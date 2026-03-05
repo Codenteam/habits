@@ -1,0 +1,74 @@
+{
+  "id": "minimal-intersect-output-test",
+  "name": "PR Document Workflow",
+  "description": "A workflow that takes a marketing prompt, generates a PR document prompt, and creates the PR campaign document",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "pr-document-prompt-generator",
+      "type": "activepieces",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "data": {
+        "label": "PR Document Prompt Generator",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-5-mini",
+          "prompt": "You are a PR and communications expert. Based on this marketing concept, create a detailed prompt for generating a professional PR campaign document. Include sections for press release, key messaging, media talking points, target publications, campaign timeline, and success metrics. Output ONLY the PR document prompt.\n\nMarketing concept: {{habits.input.prompt}}\n\nPR campaign document prompt:",
+          "temperature": 0.7,
+          "maxTokens": 600
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.header.host}}",
+            "apiKey": "{{habits.cookies.token}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "pr-document-creator",
+      "type": "activepieces",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "data": {
+        "label": "Create PR Campaign Document",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "create_canvas",
+        "operation": "create_canvas",
+        "params": {
+          "model": "gpt-4",
+          "prompt": "{{pr-document-prompt-generator}}"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.header.host}}",
+            "apiKey": "{{habits.cookies.token}}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "pr-document-prompt-generator",
+      "target": "pr-document-creator"
+    }
+  ],
+  "output": {
+    "originalPrompt": "{{habits.input.prompt}}",
+    "prDocumentPrompt": "{{pr-document-prompt-generator}}",
+    "prDocument": "{{pr-document-creator}}"
+  }
+}

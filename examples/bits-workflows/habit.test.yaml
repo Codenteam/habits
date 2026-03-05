@@ -1,0 +1,59 @@
+# Tests for Email Triage and Routing
+# Workflow: email-triage-routing.yaml - Classifies and routes emails
+workflow: ./email-triage-routing.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully triages and routes support email"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.example.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "password"
+          OPENAI_API_KEY: "sk-test"
+          SLACK_BOT_TOKEN: "xoxb-test"
+    mocks:
+      bits:
+        # Mock IMAP email fetch
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email123"
+                from: "customer@example.com"
+                subject: "Problem with login"
+                body: "I cannot access my account"
+                date: "2024-01-15T10:00:00Z"
+        # Mock OpenAI classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            category: "support"
+            confidence: 0.95
+            summary: "Login issue"
+            priority: "high"
+        # Mock bit-if switch for routing
+        - bit: "@ha-bits/bit-if"
+          action: switch
+          response:
+            output: "#support-team"
+            matchedCase: "support"
+        # Mock Slack message send
+        - bit: "@ha-bits/bit-slack"
+          action: sendMessage
+          response:
+            ok: true
+            channel: "#support-team"
+            ts: "1705312200.123456"
+        # Mock CRM create lead
+        - bit: "@ha-bits/bit-crm"
+          action: createLead
+          response:
+            lead:
+              id: "lead123"
+              email: "customer@example.com"
+              status: "new"
+              source: "email"

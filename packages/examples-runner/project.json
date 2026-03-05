@@ -1,0 +1,23 @@
+{
+  "name": "examples-runner",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/examples-runner/src",
+  "projectType": "application",
+  "tags": ["scope:tooling"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsx src/tui.tsx",
+        "cwd": "packages/examples-runner"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsx src/tui.tsx",
+        "cwd": "packages/examples-runner"
+      }
+    }
+  }
+}

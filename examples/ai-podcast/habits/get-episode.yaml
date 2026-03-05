@@ -1,0 +1,27 @@
+id: get-episode
+name: Get Episode
+description: Get a specific podcast episode
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-episode
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "episodes"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  episode: "{{fetch-episode.document}}"
+  found: "{{fetch-episode.found}}"

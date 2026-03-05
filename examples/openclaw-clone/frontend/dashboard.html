@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Claw</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --accent-red: #ff4757;
+      --accent-orange: #ff6b35;
+      --accent-purple: #a855f7;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --border-color: #27272a;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .logo-icon { font-size: 2rem; }
+    
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    nav a:hover, nav a.active {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .card-icon { font-size: 1.25rem; }
+    
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .stat {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-value.red { color: var(--accent-red); }
+    .stat-value.green { color: var(--accent-green); }
+    .stat-value.blue { color: var(--accent-blue); }
+    .stat-value.purple { color: var(--accent-purple); }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+    }
+    
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-title {
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .activity-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .integration-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .integration-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+    }
+    
+    .integration-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 999px;
+    }
+    
+    .status-badge.connected {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent-green);
+    }
+    
+    .status-badge.disconnected {
+      background: rgba(255, 71, 87, 0.2);
+      color: var(--accent-red);
+    }
+    
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    
+    .quick-action-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-primary);
+      text-align: center;
+    }
+    
+    .quick-action-btn:hover {
+      border-color: var(--accent-red);
+      transform: translateY(-2px);
+    }
+    
+    .quick-action-btn span {
+      display: block;
+    }
+    
+    .quick-action-btn .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .quick-action-btn .label {
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🦞</span>
+      <span class="logo-text">Claw</span>
+    </div>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/dashboard.html" class="active">Dashboard</a>
+      <a href="/memories.html">Memories</a>
+      <a href="/tasks.html">Tasks</a>
+    </nav>
+  </header>
+  
+  <main>
+    <h1>Dashboard</h1>
+    
+    <div class="dashboard-grid">
+      <!-- Stats Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">📊</span>
+            Overview
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-value red" id="totalTasks">0</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value green" id="completedTasks">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value blue" id="totalMemories">0</div>
+            <div class="stat-label">Memories</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value purple" id="conversations">0</div>
+            <div class="stat-label">Conversations</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">⚡</span>
+            Recent Activity
+          </div>
+        </div>
+        <div class="activity-list" id="activityList">
+          <div class="activity-item">
+            <div class="activity-icon">💬</div>
+            <div class="activity-content">
+              <div class="activity-title">Started a conversation</div>
+              <div class="activity-time">Just now</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Integrations -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">🔗</span>
+            Integrations
+          </div>
+        </div>
+        <div class="integration-list">
+          <div class="integration-item">
+            <div class="integration-name">
+              <span>📱</span>
+              Telegram
+            </div>
+            <span class="status-badge connected">Connected</span>
+          </div>
+          <div class="integration-item">
+            <div class="integration-name">
+              <span>💬</span>
+              WhatsApp
+            </div>
+            <span class="status-badge disconnected">Not Configured</span>
+          </div>
+          <div class="integration-item">
+            <div class="integration-name">
+              <span>🔔</span>
+              Slack
+            </div>
+            <span class="status-badge disconnected">Not Configured</span>
+          </div>
+          <div class="integration-item">
+            <div class="integration-name">
+              <span>📧</span>
+              Email (SMTP)
+            </div>
+            <span class="status-badge connected">Connected</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">🚀</span>
+            Quick Actions
+          </div>
+        </div>
+        <div class="quick-actions-grid">
+          <button class="quick-action-btn" onclick="window.location.href='/'">
+            <span class="icon">💬</span>
+            <span class="label">New Chat</span>
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/tasks.html'">
+            <span class="icon">✅</span>
+            <span class="label">Create Task</span>
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/memories.html'">
+            <span class="icon">🧠</span>
+            <span class="label">Add Memory</span>
+          </button>
+          <button class="quick-action-btn" onclick="triggerHeartbeat()">
+            <span class="icon">💓</span>
+            <span class="label">Heartbeat</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <script>
+    const userId = localStorage.getItem('clawUserId') || 'default';
+    
+    async function loadStats() {
+      try {
+        // Load tasks
+        const tasksRes = await fetch('/api/get-tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { userId } })
+        });
+        const tasksData = await tasksRes.json();
+        const tasks = tasksData.output?.tasks || [];
+        
+        document.getElementById('totalTasks').textContent = tasks.length;
+        document.getElementById('completedTasks').textContent = 
+          tasks.filter(t => t.status === 'completed').length;
+        
+        // Load memories
+        const memoriesRes = await fetch('/api/get-memories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { userId } })
+        });
+        const memoriesData = await memoriesRes.json();
+        document.getElementById('totalMemories').textContent = 
+          memoriesData.output?.count || memoriesData.output?.memories?.length || 0;
+        
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+    
+    async function triggerHeartbeat() {
+      alert('Heartbeat triggered! Check the chat for your briefing.');
+      window.location.href = '/';
+    }
+    
+    loadStats();
+  </script>
+</body>
+</html>

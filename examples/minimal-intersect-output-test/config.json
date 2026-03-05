@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "path": "./workflow.json",
+      "enabled": true,
+      "webhookTimeout": 30000
+    }
+  ],
+  "server": {
+    "port": 13000,
+    "host": "0.0.0.0",
+    "frontend": "./frontend"
+  },
+  "defaults": {
+    "webhookTimeout": 30000
+  }
+}
+ 

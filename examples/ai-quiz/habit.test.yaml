@@ -1,0 +1,44 @@
+# Tests for AI Quiz Generator
+# Workflow: habits/generate-quiz.yaml - Generates quiz questions using AI
+workflow: ./habits/generate-quiz.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates quiz on a topic"
+    trigger:
+      body:
+        topic: "Solar System"
+        numQuestions: 5
+        difficulty: "medium"
+        questionType: "multiple-choice"
+    context:
+      habits:
+        input:
+          topic: "Solar System"
+          numQuestions: 5
+          difficulty: "medium"
+          questionType: "multiple-choice"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        - bit: "openai"
+          action: chat
+          response:
+            title: "Solar System Quiz"
+            description: "Test your knowledge of our Solar System"
+            questions:
+              - id: 1
+                question: "Which planet is known as the Red Planet?"
+                type: "multiple-choice"
+                options: ["Venus", "Mars", "Jupiter", "Saturn"]
+                correctAnswer: "Mars"
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "quiz-123"
+            success: true
+    expectSteps:
+      save-quiz:
+        id: "quiz-123"

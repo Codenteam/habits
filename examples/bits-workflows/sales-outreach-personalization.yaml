@@ -1,0 +1,251 @@
+id: sales-outreach-personalization
+name: Sales Outreach Personalization
+description: Generate personalized sales outreach messages based on lead data and industry
+
+nodes:
+  # Node 1: New Lead Trigger
+  - id: lead-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: New Lead Trigger
+      params:
+        leadId: "{{habits.input.leadId}}"
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        company: "{{habits.input.company}}"
+        role: "{{habits.input.role}}"
+        industry: "{{habits.input.industry}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(leadId: string, email: string, firstName: string, lastName: string, company: string, role: string, industry: string) {
+            console.log("📧 Processing lead for outreach:", email);
+            return {
+              leadId,
+              email,
+              firstName: firstName || '',
+              lastName: lastName || '',
+              company: company || '',
+              role: role || '',
+              industry: industry || 'general',
+              processedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Industry/Role API Lookup (enrichment)
+  - id: lookup-context
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Industry/Role Lookup
+      params:
+        url: "{{habits.env.ENRICHMENT_API_URL}}/industry-insights"
+        queryParams: |
+          {
+            "industry": "{{lead-input.result.industry}}",
+            "role": "{{lead-input.result.role}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.ENRICHMENT_API_KEY}}"
+          }
+
+  # Node 3: AI Message Draft - Generate personalized message
+  - id: draft-message
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Message Draft
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a professional sales outreach writer. Create personalized, engaging outreach messages.
+          
+          Guidelines:
+          - Be personal and reference specific details about the recipient
+          - Keep it concise (under 150 words)
+          - Focus on value proposition relevant to their industry/role
+          - Include a clear but soft call-to-action
+          - Avoid being pushy or salesy
+          - Sound human and genuine
+          
+          Industry insights available: {{lookup-context.body}}
+        userMessage: |
+          Create a personalized sales email for:
+          Name: {{lead-input.result.firstName}} {{lead-input.result.lastName}}
+          Company: {{lead-input.result.company}}
+          Role: {{lead-input.result.role}}
+          Industry: {{lead-input.result.industry}}
+          
+          Our product helps companies streamline their workflows and increase productivity.
+        temperature: 0.8
+        maxTokens: 300
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 4: Generate Multiple Variants
+  - id: generate-variants
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: Multiple Variant Generator
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          Based on the original message, create 2 alternative versions with different tones:
+          1. Variant A: More casual/friendly tone
+          2. Variant B: More formal/professional tone
+          
+          Return as JSON:
+          {
+            "original": "original message",
+            "variantA": "casual version",
+            "variantB": "formal version"
+          }
+        userMessage: |
+          Original message:
+          {{draft-message.content}}
+        temperature: 0.7
+        maxTokens: 600
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 5: Parse variants
+  - id: parse-variants
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Parse Message Variants
+      params:
+        variantsJson: "{{generate-variants.content}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(variantsJson: string) {
+            try {
+              let jsonStr = variantsJson;
+              const jsonMatch = variantsJson.match(/```(?:json)?\s*([\s\S]*?)```/);
+              if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+              }
+              const variants = JSON.parse(jsonStr);
+              return {
+                success: true,
+                variants,
+                count: 3
+              };
+            } catch (error) {
+              console.error("Failed to parse variants:", error);
+              return {
+                success: false,
+                variants: {
+                  original: variantsJson,
+                  variantA: variantsJson,
+                  variantB: variantsJson
+                },
+                count: 1
+              };
+            }
+          }
+
+  # Node 6: Store drafts for review/selection
+  - id: store-drafts
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: store
+      label: Store Message Drafts
+      params:
+        collection: outreach-drafts
+        key: "{{lead-input.result.leadId}}"
+        value: |
+          {
+            "leadId": "{{lead-input.result.leadId}}",
+            "email": "{{lead-input.result.email}}",
+            "firstName": "{{lead-input.result.firstName}}",
+            "company": "{{lead-input.result.company}}",
+            "variants": {{parse-variants.result.variants}},
+            "selectedVariant": null,
+            "status": "pending",
+            "createdAt": "{{lead-input.result.processedAt}}"
+          }
+        ttl: 604800
+
+  # Node 7: Send original email (can be modified to send selected variant)
+  - id: send-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      label: Send Outreach Email
+      params:
+        smtpHost: "{{habits.env.SMTP_HOST}}"
+        smtpPort: 587
+        smtpUser: "{{habits.env.SMTP_USER}}"
+        smtpPassword: "{{habits.env.SMTP_PASSWORD}}"
+        from: "{{habits.env.SALES_EMAIL}}"
+        to: "{{lead-input.result.email}}"
+        subject: "Quick idea for {{lead-input.result.company}}"
+        body: "{{draft-message.content}}"
+
+  # Node 8: Log outreach
+  - id: log-outreach
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Log Outreach Activity
+      params:
+        collection: outreach-log
+        document: |
+          {
+            "leadId": "{{lead-input.result.leadId}}",
+            "email": "{{lead-input.result.email}}",
+            "type": "initial_outreach",
+            "subject": "Quick idea for {{lead-input.result.company}}",
+            "messageId": "{{send-email.messageId}}",
+            "sentAt": "{{send-email.timestamp}}"
+          }
+
+edges:
+  - source: lead-input
+    target: lookup-context
+  - source: lookup-context
+    target: draft-message
+  - source: draft-message
+    target: generate-variants
+  - source: generate-variants
+    target: parse-variants
+  - source: parse-variants
+    target: store-drafts
+  - source: store-drafts
+    target: send-email
+  - source: send-email
+    target: log-outreach
+
+output:
+  leadId: "{{lead-input.result.leadId}}"
+  email: "{{lead-input.result.email}}"
+  messageVariants: "{{parse-variants.result.variants}}"
+  emailSent: "{{send-email.success}}"
+  messageId: "{{send-email.messageId}}"

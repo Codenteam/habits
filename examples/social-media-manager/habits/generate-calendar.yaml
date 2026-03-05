@@ -1,0 +1,92 @@
+id: generate-calendar
+name: Generate Content Calendar
+description: Generate a week or month of social media content ideas
+
+input:
+  - id: brand
+    type: string
+    required: true
+    description: Brand or business name
+  - id: industry
+    type: string
+    required: true
+    description: Industry or niche
+  - id: goals
+    type: string
+    required: false
+    description: Content goals (awareness, engagement, sales, etc.)
+  - id: duration
+    type: string
+    required: false
+    description: week or month
+  - id: postFrequency
+    type: string
+    required: false
+    description: daily, 3xweek, weekly
+
+nodes:
+  - id: generate-calendar
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 2000
+        systemMessage: You are a social media strategist who creates balanced, engaging content calendars.
+        prompt: |
+          Create a {{habits.input.duration}} content calendar for:
+          Brand: {{habits.input.brand}}
+          Industry: {{habits.input.industry}}
+          Goals: {{habits.input.goals}}
+          Posting Frequency: {{habits.input.postFrequency}}
+          
+          For each day with posts, provide:
+          1. Content theme/topic
+          2. Platform(s) to post on
+          3. Content type (image, video, carousel, text)
+          4. Hook or headline idea
+          5. Best time to post
+          6. Content pillar (educational, entertaining, promotional, etc.)
+          
+          Balance content types:
+          - 40% value/educational
+          - 30% engagement/entertainment
+          - 20% promotional
+          - 10% community/personal
+          
+          Include trending topic suggestions and seasonal/timely content where relevant.
+
+  - id: save-calendar
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "content_calendars"
+        document:
+          brand: "{{habits.input.brand}}"
+          industry: "{{habits.input.industry}}"
+          goals: "{{habits.input.goals}}"
+          duration: "{{habits.input.duration}}"
+          calendar: "{{generate-calendar}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-calendar
+    target: save-calendar
+
+output:
+  calendarId: "{{save-calendar.id}}"
+  calendar: "{{generate-calendar}}"

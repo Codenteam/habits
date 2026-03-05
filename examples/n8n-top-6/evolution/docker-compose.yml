@@ -1,0 +1,93 @@
+version: "3.8"
+
+networks:
+  evolution-net:
+    driver: bridge
+
+services:
+  postgres-evolution:
+    image: postgres:15-alpine
+    container_name: postgres-evolution
+    restart: unless-stopped
+    networks:
+      - evolution-net
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: evolution
+    volumes:
+      - postgres-evolution-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-evolution:
+    image: redis:7-alpine
+    container_name: redis-evolution
+    restart: unless-stopped
+    networks:
+      - evolution-net
+    volumes:
+      - redis-evolution-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: evolution-api
+    restart: unless-stopped
+    networks:
+      - evolution-net
+    ports:
+      - "8080:8080"
+    environment:
+      # Server
+      SERVER_URL: http://localhost:8080
+
+      # Database
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://postgres:postgres@postgres-evolution:5432/evolution
+
+      # Redis Cache
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_REDIS_URI: redis://redis-evolution:6379
+
+      # Authentication
+      AUTHENTICATION_API_KEY: test123
+
+      # Twilio WhatsApp Business Integration
+      # Get credentials from: https://console.twilio.com/
+      TWILIO_ACCOUNT_SID: ${HABITS_TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${HABITS_TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${HABITS_TWILIO_WHATSAPP_NUMBER:-}
+
+      # Optional: Webhook settings
+      # WEBHOOK_GLOBAL_URL: http://your-webhook-url
+      # WEBHOOK_GLOBAL_ENABLED: "true"
+
+      # Optional: S3 Storage
+      # S3_ENABLED: "false"
+      # S3_ACCESS_KEY: your-access-key
+      # S3_SECRET_KEY: your-secret-key
+      # S3_BUCKET: evolution
+      # S3_ENDPOINT: s3.amazonaws.com
+
+    volumes:
+      - evolution-instances:/evolution/instances
+      - evolution-store:/evolution/store
+    depends_on:
+      postgres-evolution:
+        condition: service_healthy
+      redis-evolution:
+        condition: service_healthy
+
+volumes:
+  postgres-evolution-data:
+  redis-evolution-data:
+  evolution-instances:
+  evolution-store:

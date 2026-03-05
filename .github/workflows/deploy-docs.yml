@@ -1,0 +1,152 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'examples/**'
+      - 'packages/habit-viewer/**'
+      - 'packages/workflow-canvas/**'
+      - '.github/workflows/deploy-docs.yml'
+
+# Allow only one concurrent deployment
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build habit-viewer
+        run: pnpm nx build @ha-bits/habit-viewer
+
+      - name: Copy habit-viewer to docs/public/viewer
+        run: |
+          rm -rf docs/public/viewer
+          mkdir -p docs/public/viewer
+          cp -r dist/packages/habit-viewer/* docs/public/viewer/
+          rm -f docs/public/viewer/package.json
+
+      - name: Install D2
+        run: curl -fsSL https://d2lang.com/install.sh | sh -s --
+
+      - name: Install docs dependencies
+        run: |
+          cd docs
+          pnpm install
+
+      - name: Generate example downloads
+        run: |
+          mkdir -p docs/public/downloads
+          
+          # mixed example → example.zip and mixed.zip
+          cd examples/mixed
+          zip -r example.zip . -x ".env" -x "*.zip"
+          cp example.zip mixed.zip
+          mv example.zip ../../docs/public/downloads/example.zip
+          mv mixed.zip ../../docs/public/downloads/mixed.zip
+          cd ../../
+          
+          # minimal-blog → minimal-blog.zip
+          cd examples/minimal-blog
+          zip -r minimal-blog.zip . -x ".env" -x "*.zip"
+          mv minimal-blog.zip ../../docs/public/downloads/minimal-blog.zip
+          cd ../../
+          
+          # openclaw-clone → openclaw-clone.zip
+          cd examples/openclaw-clone
+          zip -r openclaw-clone.zip . -x ".env" -x "*.zip"
+          mv openclaw-clone.zip ../../docs/public/downloads/openclaw-clone.zip
+          cd ../../
+          
+          # business-intersect-standalone → intersect.zip
+          cd examples/business-intersect-standalone
+          zip -r intersect.zip . -x ".env" -x "*.zip"
+          mv intersect.zip ../../docs/public/downloads/intersect.zip
+          cd ../../
+          
+          # email-classification → email-classification.zip
+          cd examples/email-classification
+          zip -r email-classification.zip . -x ".env" -x "*.zip"
+          mv email-classification.zip ../../docs/public/downloads/email-classification.zip
+          cd ../../
+          
+          # ai-cookbook → ai-cookbook.zip
+          cd examples/ai-cookbook
+          zip -r ai-cookbook.zip . -x ".env" -x "*.zip"
+          mv ai-cookbook.zip ../../docs/public/downloads/ai-cookbook.zip
+          cd ../../
+          
+          # ai-journal → ai-journal.zip
+          cd examples/ai-journal
+          zip -r ai-journal.zip . -x ".env" -x "*.zip"
+          mv ai-journal.zip ../../docs/public/downloads/ai-journal.zip
+          cd ../../
+
+          
+
+
+      - name: Copy example habit files for HabitViewer
+        run: |
+          mkdir -p docs/public/examples/business-intersect-standalone
+          cp examples/business-intersect-standalone/habit.yaml docs/public/examples/business-intersect-standalone/
+          
+          mkdir -p docs/public/examples/mixed
+          cp examples/mixed/habit.yaml docs/public/examples/mixed/
+          
+          mkdir -p docs/public/examples/email-classification
+          cp examples/email-classification/habit.yaml docs/public/examples/email-classification/
+      
+      - name: Copy install.sh to public
+        run: |
+          cp scripts/install.sh docs/public/install.sh
+
+      - name: Copy example demo folders (screenshots)
+        run: |
+          # Copy demo folders with screenshots for documentation
+          if [ -d "examples/ai-cookbook/demo" ]; then
+            mkdir -p docs/public/examples/ai-cookbook
+            cp -r examples/ai-cookbook/demo docs/public/examples/ai-cookbook/
+          fi
+          
+          if [ -d "examples/ai-journal/demo" ]; then
+            mkdir -p docs/public/examples/ai-journal
+            cp -r examples/ai-journal/demo docs/public/examples/ai-journal/
+          fi
+
+      - name: Build documentation
+        run: |
+          cd docs
+          npm run build
+      - name: Upload and extract files
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SCP_HOST }}
+          username: ${{ secrets.SCP_USERNAME }}
+          key: ${{ secrets.SCP_KEY }}
+          passphrase: ${{secrets.SCP_PASSPHRASE}}
+          port: ${{ secrets.SCP_PORT }}
+          source: "./docs/.vitepress/dist/*"
+          target: ${{secrets.SCP_PATH}}
+          strip_components: 3

@@ -1,0 +1,70 @@
+/**
+ * Custom D2 Diagram Theme Overrides
+ * 
+ * Customize the appearance of D2 diagrams by modifying these CSS variables
+ * and rules. These override the built-in D2 theme colors.
+ */
+
+/* D2 Diagram Container */
+.d2-diagram {
+  /* Background color for the diagram container */
+  --d2-background: transparent;
+  background: var(--d2-background);
+}
+
+/* Shape fills - rectangles, circles, etc. */
+.d2-diagram svg .shape {
+  /* Primary shape fill color */
+  --d2-shape-fill: #2d2a4a;
+  /* Shape stroke/border color */
+  --d2-shape-stroke: #7c6f9b;
+}
+
+.d2-diagram svg .shape > rect,
+.d2-diagram svg .shape > path {
+  fill: var(--d2-shape-fill) !important;
+  stroke: var(--d2-shape-stroke) !important;
+}
+
+/* Connection/Edge lines */
+.d2-diagram svg .connection path {
+  /* Line color for connections */
+  --d2-connection-stroke: #9d8cc4;
+  stroke: var(--d2-connection-stroke) !important;
+}
+
+/* Arrow markers */
+.d2-diagram svg marker path {
+  --d2-arrow-fill: #9d8cc4;
+  fill: var(--d2-arrow-fill) !important;
+  stroke: var(--d2-arrow-fill) !important;
+}
+
+/* Text labels */
+.d2-diagram svg text {
+  /* Text color */
+  --d2-text-color: #e4e0f0;
+  fill: var(--d2-text-color) !important;
+}
+
+/* Connection labels */
+.d2-diagram svg .connection text {
+  --d2-connection-label-color: #c4b8e0;
+  fill: var(--d2-connection-label-color) !important;
+}
+
+/* 
+ * Alternative: Target specific D2 class names if the above don't work.
+ * D2 generates SVGs with specific class names you can inspect in browser DevTools.
+ */
+
+/* Dark mode specific overrides */
+.dark .d2-diagram svg .shape > rect,
+.dark .d2-diagram svg .shape > path {
+  --d2-shape-fill: #1e1b33;
+  --d2-shape-stroke: #6b5f8a;
+}
+
+.dark .d2-diagram svg text {
+  --d2-text-color: #d4d0e8;
+}

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Commander</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #0c1445 0%, #1a237e 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 30px; }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { color: rgba(255,255,255,0.7); }
+        
+        .voice-circle {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 40px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+        }
+        .voice-circle:hover { transform: scale(1.05); }
+        .voice-circle.active {
+            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .voice-circle span { font-size: 4rem; }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0.4); }
+            70% { box-shadow: 0 0 0 30px rgba(240, 147, 251, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(240, 147, 251, 0); }
+        }
+        
+        .command-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .command-input input {
+            flex: 1;
+            padding: 18px 25px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            color: white;
+            font-size: 1.1rem;
+        }
+        .command-input input::placeholder { color: rgba(255,255,255,0.5); }
+        .command-input input:focus { outline: none; border-color: #667eea; }
+        .command-input button {
+            padding: 18px 30px;
+            background: #667eea;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .command-input button:hover { background: #5a67d8; }
+        
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .card h2 { margin-bottom: 20px; font-size: 1.2rem; }
+        
+        .response-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border: none;
+        }
+        .response-card .spoken { font-size: 1.3rem; margin-bottom: 15px; }
+        .response-card .actions { color: rgba(255,255,255,0.8); margin-bottom: 15px; }
+        .suggestion-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+        .chip {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip:hover { background: rgba(255,255,255,0.3); }
+        
+        .parsed-actions { margin-top: 20px; }
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .action-icon { font-size: 1.5rem; }
+        .action-details strong { display: block; }
+        .action-details span { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .device-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .device-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.15); }
+        .device-card.on { background: rgba(102, 126, 234, 0.4); }
+        .device-icon { font-size: 2rem; margin-bottom: 10px; }
+        .device-name { font-size: 0.9rem; margin-bottom: 5px; }
+        .device-state { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.2); }
+        .tab.active { background: #667eea; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .routine-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .routine-info h3 { margin-bottom: 5px; }
+        .routine-info span { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+        }
+        .toggle.on { background: #22c55e; }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s;
+        }
+        .toggle.on::after { left: 26px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.8); }
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        @media (max-width: 600px) {
+            .device-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Smart Home</h1>
+            <p>Voice-powered home automation</p>
+        </div>
+
+        <div class="voice-circle" id="voice-btn" onclick="toggleListening()">
+            <span>🎤</span>
+        </div>
+
+        <div class="command-input">
+            <input type="text" id="command-input" placeholder="Try: Turn on living room lights...">
+            <button onclick="sendCommand()">Send</button>
+        </div>
+
+        <div class="card response-card" id="response-card" style="display: none;">
+            <div class="spoken" id="spoken-response"></div>
+            <div class="actions" id="actions-desc"></div>
+            <div class="suggestion-chips" id="suggestions"></div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('devices')">🔌 Devices</div>
+            <div class="tab" onclick="switchTab('routines')">⚡ Routines</div>
+            <div class="tab" onclick="switchTab('history')">📜 History</div>
+        </div>
+
+        <!-- Devices Tab -->
+        <div id="devices-tab" class="tab-content active">
+            <div class="device-grid">
+                <div class="device-card on" onclick="quickCommand('living room lights')">
+                    <div class="device-icon">💡</div>
+                    <div class="device-name">Living Room</div>
+                    <div class="device-state">On - 80%</div>
+                </div>
+                <div class="device-card" onclick="quickCommand('bedroom lights')">
+                    <div class="device-icon">💡</div>
+                    <div class="device-name">Bedroom</div>
+                    <div class="device-state">Off</div>
+                </div>
+                <div class="device-card on" onclick="quickCommand('thermostat')">
+                    <div class="device-icon">🌡️</div>
+                    <div class="device-name">Thermostat</div>
+                    <div class="device-state">72°F</div>
+                </div>
+                <div class="device-card" onclick="quickCommand('front door lock')">
+                    <div class="device-icon">🔒</div>
+                    <div class="device-name">Front Door</div>
+                    <div class="device-state">Locked</div>
+                </div>
+                <div class="device-card on" onclick="quickCommand('tv')">
+                    <div class="device-icon">📺</div>
+                    <div class="device-name">Living Room TV</div>
+                    <div class="device-state">On - Netflix</div>
+                </div>
+                <div class="device-card" onclick="quickCommand('blinds')">
+                    <div class="device-icon">🪟</div>
+                    <div class="device-name">Blinds</div>
+                    <div class="device-state">Closed</div>
+                </div>
+                <div class="device-card" onclick="quickCommand('speakers')">
+                    <div class="device-icon">🔊</div>
+                    <div class="device-name">Speakers</div>
+                    <div class="device-state">Off</div>
+                </div>
+                <div class="device-card" onclick="quickCommand('garage door')">
+                    <div class="device-icon">🚗</div>
+                    <div class="device-name">Garage</div>
+                    <div class="device-state">Closed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routines Tab -->
+        <div id="routines-tab" class="tab-content">
+            <div class="card">
+                <h2>Create New Routine</h2>
+                <form id="routine-form">
+                    <div class="form-group">
+                        <label>Routine Name</label>
+                        <input type="text" id="routine-name" placeholder="e.g., Good Morning">
+                    </div>
+                    <div class="form-group">
+                        <label>Describe what should happen</label>
+                        <textarea id="routine-desc" placeholder="e.g., Turn on lights to 50%, set thermostat to 72, play morning news..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Trigger</label>
+                        <select id="routine-trigger">
+                            <option value="voice">Voice Command</option>
+                            <option value="time">Scheduled Time</option>
+                            <option value="arrival">When I arrive home</option>
+                            <option value="departure">When I leave</option>
+                        </select>
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 14px; background: #667eea; border: none; border-radius: 10px; color: white; font-size: 1rem; cursor: pointer;">Create Routine</button>
+                </form>
+            </div>
+
+            <div id="routines-list"></div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content">
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let isListening = false;
+
+        function toggleListening() {
+            isListening = !isListening;
+            const btn = document.getElementById('voice-btn');
+            btn.classList.toggle('active', isListening);
+            if (isListening) {
+                // Simulate voice input or use Web Speech API
+                setTimeout(() => {
+                    document.getElementById('command-input').placeholder = 'Listening...';
+                }, 100);
+            } else {
+                document.getElementById('command-input').placeholder = 'Try: Turn on living room lights...';
+            }
+        }
+
+        function quickCommand(device) {
+            document.getElementById('command-input').value = `Turn on ${device}`;
+            sendCommand();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            if (tab === 'routines') loadRoutines();
+            if (tab === 'history') loadHistory();
+        }
+
+        async function sendCommand() {
+            const command = document.getElementById('command-input').value.trim();
+            if (!command) return;
+
+            try {
+                const response = await fetch('/api/process-command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command })
+                });
+                const data = await response.json();
+                displayResponse(data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function parseJSON(data) {
+            if (typeof data === 'object') return data;
+            try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
+            catch { return null; }
+        }
+
+        function displayResponse(data) {
+            const responseCard = document.getElementById('response-card');
+            responseCard.style.display = 'block';
+            
+            const response = parseJSON(data.response);
+            if (response) {
+                document.getElementById('spoken-response').textContent = response.spokenResponse || 'Command received';
+                document.getElementById('actions-desc').textContent = response.actionsDescription || '';
+                
+                const suggestions = response.suggestions || [];
+                document.getElementById('suggestions').innerHTML = suggestions.map(s => 
+                    `<div class="chip" onclick="document.getElementById('command-input').value='${s}'; sendCommand();">${s}</div>`
+                ).join('');
+            }
+            
+            document.getElementById('command-input').value = '';
+        }
+
+        async function loadRoutines() {
+            try {
+                const response = await fetch('/api/list-routines', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: 10 })
+                });
+                const data = await response.json();
+                displayRoutines(data.routines || []);
+            } catch (e) { console.error(e); }
+        }
+
+        function displayRoutines(routines) {
+            document.getElementById('routines-list').innerHTML = routines.map(r => `
+                <div class="routine-card">
+                    <div class="routine-info">
+                        <h3>${r.name}</h3>
+                        <span>${r.trigger || 'Voice command'}</span>
+                    </div>
+                    <div class="toggle ${r.enabled ? 'on' : ''}" onclick="this.classList.toggle('on')"></div>
+                </div>
+            `).join('') || '<p style="text-align: center; color: rgba(255,255,255,0.5);">No routines yet</p>';
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/list-commands', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: 10 })
+                });
+                const data = await response.json();
+                displayHistory(data.commands || []);
+            } catch (e) { console.error(e); }
+        }
+
+        function displayHistory(commands) {
+            document.getElementById('history-list').innerHTML = commands.map(c => `
+                <div class="card" style="padding: 15px;">
+                    <strong>${c.command}</strong>
+                    <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">${new Date(c.executedAt).toLocaleString()}</p>
+                </div>
+            `).join('') || '<p style="text-align: center; color: rgba(255,255,255,0.5);">No commands yet</p>';
+        }
+
+        // Routine form
+        document.getElementById('routine-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const response = await fetch('/api/create-routine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('routine-name').value,
+                        description: document.getElementById('routine-desc').value,
+                        trigger: document.getElementById('routine-trigger').value
+                    })
+                });
+                await response.json();
+                document.getElementById('routine-form').reset();
+                loadRoutines();
+            } catch (e) {
+                alert('Error creating routine');
+            }
+        });
+
+        // Enter key for command
+        document.getElementById('command-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendCommand();
+        });
+    </script>
+</body>
+</html>

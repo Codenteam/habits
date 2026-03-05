@@ -1,0 +1,30 @@
+version: "1.0"
+
+workflows:
+  - id: analyze-competitor
+    path: ./habits/analyze-competitor.yaml
+    enabled: true
+
+  - id: compare-competitors
+    path: ./habits/compare-competitors.yaml
+    enabled: true
+
+  - id: generate-strategy
+    path: ./habits/generate-strategy.yaml
+    enabled: true
+
+  - id: list-analyses
+    path: ./habits/list-analyses.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

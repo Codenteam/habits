@@ -1,0 +1,34 @@
+id: list-tickets
+name: List Tickets
+description: List support tickets with optional filters
+
+input:
+  - id: status
+    type: string
+    required: false
+  - id: category
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-tickets
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "support_tickets"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  tickets: "{{query-tickets.results}}"
+  count: "{{query-tickets.count}}"

@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "http-text-processing",
+      "path": "./exports/HTTP-to-Text-Processing-Workflow-workflow.json",
+      "enabled": true,
+      "webhookTimeout": 300000
+    },
+    {
+      "path": "./samples/workflows/gmail-to-sheets.json",
+      "enabled": true
+    },
+    {
+      "path": "./samples/workflows/webhook-openai-analysis.json",
+      "enabled": false
+    }
+  ],
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "frontend": "./ui/dist"
+  },
+  "defaults": {
+    "webhookTimeout": 300000
+  }
+}

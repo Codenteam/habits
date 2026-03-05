@@ -1,0 +1,43 @@
+{
+  "id": "minimal-intersect-output-test",
+  "name": "PR Document Workflow",
+  "description": "A workflow that takes a marketing prompt, generates a PR document prompt, and creates the PR campaign document",
+  "version": "1.0",
+  "nodes": [
+
+    {
+      "id": "pr-document-creator",
+      "type": "activepieces",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "data": {
+        "label": "Create PR Campaign Document",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "create_canvas",
+        "operation": "create_canvas",
+        "params": {
+          "model": "gpt-4",
+          "prompt": "{{habits.input.prompt}}",
+          "type": "draftcanvas"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    }
+  ],
+  "output": {
+    "prDocument": "{{pr-document-creator}}",
+    "website": "{{habits.input.website}}",
+    "svgCanvas": "{{pr-document-creator.svgCanvas}}",
+    "generatedImage": "{{pr-document-creator.generatedImage}}"
+  },
+  "edges": []
+}

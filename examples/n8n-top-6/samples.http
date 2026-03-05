@@ -1,0 +1,355 @@
+@host = localhost
+@port = 13000
+
+
+###############################################################################
+# 1. ElevenLabs Text-to-Speech Workflow
+# Note: Requires HABITS_ELEVENLABS_API_KEY in .env
+
+
+###############################################################################
+
+
+### Execute ElevenLabs TTS - Convert text to speech
+# @name executeElevenLabsTTS
+POST http://{{host}}:{{port}}/api/elevenlabs-tts
+Content-Type: application/json
+
+{
+  "text": "Hello! This is a test of the ElevenLabs text to speech API.",
+  "voice": {
+    "mode": "id",
+    "value": "21m00Tcm4TlvDq8ikWAM"
+  },
+  "inputData": [
+    {
+      "json": {}
+    }
+  ]
+}
+
+?? status == 200
+?? body workflowId == elevenlabs-tts
+?? body status == completed
+?? js response.parsedBody.nodeResults[0].status equals completed
+?? js response.parsedBody.nodeResults[0].nodeName equals Text to Speech
+?? js response.parsedBody.nodeResults[0].output.result[0].success equals true
+?? js response.parsedBody.nodeResults[0].output.result[0].mimeType equals audio/mpeg
+?? js response.parsedBody.nodeResults[0].output.result[0].dataSize > 0
+?? js response.parsedBody.nodeResults[0].output.result[0].base64.length > 100
+
+
+###############################################################################
+# 2. Text Manipulation Workflow
+
+
+###############################################################################
+
+
+### Execute Text Manipulation - Trim and lowercase
+# @name executeTextManipulation
+POST http://{{host}}:{{port}}/api/text-manipulation
+Content-Type: application/json
+
+{
+  "inputData": [
+    {
+      "json": {
+        "originalText": "  HELLO WORLD!  This is a TEST.  "
+      }
+    }
+  ]
+}
+
+?? status == 200
+?? body workflowId == text-manipulation
+?? body status == completed
+?? js response.parsedBody.nodeResults[0].status equals completed
+?? js response.parsedBody.nodeResults[0].nodeName equals Text Manipulation
+?? js response.parsedBody.nodeResults[0].output.result[0].result equals HELLO WORLD!  This is a TEST.
+
+
+###############################################################################
+# 3. Global Constants Workflow
+
+
+###############################################################################
+
+
+### Execute Global Constants - Retrieve constants
+# @name executeGlobalConstants
+POST http://{{host}}:{{port}}/api/global-constants
+Content-Type: application/json
+
+{
+  "inputData": [
+    {
+      "json": {
+        "requestId": "test-123",
+        "timestamp": "2024-01-01T00:00:00Z"
+      }
+    }
+  ]
+}
+
+?? status == 200
+?? body workflowId == global-constants
+?? body status == completed
+?? js response.parsedBody.nodeResults[0].status equals completed
+
+
+###############################################################################
+# 4. ChatWoot Contact Workflow
+
+
+###############################################################################
+
+
+### Verify Chatwoot - direct api call
+# @name verifyChatWootAPI
+# Note: Requires valid CHATWOOT_BASE_URL and CHATWOOT_ACCESS_TOKEN
+GET {{$dotenv HABITS_CHATWOOT_BASE_URL}}/api/v1/accounts/{{$dotenv HABITS_CHATWOOT_ACCOUNT_ID}}/contacts/search?page=1&q=test
+api_access_token: {{$dotenv HABITS_CHATWOOT_ACCESS_TOKEN}}
+
+?? status == 200
+
+
+### Execute ChatWoot - Search contact
+# @name executeChatWootContactSearch
+# Note: Requires valid CHATWOOT_BASE_URL and CHATWOOT_ACCESS_TOKEN
+POST http://{{host}}:{{port}}/api/chatwoot-contact
+Content-Type: application/json
+
+{
+  "query": "test@codenteam.com",
+  "message": "Hello from Habits via ChatWoot!"
+}
+
+?? status == 200
+?? body workflowId == chatwoot-contact
+?? js response.parsedBody.nodeResults[0].status equals completed
+?? js response.parsedBody.nodeResults[0].nodeName equals ChatWoot Contact Search
+?? js response.parsedBody.nodeResults[0].output.result[0][0].json.meta.count >= 1
+?? js response.parsedBody.nodeResults[0].output.result[0][0].json.payload.length >= 1
+
+
+###############################################################################
+# 5. Evolution API Workflow
+# Run this to get it working using docker:
+#   docker compose -f examples/n8n-top-6/evolution/docker-compose.yml up -d
+# Or: docker run -d -p 8080:8080 --name evolution-api -e AUTHENTICATION_API_KEY=test123 atendai/evolution-api:latest
+
+
+###############################################################################
+
+
+### Execute Evolution API - Fetch instances
+# @name executeEvolutionAPIFetchInstances
+# Note: Requires valid HABITS_EVOLUTION_API_URL and HABITS_EVOLUTION_API_KEY in .env
+POST http://{{host}}:{{port}}/api/evolution-api
+Content-Type: application/json
+
+{
+  "instanceName": "",
+  "inputData": [
+    {
+      "json": {}
+    }
+  ]
+}
+
+?? status == 200
+?? body workflowId == evolution-api
+?? body status == completed
+?? js response.parsedBody.nodeResults[0].status equals completed
+?? js response.parsedBody.nodeResults[0].nodeName equals Fetch Instances
+
+
+###############################################################################
+# 6. MCP Client Workflow
+# Note: Uses STDIO transport to connect to an MCP server
+# Requires HABITS_MCP_COMMAND, HABITS_MCP_ARGS, HABITS_MCP_ENVIRONMENTS in .env
+
+
+###############################################################################
+
+
+### Execute MCP Client - List tools
+# @name executeMCPClientListTools
+# Note: Requires valid HABITS_MCP_COMMAND in .env (e.g., npx)
+POST http://{{host}}:{{port}}/api/mcp-client
+Content-Type: application/json
+
+{}
+
+?? status == 200
+?? body workflowId == mcp-client
+?? body status exists
+
+
+###############################################################################
+# 7. Combined End-to-End Workflow
+# Tests: Global Constants → MCP List Tools → ChatWoot Search → Evolution API Send → ElevenLabs TTS
+# Note: Requires all environment variables set in .env
+# Note: Evolution API instance must be connected (paired with WhatsApp via QR code)
+
+
+###############################################################################
+
+
+### Execute Combined Workflow - Full end-to-end test
+# @name executeCombinedWorkflow
+# Searches for contact by email in ChatWoot, gets their phone, sends WhatsApp via Evolution API
+POST http://{{host}}:{{port}}/api/combined
+Content-Type: application/json
+
+{
+  "email": "test@codenteam.com",
+  "message": "Hello from Combined Workflow! 🚀 This message was sent via Evolution API WhatsApp after searching Chatwoot."
+}
+
+?? status == 200
+?? body workflowId == combined
+?? body status == completed
+?? js response.parsedBody.nodeResults.length == 5
+
+
+###############################################################################
+# Direct Node Execution Tests (bypassing workflow)
+
+
+###############################################################################
+
+
+### Execute n8n node directly - Text Manipulation
+# @name directTextManipulation
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/Bwilliamson55/n8n-nodes-text-manipulation",
+  "params": {
+    "keepOnlySet": false,
+    "textsWithManipulations": {
+      "textsWithManipulationsValues": [
+        {
+          "dataSources": {
+            "dataSource": [
+              {
+                "readOperation": "fromText",
+                "text": "  HELLO WORLD!  "
+              }
+            ]
+          },
+          "manipulations": {
+            "manipulation": [
+              {
+                "manipulationType": "trim"
+              }
+            ]
+          },
+          "writeToOutputAs": {
+            "writeToOutputAsValues": [
+              {
+                "writeOperation": "toJSON",
+                "jsonPropertyName": "result"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "inputData": [
+      {
+        "json": {}
+      }
+    ]
+  }
+}
+
+?? status == 200
+?? body status == completed
+?? body success == true
+
+
+### Execute n8n node directly - Global Constants
+# @name directGlobalConstants
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/digital-boss/n8n-nodes-globals",
+  "params": {
+    "putAllInOneKey": true,
+    "constantsKeyName": "config",
+    "credentials": {
+      "globalConstantsApi": {
+        "format": "string",
+        "globalConstants": "APP_NAME=TestApp\nVERSION=1.0\nDEBUG=true"
+      }
+    },
+    "inputData": [
+      {
+        "json": {
+          "test": "data"
+        }
+      }
+    ]
+  }
+}
+
+?? status == 200
+?? body status == completed
+?? body success == true
+
+
+### Execute n8n node directly - ElevenLabs TTS
+# @name directElevenLabsTTS
+# Note: Requires valid ELEVENLABS_API_KEY
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/elevenlabs/elevenlabs-n8n",
+  "params": {
+    "resource": "speech",
+    "operation": "textToSpeech",
+    "voice": {
+      "mode": "id",
+      "value": "21m00Tcm4TlvDq8ikWAM"
+    },
+    "text": "Hello, this is a test.",
+    "credentials": {
+      "elevenLabsApi": {
+        "xiApiKey": "YOUR_ELEVENLABS_API_KEY"
+      }
+    }
+  }
+}
+
+?? status == 200
+?? body status exists
+
+
+###############################################################################
+# Error Handling Tests
+
+
+###############################################################################
+
+
+### Execute non-existent workflow (should return 404)
+# @name executeNonExistentWorkflow
+POST http://{{host}}:{{port}}/api/non-existent-workflow
+Content-Type: application/json
+
+{}
+
+?? status == 404
+?? body error exists

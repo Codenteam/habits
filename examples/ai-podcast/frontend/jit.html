@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Blocks - JIT Renderer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <style>
+      /* Custom animations (not in Tailwind) */
+      @keyframes wave {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.5); }
+      }
+      .animate-wave { animation: wave 1s ease-in-out infinite; }
+      .animation-delay-100 { animation-delay: 0.1s; }
+      .animation-delay-200 { animation-delay: 0.2s; }
+      .animation-delay-300 { animation-delay: 0.3s; }
+      .animation-delay-400 { animation-delay: 0.4s; }
+      
+      /* Active states for JS toggling */
+      .format-btn.active { 
+        border-color: rgb(34 211 238) !important; 
+        background-color: rgb(34 211 238 / 0.2) !important; 
+      }
+      .tab.active {
+        background: linear-gradient(to right, rgb(34 211 238), rgb(52 211 153)) !important;
+        color: rgb(15 23 42) !important;
+      }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Loading state while compiling -->
+        <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+            <div class="text-white text-center">
+                <div class="text-4xl mb-4">⚡</div>
+                <p>Compiling frontend blocks...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the blocks and compiler
+        import { blocks } from './blocks.js';
+        import { compile, initializeInteractivity } from './compiler.js';
+
+        // Fetch and parse the YAML config
+        async function loadAndRender() {
+            try {
+                // Fetch frontend.yaml (in same folder)
+                const response = await fetch('./frontend.yaml');
+                if (!response.ok) {
+                    throw new Error(`Failed to load frontend.yaml: ${response.status}`);
+                }
+                const yamlText = await response.text();
+                
+                // Parse YAML (js-yaml loaded via CDN)
+                const config = jsyaml.load(yamlText);
+                console.log('Parsed config:', config);
+                
+                // Compile blocks to HTML
+                const html = compile(config, blocks);
+                
+                // Render to DOM
+                document.getElementById('app').innerHTML = html;
+                
+                // Initialize interactivity
+                initializeInteractivity();
+                
+                console.log('✓ Frontend compiled and rendered from YAML');
+            } catch (error) {
+                console.error('Compilation error:', error);
+                document.getElementById('app').innerHTML = `
+                    <div class="min-h-screen bg-red-900 flex items-center justify-center">
+                        <div class="text-white text-center max-w-lg p-8">
+                            <div class="text-4xl mb-4">❌</div>
+                            <h1 class="text-xl font-bold mb-2">Compilation Error</h1>
+                            <pre class="text-sm text-left bg-black/30 p-4 rounded overflow-auto">${error.message}\n\n${error.stack || ''}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Global functions for runtime interactivity  
+        window.selectedFormat = 'solo';
+
+        window.parseJSON = function(data) {
+            if (typeof data === 'object') return data;
+            try {
+                return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+            } catch { return {}; }
+        };
+
+        window.displayResults = function(data) {
+            const results = document.getElementById('results');
+            results.classList.remove('hidden');
+            
+            const introText = document.getElementById('intro-text');
+            const scriptText = document.getElementById('script-text');
+            const chaptersText = document.getElementById('chapters-text');
+            const shownotesText = document.getElementById('shownotes-text');
+            
+            if (introText) introText.textContent = data.intro || '';
+            if (scriptText) scriptText.textContent = data.script || '';
+            if (chaptersText) chaptersText.textContent = data.chapters || '';
+            if (shownotesText) shownotesText.textContent = data.shownotes || '';
+
+            const social = window.parseJSON(data.social);
+            const socialContainer = document.getElementById('social-container');
+            if (socialContainer) {
+                socialContainer.innerHTML = `
+                    <div class="bg-white/10 rounded-xl p-5 mb-4">
+                        <h4 class="text-cyan-400 mb-2.5 font-semibold">🐦 Twitter</h4>
+                        <p>${social?.twitter || ''}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-5 mb-4">
+                        <h4 class="text-cyan-400 mb-2.5 font-semibold">💼 LinkedIn</h4>
+                        <p>${social?.linkedin || ''}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-5 mb-4">
+                        <h4 class="text-cyan-400 mb-2.5 font-semibold">📸 Instagram</h4>
+                        <p>${social?.instagram || ''}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-5 mb-4">
+                        <h4 class="text-cyan-400 mb-2.5 font-semibold">🔊 Audiogram Quote</h4>
+                        <p class="italic">"${social?.audiogram || ''}"</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.showTab = function(tab) {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                t.classList.add('bg-white/10');
+                t.classList.remove('bg-gradient-to-r', 'from-cyan-400', 'to-emerald-400', '!text-slate-900');
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            
+            const tabBtn = document.querySelector(`[onclick="showTab('${tab}')"]`);
+            if (tabBtn) {
+                tabBtn.classList.add('active', 'bg-gradient-to-r', 'from-cyan-400', 'to-emerald-400', '!text-slate-900');
+                tabBtn.classList.remove('bg-white/10');
+            }
+            const tabContent = document.getElementById(`${tab}-tab`);
+            if (tabContent) tabContent.classList.remove('hidden');
+        };
+
+        window.copyContent = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                navigator.clipboard.writeText(el.textContent);
+                alert('Copied!');
+            }
+        };
+
+        window.backToCreate = function() {
+            const results = document.getElementById('results');
+            results.classList.add('hidden');
+            
+            const createSection = document.getElementById('create-section');
+            const historySection = document.getElementById('history-section');
+            if (createSection) createSection.style.display = 'block';
+            if (historySection) historySection.style.display = 'block';
+        };
+
+        window.loadHistory = async function() {
+            const grid = document.getElementById('episode-grid');
+            if (!grid) return;
+            
+            try {
+                const response = await fetch('/api/list-episodes?limit=9');
+                const data = await response.json();
+
+                if (data.episodes?.length > 0) {
+                    grid.innerHTML = data.episodes.map(ep => `
+                        <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1 hover:border-cyan-400" onclick="viewEpisode('${ep._id}')">
+                            <div class="bg-gradient-to-r from-cyan-400 to-emerald-400 p-4 text-slate-900">
+                                <div class="font-semibold">🎙️ ${(ep.topic || '').substring(0, 40)}...</div>
+                            </div>
+                            <div class="p-4">
+                                <div class="text-sm text-white/70 mt-1">${ep.duration || 30} min • ${ep.format || 'solo'}</div>
+                                <div class="text-sm text-white/70 mt-1">${ep.podcastName || 'Untitled Podcast'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p class="text-white/60 col-span-full text-center">No episodes yet</p>';
+                }
+            } catch (error) {
+                grid.innerHTML = '<p class="text-white/60 col-span-full text-center">Error loading episodes</p>';
+            }
+        };
+
+        window.viewEpisode = async function(id) {
+            try {
+                const response = await fetch(`/api/get-episode?id=${id}`);
+                const data = await response.json();
+                if (data.episode) {
+                    window.displayResults(data.episode);
+                }
+            } catch (error) {
+                alert('Error loading episode');
+            }
+        };
+
+        // Start rendering
+        loadAndRender();
+    </script>
+</body>
+</html>

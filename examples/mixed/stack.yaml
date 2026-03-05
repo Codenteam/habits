@@ -1,0 +1,17 @@
+version: "1.0"
+workflows:
+  - id: text-to-voice-to-s3
+    path: ./habit.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+
+
+logging:
+  level: info                    # trace, debug, info, warn, error, fatal, none
+  outputs: [console]             # console, file, json
+  format: text                   # text or json
+  colorize: true
+

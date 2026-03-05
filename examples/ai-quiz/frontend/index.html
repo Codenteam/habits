@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quiz Generator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        .subtitle { color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 30px; }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .card h2 { color: #a78bfa; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.9); font-weight: 500; }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: white;
+        }
+        input::placeholder { color: rgba(255,255,255,0.5); }
+        select option { background: #1a1a2e; }
+        input:focus, select:focus { outline: none; border-color: #a78bfa; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        button {
+            background: #a78bfa;
+            color: #1a1a2e;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(167, 139, 250, 0.3); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .secondary-btn { background: rgba(255,255,255,0.1); color: white; }
+        .loading { display: none; text-align: center; padding: 40px; color: white; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Quiz taking styles */
+        .quiz-container { display: none; }
+        .quiz-container.active { display: block; }
+        .question-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 1.1rem;
+            color: white;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+        .option:hover { border-color: #a78bfa; background: rgba(167, 139, 250, 0.1); }
+        .option.selected { border-color: #a78bfa; background: rgba(167, 139, 250, 0.15); }
+        .option input { display: none; }
+        .option-letter {
+            width: 30px; height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 14px;
+            color: rgba(255,255,255,0.7);
+        }
+        .option.selected .option-letter { background: #a78bfa; color: #1a1a2e; }
+
+        /* Results styles */
+        .results-container { display: none; }
+        .results-container.active { display: block; }
+        .score-card {
+            text-align: center;
+            padding: 30px;
+            background: #a78bfa;
+            border-radius: 16px;
+            color: #1a1a2e;
+            margin-bottom: 25px;
+        }
+        .score-big { font-size: 4rem; font-weight: 700; }
+        .score-label { font-size: 1.2rem; opacity: 0.9; }
+        .grade { font-size: 2rem; margin-top: 10px; }
+        .result-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid rgba(255,255,255,0.2);
+        }
+        .result-item.correct { border-left-color: #4CAF50; }
+        .result-item.incorrect { border-left-color: #f44336; }
+        .result-question { font-weight: 500; margin-bottom: 10px; color: white; }
+        .result-answer { font-size: 0.9rem; color: rgba(255,255,255,0.7); }
+        .result-answer span { font-weight: 500; }
+        .result-feedback {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+        }
+        .study-tips {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .study-tips h4 { color: #ffc107; margin-bottom: 10px; }
+        .study-tips ul { padding-left: 20px; color: rgba(255, 193, 7, 0.9); }
+
+        /* History */
+        .quiz-list { display: grid; gap: 15px; }
+        .quiz-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quiz-item:hover { transform: translateX(5px); background: rgba(167, 139, 250, 0.1); border-color: #a78bfa; }
+        .quiz-item h4 { color: white; margin-bottom: 5px; }
+        .quiz-item .meta { font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-top: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #a78bfa;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 AI Quiz Generator</h1>
+        <p class="subtitle">Generate and take quizzes on any topic</p>
+
+        <!-- Create Quiz Section -->
+        <div class="card" id="create-section">
+            <h2>Create New Quiz</h2>
+            <form id="create-form">
+                <div class="form-group">
+                    <label>Topic *</label>
+                    <input type="text" id="topic" placeholder="e.g., World History, Python Programming, The Solar System" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Questions</label>
+                        <select id="numQuestions">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                            <option value="20">20 Questions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Difficulty</label>
+                        <select id="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="questionType">
+                            <option value="multiple-choice" selected>Multiple Choice</option>
+                            <option value="true-false">True/False</option>
+                            <option value="mixed">Mixed</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="createBtn">✨ Generate Quiz</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loading-text">Generating your quiz...</p>
+        </div>
+
+        <!-- Quiz Taking Section -->
+        <div class="quiz-container" id="quiz-section">
+            <div class="card">
+                <h2 id="quiz-title">Quiz Title</h2>
+                <p id="quiz-description" style="color: rgba(255,255,255,0.7); margin-bottom: 20px;"></p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress" style="width: 0%"></div>
+                </div>
+                <div id="questions-container"></div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="secondary-btn" onclick="backToCreate()">← Back</button>
+                    <button id="submitQuiz" onclick="submitQuiz()">Submit Answers</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-container" id="results-section">
+            <div class="card">
+                <div class="score-card">
+                    <div class="score-big" id="score-display">0/0</div>
+                    <div class="score-label">Questions Correct</div>
+                    <div class="grade" id="grade-display">Grade: A</div>
+                </div>
+                <h3 style="margin-bottom: 15px; color: white;">Detailed Results</h3>
+                <div id="detailed-results"></div>
+                <div class="study-tips" id="study-tips" style="display: none;">
+                    <h4>📚 Study Tips</h4>
+                    <ul id="tips-list"></ul>
+                </div>
+                <button onclick="backToCreate()" style="margin-top: 20px;">Create Another Quiz</button>
+            </div>
+        </div>
+
+        <!-- Quiz History -->
+        <div class="card" id="history-section">
+            <h2>Recent Quizzes</h2>
+            <div class="quiz-list" id="quiz-list">
+                <p style="color: rgba(255,255,255,0.6); text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuiz = null;
+        let currentQuizId = null;
+
+        // Create quiz
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const createBtn = document.getElementById('createBtn');
+            const loading = document.getElementById('loading');
+            
+            createBtn.disabled = true;
+            loading.classList.add('active');
+            document.getElementById('loading-text').textContent = 'Generating your quiz...';
+
+            try {
+                const response = await fetch('/api/generate-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: document.getElementById('topic').value,
+                        numQuestions: parseInt(document.getElementById('numQuestions').value),
+                        difficulty: document.getElementById('difficulty').value,
+                        questionType: document.getElementById('questionType').value
+                    })
+                });
+
+                const result = await response.json();
+                const data = result.output;
+                currentQuizId = data.quizId;
+                
+                // Parse quiz content
+                let quizContent = data.quiz;
+                if (typeof quizContent === 'string') {
+                    // Remove markdown code blocks if present
+                    quizContent = quizContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                    quizContent = JSON.parse(quizContent);
+                }
+                
+                currentQuiz = quizContent;
+                displayQuiz(quizContent);
+                loadHistory();
+            } catch (error) {
+                alert('Error generating quiz: ' + error.message);
+            } finally {
+                createBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function displayQuiz(quiz) {
+            document.getElementById('create-section').style.display = 'none';
+            document.getElementById('history-section').style.display = 'none';
+            document.getElementById('results-section').classList.remove('active');
+            document.getElementById('quiz-section').classList.add('active');
+
+            document.getElementById('quiz-title').textContent = quiz.title || 'Quiz';
+            document.getElementById('quiz-description').textContent = quiz.description || '';
+
+            const container = document.getElementById('questions-container');
+            container.innerHTML = quiz.questions.map((q, i) => `
+                <div class="question-card" data-question-id="${q.id || i + 1}">
+                    <div class="question-number">Question ${i + 1} of ${quiz.questions.length}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((opt, j) => `
+                            <label class="option" onclick="selectOption(this, ${q.id || i + 1})">
+                                <input type="radio" name="q${q.id || i + 1}" value="${opt}">
+                                <span class="option-letter">${String.fromCharCode(65 + j)}</span>
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            updateProgress();
+        }
+
+        function selectOption(element, questionId) {
+            const card = element.closest('.question-card');
+            card.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            if (!currentQuiz) return;
+            const answered = document.querySelectorAll('.question-card input:checked').length;
+            const total = currentQuiz.questions.length;
+            document.getElementById('progress').style.width = `${(answered / total) * 100}%`;
+        }
+
+        async function submitQuiz() {
+            const answers = [];
+            currentQuiz.questions.forEach((q, i) => {
+                const selected = document.querySelector(`input[name="q${q.id || i + 1}"]:checked`);
+                answers.push({
+                    questionId: q.id || i + 1,
+                    answer: selected ? selected.value : null
+                });
+            });
+
+            const unanswered = answers.filter(a => !a.answer).length;
+            if (unanswered > 0) {
+                if (!confirm(`You have ${unanswered} unanswered questions. Submit anyway?`)) return;
+            }
+
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('loading-text').textContent = 'Grading your quiz...';
+            document.getElementById('quiz-section').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/submit-answers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quizId: currentQuizId,
+                        answers: JSON.stringify(answers),
+                        userName: 'Anonymous'
+                    })
+                });
+
+                const data = await response.json();
+                let results = data.results;
+                if (typeof results === 'string') {
+                    results = results.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                    results = JSON.parse(results);
+                }
+                
+                displayResults(results);
+            } catch (error) {
+                alert('Error submitting quiz: ' + error.message);
+                document.getElementById('quiz-section').classList.add('active');
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function displayResults(results) {
+            document.getElementById('results-section').classList.add('active');
+            
+            document.getElementById('score-display').textContent = `${results.score}/${results.total}`;
+            document.getElementById('grade-display').textContent = `Grade: ${results.grade} (${results.percentage}%)`;
+
+            const detailedResults = document.getElementById('detailed-results');
+            detailedResults.innerHTML = results.results.map((r, i) => `
+                <div class="result-item ${r.isCorrect ? 'correct' : 'incorrect'}">
+                    <div class="result-question">${i + 1}. ${currentQuiz.questions[i]?.question || 'Question'}</div>
+                    <div class="result-answer">
+                        Your answer: <span>${r.userAnswer || 'Not answered'}</span>
+                        ${!r.isCorrect ? `<br>Correct answer: <span style="color: #4CAF50">${r.correctAnswer}</span>` : ''}
+                    </div>
+                    <div class="result-feedback">${r.feedback}</div>
+                </div>
+            `).join('');
+
+            if (results.studyTips && results.studyTips.length > 0) {
+                document.getElementById('study-tips').style.display = 'block';
+                document.getElementById('tips-list').innerHTML = results.studyTips.map(tip => 
+                    `<li>${tip}</li>`
+                ).join('');
+            }
+        }
+
+        function backToCreate() {
+            document.getElementById('quiz-section').classList.remove('active');
+            document.getElementById('results-section').classList.remove('active');
+            document.getElementById('create-section').style.display = 'block';
+            document.getElementById('history-section').style.display = 'block';
+            currentQuiz = null;
+            currentQuizId = null;
+        }
+
+        async function loadHistory() {
+            const list = document.getElementById('quiz-list');
+            try {
+                const response = await fetch('/api/list-quizzes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ limit: 10 })
+                });
+                const results = await response.json();
+                const data = results.output;
+
+                
+                if (data.quizzes?.length > 0) {
+                    list.innerHTML = data.quizzes.map(q => {
+                        let content = q.content;
+                        if (typeof content === 'string') {
+                            try {
+                                content = JSON.parse(content.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+                            } catch {}
+                        }
+                        return `
+                            <div class="quiz-item" onclick="loadQuiz('${q._id}')">
+                                <h4>${content?.title || q.topic}</h4>
+                                <div class="meta">
+                                    ${q.difficulty || 'medium'} • ${q.numQuestions || '?'} questions
+                                    • ${new Date(q.createdAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    list.innerHTML = '<p style="color: rgba(255,255,255,0.6); text-align: center;">No quizzes yet. Create one above!</p>';
+                }
+            } catch (error) {
+                list.innerHTML = '<p style="color: rgba(255,255,255,0.6); text-align: center;">Error loading quizzes</p>';
+            }
+        }
+
+        async function loadQuiz(id) {
+            try {
+                const response = await fetch(`/api/get-quiz?id=${id}`,{
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const result = await response.json();
+                const data = result.output;
+                
+                if (data.quiz) {
+                    currentQuizId = id;
+                    let content = data.quiz.content;
+                    if (typeof content === 'string') {
+                        content = JSON.parse(content.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+                    }
+                    currentQuiz = content;
+                    displayQuiz(content);
+                }
+            } catch (error) {
+                alert('Error loading quiz');
+            }
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

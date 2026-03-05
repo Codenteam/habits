@@ -1,0 +1,126 @@
+@host = http://localhost
+@port = 3000
+
+# =============================================================================
+# Cortex Mode API Tests (using mixed example)
+# =============================================================================
+# 
+# This file tests all Cortex mode endpoints when running:
+#   npx habits cortex --config ./examples/mixed/stack.yaml
+#   OR
+#   npx ./dist/packages/habits cortex --config ./dist/packages/habits/examples/mixed/stack.yaml (local testing)
+#
+# Run all tests:
+#   httpyac http/cortex-tests.http --all
+#
+# Run specific test:
+#   httpyac http/cortex-tests.http -n "Cortex Frontend Health"
+#
+# =============================================================================
+
+# =============================================================================
+# UI Health Checks
+# =============================================================================
+
+### Cortex Frontend Health - Habit UI (React SPA)
+# @name cortexFrontendHealth
+GET {{host}}:{{port}}/
+
+?? status == 200
+
+### Cortex Management UI Health
+# @name cortexManagementUIHealth
+GET {{host}}:{{port}}/habits/cortex/
+
+?? status == 200
+
+### Base UI (embedded in Cortex mode)
+# @name baseUIEmbedded
+GET {{host}}:{{port}}/habits/base/
+
+?? status == 200
+
+# =============================================================================
+# Cortex Core API
+# =============================================================================
+
+### List all workflows
+# @name workflowsList
+GET {{host}}:{{port}}/misc/workflows
+Content-Type: application/json
+
+?? status == 200
+
+### Get workflows (JSON output)
+# @name workflowsJSON
+GET {{host}}:{{port}}/misc/workflows?output=json
+Content-Type: application/json
+
+?? status == 200
+
+# =============================================================================
+# Workflow Execution - mixed example workflows
+# =============================================================================
+
+### Execute text-to-voice-to-s3 workflow (streaming)
+# @name executeTextToVoiceStream
+POST {{host}}:{{port}}/api/text-to-voice-to-s3?stream=true
+Content-Type: application/json
+Accept: application/x-ndjson
+
+{
+  "params": {
+    "prompt": "Write a short motivational quote about success"
+  }
+}
+
+### Execute text-to-voice-to-s3 workflow (non-streaming)
+# @name executeTextToVoice
+POST {{host}}:{{port}}/api/text-to-voice-to-s3
+Content-Type: application/json
+
+{
+  "params": {
+    "prompt": "Write a short motivational quote about success"
+  }
+}
+
+# =============================================================================
+# Workflow Info
+# =============================================================================
+
+### Get workflow info - text-to-voice-to-s3
+# @name workflowInfoTextToVoice
+GET {{host}}:{{port}}/misc/workflow/text-to-voice-to-s3
+Content-Type: application/json
+
+?? status == 200
+
+### Test 404 - Non-existent workflow
+# @name workflow404
+GET {{host}}:{{port}}/misc/workflow/non-existent-workflow
+Content-Type: application/json
+
+?? status == 404
+
+# =============================================================================
+# Error Handling
+# =============================================================================
+
+### Execute non-existent workflow
+# @name executeWorkflow404
+POST {{host}}:{{port}}/api/non-existent-workflow
+Content-Type: application/json
+
+{
+  "params": {}
+}
+
+?? status == 404
+
+### Execute with missing required params (should fail gracefully)
+# @name executeMissingParams
+POST {{host}}:{{port}}/api/text-to-voice-to-s3
+Content-Type: application/json
+
+{}

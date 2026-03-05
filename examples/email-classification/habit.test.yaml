@@ -1,0 +1,801 @@
+# Tests for Email Classification Workflow
+# Workflow: habit.yaml - Email classification and routing pipeline
+#
+# These tests mock the underlying HTTP calls within each bit, NOT the entire bit.
+# This allows testing the actual bit logic while isolating external dependencies.
+#
+# The workflow supports two input methods:
+# - IMAP: Receives email via IMAP polling (receive-email-imap node)
+# - HTTP Submission: Direct submission via habits.input.submission
+#
+# Both paths merge at the any-input node (bit-any-of) before classification.
+workflow: ./habit.yaml
+
+tests:
+  # === Test 1: Important Email via IMAP → Telegram ===
+  - name: "important email via IMAP routes to telegram"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+    # Mock entire bits for workflow-level mocking (alternative approach)
+    # Since you asked to mock modules within bits, we use fetch mocks above
+    # But for workflow testing, sometimes bit-level mocking is cleaner
+      bits:
+        # Mock bit-if check-submission (submission is null in IMAP test)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_001"
+                  from: "security@bank.com"
+                  to: "user@example.com"
+                  subject: "URGENT: Suspicious login detected"
+                  body: "We detected a login from an unknown device. Please verify immediately."
+                  date: "2024-01-15T10:30:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        # Mock bit-email newEmail action
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_001"
+                from: "security@bank.com"
+                to: "user@example.com"
+                subject: "URGENT: Suspicious login detected"
+                body: "We detected a login from an unknown device. Please verify immediately."
+                date: "2024-01-15T10:30:00Z"
+            count: 1
+            folder: "INBOX"
+            timestamp: "2024-01-15T10:30:00Z"
+        # Mock bit-openai classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "important"
+            message:
+              content: "important"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: 0
+            executedBranchLabel: "Important"
+            output: "important"
+            matched: true
+            elseExecuted: false
+        # Mock bit-telegram sendMessage
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 12345
+            chatId: 987654321
+            text: "Important email notification"
+        # Mock bit-email sendEmail (SMTP) - needed even if branch not taken
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<skipped>"
+            accepted: []
+        # Mock bit-whatsapp - needed even if branch not taken
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "skipped"
+
+  # === Test 2: Semi-Important Email via IMAP → SMTP ===
+  - name: "semi-important email via IMAP routes to smtp"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null in IMAP test)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_002"
+                  from: "colleague@company.com"
+                  to: "user@example.com"
+                  subject: "Meeting Request: Q1 Planning"
+                  body: "Hi, would you be available for a Q1 planning meeting next week? Let me know your availability."
+                  date: "2024-01-15T11:00:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        # Mock bit-email newEmail action - meeting request
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_002"
+                from: "colleague@company.com"
+                to: "user@example.com"
+                subject: "Meeting Request: Q1 Planning"
+                body: "Hi, would you be available for a Q1 planning meeting next week? Let me know your availability."
+                date: "2024-01-15T11:00:00Z"
+            count: 1
+            folder: "INBOX"
+            timestamp: "2024-01-15T11:00:00Z"
+        # Mock bit-openai classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "semi-important"
+            message:
+              content: "semi-important"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: 1
+            executedBranchLabel: "Semi-Important"
+            output: "semi-important"
+            matched: true
+            elseExecuted: false
+        # Mock bit-email sendEmail (SMTP)
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<smtp-msg-001@habits.local>"
+            accepted:
+              - "backup@example.com"
+            from: "smtp@example.com"
+            to: "backup@example.com"
+            subject: "[Semi-Important] FWD: Meeting Request: Q1 Planning"
+            timestamp: "2024-01-15T11:00:00Z"
+        # Mock bit-telegram - needed even if branch not taken
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 0
+        # Mock bit-whatsapp - needed even if branch not taken
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "skipped"
+
+  # === Test 3: Not Important Email via IMAP → WhatsApp ===
+  - name: "not-important email via IMAP routes to whatsapp"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null in IMAP test)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_003"
+                  from: "newsletter@marketing.com"
+                  to: "user@example.com"
+                  subject: "Weekly Tech Newsletter - January Edition"
+                  body: "Here is your weekly roundup of tech news and updates. This week we cover AI advances..."
+                  date: "2024-01-15T12:00:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        # Mock bit-email newEmail action - newsletter
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_003"
+                from: "newsletter@marketing.com"
+                to: "user@example.com"
+                subject: "Weekly Tech Newsletter - January Edition"
+                body: "Here is your weekly roundup of tech news and updates. This week we cover AI advances..."
+                date: "2024-01-15T12:00:00Z"
+            count: 1
+            folder: "INBOX"
+            timestamp: "2024-01-15T12:00:00Z"
+        # Mock bit-openai classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "not-important"
+            message:
+              content: "not-important"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: 2
+            executedBranchLabel: "Not Important"
+            output: "not-important"
+            matched: true
+            elseExecuted: false
+        # Mock bit-whatsapp sendTextMessage
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "wamid.HBgL..."
+            to: "14155238886"
+            waId: "14155238886"
+            timestamp: "2024-01-15T12:00:00Z"
+        # Mock bit-telegram - needed even if branch not taken
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 0
+        # Mock bit-email sendEmail (SMTP) - needed even if branch not taken
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<skipped>"
+            accepted: []
+
+  # === Test 4: Fallback to Else Branch via IMAP ===
+  - name: "unknown classification falls to else (not-important)"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null in IMAP test)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_004"
+                  from: "unknown@domain.com"
+                  to: "user@example.com"
+                  subject: "Random subject"
+                  body: "Some random content"
+                  date: "2024-01-15T13:00:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        # Mock bit-email newEmail action
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_004"
+                from: "unknown@domain.com"
+                to: "user@example.com"
+                subject: "Random subject"
+                body: "Some random content"
+                date: "2024-01-15T13:00:00Z"
+            count: 1
+            folder: "INBOX"
+            timestamp: "2024-01-15T13:00:00Z"
+        # Mock bit-openai - returns unexpected classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "unclear"
+            message:
+              content: "unclear"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch - no match, falls to else (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: -1
+            executedBranchLabel: "Else"
+            output: "not-important"
+            matched: false
+            elseExecuted: true
+        # Mock bit-whatsapp (else defaults to not-important → WhatsApp)
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "wamid.else..."
+            to: "14155238886"
+            waId: "14155238886"
+            timestamp: "2024-01-15T13:00:00Z"
+        # Mock bit-telegram - needed even if branch not taken
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 0
+        # Mock bit-email sendEmail (SMTP) - needed even if branch not taken
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<skipped>"
+            accepted: []
+
+  # === Test 5: OpenAI API Error ===
+  - name: "handles openai classification error"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "invalid-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_005"
+                  from: "test@test.com"
+                  to: "user@example.com"
+                  subject: "Test Email"
+                  body: "Test body"
+                  date: "2024-01-15T14:00:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_005"
+                from: "test@test.com"
+                to: "user@example.com"
+                subject: "Test Email"
+                body: "Test body"
+                date: "2024-01-15T14:00:00Z"
+            count: 1
+            folder: "INBOX"
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          error: "OpenAI API Error: 401 - Invalid API key"
+    expectError: "OpenAI API Error: 401 - Invalid API key"
+
+  # === Test 6: IMAP Connection Error ===
+  - name: "handles imap connection error"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "invalid.host.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "wrong-password"
+          OPENAI_API_KEY: "sk-test-key"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          error: "IMAP Error: Connection timeout"
+    expectError: "IMAP Error: Connection timeout"
+
+  # === Test 7: Telegram Send Error (on important email via IMAP) ===
+  - name: "handles telegram send error gracefully"
+    trigger:
+      body: {}
+    context:
+      habits:
+        env:
+          IMAP_HOST: "imap.gmail.com"
+          IMAP_USER: "test@example.com"
+          IMAP_PASSWORD: "test-password"
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "invalid-token"
+          TELEGRAM_CHAT_ID: "987654321"
+    mocks:
+      bits:
+        # Mock bit-if check-submission (submission is null)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: null
+            matched: false
+        # Mock bit-any-of race - passes through IMAP data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "email_006"
+                  from: "emergency@company.com"
+                  to: "user@example.com"
+                  subject: "CRITICAL: Server down"
+                  body: "Production server is down"
+                  date: "2024-01-15T15:00:00Z"
+              count: 1
+              folder: "INBOX"
+            label: "email-input"
+            triggeredBy: "receive-email-imap"
+            passedThrough: true
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          response:
+            emails:
+              - id: "email_006"
+                from: "emergency@company.com"
+                to: "user@example.com"
+                subject: "CRITICAL: Server down"
+                body: "Production server is down"
+                date: "2024-01-15T15:00:00Z"
+            count: 1
+            folder: "INBOX"
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "important"
+            model: "gpt-4o-mini"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            output: "important"
+            matched: true
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          error: "Telegram API Error: Unauthorized (401)"
+    expectError: "Telegram API Error: Unauthorized"
+
+  # === Test 8: HTTP Submission Path - Important Email → Telegram ===
+  - name: "important email via HTTP submission routes to telegram"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          submission:
+            from: "ceo@company.com"
+            subject: "URGENT: Board meeting rescheduled"
+            body: "The emergency board meeting has been moved to tomorrow 9 AM. Your attendance is mandatory."
+        env:
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock IMAP receiver (needed for all tests, returns empty for HTTP path)
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          nodeId: receive-email-imap
+          response:
+            emails: []
+            count: 0
+            folder: "INBOX"
+        # Mock bit-if check-submission (submission IS provided)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: "has-submission"
+            matched: true
+        # Mock bit-any-of race - passes through submission formatted data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "submission-1705320000000"
+                  from: "ceo@company.com"
+                  to: "user@example.com"
+                  subject: "URGENT: Board meeting rescheduled"
+                  body: "The emergency board meeting has been moved to tomorrow 9 AM. Your attendance is mandatory."
+                  date: "2024-01-15T10:00:00Z"
+                  source: "http-submission"
+              count: 1
+              folder: "SUBMISSION"
+            label: "email-input"
+            triggeredBy: "format-submission"
+            passedThrough: true
+        # Mock bit-openai classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "important"
+            message:
+              content: "important"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: 0
+            executedBranchLabel: "Important"
+            output: "important"
+            matched: true
+            elseExecuted: false
+        # Mock bit-telegram sendMessage
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 12346
+            chatId: 987654321
+            text: "Important email notification"
+        # Mock bit-email sendEmail (SMTP) - needed even if branch not taken
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<skipped>"
+            accepted: []
+        # Mock bit-whatsapp - needed even if branch not taken
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "skipped"
+
+  # === Test 9: HTTP Submission Path - Semi-Important Email → SMTP ===
+  - name: "semi-important email via HTTP submission routes to smtp"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          submission:
+            from: "hr@company.com"
+            subject: "Reminder: Submit your timesheet"
+            body: "Please remember to submit your timesheet by end of day Friday."
+        env:
+          OPENAI_API_KEY: "sk-test-key"
+          TELEGRAM_BOT_TOKEN: "123456789:ABCDEF"
+          TELEGRAM_CHAT_ID: "987654321"
+          SMTP_HOST: "smtp.gmail.com"
+          SMTP_USER: "smtp@example.com"
+          SMTP_PASSWORD: "smtp-password"
+          BACKUP_EMAIL: "backup@example.com"
+          WHATSAPP_ACCESS_TOKEN: "EAABsbCS..."
+          WHATSAPP_PHONE_NUMBER_ID: "123456789"
+          WHATSAPP_PHONE: "14155238886"
+    mocks:
+      bits:
+        # Mock IMAP receiver (needed for all tests, returns empty for HTTP path)
+        - bit: "@ha-bits/bit-email"
+          action: newEmail
+          nodeId: receive-email-imap
+          response:
+            emails: []
+            count: 0
+            folder: "INBOX"
+        # Mock bit-if check-submission (submission IS provided)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: check-submission
+          response:
+            mode: "if"
+            output: "has-submission"
+            matched: true
+        # Mock bit-any-of race - passes through submission formatted data
+        - bit: "@ha-bits/bit-any-of"
+          action: race
+          response:
+            output:
+              emails:
+                - id: "submission-1705323600000"
+                  from: "hr@company.com"
+                  to: "user@example.com"
+                  subject: "Reminder: Submit your timesheet"
+                  body: "Please remember to submit your timesheet by end of day Friday."
+                  date: "2024-01-15T11:00:00Z"
+                  source: "http-submission"
+              count: 1
+              folder: "SUBMISSION"
+            label: "email-input"
+            triggeredBy: "format-submission"
+            passedThrough: true
+        # Mock bit-openai classification
+        - bit: "@ha-bits/bit-openai"
+          action: chatCompletion
+          response:
+            content: "semi-important"
+            message:
+              content: "semi-important"
+              role: "assistant"
+            model: "gpt-4o-mini"
+            finishReason: "stop"
+        # Mock bit-if branch action (route-email node)
+        - bit: "@ha-bits/bit-if"
+          action: branch
+          nodeId: route-email
+          response:
+            mode: "switch"
+            executedBranchIndex: 1
+            executedBranchLabel: "Semi-Important"
+            output: "semi-important"
+            matched: true
+            elseExecuted: false
+        # Mock bit-email sendEmail (SMTP)
+        - bit: "@ha-bits/bit-email"
+          action: sendEmail
+          response:
+            success: true
+            messageId: "<smtp-msg-002@habits.local>"
+            accepted:
+              - "backup@example.com"
+            from: "smtp@example.com"
+            to: "backup@example.com"
+            subject: "[Semi-Important] FWD: Reminder: Submit your timesheet"
+            timestamp: "2024-01-15T11:00:00Z"
+        # Mock bit-telegram - needed even if branch not taken
+        - bit: "@ha-bits/bit-telegram"
+          action: sendMessage
+          response:
+            success: true
+            messageId: 0
+        # Mock bit-whatsapp - needed even if branch not taken
+        - bit: "@ha-bits/bit-whatsapp"
+          action: sendTextMessage
+          response:
+            success: true
+            messageId: "skipped"

@@ -1,0 +1,8 @@
+version: "1.0"
+workflows:
+  - id: multi-trigger-test
+    path: ./habits.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"

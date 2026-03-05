@@ -1,0 +1,26 @@
+# Ignore sensitive files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Ignore development files
+*.ts
+*.tsx
+tsconfig*.json
+.eslintrc*
+.prettierrc*
+jest.config.*
+
+# Ignore source maps in production (optional - comment out if needed for debugging)
+# *.map
+
+# Ignore test files
+**/*.test.*
+**/*.spec.*
+__tests__/
+
+# Ignore local development
+node_modules/
+.git/
+.gitignore
+.DS_Store

@@ -1,0 +1,12 @@
+version: "1.0"
+workflows:
+  - id: habit-code
+    path: ./habit.yaml
+    enabled: true
+  - id: habit-bits
+    path: ./habit-bits.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend

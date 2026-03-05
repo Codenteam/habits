@@ -1,0 +1,67 @@
+{
+  "id": "openai-elevenlabs-test",
+  "name": "OpenAI + ElevenLabs Voiceover Workflow",
+  "description": "A workflow that generates voiceover text using OpenAI and converts it to audio using ElevenLabs",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "openai-node",
+      "type": "action",
+      "position": { "x": 250, "y": 100 },
+      "data": {
+        "label": "OpenAI Generate Voiceover Text",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@activepieces/piece-openai",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-4.1-nano",
+          "prompt": "Generate a short, engaging voiceover script for the following topic. Keep it under 100 words, make it sound natural and professional for audio narration. Topic: {{habits.input.topic}}",
+          "temperature": 0.7,
+          "maxTokens": 200
+        },
+        "credentials": {
+          "openai": {
+            "apiKey": "{{habits.env.HABITS_OPENAI_API_KEY}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "elevenlabs-node",
+      "type": "action",
+      "position": { "x": 250, "y": 250 },
+      "data": {
+        "label": "ElevenLabs Text to Speech",
+        "framework": "n8n",
+        "source": "npm",
+        "module": "@elevenlabs/n8n-nodes-elevenlabs",
+        "resource": "speech",
+        "operation": "textToSpeech",
+        "params": {
+          "voice": "{{habits.input.voiceId}}",
+          "text": "{{openai-node}}",
+          "additionalOptions": {
+            "model": "eleven_multilingual_v2"
+          }
+        },
+        "credentials": {
+          "elevenLabsApi": {
+            "xiApiKey": "{{habits.env.ELEVENLABS_API_KEY}}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "openai-node", "target": "elevenlabs-node" }
+  ],
+  "output": {
+    "topic": "{{habits.input.topic}}",
+    "voiceId": "{{habits.input.voiceId}}",
+    "requestedBy": "{{habits.input.user}}",
+    "generatedScript": "{{openai-node}}",
+    "audioResult": "{{elevenlabs-node}}"
+  }
+}

@@ -1,0 +1,32 @@
+id: send-whatsapp
+name: Send WhatsApp Message
+description: Send a message via WhatsApp Business API
+
+input:
+  - id: to
+    type: string
+    required: true
+  - id: message
+    type: string
+    required: true
+
+nodes:
+  - id: whatsapp-send
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      resource: sendTextMessage
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{habits.env.WHATSAPP_PHONE}}"
+        message: "{{habits.input.message}}"
+
+edges: []
+
+output:
+  success: true
+  messageId: "{{whatsapp-send.messages[0].id}}"

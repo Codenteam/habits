@@ -1,0 +1,15 @@
+{
+  "name": "@ha-bits/frontend-builder",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/base/frontend-builder/src",
+  "projectType": "library",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm run typecheck",
+        "cwd": "packages/base/frontend-builder"
+      }
+    }
+  }
+}

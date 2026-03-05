@@ -1,0 +1,102 @@
+id: create-budget
+name: Create Budget
+description: Generate a personalized budget plan
+
+input:
+  - id: income
+    type: number
+    required: true
+  - id: fixedExpenses
+    type: object
+    required: false
+    description: Rent, utilities, subscriptions, etc.
+  - id: goals
+    type: array
+    required: false
+  - id: budgetStyle
+    type: string
+    required: false
+    description: aggressive-saving, balanced, flexible
+
+nodes:
+  - id: generate-budget
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 1200
+        prompt: |
+          Create a personalized monthly budget.
+          
+          Income: ${{habits.input.income}}
+          Fixed Expenses: {{habits.input.fixedExpenses}}
+          Goals: {{habits.input.goals}}
+          Style: {{habits.input.budgetStyle}}
+          
+          Return JSON:
+          {
+            "budgetName": "Budget name based on style",
+            "monthlyIncome": 0,
+            "categories": [
+              {
+                "category": "Category name",
+                "budgetAmount": 0,
+                "percentage": "X%",
+                "type": "fixed|variable|savings|discretionary",
+                "subcategories": [
+                  {"name": "Subcategory", "amount": 0}
+                ],
+                "tips": "Category-specific tips"
+              }
+            ],
+            "savingsAllocation": {
+              "emergencyFund": 0,
+              "retirementContribution": 0,
+              "goalSavings": 0,
+              "investmentSavings": 0
+            },
+            "rules": [
+              "Weekly spending rules",
+              "Like: Max $X per dining out trip"
+            ],
+            "weeklyBreakdown": {
+              "week1": {"groceries": 0, "dining": 0, "entertainment": 0, "gas": 0},
+              "weeklyTotal": 0
+            },
+            "methodology": "50/30/20 or custom methodology explanation"
+          }
+
+  # Save budget
+  - id: save-budget
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "budgets"
+        document:
+          income: "{{habits.input.income}}"
+          style: "{{habits.input.budgetStyle}}"
+          budget: "{{generate-budget}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-budget
+    target: save-budget
+
+output:
+  budgetId: "{{save-budget.id}}"
+  budget: "{{generate-budget}}"

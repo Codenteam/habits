@@ -1,0 +1,181 @@
+@host = http://localhost
+@port = 3000
+
+# =============================================================================
+# Minimal Blog Auth Flow Tests
+# =============================================================================
+#
+# This file tests the complete authentication and CRUD flow:
+#   1. Login and get JWT cookie
+#   2. Create a post with authentication
+#   3. List posts and verify the new post exists
+#   4. Login again to refresh token
+#   5. Delete the post
+#   6. List posts and verify the post is deleted
+#
+# Start the server:
+#   npx nx dev @ha-bits/cortex --config examples/minimal-blog/stack.yaml
+#
+# Run all tests in order:
+#   cd /path/to/habits && httpyac examples/minimal-blog/minimal-blog-tests.http --all
+#
+# =============================================================================
+
+# =============================================================================
+# Step 1: Login
+# =============================================================================
+
+### Login with valid credentials
+# @name login
+POST {{host}}:{{port}}/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+?? status == 200
+
+{{
+  // Extract auth token from Set-Cookie header in response
+  const setCookieHeader = response.headers['set-cookie'];
+  if (setCookieHeader) {
+    const cookieValue = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+    exports.authToken = cookieValue;
+  }
+  
+  // Also extract the token from nodeResults for verification
+  const nodeResults = response.parsedBody.nodeResults || [];
+  const setCookieNode = nodeResults.find(n => n.nodeId === 'set-auth-cookie');
+  if (setCookieNode && setCookieNode.output && setCookieNode.output.success) {
+    console.log('✅ Login successful - auth cookie set');
+  }
+}}
+
+# =============================================================================
+# Step 2: Create a Post (with auth)
+# =============================================================================
+
+### Create a new post with authentication
+# @name createPost
+POST {{host}}:{{port}}/api/create-post
+Content-Type: application/json
+Cookie: {{authToken}}
+
+{
+  "title": "Test Post from HTTP Client",
+  "content": "This is a test post created via the HTTP test file to verify authentication flow."
+}
+
+?? status == 200
+?? body output.authorized == true
+?? body output.success == true
+
+{{
+  // Store the created post ID for deletion
+  if (response.parsedBody && response.parsedBody.output) {
+    exports.createdPostId = response.parsedBody.output.id;
+    console.log('✅ Post created with ID:', exports.createdPostId);
+  }
+}}
+
+# =============================================================================
+# Step 3: List Posts - Verify Creation
+# =============================================================================
+
+### List all posts and check if new post exists
+# @name listPostsAfterCreate
+POST {{host}}:{{port}}/api/get-posts
+Content-Type: application/json
+
+{}
+
+?? status == 200
+
+{{
+  const output = response.parsedBody.output || {};
+  const posts = output.posts || [];
+  const newPost = posts.find(p => p.title === 'Test Post from HTTP Client');
+  if (newPost) {
+    console.log('✅ New post found in list. Total posts:', posts.length);
+  } else {
+    console.log('⚠️ New post NOT found in list. Posts:', posts.map(p => p.title));
+  }
+}}
+
+# =============================================================================
+# Step 4: Login Again (refresh token)
+# =============================================================================
+
+### Login again to get fresh token
+# @name loginRefresh
+POST {{host}}:{{port}}/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+?? status == 200
+
+{{
+  // Extract fresh auth token
+  const setCookieHeader = response.headers['set-cookie'];
+  if (setCookieHeader) {
+    const cookieValue = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+    exports.freshAuthToken = cookieValue;
+    console.log('✅ Token refreshed');
+  }
+}}
+
+# =============================================================================
+# Step 5: Delete the Post
+# =============================================================================
+
+### Delete the post we created
+# @name deletePost
+POST {{host}}:{{port}}/api/delete-post
+Content-Type: application/json
+Cookie: {{freshAuthToken}}
+
+{
+  "postId": "{{createdPostId}}"
+}
+
+?? status == 200
+?? body output.authorized == true
+?? body output.success == true
+
+{{
+  if (response.parsedBody.output.authorized) {
+    console.log('✅ Post deleted successfully');
+  } else {
+    console.log('❌ Delete failed - not authorized');
+  }
+}}
+
+# =============================================================================
+# Step 6: List Posts - Verify Deletion
+# =============================================================================
+
+### List all posts and verify post is deleted
+# @name listPostsAfterDelete
+POST {{host}}:{{port}}/api/get-posts
+Content-Type: application/json
+
+{}
+
+?? status == 200
+
+{{
+  const output = response.parsedBody.output || {};
+  const posts = output.posts || [];
+  const deletedPost = posts.find(p => p.title === 'Test Post from HTTP Client');
+  if (!deletedPost) {
+    console.log('✅ Post successfully deleted - not found in list. Remaining posts:', posts.length);
+  } else {
+    console.log('❌ Post still exists in list after deletion!');
+  }
+}}

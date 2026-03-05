@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "baseUrl": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "paths": {
+      "@ha-bits/core": ["packages/core/src/index.ts"],
+      "@ha-bits/core/*": ["packages/core/src/*"],
+      "@ha-bits/cortex": ["packages/cortex/server/src/index.ts"],
+      "@ha-bits/cortex/*": ["packages/cortex/server/src/*"],
+      "@ha-bits/base": ["packages/base/server/src/index.ts"],
+      "@ha-bits/base/*": ["packages/base/server/src/*"],
+      "@ha-bits/frontend-builder": ["packages/base/frontend-builder/src/index.ts"],
+      "@ha-bits/frontend-builder/*": ["packages/base/frontend-builder/src/*"],
+      "@ha-bits/workflow-canvas": ["packages/workflow-canvas/src/index.ts"],
+      "@ha-bits/workflow-canvas/*": ["packages/workflow-canvas/src/*"],
+      "@ha-bits/habit-viewer": ["packages/habit-viewer/src/main.tsx"],
+      "@ha-bits/habit-viewer/*": ["packages/habit-viewer/src/*"],
+      "@ha-bits/test-utils": ["packages/test-utils/src/index.ts"],
+      "@ha-bits/test-utils/*": ["packages/test-utils/src/*"],
+      "habits": ["packages/habits/app/src/index.ts"],
+      "habits/*": ["packages/habits/app/src/*"],
+      "@habits/shared/types": ["packages/core/src/types.ts"],
+      "@habits/shared/*": ["packages/core/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "tmp"]
+}

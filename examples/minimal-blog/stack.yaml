@@ -1,0 +1,38 @@
+version: "1.0"
+
+workflows:
+  - id: login
+    path: ./habits/login.yaml
+    enabled: true
+
+  - id: get-posts
+    path: ./habits/get-posts.yaml
+    enabled: true
+    
+  - id: get-post
+    path: ./habits/get-post.yaml
+    enabled: true
+    
+  - id: create-post
+    path: ./habits/create-post.yaml
+    enabled: true
+    
+  - id: delete-post
+    path: ./habits/delete-post.yaml
+    enabled: true
+    
+  - id: send-contact
+    path: ./habits/send-contact.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

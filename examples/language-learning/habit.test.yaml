@@ -1,0 +1,44 @@
+# Tests for Language Learning Conversation Practice
+# Workflow: habits/practice-conversation.yaml - AI language tutor conversations
+workflow: ./habits/practice-conversation.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully practices conversation and provides feedback"
+    trigger:
+      body:
+        targetLanguage: "Spanish"
+        nativeLanguage: "English"
+        level: "beginner"
+        scenario: "restaurant"
+        userMessage: "Hola, quiero una mesa por favor"
+    context:
+      habits:
+        input:
+          targetLanguage: "Spanish"
+          nativeLanguage: "English"
+          level: "beginner"
+          scenario: "restaurant"
+          userMessage: "Hola, quiero una mesa por favor"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock conversation response
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            response: "Claro, ¿para cuántas personas?"
+            translation: "Of course, for how many people?"
+            corrections: []
+            newVocabulary:
+              - word: "mesa"
+                translation: "table"
+                example: "Una mesa para dos"
+            encouragement: "Great start!"
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

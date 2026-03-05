@@ -1,0 +1,43 @@
+# Tests for Newsletter Generator
+# Workflow: habits/generate-newsletter.yaml - Generates complete newsletters
+workflow: ./habits/generate-newsletter.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates newsletter"
+    trigger:
+      body:
+        title: "Tech Weekly"
+        audience: "Software developers"
+        topics: ["AI trends", "Web development"]
+        tone: "professional"
+    context:
+      habits:
+        input:
+          title: "Tech Weekly"
+          audience: "Software developers"
+          topics: ["AI trends", "Web development"]
+          tone: "professional"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock intro generation
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: "Welcome to Tech Weekly! This week we're diving into exciting AI trends and web development breakthroughs."
+        # Mock articles generation
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            articles:
+              - headline: "AI Revolution"
+                summary: "AI continues to transform software"
+                keyTakeaway: "Embrace AI tools"
+                readMoreText: "See full analysis"
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Describer - AI E-commerce Content</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        .card h2 { color: #333; margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+        .image-upload {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+        .image-upload:hover { border-color: #f5576c; background: #fff5f6; }
+        .image-upload.has-image { border-style: solid; border-color: #4CAF50; }
+        .image-upload input { display: none; }
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #f5576c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .results { display: none; }
+        .results.active { display: block; }
+        .result-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .result-tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .result-tab:hover { background: #e0e0e0; }
+        .result-tab.active { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .result-content { display: none; }
+        .result-content.active { display: block; }
+        .content-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .content-box h3 { color: #f5576c; margin-bottom: 10px; font-size: 1rem; }
+        .content-box pre, .content-box p {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.7;
+            color: #444;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            width: auto;
+            background: #333;
+        }
+        .copy-btn:hover { background: #555; transform: none; }
+        .keywords { display: flex; flex-wrap: wrap; gap: 8px; }
+        .keyword {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-item:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .history-item h4 { color: #333; margin-bottom: 5px; font-size: 1rem; }
+        .history-item .category { color: #f5576c; font-size: 0.85rem; font-weight: 500; }
+        .history-item .date { color: #888; font-size: 0.8rem; margin-top: 5px; }
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .result-tabs { overflow-x: auto; flex-wrap: nowrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Product Describer</h1>
+        <p class="subtitle">Generate SEO-optimized descriptions, bullet points, and social media content from product images</p>
+
+        <div class="card">
+            <h2>Upload Product Image</h2>
+            <form id="product-form">
+                <div class="form-group">
+                    <div class="image-upload" id="dropzone">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">📸</div>
+                        <p>Drop product image here or click to browse</p>
+                        <p style="font-size: 0.85rem; color: #888; margin-top: 5px;">JPG, PNG, WebP supported</p>
+                        <input type="file" id="imageFile" accept="image/*">
+                        <img id="preview" class="preview-image" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Or paste image URL</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/product.jpg">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name (optional)</label>
+                        <input type="text" id="productName" placeholder="Wireless Bluetooth Earbuds">
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="category" required>
+                            <option value="">Select category...</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Fashion">Fashion & Apparel</option>
+                            <option value="Home & Garden">Home & Garden</option>
+                            <option value="Beauty">Beauty & Personal Care</option>
+                            <option value="Sports">Sports & Outdoors</option>
+                            <option value="Toys">Toys & Games</option>
+                            <option value="Food">Food & Beverages</option>
+                            <option value="Jewelry">Jewelry & Accessories</option>
+                            <option value="Automotive">Automotive</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Audience (optional)</label>
+                    <input type="text" id="targetAudience" placeholder="Young professionals, Tech enthusiasts, etc.">
+                </div>
+
+                <button type="submit" id="submitBtn">✨ Generate Content</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your product and generating content...</p>
+            <p style="font-size: 0.85rem; color: #888; margin-top: 10px;">This usually takes 15-30 seconds</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <h2>Generated Content</h2>
+                
+                <div class="result-tabs">
+                    <button class="result-tab active" onclick="showResult('description')">Description</button>
+                    <button class="result-tab" onclick="showResult('bullets')">Bullet Points</button>
+                    <button class="result-tab" onclick="showResult('amazon')">Amazon</button>
+                    <button class="result-tab" onclick="showResult('instagram')">Instagram</button>
+                    <button class="result-tab" onclick="showResult('seo')">SEO Keywords</button>
+                    <button class="result-tab" onclick="showResult('taglines')">Taglines</button>
+                </div>
+
+                <div id="description-content" class="result-content active">
+                    <div class="content-box">
+                        <h3>SEO Product Description</h3>
+                        <button class="copy-btn" onclick="copyContent('longDescription')">Copy</button>
+                        <p id="longDescription"></p>
+                    </div>
+                </div>
+
+                <div id="bullets-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Feature Bullet Points</h3>
+                        <button class="copy-btn" onclick="copyContent('bulletPoints')">Copy</button>
+                        <pre id="bulletPoints"></pre>
+                    </div>
+                </div>
+
+                <div id="amazon-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Amazon Listing Format</h3>
+                        <button class="copy-btn" onclick="copyContent('amazonListing')">Copy</button>
+                        <pre id="amazonListing"></pre>
+                    </div>
+                </div>
+
+                <div id="instagram-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Instagram Caption</h3>
+                        <button class="copy-btn" onclick="copyContent('instagramCaption')">Copy</button>
+                        <pre id="instagramCaption"></pre>
+                    </div>
+                </div>
+
+                <div id="seo-content" class="result-content">
+                    <div class="content-box">
+                        <h3>SEO Keywords</h3>
+                        <div id="seoKeywords" class="keywords"></div>
+                    </div>
+                </div>
+
+                <div id="taglines-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Product Taglines</h3>
+                        <button class="copy-btn" onclick="copyContent('taglines')">Copy</button>
+                        <pre id="taglines"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Recent Products</h2>
+            <div id="historyGrid" class="history-grid">
+                <p style="color: #888; grid-column: 1/-1; text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let imageBase64 = null;
+
+        // File handling
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('imageFile');
+        const preview = document.getElementById('preview');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#f5576c'; });
+        dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#ddd'; });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#ddd';
+            if (e.dataTransfer.files[0]?.type.startsWith('image/')) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageBase64 = e.target.result.split(',')[1];
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                dropzone.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Form submission
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const imageUrl = document.getElementById('imageUrl').value;
+            if (!imageBase64 && !imageUrl) {
+                alert('Please upload an image or provide a URL');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            submitBtn.disabled = true;
+            loading.classList.add('active');
+            results.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/describe-product', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        productName: document.getElementById('productName').value,
+                        category: document.getElementById('category').value,
+                        targetAudience: document.getElementById('targetAudience').value,
+                        imageUrls: imageUrl || undefined,
+                        imageBase64: imageBase64 || undefined
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+                loadHistory();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            document.getElementById('longDescription').textContent = data.longDescription || '';
+            document.getElementById('bulletPoints').textContent = data.bulletPoints || '';
+            document.getElementById('amazonListing').textContent = data.amazonListing || '';
+            document.getElementById('instagramCaption').textContent = data.instagramCaption || '';
+            document.getElementById('taglines').textContent = data.taglines || '';
+            
+            // Keywords as tags
+            const keywords = (data.seoKeywords || '').split(',').map(k => k.trim()).filter(k => k);
+            document.getElementById('seoKeywords').innerHTML = keywords.map(k => 
+                `<span class="keyword">${k}</span>`
+            ).join('');
+        }
+
+        function showResult(tab) {
+            document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.result-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="showResult('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
+
+        function copyContent(id) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard!');
+        }
+
+        async function loadHistory() {
+            const grid = document.getElementById('historyGrid');
+            try {
+                const response = await fetch('/api/list-products?limit=12');
+                const data = await response.json();
+                
+                if (data.products?.length > 0) {
+                    grid.innerHTML = data.products.map(p => `
+                        <div class="history-item" onclick="viewProduct('${p._id}')">
+                            <h4>${p.name || 'Unnamed Product'}</h4>
+                            <div class="category">${p.category}</div>
+                            <div class="date">${new Date(p.createdAt).toLocaleDateString()}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">No products yet</p>';
+                }
+            } catch (err) {
+                grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">Error loading history</p>';
+            }
+        }
+
+        async function viewProduct(id) {
+            try {
+                const response = await fetch(`/api/get-product?id=${id}`);
+                const data = await response.json();
+                if (data.product) {
+                    document.getElementById('productName').value = data.product.name || '';
+                    document.getElementById('category').value = data.product.category || '';
+                    displayResults(data.product);
+                }
+            } catch (err) {
+                alert('Error loading product');
+            }
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

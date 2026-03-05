@@ -1,0 +1,34 @@
+# Tests for Multiple Triggers Workflow
+# Workflow: habits.yaml - Aggregates inputs from multiple trigger sources
+workflow: ./habits.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully aggregates input from HTTP trigger"
+    trigger:
+      body:
+        message: "Test webhook message"
+        source: "webhook"
+    context:
+      habits:
+        input:
+          message: "Test webhook message"
+          source: "webhook"
+        env:
+          IMAP_HOST: "localhost"
+          IMAP_USERNAME_1: "user1@localhost"
+          IMAP_PASSWORD_1: "password1"
+          IMAP_USERNAME_2: "user2@localhost"
+          IMAP_PASSWORD_2: "password2"
+    mocks:
+      bits:
+        # Mock IMAP trigger 1 (returns empty - not the active trigger)
+        - bit: "@activepieces/piece-imap"
+          action: new_email
+          response: []
+        # Mock webhook trigger (the active trigger for this test)
+        - bit: "@activepieces/piece-webhook"
+          action: catch_webhook
+          response:
+            message: "Test webhook message"
+            source: "webhook"

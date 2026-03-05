@@ -1,0 +1,52 @@
+id: create-task
+name: Create Task
+description: Create a new task or reminder
+
+input:
+  - id: title
+    type: string
+    required: true
+  - id: description
+    type: string
+    required: false
+  - id: dueDate
+    type: string
+    required: false
+  - id: priority
+    type: string
+    required: false
+  - id: userId
+    type: string
+    required: false
+  - id: tags
+    type: array
+    required: false
+
+nodes:
+  - id: insert-task
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "tasks"
+        document:
+          title: "{{habits.input.title}}"
+          description: "{{habits.input.description}}"
+          dueDate: "{{habits.input.dueDate}}"
+          priority: "{{habits.input.priority}}"
+          userId: "{{habits.input.userId}}"
+          tags: "{{habits.input.tags}}"
+          status: "pending"
+          createdAt: "{{habits.now}}"
+          updatedAt: "{{habits.now}}"
+
+edges: []
+
+output:
+  success: "{{insert-task.success}}"
+  id: "{{insert-task.id}}"
+  task: "{{insert-task.document}}"

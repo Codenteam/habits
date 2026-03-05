@@ -1,0 +1,38 @@
+# Tests for Code Review
+# Workflow: habits/review-code.yaml - AI-powered code review
+workflow: ./habits/review-code.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully reviews code and provides suggestions"
+    trigger:
+      body:
+        code: "function add(a, b) { return a + b; }"
+        language: "javascript"
+        context: "Simple addition function"
+        reviewType: "all"
+    context:
+      habits:
+        input:
+          code: "function add(a, b) { return a + b; }"
+          language: "javascript"
+          context: "Simple addition function"
+          reviewType: "all"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock quality review
+        - bit: "openai"
+          action: chat
+          response: "Code is generally clean but lacks type checking and documentation."
+        # Mock security review
+        - bit: "openai"
+          action: chat
+          response: "No security issues found in this simple function."
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

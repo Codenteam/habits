@@ -1,0 +1,31 @@
+id: list-sessions
+name: List Sessions
+description: Get language learning sessions
+
+input:
+  - id: limit
+    type: number
+    required: false
+  - id: type
+    type: string
+    required: false
+
+nodes:
+  - id: query-sessions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "language_sessions"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  sessions: "{{query-sessions.results}}"
+  count: "{{query-sessions.count}}"

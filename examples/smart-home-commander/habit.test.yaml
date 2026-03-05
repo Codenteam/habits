@@ -1,0 +1,46 @@
+# Tests for Smart Home Commander
+# Workflow: habits/process-command.yaml - Parses smart home voice commands
+workflow: ./habits/process-command.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully parses and executes smart home command"
+    trigger:
+      body:
+        command: "Turn on the living room lights"
+        devices: '["living room lights","bedroom lights"]'
+    context:
+      habits:
+        input:
+          command: "Turn on the living room lights"
+          devices: '["living room lights","bedroom lights"]'
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock command parsing
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            intent: "control"
+            confidence: 0.95
+            targets:
+              - deviceType: "lights"
+                location: "living room"
+            actions:
+              - action: "turn_on"
+                deviceType: "lights"
+                location: "living room"
+            clarificationNeeded: false
+        # Mock response generation
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            spokenResponse: "Turning on the living room lights now"
+            shortResponse: "Living room lights on"
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

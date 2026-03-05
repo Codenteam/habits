@@ -1,0 +1,28 @@
+id: list-episodes
+name: List Episodes
+description: Get all podcast episodes
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-episodes
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "episodes"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  episodes: "{{query-episodes.results}}"
+  count: "{{query-episodes.count}}"

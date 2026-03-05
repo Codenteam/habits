@@ -1,0 +1,31 @@
+id: complete-task
+name: Complete Task
+description: Mark a task as completed
+
+input:
+  - id: taskId
+    type: string
+    required: true
+
+nodes:
+  - id: update-task
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: update
+      operation: update
+      params:
+        collection: "tasks"
+        filter: '{"_id": "{{habits.input.taskId}}"}'
+        update:
+          status: "completed"
+          completedAt: "{{habits.now}}"
+          updatedAt: "{{habits.now}}"
+
+edges: []
+
+output:
+  success: "{{update-task.success}}"
+  task: "{{update-task.document}}"

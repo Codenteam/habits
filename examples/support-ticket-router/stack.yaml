@@ -1,0 +1,30 @@
+version: "1.0"
+
+workflows:
+  - id: submit-ticket
+    path: ./habits/submit-ticket.yaml
+    enabled: true
+
+  - id: escalate-ticket
+    path: ./habits/escalate-ticket.yaml
+    enabled: true
+
+  - id: list-tickets
+    path: ./habits/list-tickets.yaml
+    enabled: true
+
+  - id: get-ticket
+    path: ./habits/get-ticket.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

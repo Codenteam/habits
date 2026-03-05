@@ -1,0 +1,26 @@
+version: "1.0"
+
+workflows:
+  - id: generate-episode
+    path: ./habits/generate-episode.yaml
+    enabled: true
+
+  - id: list-episodes
+    path: ./habits/list-episodes.yaml
+    enabled: true
+
+  - id: get-episode
+    path: ./habits/get-episode.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

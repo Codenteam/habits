@@ -1,0 +1,257 @@
+# Test Schema for bits testing - defines the structure of .test.yaml files
+# Used by @ha-bits/test-utils to run automated bit tests
+$schema: http://json-schema.org/draft-07/schema#
+
+definitions:
+  # Fetch mock definition - intercepts HTTP requests
+  FetchMock:
+    type: object
+    description: Mock definition for intercepting HTTP fetch requests
+    required:
+      - url
+      - response
+    properties:
+      url:
+        type: string
+        description: URL pattern to match (supports * wildcards). Use "*/endpoint" for partial match
+        examples:
+          - "*/chat/completions"
+          - "https://api.example.com/v1/*"
+          - "*"
+      method:
+        type: string
+        description: HTTP method to match (GET, POST, PUT, DELETE, PATCH)
+        enum: [GET, POST, PUT, DELETE, PATCH]
+      status:
+        type: integer
+        description: HTTP status code to return (default 200)
+        default: 200
+      response:
+        description: Response body to return (object for JSON, string for text)
+      responseType:
+        type: string
+        description: Response content type
+        enum: [json, text, arraybuffer]
+        default: json
+      assertRequest:
+        type: object
+        description: Assert request body contains these key-value pairs
+        additionalProperties: true
+
+  # Store mock definition - for testing stateful bits
+  StoreMock:
+    type: object
+    description: Mock store with initial data for testing bits with state
+    required:
+      - initial
+    properties:
+      initial:
+        type: object
+        description: Initial store data (key-value pairs)
+        additionalProperties: true
+
+  # Module mock definition - for mocking npm modules
+  ModuleMock:
+    type: object
+    description: Mock an entire npm module (for SDK-level mocking)
+    required:
+      - moduleName
+      - exports
+    properties:
+      __type:
+        type: string
+        const: module_mock
+        description: Type discriminator (auto-added if omitted)
+      moduleName:
+        type: string
+        description: Name of the npm module to mock (e.g., "openai")
+      exports:
+        type: object
+        description: Mock exports object
+        additionalProperties: true
+      clearSubmodules:
+        type: boolean
+        description: Clear all submodules from cache when applying mock
+        default: true
+
+  # Bit mock definition - for workflow testing
+  BitMock:
+    type: object
+    description: Mock a specific bit's action response (for workflow testing)
+    required:
+      - bit
+      - response
+    properties:
+      bit:
+        type: string
+        description: Bit name (e.g., "bit-openai")
+      action:
+        type: string
+        description: Action to mock (optional, defaults to all actions)
+      response:
+        description: Mocked response - returned directly without executing the action
+      assertInput:
+        type: object
+        description: Assert input before returning mock
+        additionalProperties: true
+
+  # Test mocks container
+  TestMocks:
+    type: object
+    description: Container for all mock types used in a test
+    properties:
+      modules:
+        oneOf:
+          - type: array
+            description: |
+              Array format - for TypeScript tests with custom mock classes
+              Example: [{ moduleName: 'openai', exports: { default: MockClass } }]
+            items:
+              $ref: "#/definitions/ModuleMock"
+          - type: object
+            description: |
+              Object format - declarative mocking for YAML tests.
+              Maps module names to method paths and return values.
+              Example: { openai: { 'chat.completions.create': { choices: [...] } } }
+            additionalProperties:
+              type: object
+              description: Methods to mock (dot notation paths to return values)
+              additionalProperties: true
+      fetch:
+        type: array
+        description: HTTP fetch mocks
+        items:
+          $ref: "#/definitions/FetchMock"
+      store:
+        $ref: "#/definitions/StoreMock"
+      bits:
+        type: array
+        description: Bit mocks for workflow testing
+        items:
+          $ref: "#/definitions/BitMock"
+      httpModules:
+        type: array
+        description: HTTP modules to replace with mock fetch (e.g., node-fetch, undici)
+        items:
+          type: string
+      clearModules:
+        type: array
+        description: |
+          Modules to clear from cache (but not replace).
+          These will reload and pick up the mocked global fetch.
+          Example: [openai, @anthropic-ai/sdk]
+        items:
+          type: string
+
+  # Single test definition
+  BitTestDefinition:
+    type: object
+    description: A single test case for a bit action
+    required:
+      - name
+      - input
+    properties:
+      name:
+        type: string
+        description: Human-readable test name (shown in test output)
+      action:
+        type: string
+        description: Action name to test (overrides file-level action)
+      auth:
+        type: object
+        description: Authentication credentials for the bit
+        additionalProperties: true
+        examples:
+          - apiKey: "sk-test-key"
+          - apiKey: "sk-test"
+            host: "api.openai.com"
+      input:
+        type: object
+        description: Input parameters passed to the action (propsValue)
+        additionalProperties: true
+      mocks:
+        $ref: "#/definitions/TestMocks"
+      expect:
+        description: |
+          Expected output from the action.
+          Can be a primitive (string, number) or an object to deep-compare partial matches.
+      expectStore:
+        type: object
+        description: Expected store state after test execution
+        additionalProperties: true
+      expectError:
+        type: string
+        description: Expected error message (test passes if error contains this string)
+      afterRun:
+        description: |
+          Callback function to run after the test (only in .test.ts files).
+          Signature: (result: any, mocks: any) => void
+
+  # Workflow test definition
+  WorkflowTestDefinition:
+    type: object
+    description: A test case for an entire workflow/habit
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: Human-readable test name
+      trigger:
+        type: object
+        description: Trigger input data
+        additionalProperties: true
+      context:
+        type: object
+        description: Initial context/variables
+        additionalProperties: true
+      mocks:
+        $ref: "#/definitions/TestMocks"
+      expect:
+        description: Expected final output from the workflow
+      expectSteps:
+        type: object
+        description: Expected values at specific steps (step-id → expected value)
+        additionalProperties: true
+      expectError:
+        type: string
+        description: Expected error message
+
+# Root schema - can be either bit tests or workflow tests
+oneOf:
+  # Bit test file (.test.yaml next to bit source)
+  - type: object
+    description: Bit test file - tests individual bit actions
+    required:
+      - bit
+      - tests
+    properties:
+      bit:
+        type: string
+        description: Relative path to the bit source file (e.g., ./index.ts, ./send-prompt.ts)
+      action:
+        type: string
+        description: Default action name for all tests (can be overridden per test)
+      tests:
+        type: array
+        description: List of test cases
+        items:
+          $ref: "#/definitions/BitTestDefinition"
+        minItems: 1
+
+  # Workflow test file (.test.yaml for testing habits)
+  - type: object
+    description: Workflow test file - tests entire workflows/habits
+    required:
+      - workflow
+      - tests
+    properties:
+      workflow:
+        type: string
+        description: Path to workflow YAML file
+      tests:
+        type: array
+        description: List of workflow test cases
+        items:
+          $ref: "#/definitions/WorkflowTestDefinition"
+        minItems: 1

@@ -1,0 +1,46 @@
+# Tests for Real Estate Listing Generator
+# Workflow: habits/generate-listing.yaml - Generates property listings
+workflow: ./habits/generate-listing.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates property listing"
+    trigger:
+      body:
+        imageUrls: "https://example.com/house.jpg"
+        propertyType: "house"
+        bedrooms: 3
+        bathrooms: 2
+        sqft: 2000
+        price: 450000
+        address: "123 Main St"
+        features: "Updated kitchen, large backyard"
+    context:
+      habits:
+        input:
+          imageUrls: "https://example.com/house.jpg"
+          propertyType: "house"
+          bedrooms: 3
+          bathrooms: 2
+          sqft: 2000
+          price: 450000
+          address: "123 Main St"
+          features: "Updated kitchen, large backyard"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock photo analysis (vision_prompt)
+        - bit: "@ha-bits/bit-intersect"
+          action: vision_prompt
+          response: "Beautiful 3-bedroom house with modern updates, bright natural light, and well-maintained exterior."
+        # Mock description generation
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: "Welcome to this stunning 3-bedroom, 2-bathroom home featuring 2,000 sq ft of living space. Recently updated kitchen and spacious backyard perfect for entertaining."
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

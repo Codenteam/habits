@@ -1,0 +1,28 @@
+{
+  "id": "bits-examples",
+  "name": "Bits Examples Workflow",
+  "description": "A workflow demonstrating bits with and without documentation links",
+  "version": "1.0.0",
+  "nodes": [
+    "Generate an image of a dog",
+    {
+        "id": "bits-example-without-docs",
+        "type": "bit",
+        "data": {
+            "text": "Calculate the Fibonacci sequence up to {{habits.input.n}}."
+        }
+
+    },
+    {
+        "id": "bits-example-with-docs", 
+        "type": "bit",
+        "data": {
+            "text": "Explain the theory of relativity in simple terms.",
+            "docs": "https://elevenlabs.io/docs/api-reference/text-to-speech"
+        }
+
+    }
+    
+  ],
+  "edges": []
+}

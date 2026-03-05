@@ -1,0 +1,184 @@
+id: habit-code
+name: Habit Code Demo
+description: A habit demonstrating if conditions, loops, and string utilities using pure script nodes (Deno)
+
+# This habit demonstrates using Deno scripts for:
+# 1. If conditions - Check if data is valid
+# 2. Loops - Iterate over items and transform them
+# 3. String utils - Split, join, uppercase, lowercase operations
+
+nodes:
+  # Node 1: Create test data
+  - id: create-data
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Create Test Data
+      params:
+        type: script
+        language: deno
+        script: |
+          export async function main() {
+            console.log("📝 Creating test data");
+            
+            return {
+              name: "habits demo",
+              items: "apple,banana,cherry,date",
+              count: 4,
+              isValid: true
+            };
+          }
+
+  # Node 2: If condition - Check if data is valid
+  - id: check-valid
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: If Condition Check
+      params:
+        isValid: "{{create-data.result.isValid}}"
+        count: "{{create-data.result.count}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(isValid: boolean, count: number) {
+            console.log("🔀 Running if condition check");
+            
+            // IF condition: check if data is valid and count > 0
+            if (isValid && count > 0) {
+              return {
+                passed: true,
+                message: "Data validation passed",
+                branch: "trueBranch"
+              };
+            } else {
+              return {
+                passed: false,
+                message: "Data validation failed",
+                branch: "falseBranch"
+              };
+            }
+          }
+
+  # Node 3: String utils - Transform text
+  - id: string-utils
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: String Utilities
+      params:
+        text: "{{create-data.result.name}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(text: string) {
+            console.log("📝 Running string utilities");
+            
+            return {
+              original: text,
+              uppercase: text.toUpperCase(),
+              lowercase: text.toLowerCase(),
+              titleCase: text.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' '),
+              reversed: text.split('').reverse().join(''),
+              length: text.length,
+              words: text.split(' ').length
+            };
+          }
+
+  # Node 4: Loop - Split and iterate over items
+  - id: loop-items
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Loop Over Items
+      params:
+        itemsString: "{{create-data.result.items}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(itemsString: string) {
+            console.log("🔄 Running loop over items");
+            
+            // Split the string into array
+            const items = itemsString.split(',').map(item => item.trim());
+            
+            // Loop through items and transform each
+            const transformedItems = [];
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              transformedItems.push({
+                index: i,
+                original: item,
+                uppercase: item.toUpperCase(),
+                length: item.length,
+                startsWithVowel: /^[aeiou]/i.test(item)
+              });
+            }
+            
+            // Aggregate results
+            const vowelStarters = transformedItems.filter(item => item.startsWithVowel);
+            
+            return {
+              totalItems: items.length,
+              items: transformedItems,
+              joinedUppercase: transformedItems.map(i => i.uppercase).join(' | '),
+              vowelStarters: vowelStarters.map(i => i.original),
+              vowelStarterCount: vowelStarters.length
+            };
+          }
+
+  # Node 5: Final summary combining all results
+  - id: summary
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Generate Summary
+      params:
+        validation: "{{check-valid.result}}"
+        stringOps: "{{string-utils.result}}"
+        loopResult: "{{loop-items.result}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(validation: any, stringOps: any, loopResult: any) {
+            console.log("📊 Generating final summary");
+            
+            return {
+              validationPassed: validation.passed,
+              validationMessage: validation.message,
+              transformedName: stringOps.titleCase,
+              allStringTransforms: stringOps,
+              totalItemsProcessed: loopResult.totalItems,
+              itemsWithVowels: loopResult.vowelStarters,
+              processedItems: loopResult.items,
+              processedAt: new Date().toISOString(),
+              summary: `Processed ${loopResult.totalItems} items. Validation: ${validation.passed ? 'PASSED' : 'FAILED'}. Name transformed to: ${stringOps.titleCase}`
+            };
+          }
+
+edges:
+  - source: create-data
+    target: check-valid
+  - source: create-data
+    target: string-utils
+  - source: create-data
+    target: loop-items
+  - source: check-valid
+    target: summary
+  - source: string-utils
+    target: summary
+  - source: loop-items
+    target: summary
+
+output:
+  summary: "{{summary.result}}"
+  validation: "{{check-valid.result}}"
+  stringOperations: "{{string-utils.result}}"
+  loopResults: "{{loop-items.result}}"

@@ -1,0 +1,28 @@
+id: list-quizzes
+name: List Quizzes
+description: Get all available quizzes
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-quizzes
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "quizzes"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  quizzes: "{{query-quizzes.results}}"
+  count: "{{query-quizzes.count}}"

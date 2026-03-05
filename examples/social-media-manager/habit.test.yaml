@@ -1,0 +1,38 @@
+# Tests for Social Media Manager
+# Workflow: habits/generate-content.yaml - Generates multi-platform social content
+workflow: ./habits/generate-content.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates social media content"
+    trigger:
+      body:
+        topic: "Launch of new AI feature"
+        brand: "TechCorp"
+        tone: "professional"
+        platforms: "twitter,linkedin"
+    context:
+      habits:
+        input:
+          topic: "Launch of new AI feature"
+          brand: "TechCorp"
+          tone: "professional"
+          platforms: "twitter,linkedin"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock Twitter content
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: "Excited to launch our new AI feature! 🚀 #AI #Innovation"
+        # Mock LinkedIn content
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: "We're thrilled to announce the launch of our groundbreaking AI feature. This innovation represents months of development and will transform how our users work."
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

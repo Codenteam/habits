@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Blog - Article</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --neon-cyan: #00f5ff;
+      --neon-magenta: #ff00ff;
+      --neon-purple: #b026ff;
+      --dark-bg: #0a0a0f;
+      --card-bg: rgba(15, 15, 25, 0.8);
+      --glass-border: rgba(0, 245, 255, 0.2);
+    }
+    
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark-bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #fff;
+    }
+    
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: 
+        radial-gradient(ellipse at 20% 80%, rgba(176, 38, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 245, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 0, 255, 0.05) 0%, transparent 70%);
+    }
+    
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 245, 255, 0.01) 2px,
+        rgba(0, 245, 255, 0.01) 4px
+      );
+      pointer-events: none;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    header {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px 30px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+    }
+    
+    .logo h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--neon-cyan), #fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 3px;
+    }
+    
+    nav {
+      display: flex;
+      gap: 10px;
+    }
+    
+    nav a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 500;
+      font-size: 0.75rem;
+      padding: 10px 18px;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    nav a:hover {
+      background: rgba(0, 245, 255, 0.1);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+    }
+    
+    .post-content {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 50px;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.6s ease;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .post-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+    }
+    
+    .post-content h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      line-height: 1.4;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff, var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .post-content .meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .meta-item .icon {
+      width: 24px;
+      height: 24px;
+      background: rgba(0, 245, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    
+    .post-content .body {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 1.15rem;
+      line-height: 2;
+      white-space: pre-wrap;
+      letter-spacing: 0.5px;
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 40px;
+      padding: 15px 25px;
+      color: var(--neon-cyan);
+      text-decoration: none;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .back-link:hover {
+      background: rgba(0, 245, 255, 0.1);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.3);
+      transform: translateX(-5px);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 80px;
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 3px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .error, .not-found {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 50, 100, 0.3);
+      border-radius: 20px;
+      padding: 60px;
+      text-align: center;
+    }
+    
+    .error h2, .not-found h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #ff6b9d;
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+    }
+    
+    .error p, .not-found p {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--dark-bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"></div>
+  <div class="scanlines"></div>
+  
+  <div class="container">
+    <header>
+      <a href="/" class="logo">
+        <div class="logo-icon">⬡</div>
+        <h1>MY BLOG</h1>
+      </a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/admin/">Admin</a>
+      </nav>
+    </header>
+    
+    <div id="post-container">
+      <div class="loading">Loading post...</div>
+    </div>
+  </div>
+
+  <script>
+    async function loadPost() {
+      const container = document.getElementById('post-container');
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get('id');
+      
+      if (!postId) {
+        container.innerHTML = `
+          <div class="not-found">
+            <h2>Invalid Link</h2>
+            <p>No post ID provided. Return to <a href="/" style="color: var(--neon-cyan)">home</a>.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/get-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+          container.innerHTML = `<div class="error"><h2>Error</h2><p>${data.error || 'Unknown error'}</p></div>`;
+          return;
+        }
+        
+        const found = data.output?.found;
+        const post = data.output?.post;
+        
+        if (!found || !post) {
+          container.innerHTML = `
+            <div class="not-found">
+              <h2>Post Not Found</h2>
+              <p>The requested post does not exist or has been deleted.</p>
+              <a href="/" class="back-link">← Back to Home</a>
+            </div>
+          `;
+          return;
+        }
+        
+        document.title = `${post.title} - My Blog`;
+        
+        container.innerHTML = `
+          <article class="post-content">
+            <h1>${escapeHtml(post.title)}</h1>
+            <div class="meta">
+              <div class="meta-item">
+                <span class="icon">◈</span>
+                <span>${post._createdAt ? formatDate(post._createdAt) : 'Unknown date'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="icon">▣</span>
+                <span>Published</span>
+              </div>
+            </div>
+            <div class="body">${escapeHtml(post.content)}</div>
+            <a href="/" class="back-link">← Back to Home</a>
+          </article>
+        `;
+        
+      } catch (error) {
+        container.innerHTML = `<div class="error"><h2>Connection Error</h2><p>${error.message}</p></div>`;
+      }
+    }
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    
+    function formatDate(dateStr) {
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).toUpperCase();
+      } catch {
+        return dateStr;
+      }
+    }
+    
+    loadPost();
+  </script>
+</body>
+</html>

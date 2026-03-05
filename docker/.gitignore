@@ -1,0 +1,3 @@
+# Verdaccio bind-mount storage directories
+verdaccio-storage/
+verdaccio-plugins/

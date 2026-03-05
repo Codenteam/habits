@@ -1,0 +1,237 @@
+id: website-change-monitor
+name: Website Change Monitor
+description: Monitor websites for changes, detect differences, and notify team with AI-generated summaries
+
+nodes:
+  # Node 1: Schedule/Input Trigger
+  - id: monitor-trigger
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Monitor Trigger
+      params:
+        url: "{{habits.input.url}}"
+        monitorName: "{{habits.input.monitorName}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(url: string, monitorName: string) {
+            return {
+              url: url || 'https://example.com',
+              monitorName: monitorName || 'Default Monitor',
+              checkId: `check_${Date.now()}`,
+              checkedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Fetch Current Page
+  - id: fetch-page
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: fetchPage
+      label: Fetch Web Page
+      params:
+        url: "{{monitor-trigger.result.url}}"
+        extractText: true
+        userAgent: "Mozilla/5.0 (compatible; HabitsMonitor/1.0)"
+
+  # Node 3: Get Previous Version from Database
+  - id: get-previous
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: get
+      label: Get Previous Snapshot
+      params:
+        collection: website-snapshots
+        key: "{{monitor-trigger.result.url}}"
+
+  # Node 4: Text Diff Checker
+  - id: diff-check
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: diff
+      label: Text Diff Checker
+      params:
+        oldText: "{{get-previous.value.text}}"
+        newText: "{{fetch-page.text}}"
+        ignoreWhitespace: true
+
+  # Node 5: Check if changes detected
+  - id: has-changes
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      label: Changes Detected?
+      params:
+        value1: "{{diff-check.changed}}"
+        operator: equals
+        value2: "true"
+
+  # Node 6: AI Summary of Changes
+  - id: ai-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Change Summary
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a content change analyst. Summarize what has changed on a website.
+          Be concise and highlight:
+          - Main changes detected
+          - Type of changes (content, structure, additions, removals)
+          - Potential significance
+          Keep summary under 100 words.
+        userMessage: |
+          Website: {{monitor-trigger.result.url}}
+          Monitor: {{monitor-trigger.result.monitorName}}
+          
+          Changes detected:
+          Added lines: {{diff-check.added}}
+          Removed lines: {{diff-check.removed}}
+          
+          Summary: {{diff-check.summary}}
+        temperature: 0.5
+        maxTokens: 200
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      stopAfterIf:
+        expr: "{{has-changes.condition}} === false"
+        skipIfStopped: true
+
+  # Node 7: Send Slack Notification
+  - id: slack-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Slack Notify
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#website-monitors"
+        text: |
+          🔔 *Website Change Detected*
+          
+          *Monitor:* {{monitor-trigger.result.monitorName}}
+          *URL:* {{monitor-trigger.result.url}}
+          *Checked:* {{monitor-trigger.result.checkedAt}}
+          
+          *Changes:*
+          {{ai-summary.content}}
+          
+          _Check ID: {{monitor-trigger.result.checkId}}_
+      stopAfterIf:
+        expr: "{{has-changes.condition}} === false"
+        skipIfStopped: true
+
+  # Node 8: Send Telegram Notification (using HTTP for webhook)
+  - id: telegram-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: post
+      label: Telegram Notify
+      params:
+        url: "https://api.telegram.org/bot{{habits.env.TELEGRAM_BOT_TOKEN}}/sendMessage"
+        body: |
+          {
+            "chat_id": "{{habits.env.TELEGRAM_CHAT_ID}}",
+            "text": "🔔 Website Change: {{monitor-trigger.result.monitorName}}\n\n{{ai-summary.content}}\n\nURL: {{monitor-trigger.result.url}}",
+            "parse_mode": "HTML"
+          }
+      stopAfterIf:
+        expr: "{{has-changes.condition}} === false"
+        skipIfStopped: true
+
+  # Node 9: Store New Snapshot
+  - id: store-snapshot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: store
+      label: Database Log
+      params:
+        collection: website-snapshots
+        key: "{{monitor-trigger.result.url}}"
+        value: |
+          {
+            "url": "{{monitor-trigger.result.url}}",
+            "monitorName": "{{monitor-trigger.result.monitorName}}",
+            "text": "{{fetch-page.text}}",
+            "html": "{{fetch-page.html}}",
+            "lastChecked": "{{monitor-trigger.result.checkedAt}}",
+            "checkId": "{{monitor-trigger.result.checkId}}"
+          }
+
+  # Node 10: Log change history
+  - id: log-change
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Log Change History
+      params:
+        collection: website-changes
+        document: |
+          {
+            "url": "{{monitor-trigger.result.url}}",
+            "monitorName": "{{monitor-trigger.result.monitorName}}",
+            "checkId": "{{monitor-trigger.result.checkId}}",
+            "checkedAt": "{{monitor-trigger.result.checkedAt}}",
+            "changed": {{has-changes.condition}},
+            "summary": "{{ai-summary.content}}",
+            "addedLines": {{diff-check.added.length}},
+            "removedLines": {{diff-check.removed.length}}
+          }
+
+edges:
+  - source: monitor-trigger
+    target: fetch-page
+  - source: fetch-page
+    target: get-previous
+  - source: get-previous
+    target: diff-check
+  - source: diff-check
+    target: has-changes
+  - source: has-changes
+    target: ai-summary
+  - source: ai-summary
+    target: slack-notify
+  - source: ai-summary
+    target: telegram-notify
+  - source: telegram-notify
+    target: store-snapshot
+  - source: store-snapshot
+    target: log-change
+
+output:
+  url: "{{monitor-trigger.result.url}}"
+  checkId: "{{monitor-trigger.result.checkId}}"
+  changed: "{{has-changes.condition}}"
+  changeSummary: "{{ai-summary.content}}"
+  diffSummary: "{{diff-check.summary}}"

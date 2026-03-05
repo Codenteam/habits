@@ -1,0 +1,327 @@
+# Email Classification Test with Greenmail
+# 
+# Uses local Greenmail server for email testing
+# Also supports direct HTTP submission via habits.input.submission
+
+id: email-classification-test
+name: Email Classification Test (Greenmail)
+description: Test email classification with local Greenmail server or direct HTTP submission
+version: "1.0"
+
+# Accept email data as direct input (alternative to IMAP trigger)
+input:
+  - id: submission
+    type: object
+    description: Direct email submission with from, subject, and body fields
+    required: false
+
+nodes:
+  # --- Entry Point ---
+  # Check if we have a direct submission or need to fetch from IMAP
+  - id: check-input-source
+    type: bits
+    position:
+      x: 100
+      y: 100
+    data:
+      label: Check Input Source
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      resource: branch
+      operation: branch
+      isTrigger: true
+      params:
+        mode: if
+        branches:
+          - label: "Has Submission"
+            value1: "{{habits.input.submission}}"
+            operator: isNotNull
+            output: "submission"
+        includeElse: true
+        defaultOutput: "imap"
+
+  # --- HTTP Submission Path ---
+  # Format the direct submission to match IMAP output structure
+  - id: format-submission
+    type: script
+    position:
+      x: 300
+      y: 0
+    data:
+      label: Format Submission Input
+      framework: script
+      source: inline
+      params:
+        emailFrom: "{{habits.input.submission.from}}"
+        emailSubject: "{{habits.input.submission.subject}}"
+        emailBody: "{{habits.input.submission.body}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(emailFrom: string, emailSubject: string, emailBody: string) {
+            return {
+              emails: [{
+                id: "submission-" + Date.now(),
+                from: emailFrom || "unknown@submission.local",
+                to: "user@example.com",
+                subject: emailSubject || "No Subject",
+                body: emailBody || "",
+                date: new Date().toISOString(),
+                source: "http-submission"
+              }],
+              count: 1,
+              folder: "SUBMISSION",
+              inputSource: "http-submission"
+            };
+          }
+      stopAfterIf:
+        expr: "{{check-input-source.output}} !== 'submission'"
+        skipIfStopped: true
+
+  # --- IMAP Path ---
+  # Receive email via IMAP from Greenmail
+  - id: receive-email-imap
+    type: bits
+    position:
+      x: 300
+      y: 200
+    data:
+      label: Receive Email (Greenmail IMAP)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      resource: newEmail
+      operation: newEmail
+      params:
+        folder: "INBOX"
+        unreadOnly: false
+        limit: 1
+      credentials:
+        email:
+          imapHost: "localhost"
+          imapPort: 3143
+          imapUser: "test@localhost"
+          imapPassword: "test"
+      stopAfterIf:
+        expr: "{{check-input-source.output}} !== 'imap'"
+        skipIfStopped: true
+
+  # --- Merge Point ---
+  # Merge both paths into a single data stream using any-of
+  # Uses inputs array with passThrough mode - first non-skipped input is used
+  - id: any-input
+    type: bits
+    position:
+      x: 500
+      y: 100
+    data:
+      label: Any Input (IMAP or Submission)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-any-of"
+      resource: race
+      operation: race
+      params:
+        passThrough: true
+        inputs:
+          - "{{format-submission}}"
+          - "{{receive-email-imap}}"
+
+  # Step 2: Classify email importance with OpenAI
+  - id: classify-email
+    type: bits
+    position:
+      x: 700
+      y: 100
+    data:
+      label: Classify Email Importance
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: chatCompletion
+      operation: chatCompletion
+      params:
+        model: "gpt-4o-mini"
+        systemPrompt: |
+          You are an email importance classifier. Analyze the email and classify it into one of three categories:
+          - "important": Urgent emails requiring immediate attention (security alerts, critical business issues, emergencies)
+          - "semi-important": Emails that need attention but not urgently (meeting requests, project updates, customer inquiries)
+          - "not-important": Low priority emails (newsletters, promotional content, general notifications)
+          
+          Respond with ONLY one word: "important", "semi-important", or "not-important"
+        userMessage: |
+          From: {{any-input.result.emails.0.from}}
+          Subject: {{any-input.result.emails.0.subject}}
+          Body: {{any-input.result.emails.0.body}}
+        temperature: 0.1
+        maxTokens: 10
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Step 3: Branch based on classification
+  - id: route-email
+    type: bits
+    position:
+      x: 950
+      y: 100
+    data:
+      label: Route by Importance
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      resource: branch
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: "Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "important"
+            output: "important"
+          - label: "Semi-Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "semi-important"
+            output: "semi-important"
+          - label: "Not Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "not-important"
+            output: "not-important"
+        includeElse: true
+        defaultOutput: "not-important"
+
+  # Step 4a: Send to Telegram for IMPORTANT emails
+  - id: send-telegram
+    type: bits
+    position:
+      x: 1200
+      y: -50
+    data:
+      label: Send to Telegram (Important)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-telegram"
+      resource: sendMessage
+      operation: sendMessage
+      params:
+        chatId: "{{habits.env.TELEGRAM_CHAT_ID}}"
+        text: |
+          🚨 *IMPORTANT EMAIL*
+          
+          *From:* {{any-input.result.emails.0.from}}
+          *Subject:* {{any-input.result.emails.0.subject}}
+          
+          {{any-input.result.emails.0.body}}
+        parseMode: Markdown
+        disableNotification: false
+      credentials:
+        telegram:
+          botToken: "{{habits.env.TELEGRAM_BOT_TOKEN}}"
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'important'"
+        skipIfStopped: true
+
+  # Step 4b: Send via SMTP (Greenmail) for SEMI-IMPORTANT emails
+  - id: send-smtp
+    type: bits
+    position:
+      x: 1200
+      y: 100
+    data:
+      label: Forward via SMTP (Greenmail)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      resource: sendEmail
+      operation: sendEmail
+      params:
+        smtpHost: "localhost"
+        smtpPort: 3025
+        smtpUser: "forwarder@localhost"
+        smtpPassword: "forwarder"
+        from: "forwarder@localhost"
+        to: "backup@localhost"
+        subject: "[Semi-Important] FWD: {{any-input.result.emails.0.subject}}"
+        body: |
+          This email was classified as semi-important.
+          
+          Original sender: {{any-input.result.emails.0.from}}
+          Original subject: {{any-input.result.emails.0.subject}}
+          
+          ---
+          
+          {{any-input.result.emails.0.body}}
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'semi-important'"
+        skipIfStopped: true
+
+  # Step 4c: Send to WhatsApp for NOT IMPORTANT emails
+  - id: send-whatsapp
+    type: bits
+    position:
+      x: 1200
+      y: 250
+    data:
+      label: Send to WhatsApp (Not Important)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      resource: sendTextMessage
+      operation: sendTextMessage
+      params:
+        to: "{{habits.env.WHATSAPP_PHONE}}"
+        message: |
+          📧 Low-priority email received
+          
+          From: {{any-input.result.emails.0.from}}
+          Subject: {{any-input.result.emails.0.subject}}
+          
+          (Check email for details)
+        previewUrl: false
+      credentials:
+        whatsapp:
+          accessToken: "{{habits.env.WHATSAPP_ACCESS_TOKEN}}"
+          phoneNumberId: "{{habits.env.WHATSAPP_PHONE_NUMBER_ID}}"
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'not-important'"
+        skipIfStopped: true
+
+edges:
+  # Entry point branches to both paths based on input source check
+  - source: check-input-source
+    target: format-submission
+    sourceHandle: "branch-0"
+  - source: check-input-source
+    target: receive-email-imap
+    sourceHandle: "else"
+  # Both paths converge at any-input
+  - source: format-submission
+    target: any-input
+  - source: receive-email-imap
+    target: any-input
+  # Main flow: any-input -> classify -> route -> actions
+  - source: any-input
+    target: classify-email
+  - source: classify-email
+    target: route-email
+  - source: route-email
+    target: send-telegram
+    sourceHandle: "branch-0"
+  - source: route-email
+    target: send-smtp
+    sourceHandle: "branch-1"
+  - source: route-email
+    target: send-whatsapp
+    sourceHandle: "branch-2"
+
+output:
+  classification: "{{classify-email.content}}"
+  routedTo: "{{route-email.output}}"
+  inputSource: "{{any-input.triggeredBy}}"
+  originalEmail:
+    from: "{{any-input.result.emails.0.from}}"
+    subject: "{{any-input.result.emails.0.subject}}"

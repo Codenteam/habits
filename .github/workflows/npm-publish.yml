@@ -1,0 +1,68 @@
+name: NPM Publish
+
+on:
+  push:
+    branches:
+      - main
+      - 'v*'
+      - 'release/**'
+    tags:
+      - 'v*'
+      - 'release/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-to-npm:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: pnpm/action-setup@v2
+        with:
+          cache: true
+          version: 10
+
+      - name: Install & Build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm nx pack habits --skip-nx-cache
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: dist/packages/habits
+        run: |
+          REF="${{ github.ref_name }}"
+          
+          if [[ "$REF" == "main" ]]; then
+            # Push to main → @next with commit-based version
+            VERSION="0.1.0-next.${{ github.run_number }}"
+            TAG="next"
+          else
+            # Tag or release branch → @latest with version from ref
+            VERSION="${REF#v}"
+            VERSION="${VERSION#release/}"
+            # Add .${{ github.run_number }} to version
+            VERSION="${VERSION}.${{ github.run_number }}"
+            TAG="latest"
+          fi
+          
+          npm version $VERSION --no-git-tag-version --allow-same-version
+
+          # For public habits repo
+          # npm publish --tag $TAG --access public --provenance
+
+          # For private habits repo
+          npm publish --tag $TAG --access public
+          
+          echo "📦 Published habits@$VERSION with tag @$TAG" >> $GITHUB_STEP_SUMMARY
+

@@ -1,0 +1,751 @@
+﻿{
+  "created": "1765230433534",
+  "updated": "1765230433534",
+  "name": "Post Github Pull Requests To Discord",
+  "description": "",
+  "tags": [],
+  "pieces": [
+    "@activepieces/piece-github",
+    "@activepieces/piece-discord",
+    "@activepieces/piece-store"
+  ],
+  "template": {
+    "displayName": "Post Github Pull Requests To Discord",
+    "trigger": {
+      "name": "trigger",
+      "valid": true,
+      "displayName": "New Pull Request",
+      "type": "PIECE_TRIGGER",
+      "settings": {
+        "propertySettings": {
+          "auth": {
+            "type": "MANUAL"
+          },
+          "repository": {
+            "type": "MANUAL"
+          }
+        },
+        "pieceName": "@activepieces/piece-github",
+        "pieceVersion": "~0.5.1",
+        "input": {
+          "auth": "{{connections['M0sZekcYi3rrKvRDZbs1U']}}",
+          "repository": {
+            "repo": "pr-flow-test",
+            "owner": "meganammari"
+          }
+        },
+        "sampleData": {},
+        "triggerName": "trigger_pull_request"
+      },
+      "nextAction": {
+        "name": "step_3",
+        "skip": false,
+        "type": "ROUTER",
+        "valid": true,
+        "children": [
+          {
+            "name": "step_13",
+            "skip": false,
+            "type": "ROUTER",
+            "valid": true,
+            "children": [
+              {
+                "name": "step_14",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "auth": "{{connections['zmyNSOjJr8xdydvtowsQn']}}",
+                    "files": [],
+                    "message": "🆕: {{trigger['repository']['full_name']}} \nPR: {{trigger['number']}}\n\n• Title: {{trigger['pull_request']['title']}}\n• User: {{trigger['pull_request']['user']['login']}}\n\n{{trigger['pull_request']['html_url']}}\n\nStatus (react or read):\n✅ = approved or merged  \n❌ = closed without merge  \n❓ = need help (add manually)  \n(no reaction yet = still awaiting review)",
+                    "channel_id": "1382301419708878968"
+                  },
+                  "pieceName": "@activepieces/piece-discord",
+                  "pieceType": "OFFICIAL",
+                  "actionName": "sendMessageWithBot",
+                  "sampleData": {},
+                  "packageType": "REGISTRY",
+                  "pieceVersion": "~0.3.14",
+                  "propertySettings": {
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "files": {
+                      "type": "MANUAL"
+                    },
+                    "message": {
+                      "type": "MANUAL"
+                    },
+                    "channel_id": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "sampleDataSettings": {},
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_15",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "key": "pr-{{trigger['number']}}",
+                      "value": "{{step_14['id']}}",
+                      "store_scope": "FLOW"
+                    },
+                    "pieceName": "@activepieces/piece-store",
+                    "pieceType": "OFFICIAL",
+                    "actionName": "put",
+                    "sampleData": {},
+                    "packageType": "REGISTRY",
+                    "pieceVersion": "~0.6.1",
+                    "propertySettings": {
+                      "key": {
+                        "type": "MANUAL"
+                      },
+                      "value": {
+                        "type": "MANUAL"
+                      },
+                      "store_scope": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "sampleDataSettings": {},
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_16",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "key": "pr-{{trigger['number']}}:channel",
+                        "value": "{{step_14['channel_id']}}",
+                        "store_scope": "FLOW"
+                      },
+                      "pieceName": "@activepieces/piece-store",
+                      "pieceType": "OFFICIAL",
+                      "actionName": "put",
+                      "sampleData": {},
+                      "packageType": "REGISTRY",
+                      "pieceVersion": "~0.6.1",
+                      "propertySettings": {
+                        "key": {
+                          "type": "MANUAL"
+                        },
+                        "value": {
+                          "type": "MANUAL"
+                        },
+                        "store_scope": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "sampleDataSettings": {},
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Put"
+                  },
+                  "displayName": "Put"
+                },
+                "displayName": "Send Message with Bot"
+              },
+              {
+                "name": "step_17",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "auth": "{{connections['zmyNSOjJr8xdydvtowsQn']}}",
+                    "files": [],
+                    "message": "🆕: {{trigger['repository']['full_name']}} \nPR: {{trigger['number']}}\n\n• Title: {{trigger['pull_request']['title']}}\n• User: {{trigger['pull_request']['user']['login']}}\n\n{{trigger['pull_request']['html_url']}}\n\nStatus (react or read):\n✅ = approved or merged  \n❌ = closed without merge  \n❓ = need help (add manually)  \n(no reaction yet = still awaiting review)",
+                    "channel_id": "1382302576082550785"
+                  },
+                  "pieceName": "@activepieces/piece-discord",
+                  "pieceType": "OFFICIAL",
+                  "actionName": "sendMessageWithBot",
+                  "sampleData": {},
+                  "packageType": "REGISTRY",
+                  "pieceVersion": "~0.3.14",
+                  "propertySettings": {
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "files": {
+                      "type": "MANUAL"
+                    },
+                    "message": {
+                      "type": "MANUAL"
+                    },
+                    "channel_id": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "sampleDataSettings": {},
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_18",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "key": "pr-{{trigger['number']}}",
+                      "value": "{{step_17['id']}}",
+                      "store_scope": "FLOW"
+                    },
+                    "pieceName": "@activepieces/piece-store",
+                    "pieceType": "OFFICIAL",
+                    "actionName": "put",
+                    "sampleData": {},
+                    "packageType": "REGISTRY",
+                    "pieceVersion": "~0.6.1",
+                    "propertySettings": {
+                      "key": {
+                        "type": "MANUAL"
+                      },
+                      "value": {
+                        "type": "MANUAL"
+                      },
+                      "store_scope": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "sampleDataSettings": {},
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_19",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "key": "pr-{{trigger['number']}}:channel",
+                        "value": "{{step_17['channel_id']}}",
+                        "store_scope": "FLOW"
+                      },
+                      "pieceName": "@activepieces/piece-store",
+                      "pieceType": "OFFICIAL",
+                      "actionName": "put",
+                      "sampleData": {},
+                      "packageType": "REGISTRY",
+                      "pieceVersion": "~0.6.1",
+                      "propertySettings": {
+                        "key": {
+                          "type": "MANUAL"
+                        },
+                        "value": {
+                          "type": "MANUAL"
+                        },
+                        "store_scope": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "sampleDataSettings": {},
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Put"
+                  },
+                  "displayName": "Put"
+                },
+                "displayName": "Send Message with Bot"
+              },
+              null
+            ],
+            "settings": {
+              "branches": [
+                {
+                  "branchName": "Team PR",
+                  "branchType": "CONDITION",
+                  "conditions": [
+                    [
+                      {
+                        "operator": "TEXT_EXACTLY_MATCHES",
+                        "firstValue": "{{trigger['pull_request']['user']['login']}}",
+                        "secondValue": "meganammari",
+                        "caseSensitive": false
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "branchName": "External PR",
+                  "branchType": "CONDITION",
+                  "conditions": [
+                    [
+                      {
+                        "operator": "TEXT_DOES_NOT_CONTAIN",
+                        "firstValue": "{{trigger['pull_request']['user']['login']}}",
+                        "secondValue": "meganammari",
+                        "caseSensitive": false
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "branchName": "Otherwise",
+                  "branchType": "FALLBACK"
+                }
+              ],
+              "sampleData": {},
+              "executionType": "EXECUTE_FIRST_MATCH",
+              "propertySettings": {},
+              "sampleDataSettings": {}
+            },
+            "displayName": "Team vs. External Router"
+          },
+          {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "key": "pr-{{trigger['number']}}",
+                "store_scope": "FLOW"
+              },
+              "pieceName": "@activepieces/piece-store",
+              "pieceType": "OFFICIAL",
+              "actionName": "get",
+              "sampleData": {},
+              "packageType": "REGISTRY",
+              "pieceVersion": "~0.6.1",
+              "propertySettings": {
+                "key": {
+                  "type": "MANUAL"
+                },
+                "store_scope": {
+                  "type": "MANUAL"
+                }
+              },
+              "sampleDataSettings": {},
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_7",
+              "skip": false,
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "key": "pr-{{trigger['number']}}:channel",
+                  "store_scope": "FLOW"
+                },
+                "pieceName": "@activepieces/piece-store",
+                "pieceType": "OFFICIAL",
+                "actionName": "get",
+                "sampleData": {},
+                "packageType": "REGISTRY",
+                "pieceVersion": "~0.6.1",
+                "propertySettings": {
+                  "key": {
+                    "type": "MANUAL"
+                  },
+                  "store_scope": {
+                    "type": "MANUAL"
+                  }
+                },
+                "sampleDataSettings": {},
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_5",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "url": {
+                      "url": "/channels/{{step_7}}/messages/{{step_2}}/reactions/%E2%9C%85/@me"
+                    },
+                    "auth": "{{connections['zmyNSOjJr8xdydvtowsQn']}}",
+                    "method": "PUT",
+                    "headers": {},
+                    "failsafe": false,
+                    "queryParams": {}
+                  },
+                  "pieceName": "@activepieces/piece-discord",
+                  "pieceType": "OFFICIAL",
+                  "actionName": "custom_api_call",
+                  "sampleData": {},
+                  "packageType": "REGISTRY",
+                  "pieceVersion": "~0.3.14",
+                  "propertySettings": {
+                    "url": {
+                      "type": "MANUAL"
+                    },
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "method": {
+                      "type": "MANUAL"
+                    },
+                    "headers": {
+                      "type": "MANUAL"
+                    },
+                    "failsafe": {
+                      "type": "MANUAL"
+                    },
+                    "queryParams": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "sampleDataSettings": {},
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "displayName": "Custom API Call"
+              },
+              "displayName": "Get"
+            },
+            "displayName": "Get"
+          },
+          {
+            "name": "step_8",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "key": "pr-{{trigger['number']}}",
+                "store_scope": "FLOW"
+              },
+              "pieceName": "@activepieces/piece-store",
+              "pieceType": "OFFICIAL",
+              "actionName": "get",
+              "sampleData": {},
+              "packageType": "REGISTRY",
+              "pieceVersion": "~0.6.1",
+              "propertySettings": {
+                "key": {
+                  "type": "MANUAL"
+                },
+                "store_scope": {
+                  "type": "MANUAL"
+                }
+              },
+              "sampleDataSettings": {},
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_9",
+              "skip": false,
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "key": "pr-{{trigger['number']}}:channel",
+                  "store_scope": "FLOW"
+                },
+                "pieceName": "@activepieces/piece-store",
+                "pieceType": "OFFICIAL",
+                "actionName": "get",
+                "sampleData": {},
+                "packageType": "REGISTRY",
+                "pieceVersion": "~0.6.1",
+                "propertySettings": {
+                  "key": {
+                    "type": "MANUAL"
+                  },
+                  "store_scope": {
+                    "type": "MANUAL"
+                  }
+                },
+                "sampleDataSettings": {},
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_10",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "url": {
+                      "url": "/channels/{{step_9}}/messages/{{step_8}}/reactions/%E2%9D%8C/@me"
+                    },
+                    "auth": "{{connections['zmyNSOjJr8xdydvtowsQn']}}",
+                    "method": "PUT",
+                    "headers": {},
+                    "failsafe": false,
+                    "queryParams": {}
+                  },
+                  "pieceName": "@activepieces/piece-discord",
+                  "pieceType": "OFFICIAL",
+                  "actionName": "custom_api_call",
+                  "sampleData": {},
+                  "packageType": "REGISTRY",
+                  "pieceVersion": "~0.3.14",
+                  "propertySettings": {
+                    "url": {
+                      "type": "MANUAL"
+                    },
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "method": {
+                      "type": "MANUAL"
+                    },
+                    "headers": {
+                      "type": "MANUAL"
+                    },
+                    "failsafe": {
+                      "type": "MANUAL"
+                    },
+                    "queryParams": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "sampleDataSettings": {},
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_11",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "key": "pr-{{trigger['number']}}",
+                      "store_scope": "FLOW"
+                    },
+                    "pieceName": "@activepieces/piece-store",
+                    "pieceType": "OFFICIAL",
+                    "actionName": "remove_value",
+                    "sampleData": {},
+                    "packageType": "REGISTRY",
+                    "pieceVersion": "~0.6.1",
+                    "propertySettings": {
+                      "key": {
+                        "type": "MANUAL"
+                      },
+                      "store_scope": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "sampleDataSettings": {},
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_12",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "key": "pr-{{trigger['number']}}:channel",
+                        "store_scope": "FLOW"
+                      },
+                      "pieceName": "@activepieces/piece-store",
+                      "pieceType": "OFFICIAL",
+                      "actionName": "remove_value",
+                      "sampleData": {},
+                      "packageType": "REGISTRY",
+                      "pieceVersion": "~0.6.1",
+                      "propertySettings": {
+                        "key": {
+                          "type": "MANUAL"
+                        },
+                        "store_scope": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "sampleDataSettings": {},
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Remove"
+                  },
+                  "displayName": "Remove"
+                },
+                "displayName": "Custom API Call"
+              },
+              "displayName": "Get"
+            },
+            "displayName": "Get"
+          },
+          null
+        ],
+        "settings": {
+          "branches": [
+            {
+              "branchName": "Opened",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['action']}}",
+                    "secondValue": "opened",
+                    "caseSensitive": false
+                  }
+                ],
+                [
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['action']}}",
+                    "secondValue": "ready_for_review",
+                    "caseSensitive": false
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "✅ Merged",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_CONTAINS",
+                    "firstValue": "{{trigger['action']}}",
+                    "secondValue": "Closed",
+                    "caseSensitive": false
+                  },
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['pull_request']['merged']}}",
+                    "secondValue": "true",
+                    "caseSensitive": false
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "❌ Closed (no merge)",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['action']}}",
+                    "secondValue": "closed",
+                    "caseSensitive": false
+                  },
+                  {
+                    "operator": "TEXT_CONTAINS",
+                    "firstValue": "{{trigger['pull_request']['merged']}}",
+                    "secondValue": "false",
+                    "caseSensitive": false
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "Otherwise",
+              "branchType": "FALLBACK"
+            }
+          ],
+          "sampleData": {},
+          "executionType": "EXECUTE_FIRST_MATCH",
+          "propertySettings": {},
+          "sampleDataSettings": {}
+        },
+        "displayName": "Router"
+      }
+    },
+    "valid": true,
+    "schemaVersion": "10"
+  },
+  "blogUrl": ""
+}

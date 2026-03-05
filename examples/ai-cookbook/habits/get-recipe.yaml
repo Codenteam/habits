@@ -1,0 +1,27 @@
+id: get-recipe
+name: Get Recipe
+description: Get a specific recipe by ID
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-recipe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "recipes"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  recipe: "{{fetch-recipe.document}}"
+  found: "{{fetch-recipe.found}}"

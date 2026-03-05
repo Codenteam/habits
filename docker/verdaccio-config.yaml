@@ -1,0 +1,72 @@
+# Verdaccio Configuration
+# See: https://verdaccio.org/docs/configuration
+
+# Path to storage directory
+storage: /verdaccio/storage
+
+# Path to plugins directory
+plugins: /verdaccio/plugins
+
+# Web UI settings
+web:
+  title: Habits Private Registry
+  enable: true
+  primary_color: "#4b32c3"
+
+# Authentication settings
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    # Maximum users allowed to register
+    # Set to -1 to disable registration
+    max_users: 100
+
+# Upstream npm registries
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+    timeout: 60s
+    maxage: 10m
+    fail_timeout: 5m
+    max_fails: 3
+    cache: true
+    agent_options:
+      keepAlive: true
+      maxSockets: 40
+      maxFreeSockets: 10
+
+# Package access rules
+packages:
+  # @ha-bits scoped packages - check local first, then proxy to npm
+  "@ha-bits/*":
+    access: $all
+    publish: $all
+    unpublish: $all
+    # Proxy to npmjs if not found locally
+    proxy: npmjs
+
+  # All other scoped packages - proxy to npm
+  "@*/*":
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+
+  # All other packages - proxy to npm
+  "**":
+    access: $all
+    publish: $authenticated
+    proxy: npmjs
+
+# Server settings
+server:
+  keepAliveTimeout: 60
+
+# Middleware settings
+middlewares:
+  audit:
+    enabled: true
+
+# Logging
+logs:
+  - { type: stdout, format: pretty, level: http }

@@ -1,0 +1,153 @@
+id: count-calories
+name: Count Calories from Image
+description: Take a photo of your food and get calorie estimates based on AI analysis
+
+input:
+  - id: imageUrl
+    type: string
+    required: false
+    description: URL of the food image
+  - id: imageBase64
+    type: string
+    required: false
+    description: Base64 encoded food image
+  - id: notes
+    type: string
+    required: false
+    description: Optional notes about the meal (e.g., "homemade", "restaurant portion")
+
+nodes:
+  # Analyze the food image to identify items and portions
+  - id: analyze-food
+    type: bits
+    description: Analyze the food image to identify items and portions
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: vision_prompt
+      operation: vision_prompt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        image: "{{habits.input.imageBase64}}"
+        temperature: 0.3
+        maxTokens: 1500
+        cast: true
+        prompt: |
+          Analyze this food image and identify all food items visible.
+          
+          For each item, estimate:
+          1. What the food item is
+          2. The approximate portion size in common measurements (cups, oz, pieces, tablespoons, grams)
+          3. Whether it's on a plate, in a bowl, or other container
+          4. Any visible toppings, sauces, or additions
+          
+          User notes about the meal: {{habits.input.notes}}
+          
+          Return a JSON object with this structure:
+          {
+            "containerType": "plate/bowl/glass/etc",
+            "mealType": "breakfast/lunch/dinner/snack",
+            "items": [
+              {
+                "name": "food name",
+                "portion": "estimated amount (e.g., '1 cup', '4 oz', '2 pieces')",
+                "preparationStyle": "grilled/fried/raw/etc",
+                "toppings": ["sauce", "cheese", etc],
+                "confidence": "high/medium/low"
+              }
+            ],
+            "observations": "any relevant notes about the meal"
+          }
+          
+          Be specific with portions - use standard measurements when possible.
+          Return ONLY the JSON object.
+
+  # Calculate calories based on identified items
+  - id: calculate-calories
+    type: bits
+    description: Calculate calories based on identified items
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        temperature: 0.2
+        maxTokens: 1500
+        cast: true
+        systemPrompt: |
+          You are a certified nutritionist and dietitian with expertise in calorie counting.
+          Provide accurate calorie estimates based on standard nutritional databases.
+          Be reasonably conservative with estimates for home-cooked food and slightly higher for restaurant portions.
+        prompt: |
+          Based on this food analysis, calculate the calorie content for each item:
+          
+          {{analyze-food}}
+          
+          Return a detailed JSON breakdown:
+          {
+            "items": [
+              {
+                "name": "food name",
+                "portion": "portion from analysis",
+                "caloriesPerPortion": 250,
+                "protein": "15g",
+                "carbs": "30g",
+                "fat": "8g",
+                "fiber": "3g",
+                "notes": "any relevant nutritional notes"
+              }
+            ],
+            "totals": {
+              "calories": 650,
+              "protein": "35g",
+              "carbs": "60g",
+              "fat": "22g",
+              "fiber": "8g"
+            },
+            "mealClassification": "light/moderate/heavy",
+            "healthScore": 7,
+            "healthNotes": ["Good protein source", "Consider adding vegetables"],
+            "recommendations": ["Add a side salad for more fiber", "Drink water with this meal"]
+          }
+          
+          Use standard USDA nutritional values as reference.
+          Return ONLY the JSON object.
+
+  # Save the analysis to database
+  - id: save-analysis
+    type: bits
+    description: Save the analysis to database
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "calorie_logs"
+        document:
+          foodAnalysis: "{{analyze-food}}"
+          calorieBreakdown: "{{calculate-calories}}"
+          imageUrl: "{{habits.input.imageUrl}}"
+          notes: "{{habits.input.notes}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-food
+    target: calculate-calories
+  - source: calculate-calories
+    target: save-analysis
+
+output:
+  logId: "{{save-analysis.id}}"
+  foodItems: "{{analyze-food}}"
+  calories: "{{calculate-calories}}"

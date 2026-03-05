@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper Assistant</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Crimson Text', Georgia, serif;
+            background: #f5f5f0;
+            min-height: 100vh;
+            color: #333;
+        }
+        .header {
+            background: #1a365d;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .tabs {
+            background: white;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-family: -apple-system, sans-serif;
+        }
+        .tab:hover { background: #f5f5f0; }
+        .tab.active { border-bottom-color: #1a365d; color: #1a365d; font-weight: 600; }
+        
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+        .card h2 { color: #1a365d; margin-bottom: 25px; font-size: 1.4rem; }
+        
+        .form-group { margin-bottom: 22px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-family: -apple-system, sans-serif;
+            font-size: 0.9rem;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+        textarea { min-height: 200px; line-height: 1.7; }
+        
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        button.submit {
+            background: #1a365d;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-family: -apple-system, sans-serif;
+            transition: all 0.2s;
+        }
+        button.submit:hover { background: #2c5282; }
+        button.submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .result-section {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3182ce;
+        }
+        .result-section h3 { color: #2c5282; margin-bottom: 15px; font-size: 1.1rem; }
+        
+        .finding-card {
+            background: white;
+            padding: 18px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .finding-card strong { color: #2d3748; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: -apple-system, sans-serif;
+        }
+        .badge.strength { background: #c6f6d5; color: #22543d; }
+        .badge.weakness { background: #fed7d7; color: #9b2c2c; }
+        
+        .outline-section { margin-bottom: 20px; }
+        .outline-section h4 { color: #4a5568; margin-bottom: 10px; }
+        .outline-section ul { padding-left: 20px; }
+        .outline-section li { margin-bottom: 8px; line-height: 1.6; }
+        
+        .loading { text-align: center; padding: 50px; color: #718096; }
+        
+        pre {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-family: inherit;
+        }
+        
+        @media (max-width: 700px) {
+            .row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 Research Paper Assistant</h1>
+        <p>Analyze, summarize, and plan your academic research</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('analyze')">🔬 Analyze</div>
+        <div class="tab" onclick="switchTab('summarize')">📄 Summarize</div>
+        <div class="tab" onclick="switchTab('outline')">📝 Outline</div>
+    </div>
+
+    <div class="container">
+        <!-- Analyze Tab -->
+        <div id="analyze-tab" class="tab-content active">
+            <div class="card">
+                <h2>Analyze Research Paper</h2>
+                <form id="analyze-form">
+                    <div class="form-group">
+                        <label>Paper Title</label>
+                        <input type="text" id="analyze-title" placeholder="Enter paper title">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Paper Content (paste abstract or full text)</label>
+                        <textarea id="analyze-content" placeholder="Paste the paper content here for analysis..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit" id="analyze-btn">🔬 Analyze Paper</button>
+                </form>
+            </div>
+
+            <div id="analyze-results" style="display: none;"></div>
+        </div>
+
+        <!-- Summarize Tab -->
+        <div id="summarize-tab" class="tab-content">
+            <div class="card">
+                <h2>Summarize Paper</h2>
+                <form id="summarize-form">
+                    <div class="form-group">
+                        <label>Paper Title</label>
+                        <input type="text" id="summarize-title" placeholder="Paper title">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Summary Type</label>
+                        <select id="summary-type">
+                            <option value="executive">Executive Summary</option>
+                            <option value="technical">Technical Summary</option>
+                            <option value="layperson">Layperson Summary</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Paper Content</label>
+                        <textarea id="summarize-content" placeholder="Paste the paper content..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit" id="summarize-btn">📄 Generate Summary</button>
+                </form>
+            </div>
+
+            <div id="summary-results" style="display: none;"></div>
+        </div>
+
+        <!-- Outline Tab -->
+        <div id="outline-tab" class="tab-content">
+            <div class="card">
+                <h2>Generate Research Outline</h2>
+                <form id="outline-form">
+                    <div class="form-group">
+                        <label>Research Topic</label>
+                        <input type="text" id="outline-topic" placeholder="Your research topic" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Research Question</label>
+                        <input type="text" id="research-question" placeholder="What question are you trying to answer?">
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Paper Type</label>
+                            <select id="paper-type">
+                                <option value="empirical">Empirical Study</option>
+                                <option value="literature review">Literature Review</option>
+                                <option value="theoretical">Theoretical Paper</option>
+                                <option value="case study">Case Study</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Field of Study</label>
+                            <input type="text" id="field-study" placeholder="e.g., Psychology, Computer Science">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit" id="outline-btn">📝 Generate Outline</button>
+                </form>
+            </div>
+
+            <div id="outline-results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        function parseJSON(data) {
+            if (typeof data === 'object') return data;
+            try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
+            catch { return null; }
+        }
+
+        // Analyze form
+        document.getElementById('analyze-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.textContent = '🔬 Analyzing...';
+
+            try {
+                const response = await fetch('/api/analyze-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: document.getElementById('analyze-title').value,
+                        paperContent: document.getElementById('analyze-content').value
+                    })
+                });
+                const data = await response.json();
+                displayAnalysis(data);
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔬 Analyze Paper';
+            }
+        });
+
+        function displayAnalysis(data) {
+            const container = document.getElementById('analyze-results');
+            container.style.display = 'block';
+
+            const methodology = parseJSON(data.methodology);
+            const critical = parseJSON(data.criticalAnalysis);
+            const context = parseJSON(data.academicContext);
+
+            let html = '';
+
+            if (methodology) {
+                html += `
+                    <div class="card">
+                        <div class="result-section">
+                            <h3>🔬 Methodology Analysis</h3>
+                            <p><strong>Research Question:</strong> ${methodology.researchQuestion || 'N/A'}</p>
+                            <p><strong>Approach:</strong> ${methodology.methodology?.approach || 'N/A'}</p>
+                            <p><strong>Methods:</strong> ${methodology.methodology?.methods?.join(', ') || 'N/A'}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>📊 Key Findings</h3>
+                            ${(methodology.keyFindings || []).map(f => `
+                                <div class="finding-card">
+                                    <strong>${f.finding}</strong>
+                                    <p style="color: #718096; margin-top: 5px;">${f.evidence || ''}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (critical) {
+                html += `
+                    <div class="card">
+                        <h2>Critical Analysis</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h4>✅ Strengths</h4>
+                                ${(critical.strengths || []).map(s => `
+                                    <p><span class="badge strength">+</span> ${s.point}</p>
+                                `).join('')}
+                            </div>
+                            <div>
+                                <h4>⚠️ Weaknesses</h4>
+                                ${(critical.weaknesses || []).map(w => `
+                                    <p><span class="badge weakness">-</span> ${w.point}</p>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <p style="margin-top: 20px;"><strong>Overall:</strong> ${critical.overallAssessment || ''}</p>
+                    </div>
+                `;
+            }
+
+            if (context) {
+                html += `
+                    <div class="card">
+                        <h2>Academic Context</h2>
+                        <p><strong>Field:</strong> ${context.field} > ${context.subfield}</p>
+                        <p><strong>Related Topics:</strong> ${(context.relatedTopics || []).join(', ')}</p>
+                        <p><strong>Future Research:</strong> ${(context.futureResearch || []).join(', ')}</p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Summarize form
+        document.getElementById('summarize-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('summarize-btn');
+            btn.disabled = true;
+            btn.textContent = '📄 Summarizing...';
+
+            try {
+                const response = await fetch('/api/summarize-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: document.getElementById('summarize-title').value,
+                        paperContent: document.getElementById('summarize-content').value,
+                        summaryType: document.getElementById('summary-type').value
+                    })
+                });
+                const data = await response.json();
+                
+                document.getElementById('summary-results').style.display = 'block';
+                document.getElementById('summary-results').innerHTML = `
+                    <div class="card">
+                        <h2>Paper Summary</h2>
+                        <pre>${data.summary || ''}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📄 Generate Summary';
+            }
+        });
+
+        // Outline form
+        document.getElementById('outline-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('outline-btn');
+            btn.disabled = true;
+            btn.textContent = '📝 Generating...';
+
+            try {
+                const response = await fetch('/api/generate-outline', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: document.getElementById('outline-topic').value,
+                        researchQuestion: document.getElementById('research-question').value,
+                        paperType: document.getElementById('paper-type').value,
+                        fieldOfStudy: document.getElementById('field-study').value
+                    })
+                });
+                const data = await response.json();
+                
+                document.getElementById('outline-results').style.display = 'block';
+                document.getElementById('outline-results').innerHTML = `
+                    <div class="card">
+                        <h2>Research Paper Outline</h2>
+                        <pre>${data.outline || ''}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📝 Generate Outline';
+            }
+        });
+    </script>
+</body>
+</html>

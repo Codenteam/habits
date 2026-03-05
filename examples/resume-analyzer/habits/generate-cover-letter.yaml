@@ -1,0 +1,69 @@
+id: generate-cover-letter
+name: Generate Cover Letter
+description: Generate a customized cover letter for a specific job
+
+input:
+  - id: resumeText
+    type: string
+    required: true
+    description: Resume content
+  - id: jobDescription
+    type: string
+    required: true
+    description: Target job description
+  - id: companyName
+    type: string
+    required: true
+    description: Company name
+  - id: hiringManager
+    type: string
+    required: false
+    description: Hiring manager name if known
+  - id: tone
+    type: string
+    required: false
+    description: formal, friendly, enthusiastic
+
+nodes:
+  - id: generate-letter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        systemMessage: You are an expert cover letter writer who crafts compelling, personalized letters that get interviews.
+        prompt: |
+          Write a cover letter for this application:
+          
+          Resume:
+          {{habits.input.resumeText}}
+          
+          Job Description:
+          {{habits.input.jobDescription}}
+          
+          Company: {{habits.input.companyName}}
+          Hiring Manager: {{habits.input.hiringManager}}
+          Tone: {{habits.input.tone}}
+          
+          Structure:
+          1. Opening hook that shows enthusiasm and mentions the specific role
+          2. Paragraph connecting your experience to their needs (use specific examples)
+          3. Paragraph showing knowledge of the company and cultural fit
+          4. Strong closing with call to action
+          
+          Keep it to about 300-350 words. Be specific, not generic.
+
+edges: []
+
+output:
+  coverLetter: "{{generate-letter}}"

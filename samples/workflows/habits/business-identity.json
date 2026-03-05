@@ -1,0 +1,103 @@
+
+{
+    "name": "Business Identity Generator",
+    "description": "Generate complete business identity from a single prompt",
+    "nodes": [
+        {
+            "id": "input",
+            "type": "input",
+            "config": {
+                "prompt": {
+                    "type": "string",
+                    "description": "Business description or idea"
+                }
+            },
+            "outputs": ["original_prompt"]
+        },
+        {
+            "id": "logo_prompt_1",
+            "type": "openai",
+            "inputs": ["input.original_prompt"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Generate a detailed logo design prompt based on the business description.",
+                "temperature": 0.7
+            },
+            "outputs": ["logo_prompt"]
+        },
+        {
+            "id": "logo_prompt_2",
+            "type": "openai",
+            "inputs": ["input.original_prompt"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Create an alternative logo design prompt with different style based on the business description.",
+                "temperature": 0.8
+            },
+            "outputs": ["logo_prompt"]
+        },
+        {
+            "id": "logo_prompt_3",
+            "type": "openai",
+            "inputs": ["input.original_prompt"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Generate a creative logo design prompt with unique approach based on the business description.",
+                "temperature": 0.9
+            },
+            "outputs": ["logo_prompt"]
+        },
+        {
+            "id": "logo_generator",
+            "type": "image_generation",
+            "inputs": ["logo_prompt_1.logo_prompt"],
+            "config": {
+                "model": "dall-e-3"
+            },
+            "outputs": ["logo_image"]
+        },
+        {
+            "id": "website_prompt",
+            "type": "openai",
+            "inputs": ["input.original_prompt", "logo_generator.logo_image"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Generate a comprehensive prompt for creating a website that incorporates the business description and logo. Include color scheme, layout, sections, and branding guidelines.",
+                "temperature": 0.7
+            },
+            "outputs": ["website_design_prompt"]
+        },
+        {
+            "id": "business_card_prompt",
+            "type": "openai",
+            "inputs": ["input.original_prompt", "logo_generator.logo_image"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Generate a detailed prompt for creating an SVG business card that includes the logo. Specify layout, contact information placement, colors, and design elements.",
+                "temperature": 0.7
+            },
+            "outputs": ["business_card_prompt"]
+        },
+        {
+            "id": "company_document_prompt",
+            "type": "openai",
+            "inputs": ["input.original_prompt", "logo_generator.logo_image"],
+            "config": {
+                "model": "gpt-4",
+                "systemPrompt": "Generate a prompt for creating a comprehensive company document with logo on top. Include sections for mission, vision, services, values, and formatting guidelines.",
+                "temperature": 0.7
+            },
+            "outputs": ["document_prompt"]
+        },
+        {
+            "id": "output",
+            "type": "output",
+            "inputs": [
+                "logo_generator.logo_image",
+                "website_prompt.website_design_prompt",
+                "business_card_prompt.business_card_prompt",
+                "company_document_prompt.document_prompt"
+            ]
+        }
+    ]
+}

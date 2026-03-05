@@ -1,0 +1,113 @@
+﻿{
+  "name": "Untitled",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "-",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-imap",
+    "@activepieces/piece-smtp"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": {
+    "externalId": "03B4CLEjzDLUszz0wyLO3"
+  },
+  "flows": [
+    {
+      "displayName": "Untitled",
+      "trigger": {
+        "name": "trigger",
+        "valid": false,
+        "displayName": "New Email",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "mailbox": {
+              "type": "MANUAL"
+            },
+            "filterInstructions": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-imap",
+          "pieceVersion": "~0.4.0",
+          "input": {
+            "mailbox": null
+          },
+          "sampleData": {},
+          "triggerName": "new_email"
+        },
+        "nextAction": {
+          "name": "step_1",
+          "skip": false,
+          "type": "PIECE",
+          "valid": false,
+          "settings": {
+            "input": {
+              "cc": [],
+              "to": [],
+              "bcc": [],
+              "body_type": "plain_text",
+              "attachments": [],
+              "customHeaders": {}
+            },
+            "pieceName": "@activepieces/piece-smtp",
+            "actionName": "send-email",
+            "sampleData": {},
+            "pieceVersion": "~0.3.9",
+            "propertySettings": {
+              "cc": {
+                "type": "MANUAL"
+              },
+              "to": {
+                "type": "MANUAL"
+              },
+              "bcc": {
+                "type": "MANUAL"
+              },
+              "body": {
+                "type": "MANUAL"
+              },
+              "from": {
+                "type": "MANUAL"
+              },
+              "replyTo": {
+                "type": "MANUAL"
+              },
+              "subject": {
+                "type": "MANUAL"
+              },
+              "body_type": {
+                "type": "MANUAL"
+              },
+              "senderName": {
+                "type": "MANUAL"
+              },
+              "attachments": {
+                "type": "MANUAL"
+              },
+              "customHeaders": {
+                "type": "MANUAL"
+              }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "displayName": "Send Email"
+        }
+      },
+      "valid": false,
+      "schemaVersion": "16",
+      "notes": []
+    }
+  ]
+}

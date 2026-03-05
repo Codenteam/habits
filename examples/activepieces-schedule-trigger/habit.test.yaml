@@ -1,0 +1,21 @@
+# Tests for Schedule Trigger Workflow
+# Workflow: habits.yaml - Executes on schedule using cron
+workflow: ./habits.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully executes scheduled task"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input: {}
+    mocks:
+      bits:
+        # Mock schedule trigger
+        - bit: "@activepieces/piece-schedule"
+          action: cron_expression
+          response:
+            triggered: true
+            timestamp: "2024-01-15T10:00:00Z"
+            cronExpression: "*/1 * * * *"

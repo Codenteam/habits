@@ -1,0 +1,42 @@
+# Tests for Product Describer
+# Workflow: habits/describe-product.yaml - Generates product descriptions from images
+workflow: ./habits/describe-product.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates product description"
+    trigger:
+      body:
+        imageUrls: "https://example.com/product.jpg"
+        category: "Electronics"
+        productName: "Wireless Headphones"
+        targetAudience: "Music enthusiasts"
+    context:
+      habits:
+        input:
+          imageUrls: "https://example.com/product.jpg"
+          category: "Electronics"
+          productName: "Wireless Headphones"
+          targetAudience: "Music enthusiasts"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock image analysis (vision_prompt action)
+        - bit: "@ha-bits/bit-intersect"
+          action: vision_prompt
+          response: "Premium over-ear wireless headphones in matte black finish with cushioned ear pads and metallic accents."
+        # Mock description generation
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: "Experience exceptional sound quality with these premium wireless headphones. Featuring advanced noise cancellation and 30-hour battery life."
+        # Mock bullet points
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response: ["Premium sound quality", "30-hour battery", "Active noise cancellation", "Comfortable design"]
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

@@ -1,0 +1,27 @@
+id: get-entry
+name: Get Journal Entry
+description: Get a specific entry by ID
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-entry
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "journal_entries"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  entry: "{{fetch-entry.document}}"
+  found: "{{fetch-entry.found}}"

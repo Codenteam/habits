@@ -1,0 +1,209 @@
+id: generate-recipe
+name: Generate Recipe
+description: Generate a recipe based on available ingredients and dietary preferences
+
+input:
+  - id: ingredients
+    type: string
+    required: true
+    description: Comma-separated list of available ingredients
+  - id: restrictions
+    type: string
+    required: false
+    description: Dietary restrictions (vegetarian, vegan, gluten-free, etc.)
+  - id: cuisine
+    type: string
+    required: false
+    description: Preferred cuisine type
+  - id: mealType
+    type: string
+    required: false
+    description: breakfast, lunch, dinner, snack, dessert
+  - id: servings
+    type: number
+    required: false
+    description: Number of servings
+
+nodes:
+  # Generate the recipe
+  - id: generate-recipe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        cast: true
+        temperature: 0.8
+        maxTokens: 2000
+        systemMessage: |
+          You are a professional chef and recipe developer. Create delicious, practical recipes
+          that make the most of available ingredients. Always return valid JSON.
+        prompt: |
+          Create a recipe using these ingredients: {{habits.input.ingredients}}
+          
+          Dietary restrictions: {{habits.input.restrictions}}
+          Cuisine preference: {{habits.input.cuisine}}
+          Meal type: {{habits.input.mealType}}
+          Servings: {{habits.input.servings}}
+          
+          Return a JSON object with this structure:
+          {
+            "title": "Recipe name",
+            "description": "Brief appetizing description",
+            "prepTime": "15 minutes",
+            "cookTime": "30 minutes",
+            "totalTime": "45 minutes",
+            "servings": 4,
+            "difficulty": "easy/medium/hard",
+            "cuisine": "Italian/Mexican/etc",
+            "tags": ["quick", "healthy", "comfort food"],
+            "ingredients": [
+              {"item": "ingredient name", "amount": "1 cup", "notes": "optional prep notes"}
+            ],
+            "instructions": [
+              {"step": 1, "instruction": "Step description", "tip": "optional pro tip"}
+            ],
+            "tips": ["Chef's tips for best results"],
+            "variations": ["Alternative versions or substitutions"],
+            "pairings": ["What to serve with this dish"]
+          }
+          
+          Make the recipe creative but practical. Include helpful tips.
+          Return ONLY the JSON object.
+
+  # Generate recipe image
+  - id: generate-image
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: generate_image
+      operation: generate_image
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-image-1
+        prompt: "Professional food photography of {{generate-recipe.title}}, plated beautifully, natural lighting, appetizing, high-end restaurant presentation"
+        resolution: 1024x1024
+        quality: medium
+
+  # Generate shopping list for missing ingredients
+  - id: shopping-list
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 500
+        prompt: |
+          Compare these available ingredients: {{habits.input.ingredients}}
+          
+          With these required ingredients from the recipe:
+          {{habits.input.ingredients}}
+          
+          List any ingredients the user needs to buy. Return as JSON:
+          {
+            "needed": [{"item": "ingredient", "amount": "quantity"}],
+            "optional": [{"item": "ingredient", "reason": "for garnish/extra flavor"}],
+            "substitutions": [{"missing": "item", "substitute": "alternative", "notes": "how to substitute"}]
+          }
+          
+          Return ONLY the JSON object.
+
+  # Calculate estimated nutrition
+  - id: nutrition
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 400
+        prompt: |
+          Estimate the nutritional information per serving for this recipe:
+          {{generate-recipe}}
+          
+          Return as JSON:
+          {
+            "perServing": {
+              "calories": 350,
+              "protein": "25g",
+              "carbs": "30g",
+              "fat": "15g",
+              "fiber": "5g",
+              "sodium": "500mg"
+            },
+            "healthNotes": ["High in protein", "Good source of fiber"],
+            "dietaryInfo": ["gluten-free", "dairy-free", etc if applicable]
+          }
+          
+          Be reasonable with estimates. Return ONLY the JSON.
+
+  # Save recipe
+  - id: save-recipe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "recipes"
+        document:
+          recipe: "{{generate-recipe}}"
+          image: "{{generate-image}}"
+          shoppingList: "{{shopping-list}}"
+          nutrition: "{{nutrition}}"
+          inputIngredients: "{{habits.input.ingredients}}"
+          restrictions: "{{habits.input.restrictions}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-recipe
+    target: generate-image
+  - source: generate-recipe
+    target: shopping-list
+  - source: generate-recipe
+    target: nutrition
+  - source: generate-image
+    target: save-recipe
+  - source: shopping-list
+    target: save-recipe
+  - source: nutrition
+    target: save-recipe
+
+output:
+  recipeId: "{{save-recipe.id}}"
+  recipe: "{{generate-recipe}}"
+  image: "{{generate-image}}"
+  shoppingList: "{{shopping-list}}"
+  nutrition: "{{nutrition}}"

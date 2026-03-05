@@ -1,0 +1,373 @@
+id: customer-survey-processor
+name: Customer Survey Processor
+description: Process survey responses with sentiment analysis, store in database, and route based on positive/negative feedback
+
+nodes:
+  # Node 1: Survey Webhook Trigger
+  - id: survey-trigger
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Survey Webhook
+      params:
+        responseId: "{{habits.input.responseId}}"
+        surveyId: "{{habits.input.surveyId}}"
+        customerEmail: "{{habits.input.customerEmail}}"
+        customerName: "{{habits.input.customerName}}"
+        rating: "{{habits.input.rating}}"
+        feedback: "{{habits.input.feedback}}"
+        productUsed: "{{habits.input.productUsed}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            responseId: string,
+            surveyId: string,
+            customerEmail: string,
+            customerName: string,
+            rating: string,
+            feedback: string,
+            productUsed: string
+          ) {
+            return {
+              responseId: responseId || `resp_${Date.now()}`,
+              surveyId: surveyId || 'default-survey',
+              customer: {
+                email: customerEmail || 'anonymous@example.com',
+                name: customerName || 'Anonymous'
+              },
+              rating: parseInt(rating) || 5,
+              feedback: feedback || '',
+              productUsed: productUsed || 'General',
+              receivedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Sentiment Analysis
+  - id: sentiment-analysis
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: sentiment
+      label: Sentiment Analysis
+      params:
+        text: "{{survey-trigger.result.feedback}}"
+
+  # Node 3: AI Enhanced Analysis
+  - id: ai-analysis
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Analysis
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a customer feedback analyst. Analyze the survey response and provide:
+          1. Key themes mentioned
+          2. Specific issues or praise points
+          3. Suggested follow-up actions
+          4. Risk level for churn (low/medium/high)
+          
+          Respond in JSON format:
+          {
+            "themes": ["theme1", "theme2"],
+            "positives": ["positive point"],
+            "negatives": ["negative point"],
+            "actionItems": ["suggested action"],
+            "churnRisk": "low|medium|high",
+            "summary": "brief 1-sentence summary"
+          }
+        userMessage: |
+          Customer: {{survey-trigger.result.customer.name}}
+          Product: {{survey-trigger.result.productUsed}}
+          Rating: {{survey-trigger.result.rating}}/10
+          
+          Feedback:
+          {{survey-trigger.result.feedback}}
+        temperature: 0.3
+        maxTokens: 400
+        responseFormat: json_object
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 4: Parse AI Analysis
+  - id: parse-analysis
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Parse Analysis
+      params:
+        aiResponse: "{{ai-analysis.content}}"
+        rating: "{{survey-trigger.result.rating}}"
+        sentiment: "{{sentiment-analysis.sentiment}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(aiResponse: string, rating: number, sentiment: string) {
+            let analysis;
+            try {
+              analysis = JSON.parse(aiResponse);
+            } catch {
+              analysis = { themes: [], positives: [], negatives: [], actionItems: [], churnRisk: 'medium', summary: 'Unable to parse' };
+            }
+            
+            // Determine if positive or negative overall
+            const isPositive = rating >= 7 && sentiment === 'positive';
+            const isNegative = rating <= 4 || sentiment === 'negative' || analysis.churnRisk === 'high';
+            
+            return {
+              ...analysis,
+              isPositive,
+              isNegative,
+              isNeutral: !isPositive && !isNegative,
+              overallCategory: isPositive ? 'positive' : (isNegative ? 'negative' : 'neutral'),
+              needsFollowUp: isNegative || analysis.churnRisk !== 'low'
+            };
+          }
+
+  # Node 5: Store in Database
+  - id: store-response
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Store in DB
+      params:
+        collection: survey-responses
+        document: |
+          {
+            "responseId": "{{survey-trigger.result.responseId}}",
+            "surveyId": "{{survey-trigger.result.surveyId}}",
+            "customerEmail": "{{survey-trigger.result.customer.email}}",
+            "customerName": "{{survey-trigger.result.customer.name}}",
+            "product": "{{survey-trigger.result.productUsed}}",
+            "rating": {{survey-trigger.result.rating}},
+            "feedback": "{{survey-trigger.result.feedback}}",
+            "sentiment": "{{sentiment-analysis.sentiment}}",
+            "sentimentScore": {{sentiment-analysis.score}},
+            "analysis": {
+              "themes": {{parse-analysis.result.themes}},
+              "churnRisk": "{{parse-analysis.result.churnRisk}}",
+              "summary": "{{parse-analysis.result.summary}}"
+            },
+            "category": "{{parse-analysis.result.overallCategory}}",
+            "needsFollowUp": {{parse-analysis.result.needsFollowUp}},
+            "receivedAt": "{{survey-trigger.result.receivedAt}}",
+            "processedAt": "{{currentTime}}"
+          }
+
+  # Node 6: Check if Positive
+  - id: check-positive
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      label: Is Positive?
+      params:
+        value1: "{{parse-analysis.result.isPositive}}"
+        operator: equals
+        value2: "true"
+
+  # Node 7: Check if Negative
+  - id: check-negative
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      label: Is Negative?
+      params:
+        value1: "{{parse-analysis.result.isNegative}}"
+        operator: equals
+        value2: "true"
+
+  # Node 8: Positive Response - Notify Marketing Team
+  - id: notify-marketing
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Notify Marketing
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#customer-wins"
+        text: |
+          🎉 *Positive Survey Response!*
+          
+          *Customer:* {{survey-trigger.result.customer.name}}
+          *Product:* {{survey-trigger.result.productUsed}}
+          *Rating:* {{survey-trigger.result.rating}}/10 ⭐
+          
+          *Feedback:*
+          > {{survey-trigger.result.feedback}}
+          
+          *Highlights:* {{parse-analysis.result.positives}}
+          
+          _Consider for testimonial or case study!_
+      stopAfterIf:
+        expr: "{{check-positive.condition}} === false"
+        skipIfStopped: true
+
+  # Node 9: Negative Response - Alert Support Team
+  - id: alert-support
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Alert Support
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#customer-alerts"
+        text: |
+          🚨 *Negative Survey Response - Action Required*
+          
+          *Customer:* {{survey-trigger.result.customer.name}} ({{survey-trigger.result.customer.email}})
+          *Product:* {{survey-trigger.result.productUsed}}
+          *Rating:* {{survey-trigger.result.rating}}/10
+          *Churn Risk:* {{parse-analysis.result.churnRisk}}
+          
+          *Feedback:*
+          > {{survey-trigger.result.feedback}}
+          
+          *Issues Identified:* {{parse-analysis.result.negatives}}
+          
+          *Suggested Actions:*
+          {{parse-analysis.result.actionItems}}
+          
+          _Please follow up within 24 hours!_
+      stopAfterIf:
+        expr: "{{check-negative.condition}} === false"
+        skipIfStopped: true
+
+  # Node 10: Create Follow-up Task for Negative
+  - id: create-followup-task
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-tasks"
+      operation: createTask
+      label: Create Follow-up Task
+      params:
+        project: CS
+        title: "Follow up: Negative survey - {{survey-trigger.result.customer.name}}"
+        description: |
+          Customer {{survey-trigger.result.customer.name}} ({{survey-trigger.result.customer.email}}) submitted a negative survey response.
+          
+          Rating: {{survey-trigger.result.rating}}/10
+          Churn Risk: {{parse-analysis.result.churnRisk}}
+          
+          Feedback: {{survey-trigger.result.feedback}}
+          
+          Issues: {{parse-analysis.result.negatives}}
+          
+          Suggested Actions:
+          {{parse-analysis.result.actionItems}}
+        priority: high
+        dueDate: "+1d"
+        labels: ["survey-followup", "negative-feedback", "{{parse-analysis.result.churnRisk}}-churn-risk"]
+      credentials:
+        apiKey: "{{habits.env.TICKETING_API_KEY}}"
+      stopAfterIf:
+        expr: "{{check-negative.condition}} === false"
+        skipIfStopped: true
+
+  # Node 11: Neutral Response - Log Only
+  - id: notify-neutral
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Log Neutral
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#survey-logs"
+        text: |
+          📊 *Survey Response Logged*
+          
+          *Customer:* {{survey-trigger.result.customer.name}}
+          *Product:* {{survey-trigger.result.productUsed}}
+          *Rating:* {{survey-trigger.result.rating}}/10
+          *Category:* Neutral
+          
+          *Summary:* {{parse-analysis.result.summary}}
+      stopAfterIf:
+        expr: "{{parse-analysis.result.isNeutral}} === false"
+        skipIfStopped: true
+
+  # Node 12: Update Customer Record
+  - id: update-customer
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: store
+      label: Update Customer Record
+      params:
+        collection: customer-sentiment
+        key: "{{survey-trigger.result.customer.email}}"
+        value: |
+          {
+            "email": "{{survey-trigger.result.customer.email}}",
+            "name": "{{survey-trigger.result.customer.name}}",
+            "lastSurveyDate": "{{survey-trigger.result.receivedAt}}",
+            "lastRating": {{survey-trigger.result.rating}},
+            "lastSentiment": "{{parse-analysis.result.overallCategory}}",
+            "churnRisk": "{{parse-analysis.result.churnRisk}}",
+            "needsFollowUp": {{parse-analysis.result.needsFollowUp}}
+          }
+
+edges:
+  - source: survey-trigger
+    target: sentiment-analysis
+  - source: sentiment-analysis
+    target: ai-analysis
+  - source: ai-analysis
+    target: parse-analysis
+  - source: parse-analysis
+    target: store-response
+  - source: store-response
+    target: check-positive
+  - source: store-response
+    target: check-negative
+  - source: check-positive
+    target: notify-marketing
+  - source: check-negative
+    target: alert-support
+  - source: alert-support
+    target: create-followup-task
+  - source: notify-marketing
+    target: update-customer
+  - source: create-followup-task
+    target: update-customer
+  - source: check-negative
+    target: notify-neutral
+
+output:
+  responseId: "{{survey-trigger.result.responseId}}"
+  rating: "{{survey-trigger.result.rating}}"
+  sentiment: "{{sentiment-analysis.sentiment}}"
+  category: "{{parse-analysis.result.overallCategory}}"
+  churnRisk: "{{parse-analysis.result.churnRisk}}"
+  summary: "{{parse-analysis.result.summary}}"
+  needsFollowUp: "{{parse-analysis.result.needsFollowUp}}"

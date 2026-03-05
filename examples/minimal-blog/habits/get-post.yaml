@@ -1,0 +1,27 @@
+id: get-post
+name: Get Single Post
+description: Retrieve a single post by its ID
+
+input:
+  - id: postId
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: get
+      operation: get
+      params:
+        collection: "posts"
+        key: "{{habits.input.postId}}"
+
+edges: []
+
+output:
+  found: "{{fetch-post.found}}"
+  post: "{{fetch-post.value}}"

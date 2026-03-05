@@ -1,0 +1,29 @@
+{
+  "name": "@ha-bits/examples-runner",
+  "version": "1.0.0",
+  "description": "Interactive TUI for running and testing Habits examples",
+  "type": "module",
+  "main": "./src/tui.tsx",
+  "bin": {
+    "examples-runner": "./src/tui.tsx"
+  },
+  "scripts": {
+    "dev": "tsx src/tui.tsx",
+    "start": "tsx src/tui.tsx"
+  },
+  "keywords": ["habits", "tui", "examples", "runner", "ink"],
+  "author": "Codenteam",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ink": "^6.0.0",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0"
+  }
+}

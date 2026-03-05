@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Blog - Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --neon-cyan: #00f5ff;
+      --neon-magenta: #ff00ff;
+      --neon-purple: #b026ff;
+      --dark-bg: #0a0a0f;
+      --card-bg: rgba(15, 15, 25, 0.8);
+      --glass-border: rgba(0, 245, 255, 0.2);
+    }
+    
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark-bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #fff;
+    }
+    
+    /* Animated background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: 
+        radial-gradient(ellipse at 20% 80%, rgba(176, 38, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 245, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 0, 255, 0.05) 0%, transparent 70%);
+    }
+    
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-image: 
+        linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+    }
+    
+    @keyframes gridMove {
+      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+      100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+    }
+    
+    /* Header */
+    header {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 30px 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-magenta), transparent);
+      animation: headerGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes headerGlow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+    }
+    
+    header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--neon-cyan), #fff, var(--neon-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 4px;
+    }
+    
+    header p {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+    }
+    
+    nav {
+      margin-top: 25px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    nav a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 500;
+      font-size: 0.85rem;
+      padding: 12px 24px;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    nav a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    nav a:hover::before {
+      left: 100%;
+    }
+    
+    nav a:hover {
+      background: rgba(0, 245, 255, 0.1);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    nav a.active {
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.2), rgba(176, 38, 255, 0.2));
+      border-color: var(--neon-cyan);
+    }
+    
+    /* Posts Grid */
+    .posts {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    
+    .post-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+    
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .post-card:hover::before {
+      opacity: 1;
+    }
+    
+    .post-card:hover {
+      transform: translateX(10px);
+      border-color: rgba(0, 245, 255, 0.4);
+      box-shadow: 
+        0 0 40px rgba(0, 245, 255, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .post-card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    
+    .post-card h2 a {
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    
+    .post-card h2 a:hover {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px rgba(0, 245, 255, 0.5);
+    }
+    
+    .post-card .excerpt {
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.8;
+      margin-bottom: 20px;
+      font-size: 1.05rem;
+    }
+    
+    .post-card .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .post-card .meta::before {
+      content: '◆';
+      font-size: 8px;
+    }
+    
+    /* Loading & Empty States */
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .empty {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 60px;
+      text-align: center;
+    }
+    
+    .empty h3 {
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+    }
+    
+    .empty p {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .empty a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      border-bottom: 1px solid var(--neon-cyan);
+    }
+    
+    .error {
+      background: rgba(255, 50, 100, 0.1);
+      border: 1px solid rgba(255, 50, 100, 0.3);
+      border-radius: 16px;
+      padding: 30px;
+      color: #ff6b9d;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 1px;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--dark-bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"></div>
+  <div class="grid-overlay"></div>
+  
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">⬡</div>
+        <div>
+          <h1>MY BLOG</h1>
+          <p>Welcome to my blog</p>
+        </div>
+      </div>
+      <nav>
+        <a href="/" class="active">Home</a>
+        <a href="/contact.html">Contact</a>
+        <a href="/admin/">Admin</a>
+      </nav>
+    </header>
+    
+    <div id="posts-container" class="posts">
+      <div class="loading">Loading posts...</div>
+    </div>
+  </div>
+
+  <script>
+    async function loadPosts() {
+      const container = document.getElementById('posts-container');
+      
+      try {
+        const response = await fetch('/api/get-posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'error') {
+          container.innerHTML = `<div class="error">Error: ${data.error || 'Unknown error'}</div>`;
+          return;
+        }
+        
+        const posts = data.output?.posts || [];
+        
+        if (posts.length === 0) {
+          container.innerHTML = `
+            <div class="empty">
+              <h3>No Posts Yet</h3>
+              <p>Create your first post in the <a href="/admin/">admin panel</a></p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = posts.map((post, index) => `
+          <article class="post-card" style="animation: fadeIn 0.5s ease ${index * 0.1}s both">
+            <h2><a href="/post.html?id=${post._id || post.key}">${escapeHtml(post.title)}</a></h2>
+            <p class="excerpt">${escapeHtml(truncate(post.content, 200))}</p>
+            <div class="meta">${post._createdAt ? formatDate(post._createdAt) : 'Unknown date'}</div>
+          </article>
+        `).join('');
+        
+      } catch (error) {
+        container.innerHTML = `<div class="error">Connection failed: ${error.message}</div>`;
+      }
+    }
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    
+    function truncate(str, maxLength) {
+      if (!str) return '';
+      if (str.length <= maxLength) return str;
+      return str.substring(0, maxLength) + '...';
+    }
+    
+    function formatDate(dateStr) {
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }).toUpperCase();
+      } catch {
+        return dateStr;
+      }
+    }
+    
+    // Add fadeIn animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    loadPosts();
+  </script>
+</body>
+</html>

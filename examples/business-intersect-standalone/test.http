@@ -1,0 +1,19 @@
+# @host = http://localhost:11000
+@host = https://staging.staging.intersect.site
+@port = 13000
+
+@intersect_api_key={{$dotenv INTERSECT_API_KEY}}
+
+
+### Tunneled Through Intersect
+# @name streamExecuteProductLaunch
+POST {{host}}/habits/business/api/marketing-campaign?stream=true
+Content-Type: application/json
+Origin: {{host}}
+
+{
+  "prompt": "Launch campaign for a new eco-friendly water bottle"
+}
+
+?? status >= 200
+?? status < 300

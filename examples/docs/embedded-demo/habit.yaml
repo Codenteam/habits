@@ -1,0 +1,26 @@
+id: embedded-demo
+name: Embedded Demo
+nodes:
+  - id: start
+    type: bits
+    data:
+      framework: bits
+      isTrigger: true
+      label: Start
+  - id: process
+    type: bits
+    data:
+      framework: bits
+      label: Process
+  - id: end
+    type: bits
+    data:
+      framework: bits
+      label: End
+edges:
+  - id: e1
+    source: start
+    target: process
+  - id: e2
+    source: process
+    target: end

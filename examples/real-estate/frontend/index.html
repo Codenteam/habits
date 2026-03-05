@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Listing Generator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+        .subtitle { color: rgba(255,255,255,0.9); text-align: center; margin-bottom: 30px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card h2 { color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        input:focus, select:focus { outline: none; border-color: #4ca1af; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .image-upload {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-upload:hover { border-color: #4ca1af; background: #f8fffe; }
+        .image-upload input { display: none; }
+        .preview-image { max-width: 200px; max-height: 150px; border-radius: 8px; margin-top: 10px; }
+        button.submit {
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        button.submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(76, 161, 175, 0.4); }
+        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #4ca1af;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .results { display: none; }
+        .results.active { display: block; }
+        .result-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .result-tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .result-tab:hover { background: #e0e0e0; }
+        .result-tab.active { background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%); color: white; }
+        .result-content { display: none; }
+        .result-content.active { display: block; }
+        .content-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+        }
+        .content-box h3 { color: #4ca1af; margin-bottom: 15px; }
+        .content-box pre, .content-box p { white-space: pre-wrap; line-height: 1.7; color: #444; }
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background: #2c3e50;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        .highlights-list { list-style: none; }
+        .highlights-list li {
+            padding: 12px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-left: 4px solid #4ca1af;
+        }
+        .social-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .social-card h4 { color: #2c3e50; margin-bottom: 10px; }
+        .social-card p { color: #444; line-height: 1.6; }
+        
+        .listing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .listing-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .listing-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .listing-card-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            color: white;
+            padding: 15px;
+        }
+        .listing-card-body { padding: 15px; }
+        .listing-card .price { font-size: 1.3rem; font-weight: 700; }
+        .listing-card .details { font-size: 0.9rem; color: #666; margin-top: 5px; }
+        
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Real Estate Listing Generator</h1>
+        <p class="subtitle">Create professional property listings from photos</p>
+
+        <div class="card" id="create-section">
+            <h2>Property Details</h2>
+            <form id="listing-form">
+                <div class="form-group">
+                    <label>Property Photos</label>
+                    <div class="image-upload" id="dropzone">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">📷</div>
+                        <p>Drop property photos here or click to browse</p>
+                        <input type="file" id="imageFile" accept="image/*">
+                        <img id="preview" class="preview-image" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Or paste image URL</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/property.jpg">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Property Type *</label>
+                        <select id="propertyType" required>
+                            <option value="house">House</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="condo">Condo</option>
+                            <option value="townhouse">Townhouse</option>
+                            <option value="land">Land</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bedrooms</label>
+                        <select id="bedrooms">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bathrooms</label>
+                        <select id="bathrooms">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="1.5">1.5</option>
+                            <option value="2">2</option>
+                            <option value="2.5">2.5</option>
+                            <option value="3">3+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Square Feet</label>
+                        <input type="number" id="sqft" placeholder="2000">
+                    </div>
+                    <div class="form-group">
+                        <label>Price ($)</label>
+                        <input type="number" id="price" placeholder="450000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Address/Location</label>
+                    <input type="text" id="address" placeholder="123 Main St, City, State">
+                </div>
+
+                <div class="form-group">
+                    <label>Notable Features</label>
+                    <input type="text" id="features" placeholder="Pool, new kitchen, hardwood floors, etc.">
+                </div>
+
+                <button type="submit" class="submit" id="submitBtn">🏡 Generate Listing</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Creating your professional listing...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <button onclick="backToCreate()" style="margin-bottom: 20px; background: #6c757d; padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer;">← Create Another</button>
+
+                <div class="result-tabs">
+                    <button class="result-tab active" onclick="showResult('description')">Description</button>
+                    <button class="result-tab" onclick="showResult('highlights')">Highlights</button>
+                    <button class="result-tab" onclick="showResult('narration')">Tour Script</button>
+                    <button class="result-tab" onclick="showResult('social')">Social Media</button>
+                </div>
+
+                <div id="description-content" class="result-content active">
+                    <div class="content-box">
+                        <h3>Property Description</h3>
+                        <button class="copy-btn" onclick="copyContent('description-text')">Copy</button>
+                        <p id="description-text"></p>
+                    </div>
+                </div>
+
+                <div id="highlights-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Property Highlights</h3>
+                        <button class="copy-btn" onclick="copyContent('highlights-text')">Copy</button>
+                        <pre id="highlights-text"></pre>
+                    </div>
+                </div>
+
+                <div id="narration-content" class="result-content">
+                    <div class="content-box">
+                        <h3>Virtual Tour Script</h3>
+                        <button class="copy-btn" onclick="copyContent('narration-text')">Copy</button>
+                        <p id="narration-text"></p>
+                    </div>
+                </div>
+
+                <div id="social-content" class="result-content">
+                    <div id="social-posts"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="history-section">
+            <h2>Recent Listings</h2>
+            <div class="listing-grid" id="listing-grid">
+                <p style="color: #888; grid-column: 1/-1; text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let imageBase64 = null;
+
+        // File handling
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('imageFile');
+        const preview = document.getElementById('preview');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#4ca1af'; });
+        dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#ddd'; });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = '#ddd';
+            if (e.dataTransfer.files[0]?.type.startsWith('image/')) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageBase64 = e.target.result.split(',')[1];
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Form submission
+        document.getElementById('listing-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const imageUrl = document.getElementById('imageUrl').value;
+            if (!imageBase64 && !imageUrl) {
+                alert('Please upload a photo or provide a URL');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            
+            submitBtn.disabled = true;
+            loading.classList.add('active');
+            document.getElementById('create-section').style.display = 'none';
+            document.getElementById('history-section').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/generate-listing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        propertyType: document.getElementById('propertyType').value,
+                        bedrooms: document.getElementById('bedrooms').value || undefined,
+                        bathrooms: document.getElementById('bathrooms').value || undefined,
+                        sqft: document.getElementById('sqft').value || undefined,
+                        price: document.getElementById('price').value || undefined,
+                        address: document.getElementById('address').value,
+                        features: document.getElementById('features').value,
+                        imageUrls: imageUrl || undefined,
+                        imageBase64: imageBase64 || undefined
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+                loadHistory();
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('create-section').style.display = 'block';
+                document.getElementById('history-section').style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function parseJSON(data) {
+            if (typeof data === 'object') return data;
+            try {
+                return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+            } catch { return data; }
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            document.getElementById('description-text').textContent = data.description || '';
+            document.getElementById('highlights-text').textContent = data.highlights || '';
+            document.getElementById('narration-text').textContent = data.narration || '';
+
+            const social = parseJSON(data.socialPosts);
+            document.getElementById('social-posts').innerHTML = `
+                <div class="social-card">
+                    <h4>📸 Instagram</h4>
+                    <p>${social?.instagram || ''}</p>
+                </div>
+                <div class="social-card">
+                    <h4>📘 Facebook</h4>
+                    <p>${social?.facebook || ''}</p>
+                </div>
+                <div class="social-card">
+                    <h4>🐦 Twitter/X</h4>
+                    <p>${social?.twitter || ''}</p>
+                </div>
+            `;
+        }
+
+        function showResult(tab) {
+            document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.result-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="showResult('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
+
+        function copyContent(id) {
+            navigator.clipboard.writeText(document.getElementById(id).textContent);
+            alert('Copied!');
+        }
+
+        function backToCreate() {
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('create-section').style.display = 'block';
+            document.getElementById('history-section').style.display = 'block';
+        }
+
+        async function loadHistory() {
+            const grid = document.getElementById('listing-grid');
+            try {
+                const response = await fetch('/api/list-properties?limit=12');
+                const data = await response.json();
+                
+                if (data.listings?.length > 0) {
+                    grid.innerHTML = data.listings.map(l => `
+                        <div class="listing-card" onclick="viewListing('${l._id}')">
+                            <div class="listing-card-header">
+                                <div class="price">$${(l.price || 0).toLocaleString()}</div>
+                                <div class="details">${l.propertyType}</div>
+                            </div>
+                            <div class="listing-card-body">
+                                <div>${l.bedrooms || '-'} bed • ${l.bathrooms || '-'} bath • ${l.sqft || '-'} sqft</div>
+                                <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">${l.address || 'No address'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">No listings yet</p>';
+                }
+            } catch (error) {
+                grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">Error loading listings</p>';
+            }
+        }
+
+        async function viewListing(id) {
+            try {
+                const response = await fetch(`/api/get-property?id=${id}`);
+                const data = await response.json();
+                if (data.listing) {
+                    displayResults(data.listing);
+                }
+            } catch (error) {
+                alert('Error loading listing');
+            }
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+id: list-meetings
+name: List Meetings
+description: Get all saved meeting summaries
+
+input:
+  - id: limit
+    type: number
+    required: false
+    description: Maximum number of meetings to return
+
+nodes:
+  - id: query-meetings
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "meetings"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  meetings: "{{query-meetings.results}}"
+  count: "{{query-meetings.count}}"

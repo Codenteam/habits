@@ -1,0 +1,54 @@
+# Docker Compose for Habits Development
+# 
+# Services:
+#   - Verdaccio: Private npm registry (http://localhost:4873)
+#   - Greenmail: Test email server (SMTP: 3025, IMAP: 3143)
+#
+# Usage:
+#   docker compose up -d
+
+services:
+  verdaccio:
+    image: verdaccio/verdaccio:5
+    container_name: verdaccio
+    restart: unless-stopped
+    ports:
+      - "4873:4873"
+    environment:
+      VERDACCIO_PROTOCOL: http
+      VERDACCIO_PUBLIC_URL: http://localhost:4873
+    volumes:
+      # Use bind mount for storage to make data visible and persistent on host
+      - ./verdaccio-storage:/verdaccio/storage
+      - ./verdaccio-plugins:/verdaccio/plugins
+      - ./verdaccio-config.yaml:/verdaccio/conf/config.yaml:ro
+    # Run as root first to fix permissions, then verdaccio handles it
+    user: "10001:65533"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:4873/-/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  greenmail:
+    image: greenmail/standalone:2.0.1
+    container_name: greenmail
+    restart: unless-stopped
+    ports:
+      - "3025:3025"   # SMTP
+      - "3110:3110"   # POP3
+      - "3143:3143"   # IMAP
+      - "3465:3465"   # SMTPS
+      - "3993:3993"   # IMAPS
+      - "3995:3995"   # POP3S
+      - "8080:8080"   # Web API
+    environment:
+      GREENMAIL_OPTS: "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# Note: Verdaccio uses bind mounts for storage at ./verdaccio-storage/
+# This provides visible and persistent data on the host machine

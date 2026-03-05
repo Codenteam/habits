@@ -1,0 +1,43 @@
+# Tests for Minimal Blog Create Post
+# Workflow: habits/create-post.yaml - Creates blog posts with authentication
+workflow: ./habits/create-post.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully creates authenticated blog post"
+    trigger:
+      body:
+        title: "My First Blog Post"
+        content: "This is the content of my post"
+        status: "published"
+    context:
+      habits:
+        input:
+          title: "My First Blog Post"
+          content: "This is the content of my post"
+          status: "published"
+        cookies:
+          auth_token: "mock-jwt-token"
+        env:
+          JWT_SECRET: "test-secret"
+    mocks:
+      bits:
+        # Mock auth verification
+        - bit: "@ha-bits/bit-auth"
+          action: verify
+          response:
+            valid: true
+            payload:
+              username: "admin"
+              role: "admin"
+        # Mock database insert for post creation
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            success: true
+            id: "post123"
+            document:
+              title: "My First Blog Post"
+              content: "This is the content of my post"
+              status: "published"
+              author: "admin"

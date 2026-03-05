@@ -1,0 +1,27 @@
+id: get-bug
+name: Get Bug
+description: Get a single bug report
+
+input:
+  - id: bugId
+    type: string
+    required: true
+
+nodes:
+  - id: find-bug
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "bug_reports"
+        query:
+          id: "{{habits.input.bugId}}"
+
+edges: []
+
+output:
+  bug: "{{find-bug}}"

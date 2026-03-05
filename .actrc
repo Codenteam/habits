@@ -1,0 +1,7 @@
+-P ubuntu-latest=-self-hosted
+--secret-file .secrets
+--pull=false
+--action-offline-mode
+--env ACTIONS_CACHE_URL=http://localhost:33000/
+--env ACTIONS_RUNTIME_URL=http://localhost:33000/
+--env ACTIONS_RUNTIME_TOKEN=runtime-token-cache

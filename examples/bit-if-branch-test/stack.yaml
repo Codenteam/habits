@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "test-if-single-branch",
+      "path": "./test-if-single-branch.yaml",
+      "enabled": true,
+      "webhookTimeout": 30000
+    },
+    {
+      "id": "test-if-multi-branch",
+      "path": "./test-if-multi-branch.yaml",
+      "enabled": true,
+      "webhookTimeout": 30000
+    }
+  ],
+  "server": {
+    "port": 3001,
+    "host": "0.0.0.0",
+    "openapi": true
+  },
+  "defaults": {
+    "webhookTimeout": 30000
+  }
+}

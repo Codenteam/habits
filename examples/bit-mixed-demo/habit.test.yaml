@@ -1,0 +1,21 @@
+# Tests for Declarative Mixed Demo
+# Workflow: habit.yaml - Demonstrates script, bits module, and declarative bits
+workflow: ./habit.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully executes mixed node types"
+    trigger:
+      body: {}
+    mocks:
+      bits:
+        # Mock bit-string uppercase
+        - bit: "@ha-bits/bit-string"
+          action: uppercase
+          response:
+            result: "HELLO WORLD FROM HABITS"
+        # Mock HTTPBin UUID endpoint
+        - bit: "@ha-bits/bit-httpbin"
+          action: uuid
+          response:
+            uuid: "550e8400-e29b-41d4-a716-446655440000"

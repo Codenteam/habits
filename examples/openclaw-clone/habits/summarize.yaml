@@ -1,0 +1,48 @@
+id: summarize
+name: Summarize Content
+description: Use AI to summarize text content
+
+input:
+  - id: content
+    type: string
+    required: true
+  - id: style
+    type: string
+    required: false
+  - id: maxLength
+    type: number
+    required: false
+
+nodes:
+  - id: ai-summarize
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o"
+        systemMessage: |
+          You are a helpful assistant that summarizes content.
+          Style: {{habits.input.style}}
+          Max length hint: {{habits.input.maxLength}} words
+          
+          Provide a clear, concise summary of the given content.
+          Focus on key points and main ideas.
+        prompt: |
+          Please summarize the following content:
+          
+          {{habits.input.content}}
+        temperature: 0.3
+        maxTokens: 1024
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+
+edges: []
+
+output:
+  summary: "{{ai-summarize.text}}"

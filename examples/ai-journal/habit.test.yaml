@@ -1,0 +1,48 @@
+# Tests for AI Journal Entry Saver
+# Workflow: habits/save-entry.yaml - Saves and analyzes journal entries
+workflow: ./habits/save-entry.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully saves and analyzes journal entry"
+    trigger:
+      body:
+        content: "Today was a great day. I finished my project and felt accomplished!"
+        userId: "user123"
+    context:
+      habits:
+        input:
+          content: "Today was a great day. I finished my project and felt accomplished!"
+          userId: "user123"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock mood analysis
+        - bit: "openai"
+          action: chat
+          response:
+            moodScore: 8
+            primaryEmotion: "joy"
+            secondaryEmotions: ["satisfaction", "pride"]
+            energyLevel: "high"
+            stressIndicators: false
+        # Mock theme extraction
+        - bit: "openai"
+          action: chat
+          response:
+            themes: ["work", "achievement"]
+            topics: ["project completion"]
+            people: []
+            gratitudes: ["accomplishment"]
+            concerns: []
+        # Mock supportive response generation
+        - bit: "openai"
+          action: chat
+          response: "That's wonderful! Completing a project is a significant achievement. Your sense of accomplishment is well-deserved."
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

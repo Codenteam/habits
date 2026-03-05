@@ -1,0 +1,26 @@
+version: "1.0"
+
+workflows:
+  - id: generate-listing
+    path: ./habits/generate-listing.yaml
+    enabled: true
+
+  - id: list-properties
+    path: ./habits/list-properties.yaml
+    enabled: true
+
+  - id: get-property
+    path: ./habits/get-property.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

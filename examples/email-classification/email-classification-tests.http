@@ -1,0 +1,77 @@
+# Email Classification Tests
+# Tests both IMAP and HTTP Submission input paths
+#
+# Prerequisites:
+#   1. Start the server with:
+#      nohup npx nx dev @ha-bits/cortex --config examples/email-classification/stack.yaml &
+#   2. For IMAP tests, ensure Greenmail is running:
+#      docker run -d --name greenmail -p 3025:3025 -p 3110:3110 -p 3143:3143 greenmail/standalone
+#   3. Set OPENAI_API_KEY in env vars
+#
+# Run with httpyac:
+#   httpyac examples/email-classification/email-classification-tests.http --all
+
+@baseUrl = http://localhost:13000
+
+### Health Check
+# @name healthCheck
+GET {{baseUrl}}/misc/workflows
+
+### Test 1: HTTP Submission - Important Email
+# Tests the any-of bit passThrough with an important email via HTTP submission
+# @name submitImportantEmail
+POST {{baseUrl}}/api/email-classification-test
+Content-Type: application/json
+
+{
+  "submission": {
+    "from": "ceo@company.com",
+    "subject": "URGENT: Emergency board meeting",
+    "body": "All executives must attend the emergency board meeting today at 2 PM. Critical business decisions need to be made."
+  }
+}
+
+### Test 2: HTTP Submission - Semi-Important Email
+# Tests the any-of bit passThrough with a semi-important email
+# @name submitSemiImportantEmail
+POST {{baseUrl}}/api/email-classification-test
+Content-Type: application/json
+
+{
+  "submission": {
+    "from": "manager@company.com",
+    "subject": "Project Update - Q1 Roadmap",
+    "body": "Hi team, please review the attached Q1 roadmap and provide your feedback by Friday."
+  }
+}
+
+### Test 3: HTTP Submission - Not Important Email (Newsletter)
+# Tests the any-of bit passThrough with a newsletter (should be archived)
+# @name submitNotImportantEmail
+POST {{baseUrl}}/api/email-classification-test
+Content-Type: application/json
+
+{
+  "submission": {
+    "from": "newsletter@techweekly.com",
+    "subject": "Your Weekly Tech Digest",
+    "body": "Here's what's trending in tech this week: New AI breakthrough announced..."
+  }
+}
+
+### Test 4: Run workflow without submission (IMAP path)
+# Tests fallback to IMAP when no HTTP submission provided
+# Requires Greenmail to be running with test emails
+# @name runImapPath
+POST {{baseUrl}}/api/email-classification-test
+Content-Type: application/json
+
+{}
+
+### Get Workflow List
+# @name getWorkflows
+GET {{baseUrl}}/misc/workflows
+
+### Get Specific Workflow Config
+# @name getWorkflowConfig
+GET {{baseUrl}}/misc/workflow/email-classification-test

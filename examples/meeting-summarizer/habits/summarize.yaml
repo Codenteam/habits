@@ -1,0 +1,201 @@
+id: summarize
+name: Summarize Meeting
+description: Upload meeting recording, transcribe, extract action items, create summary
+
+input:
+  - id: audioUrl
+    type: string
+    required: false
+    description: URL to audio file (alternative to base64)
+  - id: audioBase64
+    type: string
+    required: false
+    description: Base64 encoded audio file
+  - id: attendees
+    type: string
+    required: false
+    description: Comma-separated list of attendees
+  - id: meetingTitle
+    type: string
+    required: false
+    description: Title of the meeting
+  - id: slackChannel
+    type: string
+    required: false
+    description: Slack channel to send summary (optional)
+
+nodes:
+  # Transcribe audio
+  - id: transcribe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: transcribe
+      operation: transcribe
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        audioUrl: "{{habits.input.audioUrl}}"
+        audioBase64: "{{habits.input.audioBase64}}"
+
+  # Extract summary
+  - id: extract-summary
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        prompt: |
+          Summarize this meeting transcript in 3-5 bullet points. Focus on the main topics discussed and key outcomes.
+          
+          Meeting: {{habits.input.meetingTitle}}
+          Attendees: {{habits.input.attendees}}
+          
+          Transcript:
+          {{transcribe}}
+
+  # Extract action items
+  - id: extract-actions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 1000
+        systemMessage: |
+          You are an expert at extracting action items from meeting transcripts.
+          Return a JSON array of action items, each with: task, assignee (if mentioned), deadline (if mentioned).
+          If no clear assignee, use "TBD". If no deadline, use "TBD".
+        prompt: |
+          Extract all action items from this meeting transcript:
+          
+          {{transcribe}}
+          
+          Return as JSON array: [{"task": "...", "assignee": "...", "deadline": "..."}]
+
+  # Extract key decisions
+  - id: extract-decisions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 500
+        prompt: |
+          List the key decisions made in this meeting. Return as a bullet-point list.
+          If no clear decisions were made, say "No formal decisions recorded."
+          
+          Transcript:
+          {{transcribe}}
+
+  # Format final report
+  - id: format-report
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 2000
+        prompt: |
+          Create a professional meeting summary report using this information:
+          
+          Meeting: {{habits.input.meetingTitle}}
+          Attendees: {{habits.input.attendees}}
+          
+          ## Summary
+          {{extract-summary}}
+          
+          ## Action Items
+          {{extract-actions}}
+          
+          ## Key Decisions
+          {{extract-decisions}}
+          
+          Format it nicely with markdown headers and bullet points.
+
+  # Save to database
+  - id: save-meeting
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "meetings"
+        document:
+          title: "{{habits.input.meetingTitle}}"
+          attendees: "{{habits.input.attendees}}"
+          transcript: "{{transcribe}}"
+          summary: "{{extract-summary}}"
+          actionItems: "{{extract-actions}}"
+          decisions: "{{extract-decisions}}"
+          report: "{{format-report}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: transcribe
+    target: extract-summary
+  - source: transcribe
+    target: extract-actions
+  - source: transcribe
+    target: extract-decisions
+  - source: extract-summary
+    target: format-report
+  - source: extract-actions
+    target: format-report
+  - source: extract-decisions
+    target: format-report
+  - source: format-report
+    target: save-meeting
+
+output:
+  meetingId: "{{save-meeting.id}}"
+  title: "{{habits.input.meetingTitle}}"
+  transcript: "{{transcribe}}"
+  summary: "{{extract-summary}}"
+  actionItems: "{{extract-actions}}"
+  decisions: "{{extract-decisions}}"
+  report: "{{format-report}}"

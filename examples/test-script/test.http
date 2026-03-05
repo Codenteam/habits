@@ -1,0 +1,34 @@
+@host = localhost
+@port = 3000
+
+
+### Health Check
+# @name healthCheck
+GET http://{{host}}:{{port}}/health
+
+?? status == 200
+
+
+### List all workflows
+# @name listWorkflows
+GET http://{{host}}:{{port}}/misc/workflows
+
+?? status == 200
+
+
+### Get workflow details
+# @name getWorkflowDetails
+GET http://{{host}}:{{port}}/misc/workflow/test-script-workflow
+
+?? status == 200
+
+
+### Execute Script Test Workflow
+# @name executeScriptWorkflow
+POST http://{{host}}:{{port}}/api/test-script-workflow
+Content-Type: application/json
+
+{}
+
+?? status >= 200
+?? status < 300

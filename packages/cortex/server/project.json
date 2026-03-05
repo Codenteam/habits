@@ -1,0 +1,144 @@
+{
+  "name": "@ha-bits/cortex",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/cortex/server/src",
+  "projectType": "application",
+  "tags": [
+    "scope:executor"
+  ],
+  "targets": {
+    "build": {
+      
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{workspaceRoot}/dist/packages/cortex"
+      ],
+      "options": {
+        "outputPath": "dist/packages/cortex/server",
+        "main": "packages/cortex/server/src/main.ts",
+        "outputFileName": "main.cjs",
+        "tsConfig": "packages/cortex/server/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": true,
+        "declaration": false,
+        "assets": [
+          {
+            "input": "packages/cortex/server",
+            "glob": "package.json",
+            "output": ".."
+          },
+          {
+            "input": "packages/cortex/server",
+            "glob": "README.md",
+            "output": ".."
+          }
+        ],
+        "esbuildOptions": {
+          "banner": {
+            "js": "#!/usr/bin/env node"
+          },
+          "external": [
+            "@activepieces/*"
+          ],
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build",
+        "@ha-bits/cortex-ui:build"
+      ]
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x dist/packages/cortex/pack/index.cjs",
+          "cd dist/packages/cortex && npm version patch --no-git-tag-version",
+          "cd dist/packages/cortex && npm publish"
+        ],
+        "parallel": false
+      },
+      "dependsOn": [
+        "pack"
+      ]
+    },
+
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsx watch packages/cortex/server/src/main.ts server --config {args.config}",
+        "cwd": "{workspaceRoot}",
+        "config": "examples/business-intersect-standalone/config.json"
+      }
+    },
+        
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./packages/cortex/server/exec {args.testName}",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/cortex/server/tsconfig.lib.json --noEmit"
+      }
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm ncc build dist/packages/cortex/server/main.cjs -o dist/packages/cortex/pack"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "build-lib": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{workspaceRoot}/dist/packages/cortex/lib"
+      ],
+      "options": {
+        "outputPath": "dist/packages/cortex/lib",
+        "main": "packages/cortex/server/src/index.ts",
+        "outputFileName": "index.cjs",
+        "tsConfig": "packages/cortex/server/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": false,
+        "declaration": false,
+        "esbuildOptions": {
+          "external": [
+            "@activepieces/*"
+          ],
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build",
+        "@ha-bits/cortex-ui:build"
+      ]
+    },
+    "lib-pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm ncc build dist/packages/cortex/lib/index.cjs -o dist/packages/cortex/lib-pack"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "build-lib"
+      ]
+    }
+  }
+}

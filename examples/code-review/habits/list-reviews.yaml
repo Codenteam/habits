@@ -1,0 +1,28 @@
+id: list-reviews
+name: List Reviews
+description: Get all code reviews
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-reviews
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "code_reviews"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  reviews: "{{query-reviews.results}}"
+  count: "{{query-reviews.count}}"

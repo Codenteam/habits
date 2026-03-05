@@ -1,0 +1,161 @@
+id: create-invoice
+name: Create Invoice
+description: Generate a professional invoice with AI-enhanced descriptions
+
+input:
+  - id: clientName
+    type: string
+    required: true
+    description: Client/customer name
+  - id: clientEmail
+    type: string
+    required: false
+    description: Client email
+  - id: clientAddress
+    type: string
+    required: false
+    description: Client address
+  - id: businessName
+    type: string
+    required: false
+    description: Your business name
+  - id: items
+    type: string
+    required: true
+    description: JSON array of items [{name, description, quantity, unitPrice}]
+  - id: taxRate
+    type: number
+    required: false
+    description: Tax rate percentage
+  - id: dueDate
+    type: string
+    required: false
+    description: Payment due date
+  - id: notes
+    type: string
+    required: false
+    description: Additional notes
+
+nodes:
+  # Enhance item descriptions
+  - id: enhance-items
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 600
+        prompt: |
+          Enhance these invoice line items with professional descriptions:
+          
+          Items: {{habits.input.items}}
+          
+          For each item:
+          1. Improve the description to be more professional and detailed
+          2. Ensure it clearly states what was delivered
+          3. Keep it concise but comprehensive
+          
+          Return JSON array with enhanced items:
+          [{"name": "", "description": "", "quantity": number, "unitPrice": number}]
+
+  # Calculate totals
+  - id: calculate-totals
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0
+        maxTokens: 200
+        prompt: |
+          Calculate invoice totals from these items:
+          {{enhance-items}}
+          
+          Tax Rate: {{habits.input.taxRate}}%
+          
+          Return JSON:
+          {
+            "subtotal": number,
+            "taxAmount": number,
+            "total": number
+          }
+
+  # Generate invoice number
+  - id: generate-number
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.9
+        maxTokens: 50
+        prompt: |
+          Generate a professional invoice number.
+          Format: INV-YYYYMMDD-XXXX where XXXX is random alphanumeric.
+          Current date: {{habits.now}}
+          
+          Return only the invoice number, nothing else.
+
+  # Save invoice
+  - id: save-invoice
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "invoices"
+        document:
+          invoiceNumber: "{{generate-number}}"
+          clientName: "{{habits.input.clientName}}"
+          clientEmail: "{{habits.input.clientEmail}}"
+          clientAddress: "{{habits.input.clientAddress}}"
+          businessName: "{{habits.input.businessName}}"
+          items: "{{enhance-items}}"
+          taxRate: "{{habits.input.taxRate}}"
+          totals: "{{calculate-totals}}"
+          dueDate: "{{habits.input.dueDate}}"
+          notes: "{{habits.input.notes}}"
+          status: "pending"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: enhance-items
+    target: calculate-totals
+  - source: calculate-totals
+    target: save-invoice
+  - source: generate-number
+    target: save-invoice
+
+output:
+  invoiceId: "{{save-invoice.id}}"
+  invoiceNumber: "{{generate-number}}"
+  items: "{{enhance-items}}"
+  totals: "{{calculate-totals}}"

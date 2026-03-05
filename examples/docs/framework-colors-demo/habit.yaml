@@ -1,0 +1,46 @@
+id: framework-colors-demo
+name: Framework Colors Demo
+nodes:
+  - id: n8n-trigger
+    type: bits
+    data:
+      framework: n8n
+      isTrigger: true
+      label: n8n Trigger
+  - id: n8n-action
+    type: bits
+    data:
+      framework: n8n
+      label: n8n Action
+  - id: ap-trigger
+    type: bits
+    data:
+      framework: activepieces
+      isTrigger: true
+      label: Activepieces Trigger
+  - id: ap-action
+    type: bits
+    data:
+      framework: activepieces
+      label: Activepieces Action
+  - id: bits-trigger
+    type: bits
+    data:
+      framework: bits
+      isTrigger: true
+      label: Bits Trigger
+  - id: bits-action
+    type: bits
+    data:
+      framework: bits
+      label: Bits Action
+edges:
+  - id: e1
+    source: n8n-trigger
+    target: n8n-action
+  - id: e2
+    source: ap-trigger
+    target: ap-action
+  - id: e3
+    source: bits-trigger
+    target: bits-action

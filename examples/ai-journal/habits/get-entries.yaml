@@ -1,0 +1,37 @@
+id: get-entries
+name: Get Journal Entries
+description: Get journal entries for a user
+
+input:
+  - id: userId
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+  - id: startDate
+    type: string
+    required: false
+  - id: endDate
+    type: string
+    required: false
+
+nodes:
+  - id: query-entries
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "journal_entries"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  entries: "{{query-entries.results}}"
+  count: "{{query-entries.count}}"

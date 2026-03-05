@@ -1,0 +1,109 @@
+id: submit-answers
+name: Submit Quiz Answers
+description: Submit answers and get graded results with feedback
+
+input:
+  - id: quizId
+    type: string
+    required: true
+    description: ID of the quiz
+  - id: answers
+    type: string
+    required: true
+    description: JSON array of answers [{questionId, answer}]
+  - id: userName
+    type: string
+    required: false
+    description: Name of quiz taker
+
+nodes:
+  # Fetch quiz data
+  - id: fetch-quiz
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "quizzes"
+        filter: '{"_id": "{{habits.input.quizId}}"}'
+
+  # Grade with AI for detailed feedback
+  - id: grade-and-feedback
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 2000
+        systemMessage: |
+          You are a helpful quiz grader. Provide encouraging, educational feedback.
+          Always return valid JSON.
+        prompt: |
+          Grade this quiz submission and provide detailed feedback.
+          
+          Quiz Content:
+          {{fetch-quiz.document.content}}
+          
+          User Answers:
+          {{habits.input.answers}}
+          
+          Return JSON with this structure:
+          {
+            "score": <number of correct answers>,
+            "total": <total questions>,
+            "percentage": <percentage score>,
+            "grade": "A/B/C/D/F",
+            "results": [
+              {
+                "questionId": 1,
+                "userAnswer": "user's answer",
+                "correctAnswer": "correct answer",
+                "isCorrect": true/false,
+                "feedback": "Explanation and learning point"
+              }
+            ],
+            "overallFeedback": "Encouraging summary with areas to improve",
+            "studyTips": ["Tip 1", "Tip 2"]
+          }
+          
+          Return ONLY the JSON object.
+
+  # Save results
+  - id: save-results
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "quiz_results"
+        document:
+          quizId: "{{habits.input.quizId}}"
+          userName: "{{habits.input.userName}}"
+          answers: "{{habits.input.answers}}"
+          results: "{{grade-and-feedback}}"
+          completedAt: "{{habits.now}}"
+
+edges:
+  - source: fetch-quiz
+    target: grade-and-feedback
+  - source: grade-and-feedback
+    target: save-results
+
+output:
+  resultId: "{{save-results.id}}"
+  results: "{{grade-and-feedback}}"

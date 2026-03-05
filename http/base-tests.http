@@ -1,0 +1,150 @@
+@host = http://localhost
+@port = 3000
+
+# =============================================================================
+# Base Mode API Tests
+# =============================================================================
+# 
+# This file tests all Base mode endpoints when running:
+#   npx habits base
+#   OR
+#   npx ./dist/packages/habits base (local testing)
+#
+# Run all tests:
+#   httpyac http/base-tests.http --all
+#
+# Run specific test:
+#   httpyac http/base-tests.http -n "Base UI Health"
+#
+# =============================================================================
+
+# =============================================================================
+# UI Health Checks
+# =============================================================================
+
+### Base UI Health - React SPA
+# @name baseUIHealth
+GET {{host}}:{{port}}/habits/base/
+
+?? status == 200
+
+### Base UI - Deep Route (SPA fallback)
+# @name baseUIDeepRoute
+GET {{host}}:{{port}}/habits/base/some/deep/route
+
+?? status == 200
+
+# =============================================================================
+# API Health Checks
+# =============================================================================
+
+### Base API Health
+# @name baseAPIHealth
+GET {{host}}:{{port}}/habits/base/api
+
+?? status == 200
+
+### Base API - Modules List
+# @name modulesListAPI
+GET {{host}}:{{port}}/habits/base/api/modules
+Content-Type: application/json
+
+?? status == 200
+
+# =============================================================================
+# Templates API - /templates/:templateName/{*filePath}
+# =============================================================================
+
+### Get mixed template - stack.yaml
+# @name mixedStackYaml
+GET {{host}}:{{port}}/habits/base/api/templates/mixed/stack.yaml
+Content-Type: application/json
+
+?? status == 200
+
+### Get business-intersect-standalone template - stack.yaml
+# @name businessStackYaml
+GET {{host}}:{{port}}/habits/base/api/templates/business-intersect-standalone/stack.yaml
+Content-Type: application/json
+
+?? status == 200
+
+### Get business-intersect-standalone template - habit.yaml
+# @name businessHabitYaml
+GET {{host}}:{{port}}/habits/base/api/templates/business-intersect-standalone/habit.yaml
+Content-Type: application/json
+
+?? status == 200
+
+### Test 404 - Non-existent template
+# @name template404
+GET {{host}}:{{port}}/habits/base/api/templates/non-existent-template/stack.yaml
+Content-Type: application/json
+
+?? status == 404
+
+### Test 404 - Non-existent file in existing template
+# @name templateFile404
+GET {{host}}:{{port}}/habits/base/api/templates/mixed/non-existent-file.yaml
+Content-Type: application/json
+
+?? status == 404
+
+# =============================================================================
+# Module Schema API
+# =============================================================================
+
+### Get module schema - Activepieces OpenAI
+# @name moduleSchemaOpenAI
+GET {{host}}:{{port}}/habits/base/api/modules/schema/activepieces/@activepieces%2Fpiece-openai
+Content-Type: application/json
+
+?? status == 200
+
+### Check module availability - Activepieces OpenAI
+# @name moduleCheckOpenAI
+GET {{host}}:{{port}}/habits/base/api/modules/check/activepieces/@activepieces%2Fpiece-openai
+Content-Type: application/json
+
+?? status == 200
+
+# =============================================================================
+# Module Execution API
+# =============================================================================
+
+### Execute module - n8n Chatwoot (example)
+# @name executeModule
+POST {{host}}:{{port}}/habits/base/api/execute
+Content-Type: application/json
+
+{
+  "module": "n8n/n8n-nodes-chatwoot",
+  "params": {
+    "resource": "contact",
+    "operation": "getAll",
+    "accountId": "1",
+    "credentials": {
+      "url": "https://app.chatwoot.com",
+      "accessToken": "test"
+    }
+  }
+}
+
+# =============================================================================
+# Forms API - Dynamic Options
+# =============================================================================
+
+### Populate form options
+# @name populateOptions
+POST {{host}}:{{port}}/habits/base/api/forms/populate-options
+Content-Type: application/json
+
+{
+  "framework": "activepieces",
+  "moduleId": "@activepieces/piece-openai",
+  "actionName": "generate_image",
+  "fieldName": "resolution",
+  "currentValues": {
+    "model": "dall-e-2"
+  }
+}

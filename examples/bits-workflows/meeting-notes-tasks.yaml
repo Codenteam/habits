@@ -1,0 +1,162 @@
+id: meeting-notes-tasks
+name: Meeting Notes to Tasks
+description: Extract action items from meeting transcripts and create tasks in project management system
+
+nodes:
+  # Node 1: Webhook Input - Meeting transcript
+  - id: transcript-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Webhook Transcript Input
+      params:
+        transcript: "{{habits.input.transcript}}"
+        meetingTitle: "{{habits.input.meetingTitle}}"
+        attendees: "{{habits.input.attendees}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(transcript: string, meetingTitle: string, attendees: string) {
+            console.log("📝 Processing meeting:", meetingTitle);
+            return {
+              transcript,
+              meetingTitle,
+              attendees: attendees ? attendees.split(',').map((a: string) => a.trim()) : [],
+              processedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Text Cleanup - Clean up transcript
+  - id: cleanup-text
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: cleanup
+      label: Text Cleanup
+      params:
+        text: "{{transcript-input.result.transcript}}"
+        trimLines: true
+        collapseWhitespace: true
+        removeEmptyLines: true
+
+  # Node 3: AI Task Extraction - Extract action items
+  - id: extract-tasks
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Task Extractor
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a task extraction specialist. Analyze meeting transcripts and extract clear, actionable tasks.
+          
+          For each task, identify:
+          - title: Clear, concise task title
+          - description: Brief description with context
+          - assignee: Person responsible (if mentioned in attendees)
+          - priority: high, medium, or low based on urgency
+          - dueDate: Relative due date if mentioned (e.g., "+7d" for next week)
+          
+          Meeting Attendees: {{transcript-input.result.attendees}}
+          
+          Respond with JSON array:
+          [{"title": "...", "description": "...", "assignee": "...", "priority": "...", "dueDate": "..."}]
+        userMessage: |
+          Meeting: {{transcript-input.result.meetingTitle}}
+          
+          Transcript:
+          {{cleanup-text.result}}
+        temperature: 0.3
+        maxTokens: 1000
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 4: Parse extracted tasks
+  - id: parse-tasks
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Parse Task JSON
+      params:
+        tasksJson: "{{extract-tasks.content}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(tasksJson: string) {
+            try {
+              // Try to parse JSON from the response
+              let jsonStr = tasksJson;
+              
+              // Extract JSON if wrapped in markdown code blocks
+              const jsonMatch = tasksJson.match(/```(?:json)?\s*([\s\S]*?)```/);
+              if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+              }
+              
+              const tasks = JSON.parse(jsonStr);
+              console.log(`📋 Extracted ${tasks.length} tasks`);
+              return { tasks, count: tasks.length };
+            } catch (error) {
+              console.error("Failed to parse tasks:", error);
+              return { tasks: [], count: 0, error: String(error) };
+            }
+          }
+
+  # Node 5: Create Tasks in Bulk
+  - id: create-tasks
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-tasks"
+      operation: createBulkTasks
+      label: Create Jira/Asana Tasks
+      params:
+        tasks: "{{parse-tasks.result.tasks}}"
+        project: "{{habits.env.PROJECT_KEY}}"
+
+  # Node 6: Summary notification
+  - id: notify-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Notify Team
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#team-updates"
+        text: |
+          📋 *Meeting Action Items Created*
+          
+          *Meeting:* {{transcript-input.result.meetingTitle}}
+          *Tasks Created:* {{create-tasks.count}}
+          
+          Created tasks from meeting notes. Check your project board for assignments.
+
+edges:
+  - source: transcript-input
+    target: cleanup-text
+  - source: cleanup-text
+    target: extract-tasks
+  - source: extract-tasks
+    target: parse-tasks
+  - source: parse-tasks
+    target: create-tasks
+  - source: create-tasks
+    target: notify-summary
+
+output:
+  meeting: "{{transcript-input.result.meetingTitle}}"
+  tasksExtracted: "{{parse-tasks.result.count}}"
+  tasksCreated: "{{create-tasks.count}}"
+  tasks: "{{create-tasks.tasks}}"

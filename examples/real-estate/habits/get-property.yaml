@@ -1,0 +1,27 @@
+id: get-property
+name: Get Property
+description: Get a specific property listing
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-listing
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "listings"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  listing: "{{fetch-listing.document}}"
+  found: "{{fetch-listing.found}}"

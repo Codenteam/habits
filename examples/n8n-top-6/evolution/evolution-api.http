@@ -1,0 +1,254 @@
+###############################################################################
+# Evolution API Tests
+#
+# Prerequisites:
+# 1. Run Evolution API:
+#    docker compose -f examples/n8n-top-6/evolution/docker-compose.yml up -d
+#
+# 2. Update .env with your phone number and instance name
+# 3. For Twilio WhatsApp Business, fill in HABITS_TWILIO_* credentials
+
+
+###############################################################################
+@baseUrl = {{$dotenv HABITS_EVOLUTION_API_URL}}
+@apiKey = {{$dotenv HABITS_EVOLUTION_API_KEY}}
+@instanceName = {{$dotenv HABITS_EVOLUTION_INSTANCE_NAME}}
+@phoneNumber = {{$dotenv HABITS_EVOLUTION_PHONE_NUMBER}}
+
+# Twilio Credentials
+@twilioAccountSid = {{$dotenv HABITS_TWILIO_ACCOUNT_SID}}
+@twilioAuthToken = {{$dotenv HABITS_TWILIO_AUTH_TOKEN}}
+@twilioWhatsAppNumber = {{$dotenv HABITS_TWILIO_WHATSAPP_NUMBER}}
+@twilioToWhatsAppNumber = {{$dotenv HABITS_TWILIO_TO_WHATSAPP_NUMBER}}
+
+
+###############################################################################
+# Health Check
+
+
+###############################################################################
+
+
+### Check API Status
+# @name checkApiStatus
+GET {{baseUrl}}
+
+?? status == 200
+?? body status == 200
+?? body message == Welcome to the Evolution API, it is working!
+
+
+###############################################################################
+# Instance Management
+
+
+###############################################################################
+
+
+### Fetch All Instances
+# @name fetchInstances
+GET {{baseUrl}}/instance/fetchInstances
+apikey: {{apiKey}}
+
+?? status == 200
+
+
+### Create Whatsapp instance business
+# @name createInstanceBusiness
+# Note: WHATSAPP-BUSINESS integration has a bug in Evolution API v2.2.3
+# The request format is correct but may fail with "integrationSession.update" error
+# If it fails, try using WHATSAPP-BAILEYS instead or upgrade Evolution API OR MANUALLY INCREASE DATABASE TOKEN SIZE TO 1000 instead of 255 "ALTER TABLE \"Instance\" ALTER COLUMN \"token\" TYPE VARCHAR(1000);"
+POST {{baseUrl}}/instance/create
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "instanceName": "business1",
+  "token": "{{$dotenv HABITS_META_WHATSAPP_ACCESS_TOKEN}}",
+  "number": "{{$dotenv HABITS_META_WHATSAPP_PHONE_NUMBER_ID}}",
+  "businessId": "{{$dotenv HABITS_META_WHATSAPP_BUSINESS_ACCOUNT_ID}}",
+  "qrcode": false,
+  "integration": "WHATSAPP-BUSINESS"
+}
+
+?? status == 201
+
+
+### Create WhatsApp Instance BAILEYS
+# @name createInstance
+POST {{baseUrl}}/instance/create
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "instanceName": "{{instanceName}}",
+  "integration": "WHATSAPP-BAILEYS",
+  "qrcode": true,
+  "reject_call": false,
+  "always_online": false,
+  "read_messages": false,
+  "read_status": false,
+  "groups_ignore": false
+}
+
+?? status == 201
+
+
+### Get Instance Connection State
+# @name getConnectionState
+GET {{baseUrl}}/instance/connectionState/{{instanceName}}
+apikey: {{apiKey}}
+
+?? status == 200
+
+
+### Get Instance QR Code (for pairing)
+# @name getQrCode
+GET {{baseUrl}}/instance/connect/{{instanceName}}
+apikey: {{apiKey}}
+
+?? status == 200
+
+
+### Logout Instance
+# @name logoutInstance
+DELETE {{baseUrl}}/instance/logout/{{instanceName}}
+apikey: {{apiKey}}
+
+?? status == 200
+
+
+### Delete Instance
+# @name deleteInstance
+DELETE {{baseUrl}}/instance/delete/{{instanceName}}
+apikey: {{apiKey}}
+
+?? status == 200
+
+
+###############################################################################
+# Messaging
+
+
+###############################################################################
+
+
+### Send Text Message
+# @name sendTextMessage
+# Note: Instance must be connected (paired with WhatsApp) before sending messages
+POST {{baseUrl}}/message/sendText/{{instanceName}}
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "number": "{{phoneNumber}}",
+  "text": "Hello from Evolution API! This is a test message."
+}
+
+?? status == 201
+
+
+### Send Text Message with Options
+# @name sendTextMessageWithOptions
+POST {{baseUrl}}/message/sendText/{{instanceName}}
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "number": "{{phoneNumber}}",
+  "text": "Hello! This message was sent with delay and link preview disabled.",
+  "options": {
+    "delay": 1200,
+    "linkPreview": false
+  }
+}
+
+?? status == 201
+
+
+### Send Media Message (Image URL)
+# @name sendMediaMessage
+POST {{baseUrl}}/message/sendMedia/{{instanceName}}
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "number": "{{phoneNumber}}",
+  "mediatype": "image",
+  "media": "https://via.placeholder.com/300x200.png",
+  "caption": "Test image from Evolution API"
+}
+
+?? status == 201
+
+
+###############################################################################
+# Contacts
+
+
+###############################################################################
+
+
+### Check if Number is on WhatsApp
+# @name checkNumberOnWhatsApp
+POST {{baseUrl}}/chat/whatsappNumbers/{{instanceName}}
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "numbers": ["{{phoneNumber}}"]
+}
+
+?? status == 200
+
+
+### Get Profile Picture
+# @name getProfilePicture
+POST {{baseUrl}}/chat/fetchProfilePictureUrl/{{instanceName}}
+Content-Type: application/json
+apikey: {{apiKey}}
+
+{
+  "number": "{{phoneNumber}}"
+}
+
+?? status == 200
+
+
+###############################################################################
+# Twilio WhatsApp Integration
+# Note: Requires valid HABITS_TWILIO_* credentials in .env
+# Get your credentials from: https://console.twilio.com/
+
+
+###############################################################################
+
+
+### Twilio - Send WhatsApp Message
+# @name twilioSendWhatsApp
+# Note: The "from" number must be your Twilio WhatsApp Sandbox number or Business number
+POST https://api.twilio.com/2010-04-01/Accounts/{{twilioAccountSid}}/Messages.json
+Authorization: Basic {{twilioAccountSid}}:{{twilioAuthToken}}
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:{{twilioWhatsAppNumber}}&To=whatsapp:{{twilioToWhatsAppNumber}}&Body=Hello from Evolution API via Twilio!
+
+?? status == 201
+
+
+### Twilio - Get Account Info
+# @name twilioGetAccount
+GET https://api.twilio.com/2010-04-01/Accounts/{{twilioAccountSid}}.json
+Authorization: Basic {{twilioAccountSid}}:{{twilioAuthToken}}
+
+?? status == 200
+
+
+### Twilio - List Messages
+# @name twilioListMessages
+GET https://api.twilio.com/2010-04-01/Accounts/{{twilioAccountSid}}/Messages.json?PageSize=5
+Authorization: Basic {{twilioAccountSid}}:{{twilioAuthToken}}
+
+?? status == 200
+
+?? status == 200

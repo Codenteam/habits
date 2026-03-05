@@ -1,0 +1,123 @@
+id: habit-bits
+name: Habit Bits Demo
+description: A habit demonstrating if conditions, loops, and string utilities using @ha-bits modules
+
+# This habit demonstrates using @ha-bits modules for:
+# 1. String utils (@ha-bits/bit-string) - Transform text to uppercase
+# 2. If condition (@ha-bits/bit-if) - Check conditions
+# 3. Loop (@ha-bits/bit-loop) - Split text into array
+
+nodes:
+  # Node 1: Create test data using script (setup node)
+  - id: create-data
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Create Test Data
+      params:
+        type: script
+        language: deno
+        script: |
+          export async function main() {
+            console.log("📝 Creating test data for bits demo");
+            
+            return {
+              name: "hello world from bits",
+              items: "red,green,blue,yellow",
+              count: 4,
+              isValid: true
+            };
+          }
+
+  # Node 2: Transform name to uppercase using @ha-bits/bit-string
+  - id: uppercase-name
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-string"
+      operation: uppercase
+      params:
+        text: "{{create-data.result.name}}"
+
+  # Node 3: Check if count > 0 using @ha-bits/bit-if
+  - id: check-count
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      params:
+        value1: "{{create-data.result.count}}"
+        operator: greaterThan
+        value2: "0"
+
+  # Node 4: Split items string using @ha-bits/bit-loop
+  - id: split-items
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: splitText
+      params:
+        text: "{{create-data.result.items}}"
+        separator: ","
+
+  # Node 5: Summary combining all bit results
+  - id: summary
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Generate Summary
+      params:
+        uppercaseResult: "{{uppercase-name}}"
+        conditionResult: "{{check-count}}"
+        splitResult: "{{split-items}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(uppercaseResult: any, conditionResult: any, splitResult: any) {
+            console.log("📊 Generating bits demo summary");
+            
+            return {
+              stringBit: {
+                original: uppercaseResult?.original,
+                uppercase: uppercaseResult?.result
+              },
+              ifBit: {
+                passed: conditionResult?.condition,
+                operator: conditionResult?.operator,
+                branch: conditionResult?.branch
+              },
+              loopBit: {
+                items: splitResult?.parts,
+                count: splitResult?.count
+              },
+              processedAt: new Date().toISOString(),
+              message: "Successfully executed all @ha-bits modules!"
+            };
+          }
+
+edges:
+  - source: create-data
+    target: uppercase-name
+  - source: create-data
+    target: check-count
+  - source: create-data
+    target: split-items
+  - source: uppercase-name
+    target: summary
+  - source: check-count
+    target: summary
+  - source: split-items
+    target: summary
+
+output:
+  summary: "{{summary.result}}"
+  uppercase: "{{uppercase-name}}"
+  condition: "{{check-count}}"
+  split: "{{split-items}}"

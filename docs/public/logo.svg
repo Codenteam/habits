@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Brain shape -->
+  <path 
+    d="M32 8 C18 8, 8 20, 8 32 C8 44, 18 56, 32 56 C46 56, 56 44, 56 32 C56 20, 46 8, 32 8"
+    stroke="#8b5cf6" 
+    stroke-width="3" 
+    fill="none"
+  />
+  
+  <!-- Brain divide -->
+  <path d="M32 12 L32 52" stroke="#8b5cf6" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Brain folds - left -->
+  <path d="M16 26 Q24 20, 30 26" stroke="#8b5cf6" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M14 38 Q22 32, 30 38" stroke="#8b5cf6" stroke-width="2" fill="none" opacity="0.7"/>
+  
+  <!-- Brain folds - right -->
+  <path d="M34 26 Q40 20, 48 26" stroke="#8b5cf6" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M34 38 Q42 32, 50 38" stroke="#8b5cf6" stroke-width="2" fill="none" opacity="0.7"/>
+</svg>

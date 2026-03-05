@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "mixed-framework-workflow",
+      "path": "./workflow.json",
+      "enabled": true
+    }
+  ],
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0"
+  }
+}

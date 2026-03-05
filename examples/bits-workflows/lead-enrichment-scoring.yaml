@@ -1,0 +1,265 @@
+id: lead-enrichment-scoring
+name: Lead Enrichment & Scoring
+description: Enrich lead data from third-party APIs, calculate engagement score, and update CRM
+
+nodes:
+  # Node 1: Form submission trigger
+  - id: form-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Form Submission Trigger
+      params:
+        email: "{{habits.input.email}}"
+        name: "{{habits.input.name}}"
+        company: "{{habits.input.company}}"
+        phone: "{{habits.input.phone}}"
+        source: "{{habits.input.source}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(email: string, name: string, company: string, phone: string, source: string) {
+            console.log("📝 New lead submission:", email);
+            const [firstName, ...lastNameParts] = (name || '').split(' ');
+            return {
+              email,
+              firstName: firstName || '',
+              lastName: lastNameParts.join(' ') || '',
+              company: company || '',
+              phone: phone || '',
+              source: source || 'website',
+              submittedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Create Lead in CRM
+  - id: create-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: createLead
+      label: CRM Lead Create
+      params:
+        email: "{{form-input.result.email}}"
+        firstName: "{{form-input.result.firstName}}"
+        lastName: "{{form-input.result.lastName}}"
+        company: "{{form-input.result.company}}"
+        phone: "{{form-input.result.phone}}"
+        source: "{{form-input.result.source}}"
+        status: new
+
+  # Node 3: Enrich via Clearbit-style API (using HTTP)
+  - id: enrich-company
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Third-Party Enrichment API
+      params:
+        url: "{{habits.env.ENRICHMENT_API_URL}}/company"
+        queryParams: |
+          {
+            "domain": "{{form-input.result.company}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.ENRICHMENT_API_KEY}}"
+          }
+
+  # Node 4: Enrich person data
+  - id: enrich-person
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Enrich Person Data
+      params:
+        url: "{{habits.env.ENRICHMENT_API_URL}}/person"
+        queryParams: |
+          {
+            "email": "{{form-input.result.email}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.ENRICHMENT_API_KEY}}"
+          }
+
+  # Node 5: Calculate Lead Score
+  - id: calculate-score
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Score Calculation
+      params:
+        leadData: "{{form-input.result}}"
+        companyData: "{{enrich-company.body}}"
+        personData: "{{enrich-person.body}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(leadData: any, companyData: any, personData: any) {
+            let score = 0;
+            const scoreBreakdown: any[] = [];
+            
+            // Company size scoring
+            const employees = companyData?.employees || companyData?.employeeCount || 0;
+            if (employees > 1000) {
+              score += 30;
+              scoreBreakdown.push({ factor: "Large company (1000+)", points: 30 });
+            } else if (employees > 100) {
+              score += 20;
+              scoreBreakdown.push({ factor: "Medium company (100-1000)", points: 20 });
+            } else if (employees > 10) {
+              score += 10;
+              scoreBreakdown.push({ factor: "Small company (10-100)", points: 10 });
+            }
+            
+            // Industry scoring
+            const targetIndustries = ['technology', 'software', 'finance', 'healthcare'];
+            const industry = (companyData?.industry || '').toLowerCase();
+            if (targetIndustries.some(i => industry.includes(i))) {
+              score += 20;
+              scoreBreakdown.push({ factor: "Target industry", points: 20 });
+            }
+            
+            // Title/role scoring
+            const title = (personData?.title || '').toLowerCase();
+            if (title.includes('ceo') || title.includes('founder') || title.includes('owner')) {
+              score += 25;
+              scoreBreakdown.push({ factor: "Executive role", points: 25 });
+            } else if (title.includes('director') || title.includes('vp') || title.includes('head')) {
+              score += 20;
+              scoreBreakdown.push({ factor: "Director/VP role", points: 20 });
+            } else if (title.includes('manager')) {
+              score += 10;
+              scoreBreakdown.push({ factor: "Manager role", points: 10 });
+            }
+            
+            // Email domain scoring (not free email)
+            const freeEmails = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
+            const domain = leadData.email.split('@')[1];
+            if (!freeEmails.includes(domain)) {
+              score += 15;
+              scoreBreakdown.push({ factor: "Business email", points: 15 });
+            }
+            
+            // Phone number provided
+            if (leadData.phone) {
+              score += 10;
+              scoreBreakdown.push({ factor: "Phone provided", points: 10 });
+            }
+            
+            const tier = score >= 70 ? 'hot' : score >= 40 ? 'warm' : 'cold';
+            
+            console.log(`📊 Lead score: ${score} (${tier})`);
+            
+            return {
+              score,
+              tier,
+              maxScore: 100,
+              breakdown: scoreBreakdown,
+              enrichedData: {
+                company: companyData,
+                person: personData
+              }
+            };
+          }
+
+  # Node 6: Update Lead with Enrichment and Score
+  - id: update-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: updateLead
+      label: CRM Update with Score
+      params:
+        leadId: "{{create-lead.lead.id}}"
+        updates: |
+          {
+            "score": {{calculate-score.result.score}},
+            "customFields": {
+              "tier": "{{calculate-score.result.tier}}",
+              "enrichmentData": {{calculate-score.result.enrichedData}},
+              "scoreBreakdown": {{calculate-score.result.breakdown}}
+            }
+          }
+
+  # Node 7: Assign based on score
+  - id: auto-assign
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: assignLead
+      label: Auto-Assign Lead
+      params:
+        leadId: "{{create-lead.lead.id}}"
+        assigneeId: "{{habits.env.HOT_LEAD_OWNER}}"
+      stopAfterIf:
+        expr: "{{calculate-score.result.tier}} !== 'hot'"
+        skipIfStopped: true
+
+  # Node 8: Notify sales of hot lead
+  - id: notify-hot-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Hot Lead Alert
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#sales-alerts"
+        text: |
+          🔥 *Hot Lead Alert!*
+          
+          *Name:* {{form-input.result.firstName}} {{form-input.result.lastName}}
+          *Email:* {{form-input.result.email}}
+          *Company:* {{form-input.result.company}}
+          *Score:* {{calculate-score.result.score}}/100 ({{calculate-score.result.tier}})
+          
+          *Score Breakdown:*
+          {{calculate-score.result.breakdown}}
+          
+          _Follow up immediately!_
+      stopAfterIf:
+        expr: "{{calculate-score.result.tier}} !== 'hot'"
+        skipIfStopped: true
+
+edges:
+  - source: form-input
+    target: create-lead
+  - source: create-lead
+    target: enrich-company
+  - source: create-lead
+    target: enrich-person
+  - source: enrich-company
+    target: calculate-score
+  - source: enrich-person
+    target: calculate-score
+  - source: calculate-score
+    target: update-lead
+  - source: update-lead
+    target: auto-assign
+  - source: auto-assign
+    target: notify-hot-lead
+
+output:
+  leadId: "{{create-lead.lead.id}}"
+  email: "{{form-input.result.email}}"
+  score: "{{calculate-score.result.score}}"
+  tier: "{{calculate-score.result.tier}}"
+  enrichedLead: "{{update-lead.lead}}"

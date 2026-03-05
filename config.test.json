@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "http-to-text-test",
+      "path": "./exports/HTTP-to-Text-Processing-Workflow-workflow.json",
+      "enabled": true,
+      "webhookTimeout": 30000
+    },
+    {
+      "id": "n8n-webhook-to-text-test",
+      "path": "./exports/n8n-webhook-to-text-workflow.json",
+      "enabled": true,
+      "webhookTimeout": 30000
+    }
+  ],
+  "server": {
+    "port": 13000,
+    "host": "0.0.0.0",
+    "webhookPort": 3099,
+    "webhookHost": "0.0.0.0"
+  },
+  "defaults": {
+    "webhookTimeout": 30000
+  }
+}

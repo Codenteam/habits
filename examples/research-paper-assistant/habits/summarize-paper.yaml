@@ -1,0 +1,66 @@
+id: summarize-paper
+name: Summarize Paper
+description: Generate comprehensive paper summary
+
+input:
+  - id: paperContent
+    type: string
+    required: true
+  - id: title
+    type: string
+    required: false
+  - id: summaryType
+    type: string
+    required: false
+    description: executive, technical, layperson
+
+nodes:
+  - id: generate-summary
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 1500
+        prompt: |
+          Summarize this research paper for {{habits.input.summaryType}} audience.
+          
+          Title: {{habits.input.title}}
+          Content: {{habits.input.paperContent}}
+          
+          Provide:
+          
+          1. ONE-SENTENCE SUMMARY
+          The main point in one sentence.
+          
+          2. ABSTRACT-STYLE SUMMARY (150 words)
+          Background, methods, results, conclusion format.
+          
+          3. BULLET POINT SUMMARY
+          - 5-7 key takeaways
+          
+          4. SECTION BREAKDOWN
+          Brief summary of each major section if identifiable.
+          
+          5. KEY TERMS GLOSSARY
+          Important technical terms with definitions.
+          
+          6. SO WHAT?
+          Why does this research matter? Who should care?
+          
+          7. TWEET-LENGTH SUMMARY
+          The paper in 280 characters or less.
+
+edges: []
+
+output:
+  summary: "{{generate-summary}}"

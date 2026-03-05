@@ -1,0 +1,39 @@
+{
+  "name": "@ha-bits/base-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/base/ui/src",
+  "projectType": "application",
+  "tags": [
+    "scope:builder",
+    "type:ui"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+      "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/base/ui",
+        "root": "packages/base/ui"
+      },
+      "dependsOn": [
+        "@ha-bits/workflow-canvas:build",
+        "@ha-bits/frontend-builder:typecheck"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @ha-bits/base run dev",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/base/ui/tsconfig.json --noEmit"
+      }
+    }
+  }
+}

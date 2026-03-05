@@ -1,0 +1,62 @@
+id: curate-content
+name: Curate Content
+description: Curate and summarize content for newsletter
+
+input:
+  - id: contentUrls
+    type: array
+    required: false
+    description: URLs of articles to curate
+  - id: rawContent
+    type: string
+    required: false
+    description: Raw content to process
+  - id: topic
+    type: string
+    required: true
+    description: Topic filter
+
+nodes:
+  - id: curate-analyze
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 1000
+        prompt: |
+          Analyze and curate this content for a newsletter about: {{habits.input.topic}}
+          
+          Content/URLs: {{habits.input.contentUrls}}
+          Additional content: {{habits.input.rawContent}}
+          
+          Return JSON:
+          {
+            "curatedItems": [
+              {
+                "title": "Article/Content title",
+                "source": "Source name",
+                "summary": "Concise summary (2-3 sentences)",
+                "relevance": "high/medium/low",
+                "keyQuote": "Notable quote if available",
+                "newsletterBlurb": "Ready-to-use newsletter copy",
+                "suggestedPosition": "featured/main/brief"
+              }
+            ],
+            "trendingThemes": ["Themes identified across content"],
+            "suggestedAngle": "Unique angle to tie content together"
+          }
+
+edges: []
+
+output:
+  curated: "{{curate-analyze}}"

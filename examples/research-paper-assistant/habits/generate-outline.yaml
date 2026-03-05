@@ -1,0 +1,116 @@
+id: generate-outline
+name: Generate Research Outline
+description: Generate a research paper outline
+
+input:
+  - id: topic
+    type: string
+    required: true
+  - id: researchQuestion
+    type: string
+    required: false
+  - id: paperType
+    type: string
+    required: false
+    description: literature review, empirical, theoretical, case study
+  - id: fieldOfStudy
+    type: string
+    required: false
+
+nodes:
+  - id: generate-outline
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 2000
+        prompt: |
+          Generate a comprehensive research paper outline.
+          
+          Topic: {{habits.input.topic}}
+          Research Question: {{habits.input.researchQuestion}}
+          Paper Type: {{habits.input.paperType}}
+          Field: {{habits.input.fieldOfStudy}}
+          
+          Create a detailed outline including:
+          
+          1. TITLE OPTIONS (3 suggestions)
+          
+          2. ABSTRACT OUTLINE
+          - Background hook
+          - Problem statement
+          - Methods preview
+          - Key finding preview
+          - Implication
+          
+          3. INTRODUCTION
+          - Opening hook
+          - Background/context
+          - Problem statement
+          - Research gap
+          - Research question/hypothesis
+          - Significance/contribution
+          - Paper structure preview
+          
+          4. LITERATURE REVIEW
+          - Key themes to cover
+          - Major theories to discuss
+          - Important studies to cite (types, not specific)
+          - Research gap identification
+          
+          5. METHODOLOGY
+          - Research design
+          - Data collection approach
+          - Analysis methods
+          - Validity considerations
+          
+          6. RESULTS/FINDINGS
+          - Structure for presenting findings
+          - Types of evidence to include
+          
+          7. DISCUSSION
+          - Interpretation framework
+          - Implications to address
+          - Limitations to acknowledge
+          
+          8. CONCLUSION
+          - Main contributions
+          - Future research suggestions
+          
+          Include word count suggestions for each section.
+
+  # Save outline
+  - id: save-outline
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "research_outlines"
+        document:
+          topic: "{{habits.input.topic}}"
+          researchQuestion: "{{habits.input.researchQuestion}}"
+          paperType: "{{habits.input.paperType}}"
+          outline: "{{generate-outline}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-outline
+    target: save-outline
+
+output:
+  outlineId: "{{save-outline.id}}"
+  outline: "{{generate-outline}}"

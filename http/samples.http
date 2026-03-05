@@ -1,0 +1,81 @@
+@host = http://0.0.0.0
+@port = 3000
+POST {{host}}:{{port}}/habits/api/execute
+Content-Type: application/json
+
+{
+  "module": "n8n/n8n-nodes-chatwoot",
+  "params": {
+    "resource": "contact",
+    "operation": "getAll",
+    "accountId": "1",
+    "credentials": {
+      "url": "https://app.chatwoot.com",
+      "accessToken": "test"
+    }
+  }
+}
+
+
+###
+POST {{host}}:{{port}}/habits/api/execute
+Content-Type: application/json
+
+{
+  "module": "activepieces/piece-google-sheets",
+  "params": {
+    "resource": "contact",
+    "operation": "getAll",
+    "accountId": "1",
+    "credentials": {
+      "url": "https://app.chatwoot.com",
+      "accessToken": "test"
+    }
+  }
+}
+
+
+###
+GET {{host}}:{{port}}/habits/api/modules
+Content-Type: application/json
+
+
+###
+GET {{host}}:{{port}}/habits/api/modules/check/activepieces/@activepieces%2Fpiece-openai
+
+
+###
+GET {{host}}:{{port}}/habits/api/modules/schema/activepieces/%40activeboxes%2Fpiece-google-sheets
+
+
+###
+GET {{host}}:{{port}}/habits/api/modules/schema/activepieces/@activepieces%2Fpiece-openai
+
+
+###
+POST {{host}}:{{port}}/habits/api/forms/populate-options
+Content-Type: application/json
+
+{
+  "framework": "activepieces",
+  "moduleId": "@activepieces/piece-openai",
+  "actionName": "generate_image",
+  "fieldName": "resolution",
+  "currentValues": {
+    "model": "dall-e-2"
+  }
+}
+
+
+###
+POST {{host}}:{{port}}/habits/api/forms/populate-options
+Content-Type: application/json
+
+{
+    "framework":"activepieces","moduleId":"@activepieces/piece-openai","actionName":"ask_assistant","fieldName":"assistant",
+    "currentValues":
+    {
+        "model":"dall-e-3",
+    "resolution":"1792x1024",
+    "quality":"standard",
+    "prompt":"Create f","undefined":"ffff2131","auth":"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","temperature":5}}

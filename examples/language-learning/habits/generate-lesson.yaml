@@ -1,0 +1,153 @@
+id: generate-lesson
+name: Generate Lesson
+description: Generate a personalized language lesson
+
+input:
+  - id: targetLanguage
+    type: string
+    required: true
+    description: Language to learn
+  - id: level
+    type: string
+    required: false
+    description: beginner, intermediate, advanced
+  - id: topic
+    type: string
+    required: false
+    description: Grammar topic, vocabulary theme, etc.
+  - id: focusArea
+    type: string
+    required: false
+    description: grammar, vocabulary, pronunciation, culture
+
+nodes:
+  # Generate comprehensive lesson
+  - id: generate-lesson
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 2000
+        prompt: |
+          Create a {{habits.input.level}} {{habits.input.targetLanguage}} lesson about: {{habits.input.topic}}
+          Focus area: {{habits.input.focusArea}}
+          
+          Include:
+          
+          1. INTRODUCTION
+          - Brief overview of what we'll learn
+          - Why this is useful
+          
+          2. KEY VOCABULARY (10-15 words/phrases)
+          - Word in {{habits.input.targetLanguage}}
+          - Pronunciation guide
+          - Translation
+          - Example sentence
+          
+          3. GRAMMAR POINT (if applicable)
+          - Clear explanation
+          - Pattern/formula
+          - Multiple examples
+          - Common mistakes to avoid
+          
+          4. DIALOGUE/TEXT
+          - A realistic conversation or text using the vocabulary
+          - Line-by-line translation
+          
+          5. PRACTICE EXERCISES
+          - Fill in the blanks (5 questions)
+          - Translation exercises (5 sentences)
+          - Speaking prompts (3 scenarios)
+          
+          6. CULTURAL NOTE
+          - Interesting cultural context
+          
+          7. HOMEWORK
+          - Suggested practice activities
+          
+          Make it engaging and practical!
+
+  # Generate quiz for lesson
+  - id: generate-quiz
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 600
+        prompt: |
+          Based on this lesson content:
+          {{generate-lesson}}
+          
+          Create a quiz with:
+          - 5 multiple choice questions
+          - 5 fill-in-the-blank questions
+          
+          Return JSON:
+          {
+            "multipleChoice": [
+              {
+                "question": "",
+                "options": ["a", "b", "c", "d"],
+                "answer": "a",
+                "explanation": ""
+              }
+            ],
+            "fillBlank": [
+              {
+                "sentence": "sentence with ___ blank",
+                "answer": "",
+                "hint": ""
+              }
+            ]
+          }
+
+  # Save lesson
+  - id: save-lesson
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "language_lessons"
+        document:
+          targetLanguage: "{{habits.input.targetLanguage}}"
+          level: "{{habits.input.level}}"
+          topic: "{{habits.input.topic}}"
+          focusArea: "{{habits.input.focusArea}}"
+          lesson: "{{generate-lesson}}"
+          quiz: "{{generate-quiz}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-lesson
+    target: generate-quiz
+  - source: generate-quiz
+    target: save-lesson
+
+output:
+  lessonId: "{{save-lesson.id}}"
+  lesson: "{{generate-lesson}}"
+  quiz: "{{generate-quiz}}"

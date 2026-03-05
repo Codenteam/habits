@@ -1,0 +1,17 @@
+id: mixed-nodes-migration
+name: Mixed Nodes Migration
+nodes:
+  - id: openai-chat
+    type: activepieces
+    data:
+      framework: activepieces
+      label: OpenAI Chat
+  - id: custom-api
+    type: bit
+    data:
+      framework: bits
+      label: Custom API Call
+edges:
+  - id: e1
+    source: openai-chat
+    target: custom-api

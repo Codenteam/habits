@@ -1,0 +1,112 @@
+# Tests for Business Intersect Marketing Campaign Workflow
+# Workflow: habit.yaml - Full marketing campaign pipeline
+workflow: ./habit.yaml
+
+tests:
+  # === Full Marketing Campaign Pipeline ===
+  - name: "generates complete marketing campaign assets"
+    trigger:
+      body:
+        prompt: "Launch a new organic coffee brand"
+    context:
+      habits:
+        input:
+          prompt: "Launch a new organic coffee brand"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Step 1: Prompt expander
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Introducing 'Mountain Brew' - premium organic coffee sourced from sustainable farms, offering rich flavor with environmental responsibility."
+        # Step 2a: Image prompt generator (uses expanded prompt)
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Steaming coffee cup, mountain backdrop, sunrise, organic farm, premium beans, rustic aesthetic"
+        # Step 2b: Poster prompt generator
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt  
+          response: "Minimalist poster with coffee cup silhouette against mountain landscape"
+        # Step 2c: Landing page prompt generator
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Modern landing page showcasing organic coffee origins and sustainability story"
+        # Step 2d: PR document prompt generator
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Press release announcing new organic coffee brand with sustainability focus"
+        # Step 3a: Image generator
+        - bit: "@ha-bits/piece-intersect"
+          action: generate_image
+          response:
+            imageUrl: "https://images.intersect.ai/generated/coffee-campaign.png"
+            width: 1024
+            height: 1024
+        # Step 3b: Website creator
+        - bit: "@ha-bits/piece-intersect"
+          action: create_canvas
+          response:
+            canvasId: "website-123"
+            canvasType: "webcanvas"
+            url: "https://canvas.intersect.ai/website-123"
+        # Step 3c: PR document creator
+        - bit: "@ha-bits/piece-intersect"
+          action: create_canvas
+          response:
+            canvasId: "pr-doc-456"
+            canvasType: "draftcanvas"
+            url: "https://canvas.intersect.ai/pr-doc-456"
+        # Step 3d: Poster creator
+        - bit: "@ha-bits/piece-intersect"
+          action: create_canvas
+          response:
+            canvasId: "poster-789"
+            canvasType: "svgcanvas"
+            url: "https://canvas.intersect.ai/poster-789"
+    expect:
+      originalPrompt: "Launch a new organic coffee brand"
+    expectSteps:
+      prompt-expander: "Introducing 'Mountain Brew' - premium organic coffee sourced from sustainable farms, offering rich flavor with environmental responsibility."
+
+  - name: "handles prompt expansion failure"
+    trigger:
+      body:
+        prompt: "Test campaign"
+    context:
+      habits:
+        input:
+          prompt: "Test campaign"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "invalid-key"
+    mocks:
+      bits:
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          error: "Intersect API error: Invalid authentication credentials"
+    expectError: "Intersect API error: Invalid authentication credentials"
+
+  - name: "handles image generation failure gracefully"
+    trigger:
+      body:
+        prompt: "Tech product launch"
+    context:
+      habits:
+        input:
+          prompt: "Tech product launch"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Prompt expander succeeds
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Revolutionary tech gadget that changes how you work"
+        # Image generator fails
+        - bit: "@ha-bits/piece-intersect"
+          action: generate_image
+          error: "Image generation quota exceeded"
+    expectError: "Image generation quota exceeded"

@@ -1,0 +1,27 @@
+id: get-product
+name: Get Product
+description: Get a specific product by ID
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-product
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "products"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  product: "{{fetch-product.document}}"
+  found: "{{fetch-product.found}}"

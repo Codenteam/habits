@@ -1,0 +1,99 @@
+{
+  "id": "recaptcha-mautic-test",
+  "name": "Form Submission with reCAPTCHA, OpenAI and Mautic",
+  "description": "Verifies reCAPTCHA, generates message with OpenAI, and sends to Mautic form",
+  "nodes": [
+    {
+      "id": "recaptcha",
+      "type": "action",
+      "name": "Verify reCAPTCHA",
+      "data": {
+        "framework": "n8n",
+        "source": "github",
+        "module": "https://github.com/TorchlightSoftware/n8n-nodes-recaptcha",
+        "nodeType": "recaptchaNode",
+        "params": {
+            
+          "secret": "{{habits.env.HABITS_RECAPTCHA_SECRET_KEY}}",
+          "body": {
+            "g-recaptcha-response": "{{habits.input.g-recaptcha-response}}"
+          }
+        }
+      }, 
+      "position": { "x": 100, "y": 200 }
+    },
+    {
+      "id": "openai",
+      "type": "action",
+      "name": "Generate Message with OpenAI",
+      "data": {
+        "framework": "n8n",
+        "source": "npm",
+        "module": "n8n-nodes-base",
+        "nodeType": "openAi",
+        "operation": "text",
+        "resource": "chat",
+        "params": {
+          "model": "gpt-4",
+          "prompt": "Based on the following user message, generate a professional and polished version suitable for a contact form submission. Keep it concise:\n\nOriginal message: {{habits.input.message}}",
+          "temperature": 0.7,
+          "maxTokens": 500
+        },
+        "credentials": {
+          "openAiApi": {
+            "apiKey": "{{habits.env.HABITS_OPENAI_API_KEY}}"
+          }
+        }
+      },
+      "position": { "x": 300, "y": 200 }
+    },
+    {
+      "id": "mautic",
+      "type": "action",
+      "name": "Send to Mautic Form",
+      "data": {
+        "framework": "n8n",
+        "source": "npm",
+        "module": "n8n-nodes-streaming-http-request",
+        "nodeType": "streamingHttpRequest",
+        "params": {
+          "url": "{{habits.env.HABITS_MAUTIC_API_URL}}/form/submit?ajax=1",
+          "method": "POST",
+          "sendBody1": true,
+          
+          "enableStreaming": false,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "bodyContentType": "json",
+          "query": {
+            "parameters": "formId={{habits.input.formId}}&ajax=1"
+          },
+          "sendBody": true,
+          "jsonBody": {
+            "mauticform": {
+            "email": "{{habits.input.email}}",
+            "f_message": "{{habits.input.f_message}}",
+            "f_name": "{{habits.input.f_name}}",
+            "subject": "{{habits.input.subject}}",
+            "formId": "{{habits.input.formId}}"
+            }
+          }
+        }
+      },
+      "position": { "x": 500, "y": 200 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "recaptcha",
+      "target": "openai"
+    },
+    {
+      "id": "e2",
+      "source": "openai",
+      "target": "mautic"
+    }
+  ]
+}

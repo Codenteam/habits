@@ -1,0 +1,306 @@
+id: weekly-performance-summary
+name: Weekly Performance Summary
+description: Fetch metrics, generate AI summary, and distribute weekly performance reports
+
+nodes:
+  # Node 1: Schedule Trigger (using input for testing)
+  - id: schedule-trigger
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Schedule Trigger
+      params:
+        reportType: "{{habits.input.reportType}}"
+        dateRange: "{{habits.input.dateRange}}"
+        recipients: "{{habits.input.recipients}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(reportType: string, dateRange: string, recipients: string) {
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            return {
+              reportType: reportType || 'weekly',
+              dateRange: dateRange || `${weekAgo.toISOString().split('T')[0]} to ${now.toISOString().split('T')[0]}`,
+              recipients: recipients ? recipients.split(',').map(r => r.trim()) : ['team@company.com'],
+              generatedAt: now.toISOString(),
+              weekNumber: Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
+            };
+          }
+
+  # Node 2: Fetch Sales Metrics
+  - id: fetch-sales
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Fetch Sales Metrics
+      params:
+        url: "{{habits.env.METRICS_API_URL}}/sales"
+        queryParams: |
+          {
+            "dateRange": "{{schedule-trigger.result.dateRange}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.METRICS_API_KEY}}"
+          }
+
+  # Node 3: Fetch Support Metrics
+  - id: fetch-support
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Fetch Support Metrics
+      params:
+        url: "{{habits.env.METRICS_API_URL}}/support"
+        queryParams: |
+          {
+            "dateRange": "{{schedule-trigger.result.dateRange}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.METRICS_API_KEY}}"
+          }
+
+  # Node 4: Fetch Product Metrics
+  - id: fetch-product
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: get
+      label: Fetch Product Metrics
+      params:
+        url: "{{habits.env.METRICS_API_URL}}/product"
+        queryParams: |
+          {
+            "dateRange": "{{schedule-trigger.result.dateRange}}"
+          }
+        headers: |
+          {
+            "Authorization": "Bearer {{habits.env.METRICS_API_KEY}}"
+          }
+
+  # Node 5: Aggregate metrics
+  - id: aggregate-metrics
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Aggregate Metrics
+      params:
+        salesData: "{{fetch-sales.body}}"
+        supportData: "{{fetch-support.body}}"
+        productData: "{{fetch-product.body}}"
+        dateRange: "{{schedule-trigger.result.dateRange}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(salesData: any, supportData: any, productData: any, dateRange: string) {
+            // Default values in case APIs return empty
+            const sales = salesData || {
+              newDeals: 12,
+              closedDeals: 5,
+              revenue: 45000,
+              pipeline: 120000
+            };
+            
+            const support = supportData || {
+              ticketsOpened: 45,
+              ticketsClosed: 52,
+              avgResponseTime: "2.5 hours",
+              customerSatisfaction: 4.6
+            };
+            
+            const product = productData || {
+              activeUsers: 1250,
+              newSignups: 89,
+              featureAdoption: 67,
+              errors: 23
+            };
+            
+            return {
+              dateRange,
+              sales,
+              support,
+              product,
+              highlights: {
+                salesGrowth: `${((sales.closedDeals / 4) * 100 - 100).toFixed(1)}%`,
+                ticketResolution: `${((support.ticketsClosed / support.ticketsOpened) * 100).toFixed(1)}%`,
+                userGrowth: `${((sales.newDeals / 10) * 100 - 100).toFixed(1)}%`
+              }
+            };
+          }
+
+  # Node 6: AI Summary Generation
+  - id: ai-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Summarizer
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a business analyst creating executive summaries. Create a clear, insightful weekly performance summary.
+          
+          Format:
+          1. Executive Summary (2-3 sentences)
+          2. Key Wins (bullet points)
+          3. Areas for Improvement (bullet points)
+          4. Recommendations (bullet points)
+          5. Looking Ahead (brief outlook)
+          
+          Be specific with numbers and percentages. Keep it professional but engaging.
+        userMessage: |
+          Generate a weekly performance summary for: {{aggregate-metrics.result.dateRange}}
+          
+          Sales Metrics:
+          {{aggregate-metrics.result.sales}}
+          
+          Support Metrics:
+          {{aggregate-metrics.result.support}}
+          
+          Product Metrics:
+          {{aggregate-metrics.result.product}}
+          
+          Key Highlights:
+          {{aggregate-metrics.result.highlights}}
+        temperature: 0.6
+        maxTokens: 800
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 7: Format Report
+  - id: format-report
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: format
+      label: Format Report
+      params:
+        template: |
+          # Weekly Performance Report
+          **Period:** {{dateRange}}
+          **Generated:** {{generatedAt}}
+          
+          ---
+          
+          {{summary}}
+          
+          ---
+          
+          ## Raw Metrics
+          
+          ### Sales
+          - New Deals: {{salesNewDeals}}
+          - Closed Deals: {{salesClosedDeals}}
+          - Revenue: ${{salesRevenue}}
+          
+          ### Support
+          - Tickets Opened: {{supportOpened}}
+          - Tickets Closed: {{supportClosed}}
+          - Satisfaction: {{supportSatisfaction}}/5
+          
+          ### Product
+          - Active Users: {{productUsers}}
+          - New Signups: {{productSignups}}
+          
+          ---
+          *This report was automatically generated by the Weekly Performance Summary workflow.*
+        variables: |
+          {
+            "dateRange": "{{aggregate-metrics.result.dateRange}}",
+            "generatedAt": "{{schedule-trigger.result.generatedAt}}",
+            "summary": "{{ai-summary.content}}",
+            "salesNewDeals": "{{aggregate-metrics.result.sales.newDeals}}",
+            "salesClosedDeals": "{{aggregate-metrics.result.sales.closedDeals}}",
+            "salesRevenue": "{{aggregate-metrics.result.sales.revenue}}",
+            "supportOpened": "{{aggregate-metrics.result.support.ticketsOpened}}",
+            "supportClosed": "{{aggregate-metrics.result.support.ticketsClosed}}",
+            "supportSatisfaction": "{{aggregate-metrics.result.support.customerSatisfaction}}",
+            "productUsers": "{{aggregate-metrics.result.product.activeUsers}}",
+            "productSignups": "{{aggregate-metrics.result.product.newSignups}}"
+          }
+
+  # Node 8: Post to Slack
+  - id: slack-report
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Post to Slack
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#company-updates"
+        text: |
+          📊 *Weekly Performance Report* - Week {{schedule-trigger.result.weekNumber}}
+          
+          {{ai-summary.content}}
+          
+          _Full report sent via email. React with 👍 if you found this helpful!_
+
+  # Node 9: Send Email Report
+  - id: email-report
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      label: Send Email Report
+      params:
+        smtpHost: "{{habits.env.SMTP_HOST}}"
+        smtpPort: 587
+        smtpUser: "{{habits.env.SMTP_USER}}"
+        smtpPassword: "{{habits.env.SMTP_PASSWORD}}"
+        from: "reports@company.com"
+        to: "{{schedule-trigger.result.recipients}}"
+        subject: "Weekly Performance Report - W{{schedule-trigger.result.weekNumber}}"
+        body: "{{format-report.result}}"
+
+edges:
+  - source: schedule-trigger
+    target: fetch-sales
+  - source: schedule-trigger
+    target: fetch-support
+  - source: schedule-trigger
+    target: fetch-product
+  - source: fetch-sales
+    target: aggregate-metrics
+  - source: fetch-support
+    target: aggregate-metrics
+  - source: fetch-product
+    target: aggregate-metrics
+  - source: aggregate-metrics
+    target: ai-summary
+  - source: ai-summary
+    target: format-report
+  - source: format-report
+    target: slack-report
+  - source: format-report
+    target: email-report
+
+output:
+  weekNumber: "{{schedule-trigger.result.weekNumber}}"
+  dateRange: "{{schedule-trigger.result.dateRange}}"
+  summary: "{{ai-summary.content}}"
+  fullReport: "{{format-report.result}}"
+  slackPosted: "{{slack-report.success}}"
+  emailSent: "{{email-report.success}}"

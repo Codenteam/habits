@@ -1,0 +1,81 @@
+# Tests for Minimal Intersect PR Document Workflow
+# Workflow: workflow.json
+workflow: ./workflow.json
+
+tests:
+  # === PR Document Generation Tests ===
+  - name: "generates PR document from marketing prompt"
+    trigger:
+      body:
+        prompt: "Launch a new eco-friendly water bottle"
+    context:
+      habits:
+        input:
+          prompt: "Launch a new eco-friendly water bottle"
+        headers:
+          host: "https://api.intersect.ai"
+        cookies:
+          token: "mock-api-key"
+    mocks:
+      bits:
+        # Mock the PR prompt generator (first AI call)
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "Create a comprehensive PR campaign for an eco-friendly water bottle launch. Include press release, media kit, influencer outreach strategy, and social media campaign timeline."
+        # Mock the canvas creator (second AI call - creates the document)
+        - bit: "@ha-bits/piece-intersect"
+          action: create_canvas
+          response:
+            canvasId: "canvas-123"
+            title: "Eco Bottle PR Campaign"
+            content: "# Press Release\n\nNew sustainable water bottle launches..."
+    expect:
+      originalPrompt: "Launch a new eco-friendly water bottle"
+      prDocumentPrompt: "Create a comprehensive PR campaign for an eco-friendly water bottle launch. Include press release, media kit, influencer outreach strategy, and social media campaign timeline."
+    expectSteps:
+      pr-document-prompt-generator: "Create a comprehensive PR campaign for an eco-friendly water bottle launch. Include press release, media kit, influencer outreach strategy, and social media campaign timeline."
+
+  - name: "handles tech product marketing prompt"
+    trigger:
+      body:
+        prompt: "AI-powered fitness tracker"
+    context:
+      habits:
+        input:
+          prompt: "AI-powered fitness tracker"
+        headers:
+          host: "https://api.intersect.ai"
+        cookies:
+          token: "mock-api-key"
+    mocks:
+      bits:
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          response: "PR campaign for revolutionary AI fitness tracker: Target health tech publications, feature athlete testimonials, highlight sleep tracking and recovery metrics."
+        - bit: "@ha-bits/piece-intersect"
+          action: create_canvas
+          response:
+            canvasId: "canvas-456"
+            title: "AI Fitness Tracker Campaign"
+            content: "# Launch Strategy\n\nTargeting health-conscious consumers..."
+    expect:
+      originalPrompt: "AI-powered fitness tracker"
+
+  - name: "handles AI service error gracefully"
+    trigger:
+      body:
+        prompt: "Test prompt"
+    context:
+      habits:
+        input:
+          prompt: "Test prompt"
+        headers:
+          host: "https://api.intersect.ai"
+        cookies:
+          token: "invalid-token"
+    mocks:
+      bits:
+        - bit: "@ha-bits/piece-intersect"
+          action: ask_chatgpt
+          error: "Authentication failed: Invalid API token"
+    expectError: "Authentication failed: Invalid API token"

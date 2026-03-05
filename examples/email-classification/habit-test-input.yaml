@@ -1,0 +1,237 @@
+# Email Classification Test - Direct Input
+# 
+# Test variant that accepts email as input parameter
+# to verify classification and routing without IMAP
+
+id: email-classification-input-test
+name: Email Classification Input Test
+description: Test email classification with direct input (no IMAP)
+version: "1.0"
+
+# Accept email data as input parameters
+input:
+  - id: emailFrom
+    type: string
+    description: Email sender address
+    required: true
+  - id: emailSubject
+    type: string
+    description: Email subject line
+    required: true
+  - id: emailBody
+    type: string
+    description: Email body content
+    required: true
+
+nodes:
+  # Step 1: Pass-through node to format input like IMAP output
+  - id: receive-email
+    type: script
+    position:
+      x: 100
+      y: 100
+    data:
+      label: Format Email Input
+      framework: script
+      source: inline
+      params:
+        emailFrom: "{{habits.input.emailFrom}}"
+        emailSubject: "{{habits.input.emailSubject}}"
+        emailBody: "{{habits.input.emailBody}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(emailFrom: string, emailSubject: string, emailBody: string) {
+            return {
+              emails: [{
+                id: "test-email-001",
+                from: emailFrom,
+                to: "user@example.com",
+                subject: emailSubject,
+                body: emailBody,
+                date: new Date().toISOString()
+              }],
+              count: 1,
+              folder: "INBOX"
+            };
+          }
+
+  # Step 2: Classify email importance with OpenAI
+  - id: classify-email
+    type: bits
+    position:
+      x: 350
+      y: 100
+    data:
+      label: Classify Email Importance
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: chatCompletion
+      operation: chatCompletion
+      params:
+        model: "gpt-4o-mini"
+        systemPrompt: |
+          You are an email importance classifier. Analyze the email and classify it into one of three categories:
+          - "important": Urgent emails requiring immediate attention (security alerts, critical business issues, emergencies)
+          - "semi-important": Emails that need attention but not urgently (meeting requests, project updates, customer inquiries)
+          - "not-important": Low priority emails (newsletters, promotional content, general notifications)
+          
+          Respond with ONLY one word: "important", "semi-important", or "not-important"
+        userMessage: |
+          From: {{receive-email.emails.0.from}}
+          Subject: {{receive-email.emails.0.subject}}
+          Body: {{receive-email.emails.0.body}}
+        temperature: 0.1
+        maxTokens: 10
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Step 3: Branch based on classification
+  - id: route-email
+    type: bits
+    position:
+      x: 600
+      y: 100
+    data:
+      label: Route by Importance
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      resource: branch
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: "Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "important"
+            output: "important"
+          - label: "Semi-Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "semi-important"
+            output: "semi-important"
+          - label: "Not Important"
+            value1: "{{classify-email.content}}"
+            operator: contains
+            value2: "not-important"
+            output: "not-important"
+        includeElse: true
+        defaultOutput: "not-important"
+
+  # Step 4a: Log for IMPORTANT emails (instead of Telegram for testing)
+  - id: handle-important
+    type: script
+    position:
+      x: 850
+      y: -50
+    data:
+      label: Handle Important
+      framework: script
+      source: inline
+      params:
+        emailFrom: "{{receive-email.emails.0.from}}"
+        emailSubject: "{{receive-email.emails.0.subject}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(emailFrom: string, emailSubject: string) {
+            return {
+              action: "TELEGRAM_NOTIFICATION",
+              classification: "important",
+              email: { from: emailFrom, subject: emailSubject },
+              message: "Would send Telegram notification for important email",
+              executed: true
+            };
+          }
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'important'"
+        skipIfStopped: true
+
+  # Step 4b: Log for SEMI-IMPORTANT emails (instead of SMTP for testing)
+  - id: handle-semi-important
+    type: script
+    position:
+      x: 850
+      y: 100
+    data:
+      label: Handle Semi-Important
+      framework: script
+      source: inline
+      params:
+        emailFrom: "{{receive-email.emails.0.from}}"
+        emailSubject: "{{receive-email.emails.0.subject}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(emailFrom: string, emailSubject: string) {
+            return {
+              action: "SMTP_FORWARD",
+              classification: "semi-important",
+              email: { from: emailFrom, subject: emailSubject },
+              message: "Would forward email via SMTP",
+              executed: true
+            };
+          }
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'semi-important'"
+        skipIfStopped: true
+
+  # Step 4c: Log for NOT IMPORTANT emails (instead of WhatsApp for testing)
+  - id: handle-not-important
+    type: script
+    position:
+      x: 850
+      y: 250
+    data:
+      label: Handle Not Important
+      framework: script
+      source: inline
+      params:
+        emailFrom: "{{receive-email.emails.0.from}}"
+        emailSubject: "{{receive-email.emails.0.subject}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(emailFrom: string, emailSubject: string) {
+            return {
+              action: "WHATSAPP_NOTIFICATION",
+              classification: "not-important",
+              email: { from: emailFrom, subject: emailSubject },
+              message: "Would send WhatsApp notification for low-priority email",
+              executed: true
+            };
+          }
+      stopAfterIf:
+        expr: "{{route-email.output}} !== 'not-important'"
+        skipIfStopped: true
+
+edges:
+  - source: receive-email
+    target: classify-email
+  - source: classify-email
+    target: route-email
+  - source: route-email
+    target: handle-important
+    sourceHandle: "branch-0"
+  - source: route-email
+    target: handle-semi-important
+    sourceHandle: "branch-1"
+  - source: route-email
+    target: handle-not-important
+    sourceHandle: "branch-2"
+
+output:
+  classification: "{{classify-email.content}}"
+  routedTo: "{{route-email.output}}"
+  branchExecuted: "{{route-email.executedBranchLabel}}"
+  originalEmail:
+    from: "{{receive-email.emails.0.from}}"
+    subject: "{{receive-email.emails.0.subject}}"
+  handlers:
+    important: "{{handle-important}}"
+    semiImportant: "{{handle-semi-important}}"
+    notImportant: "{{handle-not-important}}"

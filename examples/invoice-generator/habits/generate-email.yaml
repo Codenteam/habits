@@ -1,0 +1,61 @@
+id: generate-email
+name: Generate Invoice Email
+description: Generate a professional email to send with the invoice
+
+input:
+  - id: clientName
+    type: string
+    required: true
+  - id: invoiceNumber
+    type: string
+    required: true
+  - id: total
+    type: number
+    required: true
+  - id: dueDate
+    type: string
+    required: false
+  - id: businessName
+    type: string
+    required: false
+  - id: tone
+    type: string
+    required: false
+    description: formal, friendly, reminder
+
+nodes:
+  - id: generate-email
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 400
+        prompt: |
+          Write a {{habits.input.tone}} email to send with invoice:
+          
+          Client: {{habits.input.clientName}}
+          Invoice Number: {{habits.input.invoiceNumber}}
+          Amount Due: ${{habits.input.total}}
+          Due Date: {{habits.input.dueDate}}
+          From: {{habits.input.businessName}}
+          
+          Return JSON:
+          {
+            "subject": "Email subject line",
+            "body": "Email body text"
+          }
+
+edges: []
+
+output:
+  email: "{{generate-email}}"

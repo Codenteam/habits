@@ -1,0 +1,59 @@
+id: explain-code
+name: Explain Code
+description: Get a detailed explanation of what code does
+
+input:
+  - id: code
+    type: string
+    required: true
+    description: Code to explain
+  - id: language
+    type: string
+    required: false
+    description: Programming language
+  - id: expertise
+    type: string
+    required: false
+    description: beginner, intermediate, expert
+
+nodes:
+  - id: explain
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 1000
+        prompt: |
+          Explain this code to a {{habits.input.expertise}} developer:
+          
+          Language: {{habits.input.language}}
+          
+          Code:
+          ```
+          {{habits.input.code}}
+          ```
+          
+          Provide:
+          1. High-level summary (what does this code do?)
+          2. Line-by-line breakdown
+          3. Key concepts used
+          4. Data flow explanation
+          5. Any patterns or techniques used
+          6. Potential gotchas or tricky parts
+          
+          Adjust complexity of explanation to the expertise level.
+
+edges: []
+
+output:
+  explanation: "{{explain}}"

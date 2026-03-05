@@ -1,0 +1,93 @@
+id: chat
+name: Chat with AI
+description: Main chat interface - process user messages with AI and contextual memory
+
+input:
+  - id: message
+    type: string
+    required: true
+  - id: userId
+    type: string
+    required: false
+  - id: channel
+    type: string
+    required: false
+
+nodes:
+  # Retrieve recent memories for context
+  - id: get-context
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "memories"
+        filter: '{"userId": "{{habits.input.userId}}"}'
+        limit: 10
+        sort: '{"createdAt": -1}'
+
+  # Process message with AI using context
+  - id: ai-response
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        systemMessage: |
+          You are {{habits.env.ASSISTANT_NAME}}, a {{habits.env.ASSISTANT_PERSONALITY}}.
+          
+          You have access to the user's memories and context. Here's what you know about this user:
+          {{get-context.results}}
+          
+          You can help with:
+          - Answering questions and having conversations
+          - Managing tasks and reminders
+          - Sending messages via Telegram, WhatsApp, or Slack
+          - Reading and summarizing web pages
+          - Remembering important information
+          - Sending emails
+          
+          Be proactive in offering help and remembering user preferences.
+          If the user mentions something important about themselves, remember to suggest saving it to memory.
+        prompt: "{{habits.input.message}}"
+        temperature: 0.7
+        maxTokens: 2048
+
+  # Store the conversation in memory
+  - id: save-conversation
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "conversations"
+        document:
+          userId: "{{habits.input.userId}}"
+          channel: "{{habits.input.channel}}"
+          userMessage: "{{habits.input.message}}"
+          assistantResponse: "{{ai-response}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: get-context
+    target: ai-response
+  - source: ai-response
+    target: save-conversation
+
+output:
+  response: "{{ai-response}}"
+  conversationId: "{{save-conversation.id}}"

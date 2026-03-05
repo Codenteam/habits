@@ -1,0 +1,133 @@
+id: email-triage-routing
+name: Email Triage & Routing
+description: Automatically classify and route incoming emails to appropriate teams via Slack and CRM
+
+nodes:
+  # Node 1: Email Trigger - Fetch new emails from IMAP
+  - id: email-trigger
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: newEmail
+      isTrigger: true
+      label: IMAP Email Trigger
+      params:
+        imapHost: "{{habits.env.IMAP_HOST}}"
+        imapPort: 993
+        imapUser: "{{habits.env.IMAP_USER}}"
+        imapPassword: "{{habits.env.IMAP_PASSWORD}}"
+        folder: INBOX
+        unreadOnly: true
+        limit: 10
+
+  # Node 2: AI Classification - Classify email intent using OpenAI
+  - id: ai-classify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Classification
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are an email classifier. Classify the email into one of these categories:
+          - support: Technical support or help requests
+          - sales: Sales inquiries or pricing questions
+          - billing: Payment, invoice, or account issues
+          - feedback: Product feedback or suggestions
+          - spam: Spam or irrelevant emails
+          - urgent: Time-sensitive or critical issues
+          
+          Respond with JSON: {"category": "category_name", "confidence": 0.0-1.0, "summary": "brief summary", "priority": "high|medium|low"}
+        userMessage: |
+          From: {{email-trigger.emails.0.from}}
+          Subject: {{email-trigger.emails.0.subject}}
+          Body: {{email-trigger.emails.0.body}}
+        temperature: 0.3
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 3: Decision Router - Route based on classification
+  - id: route-decision
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: switch
+      label: Category Router
+      params:
+        inputValue: "{{ai-classify.content}}"
+        cases: |
+          [
+            {"value": "support", "output": "#support-team"},
+            {"value": "sales", "output": "#sales-team"},
+            {"value": "billing", "output": "#billing-team"},
+            {"value": "feedback", "output": "#product-feedback"},
+            {"value": "urgent", "output": "#urgent-alerts"}
+          ]
+        defaultOutput: "#general-inbox"
+
+  # Node 4: Slack Notification - Send to appropriate channel
+  - id: slack-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Slack Notification
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "{{route-decision.output}}"
+        text: |
+          📧 *New Email Received*
+          
+          *From:* {{email-trigger.emails.0.from}}
+          *Subject:* {{email-trigger.emails.0.subject}}
+          *Category:* {{ai-classify.content}}
+          *Priority:* Based on AI analysis
+          
+          ---
+          _Processed by Email Triage Workflow_
+
+  # Node 5: CRM Update - Create or update contact in CRM
+  - id: crm-update
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: createLead
+      label: CRM Update
+      params:
+        email: "{{email-trigger.emails.0.from}}"
+        source: email
+        status: new
+        customFields: |
+          {
+            "lastEmailSubject": "{{email-trigger.emails.0.subject}}",
+            "classification": "{{ai-classify.content}}",
+            "routedTo": "{{route-decision.output}}"
+          }
+
+edges:
+  - source: email-trigger
+    target: ai-classify
+  - source: ai-classify
+    target: route-decision
+  - source: route-decision
+    target: slack-notify
+  - source: slack-notify
+    target: crm-update
+
+output:
+  emailsProcessed: "{{email-trigger.count}}"
+  classification: "{{ai-classify.content}}"
+  routedTo: "{{route-decision.output}}"
+  slackTimestamp: "{{slack-notify.timestamp}}"
+  crmLead: "{{crm-update.lead}}"

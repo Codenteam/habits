@@ -1,0 +1,39 @@
+{
+  "name": "@ha-bits/test-utils",
+  "version": "1.0.0",
+  "description": "Dead simple bit testing utilities for Habits",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "bits-test": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "testing",
+    "unit-test"
+  ],
+  "author": "Codenteam",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "yaml": "^2.3.4",
+    "glob": "^10.3.10",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

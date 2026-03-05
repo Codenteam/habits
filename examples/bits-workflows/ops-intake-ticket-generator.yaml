@@ -1,0 +1,321 @@
+id: ops-intake-ticket-generator
+name: Ops Intake Clean Ticket Generator
+description: Process intake forms/webhooks, clarify with AI, generate required fields, and create clean tickets
+
+nodes:
+  # Node 1: Form/Webhook Trigger
+  - id: intake-trigger
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Intake Trigger
+      params:
+        subject: "{{habits.input.subject}}"
+        description: "{{habits.input.description}}"
+        priority: "{{habits.input.priority}}"
+        category: "{{habits.input.category}}"
+        requesterName: "{{habits.input.requesterName}}"
+        requesterEmail: "{{habits.input.requesterEmail}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            subject: string, 
+            description: string, 
+            priority: string, 
+            category: string,
+            requesterName: string,
+            requesterEmail: string
+          ) {
+            return {
+              rawSubject: subject || 'New Request',
+              rawDescription: description || '',
+              rawPriority: priority || 'normal',
+              rawCategory: category || 'general',
+              requester: {
+                name: requesterName || 'Unknown',
+                email: requesterEmail || 'no-email@example.com'
+              },
+              intakeId: `intake_${Date.now()}`,
+              receivedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: AI Clarifier - Clean up and extract information
+  - id: ai-clarifier
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Clarifier
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are an IT operations ticket clarifier. Your job is to:
+          1. Clean up messy or unclear request descriptions
+          2. Extract key information (what, who, when needed)
+          3. Identify the correct category and priority
+          4. Suggest clear, actionable title
+          
+          Respond in JSON format:
+          {
+            "cleanTitle": "clear ticket title",
+            "cleanDescription": "formatted description with context",
+            "suggestedCategory": "infrastructure|software|hardware|access|other",
+            "suggestedPriority": "low|normal|high|urgent",
+            "actionItems": ["action1", "action2"],
+            "missingInfo": ["list of any missing critical info"],
+            "estimatedEffort": "quick|medium|complex"
+          }
+        userMessage: |
+          Original Request:
+          Subject: {{intake-trigger.result.rawSubject}}
+          Description: {{intake-trigger.result.rawDescription}}
+          
+          Submitted priority: {{intake-trigger.result.rawPriority}}
+          Submitted category: {{intake-trigger.result.rawCategory}}
+          
+          Requester: {{intake-trigger.result.requester.name}} ({{intake-trigger.result.requester.email}})
+        temperature: 0.3
+        maxTokens: 500
+        responseFormat: json_object
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 3: Parse AI response
+  - id: parse-ai-response
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Parse AI Response
+      params:
+        aiResponse: "{{ai-clarifier.content}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(aiResponse: string) {
+            try {
+              const parsed = JSON.parse(aiResponse);
+              return {
+                title: parsed.cleanTitle || 'Untitled Request',
+                description: parsed.cleanDescription || '',
+                category: parsed.suggestedCategory || 'other',
+                priority: parsed.suggestedPriority || 'normal',
+                actionItems: parsed.actionItems || [],
+                missingInfo: parsed.missingInfo || [],
+                effort: parsed.estimatedEffort || 'medium',
+                valid: true
+              };
+            } catch (e) {
+              return {
+                title: 'Parsing Error',
+                description: aiResponse,
+                category: 'other',
+                priority: 'normal',
+                actionItems: [],
+                missingInfo: ['Failed to parse AI response'],
+                effort: 'medium',
+                valid: false
+              };
+            }
+          }
+
+  # Node 4: Generate Required Fields
+  - id: generate-fields
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Generate Required Fields
+      params:
+        parsed: "{{parse-ai-response.result}}"
+        requester: "{{intake-trigger.result.requester}}"
+        intakeId: "{{intake-trigger.result.intakeId}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(parsed: any, requester: any, intakeId: string) {
+            const priorities: Record<string, string> = {
+              'urgent': 'P1',
+              'high': 'P2',
+              'normal': 'P3',
+              'low': 'P4'
+            };
+            
+            const categories: Record<string, string> = {
+              'infrastructure': 'INF',
+              'software': 'SFT',
+              'hardware': 'HRD',
+              'access': 'ACC',
+              'other': 'GEN'
+            };
+            
+            const ticketPrefix = categories[parsed.category] || 'GEN';
+            const ticketNumber = Date.now().toString(36).toUpperCase();
+            
+            return {
+              ticketId: `${ticketPrefix}-${ticketNumber}`,
+              title: parsed.title,
+              description: `${parsed.description}\n\n---\nAction Items:\n${parsed.actionItems.map((a: string, i: number) => `${i+1}. ${a}`).join('\n')}\n\nEstimated Effort: ${parsed.effort}`,
+              priority: priorities[parsed.priority] || 'P3',
+              category: parsed.category,
+              requesterName: requester.name,
+              requesterEmail: requester.email,
+              labels: [parsed.category, parsed.effort, 'from-intake'],
+              intakeRef: intakeId,
+              hasMissingInfo: parsed.missingInfo.length > 0,
+              missingInfo: parsed.missingInfo
+            };
+          }
+
+  # Node 5: Create Ticket
+  - id: create-ticket
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-tasks"
+      operation: createTicket
+      label: Create Ticket
+      params:
+        project: OPS
+        title: "{{generate-fields.result.title}}"
+        description: "{{generate-fields.result.description}}"
+        priority: "{{generate-fields.result.priority}}"
+        labels: "{{generate-fields.result.labels}}"
+        assignee: auto
+        reporterEmail: "{{generate-fields.result.requesterEmail}}"
+        source: intake-form
+      credentials:
+        apiKey: "{{habits.env.TICKETING_API_KEY}}"
+
+  # Node 6: Check if missing info
+  - id: check-missing-info
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      label: Has Missing Info?
+      params:
+        value1: "{{generate-fields.result.hasMissingInfo}}"
+        operator: equals
+        value2: "true"
+
+  # Node 7: Send clarification request (if missing info)
+  - id: request-clarification
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: send
+      label: Request Clarification
+      params:
+        host: "{{habits.env.SMTP_HOST}}"
+        port: 587
+        secure: false
+        user: "{{habits.env.SMTP_USER}}"
+        pass: "{{habits.env.SMTP_PASS}}"
+        from: "ops-intake@company.com"
+        to: "{{generate-fields.result.requesterEmail}}"
+        subject: "Additional Info Needed - {{generate-fields.result.ticketId}}"
+        body: |
+          Hello {{generate-fields.result.requesterName}},
+          
+          Thank you for submitting your request. We've created ticket {{generate-fields.result.ticketId}}.
+          
+          To help us process your request faster, we need some additional information:
+          
+          {{generate-fields.result.missingInfo}}
+          
+          Please reply to this email with the requested details.
+          
+          Best regards,
+          Operations Team
+      stopAfterIf:
+        expr: "{{check-missing-info.condition}} === false"
+        skipIfStopped: true
+
+  # Node 8: Notify Team on Slack
+  - id: notify-team
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Notify Team
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#ops-tickets"
+        text: |
+          📋 *New Ticket Created*
+          
+          *ID:* {{generate-fields.result.ticketId}}
+          *Title:* {{generate-fields.result.title}}
+          *Priority:* {{generate-fields.result.priority}}
+          *Category:* {{generate-fields.result.category}}
+          *Effort:* {{generate-fields.result.effort}}
+          
+          *Requester:* {{generate-fields.result.requesterName}} ({{generate-fields.result.requesterEmail}})
+          
+          {{#if generate-fields.result.hasMissingInfo}}
+          ⚠️ _Missing info requested from user_
+          {{/if}}
+
+  # Node 9: Log to Database
+  - id: log-ticket
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Log Ticket
+      params:
+        collection: ops-tickets
+        document: |
+          {
+            "ticketId": "{{generate-fields.result.ticketId}}",
+            "intakeRef": "{{generate-fields.result.intakeRef}}",
+            "title": "{{generate-fields.result.title}}",
+            "priority": "{{generate-fields.result.priority}}",
+            "category": "{{generate-fields.result.category}}",
+            "requesterEmail": "{{generate-fields.result.requesterEmail}}",
+            "createdAt": "{{intake-trigger.result.receivedAt}}",
+            "hasMissingInfo": {{generate-fields.result.hasMissingInfo}},
+            "status": "new"
+          }
+
+edges:
+  - source: intake-trigger
+    target: ai-clarifier
+  - source: ai-clarifier
+    target: parse-ai-response
+  - source: parse-ai-response
+    target: generate-fields
+  - source: generate-fields
+    target: create-ticket
+  - source: create-ticket
+    target: check-missing-info
+  - source: check-missing-info
+    target: request-clarification
+  - source: request-clarification
+    target: notify-team
+  - source: notify-team
+    target: log-ticket
+
+output:
+  ticketId: "{{generate-fields.result.ticketId}}"
+  title: "{{generate-fields.result.title}}"
+  priority: "{{generate-fields.result.priority}}"
+  category: "{{generate-fields.result.category}}"
+  hasMissingInfo: "{{generate-fields.result.hasMissingInfo}}"
+  ticketKey: "{{create-ticket.ticketKey}}"

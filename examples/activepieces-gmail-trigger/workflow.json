@@ -1,0 +1,90 @@
+{
+  "id": "185ff005-caf5-4ae6-9eea-ac4be0f82f35",
+  "name": "Gmail Trigger to Send Email",
+  "description": "Triggers on new Gmail emails and sends a response",
+  "nodes": [
+    {
+      "id": "node-1768900521011",
+      "type": "activepieces",
+      "position": {
+        "x": 571.5,
+        "y": 124
+      },
+      "data": {
+        "label": "Gmail New Email Trigger",
+        "triggerType": "polling",
+        "framework": "activepieces",  
+        "source": "npm",
+        "module": "@activepieces/piece-gmail",
+        "resource": "",
+        "operation": "gmail_new_email_received",
+        "params": {
+          "subject": "",
+          "from": "",
+          "to": "",
+          "category": "primary"
+        },
+        "credentials": {
+          "gmail": {
+            "client_id": "{{habits.env.HABITS_GMAIL_CLIENT_ID}}",
+            "client_secret": "{{habits.env.HABITS_GMAIL_CLIENT_SECRET}}",
+            "access_token": "{{habits.env.HABITS_GMAIL_ACCESS_TOKEN}}",
+            "refresh_token": "{{habits.env.HABITS_GMAIL_REFRESH_TOKEN}}"
+          }
+        },
+        "inputs": [],
+        "outputs": [
+          "main"
+        ]
+      }
+    },
+    {
+      "id": "node-1768900656475",
+      "type": "activepieces",
+      "position": {
+        "x": 579.75,
+        "y": 263.25
+      },
+      "data": {
+        "label": "Send Email Response",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@activepieces/piece-gmail",
+        "resource": "",
+        "operation": "send_email",
+        "params": {
+          "receiver": "{{habits.input.receiver}}",
+          "subject": "subject",
+          "body_type": "plain_text",
+          "body": "Thank you for your email. We received",
+          "sender_name": "Auto Responder",
+          "reply_to": "{{habits.input.reply_to}}"
+        },
+        "credentials": {
+          "gmail": {
+            "client_id": "{{habits.env.HABITS_GMAIL_CLIENT_ID}}",
+            "client_secret": "{{habits.env.HABITS_GMAIL_CLIENT_SECRET}}",
+            "access_token": "{{habits.env.HABITS_GMAIL_ACCESS_TOKEN}}",
+            "refresh_token": "{{habits.env.HABITS_GMAIL_REFRESH_TOKEN}}"
+          }
+        },
+        "inputs": [
+          "main"
+        ],
+        "outputs": [
+          "main"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-node-1768900521011main-node-1768900656475main",
+      "source": "node-1768900521011",
+      "target": "node-1768900656475",
+      "sourceHandle": "main",
+      "targetHandle": "main"
+    }
+  ],
+  "version": "1.0.0"
+}

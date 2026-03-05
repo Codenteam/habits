@@ -1,0 +1,207 @@
+id: test-script-workflow
+name: Test Script Workflow
+description: A simple workflow to test script execution with inline scripts
+version: 1.0.0
+
+nodes:
+  - id: start
+    type: trigger
+    data:
+      framework: script
+      source: inline
+      module: manual-trigger
+      label: Start
+      params:
+        script:
+          type: script
+          language: deno
+          content: |
+            export async function main(): Promise<{ message: string; count: number }> {
+              return {
+                message: "Hello from Script test",
+                count: 5
+              };
+            }
+    position:
+      x: 100
+      y: 100
+
+  - id: datetime
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: datetime-utils
+      label: Get Current DateTime
+      params:
+        script:
+          type: script
+          language: deno
+          content: |
+            import { format } from "https://deno.land/std@0.224.0/datetime/format.ts";
+
+            export async function main(): Promise<{ datetime: string; timestamp: number; formatted: string }> {
+              const now = new Date();
+              return {
+                datetime: now.toISOString(),
+                timestamp: now.getTime(),
+                formatted: format(now, "yyyy-MM-dd HH:mm:ss")
+              };
+            }
+    position:
+      x: 300
+      y: 100
+
+  - id: text-process
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: text-processing
+      label: Process Text
+      params:
+        text: "{{start.result.message}}"
+        script:
+          type: script
+          language: deno
+          content: |
+            export async function main(text: string): Promise<{ original: string; upper: string; length: number }> {
+              return {
+                original: text,
+                upper: text.toUpperCase(),
+                length: text.length
+              };
+            }
+    position:
+      x: 300
+      y: 200
+
+  - id: generate-uuid
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: uuid-generator
+      label: Generate UUID
+      params:
+        script:
+          type: script
+          language: deno
+          content: |
+            export async function main(): Promise<{ uuid: string }> {
+              return {
+                uuid: crypto.randomUUID()
+              };
+            }
+    position:
+      x: 500
+      y: 100
+
+  - id: save-file
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: file-saver
+      label: Save Result to File
+      params:
+        text: "{{text-process.result.upper}}"
+        uuid: "{{generate-uuid.result.uuid}}"
+        datetime: "{{datetime.result.datetime}}"
+        script:
+          type: script
+          language: deno
+          content: |
+            export async function main(text: string, uuid: string, datetime: string): Promise<{ success: boolean; filepath: string; size: number; timestamp: string }> {
+              const outputDir = '/tmp/habits-test';
+              await Deno.mkdir(outputDir, { recursive: true });
+              
+              const filename = `test-${Date.now()}.txt`;
+              const filepath = `${outputDir}/${filename}`;
+              const content = `Text: ${text}\nUUID: ${uuid}\nDatetime: ${datetime}\n`;
+              
+              await Deno.writeTextFile(filepath, content);
+              
+              const stats = await Deno.stat(filepath);
+              return {
+                success: true,
+                filepath,
+                size: stats.size,
+                timestamp: new Date().toISOString()
+              };
+            }
+    position:
+      x: 700
+      y: 150
+
+  - id: verify-file
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: file-verifier
+      label: Verify File
+      params:
+        saveResult: "{{save-file.result}}"
+        script:
+          type: script
+          language: deno
+          content: |
+            export async function main(saveResult: any): Promise<{ verified: boolean; filepath: string; content: string; fileAgeMs: number; isRecent: boolean }> {
+              const filepath = saveResult.filepath;
+              
+              try {
+                const content = await Deno.readTextFile(filepath);
+                const stats = await Deno.stat(filepath);
+                const now = Date.now();
+                const fileAge = now - (stats.mtime?.getTime() || 0);
+                
+                return {
+                  verified: true,
+                  filepath,
+                  content,
+                  fileAgeMs: fileAge,
+                  isRecent: fileAge < 60000
+                };
+              } catch (e) {
+                return {
+                  verified: false,
+                  filepath,
+                  content: '',
+                  fileAgeMs: -1,
+                  isRecent: false
+                };
+              }
+            }
+    position:
+      x: 900
+      y: 150
+
+edges:
+  - id: e1
+    source: start
+    target: datetime
+  - id: e2
+    source: start
+    target: text-process
+  - id: e3
+    source: start
+    target: generate-uuid
+  - id: e4
+    source: datetime
+    target: save-file
+  - id: e5
+    source: text-process
+    target: save-file
+  - id: e6
+    source: generate-uuid
+    target: save-file
+  - id: e7
+    source: save-file
+    target: verify-file
+
+outputs:
+  success: "{{verify-file.result.verified}}"
+  filepath: "{{verify-file.result.filepath}}"
+  content: "{{verify-file.result.content}}"
+  isRecent: "{{verify-file.result.isRecent}}"

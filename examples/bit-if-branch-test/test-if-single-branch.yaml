@@ -1,0 +1,77 @@
+{
+  "id": "test-if-single-branch",
+  "name": "Test If Branch - Single Mode",
+  "description": "Tests the bit-if branch action in singleBranch mode (If/Else If/Else). Only the first matching branch executes.",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "if-branch-single",
+      "type": "bits",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "data": {
+        "label": "If/Else If/Else Branch",
+        "framework": "bits",
+        "source": "local",
+        "module": "bit-if",
+        "resource": "branch",
+        "operation": "branch",
+        "params": {
+          "mode": "singleBranch",
+          "branches": [
+            {
+              "value1": "{{habits.input.value}}",
+              "operator": "equals",
+              "value2": "apple",
+              "output": "You selected a fruit: Apple 🍎"
+            },
+            {
+              "value1": "{{habits.input.value}}",
+              "operator": "equals",
+              "value2": "banana",
+              "output": "You selected a fruit: Banana 🍌"
+            },
+            {
+              "value1": "{{habits.input.value}}",
+              "operator": "greaterThan",
+              "value2": "100",
+              "output": "Number is greater than 100"
+            },
+            {
+              "value1": "{{habits.input.value}}",
+              "operator": "contains",
+              "value2": "test",
+              "output": "Value contains the word 'test'"
+            }
+          ],
+          "includeElse": true,
+          "defaultOutput": "No matching condition found (Else branch)"
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "type": "schedule",
+      "id": "webhook-trigger",
+      "cron": "0 0 * * *",
+      "schedule": "daily",
+      "settings": {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "description": "Value to test against branches"
+            }
+          },
+          "required": ["value"]
+        }
+      },
+      "output": "if-branch-single"
+    }
+  ]
+}

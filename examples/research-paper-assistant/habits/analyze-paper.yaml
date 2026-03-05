@@ -1,0 +1,169 @@
+id: analyze-paper
+name: Analyze Paper
+description: Deep analysis of a research paper
+
+input:
+  - id: paperContent
+    type: string
+    required: true
+    description: Paper text or abstract
+  - id: title
+    type: string
+    required: false
+  - id: analysisDepth
+    type: string
+    required: false
+    description: quick, standard, deep
+
+nodes:
+  # Extract methodology and key findings
+  - id: analyze-methodology
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1200
+        prompt: |
+          Analyze this research paper's methodology and findings.
+          
+          Paper: {{habits.input.title}}
+          Content: {{habits.input.paperContent}}
+          
+          Return JSON:
+          {
+            "researchQuestion": "Main research question(s)",
+            "hypothesis": "Stated or implied hypothesis",
+            "methodology": {
+              "approach": "Qualitative/Quantitative/Mixed",
+              "methods": ["Specific methods used"],
+              "sampleSize": "If applicable",
+              "dataCollection": "How data was collected",
+              "analysisMethod": "How data was analyzed"
+            },
+            "keyFindings": [
+              {
+                "finding": "Description",
+                "significance": "Statistical or practical significance",
+                "evidence": "Supporting evidence"
+              }
+            ],
+            "limitations": ["Acknowledged limitations"],
+            "contributions": ["Novel contributions to the field"]
+          }
+
+  # Critical analysis
+  - id: critical-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 800
+        prompt: |
+          Provide a critical analysis of this paper.
+          
+          Paper: {{habits.input.title}}
+          Content: {{habits.input.paperContent}}
+          Methodology Analysis: {{analyze-methodology}}
+          
+          Return JSON:
+          {
+            "strengths": [
+              {"point": "Strength", "explanation": "Why this is strong"}
+            ],
+            "weaknesses": [
+              {"point": "Weakness", "explanation": "Why this is problematic"}
+            ],
+            "methodologicalConcerns": ["Any issues with research design"],
+            "biasRisks": ["Potential biases identified"],
+            "replicationability": "Assessment of whether results could be replicated",
+            "overallAssessment": "Brief overall quality assessment"
+          }
+
+  # Generate citation and related topics
+  - id: academic-context
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 600
+        prompt: |
+          Provide academic context for this research.
+          
+          Paper: {{habits.input.title}}
+          Content: {{habits.input.paperContent}}
+          
+          Return JSON:
+          {
+            "field": "Primary academic field",
+            "subfield": "Specific area within field",
+            "relatedTopics": ["Related research topics to explore"],
+            "suggestedSearchTerms": ["Terms to find related papers"],
+            "potentialCitations": ["Types of papers this would cite"],
+            "futureResearch": ["Suggested future research directions"],
+            "practicalApplications": ["Real-world applications"]
+          }
+
+  # Save analysis
+  - id: save-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "paper_analyses"
+        document:
+          title: "{{habits.input.title}}"
+          paperContent: "{{habits.input.paperContent}}"
+          methodology: "{{analyze-methodology}}"
+          criticalAnalysis: "{{critical-analysis}}"
+          academicContext: "{{academic-context}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-methodology
+    target: critical-analysis
+  - source: analyze-methodology
+    target: academic-context
+  - source: critical-analysis
+    target: save-analysis
+  - source: academic-context
+    target: save-analysis
+
+output:
+  analysisId: "{{save-analysis.id}}"
+  methodology: "{{analyze-methodology}}"
+  criticalAnalysis: "{{critical-analysis}}"
+  academicContext: "{{academic-context}}"

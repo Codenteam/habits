@@ -1,0 +1,106 @@
+id: practice-conversation
+name: Practice Conversation
+description: Have a conversation practice session with AI tutor
+
+input:
+  - id: targetLanguage
+    type: string
+    required: true
+    description: Language to practice (Spanish, French, German, etc.)
+  - id: nativeLanguage
+    type: string
+    required: false
+    description: User's native language (default English)
+  - id: level
+    type: string
+    required: false
+    description: beginner, intermediate, advanced
+  - id: scenario
+    type: string
+    required: false
+    description: Conversation scenario (restaurant, travel, meeting, etc.)
+  - id: userMessage
+    type: string
+    required: true
+    description: User's message in target language
+
+nodes:
+  # Respond in target language and provide feedback
+  - id: conversation-response
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        systemMessage: |
+          You are a friendly {{habits.input.targetLanguage}} language tutor.
+          Level: {{habits.input.level}}
+          Scenario: {{habits.input.scenario}}
+          
+          Always:
+          1. Respond naturally in {{habits.input.targetLanguage}}
+          2. Adjust complexity to student level
+          3. Gently correct errors
+          4. Provide encouragement
+        prompt: |
+          Student said: "{{habits.input.userMessage}}"
+          
+          Respond with JSON:
+          {
+            "response": "Your natural response in {{habits.input.targetLanguage}}",
+            "translation": "Translation in {{habits.input.nativeLanguage}}",
+            "corrections": [
+              {
+                "original": "what they said wrong",
+                "corrected": "correct version",
+                "explanation": "why in {{habits.input.nativeLanguage}}"
+              }
+            ],
+            "newVocabulary": [
+              {
+                "word": "new word used",
+                "translation": "meaning",
+                "example": "example sentence"
+              }
+            ],
+            "grammarTip": "Optional grammar tip based on the conversation",
+            "encouragement": "Encouraging feedback"
+          }
+
+  # Save session
+  - id: save-session
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "language_sessions"
+        document:
+          type: "conversation"
+          targetLanguage: "{{habits.input.targetLanguage}}"
+          level: "{{habits.input.level}}"
+          scenario: "{{habits.input.scenario}}"
+          userMessage: "{{habits.input.userMessage}}"
+          response: "{{conversation-response}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: conversation-response
+    target: save-session
+
+output:
+  sessionId: "{{save-session.id}}"
+  response: "{{conversation-response}}"

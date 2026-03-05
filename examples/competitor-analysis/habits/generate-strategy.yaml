@@ -1,0 +1,112 @@
+id: generate-strategy
+name: Generate Competitive Strategy
+description: Generate strategic recommendations based on competitive analysis
+
+input:
+  - id: yourCompany
+    type: string
+    required: true
+  - id: yourStrengths
+    type: array
+    required: false
+  - id: competitors
+    type: array
+    required: true
+  - id: industry
+    type: string
+    required: true
+  - id: goal
+    type: string
+    required: false
+    description: market share growth, differentiation, etc.
+
+nodes:
+  - id: generate-strategy
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 1500
+        prompt: |
+          Generate a competitive strategy.
+          
+          Your Company: {{habits.input.yourCompany}}
+          Your Strengths: {{habits.input.yourStrengths}}
+          Competitors: {{habits.input.competitors}}
+          Industry: {{habits.input.industry}}
+          Goal: {{habits.input.goal}}
+          
+          Return JSON:
+          {
+            "strategicPosition": {
+              "currentPosition": "Where you stand",
+              "targetPosition": "Where to aim",
+              "positioningStatement": "Suggested positioning"
+            },
+            "differentiationStrategy": {
+              "primaryDifferentiator": "Main differentiator",
+              "supportingDifferentiators": ["Additional differentiators"],
+              "messagingPillars": ["Key messages"]
+            },
+            "competitiveActions": {
+              "immediate": [
+                {"action": "Action", "rationale": "Why", "expectedImpact": "What it achieves"}
+              ],
+              "shortTerm": [],
+              "longTerm": []
+            },
+            "defensiveStrategy": {
+              "protectableAdvantages": ["What to defend"],
+              "vulnerabilities": ["What to address"],
+              "contingencyPlans": ["If competitor does X"]
+            },
+            "offensiveStrategy": {
+              "attackVectors": ["Where to attack competitors"],
+              "marketOpportunities": ["Gaps to exploit"],
+              "disruptionPotential": ["Ways to disrupt"]
+            },
+            "kpis": [
+              {"metric": "What to measure", "target": "Goal", "timeframe": "When"}
+            ],
+            "executionRoadmap": {
+              "q1": ["Actions"],
+              "q2": ["Actions"],
+              "q3": ["Actions"],
+              "q4": ["Actions"]
+            }
+          }
+
+  # Save strategy
+  - id: save-strategy
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "competitive_strategies"
+        document:
+          yourCompany: "{{habits.input.yourCompany}}"
+          competitors: "{{habits.input.competitors}}"
+          strategy: "{{generate-strategy}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-strategy
+    target: save-strategy
+
+output:
+  strategyId: "{{save-strategy.id}}"
+  strategy: "{{generate-strategy}}"

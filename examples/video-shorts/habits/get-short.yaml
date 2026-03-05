@@ -1,0 +1,27 @@
+id: get-short
+name: Get Short
+description: Get a specific video short
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-short
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "shorts"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  short: "{{fetch-short.document}}"
+  found: "{{fetch-short.found}}"

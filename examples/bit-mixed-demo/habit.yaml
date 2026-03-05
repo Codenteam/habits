@@ -1,0 +1,62 @@
+id: declarative-mixed-demo
+name: Declarative Mixed Demo
+
+# This habit demonstrates multiple node types:
+# 1. Script node - Creates test data  
+# 2. Bits module (@ha-bits/bit-string) - Uppercase transformation
+# 3. Declarative bit (@ha-bits/bit-httpbin) - Fetch data from HTTPBin API
+
+nodes:
+  # Node 1: Script node - Create mock data
+  - id: create-data
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Create Mock Data
+      params:
+        type: script
+        language: deno
+        script: |
+          export async function main() {
+            console.log("📝 Creating mock post data");
+            
+            const posts = [
+              { id: 1, title: "hello world from habits", body: "This is the first post" },
+              { id: 2, title: "testing the bit-string module", body: "This is the second post" },
+              { id: 3, title: "declarative nodes are cool", body: "This is the third post" }
+            ];
+            
+            return {
+              count: posts.length,
+              posts: posts,
+              processedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Bits module - Use bit-string to uppercase the first post title
+  - id: uppercase-title
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-string"
+      operation: uppercase
+      params:
+        text: "{{create-data.result.posts.0.title}}"
+
+  # Node 3: Declarative bit - Get UUID from HTTPBin API
+  - id: fetch-uuid
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-httpbin"
+      operation: uuid
+      params: {}
+
+edges:
+  - source: create-data
+    target: uppercase-title
+  - source: uppercase-title
+    target: fetch-uuid

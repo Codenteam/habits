@@ -1,0 +1,141 @@
+id: multi-trigger-test
+name: Multiple Triggers with Optional Edges
+
+nodes:
+  # IMAP Trigger 1 - Primary inbox
+  - id: imap-trigger-1
+    type: activepieces
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-imap"
+      operation: new_email
+      triggerType: polling
+      params:
+        mailbox: "INBOX"
+      credentials:
+        imapAuth:
+          host: "{{habits.env.IMAP_HOST}}"
+          username: "{{habits.env.IMAP_USERNAME_1}}"
+          password: "{{habits.env.IMAP_PASSWORD_1}}"
+          port: 3143
+          tls: false
+          validateCertificates: false
+
+  # IMAP Trigger 2 - Secondary inbox
+  - id: imap-trigger-2
+    type: activepieces
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-imap"
+      operation: new_email
+      triggerType: polling
+      params:
+        mailbox: "INBOX"
+      credentials:
+        imapAuth:
+          host: "{{habits.env.IMAP_HOST}}"
+          username: "{{habits.env.IMAP_USERNAME_2}}"
+          password: "{{habits.env.IMAP_PASSWORD_2}}"
+          port: 3143
+          tls: false
+          validateCertificates: false
+
+  # HTTP Trigger - Manual input via webhook
+  - id: http-trigger
+    type: trigger
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-webhook"
+      operation: catch_webhook
+      triggerType: webhook
+      params: {}
+
+  # Script node that aggregates inputs from any trigger
+  - id: aggregate-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Aggregate Trigger Inputs
+      params:
+        imapInput1: "{{imap-trigger-1}}"
+        imapInput2: "{{imap-trigger-2}}"
+        httpInput: "{{http-trigger}}"
+        directInput: "{{habits.input}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            imapInput1: unknown,
+            imapInput2: unknown, 
+            httpInput: unknown,
+            directInput: unknown
+          ) {
+            // Return whichever input was provided (first non-null)
+            const sources = [
+              { name: 'imap-1', data: imapInput1 },
+              { name: 'imap-2', data: imapInput2 },
+              { name: 'http', data: httpInput },
+              { name: 'direct', data: directInput }
+            ];
+            
+            const activeSource = sources.find(s => s.data !== null && s.data !== undefined && Object.keys(s.data).length > 0);
+            
+            if (!activeSource) {
+              return { error: 'No input received from any trigger' };
+            }
+            
+            console.log(`📥 Input received from: ${activeSource.name}`);
+            return {
+              source: activeSource.name,
+              timestamp: new Date().toISOString(),
+              data: activeSource.data
+            };
+          }
+
+  # Log node that takes output from aggregate
+  - id: log-email
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log Aggregated Result
+      params:
+        aggregatedData: "{{aggregate-input}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(aggregatedData: unknown) {
+            const timestamp = new Date().toISOString();
+            console.log("========================================");
+            console.log("📧 Aggregated data received at:", timestamp);
+            console.log("========================================");
+            console.log("Data:", JSON.stringify(aggregatedData, null, 2));
+            return { 
+              success: true, 
+              processed: true,
+              message: "workflow-completed-successfully",
+              processedAt: timestamp,
+              inputData: aggregatedData 
+            };
+          }
+
+edges:
+  # All triggers connect to aggregate with OPTIONAL edges
+  # This means aggregate runs when ANY trigger fires
+  - source: imap-trigger-1
+    target: aggregate-input
+    optional: true
+  - source: imap-trigger-2
+    target: aggregate-input
+    optional: true
+  - source: http-trigger
+    target: aggregate-input
+    optional: true
+  
+  # Required edge from aggregate to log
+  - source: aggregate-input
+    target: log-email

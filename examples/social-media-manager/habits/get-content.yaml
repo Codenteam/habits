@@ -1,0 +1,27 @@
+id: get-content
+name: Get Content
+description: Get specific social content
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-content
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "social_content"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  content: "{{fetch-content.document}}"
+  found: "{{fetch-content.found}}"

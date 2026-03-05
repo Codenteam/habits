@@ -1,0 +1,140 @@
+{
+  "name": "habits",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/habits/app/src",
+  "projectType": "application",
+  "tags": [
+    "scope:app",
+    "type:cli"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "cache": false,
+      "outputs": [
+        "{workspaceRoot}/dist/packages/habits"
+      ],
+      "options": {
+        "outputPath": "dist/packages/habits/app",
+        "main": "packages/habits/app/src/main.ts",
+        "outputFileName": "main.cjs",
+        "tsConfig": "packages/habits/app/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": true,
+        "declaration": false,
+        "assets": [
+          {
+            "input": "packages/habits/app",
+            "glob": "package.json",
+            "output": ".."
+          },
+          {
+            "input": "packages/habits/app",
+            "glob": "README.md",
+            "output": ".."
+          },
+          {
+            "input": "packages/base/server/src",
+            "glob": "sea-entry-template.js",
+            "output": "."
+          }
+        ],
+        "esbuildOptions": {
+          "banner": {
+            "js": "#!/usr/bin/env node"
+          },
+          "external": [
+            "@activepieces/*"
+          ],
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build",
+        "@ha-bits/cortex:build",
+        "@ha-bits/cortex-ui:build",
+        "@ha-bits/base:build",
+        "@ha-bits/base-ui:build"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsx watch packages/habits/app/src/main.ts cortex --config {args.config}",
+        "cwd": "{workspaceRoot}",
+        "config": "config.json"
+      }
+    },
+    "cortex": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsx watch packages/habits/app/src/main.ts cortex --config {args.config}",
+        "cwd": "{workspaceRoot}",
+        "config": "config.json"
+      }
+    },
+    "npx": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx ./dist/packages/habits"
+        ],
+        "parallel": true,
+        "cwd": "{workspaceRoot}"
+      },
+      "dependsOn": [
+        "pack"
+      ]
+    },
+    "base": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["pnpm tsx watch packages/habits/app/src/main.ts edit", "pnpm nx dev @ha-bits/base-ui --port=3001"],
+        "parallel": true,
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/habits/app/tsconfig.lib.json --noEmit"
+      }
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm ncc build dist/packages/habits/app/main.cjs -o dist/packages/habits/pack",
+          "pnpm ncc build dist/packages/base/server/main.cjs -o dist/packages/habits/base-server",
+          "cp -r dist/packages/cortex/ui dist/packages/habits/cortex-ui",
+          "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
+          "mkdir -p dist/packages/habits/examples",
+          "cp -r examples/mixed dist/packages/habits/examples/mixed",
+          "cp -r examples/business-intersect-standalone dist/packages/habits/examples/business-intersect-standalone",
+          "find dist/packages/habits/examples -name '.env' -type f -delete",
+          "cp packages/habits/app/.npmignore dist/packages/habits/.npmignore",
+          "chmod +x dist/packages/habits/app/main.cjs dist/packages/habits/pack/index.cjs"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x dist/packages/habits/pack/index.cjs",
+          "cd packages/habits && npm version patch --no-git-tag-version",
+          "nx pack habits",
+          "cd dist/packages/habits && npm publish --access public"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

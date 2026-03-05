@@ -1,0 +1,27 @@
+id: get-analysis
+name: Get Analysis
+description: Get a specific resume analysis
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "resume_analyses"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  analysis: "{{fetch-analysis.document}}"
+  found: "{{fetch-analysis.found}}"

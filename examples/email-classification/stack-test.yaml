@@ -1,0 +1,8 @@
+version: "1.0"
+workflows:
+  - id: email-classification-input-test
+    path: ./habit-test-input.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"

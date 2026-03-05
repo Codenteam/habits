@@ -1,0 +1,56 @@
+# Binary Export Tests
+#
+# Test the binary export endpoint with a hello-world habit.
+#
+# Prerequisites:
+# - Start base server: pnpm nx dev @ha-bits/base
+#
+# Usage:
+#   httpyac http/binary-export-tests.http --all
+
+@baseUrl = http://localhost:3000
+
+
+### Check Binary Export Support
+# @name binarySupportCheck
+GET {{baseUrl}}/habits/base/api/export/binary/support
+Accept: application/json
+
+
+### Generate Binary - Hello World
+# @name binaryExportHelloWorld
+POST {{baseUrl}}/habits/base/api/export/binary
+Content-Type: application/json
+
+{
+  "habits": [
+    {
+      "name": "Hello World Demo",
+      "slug": "hello-world",
+      "nodes": [
+        {
+          "id": "say-hello",
+          "type": "action",
+          "position": { "x": 100, "y": 100 },
+          "data": {
+            "label": "Say Hello",
+            "framework": "bits",
+            "source": "npm",
+            "module": "@ha-bits/bit-hello-world",
+            "operation": "greet",
+            "params": {
+              "param1": "hello",
+              "param2": "world"
+            }
+          }
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "serverConfig": {
+    "port": 3000
+  },
+  "envContent": "HABITS_DEBUG=true\n",
+  "platform": "current"
+}

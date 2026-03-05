@@ -1,0 +1,223 @@
+$schema: http://json-schema.org/draft-07/schema#
+
+definitions:
+  Record<string,any>:
+    type: object
+
+  # Logging configuration for workflow-level or stack-level logging
+  LogLevel:
+    type: string
+    enum:
+      - trace
+      - debug
+      - info
+      - warn
+      - error
+      - fatal
+      - none
+    description: |
+      Log level for filtering messages.
+      trace: Most verbose, for detailed debugging
+      debug: Debugging information
+      info: General information (default)
+      warn: Warnings, potential issues
+      error: Errors, failures
+      fatal: Critical errors, system failures
+      none: Disable all logging
+
+  LoggingConfig:
+    type: object
+    description: |
+      Logging configuration. Can be specified in habit.yaml (per-workflow) or stack.yaml (global).
+      Environment variables override all config (HABITS_LOG_LEVEL, HABITS_LOG_OUTPUT, etc.)
+    properties:
+      level:
+        $ref: "#/definitions/LogLevel"
+        description: Default log level for all loggers
+        default: info
+      outputs:
+        type: array
+        items:
+          type: string
+          enum:
+            - console
+            - file
+            - json
+        description: Output destinations (console, file, json)
+        default: [console]
+      file:
+        type: object
+        description: File output configuration (only used if 'file' is in outputs)
+        properties:
+          path:
+            type: string
+            description: Path to log file
+            default: ./logs/habits.log
+          maxSize:
+            type: string
+            description: Maximum file size before rotation (e.g., '10mb', '1gb')
+            default: 10mb
+          maxFiles:
+            type: integer
+            description: Maximum number of rotated files to keep
+            default: 5
+            minimum: 1
+      format:
+        type: string
+        enum:
+          - text
+          - json
+        description: Output format for console/file
+        default: text
+      colorize:
+        type: boolean
+        description: Enable ANSI colors in console output (auto-detected if not specified)
+      bitOverrides:
+        type: object
+        description: |
+          Per-bit log level overrides. Keys are bit names (e.g., 'bit-http', 'bit-openai').
+          Values are log levels.
+        additionalProperties:
+          $ref: "#/definitions/LogLevel"
+
+  WorkflowEdge:
+    type: object
+    properties:
+      id:
+        type: string
+      source:
+        type: string
+      sourceHandle:
+        type: string
+      target:
+        type: string
+      targetHandle:
+        type: string
+
+  WorkflowNode:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+        enum:
+          - action
+          - activepieces
+          - n8n
+          - trigger
+          - script
+          # Future/WIP type - used in conceptual docs examples
+          - bit         # Custom bits (see roadmap/bits.md) - includes declarative, moderation, and other bit subtypes
+      position:
+        type: object
+        properties:
+          x:
+            type: number
+          y:
+            type: number
+      data:
+        type: object
+        properties:
+          label:
+            type: string
+          framework:
+            type: string
+            enum:
+              - activepieces
+              - n8n
+              - script
+              # Future/WIP framework - used in conceptual docs examples
+              - bits      # Custom bits framework (see roadmap/bits.md)
+          module:
+            type: string
+          operation:
+            type: string
+          resource:
+            type: string
+          source:
+            type: string
+            description: Module source - 'local', 'npm', 'github', or 'link'
+            enum:
+              - local
+              - npm
+              - github
+              - link
+          registry:
+            type: string
+            description: |
+              Custom npm registry URL for 'npm' source modules.
+              If not provided, uses HABITS_NPM_REGISTRY_URL environment variable,
+              or defaults to https://registry.npmjs.org.
+              Useful for private registries like Verdaccio.
+          isTrigger:
+            type: boolean
+            description: Marks this node as a trigger/entry point for the workflow
+          inputs:
+            type: array
+            items:
+              type: string
+          outputs:
+            type: array
+            items:
+              type: string
+          inputTransforms:
+            $ref: "#/definitions/Record<string,any>"
+          credentials:
+            $ref: "#/definitions/Record<string,any>"
+          params:
+            type: object
+            additionalProperties: true
+            properties:
+              type:
+                type: string
+                description: Type parameter - 'script' 
+              language:
+                type: string
+                enum:
+                  - bash
+                  - deno
+                  - go
+                  - python3
+                  - sql
+                  - typescript
+                description: Script language for script framework nodes
+              script:
+                type: string
+                description: The script code for script framework nodes
+          stopAfterIf:
+            type: object
+            properties:
+              expr:
+                type: string
+              skipIfStopped:
+                type: boolean
+
+type: object
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  description:
+    type: string
+  version:
+    type: string
+  nodes:
+    type: array
+    items:
+      $ref: "#/definitions/WorkflowNode"
+  edges:
+    type: array
+    items:
+      $ref: "#/definitions/WorkflowEdge"
+  output:
+    type: object
+    description: Output mapping for workflow results
+    additionalProperties:
+      type: string
+  logging:
+    $ref: "#/definitions/LoggingConfig"
+    description: |
+      Per-workflow logging configuration (optional).
+      Overridden by stack.yaml logging config, which is overridden by environment variables.

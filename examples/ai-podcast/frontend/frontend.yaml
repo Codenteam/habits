@@ -1,0 +1,205 @@
+# Frontend Blocks Definition for AI Podcast Generator
+# This YAML describes the UI structure using reusable blocks
+# The compile-frontend.js script renders this into index.html
+
+title: AI Podcast Generator
+theme: dark
+
+# Block tree - rendered top to bottom
+blocks:
+  - type: ui-page
+    children:
+      # Header section
+      - type: ui-header
+        props:
+          icon: "🎙️"
+          title: "AI Podcast Generator"
+          subtitle: "Generate complete podcast episodes, scripts, and show notes"
+
+      # Create Episode Card
+      - type: ui-card
+        props:
+          id: create-section
+          title: "Create Episode"
+        children:
+          - type: ui-form
+            props:
+              id: episode-form
+            children:
+              # Topic textarea
+              - type: ui-textarea
+                props:
+                  name: topic
+                  label: "Episode Topic *"
+                  placeholder: "What's this episode about? Be specific for better results..."
+                  required: true
+
+              # Format selection
+              - type: ui-format-grid
+                props:
+                  name: format
+                  label: "Episode Format"
+                  options:
+                    - value: solo
+                      icon: "🎤"
+                      label: "Solo"
+                    - value: interview
+                      icon: "👥"
+                      label: "Interview"
+                    - value: educational
+                      icon: "📚"
+                      label: "Educational"
+                    - value: storytelling
+                      icon: "📖"
+                      label: "Story"
+                    - value: debate
+                      icon: "⚔️"
+                      label: "Debate"
+
+              # Podcast name and duration row
+              - type: ui-form-row
+                children:
+                  - type: ui-input
+                    props:
+                      name: podcastName
+                      label: "Podcast Name"
+                      placeholder: "Your podcast name"
+                  - type: ui-select
+                    props:
+                      name: duration
+                      label: "Duration"
+                      options:
+                        - value: "10"
+                          label: "10 minutes"
+                        - value: "20"
+                          label: "20 minutes"
+                        - value: "30"
+                          label: "30 minutes"
+                          selected: true
+                        - value: "45"
+                          label: "45 minutes"
+                        - value: "60"
+                          label: "60 minutes"
+
+              # Host and guest row
+              - type: ui-form-row
+                children:
+                  - type: ui-input
+                    props:
+                      name: hostName
+                      label: "Host Name"
+                      placeholder: "Your name"
+                  - type: ui-input
+                    props:
+                      id: guest-group
+                      name: guestName
+                      label: "Guest Name"
+                      placeholder: "Guest name (for interviews)"
+
+              # Additional notes
+              - type: ui-textarea
+                props:
+                  name: notes
+                  label: "Additional Notes"
+                  placeholder: "Any specific points to cover, style preferences, or context..."
+
+              # Submit button
+              - type: ui-button
+                props:
+                  id: submitBtn
+                  text: "🎙️ Generate Episode"
+
+      # Loading animation
+      - type: ui-loading
+        props:
+          id: loading
+          message: "Generating your podcast episode..."
+
+      # Results section
+      - type: ui-results
+        props:
+          id: results
+        children:
+          - type: ui-card
+            children:
+              # Back button
+              - type: ui-back-button
+                props:
+                  text: "← Create Another"
+                  onClick: "backToCreate()"
+
+              # Tab navigation
+              - type: ui-tabs
+                props:
+                  tabs:
+                    - id: script
+                      icon: "📝"
+                      label: "Script"
+                    - id: chapters
+                      icon: "📑"
+                      label: "Chapters"
+                    - id: shownotes
+                      icon: "📋"
+                      label: "Show Notes"
+                    - id: social
+                      icon: "📱"
+                      label: "Promo"
+
+              # Script tab content
+              - type: ui-tab-content
+                props:
+                  id: script
+                  active: true
+                children:
+                  - type: ui-section
+                    props:
+                      title: "Intro"
+                      copyable: true
+                      contentId: intro-text
+                  - type: ui-section
+                    props:
+                      title: "Full Script"
+                      copyable: true
+                      contentId: script-text
+
+              # Chapters tab content
+              - type: ui-tab-content
+                props:
+                  id: chapters
+                children:
+                  - type: ui-section
+                    props:
+                      title: "Episode Chapters"
+                      copyable: true
+                      contentId: chapters-text
+
+              # Show notes tab content
+              - type: ui-tab-content
+                props:
+                  id: shownotes
+                children:
+                  - type: ui-section
+                    props:
+                      title: "Show Notes"
+                      copyable: true
+                      contentId: shownotes-text
+
+              # Social tab content (dynamic)
+              - type: ui-tab-content
+                props:
+                  id: social
+                children:
+                  - type: ui-social-container
+                    props:
+                      id: social-container
+
+      # Recent episodes history
+      - type: ui-card
+        props:
+          id: history-section
+          title: "Recent Episodes"
+        children:
+          - type: ui-episode-grid
+            props:
+              id: episode-grid
+              loadingText: "Loading..."

@@ -1,0 +1,191 @@
+id: analyze-finances
+name: Analyze Finances
+description: Comprehensive financial analysis and insights
+
+input:
+  - id: income
+    type: number
+    required: true
+    description: Monthly income
+  - id: expenses
+    type: object
+    required: true
+    description: Expense breakdown by category
+  - id: savings
+    type: number
+    required: false
+  - id: debt
+    type: object
+    required: false
+    description: Debt breakdown
+  - id: goals
+    type: array
+    required: false
+    description: Financial goals
+
+nodes:
+  # Analyze spending patterns
+  - id: spending-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 1000
+        prompt: |
+          Analyze this financial profile:
+          
+          Monthly Income: ${{habits.input.income}}
+          Monthly Expenses: {{habits.input.expenses}}
+          Current Savings: ${{habits.input.savings}}
+          Debts: {{habits.input.debt}}
+          Goals: {{habits.input.goals}}
+          
+          Return JSON:
+          {
+            "healthScore": 0-100,
+            "healthStatus": "Excellent|Good|Fair|Needs Attention|Critical",
+            "incomeVsExpense": {
+              "totalExpenses": 0,
+              "netIncome": 0,
+              "savingsRate": "X%",
+              "assessment": "Good/Poor ratio explanation"
+            },
+            "spendingBreakdown": [
+              {"category": "Category", "amount": 0, "percentage": "X%", "benchmark": "typical %", "status": "Good|High|Low"}
+            ],
+            "alerts": [
+              {"type": "warning|opportunity|critical", "message": "Alert message"}
+            ],
+            "debtAnalysis": {
+              "totalDebt": 0,
+              "debtToIncomeRatio": "X%",
+              "monthlyDebtPayments": 0,
+              "status": "Manageable|Concerning|Critical"
+            }
+          }
+
+  # Generate recommendations
+  - id: generate-recommendations
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        prompt: |
+          Based on this financial analysis, provide actionable recommendations.
+          
+          Analysis: {{spending-analysis}}
+          Goals: {{habits.input.goals}}
+          
+          Return JSON:
+          {
+            "immediateActions": [
+              {"action": "What to do", "impact": "Expected savings/benefit", "difficulty": "Easy|Medium|Hard"}
+            ],
+            "monthlyOptimizations": [
+              {"area": "Category", "currentSpend": 0, "suggestedSpend": 0, "savingsTip": "How to reduce"}
+            ],
+            "savingsStrategy": {
+              "emergencyFund": {"target": 0, "currentProgress": "X%", "monthlyContribution": 0},
+              "goalFunding": [{"goal": "Goal", "timeline": "X months", "monthlySaving": 0}]
+            },
+            "debtPayoffStrategy": {
+              "method": "Avalanche|Snowball",
+              "order": ["Debt1", "Debt2"],
+              "estimatedPayoffTime": "X months",
+              "interestSaved": 0
+            }
+          }
+
+  # Generate projections
+  - id: generate-projections
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 600
+        prompt: |
+          Project financial scenarios based on:
+          
+          Analysis: {{spending-analysis}}
+          Recommendations: {{generate-recommendations}}
+          
+          Return JSON:
+          {
+            "currentTrajectory": {
+              "in6Months": {"savings": 0, "debt": 0},
+              "in1Year": {"savings": 0, "debt": 0},
+              "in5Years": {"savings": 0, "debt": 0}
+            },
+            "optimizedTrajectory": {
+              "in6Months": {"savings": 0, "debt": 0},
+              "in1Year": {"savings": 0, "debt": 0},
+              "in5Years": {"savings": 0, "debt": 0}
+            },
+            "milestones": [
+              {"milestone": "Goal achieved", "timeline": "X months"}
+            ]
+          }
+
+  # Save report
+  - id: save-report
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "finance_reports"
+        document:
+          income: "{{habits.input.income}}"
+          expenses: "{{habits.input.expenses}}"
+          analysis: "{{spending-analysis}}"
+          recommendations: "{{generate-recommendations}}"
+          projections: "{{generate-projections}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: spending-analysis
+    target: generate-recommendations
+  - source: generate-recommendations
+    target: generate-projections
+  - source: generate-projections
+    target: save-report
+
+output:
+  reportId: "{{save-report.id}}"
+  analysis: "{{spending-analysis}}"
+  recommendations: "{{generate-recommendations}}"
+  projections: "{{generate-projections}}"

@@ -1,0 +1,27 @@
+id: get-quiz
+name: Get Quiz
+description: Get a specific quiz by ID
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-quiz
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: get
+      operation: get
+      params:
+        collection: "quizzes"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  quiz: "{{fetch-quiz.document}}"
+  found: "{{fetch-quiz.found}}"

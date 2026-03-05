@@ -1,0 +1,31 @@
+id: list-products
+name: List Products
+description: Get all saved product descriptions
+
+input:
+  - id: limit
+    type: number
+    required: false
+  - id: category
+    type: string
+    required: false
+
+nodes:
+  - id: query-products
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "products"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  products: "{{query-products.results}}"
+  count: "{{query-products.count}}"

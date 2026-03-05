@@ -1,0 +1,62 @@
+#!/bin/bash
+# Run the cortex workflow server with hot reload for testing
+# 
+# Usage:
+#   ./exec [test-name]
+#   ./exec minimal-intersect-output
+#   ./exec business-intersect
+#
+# This script should be run from the packages/cortex/server directory
+# or you can run it from workspace root as: ./packages/cortex/server/exec [test-name]
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Navigate to workspace root (3 levels up from packages/cortex/server)
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
+
+# Default test module
+TEST_NAME=${1:-n8n-top-6}
+# TEST_NAME=${1:-business-intersect}
+TEST_DIR="$WORKSPACE_ROOT/examples/$TEST_NAME"
+CONFIG_FILE="$TEST_DIR/config.json"
+ENV_FILE="$TEST_DIR/.env"
+
+# Check if test directory exists
+if [ ! -d "$TEST_DIR" ]; then
+  echo "❌ Test directory not found: $TEST_DIR"
+  echo ""
+  echo "Available tests:"
+  ls -1 "$WORKSPACE_ROOT/test" 2>/dev/null || echo "  (no tests found)"
+  exit 1
+fi
+
+# Check if config file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "❌ Config file not found: $CONFIG_FILE"
+  exit 1
+fi
+
+# Build the command
+SERVER_FILE="$SCRIPT_DIR/src/server.ts"
+COMMAND="npx tsx watch --include=$TEST_DIR"
+
+# Add env file if it exists
+if [ -f "$ENV_FILE" ]; then
+  COMMAND="$COMMAND --env-file=$ENV_FILE"
+  echo "📁 Loading env from: $ENV_FILE"
+fi
+
+COMMAND="$COMMAND $SERVER_FILE server --config $CONFIG_FILE"
+
+echo "🧠 Cortex - Habits Workflow Executor (Dev Mode)"
+echo "📁 Test: $TEST_NAME"
+echo "📁 Config: $CONFIG_FILE"
+echo "🔄 Running with hot reload..."
+echo ""
+echo "Command: $COMMAND"
+echo ""
+
+# Change to workspace root and run
+cd "$WORKSPACE_ROOT"
+bash -c "$COMMAND"

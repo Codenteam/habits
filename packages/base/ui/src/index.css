@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Include frontend-builder package in Tailwind content scanning */
+@source "../../frontend-builder/src/**/*.tsx";
+
+/* Import workflow-canvas styles */
+@import "../../../workflow-canvas/src/styles.css";
+/* @import "../../../workflow-canvas*.tsx"; */
+
+@theme {
+  --color-border: oklch(0.922 0.012 249.5);
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.141 0.044 264.5);
+}
+
+
+* {
+  /* margin: 0; */
+  /* padding: 0; */
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Dark mode scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1e293b;
+}

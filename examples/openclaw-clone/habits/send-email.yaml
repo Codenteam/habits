@@ -1,0 +1,43 @@
+id: send-email
+name: Send Email
+description: Send an email via SMTP
+
+input:
+  - id: to
+    type: string
+    required: true
+  - id: subject
+    type: string
+    required: true
+  - id: body
+    type: string
+    required: true
+  - id: html
+    type: string
+    required: false
+
+nodes:
+  - id: email-send
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      resource: sendEmail
+      operation: sendEmail
+      params:
+        smtpHost: "{{habits.env.SMTP_HOST}}"
+        smtpPort: "{{habits.env.SMTP_PORT}}"
+        smtpUser: "{{habits.env.SMTP_USER}}"
+        smtpPassword: "{{habits.env.SMTP_PASSWORD}}"
+        from: "{{habits.env.SMTP_FROM}}"
+        to: "{{habits.input.to}}"
+        subject: "{{habits.input.subject}}"
+        body: "{{habits.input.body}}"
+        html: "{{habits.input.html}}"
+
+edges: []
+
+output:
+  success: "{{email-send.success}}"
+  messageId: "{{email-send.messageId}}"

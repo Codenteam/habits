@@ -1,0 +1,59 @@
+# Tests for Business Intersect Marketing Campaign
+# Workflow: habit.yaml - Marketing campaign asset generation
+workflow: ./habit.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully generates marketing campaign assets"
+    trigger:
+      body:
+        prompt: "Launch eco-friendly water bottle brand"
+    context:
+      habits:
+        input:
+          prompt: "Launch eco-friendly water bottle brand"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock prompt expander
+        - bit: "openai"
+          action: chat
+          response: "Introducing EcoFlow: premium reusable water bottles made from sustainable materials, promoting environmental responsibility."
+        # Mock image prompt generator
+        - bit: "openai"
+          action: chat
+          response: "Sleek water bottle, nature background, eco, sustainability, blue"
+        # Mock poster prompt generator
+        - bit: "openai"
+          action: chat
+          response: "Minimalist poster featuring EcoFlow bottle against natural landscape"
+        # Mock landing page prompt generator
+        - bit: "openai"
+          action: chat
+          response: "Clean landing page showcasing sustainable water bottle with environmental impact focus"
+        # Mock image generation
+        - bit: "openai"
+          action: images
+          response:
+            url: "https://images.intersect.ai/generated/water-bottle.png"
+        # Mock canvas creations (landing page, poster, pr doc)
+        - bit: "@ha-bits/bit-intersect"
+          action: create_canvas
+          response:
+            canvasId: "canvas-web123"
+            canvasType: "webcanvas"
+            url: "https://canvas.intersect.ai/canvas-web123"
+        - bit: "@ha-bits/bit-intersect"
+          action: create_canvas
+          response:
+            canvasId: "canvas-svg456"
+            canvasType: "svgcanvas"
+            url: "https://canvas.intersect.ai/canvas-svg456"
+        - bit: "@ha-bits/bit-intersect"
+          action: create_canvas
+          response:
+            canvasId: "canvas-doc789"
+            canvasType: "draftcanvas"
+            url: "https://canvas.intersect.ai/canvas-doc789"

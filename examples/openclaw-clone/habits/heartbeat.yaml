@@ -1,0 +1,86 @@
+id: heartbeat
+name: Heartbeat
+description: Proactive check-in - generates a contextual message based on user's tasks and memories
+
+input:
+  - id: userId
+    type: string
+    required: true
+  - id: channel
+    type: string
+    required: false
+
+nodes:
+  # Get pending tasks
+  - id: get-pending-tasks
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "tasks"
+        filter: '{"userId": "{{habits.input.userId}}", "status": "pending"}'
+        limit: 5
+        sort: '{"dueDate": 1}'
+
+  # Get recent memories
+  - id: get-recent-memories
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "memories"
+        filter: '{"userId": "{{habits.input.userId}}"}'
+        limit: 5
+        sort: '{"createdAt": -1}'
+
+  # Generate proactive message
+  - id: generate-heartbeat
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o"
+        systemMessage: |
+          You are {{habits.env.ASSISTANT_NAME}}, a proactive personal AI assistant.
+          Generate a friendly, helpful check-in message based on the user's context.
+          
+          Include:
+          - A warm greeting
+          - Any upcoming tasks or reminders
+          - Relevant information from their memories
+          - Helpful suggestions or offers to assist
+          
+          Keep it concise and actionable.
+        prompt: |
+          Pending tasks: {{get-pending-tasks.results}}
+          Recent memories: {{get-recent-memories.results}}
+          
+          Generate a proactive check-in message for the user.
+        temperature: 0.7
+        maxTokens: 512
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+
+edges:
+  - source: get-pending-tasks
+    target: generate-heartbeat
+  - source: get-recent-memories
+    target: generate-heartbeat
+
+output:
+  message: "{{generate-heartbeat.text}}"
+  pendingTasksCount: "{{get-pending-tasks.count}}"

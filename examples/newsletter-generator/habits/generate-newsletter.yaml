@@ -1,0 +1,245 @@
+id: generate-newsletter
+name: Generate Newsletter
+description: Generate a complete newsletter from topics and articles
+
+input:
+  - id: title
+    type: string
+    required: true
+    description: Newsletter title
+  - id: audience
+    type: string
+    required: true
+    description: Target audience description
+  - id: topics
+    type: array
+    required: true
+    description: Main topics or themes
+  - id: articles
+    type: array
+    required: false
+    description: Optional article URLs or content to include
+  - id: tone
+    type: string
+    required: false
+    description: casual, professional, friendly, authoritative
+  - id: includeImage
+    type: boolean
+    required: false
+
+nodes:
+  # Generate main content sections
+  - id: generate-intro
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 400
+        prompt: |
+          Write an engaging newsletter introduction.
+          
+          Newsletter: {{habits.input.title}}
+          Audience: {{habits.input.audience}}
+          Topics: {{habits.input.topics}}
+          Tone: {{habits.input.tone}}
+          
+          Create:
+          1. A catchy opening hook (1-2 sentences)
+          2. Brief preview of what's inside
+          3. Personal greeting
+          
+          Make it feel personal and exciting.
+
+  # Generate article summaries
+  - id: generate-articles
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 1500
+        prompt: |
+          Create newsletter article sections for these topics:
+          {{habits.input.topics}}
+          
+          Additional content/articles provided: {{habits.input.articles}}
+          
+          Audience: {{habits.input.audience}}
+          Tone: {{habits.input.tone}}
+          
+          For each topic, create:
+          {
+            "articles": [
+              {
+                "headline": "Catchy headline",
+                "summary": "2-3 sentence summary of key points",
+                "keyTakeaway": "One actionable takeaway",
+                "readMoreText": "Teaser for full article"
+              }
+            ]
+          }
+          
+          Make each section valuable and actionable for the audience.
+
+  # Generate tips/recommendations section
+  - id: generate-tips
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 400
+        prompt: |
+          Create a "Quick Tips" section for this newsletter.
+          
+          Topics: {{habits.input.topics}}
+          Audience: {{habits.input.audience}}
+          
+          Return exactly 5 practical tips as JSON:
+          {
+            "sectionTitle": "Catchy section title",
+            "tips": [
+              {
+                "emoji": "relevant emoji",
+                "title": "Short tip title",
+                "description": "Brief actionable description"
+              }
+            ]
+          }
+
+  # Generate closing and CTA
+  - id: generate-closing
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 300
+        prompt: |
+          Write a newsletter closing section.
+          
+          Newsletter: {{habits.input.title}}
+          Audience: {{habits.input.audience}}
+          Tone: {{habits.input.tone}}
+          
+          Include:
+          1. Warm closing message
+          2. Call-to-action (reply, share, subscribe, etc.)
+          3. Teaser for next issue
+          4. Signature
+          
+          Make it feel genuine and encourage engagement.
+
+  # Generate subject lines
+  - id: generate-subjects
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 200
+        prompt: |
+          Generate 5 email subject line options for this newsletter:
+          
+          Title: {{habits.input.title}}
+          Topics: {{habits.input.topics}}
+          Audience: {{habits.input.audience}}
+          
+          Return JSON:
+          {
+            "subjects": [
+              {"line": "subject line", "style": "curiosity/urgency/value/question/emoji"}
+            ]
+          }
+          
+          Make them attention-grabbing with good open rates potential.
+
+  # Save newsletter
+  - id: save-newsletter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "newsletters"
+        document:
+          title: "{{habits.input.title}}"
+          audience: "{{habits.input.audience}}"
+          topics: "{{habits.input.topics}}"
+          tone: "{{habits.input.tone}}"
+          intro: "{{generate-intro}}"
+          articles: "{{generate-articles}}"
+          tips: "{{generate-tips}}"
+          closing: "{{generate-closing}}"
+          subjectLines: "{{generate-subjects}}"
+          status: "draft"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-intro
+    target: save-newsletter
+  - source: generate-articles
+    target: save-newsletter
+  - source: generate-tips
+    target: save-newsletter
+  - source: generate-closing
+    target: save-newsletter
+  - source: generate-subjects
+    target: save-newsletter
+
+output:
+  newsletterId: "{{save-newsletter.id}}"
+  subjectLines: "{{generate-subjects}}"
+  intro: "{{generate-intro}}"
+  articles: "{{generate-articles}}"
+  tips: "{{generate-tips}}"
+  closing: "{{generate-closing}}"

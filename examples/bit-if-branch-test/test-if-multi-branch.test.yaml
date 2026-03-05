@@ -1,0 +1,94 @@
+# Tests for bit-if Multiple Branch Mode
+# Workflow: test-if-multi-branch.yaml
+workflow: ./test-if-multi-branch.yaml
+
+tests:
+  # === Multiple Branch Mode Tests ===
+  - name: "multipleBranch - text with all vowels"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          text: "aeiou"
+    mocks:
+      bits:
+        - bit: "bit-if"
+          action: branch
+          response:
+            mode: multipleBranch
+            matchedCount: 6
+            executedBranchIndices: [0, 1, 2, 3, 4, 5]
+            outputs:
+              - "Text contains letter 'a'"
+              - "Text contains letter 'e'"
+              - "Text contains letter 'i'"
+              - "Text contains letter 'o'"
+              - "Text contains letter 'u'"
+              - "Text is not empty"
+    expect:
+      matchedCount: 6
+
+  - name: "multipleBranch - text with some vowels (apple)"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          text: "apple"
+    mocks:
+      bits:
+        - bit: "bit-if"
+          action: branch
+          response:
+            mode: multipleBranch
+            matchedCount: 3
+            executedBranchIndices: [0, 1, 5]
+            outputs:
+              - "Text contains letter 'a'"
+              - "Text contains letter 'e'"
+              - "Text is not empty"
+    expect:
+      matchedCount: 3
+
+  - name: "multipleBranch - text with no vowels"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          text: "rhythm"
+    mocks:
+      bits:
+        - bit: "bit-if"
+          action: branch
+          response:
+            mode: multipleBranch
+            matchedCount: 1
+            executedBranchIndices: [5]
+            outputs:
+              - "Text is not empty"
+    expect:
+      matchedCount: 1
+      outputs:
+        - "Text is not empty"
+
+  - name: "multipleBranch - empty text"
+    trigger:
+      body: {}
+    context:
+      habits:
+        input:
+          text: ""
+    mocks:
+      bits:
+        - bit: "bit-if"
+          action: branch
+          response:
+            mode: multipleBranch
+            matchedCount: 0
+            executedBranchIndices: []
+            outputs: []
+    expect:
+      matchedCount: 0
+      outputs: []

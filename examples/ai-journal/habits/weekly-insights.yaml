@@ -1,0 +1,64 @@
+id: weekly-insights
+name: Weekly Insights
+description: Generate weekly insights from journal entries
+
+nodes:
+  # Get recent entries
+  - id: get-entries
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "journal_entries"
+        limit: 7
+        sort: '{"createdAt": -1}'
+
+  # Generate insights
+  - id: generate-insights
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 1000
+        systemMessage: You are a compassionate wellness coach reviewing someone's journal week.
+        prompt: |
+          Review these journal entries from the past week and provide thoughtful insights:
+          
+          {{get-entries.results}}
+          
+          Return JSON with:
+          {
+            "moodTrend": "improving/stable/declining",
+            "averageMood": <1-10>,
+            "dominantThemes": ["recurring topics"],
+            "positivePatterns": ["good habits or moments noticed"],
+            "areasOfConcern": ["things to be mindful of"],
+            "weekSummary": "2-3 sentence summary of the week",
+            "encouragement": "personalized encouraging message",
+            "suggestedFocus": "one thing to focus on next week",
+            "celebrateMoments": ["specific wins or good moments to celebrate"]
+          }
+          
+          Be warm, supportive, and specific to their entries.
+
+edges:
+  - source: get-entries
+    target: generate-insights
+
+output:
+  insights: "{{generate-insights}}"
+  entriesAnalyzed: "{{get-entries.count}}"

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memories - Claw</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a25;
+      --accent-red: #ff4757;
+      --accent-orange: #ff6b35;
+      --accent-purple: #a855f7;
+      --text-primary: #ffffff;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --border-color: #27272a;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .logo-icon { font-size: 2rem; }
+    
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    nav a:hover, nav a.active {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .add-btn {
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1.5rem;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .add-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    /* Search Box */
+    .search-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .search-input {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-red);
+    }
+    
+    .search-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .search-btn:hover {
+      border-color: var(--accent-red);
+    }
+    
+    /* Memory Cards */
+    .memory-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .memory-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: all 0.2s;
+    }
+    
+    .memory-card:hover {
+      border-color: var(--accent-purple);
+    }
+    
+    .memory-content {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .memory-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    
+    .memory-tags {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .tag {
+      background: var(--bg-tertiary);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal h2 {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .form-group textarea,
+    .form-group input {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    
+    .form-group textarea:focus,
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-red);
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+    
+    .cancel-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    
+    .empty-state .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🦞</span>
+      <span class="logo-text">Claw</span>
+    </div>
+    <nav>
+      <a href="/">Chat</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/memories.html" class="active">Memories</a>
+      <a href="/tasks.html">Tasks</a>
+    </nav>
+  </header>
+  
+  <main>
+    <div class="page-header">
+      <h1>🧠 Memories</h1>
+      <button class="add-btn" onclick="openModal()">+ Add Memory</button>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search memories...">
+      <button class="search-btn" onclick="searchMemories()">Search</button>
+    </div>
+    
+    <div class="memory-list" id="memoryList">
+      <div class="empty-state">
+        <div class="icon">🧠</div>
+        <h3>No memories yet</h3>
+        <p>Start saving important information for me to remember!</p>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Add Memory Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>Add New Memory</h2>
+      <form id="memoryForm" onsubmit="saveMemory(event)">
+        <div class="form-group">
+          <label for="content">What should I remember?</label>
+          <textarea id="memoryContent" rows="4" required placeholder="e.g., My favorite color is blue..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="category">Category (optional)</label>
+          <input type="text" id="memoryCategory" placeholder="e.g., preferences, work, personal">
+        </div>
+        <div class="form-group">
+          <label for="tags">Tags (comma-separated, optional)</label>
+          <input type="text" id="memoryTags" placeholder="e.g., important, reminder">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="add-btn">Save Memory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    const userId = localStorage.getItem('clawUserId') || 'default';
+    const memoryList = document.getElementById('memoryList');
+    const modalOverlay = document.getElementById('modalOverlay');
+    
+    function openModal() {
+      modalOverlay.classList.add('active');
+    }
+    
+    function closeModal() {
+      modalOverlay.classList.remove('active');
+      document.getElementById('memoryForm').reset();
+    }
+    
+    async function loadMemories() {
+      try {
+        const response = await fetch('/api/get-memories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { userId, limit: 50 } })
+        });
+        
+        const data = await response.json();
+        const memories = data.output?.memories || [];
+        
+        if (memories.length === 0) {
+          memoryList.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">🧠</div>
+              <h3>No memories yet</h3>
+              <p>Start saving important information for me to remember!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        memoryList.innerHTML = memories.map(memory => `
+          <div class="memory-card">
+            <div class="memory-content">${escapeHtml(memory.content)}</div>
+            <div class="memory-meta">
+              <div class="memory-tags">
+                ${memory.category ? `<span class="tag">${escapeHtml(memory.category)}</span>` : ''}
+                ${(memory.tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+              </div>
+              <span>${new Date(memory.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Error loading memories:', error);
+        memoryList.innerHTML = '<p>Error loading memories</p>';
+      }
+    }
+    
+    async function searchMemories() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) {
+        loadMemories();
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/search-memory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { query, userId, limit: 20 } })
+        });
+        
+        const data = await response.json();
+        const memories = data.output?.results || [];
+        
+        if (memories.length === 0) {
+          memoryList.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">🔍</div>
+              <h3>No results found</h3>
+              <p>Try a different search term</p>
+            </div>
+          `;
+          return;
+        }
+        
+        memoryList.innerHTML = memories.map(memory => `
+          <div class="memory-card">
+            <div class="memory-content">${escapeHtml(memory.content)}</div>
+            <div class="memory-meta">
+              <div class="memory-tags">
+                ${memory.category ? `<span class="tag">${escapeHtml(memory.category)}</span>` : ''}
+              </div>
+              <span>${new Date(memory.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Error searching memories:', error);
+      }
+    }
+    
+    async function saveMemory(event) {
+      event.preventDefault();
+      
+      const content = document.getElementById('memoryContent').value.trim();
+      const category = document.getElementById('memoryCategory').value.trim();
+      const tagsStr = document.getElementById('memoryTags').value.trim();
+      const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()) : [];
+      
+      try {
+        const response = await fetch('/api/create-memory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            input: { content, category, tags, userId }
+          })
+        });
+        
+        if (response.ok) {
+          closeModal();
+          loadMemories();
+        }
+      } catch (error) {
+        console.error('Error saving memory:', error);
+        alert('Failed to save memory');
+      }
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Allow Enter to search
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchMemories();
+    });
+    
+    // Click outside modal to close
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+    
+    loadMemories();
+  </script>
+</body>
+</html>

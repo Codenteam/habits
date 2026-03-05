@@ -1,0 +1,49 @@
+# Tests for Competitor Analysis
+# Workflow: habits/analyze-competitor.yaml - Analyzes competitors
+workflow: ./habits/analyze-competitor.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully analyzes competitor"
+    trigger:
+      body:
+        companyName: "CompetitorCo"
+        yourCompany: "MyCorp"
+        industry: "SaaS"
+        knownInfo: "B2B project management software"
+    context:
+      habits:
+        input:
+          companyName: "CompetitorCo"
+          yourCompany: "MyCorp"
+          industry: "SaaS"
+          knownInfo: "B2B project management software"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock business analysis
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            overview:
+              description: "B2B SaaS company"
+            businessModel:
+              type: "B2B"
+              revenueStreams: ["Subscriptions"]
+              pricingModel: "Subscription"
+              targetMarket: ["Enterprises"]
+        # Mock SWOT analysis
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            strengths: ["Market leader"]
+            weaknesses: ["High pricing"]
+            opportunities: ["SMB market"]
+            threats: ["New entrants"]
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

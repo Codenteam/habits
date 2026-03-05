@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #0d1117;
+            min-height: 100vh;
+            padding: 20px;
+            color: #c9d1d9;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 2rem; color: #58a6ff; }
+        .subtitle { text-align: center; margin-bottom: 30px; color: #8b949e; }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .card h2 { color: #58a6ff; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #8b949e; }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #c9d1d9;
+            font-family: inherit;
+        }
+        input:focus, select:focus { outline: none; border-color: #58a6ff; }
+        select option { background: #161b22; }
+        
+        .code-editor {
+            width: 100%;
+            min-height: 300px;
+            padding: 16px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #c9d1d9;
+            resize: vertical;
+            line-height: 1.6;
+            tab-size: 2;
+        }
+        .code-editor:focus { outline: none; border-color: #58a6ff; }
+        
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        button.submit {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        button.submit:hover { background: #2ea043; }
+        button.submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .loading { display: none; text-align: center; padding: 60px; }
+        .loading.active { display: block; }
+        .terminal-loading {
+            font-family: inherit;
+            color: #58a6ff;
+        }
+        .terminal-loading::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .results { display: none; }
+        .results.active { display: block; }
+        
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #30363d; }
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            color: #8b949e;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #c9d1d9; }
+        .tab.active { color: #58a6ff; border-bottom-color: #f78166; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .review-section {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .review-header {
+            padding: 12px 16px;
+            background: #21262d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .review-header h3 { color: #c9d1d9; font-size: 0.95rem; }
+        .review-body { padding: 16px; }
+        .review-body pre {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            font-size: 0.9rem;
+        }
+        
+        .copy-btn {
+            padding: 6px 12px;
+            background: #30363d;
+            border: none;
+            border-radius: 6px;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+        .copy-btn:hover { background: #484f58; color: #c9d1d9; }
+        
+        .severity-critical { color: #f85149; }
+        .severity-major { color: #f0883e; }
+        .severity-minor { color: #d29922; }
+        .severity-safe { color: #3fb950; }
+        
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .history-card {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-card:hover { border-color: #58a6ff; }
+        .history-card .lang { color: #58a6ff; font-weight: 600; }
+        .history-card .preview { font-size: 0.85rem; color: #8b949e; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        @media (max-width: 768px) { .row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 AI Code Review</h1>
+        <p class="subtitle">Get instant code reviews for quality, security & performance</p>
+
+        <div class="card" id="create-section">
+            <h2>Submit Code for Review</h2>
+            <form id="review-form">
+                <div class="form-group">
+                    <label>Paste Your Code</label>
+                    <textarea class="code-editor" id="code" required placeholder="// Paste your code here..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Language</label>
+                        <select id="language">
+                            <option value="javascript">JavaScript</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="csharp">C#</option>
+                            <option value="go">Go</option>
+                            <option value="rust">Rust</option>
+                            <option value="php">PHP</option>
+                            <option value="ruby">Ruby</option>
+                            <option value="sql">SQL</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Context (optional)</label>
+                        <input type="text" id="context" placeholder="What does this code do?">
+                    </div>
+                </div>
+
+                <button type="submit" class="submit" id="submitBtn">⚡ Review Code</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <p class="terminal-loading">Analyzing code</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <button onclick="backToCreate()" style="margin-bottom: 20px; background: #30363d; padding: 10px 20px; border: none; border-radius: 8px; color: #c9d1d9; cursor: pointer; font-family: inherit;">← Review More Code</button>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('quality')">Quality</button>
+                    <button class="tab" onclick="showTab('security')">Security</button>
+                    <button class="tab" onclick="showTab('performance')">Performance</button>
+                    <button class="tab" onclick="showTab('improved')">Improved Code</button>
+                </div>
+
+                <div id="quality-tab" class="tab-content active">
+                    <div class="review-section">
+                        <div class="review-header">
+                            <h3>📋 Quality Review</h3>
+                            <button class="copy-btn" onclick="copyContent('quality-text')">Copy</button>
+                        </div>
+                        <div class="review-body">
+                            <pre id="quality-text"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="security-tab" class="tab-content">
+                    <div class="review-section">
+                        <div class="review-header">
+                            <h3>🔒 Security Analysis</h3>
+                            <button class="copy-btn" onclick="copyContent('security-text')">Copy</button>
+                        </div>
+                        <div class="review-body">
+                            <pre id="security-text"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="performance-tab" class="tab-content">
+                    <div class="review-section">
+                        <div class="review-header">
+                            <h3>⚡ Performance Analysis</h3>
+                            <button class="copy-btn" onclick="copyContent('performance-text')">Copy</button>
+                        </div>
+                        <div class="review-body">
+                            <pre id="performance-text"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="improved-tab" class="tab-content">
+                    <div class="review-section">
+                        <div class="review-header">
+                            <h3>✨ Improved Code</h3>
+                            <button class="copy-btn" onclick="copyContent('improved-text')">Copy</button>
+                        </div>
+                        <div class="review-body">
+                            <pre id="improved-text"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="history-section">
+            <h2>Recent Reviews</h2>
+            <div class="history-grid" id="history-grid">
+                <p style="color: #8b949e; grid-column: 1/-1; text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab handling for code editor
+        document.getElementById('code').addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+            }
+        });
+
+        // Form submission
+        document.getElementById('review-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+
+            submitBtn.disabled = true;
+            loading.classList.add('active');
+            document.getElementById('create-section').style.display = 'none';
+            document.getElementById('history-section').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/review-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: document.getElementById('code').value,
+                        language: document.getElementById('language').value,
+                        context: document.getElementById('context').value || undefined
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+                loadHistory();
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('create-section').style.display = 'block';
+                document.getElementById('history-section').style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            document.getElementById('quality-text').textContent = data.qualityReview || '';
+            document.getElementById('security-text').textContent = data.securityReview || '';
+            document.getElementById('performance-text').textContent = data.performanceReview || '';
+            document.getElementById('improved-text').textContent = data.improvedCode || '';
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        function copyContent(id) {
+            navigator.clipboard.writeText(document.getElementById(id).textContent);
+            alert('Copied!');
+        }
+
+        function backToCreate() {
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('create-section').style.display = 'block';
+            document.getElementById('history-section').style.display = 'block';
+        }
+
+        async function loadHistory() {
+            const grid = document.getElementById('history-grid');
+            try {
+                const response = await fetch('/api/list-reviews?limit=6');
+                const data = await response.json();
+
+                if (data.reviews?.length > 0) {
+                    grid.innerHTML = data.reviews.map(r => `
+                        <div class="history-card" onclick="viewReview('${r._id}')">
+                            <div class="lang">${r.language || 'unknown'}</div>
+                            <div class="preview">${(r.codeSnippet || '').substring(0, 50)}...</div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p style="color: #8b949e; grid-column: 1/-1; text-align: center;">No reviews yet</p>';
+                }
+            } catch (error) {
+                grid.innerHTML = '<p style="color: #8b949e; grid-column: 1/-1; text-align: center;">Error loading history</p>';
+            }
+        }
+
+        async function viewReview(id) {
+            try {
+                const response = await fetch(`/api/get-review?id=${id}`);
+                const data = await response.json();
+                if (data.review) {
+                    displayResults(data.review);
+                }
+            } catch (error) {
+                alert('Error loading review');
+            }
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

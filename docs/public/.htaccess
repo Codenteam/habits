@@ -1,0 +1,45 @@
+# Handle 404 errors within this directory
+# Prevents parent website from handling 404s
+
+# Enable RewriteEngine
+RewriteEngine On
+
+# Set the base for rewrites (subdirectory path)
+RewriteBase /intersect/habits/
+
+# Custom 404 error document (must use full path from site root)
+ErrorDocument 404 /intersect/habits/404.html
+
+# Ensure this .htaccess takes precedence
+# and doesn't fall through to parent configurations
+<IfModule mod_rewrite.c>
+    # If a file or directory doesn't exist, show our 404
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /intersect/habits/404.html [L]
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+    AddType text/html .html
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType application/json .json
+</IfModule>
+
+# Enable compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>

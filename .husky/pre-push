@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Pre-push hook using nx affected to only build changed packages
+# This is faster than building all packages
+
+set -e
+
+echo "🔍 Running pre-push build validation with nx affected..."
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Check lockfile is in sync with package.json
+echo "🔒 Verifying lockfile is up to date..."
+if pnpm install --frozen-lockfile --registry=https://registry.npmjs.org > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Lockfile is in sync${NC}"
+    echo ""
+else
+    echo -e "${RED}❌ Lockfile is out of sync with package.json${NC}"
+    echo "Run 'pnpm install' to update the lockfile before pushing."
+    exit 1
+fi
+
+# Get the base commit to compare against
+# For pushes, compare against origin/main or the remote tracking branch
+REMOTE_REF=${1:-origin/main}
+BASE=${REMOTE_REF}
+
+# Check if there are affected projects
+AFFECTED=$(pnpm nx show projects --affected --base=$BASE 2>/dev/null || echo "")
+
+if [ -z "$AFFECTED" ]; then
+    echo -e "${GREEN}✅ No affected projects. Proceeding with push...${NC}"
+    exit 0
+fi
+
+echo "📦 Affected packages:"
+echo "$AFFECTED" | sed 's/^/  - /'
+echo ""
+
+echo "🔨 Building affected packages..."
+echo ""
+
+# Run nx affected:build
+if pnpm nx affected:build --base=$BASE --skip-nx-cache; then
+    echo ""
+    echo -e "${GREEN}✅ All affected builds passed!${NC}"
+else
+    echo ""
+    echo -e "${RED}❌ Pre-push validation failed!${NC}"
+    echo "Fix the build errors above before pushing."
+    exit 1
+fi
+
+echo ""
+echo "📚 Building documentation..."
+echo ""
+
+# Build docs
+cd docs
+if pnpm build; then
+    echo ""
+    echo -e "${GREEN}✅ Documentation build passed! Proceeding with push...${NC}"
+    exit 0
+else
+    echo ""
+    echo -e "${RED}❌ Documentation build failed!${NC}"
+    echo "Fix the docs build errors above before pushing."
+    exit 1
+fi

@@ -1,0 +1,43 @@
+id: create-memory
+name: Create Memory
+description: Store important information in persistent memory
+
+input:
+  - id: content
+    type: string
+    required: true
+  - id: category
+    type: string
+    required: false
+  - id: userId
+    type: string
+    required: false
+  - id: tags
+    type: array
+    required: false
+
+nodes:
+  - id: store-memory
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "memories"
+        document:
+          content: "{{habits.input.content}}"
+          category: "{{habits.input.category}}"
+          userId: "{{habits.input.userId}}"
+          tags: "{{habits.input.tags}}"
+          createdAt: "{{habits.now}}"
+          updatedAt: "{{habits.now}}"
+
+edges: []
+
+output:
+  success: "{{store-memory.success}}"
+  id: "{{store-memory.id}}"
+  memory: "{{store-memory.document}}"

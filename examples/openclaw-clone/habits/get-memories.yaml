@@ -1,0 +1,35 @@
+id: get-memories
+name: Get All Memories
+description: Retrieve all memories for a user with optional filtering
+
+input:
+  - id: userId
+    type: string
+    required: false
+  - id: category
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-memories
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "memories"
+        filter: '{"userId": "{{habits.input.userId}}"}'
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  memories: "{{query-memories.results}}"
+  count: "{{query-memories.count}}"

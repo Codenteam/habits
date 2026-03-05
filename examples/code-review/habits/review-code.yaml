@@ -1,0 +1,224 @@
+id: review-code
+name: Review Code
+description: AI-powered code review with suggestions and best practices
+
+input:
+  - id: code
+    type: string
+    required: true
+    description: Code to review
+  - id: language
+    type: string
+    required: false
+    description: Programming language
+  - id: context
+    type: string
+    required: false
+    description: What does this code do?
+  - id: reviewType
+    type: string
+    required: false
+    description: security, performance, style, all
+
+nodes:
+  # General code quality review
+  - id: quality-review
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        systemMessage: You are a senior software engineer conducting a thorough code review. Be constructive but direct.
+        prompt: |
+          Review this code for quality and best practices:
+          
+          Language: {{habits.input.language}}
+          Context: {{habits.input.context}}
+          
+          Code:
+          ```
+          {{habits.input.code}}
+          ```
+          
+          Analyze:
+          1. Code structure and organization
+          2. Naming conventions
+          3. Error handling
+          4. Edge cases coverage
+          5. DRY principle adherence
+          6. SOLID principles (where applicable)
+          7. Code readability
+          
+          For each issue:
+          - Severity: Critical/Major/Minor/Suggestion
+          - Line number or location
+          - Issue description
+          - Recommended fix
+
+  # Security analysis
+  - id: security-review
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 800
+        systemMessage: You are a security-focused code reviewer looking for vulnerabilities and security issues.
+        prompt: |
+          Perform a security review of this code:
+          
+          Language: {{habits.input.language}}
+          
+          Code:
+          ```
+          {{habits.input.code}}
+          ```
+          
+          Check for:
+          1. SQL injection vulnerabilities
+          2. XSS vulnerabilities
+          3. CSRF issues
+          4. Insecure data handling
+          5. Hardcoded secrets/credentials
+          6. Authentication/authorization issues
+          7. Input validation problems
+          8. Insecure dependencies (if identifiable)
+          9. Data exposure risks
+          
+          Rate overall security: Safe / Concerns / Vulnerable
+          
+          For each issue found, provide:
+          - Vulnerability type
+          - OWASP category (if applicable)
+          - Location in code
+          - Risk level
+          - Remediation steps
+
+  # Performance analysis
+  - id: performance-review
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 700
+        prompt: |
+          Analyze this code for performance:
+          
+          Language: {{habits.input.language}}
+          
+          Code:
+          ```
+          {{habits.input.code}}
+          ```
+          
+          Evaluate:
+          1. Time complexity (Big O)
+          2. Space complexity
+          3. Unnecessary loops or operations
+          4. Memory leaks potential
+          5. Caching opportunities
+          6. Database query optimization (if applicable)
+          7. Async/parallel processing opportunities
+          
+          Provide optimization suggestions with before/after examples.
+
+  # Suggest improvements
+  - id: improvement-suggestions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 1200
+        prompt: |
+          Based on the review findings, provide an improved version of this code:
+          
+          Original Code:
+          ```
+          {{habits.input.code}}
+          ```
+          
+          Quality Review: {{quality-review}}
+          Security Review: {{security-review}}
+          Performance Review: {{performance-review}}
+          
+          Provide:
+          1. Refactored code with all issues addressed
+          2. Explanation of each change made
+          3. Any additional improvements beyond the issues found
+
+  # Save review
+  - id: save-review
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "code_reviews"
+        document:
+          language: "{{habits.input.language}}"
+          context: "{{habits.input.context}}"
+          codeSnippet: "{{habits.input.code}}"
+          qualityReview: "{{quality-review}}"
+          securityReview: "{{security-review}}"
+          performanceReview: "{{performance-review}}"
+          improvedCode: "{{improvement-suggestions}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: quality-review
+    target: improvement-suggestions
+  - source: security-review
+    target: improvement-suggestions
+  - source: performance-review
+    target: improvement-suggestions
+  - source: improvement-suggestions
+    target: save-review
+
+output:
+  reviewId: "{{save-review.id}}"
+  qualityReview: "{{quality-review}}"
+  securityReview: "{{security-review}}"
+  performanceReview: "{{performance-review}}"
+  improvedCode: "{{improvement-suggestions}}"

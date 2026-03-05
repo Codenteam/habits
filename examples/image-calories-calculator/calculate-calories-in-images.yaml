@@ -1,0 +1,36 @@
+id: calculate-calories-in-images
+name: Calculate Calories in Images
+nodes:
+  - id: analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: vision_prompt
+      params:
+        image: "{{habits.input.imageBase64}}"
+        prompt: "You are a knowledgable nutritionist who can guess the amounts of ingredients in the picture in oz, bowls, plates, pieces or in weight. Then know the calories, if you don't know something try to guess it as close as possible. Don't say I don't know."
+      credentials:
+        openai:
+          apiKey: {{habits.env.OPENAI_API_KEY}}
+  - id: store-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: insert
+      params:
+        collection: calories-diary
+        document: "{{analysis}}"
+edges:
+  - id: analysis__store-analysis
+    source: analysis
+    target: store-analysis
+    sourceHandle: main
+    targetHandle: main
+output:
+  analysis: "{{analysis}}"

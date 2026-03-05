@@ -1,0 +1,175 @@
+id: submit-ticket
+name: Submit Ticket
+description: AI-powered ticket classification, routing and auto-response
+
+input:
+  - id: customerName
+    type: string
+    required: true
+  - id: customerEmail
+    type: string
+    required: true
+  - id: subject
+    type: string
+    required: true
+  - id: message
+    type: string
+    required: true
+  - id: priority
+    type: string
+    required: false
+    description: Optional manual priority override
+
+nodes:
+  # Analyze and classify ticket
+  - id: classify-ticket
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 500
+        systemMessage: |
+          You are a support ticket classification system. Analyze tickets and route them appropriately.
+        prompt: |
+          Classify this support ticket:
+          
+          Subject: {{habits.input.subject}}
+          Message: {{habits.input.message}}
+          
+          Return JSON:
+          {
+            "category": "billing|technical|account|feature_request|bug_report|general",
+            "subcategory": "more specific categorization",
+            "priority": "critical|high|medium|low",
+            "sentiment": "angry|frustrated|neutral|positive",
+            "department": "engineering|billing|customer_success|product|sales",
+            "escalationNeeded": true/false,
+            "keyIssues": ["list", "of", "main", "issues"],
+            "suggestedTags": ["relevant", "tags"],
+            "estimatedResolutionTime": "hours or days estimate",
+            "reasoning": "brief explanation of classification"
+          }
+
+  # Generate auto-response
+  - id: generate-response
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 600
+        prompt: |
+          Generate an appropriate auto-response for this support ticket.
+          
+          Customer: {{habits.input.customerName}}
+          Subject: {{habits.input.subject}}
+          Message: {{habits.input.message}}
+          
+          Classification: {{classify-ticket}}
+          
+          Return JSON:
+          {
+            "greeting": "Personalized greeting",
+            "acknowledgment": "Acknowledge their issue specifically",
+            "immediateHelp": "Any self-help steps they can try now (if applicable)",
+            "nextSteps": "What will happen next with their ticket",
+            "estimatedResponse": "When they can expect a human response",
+            "signature": "Professional sign-off"
+          }
+          
+          Be empathetic but professional. Acknowledge frustration if detected.
+
+  # Suggest similar tickets / solutions
+  - id: suggest-solutions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 500
+        prompt: |
+          Based on this support issue, suggest potential solutions for the support agent.
+          
+          Subject: {{habits.input.subject}}
+          Message: {{habits.input.message}}
+          Category: {{classify-ticket}}
+          
+          Return JSON:
+          {
+            "potentialSolutions": [
+              {
+                "solution": "Suggested solution",
+                "confidence": "high/medium/low",
+                "steps": ["Step 1", "Step 2"]
+              }
+            ],
+            "commonCauses": ["Possible root causes"],
+            "relatedDocumentation": ["Documentation topics to check"],
+            "escalationTriggers": ["Conditions that should trigger escalation"]
+          }
+
+  # Save ticket
+  - id: save-ticket
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "support_tickets"
+        document:
+          customerName: "{{habits.input.customerName}}"
+          customerEmail: "{{habits.input.customerEmail}}"
+          subject: "{{habits.input.subject}}"
+          message: "{{habits.input.message}}"
+          classification: "{{classify-ticket}}"
+          autoResponse: "{{generate-response}}"
+          suggestedSolutions: "{{suggest-solutions}}"
+          status: "open"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: classify-ticket
+    target: generate-response
+  - source: classify-ticket
+    target: suggest-solutions
+  - source: generate-response
+    target: save-ticket
+  - source: suggest-solutions
+    target: save-ticket
+
+output:
+  ticketId: "{{save-ticket.id}}"
+  classification: "{{classify-ticket}}"
+  autoResponse: "{{generate-response}}"
+  suggestedSolutions: "{{suggest-solutions}}"

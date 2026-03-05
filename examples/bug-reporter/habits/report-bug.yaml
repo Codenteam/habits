@@ -1,0 +1,148 @@
+id: report-bug
+name: Report Bug
+description: AI-enhanced bug report from description
+
+input:
+  - id: title
+    type: string
+    required: true
+  - id: description
+    type: string
+    required: true
+  - id: stepsToReproduce
+    type: string
+    required: false
+  - id: expectedBehavior
+    type: string
+    required: false
+  - id: actualBehavior
+    type: string
+    required: false
+  - id: environment
+    type: string
+    required: false
+    description: Browser, OS, app version
+
+nodes:
+  # Enhance and structure the bug report
+  - id: enhance-report
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        systemMessage: |
+          You are a QA expert. Enhance bug reports to be clear, professional, and actionable for developers.
+        prompt: |
+          Enhance this bug report:
+          
+          Title: {{habits.input.title}}
+          Description: {{habits.input.description}}
+          Steps to reproduce: {{habits.input.stepsToReproduce}}
+          Expected: {{habits.input.expectedBehavior}}
+          Actual: {{habits.input.actualBehavior}}
+          Environment: {{habits.input.environment}}
+          
+          Return JSON:
+          {
+            "enhancedTitle": "Clear, specific title",
+            "summary": "One paragraph summary",
+            "category": "UI|Functionality|Performance|Security|Data|Crash|UX",
+            "severity": "critical|high|medium|low",
+            "priority": "P0|P1|P2|P3",
+            "stepsToReproduce": [
+              "Step 1",
+              "Step 2"
+            ],
+            "expectedBehavior": "Clear expected behavior",
+            "actualBehavior": "Clear actual behavior",
+            "possibleCause": "Technical hypothesis",
+            "suggestedArea": "Part of codebase likely affected",
+            "acceptanceCriteria": [
+              "Criteria 1",
+              "Criteria 2"
+            ],
+            "testCases": [
+              "Test case to verify fix"
+            ],
+            "labels": ["bug", "needs-triage"]
+          }
+
+  # Suggest related issues / duplicates
+  - id: analyze-context
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 500
+        prompt: |
+          Analyze this bug and provide additional context.
+          
+          Bug: {{enhance-report}}
+          
+          Return JSON:
+          {
+            "potentialImpact": {
+              "users": "Who is affected",
+              "features": ["Features impacted"],
+              "dataRisk": "low|medium|high"
+            },
+            "technicalAnalysis": {
+              "likelyComponent": "UI/API/Database/etc",
+              "possibleRootCauses": ["Cause 1", "Cause 2"],
+              "relatedAreas": ["Other areas to check"]
+            },
+            "workaround": "Temporary workaround if possible",
+            "questions": ["Clarifying questions for reporter"],
+            "similarPatterns": ["Types of bugs this might be related to"]
+          }
+
+  # Save bug report
+  - id: save-bug
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "bug_reports"
+        document:
+          originalTitle: "{{habits.input.title}}"
+          originalDescription: "{{habits.input.description}}"
+          enhanced: "{{enhance-report}}"
+          analysis: "{{analyze-context}}"
+          status: "open"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: enhance-report
+    target: analyze-context
+  - source: analyze-context
+    target: save-bug
+
+output:
+  bugId: "{{save-bug.id}}"
+  enhanced: "{{enhance-report}}"
+  analysis: "{{analyze-context}}"

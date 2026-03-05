@@ -1,0 +1,243 @@
+id: generate-short
+name: Generate Video Short Script
+description: Generate complete TikTok/YouTube Shorts/Reels script with hooks and visuals
+
+input:
+  - id: topic
+    type: string
+    required: true
+    description: Topic or idea for the short video
+  - id: platform
+    type: string
+    required: false
+    description: "tiktok, youtube, instagram (default: all)"
+  - id: duration
+    type: number
+    required: false
+    description: Target duration in seconds (15, 30, 60)
+  - id: style
+    type: string
+    required: false
+    description: Educational, funny, dramatic, story, how-to
+  - id: targetAudience
+    type: string
+    required: false
+    description: Who is this for?
+
+nodes:
+  # Generate viral hook options
+  - id: generate-hooks
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.9
+        maxTokens: 500
+        systemMessage: You are a viral content creator who knows exactly how to hook viewers in the first 2 seconds.
+        prompt: |
+          Generate 5 viral hook options for a short video about: {{habits.input.topic}}
+          
+          Style: {{habits.input.style}}
+          Target: {{habits.input.targetAudience}}
+          
+          For each hook provide:
+          1. The opening line (what to say)
+          2. Visual suggestion (what to show)
+          3. Why it works (psychology)
+          
+          Make them attention-grabbing, pattern-interrupting, and impossible to scroll past.
+          Include different styles: question, shocking fact, bold claim, relatable pain, promise.
+
+  # Generate full script
+  - id: generate-script
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 1000
+        systemMessage: You are a professional short-form video scriptwriter with millions of views.
+        prompt: |
+          Write a complete script for a {{habits.input.duration}}s video about: {{habits.input.topic}}
+          
+          Use the best hook from: {{generate-hooks}}
+          
+          Style: {{habits.input.style}}
+          Target: {{habits.input.targetAudience}}
+          
+          Format the script with:
+          - HOOK (0-3 seconds): Opening line + visual
+          - BUILD (3-15 seconds): Story/value buildup
+          - PEAK (15-25 seconds): Main point/reveal
+          - CTA (final 5 seconds): Call to action
+          
+          For each section include:
+          1. Exact words to say
+          2. Visual/on-screen text suggestions
+          3. Pacing notes
+          
+          Make it conversational, punchy, and optimized for retention.
+
+  # Generate B-roll suggestions
+  - id: generate-visuals
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 600
+        prompt: |
+          Based on this script:
+          {{generate-script}}
+          
+          Provide a shot list and visual guide:
+          
+          1. Shot-by-shot breakdown with timestamps
+          2. Camera angles/movement suggestions
+          3. B-roll ideas for each section
+          4. On-screen text/captions to add
+          5. Transition suggestions
+          6. Music/sound effect recommendations
+          
+          Make it practical and achievable with a smartphone.
+
+  # Generate hashtags and captions
+  - id: generate-captions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 500
+        prompt: |
+          Create captions and hashtags for this video:
+          Topic: {{habits.input.topic}}
+          Script: {{generate-script}}
+          
+          Return JSON:
+          {
+            "tiktok": {
+              "caption": "Caption optimized for TikTok",
+              "hashtags": ["hashtag1", "hashtag2", ...]
+            },
+            "youtube": {
+              "title": "YouTube Shorts title",
+              "description": "Short description with keywords"
+            },
+            "instagram": {
+              "caption": "Instagram Reels caption",
+              "hashtags": ["hashtag1", "hashtag2", ...]
+            }
+          }
+
+  # Generate thumbnail ideas
+  - id: generate-thumbnail
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 300
+        prompt: |
+          Create 3 thumbnail concepts for: {{habits.input.topic}}
+          
+          For each provide:
+          1. Main visual (what to show)
+          2. Text overlay (max 3-4 words, big and bold)
+          3. Color scheme
+          4. Expression/pose if featuring a person
+          
+          Make them eye-catching and click-worthy!
+
+  # Save short
+  - id: save-short
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "shorts"
+        document:
+          topic: "{{habits.input.topic}}"
+          platform: "{{habits.input.platform}}"
+          duration: "{{habits.input.duration}}"
+          style: "{{habits.input.style}}"
+          targetAudience: "{{habits.input.targetAudience}}"
+          hooks: "{{generate-hooks}}"
+          script: "{{generate-script}}"
+          visuals: "{{generate-visuals}}"
+          captions: "{{generate-captions}}"
+          thumbnail: "{{generate-thumbnail}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-hooks
+    target: generate-script
+  - source: generate-script
+    target: generate-visuals
+  - source: generate-script
+    target: generate-captions
+  - source: generate-script
+    target: generate-thumbnail
+  - source: generate-visuals
+    target: save-short
+  - source: generate-captions
+    target: save-short
+  - source: generate-thumbnail
+    target: save-short
+
+output:
+  shortId: "{{save-short.id}}"
+  hooks: "{{generate-hooks}}"
+  script: "{{generate-script}}"
+  visuals: "{{generate-visuals}}"
+  captions: "{{generate-captions}}"
+  thumbnail: "{{generate-thumbnail}}"

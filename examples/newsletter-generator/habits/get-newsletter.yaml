@@ -1,0 +1,27 @@
+id: get-newsletter
+name: Get Newsletter
+description: Get a single newsletter by ID
+
+input:
+  - id: newsletterId
+    type: string
+    required: true
+
+nodes:
+  - id: find-newsletter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "newsletters"
+        query:
+          id: "{{habits.input.newsletterId}}"
+
+edges: []
+
+output:
+  newsletter: "{{find-newsletter}}"

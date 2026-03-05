@@ -1,0 +1,343 @@
+id: document-summarization-pipeline
+name: Document Summarization Pipeline
+description: Extract text from uploaded documents, generate AI summaries, store results, and email summary to requester
+
+nodes:
+  # Node 1: File Upload/Input Trigger
+  - id: upload-trigger
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: File Upload Trigger
+      params:
+        documentContent: "{{habits.input.documentContent}}"
+        documentName: "{{habits.input.documentName}}"
+        documentType: "{{habits.input.documentType}}"
+        requesterEmail: "{{habits.input.requesterEmail}}"
+        requesterName: "{{habits.input.requesterName}}"
+        summaryLength: "{{habits.input.summaryLength}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            documentContent: string,
+            documentName: string,
+            documentType: string,
+            requesterEmail: string,
+            requesterName: string,
+            summaryLength: string
+          ) {
+            return {
+              content: documentContent || '',
+              name: documentName || 'document.txt',
+              type: documentType || 'text',
+              requester: {
+                email: requesterEmail || 'user@example.com',
+                name: requesterName || 'User'
+              },
+              options: {
+                summaryLength: summaryLength || 'medium' // short, medium, long
+              },
+              documentId: `doc_${Date.now()}`,
+              uploadedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Extract Text Node (cleanup and prepare)
+  - id: extract-text
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: cleanup
+      label: Extract Text
+      params:
+        text: "{{upload-trigger.result.content}}"
+        removeExtraWhitespace: true
+        normalizeNewlines: true
+        trim: true
+
+  # Node 3: Check document length and decide on chunking
+  - id: analyze-document
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Analyze Document
+      params:
+        text: "{{extract-text.result}}"
+        documentName: "{{upload-trigger.result.name}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(text: string, documentName: string) {
+            const wordCount = text.split(/\s+/).length;
+            const charCount = text.length;
+            const paragraphCount = text.split(/\n\n+/).length;
+            
+            // Determine if document needs chunking (over 8000 words)
+            const needsChunking = wordCount > 8000;
+            
+            // Estimate reading time (200 words per minute)
+            const readingTimeMinutes = Math.ceil(wordCount / 200);
+            
+            // Extract document extension
+            const extension = documentName.split('.').pop()?.toLowerCase() || 'txt';
+            
+            return {
+              wordCount,
+              charCount,
+              paragraphCount,
+              needsChunking,
+              readingTimeMinutes,
+              extension,
+              isLargeDocument: wordCount > 2000
+            };
+          }
+
+  # Node 4: AI Summary Generation
+  - id: generate-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: AI Summary
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are an expert document summarizer. Create a comprehensive summary of the provided document.
+          
+          Structure your summary as follows:
+          1. **Executive Summary** (2-3 sentences capturing the main point)
+          2. **Key Points** (bullet points of main ideas)
+          3. **Details** (expanded summary with important specifics)
+          4. **Action Items** (if any actions are suggested or required)
+          
+          Adjust length based on requested summary length:
+          - short: Executive summary + 3-5 key points only
+          - medium: All sections, moderately detailed
+          - long: All sections with comprehensive detail
+        userMessage: |
+          Document: {{upload-trigger.result.name}}
+          Type: {{upload-trigger.result.type}}
+          Word Count: {{analyze-document.result.wordCount}}
+          Requested Summary Length: {{upload-trigger.result.options.summaryLength}}
+          
+          ---
+          DOCUMENT CONTENT:
+          {{extract-text.result}}
+        temperature: 0.3
+        maxTokens: 2000
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 5: Extract key entities
+  - id: extract-entities
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: Extract Entities
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          Extract key entities from the document. Return JSON:
+          {
+            "people": ["names mentioned"],
+            "organizations": ["companies, institutions"],
+            "dates": ["important dates/deadlines"],
+            "topics": ["main topics/keywords"],
+            "numbers": ["key figures, statistics, amounts"]
+          }
+        userMessage: "{{extract-text.result}}"
+        temperature: 0.2
+        maxTokens: 500
+        responseFormat: json_object
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 6: Parse entities
+  - id: parse-entities
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Parse Entities
+      params:
+        entitiesJson: "{{extract-entities.content}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(entitiesJson: string) {
+            try {
+              return JSON.parse(entitiesJson);
+            } catch {
+              return {
+                people: [],
+                organizations: [],
+                dates: [],
+                topics: [],
+                numbers: []
+              };
+            }
+          }
+
+  # Node 7: Store Summary in Database
+  - id: store-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Store Summary
+      params:
+        collection: document-summaries
+        document: |
+          {
+            "documentId": "{{upload-trigger.result.documentId}}",
+            "documentName": "{{upload-trigger.result.name}}",
+            "documentType": "{{upload-trigger.result.type}}",
+            "requesterEmail": "{{upload-trigger.result.requester.email}}",
+            "analysis": {
+              "wordCount": {{analyze-document.result.wordCount}},
+              "charCount": {{analyze-document.result.charCount}},
+              "paragraphCount": {{analyze-document.result.paragraphCount}},
+              "readingTimeMinutes": {{analyze-document.result.readingTimeMinutes}}
+            },
+            "summary": "{{generate-summary.content}}",
+            "entities": {{parse-entities.result}},
+            "uploadedAt": "{{upload-trigger.result.uploadedAt}}",
+            "processedAt": "{{currentTime}}"
+          }
+
+  # Node 8: Format Email Content
+  - id: format-email
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Format Email
+      params:
+        summary: "{{generate-summary.content}}"
+        documentName: "{{upload-trigger.result.name}}"
+        documentId: "{{upload-trigger.result.documentId}}"
+        wordCount: "{{analyze-document.result.wordCount}}"
+        readingTime: "{{analyze-document.result.readingTimeMinutes}}"
+        entities: "{{parse-entities.result}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            summary: string, 
+            documentName: string, 
+            documentId: string,
+            wordCount: number,
+            readingTime: number,
+            entities: any
+          ) {
+            const topicsStr = entities.topics?.slice(0, 5).join(', ') || 'N/A';
+            
+            return {
+              subject: 'Document Summary Ready: ' + documentName,
+              htmlBody: '<h2>Document Summary</h2>' +
+                '<p><strong>Document:</strong> ' + documentName + '</p>' +
+                '<p><strong>ID:</strong> ' + documentId + '</p>' +
+                '<p><strong>Stats:</strong> ' + wordCount + ' words | ~' + readingTime + ' min read</p>' +
+                '<p><strong>Topics:</strong> ' + topicsStr + '</p>' +
+                '<hr/>' +
+                '<div style="white-space: pre-wrap;">' + summary + '</div>' +
+                '<hr/>' +
+                '<p style="color: #666; font-size: 12px;">Generated by Document Summarization Pipeline</p>',
+              textBody: 'Document Summary\n================\n' +
+                'Document: ' + documentName + '\n' +
+                'ID: ' + documentId + '\n' +
+                'Stats: ' + wordCount + ' words | ~' + readingTime + ' min read\n' +
+                'Topics: ' + topicsStr + '\n\n' +
+                '---\n' + summary + '\n---\n' +
+                'Generated by Document Summarization Pipeline'
+            };
+          }
+
+  # Node 9: Send Result Email
+  - id: send-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: send
+      label: Send Result Email
+      params:
+        host: "{{habits.env.SMTP_HOST}}"
+        port: 587
+        secure: false
+        user: "{{habits.env.SMTP_USER}}"
+        pass: "{{habits.env.SMTP_PASS}}"
+        from: "summaries@company.com"
+        to: "{{upload-trigger.result.requester.email}}"
+        subject: "{{format-email.result.subject}}"
+        body: "{{format-email.result.textBody}}"
+        html: "{{format-email.result.htmlBody}}"
+
+  # Node 10: Notify via Slack (optional channel notification)
+  - id: slack-log
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Slack Log
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#document-summaries"
+        text: |
+          📄 *Document Summarized*
+          
+          *Document:* {{upload-trigger.result.name}}
+          *Requested by:* {{upload-trigger.result.requester.name}}
+          *Word Count:* {{analyze-document.result.wordCount}}
+          *Reading Time:* {{analyze-document.result.readingTimeMinutes}} min
+          
+          *Topics:* {{parse-entities.result.topics}}
+          
+          _Summary sent to {{upload-trigger.result.requester.email}}_
+
+edges:
+  - source: upload-trigger
+    target: extract-text
+  - source: extract-text
+    target: analyze-document
+  - source: analyze-document
+    target: generate-summary
+  - source: analyze-document
+    target: extract-entities
+  - source: extract-entities
+    target: parse-entities
+  - source: generate-summary
+    target: store-summary
+  - source: parse-entities
+    target: store-summary
+  - source: store-summary
+    target: format-email
+  - source: format-email
+    target: send-email
+  - source: send-email
+    target: slack-log
+
+output:
+  documentId: "{{upload-trigger.result.documentId}}"
+  documentName: "{{upload-trigger.result.name}}"
+  wordCount: "{{analyze-document.result.wordCount}}"
+  readingTimeMinutes: "{{analyze-document.result.readingTimeMinutes}}"
+  summary: "{{generate-summary.content}}"
+  topics: "{{parse-entities.result.topics}}"
+  emailSent: true

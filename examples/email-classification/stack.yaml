@@ -1,0 +1,10 @@
+# Note: This example is API-only and does not include a frontend.
+
+version: "1.0"
+workflows:
+  - id: email-classification-test
+    path: ./habit.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"

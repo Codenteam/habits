@@ -1,0 +1,38 @@
+@host = localhost
+@port = 13000
+
+
+### Health Check
+# @name healthCheck
+GET http://{{host}}:{{port}}/health
+
+?? status == 200
+
+
+### List all workflows
+# @name listWorkflows
+GET http://{{host}}:{{port}}/misc/workflows
+
+?? status == 200
+
+
+### Get workflow details
+# @name getWorkflowDetails
+GET http://{{host}}:{{port}}/misc/workflow/openai-elevenlabs-test
+
+?? status == 200
+
+
+### Generate voiceover
+# @name generateVoiceover
+POST http://{{host}}:{{port}}/api/openai-elevenlabs-test
+Content-Type: application/json
+
+{
+  "topic": "The joy of morning coffee",
+  "voiceId": "21m00Tcm4TlvDq8ikWAM",
+  "user": "test-user-123"
+}
+
+?? status >= 200
+?? status < 300

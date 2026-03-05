@@ -1,0 +1,396 @@
+{
+  "name": "Jobs Workflow DA - Last 1 Day",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.theirstack.com/v1/jobs/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer <bearer_token_here>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"page\": 0,\n  \"limit\": 50,\n  \"order_by\": [\n    {\n      \"desc\": true,\n      \"field\": \"date_posted\"\n    }\n  ],\n  \"include_total_results\": false,\n  \"blur_company_data\": false,\n  \"job_title_or\": [\n    \"developer advocate\",\n    \"ai advocate\",\n    \"security advocate\",\n    \"llm advocate\"\n  ],\n  \"job_country_code_or\": [\n    \"US\"\n  ],\n  \"posted_at_max_age_days\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        -208
+      ],
+      "id": "b4404245-08df-487c-9f3f-fcd671091921",
+      "name": "Theirstack API Request"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -656,
+        -320
+      ],
+      "id": "be9dfe87-6bc7-4f68-8b9b-e1ed7299fc6e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1gxMFH-TgXsqfz49HmYm1RajWXjIbcFYk79qxJjsQe4U",
+          "mode": "list",
+          "cachedResultName": "Jobs - DA",
+          "cachedResultUrl": "google_sheet_url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "google_sheet_url"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "apply_link": "={{ $json.apply_link }}",
+            "title": "={{ $json.title }}",
+            "company": "={{ $json.company }}",
+            "date_posted": "={{ $json.date_posted }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_posted",
+              "displayName": "date_posted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "apply_link",
+              "displayName": "apply_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        352,
+        -256
+      ],
+      "id": "41d1a509-6c8e-40e0-9486-c65da7318219",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yfaWehSziS1Mlag8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1gxMFH-TgXsqfz49HmYm1RajWXjIbcFYk79qxJjsQe4U",
+          "mode": "list",
+          "cachedResultName": "Jobs - DA",
+          "cachedResultUrl": "google_sheet_url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "google_sheet_url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -400,
+        -368
+      ],
+      "id": "d97141d0-0e1a-427d-ba57-9ff02f3b49e2",
+      "name": "Read Existing",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yfaWehSziS1Mlag8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Code Send to Sheet\n * - Reads all rows from \"Read Existing\"\n * - Reads API response from \"Theirstack API Request\"\n * - Emits only NEW jobs (not in sheet) as rows ready for Append\n */\n\n// 1) Build sets of existing IDs and links from the sheet\nconst existingRows = $items('Read Existing', 0, 0) || [];\nconst existingIds   = new Set(\n  existingRows\n    .map(i => String(i.json.id ?? '').trim())\n    .filter(Boolean)\n);\nconst existingLinks = new Set(\n  existingRows\n    .map(i => String(i.json.apply_link ?? '').trim())\n    .filter(Boolean)\n);\n\n// 2) Flatten all jobs from the API node\nconst apiItems = $items('Theirstack API Request', 0, 0) || [];\nconst allJobs = [];\n\nfor (const it of apiItems) {\n  // API may return an object or an array with an object\n  const containers = Array.isArray(it.json) ? it.json : [it.json];\n  for (const c of containers) {\n    const jobs = (c && Array.isArray(c.data)) ? c.data : [];\n    allJobs.push(...jobs);\n  }\n}\n\n// 3) Keep only jobs not already present (by id OR apply_link)\nconst isNew = (job) => {\n  const id  = String(job?.id ?? '').trim();\n  const url = String(job?.final_url || job?.url || '').trim();\n  if (!id && !url) return false; // skip empty\n  if (id && existingIds.has(id)) return false;\n  if (url && existingLinks.has(url)) return false;\n  return true;\n};\n\nlet newJobs = allJobs.filter(isNew);\n\n// 4) (Optional) sort by date_posted ascending (oldest → newest)\nnewJobs.sort((a, b) => {\n  const ta = new Date(a?.date_posted ?? 0).getTime() || 0;\n  const tb = new Date(b?.date_posted ?? 0).getTime() || 0;\n  return ta - tb;\n});\n\n// 5) Map to your sheet columns\nconst DEFAULT_STATUS = 'To Apply';\nconst rows = newJobs.map(job => ({\n  id: job.id ?? '',\n  date_posted: job.date_posted ?? '',\n  company: job.company ?? '',\n  title: job.job_title ?? '',\n  apply_link: job.final_url || job.url || '',\n  status: DEFAULT_STATUS,\n}));\n\n// 6) Emit one item per new row for the Google Sheets \"Append\" node\nreturn rows.map(r => ({ json: r }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -256
+      ],
+      "id": "7f1a10d2-5a0c-4f8b-b21f-df3b460685e5",
+      "name": "Code Send to Sheet"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -160,
+        -256
+      ],
+      "id": "8e3402e1-8445-4c5c-9889-c7d460cdc088",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C016Y11K6S1",
+          "mode": "id"
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        -64
+      ],
+      "id": "53f2d6de-b0fc-4fe2-bebd-0de55c3d2dcc",
+      "name": "Send a message",
+      "webhookId": "db115c81-dc68-4379-a1e1-4e8dced62215",
+      "credentials": {
+        "slackApi": {
+          "id": "B0JO3dSDIixQOlB0",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Code Send to Sheet\n * - Reads all rows from \"Read Existing\"\n * - Reads API response from \"Theirstack API Request\"\n * - Emits only NEW jobs (not in sheet) as rows ready for Append\n */\n\n// 1) Build sets of existing IDs and links from the sheet\nconst existingRows = $items('Read Existing', 0, 0) || [];\nconst existingIds   = new Set(\n  existingRows\n    .map(i => String(i.json.id ?? '').trim())\n    .filter(Boolean)\n);\nconst existingLinks = new Set(\n  existingRows\n    .map(i => String(i.json.apply_link ?? '').trim())\n    .filter(Boolean)\n);\n\n// 2) Flatten all jobs from the API node\nconst apiItems = $items('Theirstack API Request', 0, 0) || [];\nconst allJobs = [];\n\nfor (const it of apiItems) {\n  // API may return an object or an array with an object\n  const containers = Array.isArray(it.json) ? it.json : [it.json];\n  for (const c of containers) {\n    const jobs = (c && Array.isArray(c.data)) ? c.data : [];\n    allJobs.push(...jobs);\n  }\n}\n\n// 3) Keep only jobs not already present (by id OR apply_link)\nconst isNew = (job) => {\n  const id  = String(job?.id ?? '').trim();\n  const url = String(job?.final_url || job?.url || '').trim();\n  if (!id && !url) return false; // skip empty\n  if (id && existingIds.has(id)) return false;\n  if (url && existingLinks.has(url)) return false;\n  return true;\n};\n\nlet newJobs = allJobs.filter(isNew);\n\n// 4) (Optional) sort by date_posted ascending (oldest → newest)\nnewJobs.sort((a, b) => {\n  const ta = new Date(a?.date_posted ?? 0).getTime() || 0;\n  const tb = new Date(b?.date_posted ?? 0).getTime() || 0;\n  return ta - tb;\n});\n\n\nconst count = newJobs.length;\n\nlet text;\nif (count === 0) {\n  text = \"✅ No new jobs for DA found.\\nHave a good day, Dear 😄\";\n} else {\n  // Format each new job into a Slack-friendly line\n  const lines = newJobs.map((r, idx) => {\n    const company = r.company || 'Unknown Company';\n    const title   = r.title   || 'Untitled Job';\n    const date    = r.date_posted || 'Unknown Date';\n    const link    = r.apply_link || '';\n    return `${idx + 1}. *${company}*: *${title}*\\nPosted: ${date}\\n<${link}>`;\n  });\n\n  text = `*🎉 ${count} new job${count > 1 ? 's' : ''} added to the sheet!* \\n\\n` +\n         lines.join('\\n\\n');\n}\n\n// Always emit exactly one item so the Slack node runs once\nreturn [{ json: { text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -64
+      ],
+      "id": "f162546e-e761-4056-a745-8cd1671c38af",
+      "name": "Code for Prepare Slack Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Code node AFTER \"Append row in sheet\"\nconst appended = $input.all();   // rows that were actually appended\n\nif (!appended.length) {\n  return [{ json: { text:\"No new jobs for DA found. Have a good day, Dear 😄\" } }];\n}\n\nconst lines = appended.map((it, idx) => {\n  const r = it.json || {};\n  const company = r.company || 'Unknown Company';\n  const title   = r.title   || 'Untitled Job';\n  const date    = r.date_posted || 'Unknown Date';\n  const link    = r.apply_link || '';\n  return `${idx + 1}. *${company}*: *${title}*\\nPosted: ${date}\\n<${link}>`;\n});\n\nconst text = `*${appended.length} new job${appended.length === 1 ? '' : 's'} added to the sheet*\\n\\n${lines.join('\\n\\n')}`;\nreturn [{ json: { text } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        224
+      ],
+      "id": "492bafb1-e4c9-4c51-9c6e-d5bc1453e5bc",
+      "name": "Code for Prepare Slack Message1",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Theirstack API Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Existing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Theirstack API Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Read Existing": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Send to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code Send to Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code for Prepare Slack Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code for Prepare Slack Message": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fed92104-94ac-42cf-8330-ca4c4d339755",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fdaffe270dd4342aa282991637ff03a00fc27bebef44b4617c0254cf7439b90e"
+  },
+  "id": "kKzMEpfrRuq0yg6U",
+  "tags": [
+    {
+      "name": "job",
+      "id": "JynIBv9rnJCYe9EX",
+      "createdAt": "2025-08-06T03:01:39.185Z",
+      "updatedAt": "2025-08-06T03:01:39.185Z"
+    },
+    {
+      "name": "google sheet",
+      "id": "9vDTDn0zxGp2e44s",
+      "createdAt": "2025-08-06T03:01:42.642Z",
+      "updatedAt": "2025-08-06T03:01:42.642Z"
+    },
+    {
+      "name": "remote api",
+      "id": "hrwuK1iUhaXcg6F8",
+      "createdAt": "2025-08-06T03:01:45.819Z",
+      "updatedAt": "2025-08-06T03:01:45.819Z"
+    }
+  ]
+}

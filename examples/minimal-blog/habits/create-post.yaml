@@ -1,0 +1,55 @@
+id: create-post
+name: Create New Post
+description: Create a new blog post (admin function - requires authentication)
+
+input:
+  - id: title
+    type: string
+    required: true
+  - id: content
+    type: string
+    required: true
+  - id: status
+    type: string
+    required: false
+
+nodes:
+  # Verify JWT from auth_token cookie
+  - id: verify-auth
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-auth"
+      operation: verify
+      params:
+        token: "{{habits.cookies.auth_token}}"
+        secret: "{{habits.env.JWT_SECRET}}"
+
+  - id: insert-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "posts"
+        document:
+          title: "{{habits.input.title}}"
+          content: "{{habits.input.content}}"
+          status: "published"
+          createdAt: "{{habits.now}}"
+          author: "{{verify-auth.payload.username}}"
+
+edges:
+  - source: verify-auth
+    target: insert-post
+
+output:
+  authorized: "{{verify-auth.valid}}"
+  success: "{{insert-post.success}}"
+  id: "{{insert-post.id}}"
+  post: "{{insert-post.document}}"
+  authError: "{{verify-auth.error}}"

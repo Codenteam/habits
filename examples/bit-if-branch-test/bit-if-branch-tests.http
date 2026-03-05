@@ -1,0 +1,161 @@
+###############################################################################
+# bit-if Branch Tests
+# 
+# Tests for the unified bit-if branch action with two modes:
+# - singleBranch: If/Else If/Else (only first match executes)
+# - multipleBranch: All matching branches execute
+#
+# Start server first:
+#   cd examples/bit-if-branch-test
+#   npx nx dev @ha-bits/cortex --config stack.yaml
+#
+# Or from workspace root:
+#   nohup npx nx dev @ha-bits/cortex --config examples/bit-if-branch-test/stack.yaml &
+###############################################################################
+
+@baseUrl = http://localhost:3001
+
+###############################################################################
+# SINGLE BRANCH MODE TESTS (If / Else If / Else)
+# Only the FIRST matching condition executes
+###############################################################################
+
+### Test 1: Single Branch - First condition matches (apple)
+# @name singleBranchApple
+# Expected: First branch matches, output = "You selected a fruit: Apple 🍎"
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "apple"
+}
+
+### Test 2: Single Branch - Second condition matches (banana)
+# @name singleBranchBanana
+# Expected: Second branch matches, output = "You selected a fruit: Banana 🍌"
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "banana"
+}
+
+### Test 3: Single Branch - Third condition matches (number > 100)
+# @name singleBranchNumber
+# Expected: Third branch matches, output = "Number is greater than 100"
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "150"
+}
+
+### Test 4: Single Branch - Fourth condition matches (contains 'test')
+# @name singleBranchContainsTest
+# Expected: Fourth branch matches, output = "Value contains the word 'test'"
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "this is a test string"
+}
+
+### Test 5: Single Branch - No match, Else branch executes
+# @name singleBranchElse
+# Expected: No conditions match, Else executes, output = "No matching condition found (Else branch)"
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "xyz123"
+}
+
+### Test 6: Single Branch - Multiple could match, only first executes
+# @name singleBranchOnlyFirst
+# Expected: Value "testing99" contains 'test', so 4th branch matches first
+# Output = "Value contains the word 'test'" (NOT greaterThan because 99 < 100)
+POST {{baseUrl}}/api/test-if-single-branch
+Content-Type: application/json
+
+{
+  "value": "testing99"
+}
+
+
+###############################################################################
+# MULTIPLE BRANCH MODE TESTS (All Matching Execute)
+# ALL matching conditions execute in parallel
+###############################################################################
+
+### Test 7: Multi Branch - Word with all vowels
+# @name multiBranchAllVowels
+# Expected: All 5 vowel branches match + isNotEmpty, 6 total outputs
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": "education"
+}
+
+### Test 8: Multi Branch - Word with some vowels (a, e only)
+# @name multiBranchSomeVowels
+# Expected: 'a' and 'e' branches match + isNotEmpty, 3 outputs
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": "water"
+}
+
+### Test 9: Multi Branch - Word with no vowels
+# @name multiBranchNoVowels
+# Expected: Only isNotEmpty matches, 1 output
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": "rhythm"
+}
+
+### Test 10: Multi Branch - Word with single vowel (o)
+# @name multiBranchSingleVowel
+# Expected: 'o' branch matches + isNotEmpty, 2 outputs
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": "school"
+}
+
+### Test 11: Multi Branch - Empty string
+# @name multiBranchEmpty
+# Expected: No branches match (isNotEmpty is false), 0 outputs
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": ""
+}
+
+### Test 12: Multi Branch - Case insensitivity test (uppercase vowels)
+# @name multiBranchUppercase
+# Expected: Should match vowels even when uppercase (a, e, i, o) + isNotEmpty, 5 outputs
+POST {{baseUrl}}/api/test-if-multi-branch
+Content-Type: application/json
+
+{
+  "text": "AUDIO"
+}
+
+
+###############################################################################
+# WORKFLOW LIST & HEALTH
+###############################################################################
+
+### List all workflows
+# @name listWorkflows
+GET {{baseUrl}}/misc/workflows
+
+### Check server health
+# @name healthCheck
+GET {{baseUrl}}/health

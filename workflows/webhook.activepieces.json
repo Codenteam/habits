@@ -1,0 +1,114 @@
+﻿{
+  "created": "1765384833182",
+  "updated": "1765384833182",
+  "name": "Untitled",
+  "description": "",
+  "tags": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-hubspot",
+    "@activepieces/piece-approval"
+  ],
+  "template": {
+    "displayName": "Untitled",
+    "trigger": {
+      "name": "trigger",
+      "valid": true,
+      "displayName": "Catch Webhook",
+      "type": "PIECE_TRIGGER",
+      "settings": {
+        "propertySettings": {
+          "authType": {
+            "type": "MANUAL"
+          },
+          "authFields": {
+            "type": "MANUAL",
+            "schema": {}
+          }
+        },
+        "pieceName": "@activepieces/piece-webhook",
+        "pieceVersion": "~0.1.2",
+        "input": {
+          "authType": "none",
+          "authFields": {}
+        },
+        "triggerName": "catch_webhook"
+      },
+      "nextAction": {
+        "name": "step_3",
+        "type": "PIECE",
+        "valid": false,
+        "settings": {
+          "input": {},
+          "pieceName": "@activepieces/piece-hubspot",
+          "pieceType": "OFFICIAL",
+          "actionName": "get_owner_by_email",
+          "packageType": "REGISTRY",
+          "pieceVersion": "~0.5.7",
+          "propertySettings": {},
+          "sampleDataSettings": {},
+          "errorHandlingOptions": {
+            "retryOnFailure": {
+              "value": false
+            },
+            "continueOnFailure": {
+              "value": false
+            }
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {},
+            "pieceName": "@activepieces/piece-approval",
+            "pieceType": "OFFICIAL",
+            "actionName": "create_approval_links",
+            "packageType": "REGISTRY",
+            "pieceVersion": "~0.1.7",
+            "propertySettings": {},
+            "sampleDataSettings": {},
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {},
+              "pieceName": "@activepieces/piece-approval",
+              "pieceType": "OFFICIAL",
+              "actionName": "wait_for_approval",
+              "packageType": "REGISTRY",
+              "pieceVersion": "~0.1.7",
+              "propertySettings": {},
+              "sampleDataSettings": {},
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "displayName": "Wait for Approval"
+          },
+          "displayName": "Create Approval Links"
+        },
+        "displayName": "Get Owner by Email"
+      }
+    },
+    "valid": false,
+    "schemaVersion": "10"
+  },
+  "blogUrl": ""
+}

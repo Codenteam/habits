@@ -1,0 +1,34 @@
+id: automated-reporting
+name: Automated Daily Report
+nodes:
+  - id: schedule
+    type: bit
+    data:
+      framework: bits
+      isTrigger: true
+      label: Daily Schedule
+  - id: fetch-data
+    type: bit
+    data:
+      framework: bits
+      label: Fetch Metrics
+  - id: analyze
+    type: bit
+    data:
+      framework: bits
+      label: Analyze Sentiment
+  - id: notify
+    type: bit
+    data:
+      framework: bits
+      label: Send to Slack
+edges:
+  - id: e1
+    source: schedule
+    target: fetch-data
+  - id: e2
+    source: fetch-data
+    target: analyze
+  - id: e3
+    source: analyze
+    target: notify

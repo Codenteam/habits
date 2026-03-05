@@ -1,0 +1,46 @@
+# Tests for Resume Analyzer
+# Workflow: habits/analyze-resume.yaml - Analyzes resumes and provides feedback
+workflow: ./habits/analyze-resume.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully analyzes resume"
+    trigger:
+      body:
+        resumeText: "John Doe\nSoftware Engineer\n5 years experience in JavaScript, React, Node.js"
+        jobDescription: "Senior Frontend Developer"
+        targetRole: "Senior Frontend Developer"
+    context:
+      habits:
+        input:
+          resumeText: "John Doe\nSoftware Engineer\n5 years experience in JavaScript, React, Node.js"
+          jobDescription: "Senior Frontend Developer"
+          targetRole: "Senior Frontend Developer"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock resume parsing
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            name: "John Doe"
+            skills: ["JavaScript", "React", "Node.js"]
+            yearsExperience: 5
+        # Mock ATS scoring
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            overallScore: 75
+            keywordScore: 80
+            formatScore: 70
+            contentScore: 75
+            missingKeywords: ["TypeScript"]
+            formatIssues: []
+            suggestions: ["Add TypeScript experience"]
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

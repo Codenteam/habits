@@ -1,0 +1,33 @@
+id: browse-web
+name: Browse Web
+description: Fetch and extract content from a webpage
+
+input:
+  - id: url
+    type: string
+    required: true
+  - id: selector
+    type: string
+    required: false
+
+nodes:
+  - id: fetch-page
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      resource: request
+      operation: request
+      params:
+        url: "{{habits.input.url}}"
+        method: "GET"
+        headers: '{"User-Agent": "Mozilla/5.0 (compatible; HabitsBot/1.0)", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}'
+
+edges: []
+
+output:
+  success: "{{fetch-page.ok}}"
+  statusCode: "{{fetch-page.status}}"
+  body: "{{fetch-page.text}}"
+  headers: "{{fetch-page.headers}}"

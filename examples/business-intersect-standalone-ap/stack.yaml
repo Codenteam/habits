@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "marketing-campaign",
+      "path": "./habit.yaml",
+      "enabled": true,
+      "webhookTimeout": 30000
+    }
+  ],
+  "server": {
+    "port": 13000,
+    "host": "0.0.0.0",
+    "frontend": "./frontend",
+    "openapi": true
+  },
+  "defaults": {
+    "webhookTimeout": 30000
+  }
+}

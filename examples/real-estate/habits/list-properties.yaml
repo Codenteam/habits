@@ -1,0 +1,28 @@
+id: list-properties
+name: List Properties
+description: Get all property listings
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-listings
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "listings"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  listings: "{{query-listings.results}}"
+  count: "{{query-listings.count}}"

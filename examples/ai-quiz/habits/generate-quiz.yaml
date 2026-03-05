@@ -1,0 +1,97 @@
+id: generate-quiz
+name: Generate Quiz
+description: Generate quiz questions from any topic using AI
+
+input:
+  - id: topic
+    type: string
+    required: true
+    description: Topic for the quiz (e.g., "World War II", "JavaScript basics")
+  - id: numQuestions
+    type: number
+    required: false
+    description: Number of questions (default 10)
+  - id: difficulty
+    type: string
+    required: false
+    description: easy, medium, or hard
+  - id: questionType
+    type: string
+    required: false
+    description: multiple-choice, true-false, or mixed
+
+nodes:
+  # Generate quiz questions
+  - id: generate-questions
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 3000
+        systemMessage: |
+          You are an expert quiz creator. Generate engaging, educational quiz questions.
+          Always return valid JSON that can be parsed.
+        prompt: |
+          Create a quiz about: {{habits.input.topic}}
+          
+          Number of questions: {{habits.input.numQuestions}}
+          Difficulty: {{habits.input.difficulty}}
+          Question type: {{habits.input.questionType}}
+          
+          Return a JSON object with this exact structure:
+          {
+            "title": "Quiz title here",
+            "description": "Brief description",
+            "questions": [
+              {
+                "id": 1,
+                "question": "Question text",
+                "type": "multiple-choice",
+                "options": ["A", "B", "C", "D"],
+                "correctAnswer": "A",
+                "explanation": "Why this is the correct answer"
+              }
+            ]
+          }
+          
+          For true-false questions, use options: ["True", "False"]
+          
+          Make questions educational and interesting. Include diverse difficulty within the set.
+          Return ONLY the JSON object, no other text.
+
+  # Save quiz to database
+  - id: save-quiz
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "quizzes"
+        document:
+          topic: "{{habits.input.topic}}"
+          difficulty: "{{habits.input.difficulty}}"
+          numQuestions: "{{habits.input.numQuestions}}"
+          questionType: "{{habits.input.questionType}}"
+          content: "{{generate-questions}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-questions
+    target: save-quiz
+
+output:
+  quizId: "{{save-quiz.id}}"
+  quiz: "{{generate-questions}}"

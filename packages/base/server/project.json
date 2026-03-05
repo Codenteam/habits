@@ -1,0 +1,106 @@
+{
+  "name": "@ha-bits/base",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/base/server/src",
+  "projectType": "application",
+  "tags": [
+    "scope:executor"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{workspaceRoot}/dist/packages/base"
+      ],
+      "options": {
+        "outputPath": "dist/packages/base/server",
+        "main": "packages/base/server/src/main.ts",
+        "outputFileName": "main.cjs",
+        "tsConfig": "packages/base/server/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": true,
+        "declaration": false,
+        "assets": [
+          {
+            "input": "packages/base/server",
+            "glob": "package.json",
+            "output": ".."
+          },
+          {
+            "input": "packages/base/server",
+            "glob": "README.md",
+            "output": ".."
+          },
+          {
+            "input": "packages/base/server/src",
+            "glob": "sea-entry-template.js",
+            "output": "."
+          }
+        ],
+        "esbuildOptions": {
+          "banner": {
+            "js": "#!/usr/bin/env node"
+          },
+          "external": [
+            "@activepieces/*"
+          ],
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build",
+        "@ha-bits/base-ui:build"
+      ]
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x dist/packages/base/pack/index.cjs",
+          "cd packages/base && npm version patch --no-git-tag-version",
+          "cd dist/packages/base && npm publish"
+        ],
+        "parallel": false
+      },
+      "dependsOn": [
+        "pack"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["pnpm tsx watch packages/base/server/src/main.ts server"],
+        "parallel": true,
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "ts-node": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm ts-node packages/base/server/src/main.ts server",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/base/server/tsconfig.lib.json --noEmit"
+      }
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm ncc build dist/packages/base/server/main.cjs -o dist/packages/base/pack"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "build"
+      ]
+    }
+  }
+}

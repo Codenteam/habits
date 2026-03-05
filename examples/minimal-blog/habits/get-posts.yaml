@@ -1,0 +1,23 @@
+id: get-posts
+name: Get Recent Posts
+description: Retrieve all published posts for the homepage
+
+nodes:
+  - id: query-posts
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "posts"
+        filter: '{"status": "published"}'
+        limit: 50
+
+edges: []
+
+output:
+  posts: "{{query-posts.results}}"
+  count: "{{query-posts.count}}"

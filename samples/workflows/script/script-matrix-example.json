@@ -1,0 +1,56 @@
+{
+  "summary": "Matrix Message Notification",
+  "description": "Send automated messages to Matrix chat rooms",
+  "value": {
+    "modules": [
+      {
+        "id": "matrix-script",
+        "summary": "Send Matrix Message",
+        "value": {
+          "type": "script",
+          "content": "type Matrix = {\n  baseUrl: string;\n  token: string;\n};\n\nexport async function main(matrix_res: Matrix, room: string, body: string) {\n  if (!matrix_res.token) {\n    throw Error(\"Sending a message requires an access token.\");\n  }\n  \n  const roomId = await resolveRoomAlias(matrix_res, room);\n  const txnId = `${Math.random()}`;\n  \n  const resp = await fetch(\n    `${matrix_res.baseUrl}/_matrix/client/v3/rooms/${encodeURIComponent(\n      roomId,\n    )}/send/m.room.message/${txnId}`,\n    {\n      method: \"PUT\",\n      headers: {\n        Accept: \"application/json\",\n        Authorization: `Bearer ${matrix_res.token}`,\n        \"Content-Type\": \"application/json\",\n      },\n      body: JSON.stringify({\n        body,\n        msgtype: \"m.text\",\n      }),\n    },\n  );\n  \n  if (!resp.ok) {\n    throw Error(`Failed to send message: Error HTTP${resp.status}`);\n  }\n  \n  const eventId = (await resp.json())[\"event_id\"];\n  return eventId;\n}\n\nasync function resolveRoomAlias(matrix_res: Matrix, room: string): Promise<string> {\n  if (room.startsWith(\"!\")) {\n    return room;\n  }\n  \n  const resp = await fetch(\n    `${matrix_res.baseUrl}/_matrix/client/v3/directory/room/${encodeURIComponent(room)}`,\n    {\n      headers: {\n        Accept: \"application/json\",\n        ...(matrix_res.token && {\n          Authorization: `Bearer ${matrix_res.token}`,\n        }),\n      },\n    },\n  );\n  \n  if (!resp.ok) {\n    throw Error(`Failed to resolve room alias: Error HTTP${resp.status}`);\n  }\n  \n  const roomId = (await resp.json())[\"room_id\"];\n  return roomId;\n}",
+          "language": "deno",
+          "lock": "",
+          "inputTransforms": {
+            "matrix_res": {\n              "expr": "flow_input.matrix_res",\n              "type": "javascript"\n            },
+            "room": {\n              "expr": "flow_input.room",\n              "type": "javascript"\n            },
+            "body": {\n              "expr": "flow_input.body",\n              "type": "javascript"\n            }
+          }
+        },
+        "stopAfterIf": null
+      }
+    ],
+    "failureModule": null
+  },
+  "schema": {
+    "type": "object",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "required": ["matrix_res", "room", "body"],
+    "properties": {
+      "matrix_res": {
+        "type": "object",
+        "description": "Matrix server connection details",
+        "properties": {
+          "baseUrl": {
+            "type": "string",
+            "description": "Matrix homeserver URL"
+          },
+          "token": {
+            "type": "string",
+            "description": "Matrix access token"
+          }
+        }
+      },
+      "room": {
+        "type": "string",
+        "description": "Matrix room ID or alias",
+        "default": "#general:matrix.org"
+      },
+      "body": {
+        "type": "string",
+        "description": "Message content to send",
+        "default": "Hello from Script!"
+      }
+    }
+  }
+}

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Summarizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="url"], textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .file-upload {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        .file-upload input {
+            display: none;
+        }
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .file-name {
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.active {
+            display: block;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .results {
+            display: none;
+        }
+        .results.active {
+            display: block;
+        }
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .result-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .result-section pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .action-item {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .action-item .task {
+            font-weight: 500;
+            color: #333;
+        }
+        .action-item .meta {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-item:hover {
+            background: #f0f2ff;
+            transform: translateX(5px);
+        }
+        .history-item h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .history-item .date {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .markdown-content h2 { margin-top: 20px; color: #333; }
+        .markdown-content ul { padding-left: 20px; margin: 10px 0; }
+        .markdown-content li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Meeting Summarizer</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('upload')">New Meeting</button>
+            <button class="tab" onclick="showTab('history')">History</button>
+        </div>
+
+        <div id="upload-tab" class="tab-content active">
+            <div class="card">
+                <h2>Upload Meeting Recording</h2>
+                <form id="upload-form">
+                    <div class="form-group">
+                        <label>Meeting Title</label>
+                        <input type="text" id="meetingTitle" placeholder="Weekly Team Standup" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Attendees (comma-separated)</label>
+                        <input type="text" id="attendees" placeholder="John, Sarah, Mike">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Audio File</label>
+                        <div class="file-upload" id="dropzone">
+                            <div class="file-upload-icon">🎤</div>
+                            <p>Drop audio file here or click to browse</p>
+                            <p style="font-size: 0.85rem; color: #888; margin-top: 5px;">Supports MP3, WAV, M4A, WEBM</p>
+                            <input type="file" id="audioFile" accept="audio/*">
+                            <div class="file-name" id="fileName"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Or paste audio URL</label>
+                        <input type="url" id="audioUrl" placeholder="https://example.com/meeting.mp3">
+                    </div>
+                    
+                    <button type="submit" id="submitBtn">Summarize Meeting</button>
+                </form>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your meeting...</p>
+                <p style="font-size: 0.85rem; color: #888; margin-top: 10px;">This may take a few minutes for longer recordings</p>
+            </div>
+
+            <div class="results" id="results">
+                <div class="card">
+                    <h2>📋 Meeting Summary</h2>
+                    
+                    <div class="result-section">
+                        <h3>Summary</h3>
+                        <div id="summary" class="markdown-content"></div>
+                    </div>
+                    
+                    <div class="result-section">
+                        <h3>Action Items</h3>
+                        <div id="actionItems"></div>
+                    </div>
+                    
+                    <div class="result-section">
+                        <h3>Key Decisions</h3>
+                        <div id="decisions" class="markdown-content"></div>
+                    </div>
+                    
+                    <div class="result-section">
+                        <h3>Full Report</h3>
+                        <div id="report" class="markdown-content"></div>
+                    </div>
+                    
+                    <div class="result-section" style="display: none;" id="transcriptSection">
+                        <h3>Transcript</h3>
+                        <pre id="transcript"></pre>
+                    </div>
+                    
+                    <button onclick="toggleTranscript()">Show/Hide Transcript</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="history-tab" class="tab-content">
+            <div class="card">
+                <h2>Past Meetings</h2>
+                <div id="historyList">
+                    <p style="color: #888; text-align: center;">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioBase64 = null;
+
+        // Tab switching
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            if (tab === 'history') loadHistory();
+        }
+
+        // File upload handling
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('audioFile');
+        const fileName = document.getElementById('fileName');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('audio/')) {
+                handleFile(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            fileName.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                audioBase64 = e.target.result.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Form submission
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const audioUrl = document.getElementById('audioUrl').value;
+            if (!audioBase64 && !audioUrl) {
+                alert('Please upload an audio file or provide a URL');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            submitBtn.disabled = true;
+            loading.classList.add('active');
+            results.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        meetingTitle: document.getElementById('meetingTitle').value,
+                        attendees: document.getElementById('attendees').value,
+                        audioUrl: audioUrl || undefined,
+                        audioBase64: audioBase64 || undefined
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                alert('Error processing meeting: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            document.getElementById('summary').innerHTML = formatMarkdown(data.summary || 'No summary available');
+            document.getElementById('decisions').innerHTML = formatMarkdown(data.decisions || 'No decisions recorded');
+            document.getElementById('report').innerHTML = formatMarkdown(data.report || '');
+            document.getElementById('transcript').textContent = data.transcript || 'No transcript available';
+            
+            // Parse and display action items
+            const actionItemsDiv = document.getElementById('actionItems');
+            try {
+                const items = typeof data.actionItems === 'string' ? JSON.parse(data.actionItems) : data.actionItems;
+                if (Array.isArray(items) && items.length > 0) {
+                    actionItemsDiv.innerHTML = items.map(item => `
+                        <div class="action-item">
+                            <div class="task">☑️ ${item.task}</div>
+                            <div class="meta">Assignee: ${item.assignee || 'TBD'} | Due: ${item.deadline || 'TBD'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    actionItemsDiv.innerHTML = '<p style="color: #888;">No action items identified</p>';
+                }
+            } catch {
+                actionItemsDiv.innerHTML = formatMarkdown(data.actionItems || 'No action items');
+            }
+        }
+
+        function formatMarkdown(text) {
+            if (!text) return '';
+            return text
+                .replace(/## (.*)/g, '<h2>$1</h2>')
+                .replace(/### (.*)/g, '<h3>$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/- (.*)/g, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function toggleTranscript() {
+            const section = document.getElementById('transcriptSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            try {
+                const response = await fetch('/api/list-meetings?limit=20');
+                const data = await response.json();
+                
+                if (data.meetings && data.meetings.length > 0) {
+                    historyList.innerHTML = data.meetings.map(meeting => `
+                        <div class="history-item" onclick="viewMeeting('${meeting._id}')">
+                            <h4>${meeting.title || 'Untitled Meeting'}</h4>
+                            <div class="date">${new Date(meeting.createdAt).toLocaleString()}</div>
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                ${meeting.attendees || 'No attendees listed'}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    historyList.innerHTML = '<p style="color: #888; text-align: center;">No meetings yet</p>';
+                }
+            } catch (error) {
+                historyList.innerHTML = '<p style="color: #888; text-align: center;">Error loading history</p>';
+            }
+        }
+
+        async function viewMeeting(id) {
+            try {
+                const response = await fetch(`/api/get-meeting?id=${id}`);
+                const data = await response.json();
+                if (data.meeting) {
+                    showTab('upload');
+                    document.getElementById('meetingTitle').value = data.meeting.title || '';
+                    document.getElementById('attendees').value = data.meeting.attendees || '';
+                    displayResults(data.meeting);
+                }
+            } catch (error) {
+                alert('Error loading meeting');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+id: recipe-by-calories
+name: Generate Recipe by Calories
+description: Create a recipe based on available ingredients and/or target calorie count
+
+input:
+  - id: ingredients
+    type: string
+    required: false
+    description: Comma-separated list of available ingredients (optional if targetCalories is provided)
+  - id: targetCalories
+    type: number
+    required: false
+    description: Target calorie count per serving (optional if ingredients is provided)
+  - id: servings
+    type: number
+    required: false
+    description: Number of servings (default 2)
+  - id: dietaryRestrictions
+    type: string
+    required: false
+    description: Any dietary restrictions (vegetarian, vegan, gluten-free, keto, etc.)
+
+nodes:
+  # Validate that at least one input is provided
+  - id: validate-input
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        temperature: 0.1
+        maxTokens: 200
+        prompt: |
+          Check these inputs and determine what type of recipe generation to do:
+          
+          Ingredients provided: {{habits.input.ingredients}}
+          Target calories: {{habits.input.targetCalories}}
+          
+          Return JSON:
+          {
+            "isValid": true/false,
+            "mode": "ingredients_only" | "calories_only" | "both" | "invalid",
+            "ingredients": ["parsed", "ingredient", "list"] or [],
+            "targetCalories": number or null,
+            "error": "error message if invalid"
+          }
+          
+          If neither ingredients nor targetCalories is provided, set isValid to false.
+          Return ONLY the JSON.
+
+  # Generate recipe based on inputs
+  - id: generate-recipe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        temperature: 0.8
+        maxTokens: 2500
+        cast: true
+        systemPrompt: |
+          You are a professional chef and nutritionist who creates delicious, calorie-conscious recipes.
+          You balance flavor with health and can work with any constraint.
+          Always return accurate calorie counts based on standard nutritional databases.
+        prompt: |
+          Create a recipe with these constraints:
+          
+          Input validation: {{validate-input}}
+          Available ingredients: {{habits.input.ingredients}}
+          Target calories per serving: {{habits.input.targetCalories}}
+          Number of servings: {{habits.input.servings}}
+          Dietary restrictions: {{habits.input.dietaryRestrictions}}
+          
+          IMPORTANT:
+          - If only ingredients are provided, create the most delicious recipe possible with those ingredients
+          - If only target calories are provided, suggest a balanced meal with exactly those calories
+          - If both are provided, maximize use of ingredients while hitting the calorie target
+          - You may suggest additional basic pantry items (salt, pepper, oil, spices) if needed
+          
+          Return JSON:
+          {
+            "title": "Recipe name",
+            "description": "Brief appetizing description",
+            "servings": 2,
+            "caloriesPerServing": 450,
+            "totalCalories": 900,
+            "prepTime": "15 minutes",
+            "cookTime": "25 minutes",
+            "difficulty": "easy/medium/hard",
+            "ingredients": [
+              {
+                "item": "ingredient name",
+                "amount": "quantity",
+                "calories": 120,
+                "isFromUserList": true/false,
+                "notes": "optional prep notes"
+              }
+            ],
+            "instructions": [
+              {"step": 1, "instruction": "Step description"}
+            ],
+            "nutritionPerServing": {
+              "calories": 450,
+              "protein": "25g",
+              "carbs": "35g",
+              "fat": "18g",
+              "fiber": "6g",
+              "sodium": "400mg"
+            },
+            "tips": ["Cooking tips"],
+            "calorieAdjustments": [
+              {"change": "Skip the cheese", "caloriesSaved": 80}
+            ],
+            "usedIngredients": ["list of user ingredients used"],
+            "suggestedAdditions": ["optional additions from pantry"]
+          }
+          
+          Return ONLY the JSON object.
+
+  # Generate recipe image
+  - id: generate-image
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: generate_image
+      operation: generate_image
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: dall-e-3
+        prompt: "Professional food photography of {{generate-recipe.title}}, healthy portion size, beautifully plated, natural lighting, restaurant quality presentation"
+        resolution: 1024x1024
+        quality: standard
+
+  # Save recipe
+  - id: save-recipe
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "calorie_recipes"
+        document:
+          recipe: "{{generate-recipe}}"
+          image: "{{generate-image}}"
+          inputIngredients: "{{habits.input.ingredients}}"
+          targetCalories: "{{habits.input.targetCalories}}"
+          dietaryRestrictions: "{{habits.input.dietaryRestrictions}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: validate-input
+    target: generate-recipe
+  - source: generate-recipe
+    target: generate-image
+  - source: generate-image
+    target: save-recipe
+
+output:
+  recipeId: "{{save-recipe.id}}"
+  recipe: "{{generate-recipe}}"
+  image: "{{generate-image}}"

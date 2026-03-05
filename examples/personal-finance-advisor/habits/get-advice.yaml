@@ -1,0 +1,57 @@
+id: get-advice
+name: Get Financial Advice
+description: Get personalized financial advice for specific questions
+
+input:
+  - id: question
+    type: string
+    required: true
+    description: Financial question
+  - id: context
+    type: object
+    required: false
+    description: User's financial context
+
+nodes:
+  - id: generate-advice
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        systemMessage: |
+          You are a certified financial advisor. Provide practical, actionable advice.
+          Always include disclaimers when appropriate.
+          Do not give specific investment recommendations or guarantees.
+        prompt: |
+          Question: {{habits.input.question}}
+          User Context: {{habits.input.context}}
+          
+          Return JSON:
+          {
+            "summary": "One sentence answer",
+            "explanation": "Detailed explanation",
+            "actionSteps": [
+              {"step": "Step description", "priority": "high|medium|low"}
+            ],
+            "considerations": ["Things to keep in mind"],
+            "commonMistakes": ["Mistakes to avoid"],
+            "resources": ["Resources for more info"],
+            "disclaimer": "Appropriate disclaimer",
+            "followUpQuestions": ["Related questions to consider"]
+          }
+
+edges: []
+
+output:
+  advice: "{{generate-advice}}"

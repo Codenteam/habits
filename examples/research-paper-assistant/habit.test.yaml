@@ -1,0 +1,49 @@
+# Tests for Research Paper Assistant
+# Workflow: habits/analyze-paper.yaml - Analyzes research papers
+workflow: ./habits/analyze-paper.yaml
+
+tests:
+  # === Happy Path Test ===
+  - name: "successfully analyzes research paper"
+    trigger:
+      body:
+        title: "Machine Learning in Healthcare"
+        paperContent: "This study examines the application of ML models in predicting patient outcomes"
+        analysisDepth: "standard"
+    context:
+      habits:
+        input:
+          title: "Machine Learning in Healthcare"
+          paperContent: "This study examines the application of ML models in predicting patient outcomes"
+          analysisDepth: "standard"
+        env:
+          HABITS_INTERSECT_HOST: "https://api.intersect.ai"
+          HABITS_INTERSECT_API_KEY: "mock-api-key"
+    mocks:
+      bits:
+        # Mock methodology analysis
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            researchQuestion: "Can ML predict patient outcomes?"
+            methodology:
+              approach: "Quantitative"
+              methods: ["Random Forest", "Neural Networks"]
+            keyFindings:
+              - finding: "ML models achieved 85% accuracy"
+                significance: "Statistically significant"
+        # Mock critical analysis
+        - bit: "@ha-bits/bit-intersect"
+          action: ask_chatgpt
+          response:
+            strengths:
+              - point: "Large sample size"
+                explanation: "Increases reliability"
+            weaknesses:
+              - point: "Limited to one hospital"
+                explanation: "Generalization concerns"
+        - bit: "@ha-bits/bit-database"
+          action: insert
+          response:
+            id: "test-123"
+            success: true

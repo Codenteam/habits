@@ -1,0 +1,30 @@
+version: "1.0"
+
+workflows:
+  - id: report-bug
+    path: ./habits/report-bug.yaml
+    enabled: true
+
+  - id: analyze-screenshot
+    path: ./habits/analyze-screenshot.yaml
+    enabled: true
+
+  - id: list-bugs
+    path: ./habits/list-bugs.yaml
+    enabled: true
+
+  - id: get-bug
+    path: ./habits/get-bug.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

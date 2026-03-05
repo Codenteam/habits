@@ -1,0 +1,58 @@
+@host = localhost
+@port = 3000
+
+###############################################################################
+# Health & Workflow Discovery
+###############################################################################
+
+### Health Check
+# @name healthCheck
+GET http://{{host}}:{{port}}/health
+
+?? status == 200
+
+### List all workflows
+# @name listWorkflows
+GET http://{{host}}:{{port}}/misc/workflows
+
+?? status == 200
+
+### Get workflow details
+# @name getWorkflowDetails
+GET http://{{host}}:{{port}}/misc/workflow/imap-smtp-email-workflow
+
+?? status == 200
+
+###############################################################################
+# Execute Workflow - Non-Streaming Mode
+###############################################################################
+
+### Execute workflow (IMAP trigger fetches emails, SMTP forwards them)
+# @name executeWorkflow
+POST http://{{host}}:{{port}}/api/imap-smtp-email-workflow
+Content-Type: application/json
+
+{}
+
+?? status == 200
+?? body executionId isString
+?? body workflowId == imap-smtp-email-workflow
+?? body status == completed
+
+###############################################################################
+# Validate Node Results
+###############################################################################
+
+### Execute and validate both IMAP and SMTP nodes
+# @name executeAndValidate
+POST http://{{host}}:{{port}}/api/imap-smtp-email-workflow
+Content-Type: application/json
+
+{}
+
+?? status == 200
+?? js response.parsedBody.nodeResults.some(n => n.nodeId === 'new-email-trigger') equals true
+?? js response.parsedBody.nodeResults.find(n => n.nodeId === 'new-email-trigger').status equals completed
+?? js response.parsedBody.nodeResults.some(n => n.nodeId === 'send-email') equals true
+?? js response.parsedBody.nodeResults.find(n => n.nodeId === 'send-email').status equals completed
+?? js response.parsedBody.nodeResults.find(n => n.nodeId === 'send-email').output.response equals 250 OK

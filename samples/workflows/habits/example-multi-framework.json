@@ -1,0 +1,50 @@
+{
+  "id": "example-workflow-2",
+  "name": "Multi-Framework Demo",
+  "description": "Example workflow combining n8n and Activepieces nodes",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "node-1701234567892",
+      "type": "n8n",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "Fetch Chatwoot Data",
+        "framework": "n8n",
+        "module": "n8n-nodes-chatwoot",
+        "resource": "contact",
+        "operation": "getAll",
+        "credentials": {
+          "url": "https://app.chatwoot.com",
+          "token": "your-api-token-here"
+        },
+        "params": {
+          "accountId": "1"
+        }
+      }
+    },
+    {
+      "id": "node-1701234567893",
+      "type": "activepieces",
+      "position": { "x": 400, "y": 100 },
+      "data": {
+        "label": "Save to Google Sheets",
+        "framework": "activepieces",
+        "module": "piece-google-sheets",
+        "operation": "append_row",
+        "params": {
+          "spreadsheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+          "range": "Sheet1!A1:Z",
+          "values": []
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "node-1701234567892",
+      "target": "node-1701234567893"
+    }
+  ]
+}

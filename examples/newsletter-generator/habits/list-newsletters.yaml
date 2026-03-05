@@ -1,0 +1,31 @@
+id: list-newsletters
+name: List Newsletters
+description: List all newsletters
+
+input:
+  - id: limit
+    type: number
+    required: false
+  - id: status
+    type: string
+    required: false
+
+nodes:
+  - id: query-newsletters
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "newsletters"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  newsletters: "{{query-newsletters.results}}"
+  count: "{{query-newsletters.count}}"

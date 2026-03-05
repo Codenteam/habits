@@ -1,0 +1,27 @@
+id: get-invoice
+name: Get Invoice
+description: Get a specific invoice
+
+input:
+  - id: id
+    type: string
+    required: true
+
+nodes:
+  - id: fetch-invoice
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "invoices"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  invoice: "{{fetch-invoice.document}}"
+  found: "{{fetch-invoice.found}}"

@@ -1,0 +1,85 @@
+# ============================================================
+# ⚠️  UNDER DEVELOPMENT - NOT READY FOR PRODUCTION USE
+# ============================================================
+# This example is still being actively developed.
+# Features may be incomplete, change without notice, or not work as expected.
+# ============================================================
+
+version: "1.0"
+
+workflows:
+  # Core AI Chat
+  - id: chat
+    path: ./habits/chat.yaml
+    enabled: true
+    
+  # Memory System
+  - id: create-memory
+    path: ./habits/create-memory.yaml
+    enabled: true
+    
+  - id: search-memory
+    path: ./habits/search-memory.yaml
+    enabled: true
+    
+  - id: get-memories
+    path: ./habits/get-memories.yaml
+    enabled: true
+    
+  # Messaging Integrations
+  - id: send-telegram
+    path: ./habits/send-telegram.yaml
+    enabled: true
+    
+  - id: send-whatsapp
+    path: ./habits/send-whatsapp.yaml
+    enabled: true
+    
+  - id: send-slack
+    path: ./habits/send-slack.yaml
+    enabled: true
+    
+  # Task Management
+  - id: create-task
+    path: ./habits/create-task.yaml
+    enabled: true
+    
+  - id: get-tasks
+    path: ./habits/get-tasks.yaml
+    enabled: true
+    
+  - id: complete-task
+    path: ./habits/complete-task.yaml
+    enabled: true
+    
+  # Email
+  - id: send-email
+    path: ./habits/send-email.yaml
+    enabled: true
+    
+  # Web Browsing
+  - id: browse-web
+    path: ./habits/browse-web.yaml
+    enabled: true
+    
+  # Summarization
+  - id: summarize
+    path: ./habits/summarize.yaml
+    enabled: true
+    
+  # Heartbeat - Proactive Check-in
+  - id: heartbeat
+    path: ./habits/heartbeat.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

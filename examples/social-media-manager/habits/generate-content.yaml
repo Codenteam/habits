@@ -1,0 +1,219 @@
+id: generate-content
+name: Generate Social Content
+description: Generate social media content for multiple platforms from a single idea
+
+input:
+  - id: topic
+    type: string
+    required: true
+    description: Main topic or idea for the content
+  - id: brand
+    type: string
+    required: false
+    description: Brand name or company
+  - id: tone
+    type: string
+    required: false
+    description: professional, casual, humorous, inspirational, educational
+  - id: platforms
+    type: string
+    required: false
+    description: Comma-separated list (twitter, linkedin, instagram, facebook, threads)
+  - id: includeImage
+    type: boolean
+    required: false
+    description: Generate an image prompt
+
+nodes:
+  # Generate Twitter/X content
+  - id: generate-twitter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 400
+        prompt: |
+          Create 3 tweet variations for: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          
+          For each version:
+          1. Main tweet (under 280 chars)
+          2. Thread option (3-5 tweets telling a story)
+          3. Relevant hashtags (5-7)
+          4. Best posting time suggestion
+          
+          Make them engaging, scroll-stopping, and shareable.
+
+  # Generate LinkedIn content
+  - id: generate-linkedin
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 600
+        prompt: |
+          Create a LinkedIn post for: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          
+          Structure:
+          1. Hook (first line that grabs attention)
+          2. Story or insight (3-4 short paragraphs with line breaks)
+          3. Key takeaways (bullet points)
+          4. Call to action
+          5. Relevant hashtags (3-5, professional)
+          
+          Make it professional yet personal. Use line breaks for readability.
+
+  # Generate Instagram content
+  - id: generate-instagram
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 500
+        prompt: |
+          Create Instagram content for: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          
+          Provide:
+          1. Feed post caption (with emojis, line breaks, and CTA)
+          2. Carousel ideas (5-7 slides with text for each)
+          3. Reel concept (script/storyboard)
+          4. Story ideas (3 story frames)
+          5. Hashtags (20-30, mix of popular and niche)
+          
+          Make it visually-minded and engagement-focused.
+
+  # Generate Facebook content
+  - id: generate-facebook
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 400
+        prompt: |
+          Create Facebook post for: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          
+          Include:
+          1. Main post (conversational, encourages comments)
+          2. Question to boost engagement
+          3. Link preview text (if applicable)
+          4. Best posting time
+          
+          Make it shareable and community-focused.
+
+  # Generate image prompt
+  - id: generate-image-prompt
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 300
+        prompt: |
+          Create image prompts for: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          
+          Return JSON:
+          {
+            "dallePrompt": "Detailed DALL-E prompt for main image",
+            "midjourneyPrompt": "Midjourney-style prompt with parameters",
+            "canvaIdeas": ["Canva template idea 1", "idea 2", "idea 3"],
+            "stockKeywords": ["keyword1", "keyword2"]
+          }
+
+  # Save content
+  - id: save-content
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "social_content"
+        document:
+          topic: "{{habits.input.topic}}"
+          brand: "{{habits.input.brand}}"
+          tone: "{{habits.input.tone}}"
+          twitter: "{{generate-twitter}}"
+          linkedin: "{{generate-linkedin}}"
+          instagram: "{{generate-instagram}}"
+          facebook: "{{generate-facebook}}"
+          imagePrompt: "{{generate-image-prompt}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-twitter
+    target: save-content
+  - source: generate-linkedin
+    target: save-content
+  - source: generate-instagram
+    target: save-content
+  - source: generate-facebook
+    target: save-content
+  - source: generate-image-prompt
+    target: save-content
+
+output:
+  contentId: "{{save-content.id}}"
+  twitter: "{{generate-twitter}}"
+  linkedin: "{{generate-linkedin}}"
+  instagram: "{{generate-instagram}}"
+  facebook: "{{generate-facebook}}"
+  imagePrompt: "{{generate-image-prompt}}"

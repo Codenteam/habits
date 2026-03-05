@@ -1,0 +1,47 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "UI Base",
+            "type": "shell",
+            "command": "pnpm nx dev @ha-bits/base-ui",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Server Base",
+            "type": "shell",
+            "command": "pnpm nx dev @ha-bits/base",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Server Bits Creator",
+            "type": "shell",
+            "command": "cd bits-creator/server && pnpm dev",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "dev:all",
+            "dependsOn": ["UI Base", "Server Base", "Server Bits Creator"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

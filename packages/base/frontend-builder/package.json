@@ -1,0 +1,59 @@
+{
+  "name": "@ha-bits/frontend-builder",
+  "version": "1.0.0",
+  "description": "GrapesJS-based frontend builder with AI generation support for Intersect WebCanvas",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "@grapesjs/react": "^2.0.0",
+    "@monaco-editor/react": "^4.7.0",
+    "grapesjs": "^0.22.14",
+    "grapesjs-blocks-basic": "^1.0.2",
+    "grapesjs-custom-code": "^1.0.2",
+    "grapesjs-parser-postcss": "^1.0.3",
+    "grapesjs-plugin-forms": "^2.0.6",
+    "grapesjs-preset-webpage": "^1.0.3",
+    "grapesjs-tailwind": "^1.0.12",
+    "js-beautify": "^1.15.4",
+    "lodash": "^4.17.23",
+    "lucide-react": "^0.352.0",
+    "monaco-editor": "^0.55.1"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^14.2.0",
+    "@types/jest": "^30.0.0",
+    "@types/js-beautify": "^1.14.3",
+    "@types/lodash": "^4.17.24",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.3.4",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.2.2",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^3.7.0"
+  }
+}

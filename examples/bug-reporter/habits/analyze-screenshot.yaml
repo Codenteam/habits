@@ -1,0 +1,60 @@
+id: analyze-screenshot
+name: Analyze Screenshot
+description: Analyze bug screenshot with AI vision
+
+input:
+  - id: imageUrls
+    type: array
+    required: true
+    description: URLs of screenshot images
+  - id: context
+    type: string
+    required: false
+    description: Additional context about the bug
+
+nodes:
+  - id: analyze-image
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: vision_prompt
+      operation: vision_prompt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        prompt: |
+          Analyze this bug screenshot and create a detailed bug report.
+          
+          Additional context: {{habits.input.context}}
+          
+          Return JSON:
+          {
+            "observedIssue": "What's wrong based on the screenshot",
+            "uiElements": ["UI elements visible in screenshot"],
+            "errorMessages": ["Any error messages visible"],
+            "suggestedTitle": "Bug report title",
+            "description": "Detailed description of the bug",
+            "category": "UI|Layout|Text|Data|Error|Loading|etc",
+            "severity": "critical|high|medium|low",
+            "affectedArea": "Part of app/page affected",
+            "visualIssues": [
+              "Alignment problem",
+              "Color/styling issue",
+              "Missing element"
+            ],
+            "platformGuess": "Web/iOS/Android based on screenshot",
+            "reproductionHints": ["How this might be reproduced"]
+          }
+        imageUrls: "{{habits.input.imageUrls}}"
+
+edges: []
+
+output:
+  analysis: "{{analyze-image}}"

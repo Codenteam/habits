@@ -1,0 +1,27 @@
+id: get-ticket
+name: Get Ticket
+description: Get a single ticket by ID
+
+input:
+  - id: ticketId
+    type: string
+    required: true
+
+nodes:
+  - id: find-ticket
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "support_tickets"
+        query:
+          id: "{{habits.input.ticketId}}"
+
+edges: []
+
+output:
+  ticket: "{{find-ticket}}"

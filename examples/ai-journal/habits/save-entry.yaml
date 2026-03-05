@@ -1,0 +1,181 @@
+id: save-entry
+name: Save Journal Entry
+description: Save a journal entry with AI analysis for mood, themes, and supportive feedback
+
+input:
+  - id: content
+    type: string
+    required: true
+    description: The journal entry content
+  - id: userId
+    type: string
+    required: false
+    description: User identifier
+
+nodes:
+  # Analyze sentiment/mood
+  - id: analyze-mood
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 300
+        systemMessage: You are a compassionate therapist analyzing journal entries. Be supportive and insightful.
+        prompt: |
+          Analyze the emotional tone of this journal entry:
+          
+          {{habits.input.content}}
+          
+          Return JSON with:
+          {
+            "moodScore": <1-10 scale, 1=very negative, 10=very positive>,
+            "primaryEmotion": "main emotion expressed",
+            "secondaryEmotions": ["other emotions detected"],
+            "energyLevel": "low/medium/high",
+            "stressIndicators": true/false
+          }
+          
+          Return ONLY the JSON.
+
+  # Extract themes
+  - id: extract-themes
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 300
+        prompt: |
+          Extract key themes and topics from this journal entry:
+          
+          {{habits.input.content}}
+          
+          Return JSON:
+          {
+            "themes": ["work", "relationships", "health", etc.],
+            "topics": ["specific things mentioned"],
+            "people": ["names of people mentioned"],
+            "gratitudes": ["things they're grateful for, if any"],
+            "concerns": ["worries or problems mentioned"]
+          }
+          
+          Return ONLY the JSON.
+
+  # Generate supportive response
+  - id: generate-response
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 500
+        systemMessage: |
+          You are a compassionate, wise journaling companion. Provide supportive, 
+          thoughtful responses that validate feelings, offer gentle insights, and 
+          encourage self-reflection. Never be preachy or give unsolicited advice.
+          Be warm, human, and understanding.
+        prompt: |
+          The user wrote this journal entry:
+          
+          {{habits.input.content}}
+          
+          Their mood analysis: {{analyze-mood}}
+          Themes identified: {{extract-themes}}
+          
+          Write a supportive, personalized response (2-3 paragraphs):
+          1. Acknowledge and validate their feelings
+          2. Reflect back any insights you notice
+          3. End with an encouraging thought or gentle question for reflection
+          
+          Be genuine and warm, not clinical.
+
+  # Generate reflection prompts
+  - id: reflection-prompts
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 200
+        prompt: |
+          Based on this journal entry:
+          {{habits.input.content}}
+          
+          Suggest 3 thoughtful reflection questions for the user to consider.
+          Make them specific to what they wrote about.
+          
+          Return as JSON: {"prompts": ["question 1", "question 2", "question 3"]}
+
+  # Save entry
+  - id: save-entry
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "journal_entries"
+        document:
+          userId: "{{habits.input.userId}}"
+          content: "{{habits.input.content}}"
+          mood: "{{analyze-mood}}"
+          themes: "{{extract-themes}}"
+          response: "{{generate-response}}"
+          reflectionPrompts: "{{reflection-prompts}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-mood
+    target: generate-response
+  - source: extract-themes
+    target: generate-response
+  - source: generate-response
+    target: reflection-prompts
+  - source: reflection-prompts
+    target: save-entry
+
+output:
+  entryId: "{{save-entry.id}}"
+  mood: "{{analyze-mood}}"
+  themes: "{{extract-themes}}"
+  response: "{{generate-response}}"
+  reflectionPrompts: "{{reflection-prompts}}"

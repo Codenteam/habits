@@ -1,0 +1,154 @@
+{
+  "modules": [
+    {
+      "framework": "activepieces",
+      "source": "npm",
+      "repository": "@activepieces/piece-openai"
+    },
+    {
+      "framework": "activepieces",
+      "source": "npm",
+      "repository": "@ha-bits/piece-intersect"
+    },
+    {
+      "framework": "bits",
+      "source": "npm",
+      "repository": "@ha-bits/bit-intersect"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-if"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-loop"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-openai"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-string"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-httpbin"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-any-of"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-auth"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-cookie"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-crm"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-database"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-database-mongodb"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-database-mysql"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-discord"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-email"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-filesystem"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-github"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-hello-world"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-http"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-jsonplaceholder"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-shell"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-slack"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-tasks"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-telegram"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-text"
+    },
+    {
+      "framework": "bits",
+      "source": "link",
+      "repository": "@ha-bits/bit-whatsapp"
+    },
+    {
+      "framework": "n8n",
+      "source": "npm",
+      "repository": "n8n-nodes-google-sheets-trigger"
+    },
+    {
+      "framework": "n8n",
+      "source": "npm",
+      "repository": "n8n-nodes-elevenlabs"
+    }
+  ]
+}

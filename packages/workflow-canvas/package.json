@@ -1,0 +1,58 @@
+{
+  "name": "@ha-bits/workflow-canvas",
+  "version": "1.0.0",
+  "description": "Workflow Canvas - Reusable React components for rendering habit workflow diagrams",
+  "type": "module",
+  "main": "../../dist/packages/workflow-canvas/index.mjs",
+  "module": "../../dist/packages/workflow-canvas/index.mjs",
+  "types": "../../dist/packages/workflow-canvas/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "../../dist/packages/workflow-canvas/index.d.ts",
+      "import": "../../dist/packages/workflow-canvas/index.mjs",
+      "default": "../../dist/packages/workflow-canvas/index.mjs"
+    },
+    "./styles.css": "../../dist/packages/workflow-canvas/workflow-canvas.css"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "dagre": "^0.8.5",
+    "html-to-image": "^1.11.11",
+    "js-yaml": "^4.1.0",
+    "lucide-react": "^0.294.0",
+    "reactflow": "^11.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/dagre": "^0.7.53",
+    "@types/js-yaml": "^4.0.9",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.2.2",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
+  },
+  "keywords": [
+    "habits",
+    "workflow",
+    "canvas",
+    "react",
+    "visualization"
+  ],
+  "author": "Codenteam",
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,95 @@
+id: escalate-ticket
+name: Escalate Ticket
+description: Escalate ticket with AI-generated summary
+
+input:
+  - id: ticketId
+    type: string
+    required: true
+  - id: reason
+    type: string
+    required: true
+  - id: escalateToTeam
+    type: string
+    required: false
+
+nodes:
+  # Get original ticket
+  - id: get-ticket
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "support_tickets"
+        query:
+          id: "{{habits.input.ticketId}}"
+
+  # Generate escalation summary
+  - id: escalation-summary
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 500
+        prompt: |
+          Create an escalation summary for this ticket.
+          
+          Original Ticket:
+          Subject: {{get-ticket.subject}}
+          Message: {{get-ticket.message}}
+          Classification: {{get-ticket.classification}}
+          
+          Escalation Reason: {{habits.input.reason}}
+          
+          Return JSON:
+          {
+            "executiveSummary": "One paragraph summary for management",
+            "technicalSummary": "Technical details for engineering team",
+            "customerImpact": "How this affects the customer",
+            "businessImpact": "Potential business implications",
+            "urgency": "Why this needs immediate attention",
+            "recommendedActions": ["Action 1", "Action 2"],
+            "suggestedOwner": "Team or role best suited to handle"
+          }
+
+  # Save escalation
+  - id: save-escalation
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "ticket_escalations"
+        document:
+          ticketId: "{{habits.input.ticketId}}"
+          reason: "{{habits.input.reason}}"
+          escalateToTeam: "{{habits.input.escalateToTeam}}"
+          summary: "{{escalation-summary}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: get-ticket
+    target: escalation-summary
+  - source: escalation-summary
+    target: save-escalation
+
+output:
+  escalationId: "{{save-escalation.id}}"
+  summary: "{{escalation-summary}}"

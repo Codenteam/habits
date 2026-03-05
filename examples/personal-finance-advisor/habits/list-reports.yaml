@@ -1,0 +1,28 @@
+id: list-reports
+name: List Reports
+description: List financial reports
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-reports
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "finance_reports"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  reports: "{{query-reports.results}}"
+  count: "{{query-reports.count}}"

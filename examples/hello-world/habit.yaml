@@ -1,0 +1,23 @@
+id: hello-world
+name: Hello World Demo
+description: A simple hello world habit using @ha-bits/bit-hello-world
+
+# This habit demonstrates the bit-hello-world module:
+# - Returns "hello there" when param1="hello" and param2="world"
+# - Returns "Nah!" otherwise
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "{{habits.input.param1}}"
+        param2: "{{habits.input.param2}}"
+
+edges: []
+output: 
+  greeting: "{{say-hello}}"

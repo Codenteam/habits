@@ -1,0 +1,31 @@
+id: get-results
+name: Get Quiz Results
+description: Get results for a quiz
+
+input:
+  - id: quizId
+    type: string
+    required: false
+  - id: resultId
+    type: string
+    required: false
+
+nodes:
+  - id: query-results
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "quiz_results"
+        sort: '{"completedAt": -1}'
+        limit: 50
+
+edges: []
+
+output:
+  results: "{{query-results.results}}"
+  count: "{{query-results.count}}"

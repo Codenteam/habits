@@ -1,0 +1,39 @@
+{
+    "name": "HTTP to Text Processing Workflow",
+    "description": "Fetch employee data via HTTP and process it with text manipulation",
+    "variables": {
+      "apiUrl": "https://dummy.restapiexample.com/api/v1/employees"
+    },
+    "steps": [
+      {
+        "id": "http-request",
+        "type": "action",
+        "framework": "activepieces",
+        "module": "@activepieces/piece-http",
+        "source": "npm",
+        "params": {
+          "method": "GET",
+          "url": "{{apiUrl}}",
+          "headers": {
+            "Content-Type": "application/json",
+            "User-Agent": "Habits-Executer/1.0"
+          },
+          "timeout": 30000
+        }
+      },
+      {
+        "id": "text-processing", 
+        "type": "action",
+        "framework": "n8n",
+        "source": "npm",
+        "module": "n8n-nodes-text-manipulation",
+        "params": {
+          "operation": "uppercase",
+          "text": "{{JSON.stringify(previous_result)}}"
+        },
+        "conditions": {
+          "skipIf": "!previous_result"
+        }
+      }
+    ]
+  }

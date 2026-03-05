@@ -1,0 +1,52 @@
+id: send-contact
+name: Send Contact Message
+description: Send a contact form submission via email
+
+input:
+  - id: name
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: true
+  - id: message
+    type: string
+    required: true
+
+nodes:
+  - id: send-email
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      resource: sendEmail
+      operation: sendEmail
+      params:
+        smtpHost: "{{habits.env.SMTP_HOST}}"
+        smtpPort: "{{habits.env.SMTP_PORT}}"
+        smtpUser: "{{habits.env.SMTP_USER}}"
+        smtpPassword: "{{habits.env.SMTP_PASSWORD}}"
+        from: "{{habits.env.SMTP_FROM}}"
+        to: "{{habits.env.CONTACT_EMAIL}}"
+        subject: "Contact Form: Message from {{habits.input.name}}"
+        body: |
+          New contact form submission:
+          
+          Name: {{habits.input.name}}
+          Email: {{habits.input.email}}
+          
+          Message:
+          {{habits.input.message}}
+        html: |
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Name:</strong> {{habits.input.name}}</p>
+          <p><strong>Email:</strong> <a href="mailto:{{habits.input.email}}">{{habits.input.email}}</a></p>
+          <h3>Message:</h3>
+          <p>{{habits.input.message}}</p>
+
+edges: []
+
+output:
+  success: "{{send-email.success}}"
+  messageId: "{{send-email.messageId}}"

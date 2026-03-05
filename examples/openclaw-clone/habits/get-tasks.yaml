@@ -1,0 +1,35 @@
+id: get-tasks
+name: Get Tasks
+description: Retrieve tasks with optional filtering by status or user
+
+input:
+  - id: userId
+    type: string
+    required: false
+  - id: status
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-tasks
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "tasks"
+        filter: '{"userId": "{{habits.input.userId}}", "status": "{{habits.input.status}}"}'
+        limit: "{{habits.input.limit}}"
+        sort: '{"dueDate": 1, "priority": -1}'
+
+edges: []
+
+output:
+  tasks: "{{query-tasks.results}}"
+  count: "{{query-tasks.count}}"

@@ -1,0 +1,93 @@
+{
+  "id": "test-if-multi-branch",
+  "name": "Test If Branch - Multiple Mode",
+  "description": "Tests the bit-if branch action in multipleBranch mode. All matching branches execute in parallel.",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "if-branch-multi",
+      "type": "bits",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "data": {
+        "label": "Multiple Parallel Branches",
+        "framework": "bits",
+        "source": "local",
+        "module": "bit-if",
+        "resource": "branch",
+        "operation": "branch",
+        "params": {
+          "mode": "multipleBranch",
+          "branches": [
+            {
+              "label": "If Contains Letter A",
+              "value1": "{{habits.input.text}}",
+              "operator": "contains",
+              "value2": "a",
+              "output": "Text contains letter 'a'"
+            },
+            {
+              "label": "If Contains Letter E",
+              "value1": "{{habits.input.text}}",
+              "operator": "contains",
+              "value2": "e",
+              "output": "Text contains letter 'e'"
+            },
+            {
+              "label": "If Contains Letter I",
+              "value1": "{{habits.input.text}}",
+              "operator": "contains",
+              "value2": "i",
+              "output": "Text contains letter 'i'"
+            },
+            {
+              "label": "If Contains Letter O",
+              "value1": "{{habits.input.text}}",
+              "operator": "contains",
+              "value2": "o",
+              "output": "Text contains letter 'o'"
+            },
+            {
+              "label": "If Contains Letter U",
+              "value1": "{{habits.input.text}}",
+              "operator": "contains",
+              "value2": "u",
+              "output": "Text contains letter 'u'"
+            },
+            {
+              "label": "If Is Not Empty",
+              "value1": "{{habits.input.text}}",
+              "operator": "isNotEmpty",
+              "value2": "",
+              "output": "Text is not empty"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "triggers": [
+    {
+      "type": "schedule",
+      "id": "webhook-trigger",
+      "cron": "0 0 * * *",
+      "schedule": "daily",
+      "settings": {
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Text to check for vowels"
+            }
+          },
+          "required": ["text"]
+        }
+      },
+      "output": "if-branch-multi"
+    }
+  ]
+}

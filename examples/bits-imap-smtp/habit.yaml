@@ -1,0 +1,47 @@
+id: imap-smtp-email-workflow
+name: IMAP to SMTP Email Forward
+
+nodes:
+  # IMAP Trigger - Listen for new emails
+  - id: new-email-trigger
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: newEmail
+      triggerType: polling
+      params:
+        folder: "INBOX"
+        unreadOnly: true
+        limit: 10
+      credentials:
+        imapAuth:
+          imapHost: "localhost"
+          imapUser: "test@localhost"
+          imapPassword: "password"
+          imapPort: 3143
+
+  # Send Email via SMTP
+  - id: send-email
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "forwarder@localhost"
+        to: "recipient@localhost"
+        subject: "Forwarded: {{new-email-trigger[0].emails[0].subject}}"
+        body: "{{new-email-trigger[0].emails[0].body}}"
+      credentials:
+        smtpAuth:
+          smtpHost: "localhost"
+          smtpUser: "forwarder@localhost"
+          smtpPassword: "password"
+          smtpPort: 2525
+
+edges:
+  - source: new-email-trigger
+    target: send-email

@@ -1,0 +1,97 @@
+id: login
+name: User Login
+description: Authenticate user and issue JWT token as cookie
+# DISCLAIMER: This example uses sample credentials ("username" and "password") for demonstration purposes only.
+# Do NOT use these credentials in production environments. Replace with secure authentication methods.
+input:
+  - id: username
+    type: string
+    required: true
+  - id: password
+    type: string
+    required: true
+
+nodes:
+  # Validate credentials using bit-if branch
+  - id: validate-user
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: "if"
+        branches:
+          - value1: "{{habits.input.username}}"
+            operator: "equals"
+            value2: "admin"
+            output:
+              valid: true
+              role: "admin"
+        defaultOutput:
+          valid: false
+          role: null
+
+  # Check password as well
+  - id: check-password
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: "if"
+        branches:
+          - value1: "{{habits.input.password}}"
+            operator: "equals"
+            value2: "admin123"
+            output: true
+        defaultOutput: false
+
+  # Generate JWT token on successful login
+  - id: sign-jwt
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-auth"
+      operation: sign
+      params:
+        payload:
+          username: "{{habits.input.username}}"
+          role: "{{validate-user.output.role}}"
+        secret: "{{habits.env.JWT_SECRET}}"
+        expiresIn: "24h"
+    condition: "{{validate-user.output.valid == true && check-password.output == true}}"
+
+  # Set the auth cookie
+  - id: set-auth-cookie
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-cookie"
+      operation: set
+      params:
+        name: "auth_token"
+        value: "{{sign-jwt.token}}"
+        maxAge: 86400
+        path: "/"
+        httpOnly: true
+        sameSite: "Lax"
+    condition: "{{sign-jwt.success == true}}"
+
+edges:
+  - source: validate-user
+    target: check-password
+  - source: check-password
+    target: sign-jwt
+  - source: sign-jwt
+    target: set-auth-cookie
+
+output:
+  success: "{{set-auth-cookie.success || false}}"
+  message: "{{validate-user.output.valid == true && check-password.output == true ? 'Login successful' : 'Invalid credentials'}}"
+  user: "{{validate-user.output.valid == true && check-password.output == true ? habits.input.username : null}}"

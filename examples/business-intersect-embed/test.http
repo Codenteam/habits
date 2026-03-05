@@ -1,0 +1,91 @@
+@host = localhost
+@port = 13000
+
+@intersect_api_key={{$dotenv INTERSECT_API_KEY}}
+
+
+### Health Check
+# @name healthCheck
+GET http://{{host}}:{{port}}/health
+
+?? status == 200
+
+
+### List all workflows
+# @name listWorkflows
+GET http://{{host}}:{{port}}/misc/workflows
+
+?? status == 200
+
+
+### Get workflow details
+# @name getWorkflowDetails
+GET http://{{host}}:{{port}}/misc/workflow/intersect-output-test
+
+?? status == 200
+
+
+### Execute Marketing Campaign
+# @name executeProductLaunch
+POST http://{{host}}:{{port}}/api/intersect-output-test
+Content-Type: application/json
+Host: localhost:11000
+Origin: http://localhost:11000
+Cookie: token={{intersect_api_key}}
+
+
+
+{
+  "prompt": "Launch campaign for a new eco-friendly water bottle"
+}
+
+?? status >= 200
+?? status < 300
+
+
+### Stream Execute Marketing Campaign
+# @name streamExecuteProductLaunch
+POST http://{{host}}:{{port}}/api/marketing-campaign?stream=true
+Content-Type: application/json
+Origin: http://localhost:11000
+
+{
+  "prompt": "Launch campaign for a new eco-friendly water bottle",
+  "apiToken": "{{intersect_api_key}}",
+  "intersect": "http://localhost:11000"
+}
+
+?? status >= 200
+?? status < 300
+
+
+### Tunneled Through Intersect
+# @name streamExecuteProductLaunch
+POST http://allai.intersect.test/habits/business/api/marketing-campaign?stream=true
+Content-Type: application/json
+Origin: http://allai.intersect.test
+
+{
+  "prompt": "Launch campaign for a new eco-friendly water bottle",
+  "apiToken": "{{intersect_api_key}}",
+  "intersect": "http://allai.intersect.test"
+}
+
+?? status >= 200
+?? status < 300
+
+
+### Tunneled Through Intersect
+# @name streamExecuteProductLaunch
+POST http://localhost:11000/habits/business/api/marketing-campaign?stream=true
+Content-Type: application/json
+Origin: http://localhost:11000
+
+{
+  "prompt": "Launch campaign for a new eco-friendly water bottle",
+  "apiToken": "{{intersect_api_key}}",
+  "intersect": "http://localhost:11000"
+}
+
+?? status >= 200
+?? status < 300

@@ -1,0 +1,43 @@
+id: delete-post
+name: Delete Post
+description: Delete a blog post by ID (admin function - requires authentication)
+
+input:
+  - id: postId
+    type: string
+    required: true
+
+nodes:
+  # Verify JWT from auth_token cookie
+  - id: verify-auth
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-auth"
+      operation: verify
+      params:
+        token: "{{habits.cookies.auth_token}}"
+        secret: "{{habits.env.JWT_SECRET}}"
+
+  - id: remove-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: delete
+      operation: delete
+      params:
+        collection: "posts"
+        key: "{{habits.input.postId}}"
+
+edges:
+  - source: verify-auth
+    target: remove-post
+
+output:
+  authorized: "{{verify-auth.valid}}"
+  success: "{{remove-post.success}}"
+  deleted: "{{remove-post.deleted}}"
+  authError: "{{verify-auth.error}}"

@@ -1,0 +1,28 @@
+id: list-commands
+name: List Commands
+description: List command history
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-commands
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "smart_home_commands"
+        limit: "{{habits.input.limit}}"
+        sort: '{"executedAt": -1}'
+
+edges: []
+
+output:
+  commands: "{{query-commands.results}}"
+  count: "{{query-commands.count}}"

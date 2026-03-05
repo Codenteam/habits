@@ -1,0 +1,34 @@
+version: "1.0"
+
+workflows:
+  - id: generate-quiz
+    path: ./habits/generate-quiz.yaml
+    enabled: true
+
+  - id: submit-answers
+    path: ./habits/submit-answers.yaml
+    enabled: true
+
+  - id: list-quizzes
+    path: ./habits/list-quizzes.yaml
+    enabled: true
+
+  - id: get-quiz
+    path: ./habits/get-quiz.yaml
+    enabled: true
+
+  - id: get-results
+    path: ./habits/get-results.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

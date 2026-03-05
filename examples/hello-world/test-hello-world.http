@@ -1,0 +1,35 @@
+# Hello World Habit Tests
+#
+# Test the hello-world habit using bit-hello-world module.
+#
+# Prerequisites:
+# - Start cortex server: pnpm nx dev @ha-bits/cortex --config examples/hello-world/stack.yaml
+#
+# Usage:
+#   cd habits && httpyac examples/hello-world/test-hello-world.http --all
+
+@baseUrl = http://localhost:13000
+
+
+### Happy Flow: hello world => hello there
+# @name happyFlow
+# Should return "hello there" because param1="hello" and param2="world"
+POST {{baseUrl}}/api/hello-world
+Content-Type: application/json
+
+{
+  "param1": "hello",
+  "param2": "world"
+}
+
+
+### Sad Flow: anything => Nah!
+# @name sadFlow
+# Should return "Nah!" because params don't match "hello" and "world"
+POST {{baseUrl}}/api/hello-world
+Content-Type: application/json
+
+{
+  "param1": "goodbye",
+  "param2": "moon"
+}

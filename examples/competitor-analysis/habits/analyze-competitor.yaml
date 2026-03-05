@@ -1,0 +1,188 @@
+id: analyze-competitor
+name: Analyze Competitor
+description: Deep dive analysis of a competitor
+
+input:
+  - id: companyName
+    type: string
+    required: true
+  - id: yourCompany
+    type: string
+    required: false
+  - id: industry
+    type: string
+    required: true
+  - id: knownInfo
+    type: string
+    required: false
+    description: Any known info about the competitor (website, products, etc.)
+
+nodes:
+  # Analyze business model
+  - id: analyze-business
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 1200
+        prompt: |
+          Analyze this competitor's business:
+          
+          Company: {{habits.input.companyName}}
+          Industry: {{habits.input.industry}}
+          Known Info: {{habits.input.knownInfo}}
+          
+          Return JSON:
+          {
+            "overview": {
+              "description": "Brief company description",
+              "founded": "Year if known",
+              "headquarters": "Location if known",
+              "size": "Employee count estimate",
+              "funding": "Funding status if known"
+            },
+            "businessModel": {
+              "type": "B2B/B2C/B2B2C",
+              "revenueStreams": ["How they make money"],
+              "pricingModel": "Subscription/One-time/Freemium/etc",
+              "targetMarket": ["Who they sell to"]
+            },
+            "products": [
+              {
+                "name": "Product name",
+                "description": "What it does",
+                "targetAudience": "Who uses it",
+                "pricing": "Price point if known"
+              }
+            ],
+            "marketPosition": {
+              "positioning": "How they position themselves",
+              "differentiators": ["What makes them unique"],
+              "valueProposition": "Their main value prop"
+            }
+          }
+
+  # SWOT analysis
+  - id: swot-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        prompt: |
+          Perform SWOT analysis for this competitor.
+          
+          Company: {{habits.input.companyName}}
+          Industry: {{habits.input.industry}}
+          Business Analysis: {{analyze-business}}
+          
+          Return JSON:
+          {
+            "strengths": [
+              {"item": "Strength", "evidence": "Why this is a strength", "impact": "high/medium/low"}
+            ],
+            "weaknesses": [
+              {"item": "Weakness", "evidence": "Why this is a weakness", "impact": "high/medium/low"}
+            ],
+            "opportunities": [
+              {"item": "Opportunity", "evidence": "Why this is an opportunity", "timeframe": "short/medium/long"}
+            ],
+            "threats": [
+              {"item": "Threat", "evidence": "Why this is a threat", "likelihood": "high/medium/low"}
+            ]
+          }
+
+  # Generate competitive intelligence
+  - id: competitive-intel
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        prompt: |
+          Generate competitive intelligence insights.
+          
+          Competitor: {{habits.input.companyName}}
+          Your Company: {{habits.input.yourCompany}}
+          Industry: {{habits.input.industry}}
+          Business: {{analyze-business}}
+          SWOT: {{swot-analysis}}
+          
+          Return JSON:
+          {
+            "keyInsights": [
+              "Important strategic insights"
+            ],
+            "competitiveAdvantage": "Their main competitive advantage",
+            "vulnerabilities": ["Where they can be beaten"],
+            "battlecards": {
+              "whenToCompete": ["Scenarios where you should compete"],
+              "whenToAvoid": ["Scenarios to avoid competing"],
+              "winningArguments": ["Key arguments against them"],
+              "commonObjections": ["Objections they raise about you"]
+            },
+            "signalsToWatch": ["Things to monitor about them"]
+          }
+
+  # Save analysis
+  - id: save-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "competitor_analyses"
+        document:
+          companyName: "{{habits.input.companyName}}"
+          industry: "{{habits.input.industry}}"
+          business: "{{analyze-business}}"
+          swot: "{{swot-analysis}}"
+          intel: "{{competitive-intel}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-business
+    target: swot-analysis
+  - source: swot-analysis
+    target: competitive-intel
+  - source: competitive-intel
+    target: save-analysis
+
+output:
+  analysisId: "{{save-analysis.id}}"
+  business: "{{analyze-business}}"
+  swot: "{{swot-analysis}}"
+  intel: "{{competitive-intel}}"

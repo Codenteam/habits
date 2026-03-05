@@ -1,0 +1,8 @@
+version: "1.0"
+workflows:
+  - id: declarative-mixed-demo
+    path: ./habit.yaml
+    enabled: true
+server:
+  port: 13000
+  host: "0.0.0.0"

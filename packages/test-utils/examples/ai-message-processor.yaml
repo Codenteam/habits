@@ -1,0 +1,60 @@
+# Example Workflow: AI-Enhanced Message Processing
+# This workflow demonstrates a multi-step AI pipeline:
+# 1. Receives a message via webhook trigger
+# 2. Uses OpenAI to analyze sentiment
+# 3. Uses conditional branching to route based on sentiment
+
+id: ai-message-processor
+name: AI Message Processor
+description: Example workflow for testing - analyzes message sentiment and routes accordingly
+
+trigger:
+  type: webhook
+  path: /process-message
+
+nodes:
+  # Step 1: Analyze sentiment using OpenAI
+  - id: analyze-sentiment
+    type: bit
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      operation: ask_chatgpt
+      params:
+        model: gpt-4o-mini
+        prompt: |
+          Analyze the sentiment of this message and respond with ONLY one word: positive, negative, or neutral.
+          Message: {{trigger.body.message}}
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+
+  # Step 2: Branch based on sentiment
+  - id: route-sentiment
+    type: bit
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: singleBranch
+        branches:
+          - value1: "{{analyze-sentiment}}"
+            operator: contains
+            value2: positive
+            output: "😊 Great to hear!"
+          - value1: "{{analyze-sentiment}}"
+            operator: contains
+            value2: negative
+            output: "😔 Sorry to hear that."
+        includeElse: true
+        defaultOutput: "🤔 I see."
+
+edges:
+  - source: analyze-sentiment
+    target: route-sentiment
+
+output: "{{route-sentiment}}"

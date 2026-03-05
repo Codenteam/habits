@@ -1,0 +1,139 @@
+﻿{
+  "created": "1765484735866",
+  "updated": "1765484735866",
+  "name": "Untitled",
+  "description": "",
+  "tags": [],
+  "pieces": [
+    "@activepieces/piece-intersect"
+  ],
+  "template": {
+    "displayName": "Untitled",
+    "trigger": {
+      "name": "trigger",
+      "valid": false,
+      "displayName": "Select Trigger",
+      "type": "EMPTY",
+      "settings": {},
+      "nextAction": {
+        "name": "step_2",
+        "skip": false,
+        "type": "PIECE",
+        "valid": false,
+        "settings": {
+          "input": {
+            "auth": "{{connections['fcrAaNPVIGnj85om9MIpB']}}",
+            "speed": 0.5,
+            "voice": null,
+            "stability": 0.5,
+            "similarity": 0.75,
+            "styleExaggeration": 1
+          },
+          "pieceName": "@activepieces/piece-intersect",
+          "actionName": "text_to_voice",
+          "sampleData": {},
+          "pieceVersion": "~0.1.0",
+          "propertySettings": {
+            "text": {
+              "type": "MANUAL"
+            },
+            "speed": {
+              "type": "MANUAL"
+            },
+            "voice": {
+              "type": "MANUAL"
+            },
+            "stability": {
+              "type": "MANUAL"
+            },
+            "similarity": {
+              "type": "MANUAL"
+            },
+            "styleExaggeration": {
+              "type": "MANUAL"
+            }
+          },
+          "errorHandlingOptions": {
+            "retryOnFailure": {
+              "value": false
+            },
+            "continueOnFailure": {
+              "value": false
+            }
+          }
+        },
+        "nextAction": {
+          "name": "step_3",
+          "skip": false,
+          "type": "PIECE",
+          "valid": false,
+          "settings": {
+            "input": {
+              "model": "gpt-4"
+            },
+            "pieceName": "@activepieces/piece-intersect",
+            "actionName": "create_website",
+            "sampleData": {},
+            "pieceVersion": "~0.1.0",
+            "propertySettings": {
+              "model": {
+                "type": "MANUAL"
+              },
+              "prompt": {
+                "type": "MANUAL"
+              }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_1",
+            "skip": false,
+            "type": "ROUTER",
+            "valid": false,
+            "children": [
+              null,
+              null
+            ],
+            "settings": {
+              "branches": [
+                {
+                  "branchName": "Branch 1",
+                  "branchType": "CONDITION",
+                  "conditions": [
+                    [
+                      {
+                        "operator": "TEXT_EXACTLY_MATCHES",
+                        "firstValue": "",
+                        "secondValue": "",
+                        "caseSensitive": false
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "branchName": "Otherwise",
+                  "branchType": "FALLBACK"
+                }
+              ],
+              "sampleData": {},
+              "executionType": "EXECUTE_FIRST_MATCH"
+            },
+            "displayName": "Router"
+          },
+          "displayName": "Create Website"
+        },
+        "displayName": "Text to Voice"
+      }
+    },
+    "valid": false,
+    "schemaVersion": "10"
+  },
+  "blogUrl": ""
+}

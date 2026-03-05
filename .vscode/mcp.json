@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic-ai/mcp-chrome-devtools@latest"
+      ]
+    }
+  }
+}

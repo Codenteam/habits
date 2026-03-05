@@ -1,0 +1,62 @@
+@host = localhost
+@port = 13000
+
+###############################################################################
+# 1. Create a New Recipe
+###############################################################################
+
+### Create a salmon recipe
+# @name createRecipe
+POST http://{{host}}:{{port}}/api/generate-recipe
+Content-Type: application/json
+
+{
+  "ingredients": "salmon, lemon, dill, capers, butter, asparagus",
+  "restrictions": "",
+  "cuisine": "French",
+  "mealType": "dinner",
+  "servings": 2
+}
+
+?? status == 200
+?? body status == completed
+?? body output.recipe.title isString
+?? body output.recipe.ingredients isArray
+?? body output.saved.insertedId isString
+
+###############################################################################
+# 2. List All Recipes
+###############################################################################
+
+### List recipes and verify our new recipe exists
+# @name listRecipes
+POST http://{{host}}:{{port}}/api/list-recipes
+Content-Type: application/json
+
+{
+  "limit": 10
+}
+
+?? status == 200
+?? body status == completed
+?? body output.recipes isArray
+?? body output.count >= 1
+
+###############################################################################
+# 3. Get the Created Recipe by ID
+###############################################################################
+
+### Get the recipe we just created
+# @name getRecipe
+POST http://{{host}}:{{port}}/api/get-recipe
+Content-Type: application/json
+
+{
+  "id": "{{createRecipe.response.body.$.output.saved.insertedId}}"
+}
+
+?? status == 200
+?? body status == completed
+?? body output.recipe.title isString
+?? body output.found == true
+

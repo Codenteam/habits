@@ -1,0 +1,19 @@
+# Source files
+src/
+test/
+tsconfig*.json
+project.json
+node_modules/
+
+# Build artifacts
+*.map
+
+# Development files
+.DS_Store
+*.log
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/

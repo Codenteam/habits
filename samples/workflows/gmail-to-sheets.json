@@ -1,0 +1,60 @@
+{
+  "name": "Sample Gmail to Sheets Workflow",
+  "description": "Monitor Gmail for new emails and save them to Google Sheets",
+  "variables": {
+    "sheetId": "your-google-sheet-id",
+    "emailSubjectFilter": "important"
+  },
+  "steps": [
+    {
+      "id": "gmail-trigger",
+      "type": "trigger",
+      "framework": "activepieces",
+      "module": "piece-gmail",
+      "params": {
+        "connection": "{{process.env.GMAIL_CONNECTION}}",
+        "triggerCondition": "result.length > 0",
+        "pollInterval": 60000,
+        "maxWaitTime": 3600000,
+        "labelIds": ["INBOX"],
+        "query": "is:unread subject:{{emailSubjectFilter}}"
+      }
+    },
+    {
+      "id": "process-emails",
+      "type": "action", 
+      "framework": "activepieces",
+      "module": "piece-gmail",
+      "params": {
+        "connection": "{{process.env.GMAIL_CONNECTION}}",
+        "messageId": "{{previous_result.id}}",
+        "action": "get_message_details"
+      }
+    },
+    {
+      "id": "save-to-sheets",
+      "type": "action",
+      "framework": "activepieces", 
+      "module": "piece-google-sheets",
+      "params": {
+        "connection": "{{process.env.GOOGLE_SHEETS_CONNECTION}}",
+        "spreadsheetId": "{{sheetId}}",
+        "range": "Sheet1!A:D",
+        "values": [
+          [
+            "{{step_process-emails.subject}}",
+            "{{step_process-emails.from}}",
+            "{{step_process-emails.date}}",
+            "{{step_process-emails.snippet}}"
+          ]
+        ],
+        "action": "append_values"
+      },
+      "conditions": {
+        "skipIf": "!step_process-emails.subject"
+      },
+      "retries": 3,
+      "timeout": 30000
+    }
+  ]
+}

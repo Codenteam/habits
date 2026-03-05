@@ -1,0 +1,38 @@
+id: search-memory
+name: Search Memory
+description: Search through stored memories using semantic search
+
+input:
+  - id: query
+    type: string
+    required: true
+  - id: userId
+    type: string
+    required: false
+  - id: category
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: search-memories
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "memories"
+        filter: '{"$text": {"$search": "{{habits.input.query}}"}, "userId": "{{habits.input.userId}}"}'
+        limit: "{{habits.input.limit}}"
+        sort: '{"score": {"$meta": "textScore"}}'
+
+edges: []
+
+output:
+  results: "{{search-memories.results}}"
+  count: "{{search-memories.count}}"

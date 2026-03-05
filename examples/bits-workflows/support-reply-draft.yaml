@@ -1,0 +1,183 @@
+id: support-reply-draft
+name: Support Reply Draft with Approval
+description: Generate AI draft replies for support tickets with human approval before sending
+
+nodes:
+  # Node 1: Input trigger - Support ticket data
+  - id: ticket-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      isTrigger: true
+      label: Ticket Webhook Input
+      params:
+        ticketId: "{{habits.input.ticketId}}"
+        customerEmail: "{{habits.input.customerEmail}}"
+        subject: "{{habits.input.subject}}"
+        message: "{{habits.input.message}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(ticketId: string, customerEmail: string, subject: string, message: string) {
+            console.log("📩 Received support ticket:", ticketId);
+            return {
+              ticketId,
+              customerEmail,
+              subject,
+              message,
+              receivedAt: new Date().toISOString()
+            };
+          }
+
+  # Node 2: Fetch Customer History from CRM
+  - id: fetch-history
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: getHistory
+      label: Fetch Customer History
+      params:
+        email: "{{ticket-input.result.customerEmail}}"
+        limit: 5
+
+  # Node 3: Generate AI Draft Reply
+  - id: draft-reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chatCompletion
+      label: LLM Draft Reply
+      params:
+        model: gpt-4o-mini
+        systemPrompt: |
+          You are a helpful customer support agent. Write a professional and empathetic reply to the customer's support request.
+          
+          Guidelines:
+          - Be friendly and professional
+          - Address the customer's concern directly
+          - Provide clear next steps if applicable
+          - Keep the response concise but complete
+          - Sign off appropriately
+          
+          Customer History Summary: {{fetch-history.summary}}
+        userMessage: |
+          Subject: {{ticket-input.result.subject}}
+          Message: {{ticket-input.result.message}}
+        temperature: 0.7
+        maxTokens: 500
+      credentials:
+        apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Node 4: Approval Wait Node - Store draft for review
+  - id: approval-store
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: store
+      label: Store for Approval
+      params:
+        collection: pending-approvals
+        key: "{{ticket-input.result.ticketId}}"
+        value: |
+          {
+            "ticketId": "{{ticket-input.result.ticketId}}",
+            "customerEmail": "{{ticket-input.result.customerEmail}}",
+            "subject": "{{ticket-input.result.subject}}",
+            "originalMessage": "{{ticket-input.result.message}}",
+            "draftReply": "{{draft-reply.content}}",
+            "status": "pending_approval",
+            "createdAt": "{{ticket-input.result.receivedAt}}"
+          }
+        ttl: 86400
+
+  # Node 5: Notify for Approval via Slack
+  - id: approval-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      label: Request Approval
+      params:
+        token: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "#support-approvals"
+        text: |
+          📋 *Support Reply Draft - Approval Needed*
+          
+          *Ticket:* {{ticket-input.result.ticketId}}
+          *Customer:* {{ticket-input.result.customerEmail}}
+          *Subject:* {{ticket-input.result.subject}}
+          
+          *Customer Message:*
+          > {{ticket-input.result.message}}
+          
+          *Draft Reply:*
+          ```
+          {{draft-reply.content}}
+          ```
+          
+          React with ✅ to approve or ❌ to reject
+
+  # Node 6: Check if auto-approved (for simple queries)
+  - id: check-simple
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      label: Auto-Approve Check
+      params:
+        value1: "{{draft-reply.content}}"
+        operator: contains
+        value2: "password reset"
+
+  # Node 7: Send Email (conditional - would be triggered separately after approval)
+  - id: send-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      label: Send Reply Email
+      params:
+        smtpHost: "{{habits.env.SMTP_HOST}}"
+        smtpPort: 587
+        smtpUser: "{{habits.env.SMTP_USER}}"
+        smtpPassword: "{{habits.env.SMTP_PASSWORD}}"
+        from: "support@company.com"
+        to: "{{ticket-input.result.customerEmail}}"
+        subject: "Re: {{ticket-input.result.subject}}"
+        body: "{{draft-reply.content}}"
+      stopAfterIf:
+        expr: "{{check-simple.condition}} === false"
+        skipIfStopped: true
+
+edges:
+  - source: ticket-input
+    target: fetch-history
+  - source: fetch-history
+    target: draft-reply
+  - source: draft-reply
+    target: approval-store
+  - source: draft-reply
+    target: approval-notify
+  - source: approval-store
+    target: check-simple
+  - source: check-simple
+    target: send-email
+
+output:
+  ticketId: "{{ticket-input.result.ticketId}}"
+  draftReply: "{{draft-reply.content}}"
+  approvalKey: "{{approval-store.key}}"
+  slackNotification: "{{approval-notify.timestamp}}"

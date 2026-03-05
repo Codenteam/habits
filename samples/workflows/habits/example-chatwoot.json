@@ -1,0 +1,57 @@
+{
+  "id": "example-workflow-1",
+  "name": "Chatwoot Contact Manager",
+  "description": "Example workflow that fetches Chatwoot contacts and processes them",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "node-1701234567890",
+      "type": "n8n",
+      "position": { "x": 250, "y": 100 },
+      "data": {
+        "label": "Get All Contacts",
+        "framework": "n8n",
+        "module": "n8n-nodes-chatwoot",
+        "resource": "contact",
+        "operation": "getAll",
+        "credentials": {
+          "url": "https://app.chatwoot.com",
+          "token": "your-api-token-here"
+        },
+        "params": {
+          "accountId": "1"
+        },
+        "inputs": ["main"],
+        "outputs": ["main"]
+      }
+    },
+    {
+      "id": "node-1701234567891",
+      "type": "n8n",
+      "position": { "x": 250, "y": 250 },
+      "data": {
+        "label": "Get Conversations",
+        "framework": "n8n",
+        "module": "n8n-nodes-chatwoot",
+        "resource": "conversation",
+        "operation": "getAll",
+        "credentials": {
+          "url": "https://app.chatwoot.com",
+          "token": "your-api-token-here"
+        },
+        "params": {
+          "accountId": "1"
+        },
+        "inputs": ["main"],
+        "outputs": ["main"]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "node-1701234567890",
+      "target": "node-1701234567891"
+    }
+  ]
+}

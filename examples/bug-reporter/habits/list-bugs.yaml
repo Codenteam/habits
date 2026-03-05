@@ -1,0 +1,34 @@
+id: list-bugs
+name: List Bugs
+description: List all bug reports
+
+input:
+  - id: status
+    type: string
+    required: false
+  - id: severity
+    type: string
+    required: false
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-bugs
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "bug_reports"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  bugs: "{{query-bugs.results}}"
+  count: "{{query-bugs.count}}"

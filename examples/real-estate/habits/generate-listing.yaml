@@ -1,0 +1,243 @@
+id: generate-listing
+name: Generate Real Estate Listing
+description: Generate professional property listing from photos and details
+
+input:
+  - id: imageUrls
+    type: string
+    required: false
+    description: Comma-separated URLs of property photos
+  - id: imageBase64
+    type: string
+    required: false
+    description: Base64 encoded property photo
+  - id: propertyType
+    type: string
+    required: true
+    description: house, apartment, condo, townhouse, land
+  - id: bedrooms
+    type: number
+    required: false
+  - id: bathrooms
+    type: number
+    required: false
+  - id: sqft
+    type: number
+    required: false
+  - id: price
+    type: number
+    required: false
+  - id: address
+    type: string
+    required: false
+  - id: features
+    type: string
+    required: false
+    description: Notable features (pool, garage, etc.)
+
+nodes:
+  # Analyze property photos
+  - id: analyze-photos
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: vision_prompt
+      operation: vision_prompt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        imageUrl: "{{habits.input.imageUrls}}"
+        imageBase64: "{{habits.input.imageBase64}}"
+        prompt: |
+          Analyze this property photo for a real estate listing. Describe:
+          1. Room type (living room, bedroom, kitchen, exterior, etc.)
+          2. Key features visible (flooring, appliances, fixtures)
+          3. Condition and quality (modern, updated, needs work)
+          4. Natural lighting
+          5. Architectural style
+          6. Standout selling points
+          7. Overall impression
+          
+          Be detailed and positive but accurate - this will be used for marketing.
+
+  # Generate main description
+  - id: generate-description
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        systemMessage: You are an expert real estate copywriter who creates compelling listings that sell.
+        prompt: |
+          Write a professional real estate listing description (200-300 words).
+          
+          Property Details:
+          - Type: {{habits.input.propertyType}}
+          - Bedrooms: {{habits.input.bedrooms}}
+          - Bathrooms: {{habits.input.bathrooms}}
+          - Square Feet: {{habits.input.sqft}}
+          - Price: {{habits.input.price}}
+          - Location: {{habits.input.address}}
+          - Features: {{habits.input.features}}
+          
+          Photo Analysis:
+          {{analyze-photos}}
+          
+          Write an engaging, professional description that:
+          - Opens with an attention-grabbing headline
+          - Highlights unique features
+          - Paints a lifestyle picture
+          - Mentions location benefits
+          - Ends with a call to action
+
+  # Generate feature highlights
+  - id: generate-highlights
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 400
+        prompt: |
+          Create 8-10 compelling bullet point highlights for this property listing.
+          
+          Photo Analysis: {{analyze-photos}}
+          Features: {{habits.input.features}}
+          Property: {{habits.input.propertyType}}, {{habits.input.bedrooms}} bed, {{habits.input.bathrooms}} bath, {{habits.input.sqft}} sqft
+          
+          Format: Start each bullet with an emoji, then the highlight.
+          Make them scannable and impactful for buyers.
+
+  # Generate virtual tour narration
+  - id: generate-narration
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 600
+        prompt: |
+          Write a virtual tour narration script for this property (like you're walking through it).
+          
+          Photo Analysis: {{analyze-photos}}
+          Property: {{habits.input.propertyType}}
+          
+          Write in a warm, inviting tone as if guiding a buyer through the home.
+          Describe what they'd see and feel in each area.
+          Keep it under 2 minutes when read aloud (~300 words).
+
+  # Generate social media post
+  - id: generate-social
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 300
+        prompt: |
+          Create social media posts for this property listing:
+          
+          Property: {{habits.input.propertyType}}, {{habits.input.bedrooms}} bed, {{habits.input.bathrooms}} bath
+          Price: {{habits.input.price}}
+          Location: {{habits.input.address}}
+          Photo Analysis: {{analyze-photos}}
+          
+          Return JSON:
+          {
+            "instagram": "Instagram caption with emojis and hashtags",
+            "facebook": "Facebook post (slightly longer, more detailed)",
+            "twitter": "Twitter post (under 280 chars)"
+          }
+
+  # Save listing
+  - id: save-listing
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "listings"
+        document:
+          propertyType: "{{habits.input.propertyType}}"
+          bedrooms: "{{habits.input.bedrooms}}"
+          bathrooms: "{{habits.input.bathrooms}}"
+          sqft: "{{habits.input.sqft}}"
+          price: "{{habits.input.price}}"
+          address: "{{habits.input.address}}"
+          photoAnalysis: "{{analyze-photos}}"
+          description: "{{generate-description}}"
+          highlights: "{{generate-highlights}}"
+          narration: "{{generate-narration}}"
+          socialPosts: "{{generate-social}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-photos
+    target: generate-description
+  - source: analyze-photos
+    target: generate-highlights
+  - source: analyze-photos
+    target: generate-narration
+  - source: analyze-photos
+    target: generate-social
+  - source: generate-description
+    target: save-listing
+  - source: generate-highlights
+    target: save-listing
+  - source: generate-narration
+    target: save-listing
+  - source: generate-social
+    target: save-listing
+
+output:
+  listingId: "{{save-listing.id}}"
+  photoAnalysis: "{{analyze-photos}}"
+  description: "{{generate-description}}"
+  highlights: "{{generate-highlights}}"
+  narration: "{{generate-narration}}"
+  socialPosts: "{{generate-social}}"

@@ -1,0 +1,313 @@
+{
+  "id": "intersect-output-test",
+  "name": "Marketing Campaign Workflow",
+  "description": "A workflow that takes a marketing prompt, expands it, then generates image, vector graphic, and landing page prompts, and creates the assets",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "prompt-expander",
+      "type": "activepieces",
+      "position": {
+        "x": 316.9991487026001,
+        "y": -11.984291402917478
+      },
+      "data": {
+        "label": "Prompt Expander",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-5-mini",
+          "prompt": "In 2 sentences, summarize this marketing idea: {{habits.input.prompt}}",
+          "temperature": 0.7,
+          "maxTokens": 50
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "image-prompt-generator",
+      "type": "activepieces",
+      "position": {
+        "x": -418.2645195621046,
+        "y": 140.3164235298582
+      },
+      "data": {
+        "label": "Image Prompt Generator",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-5-mini",
+          "prompt": "Write a 10-word image prompt for: {{prompt-expander}}",
+          "temperature": 0.8,
+          "maxTokens": 30
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "poster-prompt-generator",
+      "type": "activepieces",
+      "position": {
+        "x": 97.70801606792486,
+        "y": 261.38576897811544
+      },
+      "data": {
+        "label": "Poster/SVG Prompt Generator",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-5-mini",
+          "prompt": "In 1 sentence, describe a poster for: {{prompt-expander}}",
+          "temperature": 0.7,
+          "maxTokens": 30
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "landing-page-prompt-generator",
+      "type": "activepieces",
+      "position": {
+        "x": 560.5038333522873,
+        "y": 157.83893892996755
+      },
+      "data": {
+        "label": "Landing Page Prompt Generator",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gpt-5-mini",
+          "prompt": "In 1 sentence, describe a landing page for: {{prompt-expander}}",
+          "temperature": 0.7,
+          "maxTokens": 30
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "image-generator",
+      "type": "activepieces",
+      "position": {
+        "x": -538.3046602363528,
+        "y": 406.9169822999188
+      },
+      "data": {
+        "label": "Generate Marketing Image",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "generate_image",
+        "operation": "generate_image",
+        "params": {
+          "model": "dall-e-3",
+          "prompt": "{{image-prompt-generator}}",
+          "resolution": "1024x1024",
+          "quality": "hd"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+
+    {
+      "id": "website-creator",
+      "type": "activepieces",
+      "position": {
+        "x": 601.9516565016136,
+        "y": 400.12206784113823
+      },
+      "data": {
+        "label": "Create Landing Page",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "create_canvas",
+        "operation": "create_canvas",
+        "params": {
+          "model": "gemini-3-pro-preview",
+          "type": "webcanvas",
+          "prompt": "{{landing-page-prompt-generator}}"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "pr-document-prompt-generator",
+      "type": "activepieces",
+      "position": {
+        "x": 740.5166897725798,
+        "y": -47.75467317216666
+      },
+      "data": {
+        "label": "PR Document Prompt Generator",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "ask_chatgpt",
+        "operation": "ask_chatgpt",
+        "params": {
+          "model": "gemini-3-pro-preview",
+          "prompt": "In 1 sentence, describe a PR doc for: {{prompt-expander}}",
+          "temperature": 0.7,
+          "maxTokens": 30
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "pr-document-creator",
+      "type": "activepieces",
+      "position": {
+        "x": 1004.6370804819302,
+        "y": 551.0352237895758
+      },
+      "data": {
+        "label": "Create PR Campaign Document",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+                "resource": "create_canvas",
+        "operation": "create_canvas",
+        "params": {
+          "model": "gemini-3-pro-preview",
+          "type": "draftcanvas",
+          "prompt": "{{pr-document-prompt-generator}}"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "poster-creator",
+      "type": "activepieces",
+      "position": {
+        "x": 250,
+        "y": 550
+      },
+      "data": {
+        "label": "Create Campaign Poster",
+        "framework": "activepieces",
+        "source": "npm",
+        "module": "@ha-bits/piece-intersect",
+        "resource": "create_canvas",
+        "operation": "create_canvas",
+        "params": {
+          "model": "gemini-3-pro-preview",
+          "type": "svgcanvas",
+          "prompt": "{{poster-prompt-generator}}"
+        },
+        "credentials": {
+          "intersect": {
+            "host": "{{habits.input.intersect}}",
+            "apiKey": "{{habits.input.apiToken}}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "prompt-expander",
+      "target": "image-prompt-generator"
+    },
+    {
+      "id": "e2",
+      "source": "prompt-expander",
+      "target": "poster-prompt-generator"
+    },
+    {
+      "id": "e3",
+      "source": "prompt-expander",
+      "target": "landing-page-prompt-generator"
+    },
+    {
+      "id": "e4",
+      "source": "image-prompt-generator",
+      "target": "image-generator"
+    },
+    
+    {
+      "id": "e6",
+      "source": "landing-page-prompt-generator",
+      "target": "website-creator"
+    },
+    {
+      "id": "e7",
+      "source": "prompt-expander",
+      "target": "pr-document-prompt-generator"
+    },
+    {
+      "id": "e8",
+      "source": "pr-document-prompt-generator",
+      "target": "pr-document-creator"
+    },
+    {
+      "id": "e9",
+      "source": "poster-prompt-generator",
+      "target": "poster-creator"
+    }
+  ],
+  "output": {
+    "originalPrompt": "{{habits.input.prompt}}",
+    "expandedConcept": "{{prompt-expander}}",
+    "imagePrompt": "{{image-prompt-generator}}",
+    "posterPrompt": "{{poster-prompt-generator}}",
+    "landingPagePrompt": "{{landing-page-prompt-generator}}",
+    "prDocumentPrompt": "{{pr-document-prompt-generator}}",
+    "generatedImage": "{{image-generator}}",
+    "landingPage": "{{website-creator}}",
+    "prDocument": "{{pr-document-creator}}",
+    "poster": "{{poster-creator}}"
+  }
+}

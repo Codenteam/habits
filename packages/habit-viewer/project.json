@@ -1,0 +1,44 @@
+{
+  "name": "@ha-bits/habit-viewer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/habit-viewer/src",
+  "projectType": "application",
+  "tags": [
+    "scope:viewer",
+    "type:ui"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/habit-viewer",
+        "root": "packages/habit-viewer"
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm vite --config packages/habit-viewer/vite.config.ts packages/habit-viewer",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx -y serve packages/habit-viewer/dist -l 3030"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/habit-viewer/tsconfig.json --noEmit"
+      }
+    }
+  }
+}

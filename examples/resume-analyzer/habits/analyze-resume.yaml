@@ -1,0 +1,280 @@
+id: analyze-resume
+name: Analyze Resume
+description: Analyze resume against job description and provide improvement suggestions
+
+input:
+  - id: resumeText
+    type: string
+    required: true
+    description: Resume content (pasted text)
+  - id: jobDescription
+    type: string
+    required: false
+    description: Target job description
+  - id: targetRole
+    type: string
+    required: false
+    description: Target job title/role
+
+nodes:
+  # Parse and structure resume
+  - id: parse-resume
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        prompt: |
+          Parse this resume and extract structured information:
+          
+          {{habits.input.resumeText}}
+          
+          Return JSON:
+          {
+            "name": "Full name",
+            "email": "Email",
+            "phone": "Phone",
+            "location": "Location",
+            "summary": "Professional summary",
+            "experience": [{"title": "", "company": "", "dates": "", "bullets": []}],
+            "education": [{"degree": "", "school": "", "year": ""}],
+            "skills": ["skill1", "skill2"],
+            "certifications": [],
+            "yearsExperience": number
+          }
+
+  # Score ATS compatibility
+  - id: ats-score
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 600
+        prompt: |
+          Analyze this resume for ATS (Applicant Tracking System) compatibility:
+          
+          Resume: {{habits.input.resumeText}}
+          Target Job: {{habits.input.jobDescription}}
+          
+          Evaluate:
+          1. Keyword optimization (does it include relevant keywords?)
+          2. Format compatibility (is it ATS-friendly?)
+          3. Contact info completeness
+          4. Section structure
+          5. Quantifiable achievements
+          
+          Return JSON:
+          {
+            "overallScore": number (0-100),
+            "keywordScore": number (0-100),
+            "formatScore": number (0-100),
+            "contentScore": number (0-100),
+            "missingKeywords": ["keyword1", "keyword2"],
+            "formatIssues": ["issue1", "issue2"],
+            "suggestions": ["suggestion1", "suggestion2"]
+          }
+
+  # Analyze experience quality
+  - id: experience-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        prompt: |
+          Analyze the work experience section of this resume:
+          
+          {{habits.input.resumeText}}
+          
+          For each position, evaluate:
+          1. Action verbs usage
+          2. Quantifiable results (numbers, percentages)
+          3. Achievement vs. responsibility focus
+          4. Relevance to target role: {{habits.input.targetRole}}
+          
+          Provide:
+          - Strengths of each position description
+          - Weaknesses and areas to improve
+          - Specific rewrite suggestions for 2-3 weak bullets
+          - Example of how to add metrics where missing
+
+  # Job match analysis
+  - id: job-match
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 700
+        prompt: |
+          Compare this resume to the job requirements:
+          
+          Resume: {{habits.input.resumeText}}
+          
+          Job Description: {{habits.input.jobDescription}}
+          
+          Target Role: {{habits.input.targetRole}}
+          
+          Return JSON:
+          {
+            "matchScore": number (0-100),
+            "matchingSkills": ["skill1", "skill2"],
+            "missingSkills": ["skill1", "skill2"],
+            "experienceGaps": ["gap1", "gap2"],
+            "strengthsForRole": ["strength1", "strength2"],
+            "recommendations": ["rec1", "rec2"],
+            "likelyOutcome": "Strong match / Moderate match / Weak match"
+          }
+
+  # Generate improved summary
+  - id: generate-summary
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 300
+        systemMessage: You are an expert resume writer who crafts compelling professional summaries.
+        prompt: |
+          Write an improved professional summary for this resume:
+          
+          Current Resume: {{habits.input.resumeText}}
+          
+          Target Role: {{habits.input.targetRole}}
+          
+          Create a 3-4 sentence summary that:
+          - Opens with years of experience and specialty
+          - Highlights 2-3 key achievements
+          - Includes relevant skills for the target role
+          - Shows unique value proposition
+
+  # Interview questions to prepare
+  - id: interview-prep
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 600
+        prompt: |
+          Based on this resume and job, generate interview preparation:
+          
+          Resume: {{habits.input.resumeText}}
+          Job: {{habits.input.jobDescription}}
+          Role: {{habits.input.targetRole}}
+          
+          Provide:
+          1. 5 likely interview questions based on resume gaps
+          2. 3 behavioral questions (STAR format prep)
+          3. 3 technical questions based on listed skills
+          4. Suggested talking points for strengths
+          5. How to address any weaknesses/gaps
+
+  # Save analysis
+  - id: save-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "resume_analyses"
+        document:
+          targetRole: "{{habits.input.targetRole}}"
+          parsed: "{{parse-resume}}"
+          atsScore: "{{ats-score}}"
+          experienceAnalysis: "{{experience-analysis}}"
+          jobMatch: "{{job-match}}"
+          improvedSummary: "{{generate-summary}}"
+          interviewPrep: "{{interview-prep}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: parse-resume
+    target: ats-score
+  - source: parse-resume
+    target: experience-analysis
+  - source: parse-resume
+    target: job-match
+  - source: parse-resume
+    target: generate-summary
+  - source: job-match
+    target: interview-prep
+  - source: ats-score
+    target: save-analysis
+  - source: experience-analysis
+    target: save-analysis
+  - source: job-match
+    target: save-analysis
+  - source: generate-summary
+    target: save-analysis
+  - source: interview-prep
+    target: save-analysis
+
+output:
+  analysisId: "{{save-analysis.id}}"
+  parsed: "{{parse-resume}}"
+  atsScore: "{{ats-score}}"
+  experienceAnalysis: "{{experience-analysis}}"
+  jobMatch: "{{job-match}}"
+  improvedSummary: "{{generate-summary}}"
+  interviewPrep: "{{interview-prep}}"

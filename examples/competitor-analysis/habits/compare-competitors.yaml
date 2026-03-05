@@ -1,0 +1,81 @@
+id: compare-competitors
+name: Compare Competitors
+description: Compare multiple competitors side by side
+
+input:
+  - id: competitors
+    type: array
+    required: true
+    description: List of competitor names
+  - id: industry
+    type: string
+    required: true
+  - id: criteria
+    type: array
+    required: false
+    description: Comparison criteria
+
+nodes:
+  - id: compare-all
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 2000
+        prompt: |
+          Compare these competitors:
+          
+          Competitors: {{habits.input.competitors}}
+          Industry: {{habits.input.industry}}
+          Criteria: {{habits.input.criteria}}
+          
+          Return JSON:
+          {
+            "comparisonMatrix": {
+              "criteria": ["Criterion 1", "Criterion 2", ...],
+              "competitors": {
+                "CompanyA": {
+                  "scores": {"Criterion 1": 8, ...},
+                  "overallScore": 75
+                }
+              }
+            },
+            "featureComparison": [
+              {
+                "feature": "Feature name",
+                "companies": {
+                  "CompanyA": "Has/Partial/No",
+                  "CompanyB": "Has/Partial/No"
+                }
+              }
+            ],
+            "pricingComparison": {
+              "CompanyA": {"model": "Type", "startingPrice": "$X", "enterprise": "$X"}
+            },
+            "marketShare": {
+              "CompanyA": "X%",
+              "leader": "Company name"
+            },
+            "summary": {
+              "bestOverall": "Company",
+              "bestValue": "Company",
+              "mostInnovative": "Company",
+              "fastestGrowing": "Company"
+            },
+            "recommendations": ["Strategic recommendations"]
+          }
+
+edges: []
+
+output:
+  comparison: "{{compare-all}}"

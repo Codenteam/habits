@@ -1,0 +1,28 @@
+id: get-meeting
+name: Get Meeting
+description: Get a specific meeting by ID
+
+input:
+  - id: id
+    type: string
+    required: true
+    description: Meeting ID
+
+nodes:
+  - id: fetch-meeting
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: findOne
+      operation: findOne
+      params:
+        collection: "meetings"
+        filter: '{"_id": "{{habits.input.id}}"}'
+
+edges: []
+
+output:
+  meeting: "{{fetch-meeting.document}}"
+  found: "{{fetch-meeting.found}}"

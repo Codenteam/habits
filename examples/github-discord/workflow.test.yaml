@@ -1,0 +1,64 @@
+# GitHub → Discord workflow test
+# Tests the full workflow with mocked GitHub and Discord API calls
+
+workflow: ./workflow.yaml
+tests:
+  - name: "Posts open PRs to Discord"
+    trigger: {}
+    context:
+      env:
+        GITHUB_OWNER: octocat
+        GITHUB_REPO: hello-world
+        GITHUB_TOKEN: ghp_test_token
+        DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/12345/abcdef"
+    mocks:
+      bits:
+        - bit: bit-github
+          action: listPullRequests
+          response:
+            pullRequests:
+              - number: 42
+                title: "Fix typo in README"
+                url: "https://github.com/octocat/hello-world/pull/42"
+                user: "contributor1"
+                state: "open"
+                draft: false
+                labels: ["bug"]
+              - number: 43
+                title: "Add dark mode"
+                url: "https://github.com/octocat/hello-world/pull/43"
+                user: "contributor2"
+                state: "open"
+                draft: true
+                labels: ["enhancement", "ui"]
+            count: 2
+        - bit: bit-discord
+          action: sendWebhookMessage
+          response:
+            success: true
+    expect:
+      prCount: 2
+      discordResult: true
+
+  - name: "No open PRs - sends info message"
+    trigger: {}
+    context:
+      env:
+        GITHUB_OWNER: octocat
+        GITHUB_REPO: empty-repo
+        GITHUB_TOKEN: ghp_test_token
+        DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/12345/abcdef"
+    mocks:
+      bits:
+        - bit: bit-github
+          action: listPullRequests
+          response:
+            pullRequests: []
+            count: 0
+        - bit: bit-discord
+          action: sendWebhookMessage
+          response:
+            success: true
+    expect:
+      prCount: 0
+      discordResult: true

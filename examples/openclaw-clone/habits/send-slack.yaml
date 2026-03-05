@@ -1,0 +1,36 @@
+id: send-slack
+name: Send Slack Message
+description: Send a message to a Slack channel or user
+
+input:
+  - id: channel
+    type: string
+    required: true
+  - id: message
+    type: string
+    required: true
+  - id: threadTs
+    type: string
+    required: false
+
+nodes:
+  - id: slack-send
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      resource: sendMessage
+      operation: sendMessage
+      params:
+        botToken: "{{habits.env.SLACK_BOT_TOKEN}}"
+        channel: "{{habits.input.channel}}"
+        text: "{{habits.input.message}}"
+        threadTs: "{{habits.input.threadTs}}"
+
+edges: []
+
+output:
+  success: "{{slack-send.ok}}"
+  messageTs: "{{slack-send.ts}}"
+  channel: "{{slack-send.channel}}"

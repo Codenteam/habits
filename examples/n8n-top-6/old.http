@@ -1,0 +1,390 @@
+@host = localhost
+@port = 3000
+
+
+###############################################################################
+# Health & Workflow List
+#
+# Expected Responses:
+# - Health: { "status": "healthy", "workflowsLoaded": 6 }
+# - Workflows: { "count": 6, "workflows": [...] }
+
+
+###############################################################################
+
+
+### Health Check
+# @name healthCheck
+# @expected status == 200
+# @expected body.status == "healthy"
+# @expected body.workflowsLoaded == 6
+# @expected body.configLoaded == true
+GET http://{{host}}:{{port}}/health
+
+
+### List all workflows
+# @name listWorkflows
+# @expected status == 200
+# @expected body.count == 6
+# @expected body.workflows[0].id == "elevenlabs-tts"
+# @expected body.workflows[1].id == "text-manipulation"
+# @expected body.workflows[2].id == "global-constants"
+# @expected body.workflows[3].id == "chatwoot-contact"
+# @expected body.workflows[4].id == "evolution-api"
+# @expected body.workflows[5].id == "mcp-client"
+GET http://{{host}}:{{port}}/misc/workflows
+
+
+###############################################################################
+# 1. ElevenLabs Text-to-Speech Workflow
+#
+# Expected: Workflow exists, execution requires valid API key
+
+
+###############################################################################
+
+
+### Get ElevenLabs workflow details
+# @name getElevenLabsWorkflow
+# @expected status == 200
+# @expected body.id == "elevenlabs-tts"
+# @expected body.name == "ElevenLabs Text-to-Speech"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/elevenlabs-tts
+
+
+### Execute ElevenLabs TTS - Convert text to speech
+# @name executeElevenLabsTTS
+# Note: Requires valid ELEVENLABS_API_KEY in environment
+# @expected status == 200
+# @expected body.workflowId == "elevenlabs-tts"
+# @expected body.status in ["completed", "failed"]
+POST http://{{host}}:{{port}}/api/elevenlabs-tts
+Content-Type: application/json
+
+{
+  "text": "Hello! This is a test of the ElevenLabs text to speech API.",
+  "voice": {
+    "mode": "id",
+    "value": "21m00Tcm4TlvDq8ikWAM"
+  }
+}
+
+
+###############################################################################
+# 2. Text Manipulation Workflow
+#
+# Expected: Successfully trims and processes text input
+
+
+###############################################################################
+
+
+### Get Text Manipulation workflow details
+# @name getTextManipulationWorkflow
+# @expected status == 200
+# @expected body.id == "text-manipulation"
+# @expected body.name == "Text Manipulation"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/text-manipulation
+
+
+### Execute Text Manipulation - Trim and lowercase
+# @name executeTextManipulation
+# @expected status == 200
+# @expected body.workflowId == "text-manipulation"
+# @expected body.status == "completed"
+# @expected body.nodeResults[0].status == "completed"
+# @expected body.nodeResults[0].nodeName == "Text Manipulation"
+POST http://{{host}}:{{port}}/api/text-manipulation
+Content-Type: application/json
+
+{
+  "inputData": [
+    {
+      "json": {
+        "originalText": "  HELLO WORLD!  This is a TEST.  "
+      }
+    }
+  ]
+}
+
+
+###############################################################################
+# 3. Global Constants Workflow
+#
+# Expected: Successfully retrieves global constants
+
+
+###############################################################################
+
+
+### Get Global Constants workflow details
+# @name getGlobalConstantsWorkflow
+# @expected status == 200
+# @expected body.id == "global-constants"
+# @expected body.name == "Global Constants"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/global-constants
+
+
+### Execute Global Constants - Retrieve constants
+# @name executeGlobalConstants
+# @expected status == 200
+# @expected body.workflowId == "global-constants"
+# @expected body.status == "completed"
+# @expected body.nodeResults[0].status == "completed"
+POST http://{{host}}:{{port}}/api/global-constants
+Content-Type: application/json
+
+{
+  "inputData": [
+    {
+      "json": {
+        "requestId": "test-123",
+        "timestamp": "2024-01-01T00:00:00Z"
+      }
+    }
+  ]
+}
+
+
+###############################################################################
+# 4. ChatWoot Contact Workflow
+#
+# Expected: Workflow exists, execution requires valid ChatWoot credentials
+
+
+###############################################################################
+
+
+### Get ChatWoot workflow details
+# @name getChatWootWorkflow
+# @expected status == 200
+# @expected body.id == "chatwoot-contact"
+# @expected body.name == "ChatWoot Contact Search"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/chatwoot-contact
+
+
+### Execute ChatWoot - Search contact
+# @name executeChatWootContactSearch
+# Note: Requires valid CHATWOOT_API_URL and CHATWOOT_ACCESS_TOKEN
+# @expected status == 200
+# @expected body.workflowId == "chatwoot-contact"
+# @expected body.status in ["completed", "failed"]
+POST http://{{host}}:{{port}}/api/chatwoot-contact
+Content-Type: application/json
+
+{
+  "sourceId": "test@example.com",
+  "accountId": "1"
+}
+
+
+###############################################################################
+# 5. Evolution API Workflow
+#
+# Expected: Workflow exists, execution requires valid Evolution API credentials
+
+
+###############################################################################
+
+
+### Get Evolution API workflow details
+# @name getEvolutionAPIWorkflow
+# @expected status == 200
+# @expected body.id == "evolution-api"
+# @expected body.name == "Evolution API - Fetch Instances"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/evolution-api
+
+
+### Execute Evolution API - Fetch instances
+# @name executeEvolutionAPIFetchInstances
+# Note: Requires valid EVOLUTION_API_URL and EVOLUTION_API_KEY
+# @expected status == 200
+# @expected body.workflowId == "evolution-api"
+# @expected body.status in ["completed", "failed"]
+POST http://{{host}}:{{port}}/api/evolution-api
+Content-Type: application/json
+
+{}
+
+
+###############################################################################
+# 6. MCP Client Workflow
+#
+# Expected: Workflow exists, execution requires valid MCP server connection
+
+
+###############################################################################
+
+
+### Get MCP Client workflow details
+# @name getMCPClientWorkflow
+# @expected status == 200
+# @expected body.id == "mcp-client"
+# @expected body.name == "MCP Client - List Tools"
+# @expected body.enabled == true
+GET http://{{host}}:{{port}}/misc/workflow/mcp-client
+
+
+### Execute MCP Client - List tools
+# @name executeMCPClientListTools
+# Note: Requires valid MCP_SERVER_URL
+# @expected status == 200
+# @expected body.workflowId == "mcp-client"
+# @expected body.status in ["completed", "failed"]
+POST http://{{host}}:{{port}}/api/mcp-client
+Content-Type: application/json
+
+{}
+
+
+###############################################################################
+# Direct Node Execution Tests (bypassing workflow)
+#
+# These test the /api/execute endpoint for direct node execution
+
+
+###############################################################################
+
+
+### Execute n8n node directly - Text Manipulation
+# @name directTextManipulation
+# @expected status == 200
+# @expected body.status == "completed"
+# @expected body.success == true
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/Bwilliamson55/n8n-nodes-text-manipulation",
+  "params": {
+    "keepOnlySet": false,
+    "textsWithManipulations": {
+      "textsWithManipulationsValues": [
+        {
+          "dataSources": {
+            "dataSource": [
+              {
+                "readOperation": "fromText",
+                "text": "  HELLO WORLD!  "
+              }
+            ]
+          },
+          "manipulations": {
+            "manipulation": [
+              {
+                "manipulationType": "trim"
+              }
+            ]
+          },
+          "writeToOutputAs": {
+            "writeToOutputAsValues": [
+              {
+                "writeOperation": "toJSON",
+                "jsonPropertyName": "result"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "inputData": [
+      {
+        "json": {}
+      }
+    ]
+  }
+}
+
+
+### Execute n8n node directly - Global Constants
+# @name directGlobalConstants
+# @expected status == 200
+# @expected body.status == "completed"
+# @expected body.success == true
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/digital-boss/n8n-nodes-globals",
+  "params": {
+    "putAllInOneKey": true,
+    "constantsKeyName": "config",
+    "credentials": {
+      "globalConstantsApi": {
+        "format": "string",
+        "globalConstants": "APP_NAME=TestApp\nVERSION=1.0\nDEBUG=true"
+      }
+    },
+    "inputData": [
+      {
+        "json": {
+          "test": "data"
+        }
+      }
+    ]
+  }
+}
+
+
+### Execute n8n node directly - ElevenLabs TTS
+# @name directElevenLabsTTS
+# Note: Requires valid ELEVENLABS_API_KEY
+# @expected status == 200
+# @expected body.status in ["completed", "failed"]
+POST http://{{host}}:{{port}}/api/execute
+Content-Type: application/json
+
+{
+  "source": "github",
+  "framework": "n8n",
+  "moduleName": "https://github.com/elevenlabs/elevenlabs-n8n",
+  "params": {
+    "resource": "speech",
+    "operation": "textToSpeech",
+    "voice": {
+      "mode": "id",
+      "value": "21m00Tcm4TlvDq8ikWAM"
+    },
+    "text": "Hello, this is a test.",
+    "credentials": {
+      "elevenLabsApi": {
+        "xiApiKey": "YOUR_ELEVENLABS_API_KEY"
+      }
+    }
+  }
+}
+
+
+###############################################################################
+# Error Handling Tests
+#
+# These test expected error responses
+
+
+###############################################################################
+
+
+### Get non-existent workflow (should return 404)
+# @name getNonExistentWorkflow
+# @expected status == 404
+# @expected body.error != null
+GET http://{{host}}:{{port}}/misc/workflow/non-existent-workflow
+
+
+### Execute non-existent workflow (should return 404)
+# @name executeNonExistentWorkflow
+# @expected status == 404
+# @expected body.error != null
+POST http://{{host}}:{{port}}/api/non-existent-workflow
+Content-Type: application/json
+
+{}

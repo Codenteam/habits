@@ -1,0 +1,37 @@
+{
+  "id": "mcp-client",
+  "name": "MCP Client - List Tools",
+  "description": "List available tools from an MCP server",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "mcp-client-node",
+      "type": "n8n",
+      "position": { "x": 250, "y": 100 },
+      "data": {
+        "label": "List MCP Tools",
+        "framework": "n8n",
+        "source": "npm",
+        "module": "n8n-nodes-mcp",
+        "operation": "listTools",
+        "params": {
+          "connectionType": "cmd",
+          "operation": "listTools"
+        },
+        "credentials": {
+          "mcpClientApi": {
+            "command": "{{habits.env.HABITS_MCP_COMMAND}}",
+            "args": "{{habits.env.HABITS_MCP_ARGS_SIMPLE}}",
+            "environments": "{{habits.env.HABITS_MCP_ENVIRONMENTS}}"
+          }
+        },
+        "inputData": [
+          {
+            "json": {}
+          }
+        ]
+      }
+    }
+  ],
+  "edges": []
+}

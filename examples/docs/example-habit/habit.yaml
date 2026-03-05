@@ -1,0 +1,19 @@
+id: example-habit
+name: Example Habit
+nodes:
+  - id: trigger
+    type: bits
+    data:
+      framework: bits
+      module: "@ha-bits/bit-webhook"
+      label: Webhook Trigger
+  - id: action
+    type: bits
+    data:
+      framework: bits
+      module: "@ha-bits/bit-http"
+      label: HTTP Request
+edges:
+  - id: edge-1
+    source: trigger
+    target: action

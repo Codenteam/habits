@@ -1,0 +1,35 @@
+### Basic Habit Demo Tests
+### This file tests the basic-habit workflow that demonstrates if, loop, and string utils
+
+@baseUrl = http://localhost:13000
+
+### Check API Health
+# @name healthCheck
+GET {{baseUrl}}/api
+Accept: application/json
+
+### List Available Workflows
+# @name workflowsList
+GET {{baseUrl}}/misc/workflows
+Accept: application/json
+
+### Execute Basic Habit Demo Workflow
+# @name executeBasicHabit
+POST {{baseUrl}}/api/basic-habit-demo
+Content-Type: application/json
+
+{}
+
+### Execute with Custom Input (if you want to test with custom data)
+# @name executeWithInput
+POST {{baseUrl}}/api/basic-habit-demo
+Content-Type: application/json
+
+{
+  "input": {}
+}
+
+### Check Workflow Status
+# @name workflowStatus
+GET {{baseUrl}}/misc/workflows/basic-habit-demo
+Accept: application/json

@@ -1,0 +1,51 @@
+name: bits-demo
+description: Demo stack for all new bits workflows
+
+# Module paths relative to dist directory
+modules:
+  - "@ha-bits/bit-string"
+  - "@ha-bits/bit-if"
+  - "@ha-bits/bit-loop"
+  - "@ha-bits/bit-openai"
+  - "@ha-bits/bit-httpbin"
+  - "@ha-bits/bit-jsonplaceholder"
+  - "@ha-bits/bit-intersect"
+  - "@ha-bits/bit-email"
+  - "@ha-bits/bit-slack"
+  - "@ha-bits/bit-http"
+  - "@ha-bits/bit-database"
+  - "@ha-bits/bit-text"
+  - "@ha-bits/bit-crm"
+  - "@ha-bits/bit-tasks"
+
+workflows:
+  - id: email-triage-routing
+    path: ./email-triage-routing.yaml
+    enabled: true
+  - id: support-reply-draft
+    path: ./support-reply-draft.yaml
+    enabled: true
+  - id: meeting-notes-tasks
+    path: ./meeting-notes-tasks.yaml
+    enabled: true
+  - id: lead-enrichment-scoring
+    path: ./lead-enrichment-scoring.yaml
+    enabled: true
+  - id: sales-outreach-personalization
+    path: ./sales-outreach-personalization.yaml
+    enabled: true
+  - id: weekly-performance-summary
+    path: ./weekly-performance-summary.yaml
+    enabled: true
+  - id: website-change-monitor
+    path: ./website-change-monitor.yaml
+    enabled: true
+  - id: ops-intake-ticket-generator
+    path: ./ops-intake-ticket-generator.yaml
+    enabled: true
+  - id: customer-survey-processor
+    path: ./customer-survey-processor.yaml
+    enabled: true
+  - id: document-summarization-pipeline
+    path: ./document-summarization-pipeline.yaml
+    enabled: true

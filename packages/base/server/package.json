@@ -1,0 +1,55 @@
+{
+  "name": "@ha-bits/base",
+  "version": "1.0.1",
+  "description": "Base - Habits Workflow Builder API Server with integrated UI",
+  "main": "./pack/index.cjs",
+  "bin": {
+    "@ha-bits/base": "./pack/index.cjs"
+  },
+  "files": [
+    "pack",
+    "ui",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node pack/index.cjs"
+  },
+  "keywords": [
+    "habits",
+    "workflow",
+    "builder",
+    "automation",
+    "api"
+  ],
+  "author": "Codenteam",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenteam/habits.git",
+    "directory": "packages/base"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@activepieces/piece-http": "^0.9.5",
+    "@activepieces/pieces-common": "^0.11.0",
+    "@activepieces/pieces-framework": "^0.23.0",
+    "@activepieces/shared": "^0.30.4",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "express": "^5.0.0",
+    "form-data": "^4.0.5",
+    "qs": "^6.14.0",
+    "uuid": "^9.0.1",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/uuid": "^9.0.7",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "id": "elevenlabs-tts",
+      "path": "./workflows/elevenlabs-tts.json",
+      "enabled": true,
+      "description": "ElevenLabs Text-to-Speech workflow"
+    },
+    {
+      "id": "text-manipulation",
+      "path": "./workflows/text-manipulation.json",
+      "enabled": true,
+      "description": "Text manipulation workflow"
+    },
+    {
+      "id": "global-constants",
+      "path": "./workflows/global-constants.json",
+      "enabled": true,
+      "description": "Global constants workflow"
+    },
+    {
+      "id": "chatwoot-contact",
+      "path": "./workflows/chatwoot-contact.json",
+      "enabled": true,
+      "description": "ChatWoot contact management workflow"
+    },
+    {
+      "id": "evolution-api",
+      "path": "./workflows/evolution-api.json",
+      "enabled": true,
+      "description": "Evolution API WhatsApp workflow"
+    },
+    {
+      "id": "mcp-client",
+      "path": "./workflows/mcp-client.json",
+      "enabled": true,
+      "description": "MCP Client tools workflow"
+    },
+    {
+      "id": "combined",
+      "path": "./workflows/combined.json",
+      "enabled": true,
+      "description": "Combined end-to-end workflow with text, globals, MCP, TTS, and ChatWoot"
+    }
+  ],
+  "server": {
+    "port": 13000,
+    "host": "0.0.0.0"
+  }
+}

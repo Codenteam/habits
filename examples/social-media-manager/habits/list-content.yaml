@@ -1,0 +1,28 @@
+id: list-content
+name: List Content
+description: Get all generated social content
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-content
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: query
+      operation: query
+      params:
+        collection: "social_content"
+        limit: "{{habits.input.limit}}"
+        sort: '{"createdAt": -1}'
+
+edges: []
+
+output:
+  content: "{{query-content.results}}"
+  count: "{{query-content.count}}"

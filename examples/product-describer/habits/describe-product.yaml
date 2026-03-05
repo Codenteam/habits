@@ -1,0 +1,304 @@
+id: describe-product
+name: Describe Product
+description: Upload product images and generate SEO-optimized descriptions, bullet points, and social media content
+
+input:
+  - id: imageUrls
+    type: string
+    required: false
+    description: Comma-separated URLs of product images
+  - id: imageBase64
+    type: string
+    required: false
+    description: Base64 encoded product image
+  - id: category
+    type: string
+    required: true
+    description: Product category (e.g., Electronics, Fashion, Home)
+  - id: productName
+    type: string
+    required: false
+    description: Product name if known
+  - id: targetAudience
+    type: string
+    required: false
+    description: Target audience for the product
+
+nodes:
+  # Analyze product images
+  - id: analyze-images
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: vision_prompt
+      operation: vision_prompt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        imageUrl: "{{habits.input.imageUrls}}"
+        imageBase64: "{{habits.input.imageBase64}}"
+        prompt: |
+          Analyze this product image in detail. Describe:
+          1. What the product is
+          2. Key visual features (color, size, material appearance)
+          3. Design elements and style
+          4. Quality indicators visible
+          5. Any text or branding visible
+          6. Suggested use cases based on appearance
+          
+          Be specific and detailed - this will be used to write product descriptions.
+
+  # Generate long SEO description
+  - id: long-description
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        systemMessage: |
+          You are an expert e-commerce copywriter specializing in SEO-optimized product descriptions.
+          Write compelling, keyword-rich descriptions that convert browsers into buyers.
+        prompt: |
+          Write a detailed, SEO-optimized product description (200-300 words) for this {{habits.input.category}} product.
+          
+          Product: {{habits.input.productName}}
+          Target Audience: {{habits.input.targetAudience}}
+          
+          Visual Analysis:
+          {{analyze-images}}
+          
+          Include:
+          - Engaging opening hook
+          - Key features and benefits
+          - Quality/material details
+          - Use cases
+          - Compelling call to action
+          
+          Make it persuasive and professional.
+
+  # Generate bullet points
+  - id: bullet-points
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 400
+        prompt: |
+          Create 5-7 compelling bullet points highlighting the key features and benefits of this product.
+          
+          Category: {{habits.input.category}}
+          Visual Analysis: {{analyze-images}}
+          
+          Format each bullet point to:
+          - Start with a benefit or feature in bold (using **)
+          - Follow with a brief explanation
+          - Be scannable and impactful
+          
+          Example format:
+          • **Premium Quality Materials** - Crafted from durable, long-lasting components
+          
+          Return ONLY the bullet points, one per line.
+
+  # Generate SEO keywords
+  - id: seo-keywords
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 200
+        prompt: |
+          Generate 15-20 SEO keywords and keyword phrases for this {{habits.input.category}} product.
+          
+          Product Analysis: {{analyze-images}}
+          Target Audience: {{habits.input.targetAudience}}
+          
+          Include:
+          - Primary keywords (high volume)
+          - Long-tail keywords
+          - Feature-based keywords
+          - Benefit-based keywords
+          
+          Return as comma-separated list.
+
+  # Generate Instagram caption
+  - id: instagram-caption
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 300
+        prompt: |
+          Write an engaging Instagram caption for this product.
+          
+          Category: {{habits.input.category}}
+          Product Analysis: {{analyze-images}}
+          Target Audience: {{habits.input.targetAudience}}
+          
+          Include:
+          - Catchy opening line with emoji
+          - 2-3 sentences about the product
+          - Call to action
+          - 5-8 relevant hashtags
+          
+          Make it casual, trendy, and engaging for a younger audience.
+
+  # Generate Amazon listing format
+  - id: amazon-listing
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 600
+        prompt: |
+          Create an Amazon-style product listing for this item.
+          
+          Category: {{habits.input.category}}
+          Product Analysis: {{analyze-images}}
+          
+          Include:
+          1. **Title** (keyword-optimized, under 200 characters)
+          2. **Bullet Points** (5 points, Amazon style with ALL CAPS feature start)
+          3. **Product Description** (HTML formatted, 150-200 words)
+          
+          Follow Amazon's best practices for listing optimization.
+
+  # Generate short tagline
+  - id: tagline
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.9
+        maxTokens: 50
+        prompt: |
+          Create 3 short, catchy taglines/slogans (under 10 words each) for this product.
+          
+          Product Analysis: {{analyze-images}}
+          Category: {{habits.input.category}}
+          
+          Make them memorable, benefit-focused, and brandable.
+          Return one per line.
+
+  # Save to database
+  - id: save-product
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "products"
+        document:
+          name: "{{habits.input.productName}}"
+          category: "{{habits.input.category}}"
+          targetAudience: "{{habits.input.targetAudience}}"
+          imageAnalysis: "{{analyze-images}}"
+          longDescription: "{{long-description}}"
+          bulletPoints: "{{bullet-points}}"
+          seoKeywords: "{{seo-keywords}}"
+          instagramCaption: "{{instagram-caption}}"
+          amazonListing: "{{amazon-listing}}"
+          taglines: "{{tagline}}"
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: analyze-images
+    target: long-description
+  - source: analyze-images
+    target: bullet-points
+  - source: analyze-images
+    target: seo-keywords
+  - source: analyze-images
+    target: instagram-caption
+  - source: analyze-images
+    target: amazon-listing
+  - source: analyze-images
+    target: tagline
+  - source: long-description
+    target: save-product
+  - source: bullet-points
+    target: save-product
+  - source: seo-keywords
+    target: save-product
+  - source: instagram-caption
+    target: save-product
+  - source: amazon-listing
+    target: save-product
+  - source: tagline
+    target: save-product
+
+output:
+  productId: "{{save-product.id}}"
+  imageAnalysis: "{{analyze-images}}"
+  longDescription: "{{long-description}}"
+  bulletPoints: "{{bullet-points}}"
+  seoKeywords: "{{seo-keywords}}"
+  instagramCaption: "{{instagram-caption}}"
+  amazonListing: "{{amazon-listing}}"
+  taglines: "{{tagline}}"
