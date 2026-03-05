@@ -1,6 +1,6 @@
 # Introduction
 
-Habits is a **lightweight automation creator, runtime and packer**. It's designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
+Habits is a **lightweight automation creator, runtime and packer**. It's designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product and serve it as a full-stack application. Allowing you to create, run and pack-to-distribute Agents, Automations, Full-Stacks, SaaS and Micro-Apps.
 
 With Apache 2.0 licensing, Habits combined with open-source nodes gives you a completely open-source workflow runner.
 
@@ -10,7 +10,7 @@ At its core, Habits is an execution engine inspired by how the human brain forms
 
 | Concept | Role | Description |
 |---------|------|-------------|
-| **Habit** | Workflow | A complete automation routine composed of connected nodes |
+| **Habit** | Workflow | A complete automation logic composed of connected nodes |
 | **Stack** | Workflow Set | A collection of habits executed together |
 | **Bit** | Node | A single step: a bit, an ActivePieces piece, n8n node, or a script |
 | **Base** | Builder | Visual workflow designer for constructing habits |

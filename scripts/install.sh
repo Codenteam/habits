@@ -259,7 +259,7 @@ print_usage() {
     echo -e "    ${CYAN}habits base${NC}"
     echo ""
     echo "  Run a workflow with Cortex engine:"
-    echo -e "    ${CYAN}habits cortex --config ./stack.yaml${NC}"
+    echo -e "    ${CYAN}habits cortex server --config ./stack.yaml${NC}"
     echo ""
     echo "  Get help:"
     echo -e "    ${CYAN}habits --help${NC}"

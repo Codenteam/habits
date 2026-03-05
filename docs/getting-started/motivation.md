@@ -1,6 +1,6 @@
 # Why Habits?
 
-Habits helps you build backend workflows using pre-built, tested building blocks instead of writing custom code. Here's why that matters.
+Habits helps you build backend logic using pre-built, tested building blocks instead of writing custom code then use AI to build the frontend. Here's why that matters.
 
 ## The Problem
 
