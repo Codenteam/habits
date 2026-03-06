@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Package, 
   Loader2, 
@@ -11,7 +11,10 @@ import {
   Info,
   ExternalLink,
   Globe,
-  ArchiveIcon
+  ArchiveIcon,
+  ImageIcon,
+  Upload,
+  X
 } from 'lucide-react';
 import { api } from '../lib/api';
 import JSZip from 'jszip';
@@ -122,10 +125,15 @@ const MOBILE_TARGET_INFO: Record<MobileTarget, { name: string; iconClass: string
   'both': { name: 'Both Platforms', iconClass: 'devicon-devicon-plain', description: 'iOS & Android', requirements: 'Requires both Xcode & Android SDK' },
 };
 
-const MOBILE_FRAMEWORK_INFO: Record<MobileFramework, { name: string; iconClass: string; description: string }> = {
-  'capacitor': { name: 'Capacitor', iconClass: 'devicon-ionic-original', description: 'Modern, recommended framework by Ionic' },
-  'cordova': { name: 'Cordova', iconClass: 'devicon-apache-plain', description: 'Legacy Apache Cordova framework' },
-  'tauri': { name: 'Tauri', iconClass: 'devicon-rust-plain', description: 'Rust-based framework with desktop & mobile support' },
+const MOBILE_FRAMEWORK_INFO: Record<MobileFramework, { name: string; iconClass: string; description: string; deprecated?: boolean; experimental?: boolean }> = {
+  'tauri': { name: 'Tauri', iconClass: 'devicon-rust-plain', description: 'Rust-based framework with desktop & mobile support', experimental: true },
+  'capacitor': { name: 'Capacitor', iconClass: 'devicon-ionic-original', description: 'Modern framework by Ionic', deprecated: true },
+  'cordova': { name: 'Cordova', iconClass: 'devicon-apache-plain', description: 'Legacy Apache Cordova framework', deprecated: true },
+};
+
+const DESKTOP_FRAMEWORK_INFO: Record<DesktopFramework, { name: string; iconClass: string; description: string; deprecated?: boolean; experimental?: boolean }> = {
+  'tauri': { name: 'Tauri', iconClass: 'devicon-rust-plain', description: 'Rust-based, smaller & faster', experimental: true },
+  'electron': { name: 'Electron', iconClass: 'devicon-electron-original', description: 'Chromium-based, larger bundles', deprecated: true },
 };
 
 export default function BinaryExportTab({ habits, serverConfig, envContent, frontendHtml, exportBundle, stackName }: BinaryExportTabProps) {
@@ -162,14 +170,76 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   // Selection state
   const [selectedSeaPlatform, setSelectedSeaPlatform] = useState<SeaPlatform>('current');
   const [selectedDesktopPlatform, setSelectedDesktopPlatform] = useState<DesktopPlatform>('dmg');
-  const [selectedDesktopFramework, setSelectedDesktopFramework] = useState<DesktopFramework>('electron');
+  const [selectedDesktopFramework, setSelectedDesktopFramework] = useState<DesktopFramework>('tauri');
   const [selectedMobileTarget, setSelectedMobileTarget] = useState<MobileTarget>('both');
-  const [selectedMobileFramework, setSelectedMobileFramework] = useState<MobileFramework>('capacitor');
+  const [selectedMobileFramework, setSelectedMobileFramework] = useState<MobileFramework>('tauri');
   const [backendUrl, setBackendUrl] = useState('');
   const [desktopMode, setDesktopMode] = useState<AppMode>('client');
   const [mobileMode, setMobileMode] = useState<AppMode>('client');
-  const [buildDesktopBinary, setBuildDesktopBinary] = useState(false);
+  const [buildDesktopBinary, setBuildDesktopBinary] = useState(true);
   const [buildMobileBinary, setBuildMobileBinary] = useState(true);
+  
+  // App customization state
+  const [appName, setAppName] = useState(stackName || 'Habits App');
+  const [appIcon, setAppIcon] = useState<string | null>(null); // base64 encoded image
+  const [appIconPreview, setAppIconPreview] = useState<string | null>(null);
+  const iconInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle icon file selection
+  const handleIconSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setGenerationError('Please select an image file (PNG, JPG, etc.)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setGenerationError('Icon image must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      
+      // Validate that image is square
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== img.height) {
+          setGenerationError(`Icon must be square. Selected image is ${img.width}×${img.height}. Please use a square image (e.g., 512×512).`);
+          if (iconInputRef.current) {
+            iconInputRef.current.value = '';
+          }
+          return;
+        }
+        
+        // Image is square, proceed
+        setAppIcon(base64);
+        setAppIconPreview(base64);
+        setGenerationError(null);
+      };
+      img.onerror = () => {
+        setGenerationError('Failed to load image');
+        if (iconInputRef.current) {
+          iconInputRef.current.value = '';
+        }
+      };
+      img.src = base64;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveIcon = () => {
+    setAppIcon(null);
+    setAppIconPreview(null);
+    if (iconInputRef.current) {
+      iconInputRef.current.value = '';
+    }
+  };
 
   // Fetch capabilities on mount
   useEffect(() => {
@@ -331,6 +401,8 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
           framework: selectedDesktopFramework,
           buildBinary: buildDesktopBinary,
           stackName,
+          appName: appName || 'Habits App',
+          appIcon: appIcon || null,
         }),
       });
 
@@ -399,6 +471,8 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
           buildBinary: buildMobileBinary,
           framework: selectedMobileFramework,
           stackName,
+          appName: appName || 'Habits App',
+          appIcon: appIcon || null,
         }),
       });
 
@@ -948,6 +1022,13 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
               <div className="mt-4">
                 <div className="text-xs text-slate-400 font-semibold mb-1">Desktop Build Tools</div>
                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Tauri</div>
+                    <ul className="text-xs text-slate-300 space-y-0.5">
+                      <li>Cargo: <span className="font-mono">{capabilities.cargoVersion || 'Not installed'}</span></li>
+                      <li>Rustc: <span className="font-mono">{capabilities.rustcVersion || 'Not installed'}</span></li>
+                    </ul>
+                  </div>
                   <div>
                     <div className="text-xs text-slate-500 mb-0.5">Electron</div>
                     <ul className="text-xs text-slate-300 space-y-0.5">
@@ -955,14 +1036,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                       <li>Builder: <span className="font-mono">{capabilities.electronBuilderVersion || 'Not installed'}</span></li>
                     </ul>
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-0.5">Tauri</div>
-                    <ul className="text-xs text-slate-300 space-y-0.5">
-                      <li>Tauri: <span className="font-mono">{capabilities.tauriVersion || 'Not installed'}</span></li>
-                      <li>Cargo: <span className="font-mono">{capabilities.cargoVersion || 'Not installed'}</span></li>
-                      <li>Rustc: <span className="font-mono">{capabilities.rustcVersion || 'Not installed'}</span></li>
-                    </ul>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -971,48 +1045,41 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             <div className="space-y-3 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
               <label className="text-sm font-medium text-slate-300 block">Framework</label>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setSelectedDesktopFramework('electron')}
-                  className={`flex flex-col items-start p-3 rounded-lg border transition-colors text-left ${
-                    selectedDesktopFramework === 'electron'
-                      ? 'bg-blue-600/20 border-blue-500'
-                      : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <i className="devicon-electron-original text-lg" />
-                    <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
-                      selectedDesktopFramework === 'electron' ? 'border-blue-400' : 'border-slate-500'
-                    }`}>
-                      {selectedDesktopFramework === 'electron' && <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />}
-                    </div>
-                    <span className={`text-sm font-medium ${selectedDesktopFramework === 'electron' ? 'text-blue-300' : 'text-slate-300'}`}>
-                      Electron
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-8">Chromium-based, larger bundles</p>
-                </button>
-                <button
-                  onClick={() => setSelectedDesktopFramework('tauri')}
-                  className={`flex flex-col items-start p-3 rounded-lg border transition-colors text-left ${
-                    selectedDesktopFramework === 'tauri'
-                      ? 'bg-orange-600/20 border-orange-500'
-                      : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <i className="devicon-rust-plain text-lg" />
-                    <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
-                      selectedDesktopFramework === 'tauri' ? 'border-orange-400' : 'border-slate-500'
-                    }`}>
-                      {selectedDesktopFramework === 'tauri' && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
-                    </div>
-                    <span className={`text-sm font-medium ${selectedDesktopFramework === 'tauri' ? 'text-orange-300' : 'text-slate-300'}`}>
-                      Tauri
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-8">Rust-based, smaller & faster</p>
-                </button>
+                {(['tauri', 'electron'] as DesktopFramework[]).map((fw) => {
+                  const info = DESKTOP_FRAMEWORK_INFO[fw];
+                  const colorScheme = fw === 'tauri' ? 'orange' : 'blue';
+                  const isSelected = selectedDesktopFramework === fw;
+                  return (
+                    <button
+                      key={fw}
+                      onClick={() => setSelectedDesktopFramework(fw)}
+                      className={`flex flex-col items-start p-3 rounded-lg border transition-colors text-left ${
+                        isSelected
+                          ? `bg-${colorScheme}-600/20 border-${colorScheme}-500`
+                          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+                      } ${info.deprecated ? 'opacity-60' : ''}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <i className={`${info.iconClass} text-lg`} />
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                          isSelected ? `border-${colorScheme}-400` : 'border-slate-500'
+                        }`}>
+                          {isSelected && <div className={`w-1.5 h-1.5 rounded-full bg-${colorScheme}-400`} />}
+                        </div>
+                        <span className={`text-sm font-medium ${isSelected ? `text-${colorScheme}-300` : 'text-slate-300'}`}>
+                          {info.name}
+                        </span>
+                        {info.experimental && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-orange-600/30 text-orange-300 rounded">Experimental</span>
+                        )}
+                        {info.deprecated && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-600/30 text-amber-300 rounded">Deprecated</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 ml-8">{info.description}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1071,6 +1138,83 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </div>
               </div>
             )}
+
+            {/* App Customization */}
+            <div className="space-y-4 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+              <h5 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-blue-400" />
+                App Customization
+              </h5>
+              
+              {/* App Name */}
+              <div>
+                <label htmlFor="desktop-app-name" className="text-sm font-medium text-slate-300 mb-2 block">
+                  App Name
+                </label>
+                <input
+                  id="desktop-app-name"
+                  type="text"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="My Habits App"
+                  className="w-full px-3 py-2 text-sm bg-slate-800 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  The name that will appear in the app title bar and system menus.
+                </p>
+              </div>
+
+              {/* App Icon */}
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">
+                  App Icon
+                </label>
+                <div className="flex items-start gap-4">
+                  {/* Icon Preview */}
+                  <div className="w-16 h-16 rounded-lg border border-slate-600 bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                    {appIconPreview ? (
+                      <img src={appIconPreview} alt="App icon" className="w-full h-full object-cover" />
+                    ) : (
+                      <img src="/habits/base/assets/logo.png" alt="Default icon" className="w-12 h-12 object-contain opacity-50" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <input
+                      ref={iconInputRef}
+                      type="file"
+                      accept="image/png"
+                      onChange={handleIconSelect}
+                      className="hidden"
+                      id="desktop-icon-upload"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => iconInputRef.current?.click()}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Icon
+                      </button>
+                      {appIconPreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveIcon}
+                          className="flex items-center gap-1 px-2 py-1.5 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-md transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {appIconPreview ? 'Custom icon selected' : 'Default Habits logo will be used'}. Required: Square image (e.g., 512×512 PNG).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Backend URL */}
             <div className="space-y-4 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
@@ -1282,6 +1426,18 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
               <div className="mt-4">
                 <div className="text-xs text-slate-400 font-semibold mb-1">Mobile Build Tools</div>
                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Tauri Mobile</div>
+                    <ul className="text-xs text-slate-300 space-y-0.5">
+                      <li>Cargo: <span className="font-mono">{capabilities.cargoVersion || 'Not installed'}</span></li>
+                      <li>Rustc: <span className="font-mono">{capabilities.rustcVersion || 'Not installed'}</span></li>
+                    </ul>
+                    <div className="text-xs text-slate-500 mt-2 mb-0.5">Environment</div>
+                    <ul className="text-xs text-slate-300 space-y-0.5">
+                      <li>ANDROID_HOME: <span className={`font-mono ${capabilities.androidHome === 'unset' ? 'text-amber-400' : 'text-green-400'}`}>{capabilities.androidHome || 'unset'}</span></li>
+                      <li>ANDROID_SDK_ROOT: <span className={`font-mono ${capabilities.androidSdkRoot === 'unset' ? 'text-amber-400' : 'text-green-400'}`}>{capabilities.androidSdkRoot || 'unset'}</span></li>
+                    </ul>
+                  </div>
                   <div>
                     <div className="text-xs text-slate-500 mb-0.5">General</div>
                     <ul className="text-xs text-slate-300 space-y-0.5">
@@ -1292,19 +1448,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                       <li>Xcode (iOS): <span className="font-mono">{capabilities.xcodeVersion || 'Not installed'}</span></li>
                     </ul>
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-0.5">Tauri Mobile</div>
-                    <ul className="text-xs text-slate-300 space-y-0.5">
-                      <li>Tauri: <span className="font-mono">{capabilities.tauriVersion || 'Not installed'}</span></li>
-                      <li>Cargo: <span className="font-mono">{capabilities.cargoVersion || 'Not installed'}</span></li>
-                      <li>Rustc: <span className="font-mono">{capabilities.rustcVersion || 'Not installed'}</span></li>
-                    </ul>
-                    <div className="text-xs text-slate-500 mt-2 mb-0.5">Environment</div>
-                    <ul className="text-xs text-slate-300 space-y-0.5">
-                      <li>ANDROID_HOME: <span className={`font-mono ${capabilities.androidHome === 'unset' ? 'text-amber-400' : 'text-green-400'}`}>{capabilities.androidHome || 'unset'}</span></li>
-                      <li>ANDROID_SDK_ROOT: <span className={`font-mono ${capabilities.androidSdkRoot === 'unset' ? 'text-amber-400' : 'text-green-400'}`}>{capabilities.androidSdkRoot || 'unset'}</span></li>
-                    </ul>
-                  </div>
+
                 </div>
                 {capabilities.compatibility && (
                   <div className={`mt-3 p-2 rounded text-xs ${
@@ -1382,7 +1526,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             <div className="space-y-3 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
               <label className="text-sm font-medium text-slate-300 block">Mobile Framework</label>
               <div className="grid grid-cols-3 gap-3">
-                {(['capacitor', 'cordova', 'tauri'] as MobileFramework[]).map((fw) => {
+                {(['tauri', 'capacitor', 'cordova'] as MobileFramework[]).map((fw) => {
                   const info = MOBILE_FRAMEWORK_INFO[fw];
                   return (
                     <button
@@ -1392,7 +1536,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                         selectedMobileFramework === fw
                           ? 'bg-green-600/20 border-green-500'
                           : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
-                      }`}
+                      } ${info.deprecated ? 'opacity-60' : ''}`}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
@@ -1404,8 +1548,11 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                         <span className={`text-sm font-medium ${selectedMobileFramework === fw ? 'text-green-300' : 'text-slate-300'}`}>
                           {info.name}
                         </span>
-                        {fw === 'capacitor' && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-green-600/30 text-green-300 rounded">Recommended</span>
+                        {info.experimental && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-orange-600/30 text-orange-300 rounded">Experimental</span>
+                        )}
+                        {info.deprecated && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-amber-600/30 text-amber-300 rounded">Deprecated</span>
                         )}
                       </div>
                       <p className="text-xs text-slate-500 ml-5">{info.description}</p>
@@ -1429,6 +1576,82 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </div>
               </div>
             )}
+
+            {/* App Customization */}
+            <div className="space-y-4 bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+              <h5 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-green-400" />
+                App Customization
+              </h5>
+              
+              {/* App Name */}
+              <div>
+                <label htmlFor="mobile-app-name" className="text-sm font-medium text-slate-300 mb-2 block">
+                  App Name
+                </label>
+                <input
+                  id="mobile-app-name"
+                  type="text"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="My Habits App"
+                  className="w-full px-3 py-2 text-sm bg-slate-800 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  The name that will appear on the home screen and app stores.
+                </p>
+              </div>
+
+              {/* App Icon */}
+              <div>
+                <label className="text-sm font-medium text-slate-300 mb-2 block">
+                  App Icon
+                </label>
+                <div className="flex items-start gap-4">
+                  {/* Icon Preview */}
+                  <div className="w-16 h-16 rounded-lg border border-slate-600 bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                    {appIconPreview ? (
+                      <img src={appIconPreview} alt="App icon" className="w-full h-full object-cover" />
+                    ) : (
+                      <img src="/habits/base/assets/logo.png" alt="Default icon" className="w-12 h-12 object-contain opacity-50" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleIconSelect}
+                      className="hidden"
+                      id="mobile-icon-upload"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('mobile-icon-upload')?.click()}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Icon
+                      </button>
+                      {appIconPreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveIcon}
+                          className="flex items-center gap-1 px-2 py-1.5 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-md transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {appIconPreview ? 'Custom icon selected' : 'Default Habits logo will be used'}. Required: Square image (e.g., 1024×1024 PNG).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Backend URL */}
             <div className="space-y-4 bg-slate-900/50 rounded-lg p-4 border border-slate-700">

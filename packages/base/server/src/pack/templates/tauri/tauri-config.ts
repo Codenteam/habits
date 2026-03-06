@@ -83,7 +83,8 @@ export function getTauriConfig(options: TauriConfigOptions): string {
         },
       ],
       security: {
-        csp: `default-src 'self'; connect-src 'self' ${backendUrl} https://${backendDomain} ws://${backendDomain} wss://${backendDomain}; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;`,
+        // csp: `default-src 'self'; connect-src 'self' ${backendUrl} https://${backendDomain} ws://${backendDomain} wss://${backendDomain}; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;`,
+        csp: null,
         assetProtocol: {
           enable: true,
           scope: ['**'],
@@ -91,9 +92,9 @@ export function getTauriConfig(options: TauriConfigOptions): string {
       },
     },
     plugins: {
-      http: {
-        scope: [`${backendUrl}/*`, `${backendUrl.replace(/\/$/, '')}/*`],
-      },
+      // http: {
+      //   scope: [`${backendUrl}/*`, `${backendUrl.replace(/\/$/, '')}/*`],
+      // },
     },
   };
 

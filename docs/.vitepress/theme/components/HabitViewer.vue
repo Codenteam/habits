@@ -14,9 +14,12 @@ const props = defineProps<{
 const baseUrl = computed(() => {
   // VitePress dev mode detection
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  return isDev 
-    ? 'http://localhost:3030/intersect/habits/viewer/'
-    : 'https://codenteam.com/intersect/habits/viewer/'
+
+  // Use prod viewer always for now.
+  //return isDev 
+  //  ? 'http://localhost:3030/intersect/habits/viewer/'
+  //  : 'https://codenteam.com/intersect/habits/viewer/'
+  return 'https://codenteam.com/intersect/habits/viewer/';
 })
 
 // Resolve URL to absolute, including VitePress base path

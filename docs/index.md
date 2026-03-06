@@ -110,6 +110,7 @@ const screenshots = [
   { img: '/images/swagger.webp', caption: 'OpenAPI Swagger', link: '/deep-dive/running#swagger-screenshot' },
   { img: '/images/mixed-frontend.webp', caption: 'Text to Audio Example', link: '/examples/mixed#text-to-audio-screenshot' },
   { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/examples/minimal-blog#minimal-blog-screenshot' },
+  { img: '/images/marketing-campaign.webp', caption: 'Marketing Campaign', link: '/examples/marketing-campaign' },
 ]
 </script>
 

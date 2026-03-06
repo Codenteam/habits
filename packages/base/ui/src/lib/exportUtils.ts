@@ -199,12 +199,9 @@ export function generateEnvFile(envVars: EnvVariable[], existingEnv: string = ''
 
 // Convert a habit to schema-compliant YAML format
 export function habitToYaml(habit: Habit): string {
-  // Use the habit's actual ID, or fall back to slugified name for new habits with auto-generated UUIDs
-  const isUUID = habit.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(habit.id);
-  const habitId = isUUID ? slugify(habit.name) : (habit.id || slugify(habit.name));
   
-  const yamlObj: any = {
-    id: habitId,
+  const yamlObj= {
+    id: habit.id,
     name: habit.name,
     description: habit.description || undefined,
     nodes: habit.nodes.map(node => {
@@ -259,7 +256,7 @@ export function habitToYaml(habit: Habit): string {
     output: habit.output && Object.keys(habit.output).length > 0 ? habit.output : undefined,
   };
 
-  // Remove undefined values
+  // Remove undefined values 
   const cleanObj = JSON.parse(JSON.stringify(yamlObj));
 
   return yaml.dump(cleanObj, {
@@ -267,7 +264,7 @@ export function habitToYaml(habit: Habit): string {
     lineWidth: -1,
     noRefs: true,
     quotingType: '"',
-    forceQuotes: false,
+    forceQuotes: true,
   });
 }
 

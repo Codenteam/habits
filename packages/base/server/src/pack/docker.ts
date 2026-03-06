@@ -5,24 +5,11 @@
  * using node:24-alpine with npx @ha-bits/cortex server
  */
 
-import { getTmpDir, LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core';
 import JSZip from 'jszip';
+import { sanitizeStackName, createTmpWorkDir, createCleanupHandler, addDirectoryToZip } from './utils';
 
 const logger = LoggerFactory.getRoot();
-
-/**
- * Sanitize stack name for use in filenames
- */
-function sanitizeStackName(name: string | undefined): string {
-  if (!name || name.trim() === '' || name === 'Stack Name') {
-    return 'habits';
-  }
-  // Convert to lowercase, replace spaces and special chars with hyphens
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-}
 
 /**
  * Web API Docker Pack Options

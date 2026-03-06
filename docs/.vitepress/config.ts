@@ -68,6 +68,7 @@ export default defineConfig({
           { text: 'Build Your First Habit', link: '/getting-started/first-habit' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
+          { text: 'Checklists', link: '/getting-started/checklists' },
         ]
       },
             {
@@ -77,6 +78,7 @@ export default defineConfig({
           { text: 'Creating Habits (Base)', link: '/deep-dive/creating' },
           { text: 'Running Habits (Cortex)', link: '/deep-dive/running' },
           { text: 'Packing and Distributing Habits', link: '/deep-dive/pack-distribute' },
+          { text: 'Evaluating Variables', link: '/deep-dive/variables.md' },
 
 
         ]

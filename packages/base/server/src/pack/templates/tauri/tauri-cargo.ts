@@ -45,5 +45,15 @@ serde_json = "1"
 # This feature is used for production builds or when a different method of serving the content is used
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Link-time optimization
+codegen-units = 1   # Better optimization
+strip = true        # Remove debug symbols
+panic = "abort"     # Smaller panic handler
+overflow-checks = false  # Disable overflow checks for smaller binary
+incremental = false      # Disable incremental compilation for better optimization
 `;
 }

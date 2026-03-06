@@ -15,29 +15,8 @@ nodes:
       credentials:
         apiKey: '{{habits.env.OPENAI_API_KEY}}'
       params:
-        prompt: Write a short 2-sentence motivational quote
+        prompt: 'Write a short 2-sentence motivational quote related to: {{habits.input.prompt}}'
         model: gpt-4o-mini
-  - id: echo-text
-    type: script
-    position:
-      x: 0
-      'y': 548
-    data:
-      label: Echo Generated Text
-      framework: script
-      source: inline
-      params:
-        text: '{{generate-text}}'
-        type: script
-        language: deno
-        script: |
-          export async function main(text: string) {
-            console.log("Generated text:", text);
-
-            // Write to file 
-            await Deno.writeTextFile("/tmp/test.txt", text);
-            return { text };
-          }
   - id: text-to-speech
     type: n8n
     position:
@@ -94,8 +73,6 @@ nodes:
           }
 edges:
   - source: generate-text
-    target: echo-text
-  - source: echo-text
     target: text-to-speech
   - source: text-to-speech
     target: save-locally

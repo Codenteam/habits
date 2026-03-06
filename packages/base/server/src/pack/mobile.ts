@@ -10,27 +10,14 @@ import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
 import { PackResult, MobileTarget, MobileFramework, ParsedConfig, HabitData } from './types';
-import { getApiProxyScript } from './templates/api-proxy';
-import { getCordovaConfig } from './templates/cordova-config';
+import { getApiProxyScript } from './templates/deprecated/api-proxy';
+import { getCordovaConfig } from './templates/deprecated/cordova-config';
 import { packTauri } from './tauri';
 import { checkCordovaCompatibility, parseJavaVersion, parseGradleVersion } from './gradle-java-compatibility';
 import JSZip from 'jszip';
-import { LoggerFactory, getTmpDir } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core';
+import { sanitizeStackName, createTmpWorkDir, createCleanupHandler, addDirectoryToZip } from './utils';
 const logger = LoggerFactory.getRoot();
-
-/**
- * Sanitize stack name for use in filenames
- */
-function sanitizeStackName(name: string | undefined): string {
-  if (!name || name.trim() === '' || name === 'Stack Name') {
-    return 'habits';
-  }
-  // Convert to lowercase, replace spaces and special chars with hyphens
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-}
 
 export interface MobilePackOptions {
   configPath: string;
@@ -96,7 +83,7 @@ export async function packMobile(options: MobilePackOptions): Promise<PackResult
   }
 
   // Create temp working directory
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), 'habits-cordova-'));
+  const workDir = createTmpWorkDir('cordova');
   const appName = config.name || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
 
@@ -420,6 +407,8 @@ export interface WebMobilePackOptions {
   buildBinary?: boolean;
   framework?: MobileFramework;
   stackName?: string;
+  appName?: string;
+  appIcon?: string; // base64 encoded image
 }
 
 /**
@@ -444,7 +433,7 @@ export interface WebMobilePackResult {
  * Returns either a zip buffer (project files) or a binary file path (APK/IPA)
  */
 export async function packMobileForWeb(options: WebMobilePackOptions): Promise<WebMobilePackResult> {
-  const { framework = 'capacitor', habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName } = options;
+  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName, appName, appIcon } = options;
   
   // Route to the appropriate framework handler
   if (framework === 'capacitor') {
@@ -459,6 +448,8 @@ export async function packMobileForWeb(options: WebMobilePackOptions): Promise<W
       stackName,
       platform: 'mobile',
       mobileTarget,
+      appName,
+      appIcon,
     });
   } else {
     return packCordovaForWeb(options);
@@ -469,28 +460,18 @@ export async function packMobileForWeb(options: WebMobilePackOptions): Promise<W
  * Generate a Capacitor mobile app for Web API
  */
 async function packCapacitorForWeb(options: WebMobilePackOptions): Promise<WebMobilePackResult> {
-  const { habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName } = options;
+  const { habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName, appName: customAppName, appIcon } = options;
 
   // Sanitize stack name for filename
   const sanitizedStackName = sanitizeStackName(stackName);
   const logger = LoggerFactory.getRoot();
 
   // Create temp directory for the project
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), 'habits-mobile-'));
-  const appName = 'Habits App';
+  const workDir = createTmpWorkDir('mobile');
+  const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
 
-  const cleanup = () => {
-    try {
-      if (process.env.DEBUG) {
-        logger.info(`Debug mode - skipping cleanup of ${workDir}`);
-        return;
-      }
-      fs.rmSync(workDir, { recursive: true, force: true });
-    } catch (e) {
-      // Ignore cleanup errors
-    }
-  };
+  const cleanup = createCleanupHandler(workDir);
 
   try {
     // Package.json for Capacitor (dependencies will be installed via npm)
@@ -777,28 +758,18 @@ To change the backend URL, edit the BACKEND_URL in \`www/index.html\`.
  * Returns either a zip buffer (project files) or a binary file path (APK/IPA)
  */
 async function packCordovaForWeb(options: WebMobilePackOptions): Promise<WebMobilePackResult> {
-  const { habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName } = options;
+  const { habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName, appName: customAppName, appIcon } = options;
   const logger = LoggerFactory.getRoot();
 
   // Sanitize stack name for filename
   const sanitizedStackName = sanitizeStackName(stackName);
 
   // Create temp directory for the project
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), 'habits-mobile-'));
-  const appName = 'Habits App';
+  const workDir = createTmpWorkDir('mobile');
+  const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
 
-  const cleanup = () => {
-    try {
-      if(process.env.DEBUG) {
-        logger.info(`Debug mode - skipping cleanup of ${workDir}`);
-        return;
-      }
-      fs.rmSync(workDir, { recursive: true, force: true });
-    } catch (e) {
-      // Ignore cleanup errors
-    }
-  };
+  const cleanup = createCleanupHandler(workDir);
 
   try {
     // Create Cordova project structure
