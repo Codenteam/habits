@@ -48,6 +48,9 @@ export default defineConfig({
       });
 
       md.use(tabsMarkdownPlugin);
+    }, 
+    toc: {
+      level: [2]
     }
   },
 

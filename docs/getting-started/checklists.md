@@ -2,52 +2,11 @@
 
 Actionable checklists for working with Habits stacks. Follow the path that matches your use case.
 
----
+[[toc]]
 
-## � Documentation Reading Order Checklist
 
-### If you are completely new to Habits
-- [ ] Read [Introduction](./introduction.md) - understand what Habits is
-- [ ] Read [Motivation](./motivation.md) - understand why Habits exists
-- [ ] Read [When to Use](./when-to-use.md) - see if Habits fits your use case
-- [ ] Read [Concepts](./concepts.md) - learn core concepts (stacks, habits, nodes)
-- [ ] Read [First Habit](./first-habit.md) - build your first habit
-- [ ] Browse [Examples Index](../examples/index.md) - see what's possible
 
-### If you want to understand Habits in-depth
-- [ ] Read [Variables](../deep-dive/variables.md) - learn how to pass data between nodes
-- [ ] Read [Habit Schema](../deep-dive/habit-schema.md) - full schema reference
-- [ ] Read [Creating Habits](../deep-dive/creating.md) - advanced creation techniques
-- [ ] Read [Running Habits](../deep-dive/running.md) - different modes and options
-- [ ] Read [Logging](../deep-dive/logging.md) - debugging and monitoring
-
-### If you want to see working examples
-- [ ] Check [Mixed Framework Example](../examples/mixed.md) - combines multiple frameworks
-- [ ] Check [AI Cookbook Example](../examples/ai-cookbook.md) - AI-powered recipe generation
-- [ ] Check [Email Classification Example](../examples/email-classification.md) - email processing
-- [ ] Check [Minimal Blog Example](../examples/minimal-blog.md) - simple content management
-- [ ] Browse [Examples Directory](../examples/) - all example stacks with code
-
-### If you want to import from existing tools
-- [ ] Read [Importing & Converting](../deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.
-
-### If you want to distribute your habits
-- [ ] Read [Pack & Distribute](../deep-dive/pack-distribute.md) - export and distribution options
-- [ ] Follow export checklists in this document (Docker, Binary, Desktop, Mobile)
-
-### If you want to contribute or understand internals
-- [ ] Browse Development documentation in `docs/development/` folder
-- [ ] Browse Roadmap documentation in `docs/roadmap/` folder
-- [ ] Check [Stability](../stability.md) - API stability guarantees
-
-### If you have specific questions
-- [ ] Check [Security Documentation](../security/index.md) - security best practices
-- [ ] Browse Extra Reading in `docs/extra-reading/` folder
-- [ ] Browse Misc documentation in `docs/misc/` folder
-
----
-
-## �📋 Habits Stack Preparation Checklist
+## 📋 Habits Stack Preparation Checklist
 Do this before exporting your stack
 
 ### Basic Stack Requirements
@@ -76,12 +35,10 @@ Do this before exporting your stack
 - [ ] All habits tested locally in development
 - [ ] Environment variables loaded and working
 - [ ] Error handling tested (invalid inputs, missing keys)
-- [ ] Integration tests pass (full workflow end-to-end)
-- [ ] Performance acceptable for expected load
 
 ---
 
-## 🚀 Running Habits Locally
+## 🚀 Building & Running Habits Locally
 
 ### If you want to use Base Mode (GUI builder)
 - [ ] Run: `npx habits@latest base`
@@ -129,7 +86,7 @@ Do this before exporting your stack
 - [ ] Backend URL configured (where app will connect)
 - [ ] Choose framework: `tauri` (recommended) or `electron`
 - [ ] Choose platform: `windows`, `mac`, `linux`, or `all`
-- [ ] Check build tools: `curl http://localhost:3000/habits/base/api/export/binary/support`
+- [ ] Check build tools: `curl http://localhost:3000/habits/base/api/export/binary/support` or in UI
   - [ ] For Tauri: Rust, Cargo installed
   - [ ] For Electron: Electron Builder available
 - [ ] Export via Base UI → Export tab → Desktop
@@ -195,6 +152,51 @@ Do this before exporting your stack
 - [ ] Verify Java and Gradle versions are compatible
 - [ ] Check compatibility in support endpoint response
 - [ ] Install Android SDK build tools if missing
+
+---
+
+## Documentation Reading Order Checklist
+
+### If you are completely new to Habits
+- [ ] Read [Introduction](./introduction.md) - understand what Habits is
+- [ ] Read [Motivation](./motivation.md) - understand why Habits exists
+- [ ] Read [When to Use](./when-to-use.md) - see if Habits fits your use case
+- [ ] Read [Concepts](./concepts.md) - learn core concepts (stacks, habits, nodes)
+- [ ] Read [First Habit](./first-habit.md) - build your first habit
+- [ ] Browse [Examples Index](../examples/index.md) - see what's possible
+
+### If you want to understand Habits in-depth
+- [ ] Read [Variables](../deep-dive/variables.md) - learn how to pass data between nodes
+- [ ] Read [Habit Schema](../deep-dive/habit-schema.md) - full schema reference
+- [ ] Read [Creating Habits](../deep-dive/creating.md) - advanced creation techniques
+- [ ] Read [Running Habits](../deep-dive/running.md) - different modes and options
+- [ ] Read [Logging](../deep-dive/logging.md) - debugging and monitoring
+
+### If you want to see working examples
+- [ ] Check [Mixed Framework Example](../examples/mixed.md) - combines multiple frameworks
+- [ ] Check [AI Cookbook Example](../examples/ai-cookbook.md) - AI-powered recipe generation
+- [ ] Check [Email Classification Example](../examples/email-classification.md) - email processing
+- [ ] Check [Minimal Blog Example](../examples/minimal-blog.md) - simple content management
+- [ ] Browse [Examples Directory](../examples/) - all example stacks with code
+
+### If you want to import from existing tools
+- [ ] Read [Importing & Converting](../deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.
+
+### If you want to distribute your habits
+- [ ] Read [Pack & Distribute](../deep-dive/pack-distribute.md) - export and distribution options
+- [ ] Follow export checklists in this document (Docker, Binary, Desktop, Mobile)
+
+### If you want to contribute or understand internals
+- [ ] Browse Development documentation in `docs/development/` folder
+- [ ] Browse Roadmap documentation in `docs/roadmap/` folder
+- [ ] Check [Stability](../stability.md) - API stability guarantees
+
+### If you have specific questions
+- [ ] Check [Security Documentation](../security/index.md) - security best practices
+- [ ] Browse Extra Reading in `docs/extra-reading/` folder
+- [ ] Browse Misc documentation in `docs/misc/` folder
+
+
 
 ---
 

@@ -164,6 +164,8 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
           
           // Fit view after layout
           setTimeout(() => reactFlowInstance.current?.fitView(), 50);
+
+          autoLayoutAppliedRef.current = true;
         }
       }, 100);
 
