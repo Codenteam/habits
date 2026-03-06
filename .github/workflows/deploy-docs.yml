@@ -107,16 +107,17 @@ jobs:
           
 
 
-      - name: Copy example habit files for HabitViewer
+      - name: Copy all example YAML files for HabitViewer
         run: |
-          mkdir -p docs/public/examples/business-intersect-standalone
-          cp examples/business-intersect-standalone/habit.yaml docs/public/examples/business-intersect-standalone/
-          
-          mkdir -p docs/public/examples/mixed
-          cp examples/mixed/habit.yaml docs/public/examples/mixed/
-          
-          mkdir -p docs/public/examples/email-classification
-          cp examples/email-classification/habit.yaml docs/public/examples/email-classification/
+          # Copy all YAML files from examples/ to docs/public/examples/ maintaining directory structure
+          mkdir -p docs/public/examples
+          cd examples
+          find . -name "*.yaml" -o -name "*.yml" | while read file; do
+            dir=$(dirname "$file")
+            mkdir -p "../docs/public/examples/$dir"
+            cp "$file" "../docs/public/examples/$file"
+          done
+          cd ..
       
       - name: Copy install.sh to public
         run: |

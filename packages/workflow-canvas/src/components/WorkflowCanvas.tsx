@@ -95,6 +95,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
       onEdgesDelete,
       children,
       habitCode,
+      forceAutoLayout
     },
     ref
   ) => {
@@ -119,25 +120,34 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
     const autoLayoutAppliedRef = useRef(false);
     useEffect(() => {
       // Only run once and only if onNodesChange is provided (to apply layout)
-      if (!onNodesChange || autoLayoutAppliedRef.current) return;
+      if ( autoLayoutAppliedRef.current ) return;
       
       // Check if nodes need auto-layout:
       // - Any node is missing position entirely
       // - Any node has undefined/null x or y
       // - All nodes are at origin (0,0)
+
       const needsLayout = nodes.length > 0 && (
         nodes.some(n => !n.position || n.position.x === undefined || n.position.y === undefined) ||
         nodes.every(n => n.position && n.position.x === 0 && n.position.y === 0)
       );
-      if (!needsLayout) {
-        autoLayoutAppliedRef.current = true;
-        return;
-      }
 
       // Wait for nodes to render and get measured, then apply auto-layout
       const timeoutId = setTimeout(() => {
-        if (!autoLayoutAppliedRef.current && reactFlowInstance.current) {
+        // If there are no nodes, return
+        if(!nodes || !nodes?.length){
+          // Do nothing!
+          return;
+        }
+
+        if (!needsLayout && !forceAutoLayout) {
           autoLayoutAppliedRef.current = true;
+          return;
+        }
+
+        onAutoLayout!();
+        if (!autoLayoutAppliedRef.current && reactFlowInstance.current) {
+          
           
           // Get nodes with actual dimensions from ReactFlow
           const nodesWithDimensions = reactFlowInstance.current.getNodes() as WorkflowNode[];
@@ -149,7 +159,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
             type: 'position' as const,
             position: node.position,
           }));
-          
+          if(onNodesChange)
           onNodesChange(changes);
           
           // Fit view after layout

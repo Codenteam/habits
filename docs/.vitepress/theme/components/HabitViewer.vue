@@ -16,10 +16,11 @@ const baseUrl = computed(() => {
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
 
   // Use prod viewer always for now.
-  //return isDev 
-  //  ? 'http://localhost:3030/intersect/habits/viewer/'
-  //  : 'https://codenteam.com/intersect/habits/viewer/'
-  return 'https://codenteam.com/intersect/habits/viewer/';
+  // return 'https://codenteam.com/intersect/habits/viewer/';
+  return isDev 
+    ? 'http://localhost:3030/intersect/habits/viewer/'
+    : 'https://codenteam.com/intersect/habits/viewer/'
+  
 })
 
 // Resolve URL to absolute, including VitePress base path
@@ -49,7 +50,7 @@ const viewerUrl = computed(() => {
     params.set('habit', encodeURIComponent(props.content))
   }
   
-  if (props.hideControls) params.set('hideControls', 'true')
+  if (props.hideControls) params.set('hideControls', 'false')
   if (props.fitView !== false) params.set('fitView', 'true')
   return `${baseUrl.value}?${params.toString()}`
 })

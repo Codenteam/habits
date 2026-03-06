@@ -5,15 +5,15 @@
  * Add new validators to the `habitValidators` array to extend validation logic.
  */
 
-import type { Node, Edge } from 'reactflow';
+import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 
 // Habit type - minimal interface needed for validation
 export interface ValidatableHabit {
   id: string;
   name: string;
   description: string;
-  nodes: Node[];
-  edges: Edge[];
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
   output?: Record<string, string>;
 }
 

@@ -10,6 +10,20 @@ A simple blog/CMS backend powered by Habits with database bits. It's just a demo
 </div>
 
 <DownloadExample examplePath="minimal-blog" />
+<script setup>
+import createPostYaml from '../../examples/minimal-blog/habits/create-post.yaml?raw'
+import getPosts from '../../examples/minimal-blog/habits/get-posts.yaml?raw'
+import login from '../../examples/minimal-blog/habits/login.yaml?raw'
+</script>
+## Workflow Visualization
+Create Post Workflow 
+<HabitViewer :content="createPostYaml" :hide-controls="true" :fit-view="true" :height="500" />
+
+Get Posts Habit
+<HabitViewer :content="getPosts" :hide-controls="true" :fit-view="true" :height="500" />
+
+Login Habit
+<HabitViewer :content="login" :hide-controls="true" :fit-view="true" :height="500" />
 
 ## What It Does
 

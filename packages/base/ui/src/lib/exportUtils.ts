@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { ExportBundle, normalizePathsInObject } from '@ha-bits/core';
+import { ExportBundle, normalizePathsInObject, Habit } from '@ha-bits/core';
 
 // Helper to convert envVariables state to .env file format
 export function envVariablesToString(envVars: Record<string, { value: string; revealed?: boolean; comment?: string }>): string {
@@ -20,48 +20,6 @@ export function envVariablesToString(envVars: Record<string, { value: string; re
     lines.push(''); // Empty line between variables for readability
   }
   return lines.join('\n').trimEnd();
-}
-
-interface HabitNode {
-  id: string;
-  type: string;
-  position?: { x: number; y: number };
-  data: {
-    framework: 'n8n' | 'activepieces' | 'script' | 'bits';
-    module?: string;
-    label?: string;
-    source?: string;
-    operation?: string;
-    params?: Record<string, any>;
-    credentials?: Record<string, any>;
-    script?: {
-      type: string;
-      language: string;
-      content: string;
-    };
-    content?: string;
-    language?: string;
-  };
-}
-
-interface HabitEdge {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
-
-interface Habit {
-  id: string;
-  name: string;
-  description: string;
-  nodes: HabitNode[];
-  edges: HabitEdge[];
-  output?: Record<string, string>; // Habit-level output mappings
-  version: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface EnvVariable {
@@ -260,11 +218,15 @@ export function habitToYaml(habit: Habit): string {
   const cleanObj = JSON.parse(JSON.stringify(yamlObj));
 
   return yaml.dump(cleanObj, {
-    indent: 2,
+    indent: 1,
     lineWidth: -1,
     noRefs: true,
     quotingType: '"',
-    forceQuotes: true,
+    forceQuotes: false,
+    condenseFlow: true,
+    flowLevel: 0,
+    noArrayIndent: true
+
   });
 }
 

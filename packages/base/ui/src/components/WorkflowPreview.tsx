@@ -100,6 +100,7 @@ export const WorkflowPreview = forwardRef<WorkflowPreviewRef, WorkflowPreviewPro
         className={className}
         onNodeClick={onNodeClick}
         showActionButtons={true}
+        fitView={true}
       />
     );
   }

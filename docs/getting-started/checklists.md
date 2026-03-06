@@ -7,43 +7,43 @@ Actionable checklists for working with Habits stacks. Follow the path that match
 ## � Documentation Reading Order Checklist
 
 ### If you are completely new to Habits
-- [ ] Read [Introduction](./getting-started/introduction.md) - understand what Habits is
-- [ ] Read [Motivation](./getting-started/motivation.md) - understand why Habits exists
-- [ ] Read [When to Use](./getting-started/when-to-use.md) - see if Habits fits your use case
-- [ ] Read [Concepts](./getting-started/concepts.md) - learn core concepts (stacks, habits, nodes)
-- [ ] Read [First Habit](./getting-started/first-habit.md) - build your first habit
-- [ ] Browse [Examples Index](./examples/index.md) - see what's possible
+- [ ] Read [Introduction](./introduction.md) - understand what Habits is
+- [ ] Read [Motivation](./motivation.md) - understand why Habits exists
+- [ ] Read [When to Use](./when-to-use.md) - see if Habits fits your use case
+- [ ] Read [Concepts](./concepts.md) - learn core concepts (stacks, habits, nodes)
+- [ ] Read [First Habit](./first-habit.md) - build your first habit
+- [ ] Browse [Examples Index](../examples/index.md) - see what's possible
 
 ### If you want to understand Habits in-depth
-- [ ] Read [Variables](./deep-dive/variables.md) - learn how to pass data between nodes
-- [ ] Read [Habit Schema](./deep-dive/habit-schema.md) - full schema reference
-- [ ] Read [Creating Habits](./deep-dive/creating.md) - advanced creation techniques
-- [ ] Read [Running Habits](./deep-dive/running.md) - different modes and options
-- [ ] Read [Logging](./deep-dive/logging.md) - debugging and monitoring
+- [ ] Read [Variables](../deep-dive/variables.md) - learn how to pass data between nodes
+- [ ] Read [Habit Schema](../deep-dive/habit-schema.md) - full schema reference
+- [ ] Read [Creating Habits](../deep-dive/creating.md) - advanced creation techniques
+- [ ] Read [Running Habits](../deep-dive/running.md) - different modes and options
+- [ ] Read [Logging](../deep-dive/logging.md) - debugging and monitoring
 
 ### If you want to see working examples
-- [ ] Check [Mixed Framework Example](./examples/mixed.md) - combines multiple frameworks
-- [ ] Check [AI Cookbook Example](./examples/ai-cookbook.md) - AI-powered recipe generation
-- [ ] Check [Email Classification Example](./examples/email-classification.md) - email processing
-- [ ] Check [Minimal Blog Example](./examples/minimal-blog.md) - simple content management
+- [ ] Check [Mixed Framework Example](../examples/mixed.md) - combines multiple frameworks
+- [ ] Check [AI Cookbook Example](../examples/ai-cookbook.md) - AI-powered recipe generation
+- [ ] Check [Email Classification Example](../examples/email-classification.md) - email processing
+- [ ] Check [Minimal Blog Example](../examples/minimal-blog.md) - simple content management
 - [ ] Browse [Examples Directory](../examples/) - all example stacks with code
 
 ### If you want to import from existing tools
-- [ ] Read [Importing & Converting](./deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.
+- [ ] Read [Importing & Converting](../deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.
 
 ### If you want to distribute your habits
-- [ ] Read [Pack & Distribute](./deep-dive/pack-distribute.md) - export and distribution options
+- [ ] Read [Pack & Distribute](../deep-dive/pack-distribute.md) - export and distribution options
 - [ ] Follow export checklists in this document (Docker, Binary, Desktop, Mobile)
 
 ### If you want to contribute or understand internals
-- [ ] Read [Development Setup](./development/) - local development guide
-- [ ] Read [Roadmap](./roadmap/) - future plans and features
-- [ ] Check [Stability](./stability.md) - API stability guarantees
+- [ ] Browse Development documentation in `docs/development/` folder
+- [ ] Browse Roadmap documentation in `docs/roadmap/` folder
+- [ ] Check [Stability](../stability.md) - API stability guarantees
 
 ### If you have specific questions
-- [ ] Check [Security Documentation](./security/) - security best practices
-- [ ] Check [Extra Reading](./extra-reading/) - advanced topics
-- [ ] Browse [Misc Documentation](./misc/) - additional resources
+- [ ] Check [Security Documentation](../security/index.md) - security best practices
+- [ ] Browse Extra Reading in `docs/extra-reading/` folder
+- [ ] Browse Misc documentation in `docs/misc/` folder
 
 ---
 
@@ -113,14 +113,14 @@ Do this before exporting your stack
 ### If exporting Server-Side or Full-Stack (Recommended: Docker)
 - [ ] Stack tested locally and working
 - [ ] Export via Base UI → Export tab → Docker
-- [ ] Or POST to `/api/export/pack/docker` ([API docs](./deep-dive/api-reference.md))
+- [ ] Or POST to `/api/export/pack/docker`
 - [ ] Download `{stackName}-docker.zip`
 - [ ] Unzip and run: `docker-compose up -d`
 
 ### If exporting Server-Side (Alternative: Single Executable)
 - [ ] Stack tested locally and working
 - [ ] Export via Base UI → Export tab → Binary
-- [ ] Or POST to `/api/export/binary` ([API docs](./deep-dive/api-reference.md))
+- [ ] Or POST to `/api/export/binary`
 - [ ] Download binary for target platform
 - [ ] Run executable on target machine
 
@@ -202,5 +202,4 @@ Do this before exporting your stack
 
 - [Examples](../examples/) - Working example stacks
 - [Habits Schema](../schemas/habits.schema.yaml) - Complete schema reference
-- [API Reference](./deep-dive/api-reference.md) - REST API documentation
-- [Security Best Practices](./security/) - Security guidelines
+- [Security Best Practices](../security/) - Security guidelines

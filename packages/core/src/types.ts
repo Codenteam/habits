@@ -117,6 +117,94 @@ export interface FrontendWorkflow {
 export type Workflow = FrontendWorkflow;
 
 // ============================================================================
+// Visual Canvas Types - Structurally compatible with reactflow
+// ============================================================================
+
+/**
+ * Visual canvas node type - structurally compatible with reactflow's Node<T>
+ * Used by visual components for rendering workflow canvas
+ */
+export interface CanvasNode<T = any> {
+  id: string;
+  type?: string;
+  position: { x: number; y: number };
+  data: T;
+  selected?: boolean;
+  dragging?: boolean;
+}
+
+/**
+ * Visual canvas edge type - structurally compatible with reactflow's Edge
+ * Used by visual components for rendering workflow connections
+ */
+export interface CanvasEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+  type?: string;
+  animated?: boolean;
+  label?: any; // Compatible with ReactNode from reactflow
+}
+
+// ============================================================================
+// Export Format Types - Used for YAML/JSON serialization
+// ============================================================================
+
+/**
+ * Node format for habit YAML export files
+ * Simplified format for serialization and sharing
+ */
+export interface HabitNode {
+  id: string;
+  type: string;
+  position?: { x: number; y: number };
+  data: {
+    framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+    module?: string;
+    label?: string;
+    source?: string;
+    operation?: string;
+    params?: Record<string, any>;
+    credentials?: Record<string, any>;
+    script?: {
+      type: string;
+      language: string;
+      content: string;
+    };
+    content?: string;
+    language?: string;
+  };
+}
+
+/**
+ * Edge format for habit YAML export files
+ */
+export interface HabitEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}
+
+/**
+ * Complete habit definition for export/import
+ */
+export interface Habit {
+  id: string;
+  name: string;
+  description: string;
+  nodes: HabitNode[];
+  edges: HabitEdge[];
+  output?: Record<string, string>; // Habit-level output mappings
+  version: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
 // Flow Control Types - Allow nodes to control downstream execution
 // ============================================================================
 

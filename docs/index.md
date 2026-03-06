@@ -4,13 +4,12 @@ layout: habits-home
 ## See Base in action
 <ClientOnly>
   <iframe 
-    width="700" 
-    height="500" 
+    height="600" 
     src="https://www.youtube.com/embed/uhim-Y7b1vA" 
     title="YouTube video player" 
     frameborder="0" 
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    style="margin: auto;"
+    style="margin: auto; max-width: 80vw; width: 900px;"
     allowfullscreen>
   </iframe>
 </ClientOnly>

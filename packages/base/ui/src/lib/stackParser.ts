@@ -1,4 +1,4 @@
-import type { Node, Edge } from 'reactflow';
+import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 import * as yaml from 'js-yaml';
 
 // Types for stack configuration
@@ -59,8 +59,8 @@ export interface ParsedHabit {
   id: string;
   name: string;
   description: string;
-  nodes: Node[];
-  edges: Edge[];
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
   frontendHtml?: string;
   output?: Record<string, string>; // Habit-level output mappings
   version: string;
@@ -195,7 +195,7 @@ export function convertHabitYamlToHabit(habitYaml: HabitYaml): ParsedHabit {
   const now = new Date().toISOString();
   
   // Convert nodes with auto-layout if positions not specified
-  const nodes: Node[] = habitYaml.nodes.map((node, index) => {
+  const nodes: CanvasNode[] = habitYaml.nodes.map((node, index) => {
     // For script nodes, extract script info from params
     const params = node.data.params || {};
     const scriptContent = typeof params.script === 'string' ? params.script : undefined;
@@ -220,7 +220,7 @@ export function convertHabitYamlToHabit(habitYaml: HabitYaml): ParsedHabit {
   });
   
   // Convert edges
-  const edges: Edge[] = habitYaml.edges.map((edge, index) => ({
+  const edges: CanvasEdge[] = habitYaml.edges.map((edge, index) => ({
     id: `edge-${edge.source}-${edge.target}-${index}`,
     source: edge.source,
     target: edge.target,

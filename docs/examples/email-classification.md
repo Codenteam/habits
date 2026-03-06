@@ -6,9 +6,6 @@ This example is a daemon only and does not include a frontend.
 
 Smart email routing with conditional branching and dual input modes.
 
-<script setup>
-import emailHabitYaml from '../../examples/email-classification/habit.yaml?raw'
-</script>
 
 <DownloadExample examplePath="email-classification" />
 
@@ -29,7 +26,7 @@ Demonstrates advanced patterns:
 
 ## Workflow Visualization
 
-<HabitViewer :content="emailHabitYaml" :hide-controls="true" :fit-view="true" :height="600" />
+<HabitViewer url="https://codenteam.com/intersect/habits/examples/email-classificaiton/habit.yaml" :hide-controls="true" :fit-view="true" :height="600" />
 
 ## Quick Start
 

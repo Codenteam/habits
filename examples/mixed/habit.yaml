@@ -4,9 +4,6 @@ name: text-to-voice-to-s3
 nodes:
   - id: generate-text
     type: activepieces
-    position:
-      x: 125
-      'y': 50
     data:
       framework: activepieces
       module: '@activepieces/piece-openai'
@@ -19,9 +16,6 @@ nodes:
         model: gpt-4o-mini
   - id: text-to-speech
     type: n8n
-    position:
-      x: 125
-      'y': 1168
     data:
       framework: n8n
       module: n8n-nodes-elevenlabs
@@ -36,16 +30,12 @@ nodes:
         voice_id: 21m00Tcm4TlvDq8ikWAM
   - id: save-locally
     type: script
-    position:
-      x: 0
-      'y': 1666
     data:
       label: Save Audio Locally
       framework: script
       source: inline
       params:
-        audio: '{{text-to-speech.result.0..base64}}'
-        type: script
+        audio: '{{text-to-speech.result.0.base64}}'
         language: deno
         script: |
           export async function main(audio: string | ArrayBuffer) {

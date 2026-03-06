@@ -715,7 +715,6 @@ export function FrontendBuilderVanilla({
       }
       let currentOutputFromAI = '';
       let lastValue = '';
-      debugger;
       const interval = setInterval(() => {
         if (currentOutputFromAI && currentOutputFromAI !== lastValue) {
           handleAIChange(currentOutputFromAI, true);
@@ -740,7 +739,6 @@ export function FrontendBuilderVanilla({
           { tenantUrl: finalTenantUrl, apiKey: finalApiKey, model: selectedModel, provider: 'auto' },
           hostingResult?.isHosted ?? false
         );
-        debugger;
         if (response.html) {
           handleAIChange(response.html, false); // false = complete
           setMessage({ type: 'success', text: 'Generated successfully!' });
