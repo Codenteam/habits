@@ -94,8 +94,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
       onConnect,
       onEdgesDelete,
       children,
-      habitCode,
-      forceAutoLayout
+      habitCode
     },
     ref
   ) => {
@@ -135,21 +134,18 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
       if ( autoLayoutAppliedRef.current ) return;
       
           // Get nodes with actual dimensions from ReactFlow instance if available
-    const instance = reactFlowInstance.current;
-    const nodesWithDimensions = instance?.getNodes() as WorkflowNode[] | undefined;
+    // const instance = reactFlowInstance.current;
+    // const nodesWithDimensions = instance?.getNodes() as WorkflowNode[] | undefined;
       // Check if nodes need auto-layout:
       // - Any node is missing position entirely
       // - Any node has undefined/null x or y
       // - All nodes are at origin (0,0)
 
-      const needsLayout = nodes.length > 0 && (
-        nodes.some(n => !n.position || n.position.x === undefined || n.position.y === undefined) ||
-        nodes.every(n => n.position && n.position.x === 0 && n.position.y === 0)
-      );
-// Can layout if ALL nodes has width and height
-            const canLayout = nodes.length > 0 && (
-            nodes.every(n => n.width !== undefined && n.height !== undefined)
-      );
+      // const needsLayout = nodes.length > 0 && (
+      //   nodes.some(n => !n.position || n.position.x === undefined || n.position.y === undefined) ||
+      //   nodes.every(n => n.position && n.position.x === 0 && n.position.y === 0)
+      // );
+
 
       // Wait for nodes to render and get measured, then apply auto-layout
 

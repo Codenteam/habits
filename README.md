@@ -50,6 +50,9 @@ pnpm nx dev @ha-bits/base-ui
 pnpm nx dev @ha-bits/base
 ```
 
+> **Note:** On first startup, Habits will clone required bits and modules. This may take a minute, please wait until initialization completes before running workflows.
+
+
 ### Create Your First Habit
 
 Create a project folder with the following structure:
