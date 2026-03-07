@@ -290,7 +290,6 @@ If changes aren't reflected:
 
 - **[Examples Directory](../examples/)** - Working example stacks
 - **[Checklists](./checklists.md)** - Step-by-step checklists for common tasks
-- **[Deep Dive Documentation](../deep-dive/)** - Advanced topics and internals
 
 ---
 
