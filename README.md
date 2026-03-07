@@ -12,6 +12,26 @@ Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-App
   <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
 </p>
 
+## Table of Contents
+
+- [What is Habits?](#what-is-habits)
+- [Features](#features)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Create Your First Habit](#create-your-first-habit)
+  - [Run the Server](#run-the-server)
+- [Architecture](#architecture)
+- [Examples](#examples)
+- [Screenshots](#screenshots)
+- [When to Use Habits](#when-to-use-habits)
+- [Enabling Features](#enabling-features)
+- [License Considerations](#license-considerations)
+- [Documentation](#documentation)
+- [Development](#development)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## What is Habits?
 
 Habits is a **lightweight workflows creator, runtime, and packer**, designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
