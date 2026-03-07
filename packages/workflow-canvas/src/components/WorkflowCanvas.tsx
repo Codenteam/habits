@@ -103,6 +103,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showYamlModal, setShowYamlModal] = useState(false);
     const [showCodeModal, setShowCodeModal] = useState(false);
+    const [showAutoLayoutTooltip, setShowAutoLayoutTooltip] = useState(false);
 
     // Listen for fullscreen changes
     useEffect(() => {
@@ -115,13 +116,27 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
       };
     }, []);
 
+    // Show auto-layout tooltip for 5 seconds on mount
+    useEffect(() => {
+      if (onAutoLayout) {
+        setShowAutoLayoutTooltip(true);
+        const timer = setTimeout(() => {
+          setShowAutoLayoutTooltip(false);
+        }, 5000);
+        return () => clearTimeout(timer);
+      }
+    }, [onAutoLayout]);
+
     // Auto-layout nodes after timeout if they have no positions
     // This allows nodes to render first so we can get their real dimensions
     const autoLayoutAppliedRef = useRef(false);
-    useEffect(() => {
+    function fitStuff(){
       // Only run once and only if onNodesChange is provided (to apply layout)
       if ( autoLayoutAppliedRef.current ) return;
       
+          // Get nodes with actual dimensions from ReactFlow instance if available
+    const instance = reactFlowInstance.current;
+    const nodesWithDimensions = instance?.getNodes() as WorkflowNode[] | undefined;
       // Check if nodes need auto-layout:
       // - Any node is missing position entirely
       // - Any node has undefined/null x or y
@@ -131,20 +146,22 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
         nodes.some(n => !n.position || n.position.x === undefined || n.position.y === undefined) ||
         nodes.every(n => n.position && n.position.x === 0 && n.position.y === 0)
       );
+// Can layout if ALL nodes has width and height
+            const canLayout = nodes.length > 0 && (
+            nodes.every(n => n.width !== undefined && n.height !== undefined)
+      );
 
       // Wait for nodes to render and get measured, then apply auto-layout
-      const timeoutId = setTimeout(() => {
+
         // If there are no nodes, return
-        if(!nodes || !nodes?.length){
+        if(!nodes || !nodes?.length ){
           // Do nothing!
           return;
         }
 
-        if (!needsLayout && !forceAutoLayout) {
-          autoLayoutAppliedRef.current = true;
-          return;
-        }
+        // If no width and height
 
+        if(onAutoLayout)
         onAutoLayout!();
         if (!autoLayoutAppliedRef.current && reactFlowInstance.current) {
           
@@ -167,10 +184,22 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
 
           autoLayoutAppliedRef.current = true;
         }
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
+      }
+    
+    useEffect(() => {
+      // console.log('something changed, fitting')
+        // fitStuff();
     }, [nodes, edges, onNodesChange]);
+
+    // Handle window resize
+    useEffect(() => {
+      const handleResize = () => {
+        fitStuff();
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Toggle fullscreen
     const toggleFullscreen = useCallback(() => {
@@ -285,6 +314,13 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
           onEdgesDelete={editable ? handleEdgesDelete : undefined}
           onInit={(instance) => {
             reactFlowInstance.current = instance;
+            console.log('oninit, fitting');
+            fitStuff();
+            setTimeout(()=>{
+              
+            }, 2000)
+            
+
           }}
           fitView={fitView}
           minZoom={0.1}
@@ -349,13 +385,23 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
               </button>
             )}
             {onAutoLayout && (
-              <button
-                onClick={onAutoLayout}
-                className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg"
-                title="Auto-arrange nodes"
-              >
-                <LayoutGrid size={20} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={onAutoLayout}
+                  className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg"
+                  title="Auto-arrange nodes"
+                >
+                  <LayoutGrid size={20} />
+                </button>
+                {showAutoLayoutTooltip && (
+                  <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg shadow-xl whitespace-nowrap text-sm text-slate-200 pointer-events-none">
+                    Auto-arrange nodes
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900" style={{ marginTop: '-1px' }}>
+                      <div className="absolute left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-600" style={{ top: '-11px' }}></div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
             <button
               onClick={handleFitView}

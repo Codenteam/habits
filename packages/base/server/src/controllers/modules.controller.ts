@@ -154,12 +154,15 @@ export class ModulesController {
           repository: moduleName,
         };
       }
-
+      const cloned = isModuleCloned(moduleDefinition)
+      const built = isModuleBuilt(moduleDefinition);
       const available =
-        isModuleCloned(moduleDefinition) && isModuleBuilt(moduleDefinition);
+         cloned && built;
 
       res.json(
         createResponse(true, {
+          cloned, 
+          built,
           available,
           module: moduleDefinition,
         }),

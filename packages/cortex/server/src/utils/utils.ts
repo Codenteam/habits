@@ -213,16 +213,15 @@ export function getLocalModulePath(framework: string, moduleName: string): strin
   }
   
   // For bits framework, also check bits-creator/nodes/bits/@ha-bits/ path
-  if (framework === 'bits') {
-    // Try relative to cwd() - bits-creator path
+  if (framework === 'bits') {    // Try relative to cwd() - bits-creator path
     const bitsCreatorPath = path.join(process.cwd(), 'bits-creator', 'nodes', 'bits', '@ha-bits', strippedModuleName);
+    
     if (fs.existsSync(bitsCreatorPath)) {
       return bitsCreatorPath;
     }
-    
     // Search up from __dirname for bits-creator path
     let currentDir = __dirname;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i++) {   
       const bitsPath = path.join(currentDir, 'bits-creator', 'nodes', 'bits', '@ha-bits', strippedModuleName);
       if (fs.existsSync(bitsPath)) {
         return bitsPath;

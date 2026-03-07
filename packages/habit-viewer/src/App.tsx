@@ -295,6 +295,8 @@ function App() {
         // Apply layout algorithm if needed
         if (needsLayout) {
           nodes = applyDagreLayout(nodes, edges);
+
+          setTimeout(() => canvasRef.current?.fitView(), 200)
         }
 
         // Apply compact mode - collapse all nodes by default
@@ -325,19 +327,6 @@ function App() {
 
     loadHabit();
   }, [params.habit, params.url]);
-
-  // Fit view after content loads - nodes are pre-laid out, just need to wait for render
-  useEffect(() => {
-    if (!state.loading && state.nodes.length > 0 && params.fitView) {
-      // Call fitView after ReactFlow renders nodes with positions
-      // Multiple calls ensure it works even if nodes take time to measure
-      const timeoutIds = [
-        setTimeout(() => canvasRef.current?.fitView(), 200),
-        setTimeout(() => canvasRef.current?.fitView(), 500),
-      ];
-      return () => timeoutIds.forEach(id => clearTimeout(id));
-    }
-  }, [state.loading, state.nodes.length, params.fitView]);
 
   // Handle export after render
   useEffect(() => {

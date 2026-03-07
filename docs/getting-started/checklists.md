@@ -41,6 +41,7 @@ Do this before exporting your stack
 ## 🚀 Building & Running Habits Locally
 
 ### If you want to use Base Mode (GUI builder)
+- [ ] Create minimal .env to allow serving and installing
 - [ ] Run: `npx habits@latest base`
 - [ ] Access UI at `http://localhost:3000/habits/base/`
 

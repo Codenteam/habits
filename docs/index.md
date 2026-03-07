@@ -22,7 +22,7 @@ layout: habits-home
 === Architecture
 ### Steps to build a habit
 
-<!--@include: ./diagrams/components-horizontal.md-->
+<!--@include: ./diagrams/components.md-->
 === Create
 Install habits if not yet installed:
 ```bash

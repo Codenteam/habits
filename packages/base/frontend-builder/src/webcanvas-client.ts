@@ -318,7 +318,6 @@ function buildMultiHabitContext(context: HabitContext): string {
   
   return contextParts.join('\n\n');
 }
-
 /**
  * Generate example data from OpenAPI schema
  */
@@ -433,6 +432,99 @@ export function buildWebCanvasUrl(config: WebCanvasConfig, isHosted: boolean): s
 }
 
 /**
+ * Generate frontend HTML using AI - directly via OpenAI API
+ */
+async function generateWithDirectOpenAI(
+  request: AIGenerationRequest,
+  config: WebCanvasConfig,
+  enhancedPrompt: string
+): Promise<AIGenerationResponse> {
+  const apiKey = config.apiKey || request.apiToken;
+  if (!apiKey) {
+    throw new Error('OpenAI API key is required for direct mode');
+  }
+
+  const model = request.model || config.model || 'gpt-4.1-mini';
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a senior product designer and front-end engineer. Generate clean, professional HTML code based on user requirements.'
+        },
+        {
+          role: 'user',
+          content: enhancedPrompt
+        }
+      ],
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI API failed: ${response.statusText}. ${errorText}`);
+  }
+
+  // Handle streaming response
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let accumulatedContent = '';
+
+  if (reader) {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          if (request.onProgress) {
+            const extractedHtml = extractHtmlFromResponse(accumulatedContent);
+            request.onProgress(extractedHtml, true);
+          }
+          break;
+        }
+        
+        const chunk = decoder.decode(value, { stream: true });
+        // Parse SSE format: data: {...}\n\n
+        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data:'));
+        
+        for (const line of lines) {
+          const data = line.replace(/^data: /, '').trim();
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedContent += content;
+              
+              if (request.onProgress) {
+                const extractedHtml = extractHtmlFromResponse(accumulatedContent);
+                request.onProgress(extractedHtml, false);
+              }
+            }
+          } catch (e) {
+            // Skip invalid JSON
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  
+  const extractedHtml = extractHtmlFromResponse(accumulatedContent);
+  return { html: extractedHtml };
+}
+
+/**
  * Generate frontend HTML using AI
  */
 export async function generateWithAI(
@@ -440,9 +532,6 @@ export async function generateWithAI(
   config: WebCanvasConfig,
   isHosted: boolean
 ): Promise<AIGenerationResponse> {
-
-
-  const url = buildWebCanvasUrl(config, isHosted);
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -469,7 +558,7 @@ ${request.prompt}`;
   if (request.context) {
     // Enrich habit context with OpenAPI specs if needed (generate them now)
     const enrichedContext = await enrichHabitContextWithOpenAPI(request.context as HabitContext);
-    const contextContent = buildMultiHabitContext(enrichedContext);
+    const contextContent = buildMultiHabitContext(enrichedContext);;
     
     if (contextContent.trim()) {
       enhancedPrompt = `${UI_GENERATION_RULES}
@@ -504,7 +593,7 @@ Remember: this must be a real website UI, NOT an API testing tool. The user shou
     }
   }
 
-    // Return mock HTML if mock mode is enabled
+  // Return mock HTML if mock mode is enabled
   const forceMock = false;
   if (forceMock) {
     const mockHtml = `<!DOCTYPE html>
@@ -522,6 +611,14 @@ Test HTML Date: ${new Date().toISOString()}
     console.log(enhancedPrompt);
     return { html: mockHtml };
   }
+
+  // Use direct OpenAI mode if configured
+  if (config.useDirectOpenAI) {
+    return generateWithDirectOpenAI(request, config, enhancedPrompt);
+  }
+
+  const url = buildWebCanvasUrl(config, isHosted);
+  // WebCanvas API mode
   const response = await fetch(url, {
     method: 'POST',
     headers,

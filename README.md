@@ -14,7 +14,7 @@ Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-App
 
 ## What is Habits?
 
-Habits is a **lightweight workflows creator, runtime, and packer** designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
+Habits is a **lightweight workflows creator, runtime, and packer**, designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
 
 | Component | Role | Description |
 |-----------|------|-------------|
@@ -43,6 +43,11 @@ curl -o- https://codenteam.com/intersect/habits/install.sh | bash
 
 # Or using npx (no installation needed)
 npx habits@latest
+
+# Or if cloned
+pnpm install
+pnpm nx dev @ha-bits/base-ui 
+pnpm nx dev @ha-bits/base
 ```
 
 ### Create Your First Habit
@@ -93,13 +98,6 @@ Habits is composed of two main components:
 │  • Frontend builder │  • Multi-framework support    │
 │  • Template library │  • Dynamic module loading     │
 └─────────────────────┴───────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   ┌─────────┐       ┌──────────┐      ┌──────────┐
-   │  Bits   │       │ActivePcs │      │   n8n    │
-   │ Scripts │       │ Pieces   │      │  Nodes   │
-   └─────────┘       └──────────┘      └──────────┘
 ```
 
 ## Examples
