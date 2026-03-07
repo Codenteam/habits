@@ -188,6 +188,9 @@ export interface WorkflowCanvasProps {
   onNodesChange?: (changes: NodeChange[]) => void;
   /** Auto-layout callback (called when user clicks arrange button) */
   onAutoLayout?: () => void;
+
+  /** Force ELK even if x,y exist*/
+  forceAutoLayout?: boolean;
   /** Custom node types to override BaseNode */
   nodeTypes?: Record<string, React.ComponentType<any>>;
   /** Raw YAML content of the habit (for code view modal) */

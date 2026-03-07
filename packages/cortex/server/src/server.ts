@@ -6,6 +6,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as yaml from 'yaml';
 import {
   Workflow,
   WorkflowExecution,
@@ -15,6 +16,8 @@ import {
   ExecutionResponse,
   StreamNodeEvent,
   StreamExecutionEvent,
+  WorkflowConfig,
+  WebhookPayload,
 } from '@habits/shared/types';
 import {
   detectWorkflowType,
@@ -24,6 +27,7 @@ import {
   getWorkflowTypeName,
 } from '@ha-bits/core';
 import { WorkflowExecutor } from './WorkflowExecutor';
+import { IWebhookHandler, WebhookTriggerServer } from './WebhookTriggerServer';
 import { setupOpenAPIRoutes } from './openapi';
 import { setupManageRoutes, ManageModule } from './manage';
 
@@ -88,6 +92,8 @@ class WorkflowExecutorServer {
     resolve: (payload: any) => void;
     reject: (error: Error) => void;
   }> = new Map();
+  private webhookServer: WebhookTriggerServer | null = null;
+  private webhookServerUrl: string | null = null;
 
   constructor() {
     this.app = express();
@@ -96,12 +102,74 @@ class WorkflowExecutorServer {
   }
 
   /**
-   * Load workflows from config.json file
+   * Load workflows from config file (YAML or JSON)
+   * Parses config, loads workflow files, and initializes the executor
    */
   async loadConfig(configPath: string): Promise<void> {
+    const absolutePath = path.resolve(configPath);
     this.configPath = configPath;
-    this.configDir = path.dirname(path.resolve(configPath));
-    await this.executor.loadConfig(configPath);
+    this.configDir = path.dirname(absolutePath);
+
+    if (!fs.existsSync(absolutePath)) {
+      throw new Error(`Config file not found: ${absolutePath}`);
+    }
+
+    // Parse .env file if it exists
+    let envVars: Record<string, string> | undefined;
+    const envPath = path.join(this.configDir, '.env');
+    if (fs.existsSync(envPath)) {
+      console.log(`\n🔐 Loading environment variables from: ${envPath}`);
+      // Parse .env file manually to get as Record
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envVars = {};
+      for (const line of envContent.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const eqIndex = trimmed.indexOf('=');
+          if (eqIndex > 0) {
+            const key = trimmed.slice(0, eqIndex).trim();
+            let value = trimmed.slice(eqIndex + 1).trim();
+            // Remove surrounding quotes if present
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              value = value.slice(1, -1);
+            }
+            envVars[key] = value;
+          }
+        }
+      }
+    }
+
+    // Parse config file - support both JSON and YAML formats
+    const fileContent = fs.readFileSync(absolutePath, 'utf8');
+    const config = yaml.parse(fileContent) as WorkflowConfig;
+
+    // Load workflow files into a map
+    const workflows = new Map<string, Workflow>();
+    for (const workflowRef of config.workflows) {
+      if (workflowRef.enabled === false) continue;
+
+      const workflowPath = path.isAbsolute(workflowRef.path)
+        ? workflowRef.path
+        : path.resolve(this.configDir, workflowRef.path);
+
+      if (!fs.existsSync(workflowPath)) {
+        console.error(`   ❌ Workflow file not found: ${workflowPath}`);
+        continue;
+      }
+
+      try {
+        const workflowContent = fs.readFileSync(workflowPath, 'utf8');
+        const workflow = yaml.parse(workflowContent) as Workflow;
+        const workflowId = workflowRef.id || workflow.id || workflowRef.path;
+        workflows.set(workflowId, workflow);
+      } catch (error: any) {
+        console.error(`   ❌ Failed to parse workflow file ${workflowPath}: ${error.message}`);
+      }
+    }
+
+    // Initialize the executor with loaded data
+    await this.executor.initFromData({ config, workflows, env: envVars });
   }
 
   /**
@@ -111,13 +179,54 @@ class WorkflowExecutorServer {
    * @param options.env - Optional environment variables to set
    */
   async initFromData(options: {
-    config: import('@habits/shared/types').WorkflowConfig;
-    workflows: Map<string, import('@habits/shared/types').Workflow> | Record<string, import('@habits/shared/types').Workflow>;
+    config: WorkflowConfig;
+    workflows: Map<string, Workflow> | Record<string, Workflow>;
     env?: Record<string, string>;
   }): Promise<void> {
     this.configPath = null;
     this.configDir = null;
     await this.executor.initFromData(options);
+  }
+
+  /**
+   * Get a webhook handler that uses this server's pending webhooks map.
+   * This implements IWebhookHandler for use with the workflow executor.
+   */
+  private getWebhookHandler(): IWebhookHandler {
+    return {
+      waitForWebhook: (nodeId: string, timeout: number = 300000, workflowId?: string): Promise<WebhookPayload> => {
+        const webhookKey = workflowId ? `${workflowId}:${nodeId}` : nodeId;
+        
+        return new Promise((resolve, reject) => {
+          console.log(`🔔 Registering webhook listener for: ${webhookKey}`);
+          
+          // Set timeout for webhook
+          const timeoutId = setTimeout(() => {
+            this.pendingWebhooks.delete(webhookKey);
+            reject(new Error(`Webhook timeout: No webhook received for ${webhookKey} within ${timeout}ms`));
+          }, timeout);
+
+          this.pendingWebhooks.set(webhookKey, {
+            resolve: (payload) => {
+              clearTimeout(timeoutId);
+              resolve(payload);
+            },
+            reject: (error) => {
+              clearTimeout(timeoutId);
+              reject(error);
+            },
+          });
+        });
+      },
+      cancelWebhook: (nodeId: string, workflowId?: string): void => {
+        const webhookKey = workflowId ? `${workflowId}:${nodeId}` : nodeId;
+        const pending = this.pendingWebhooks.get(webhookKey);
+        if (pending) {
+          pending.reject(new Error('Webhook cancelled'));
+          this.pendingWebhooks.delete(webhookKey);
+        }
+      },
+    };
   }
 
   /**
@@ -429,8 +538,7 @@ class WorkflowExecutorServer {
           };
 
           const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
-            webhookPort: config?.server?.webhookPort,
-            webhookHost: config?.server?.webhookHost,
+            webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
             onStream: streamCallback,
@@ -448,8 +556,7 @@ class WorkflowExecutorServer {
         } else {
           // Non-streaming mode - return complete JSON response
           const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
-            webhookPort: config?.server?.webhookPort,
-            webhookHost: config?.server?.webhookHost,
+            webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
           });
@@ -731,6 +838,82 @@ class WorkflowExecutorServer {
   }
 }
 
+// ============================================================================
+// Helper: Load config from file path for CLI use
+// ============================================================================
+
+/**
+ * Load workflow configuration from a file path (YAML or JSON).
+ * Returns the parsed config, loaded workflows, and environment variables.
+ */
+async function loadConfigFromFile(configPath: string): Promise<{
+  config: WorkflowConfig;
+  workflows: Map<string, Workflow>;
+  env?: Record<string, string>;
+  configDir: string;
+}> {
+  const absolutePath = path.resolve(configPath);
+  const configDir = path.dirname(absolutePath);
+
+  if (!fs.existsSync(absolutePath)) {
+    throw new Error(`Config file not found: ${absolutePath}`);
+  }
+
+  // Parse .env file if it exists
+  let env: Record<string, string> | undefined;
+  const envPath = path.join(configDir, '.env');
+  if (fs.existsSync(envPath)) {
+    console.log(`\n🔐 Loading environment variables from: ${envPath}`);
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    env = {};
+    for (const line of envContent.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const eqIndex = trimmed.indexOf('=');
+        if (eqIndex > 0) {
+          const key = trimmed.slice(0, eqIndex).trim();
+          let value = trimmed.slice(eqIndex + 1).trim();
+          if ((value.startsWith('"') && value.endsWith('"')) || 
+              (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.slice(1, -1);
+          }
+          env[key] = value;
+        }
+      }
+    }
+  }
+
+  // Parse config file
+  const fileContent = fs.readFileSync(absolutePath, 'utf8');
+  const config = yaml.parse(fileContent) as WorkflowConfig;
+
+  // Load workflow files
+  const workflows = new Map<string, Workflow>();
+  for (const workflowRef of config.workflows) {
+    if (workflowRef.enabled === false) continue;
+
+    const workflowPath = path.isAbsolute(workflowRef.path)
+      ? workflowRef.path
+      : path.resolve(configDir, workflowRef.path);
+
+    if (!fs.existsSync(workflowPath)) {
+      console.error(`   ❌ Workflow file not found: ${workflowPath}`);
+      continue;
+    }
+
+    try {
+      const workflowContent = fs.readFileSync(workflowPath, 'utf8');
+      const workflow = yaml.parse(workflowContent) as Workflow;
+      const workflowId = workflowRef.id || workflow.id || workflowRef.path;
+      workflows.set(workflowId, workflow);
+    } catch (error: any) {
+      console.error(`   ❌ Failed to parse workflow file ${workflowPath}: ${error.message}`);
+    }
+  }
+
+  return { config, workflows, env, configDir };
+}
+
 // CLI Interface
 async function runCLI() {
   const argv = await yargs(hideBin(process.argv))
@@ -928,7 +1111,9 @@ async function runCLI() {
       }
       
       try {
-        await executor.loadConfig(configPath);
+        // Load config from file and initialize executor
+        const { config, workflows, env } = await loadConfigFromFile(configPath);
+        await executor.initFromData({ config, workflows, env });
         
         if (executeAll) {
           // Execute all workflows from config

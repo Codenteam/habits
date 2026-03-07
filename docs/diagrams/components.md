@@ -23,7 +23,6 @@ sources: Sources {
 }
 
 types: Node Types {
-  link: ../deep-dive/node-types
   style.fill: "#1a365d"
   style.stroke: "#63b3ed"
   
@@ -45,17 +44,19 @@ types: Node Types {
 }
 
 definition: Create Automation {
-  link: ../deep-dive/creating
+  link: /intersect/habits/deep-dive/creating
   style.fill: "#744210"
   style.stroke: "#f6ad55"
   
-  m1: WaC / AaC {
+  m1: Habits as Code {
+    link: /intersect/habits/getting-started/first-habit
     shape: hexagon
     style.fill: "#975a16"
     style.stroke: "#fbd38d"
     style.font-color: "#fefcbf"
   }
   m2: Base UI {
+    link: /intersect/habits/getting-started/first-habit-using-base
     shape: hexagon
     style.fill: "#975a16"
     style.stroke: "#fbd38d"
@@ -70,7 +71,7 @@ definition: Create Automation {
 }
 
 habits: HABITS Cortex {
-  link: ../deep-dive/running
+  link: /intersect/habits/deep-dive/running
   style.fill: "#276749"
   style.stroke: "#68d391"
   style.font-color: "#c6f6d5"
@@ -78,30 +79,26 @@ habits: HABITS Cortex {
 }
 
 deploy: Deployment Targets {
-  link: ../deep-dive/running
+link: /intersect/habits/deep-dive/running
   style.fill: "#553c9a"
   style.stroke: "#b794f4"
   
   d1: Server {
-    link: ../deep-dive/running#server
     style.fill: "#6b46c1"
     style.stroke: "#d6bcfa"
     style.font-color: "#e9d8fd"
   }
   d2: Serverless {
-    link: ../deep-dive/running#serverless
     style.fill: "#6b46c1"
     style.stroke: "#d6bcfa"
     style.font-color: "#e9d8fd"
   }
   d3: Desktop {
-    link: ../deep-dive/running#desktop
     style.fill: "#6b46c1"
     style.stroke: "#d6bcfa"
     style.font-color: "#e9d8fd"
   }
   d4: Mobile {
-    link: ../deep-dive/running#mobile
     style.fill: "#6b46c1"
     style.stroke: "#d6bcfa"
     style.font-color: "#e9d8fd"

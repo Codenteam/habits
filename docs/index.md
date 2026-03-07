@@ -4,13 +4,12 @@ layout: habits-home
 ## See Base in action
 <ClientOnly>
   <iframe 
-    width="700" 
-    height="500" 
+    height="600" 
     src="https://www.youtube.com/embed/uhim-Y7b1vA" 
     title="YouTube video player" 
     frameborder="0" 
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    style="margin: auto;"
+    style="margin: auto; max-width: 80vw; width: 900px;"
     allowfullscreen>
   </iframe>
 </ClientOnly>
@@ -23,7 +22,7 @@ layout: habits-home
 === Architecture
 ### Steps to build a habit
 
-<!--@include: ./diagrams/components-horizontal.md-->
+<!--@include: ./diagrams/components.md-->
 === Create
 Install habits if not yet installed:
 ```bash
@@ -110,6 +109,7 @@ const screenshots = [
   { img: '/images/swagger.webp', caption: 'OpenAPI Swagger', link: '/deep-dive/running#swagger-screenshot' },
   { img: '/images/mixed-frontend.webp', caption: 'Text to Audio Example', link: '/examples/mixed#text-to-audio-screenshot' },
   { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/examples/minimal-blog#minimal-blog-screenshot' },
+  { img: '/images/marketing-campaign.webp', caption: 'Marketing Campaign', link: '/examples/marketing-campaign' },
 ]
 </script>
 

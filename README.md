@@ -3,19 +3,22 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)
 
-A lightweight automation workflow engine with visual builder, runtime executor, and multi-framework support.
+Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-Apps. 
 
 <p align="center">
   <img src="docs/public/images/base.webp" alt="Habits Base - Visual Builder" width="800"/>
 </p>
+<p align="center">
+  <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
+</p>
 
 ## What is Habits?
 
-Habits is a **lightweight automation creator, runtime, and packer** designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
+Habits is a **lightweight workflows creator, runtime, and packer**, designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product.
 
 | Component | Role | Description |
 |-----------|------|-------------|
-| **Habit** | Workflow | A complete automation routine composed of connected nodes |
+| **Habit** | Workflow | A complete routine composed of connected nodes |
 | **Stack** | Workflow Set | A collection of habits executed together |
 | **Bit** | Node | A single step: a bit, ActivePieces piece, n8n node, or script |
 | **Base** | Builder | Visual workflow designer for constructing habits |
@@ -40,7 +43,15 @@ curl -o- https://codenteam.com/intersect/habits/install.sh | bash
 
 # Or using npx (no installation needed)
 npx habits@latest
+
+# Or if cloned
+pnpm install
+pnpm nx dev @ha-bits/base-ui 
+pnpm nx dev @ha-bits/base
 ```
+
+> **Note:** On first startup, Habits will clone required bits and modules. This may take a minute, please wait until initialization completes before running workflows.
+
 
 ### Create Your First Habit
 
@@ -90,13 +101,6 @@ Habits is composed of two main components:
 │  • Frontend builder │  • Multi-framework support    │
 │  • Template library │  • Dynamic module loading     │
 └─────────────────────┴───────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-   ┌─────────┐       ┌──────────┐      ┌──────────┐
-   │  Bits   │       │ActivePcs │      │   n8n    │
-   │ Scripts │       │ Pieces   │      │  Nodes   │
-   └─────────┘       └──────────┘      └──────────┘
 ```
 
 ## Examples
@@ -133,10 +137,10 @@ npx habits@latest cortex --config ./stack.yaml
 
 **Use Habits when you need:**
 - Serverless & edge deployments (AWS Lambda, Cloudflare Workers)
-- Embedding automation in your SaaS product
+- Embedding workflows in your SaaS product
 - A fully open-source stack (Apache 2.0 + MIT)
 - Mixed framework workflows (Bits + ActivePieces + n8n + scripts)
-- CLI/REST API automation for CI/CD pipelines
+- CLI/REST API workflow for CI/CD pipelines
 
 **Use n8n or ActivePieces directly when you need:**
 - A full visual builder with all features

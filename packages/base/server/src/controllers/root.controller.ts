@@ -13,7 +13,7 @@ export class RootController {
    */
   getRoot = (req: Request, res: Response): void => {
     res.json({
-      message: "Habits Automation API",
+      message: "Habits API",
       version: "1.0.0",
       documentation: "/docs",
     });

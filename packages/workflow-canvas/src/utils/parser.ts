@@ -43,20 +43,6 @@ function detectFormat(content: string): 'yaml' | 'json' {
   return 'yaml';
 }
 
-/**
- * Auto-layout nodes using dagre (directed graph layout algorithm)
- * This creates a proper hierarchical flow from sources to sinks
- */
-export function autoLayoutNodes(nodes: WorkflowNode[], edges: WorkflowEdge[] = []): WorkflowNode[] {
-  // If any nodes have non-zero positions, assume they're already laid out
-  const hasPositions = nodes.some(n => n.position && (n.position.x !== 0 || n.position.y !== 0));
-  if (hasPositions) {
-    return nodes;
-  }
-
-  return applyDagreLayout(nodes, edges);
-}
-
 // Default node dimensions (fallback when actual dimensions not available)
 const DEFAULT_NODE_WIDTH = 280;
 const DEFAULT_NODE_HEIGHT = 120;

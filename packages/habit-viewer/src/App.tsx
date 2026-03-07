@@ -286,6 +286,19 @@ function App() {
         const parsed = parseHabitContent(content);
         let { nodes, edges } = convertToCanvasFormat(parsed);
 
+        // Check if nodes need auto-layout (no positions or all at origin)
+        const needsLayout = nodes.length > 0 && (
+          nodes.some(n => !n.position || n.position.x === undefined || n.position.y === undefined) ||
+          nodes.every(n => n.position && n.position.x === 0 && n.position.y === 0)
+        );
+
+        // Apply layout algorithm if needed
+        if (needsLayout) {
+          nodes = applyDagreLayout(nodes, edges);
+
+          setTimeout(() => canvasRef.current?.fitView(), 200)
+        }
+
         // Apply compact mode - collapse all nodes by default
         if (params.compact) {
           nodes = nodes.map(node => ({
@@ -314,17 +327,6 @@ function App() {
 
     loadHabit();
   }, [params.habit, params.url]);
-
-  // Fit view after content loads
-  useEffect(() => {
-    if (!state.loading && state.nodes.length > 0 && params.fitView) {
-      // Wait for ReactFlow to render the nodes
-      const timeoutId = setTimeout(() => {
-        canvasRef.current?.fitView();
-      }, 150);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [state.loading, state.nodes.length, params.fitView]);
 
   // Handle export after render
   useEffect(() => {
@@ -425,6 +427,7 @@ function App() {
         onNodesChange={handleNodesChange}
         onAutoLayout={handleAutoLayout}
         showActionButtons={!params.hideControls}
+        forceAutoLayout={true}
       />
     </div>
   );

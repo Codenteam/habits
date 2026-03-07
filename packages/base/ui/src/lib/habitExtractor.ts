@@ -3,7 +3,7 @@
  * This ensures only schema-compliant fields are exported, removing internal state.
  */
 
-import type { Node, Edge } from 'reactflow';
+import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 import { normalizePathsInObject } from '@ha-bits/core';
 
 /** Schema-compliant workflow node data */
@@ -131,7 +131,7 @@ function extractNodeData(data: any): SchemaNodeData {
 /**
  * Map node type based on framework and data
  */
-function mapNodeType(node: Node): SchemaNode['type'] {
+function mapNodeType(node: CanvasNode): SchemaNode['type'] {
   const framework = node.data?.framework;
   const isTrigger = node.data?.isTrigger;
   
@@ -147,8 +147,8 @@ function mapNodeType(node: Node): SchemaNode['type'] {
  * Extract a clean schema-compliant habit from internal state
  */
 export function extractSchemaHabit(
-  nodes: Node[],
-  edges: Edge[],
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
   metadata?: { id?: string; name?: string; description?: string; version?: string; output?: Record<string, string> }
 ): SchemaHabit {
   const schemaNodes: SchemaNode[] = nodes.map(node => ({
@@ -189,7 +189,7 @@ export function extractSchemaHabit(
  */
 export function createSchemaCompliantExport(state: {
   workflow: { id?: string; name?: string; description?: string; version?: string };
-  habits: Array<{ id: string; name?: string; description?: string; nodes: Node[]; edges: Edge[] }>;
+  habits: Array<{ id: string; name?: string; description?: string; nodes: CanvasNode[]; edges: CanvasEdge[] }>;
   activeHabitId?: string;
 }): SchemaHabit {
   const activeHabit = state.habits.find(h => h.id === state.activeHabitId);

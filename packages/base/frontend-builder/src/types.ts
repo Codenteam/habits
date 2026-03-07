@@ -10,6 +10,8 @@ export interface WebCanvasConfig {
   provider?: 'auto' | 'openai' | 'anthropic';
   /** AI model to use */
   model?: string;
+  /** Use OpenAI API directly instead of going through WebCanvas backend */
+  useDirectOpenAI?: boolean;
 }
 
 /**
@@ -97,7 +99,7 @@ export interface AIGenerationRequest {
   /** Callback for streaming progress updates */
   onProgress?: AIStreamProgressCallback;
   /** If true, return mock HTML without calling AI */
-  mock?: boolean;
+  mebcanvasock?: boolean;
 }
 
 /**

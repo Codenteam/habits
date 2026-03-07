@@ -91,9 +91,9 @@ function BaseNodeComponent({ data, selected, id }: NodeProps<BaseNodeData>) {
   // Find long values for display
   const longValues = useMemo(() => {
     const paramsLongValues = findLongValues(data.params);
-    if (isScript && data.content && data.content.length > LONG_VALUE_THRESHOLD) {
-      paramsLongValues.push({ key: 'script', value: data.content });
-    }
+    // if (isScript && data.content && data.content.length > LONG_VALUE_THRESHOLD) {
+    //   paramsLongValues.push({ key: 'script', value: data.content });
+    // }
     return paramsLongValues;
   }, [data.params, data.content, isScript]);
 

@@ -48,6 +48,9 @@ export default defineConfig({
       });
 
       md.use(tabsMarkdownPlugin);
+    }, 
+    toc: {
+      level: [2]
     }
   },
 
@@ -65,9 +68,11 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
-          { text: 'Build Your First Habit', link: '/getting-started/first-habit' },
+          { text: 'Build Your First Habit using HaC', link: '/getting-started/first-habit' },
+          { text: 'Build Your First Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
+          { text: 'Checklists', link: '/getting-started/checklists' },
         ]
       },
             {
@@ -77,6 +82,7 @@ export default defineConfig({
           { text: 'Creating Habits (Base)', link: '/deep-dive/creating' },
           { text: 'Running Habits (Cortex)', link: '/deep-dive/running' },
           { text: 'Packing and Distributing Habits', link: '/deep-dive/pack-distribute' },
+          { text: 'Evaluating Variables', link: '/deep-dive/variables.md' },
 
 
         ]

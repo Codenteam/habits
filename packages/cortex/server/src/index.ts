@@ -1,8 +1,17 @@
 // @ha-bits/cortex - Habits Workflow Executor
 // The execution engine for running habits (workflows)
 
+// Core workflow execution
 export { WorkflowExecutor, InitFromDataOptions } from './WorkflowExecutor';
 export { WorkflowExecutorServer, startServer } from './server';
+
+// ESM/Browser-compatible executor (no Express dependencies)
+export { HabitsExecutor, StartWorkflowOptions } from './esm';
+
+// Webhook handling (Node.js server only)
+export { IWebhookHandler, WebhookTriggerServer, WebhookServerOptions } from './WebhookTriggerServer';
+
+// Server utilities
 export { ManageModule, setupManageRoutes } from './manage';
 export { setupOpenAPIRoutes, generateOpenAPISpec } from './openapi';
 export { customRequire, registerCortexModule } from './utils/customRequire';

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { withBase } from 'vitepress'
 
 const props = defineProps<{
@@ -10,13 +10,20 @@ const props = defineProps<{
   height?: number | string
 }>()
 
+const containerRef = ref<HTMLElement | null>(null)
+const containerWidth = ref<number>(0)
+
 // Use local viewer in dev mode, production URL otherwise
 const baseUrl = computed(() => {
   // VitePress dev mode detection
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+
+  // Use prod viewer always for now.
+  // return 'https://codenteam.com/intersect/habits/viewer/';
   return isDev 
     ? 'http://localhost:3030/intersect/habits/viewer/'
     : 'https://codenteam.com/intersect/habits/viewer/'
+  
 })
 
 // Resolve URL to absolute, including VitePress base path
@@ -46,7 +53,7 @@ const viewerUrl = computed(() => {
     params.set('habit', encodeURIComponent(props.content))
   }
   
-  if (props.hideControls) params.set('hideControls', 'true')
+  if (props.hideControls) params.set('hideControls', 'false')
   if (props.fitView !== false) params.set('fitView', 'true')
   return `${baseUrl.value}?${params.toString()}`
 })
@@ -57,19 +64,49 @@ const frameHeight = computed(() => {
 })
 
 const hasSource = computed(() => props.url || props.content)
+
+// Resize key combines width and height to force re-render on dimension changes
+const resizeKey = computed(() => `${containerWidth.value}x${frameHeight.value}`)
+
+// Track container width changes
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  if (containerRef.value) {
+    containerWidth.value = containerRef.value.offsetWidth
+    
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        containerWidth.value = entry.contentRect.width
+      }
+    })
+    
+    resizeObserver.observe(containerRef.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
 </script>
 
 <template>
-  <iframe
-    v-if="hasSource"
-    :src="viewerUrl"
-    width="100%"
-    :height="frameHeight"
-    style="border: 1px solid #334155; border-radius: 8px;"
-    allow="fullscreen"
-  ></iframe>
-  <div v-else class="habit-viewer-error" :style="{ height: frameHeight }">
-    <span>No habit content or URL provided</span>
+  <div ref="containerRef" style="width: 100%;">
+    <iframe
+      v-if="hasSource"
+      :key="resizeKey"
+      :id="resizeKey"
+      :src="viewerUrl"
+      :width="containerWidth+'px'"
+      :height="frameHeight"
+      style="border: 1px solid #334155; border-radius: 8px;"
+      allow="fullscreen"
+    ></iframe>
+    <div v-else class="habit-viewer-error" :style="{ height: frameHeight }">
+      <span>No habit content or URL provided</span>
+    </div>
   </div>
 </template>
 

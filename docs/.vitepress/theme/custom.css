@@ -138,7 +138,7 @@
   color: var(--vp-c-text-1);
 }
 .container {
-  max-width: 1152px !important;
+  /* max-width: 1152px !important; */
 }
 
 .slider-container {

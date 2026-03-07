@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { Node, Edge } from 'reactflow';
+import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 import type { Workflow, AvailableModuleDefinition } from '@habits/shared/types';
 import type { PieceSchema, FormValue, FormErrors } from '../../lib/formBuilder/types';
 import type { ExtractedConnection } from '../../lib/workflowConverter';
@@ -102,9 +102,9 @@ interface Habit {
   id: string;
   name: string;
   description: string;
-  nodes: Node[];
-  edges: Edge[];
-  selectedNode: Node | null;
+  nodes: CanvasNode[];
+  edges: CanvasEdge[];
+  selectedNode: CanvasNode | null;
   nodeConfig: NodeConfig | null;
   envConnections?: ExtractedConnection[]; // Environment variable connections for .env
   envVariables: Record<string, EnvVariable>; // Environment variables loaded from .env
@@ -223,7 +223,7 @@ export const workflowSlice = createSlice({
   name: 'workflow',
   initialState,
   reducers: {
-    setNodes: (state, action: PayloadAction<Node[]>) => {
+    setNodes: (state, action: PayloadAction<CanvasNode[]>) => {
       const habit = getActiveHabit(state);
       if (habit) {
         habit.nodes = action.payload;
@@ -231,7 +231,7 @@ export const workflowSlice = createSlice({
       }
     },
     
-    setEdges: (state, action: PayloadAction<Edge[]>) => {
+    setEdges: (state, action: PayloadAction<CanvasEdge[]>) => {
       const habit = getActiveHabit(state);
       if (habit) {
         habit.edges = action.payload;
@@ -239,7 +239,7 @@ export const workflowSlice = createSlice({
       }
     },
     
-    addNode: (state, action: PayloadAction<Node>) => {
+    addNode: (state, action: PayloadAction<CanvasNode>) => {
       const habit = getActiveHabit(state);
       if (habit) {
         habit.nodes.push(action.payload);
@@ -247,7 +247,7 @@ export const workflowSlice = createSlice({
       }
     },
     
-    updateNode: (state, action: PayloadAction<{ nodeId: string; data: Partial<Node['data']> }>) => {
+    updateNode: (state, action: PayloadAction<{ nodeId: string; data: Partial<CanvasNode['data']> }>) => {
       const habit = getActiveHabit(state);
       if (!habit) return;
       
@@ -327,7 +327,7 @@ export const workflowSlice = createSlice({
       habit.updatedAt = new Date().toISOString();
     },
     
-    setSelectedNode: (state, action: PayloadAction<Node | null>) => {
+    setSelectedNode: (state, action: PayloadAction<CanvasNode | null>) => {
       const habit = getActiveHabit(state);
       if (!habit) return;
       
@@ -975,17 +975,17 @@ export const selectActiveHabit = (state: { workflow: WorkflowState }): Habit | u
   return state.workflow.habits.find(h => h.id === state.workflow.activeHabitId);
 };
 
-export const selectNodes = (state: { workflow: WorkflowState }): Node[] => {
+export const selectNodes = (state: { workflow: WorkflowState }): CanvasNode[] => {
   const habit = selectActiveHabit(state);
   return habit?.nodes || [];
 };
 
-export const selectEdges = (state: { workflow: WorkflowState }): Edge[] => {
+export const selectEdges = (state: { workflow: WorkflowState }): CanvasEdge[] => {
   const habit = selectActiveHabit(state);
   return habit?.edges || [];
 };
 
-export const selectSelectedNode = (state: { workflow: WorkflowState }): Node | null => {
+export const selectSelectedNode = (state: { workflow: WorkflowState }): CanvasNode | null => {
   const habit = selectActiveHabit(state);
   return habit?.selectedNode || null;
 };

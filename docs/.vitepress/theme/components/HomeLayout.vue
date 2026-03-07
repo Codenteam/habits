@@ -65,12 +65,12 @@ const features = [
   {
     icon: '🚀',
     title: 'CLI & API Ready',
-    details: 'Run workflows from the command line or expose them as REST API endpoints out-of-the-box.'
+    details: 'Run habits from the command line or expose them as REST API endpoints out-of-the-box.'
   },
   {
     icon: '🎨',
-    title: 'Visual Workflow Builder',
-    details: 'React Flow-based UI for building and managing workflows visually.'
+    title: 'Visual Habit Builder',
+    details: 'React Flow-based UI for building and managing habits visually.'
   }
 ]
 
@@ -97,7 +97,7 @@ const screenshots = [
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">Apache 2.0 Creator and Runner</p>
+          <p class="hero-tagline">Apache 2.0 Logic & UI Builder and Runner</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Read more</a>
@@ -240,6 +240,7 @@ const screenshots = [
 
 .hero-text {
   font-size: 2rem;
+  line-height: 2rem;
   font-weight: 600;
   color: var(--vp-c-text-1);
   margin: 0 0 12px;
@@ -575,6 +576,7 @@ const screenshots = [
   
   .hero-text {
     font-size: 1.6rem;
+    line-height: 1.6rem;
   }
 }
 
@@ -624,6 +626,7 @@ const screenshots = [
   
   .hero-text {
     font-size: 1.4rem;
+    line-height: 1.4rem;
   }
   
   .hero-logo {
