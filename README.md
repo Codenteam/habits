@@ -168,14 +168,18 @@ Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
 
 ## Documentation
 
-Full documentation available at [docs](docs/):
+📚 **[View full documentation](https://codenteam.com/intersect/habits)**
 
-- [Introduction](docs/getting-started/introduction.md)
-- [First Habit](docs/getting-started/first-habit.md)
-- [Concepts](docs/getting-started/concepts.md)
-- [Running Automations](docs/deep-dive/running.md)
-- [Creating Habits](docs/deep-dive/creating.md)
-- [Security](docs/security/index.md)
+Local documentation available at [docs](docs/):
+
+## 📖 Documentation
+
+- [Introduction](https://codenteam.com/intersect/habits/getting-started/introduction.html) ([Source](docs/getting-started/introduction.md))
+- [First Habit](https://codenteam.com/intersect/habits/getting-started/first-habit.html) ([Source](docs/getting-started/first-habit.md))
+- [Concepts](https://codenteam.com/intersect/habits/getting-started/concepts.html) ([Source](docs/getting-started/concepts.md))
+- [Running Automations](https://codenteam.com/intersect/habits/deep-dive/running.html) ([Source](docs/deep-dive/running.md))
+- [Creating Habits](https://codenteam.com/intersect/habits/deep-dive/creating.html) ([Source](docs/deep-dive/creating.md))
+
 
 ## Development
 
