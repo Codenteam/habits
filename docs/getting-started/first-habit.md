@@ -1,4 +1,4 @@
-# Build your first habit in 5 minutes
+# Build your first habit in 5 minutes (Habit-as-Code)
 
 This guide walks you through creating a multi-module workflow that generates text with OpenAI (Activepieces), converts it to speech with ElevenLabs (n8n), and uploads the audio to S3 (script)
 

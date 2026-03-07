@@ -16,11 +16,11 @@ import ScriptParamsEditor from './ScriptParamsEditor';
 import AuthField from './AuthField';
 import EnvVariablesPopover from './EnvVariablesPopover';
 import RichTextArea from './RichTextArea';
-import type { Node } from 'reactflow';
+import type { CanvasNode } from '@ha-bits/core';
 import { FormBuilder } from './FormBuilder';
 
 interface NodeConfigPanelProps {
-  node: Node;
+  node: CanvasNode;
 }
 
 // Branch condition type (must be defined before generateBranchOutputs)

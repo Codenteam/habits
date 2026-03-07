@@ -2,10 +2,6 @@
 
 This guide explains how to import existing workflows from **n8n** and **Activepieces** into Habits. You can import workflows using either the **GUI (Base)** or the **CLI**.
 
-::: info Habits is a Runtime, Not a Platform
-Habits doesn't replace n8n or Activepieces: it runs their workflows with a more lightweight open-source engine as an API, converting it to a SaaS. Design your workflows in n8n or Activepieces, then import them into Habits to run in serverless, edge, or embedded environments.
-:::
-
 ---
 
 ## Overview

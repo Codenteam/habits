@@ -37,6 +37,16 @@
             "input": "packages/base/server/src",
             "glob": "sea-entry-template.js",
             "output": "."
+          }, 
+          {
+            "input": "packages/base/server/assets",
+            "glob": "**/*",
+            "output": "assets"
+          },
+          {
+            "input": "assets",
+            "glob": "**/*",
+            "output": "assets"
           }
         ],
         "esbuildOptions": {

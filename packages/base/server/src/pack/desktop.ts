@@ -9,29 +9,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
-import { getTmpDir, LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core';
 import { PackResult, DesktopPlatform, DesktopFramework, ParsedConfig, HabitData } from './types';
-import { getApiProxyScript } from './templates/api-proxy';
-import { getElectronMain } from './templates/electron-main';
-import { getElectronPreload } from './templates/electron-preload';
+import { getApiProxyScript } from './templates/deprecated/api-proxy';
+import { getElectronMain } from './templates/deprecated/electron-main';
+import { getElectronPreload } from './templates/deprecated/electron-preload';
 import { packTauri } from './tauri';
+import { sanitizeStackName, createTmpWorkDir, createCleanupHandler } from './utils';
 import JSZip from 'jszip';
 
 const logger = LoggerFactory.getRoot();
-
-/**
- * Sanitize stack name for use in filenames
- */
-function sanitizeStackName(name: string | undefined): string {
-  if (!name || name.trim() === '' || name === 'Stack Name') {
-    return 'habits';
-  }
-  // Convert to lowercase, replace spaces and special chars with hyphens
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-}
 
 export interface DesktopPackOptions {
   configPath: string;
@@ -56,6 +43,8 @@ export interface WebDesktopPackOptions {
   framework?: DesktopFramework;
   buildBinary?: boolean;
   stackName?: string;
+  appName?: string;
+  appIcon?: string; // base64 encoded image
 }
 
 /**
@@ -118,7 +107,7 @@ export async function packDesktop(options: DesktopPackOptions): Promise<PackResu
   }
 
   // Create temp working directory
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), 'habits-electron-'));
+  const workDir = createTmpWorkDir('electron');
   const appName = config.name || 'Habits App';
   const appSlug = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -364,7 +353,7 @@ function findBuildOutputs(distDir: string): string[] {
  * Returns either a zip buffer (project files) or a binary file path (DMG/EXE/AppImage/etc.)
  */
 export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise<WebDesktopPackResult> {
-  const { framework = 'electron', habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, stackName } = options;
+  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, stackName, appName, appIcon } = options;
   
   // Route to the appropriate framework handler
   if (framework === 'tauri') {
@@ -377,6 +366,8 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
       stackName,
       platform: 'desktop',
       desktopPlatform,
+      appName,
+      appIcon,
     });
   } else {
     return packElectronDesktopForWeb(options);
@@ -388,7 +379,7 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
  * Returns either a zip buffer (project files) or a binary file path (DMG/EXE/AppImage/etc.)
  */
 async function packElectronDesktopForWeb(options: WebDesktopPackOptions): Promise<WebDesktopPackResult> {
-  const { habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, stackName } = options;
+  const { habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, stackName, appName: customAppName, appIcon } = options;
 
   // Validate platform
   const validPlatforms = ['dmg', 'exe', 'appimage', 'deb', 'rpm', 'msi', 'all'];
@@ -403,23 +394,13 @@ async function packElectronDesktopForWeb(options: WebDesktopPackOptions): Promis
   const sanitizedStackName = sanitizeStackName(stackName);
 
   // Create temp directory for the project
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), 'habits-desktop-'));
+  const workDir = createTmpWorkDir('desktop');
 
   logger.info(`🖥️  Generating Electron desktop app for Web API in ${workDir}`);
-  const appName = 'Habits App';
+  const appName = customAppName || 'Habits App';
   const appSlug = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-  const cleanup = () => {
-    try {
-      if (process.env.DEBUG) {
-        logger.info(`Debug mode - skipping cleanup of ${workDir}`);
-        return;
-      }
-      fs.rmSync(workDir, { recursive: true, force: true });
-    } catch (e) {
-      // Ignore cleanup errors
-    }
-  };
+  const cleanup = createCleanupHandler(workDir);
 
   try {
     // Create Electron project structure

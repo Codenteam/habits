@@ -27,8 +27,8 @@ Access data from HTTP POST requests or CLI arguments.
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `{{habits.input}}` | Full request body | `{"name": "John", "age": 30}` |
-| `{{habits.input.fieldName}}` | Specific field from request | `{{habits.input.userId}}` |
-| `{{habits.input.query}}` | Query parameters object (GET) | `{{habits.input.query.page}}` |
+| `{{habits.input.fieldName}}` | Specific field from request (POST or GET) | `{{habits.input.userId}}` |
+| `{{habits.input.query}}` | Nested Params | `{{habits.input.query.page}}` |
 
 **HTTP Request Example:**
 ```bash

@@ -1,4 +1,4 @@
-import type { Node, Edge } from 'reactflow';
+import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 
 /**
  * Framework types supported by the workflow viewer
@@ -31,14 +31,14 @@ export interface ViewerNodeData {
 }
 
 /**
- * ReactFlow node with viewer-specific data
+ * Canvas node with viewer-specific data
  */
-export type ViewerNode = Node<ViewerNodeData>;
+export type ViewerNode = CanvasNode<ViewerNodeData>;
 
 /**
- * ReactFlow edge type
+ * Canvas edge type
  */
-export type ViewerEdge = Edge;
+export type ViewerEdge = CanvasEdge;
 
 /**
  * Parsed habit structure

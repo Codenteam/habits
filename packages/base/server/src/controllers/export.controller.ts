@@ -7,7 +7,8 @@
 import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
 import { createResponse } from '../helpers';
 import { getTmpDir } from '@ha-bits/core';
 import {
@@ -25,6 +26,8 @@ import {
   parseGradleVersion,
 } from '../pack/gradle-java-compatibility';
 
+const execAsync = promisify(exec);
+
 export class ExportController {
   /**
    * GET /api/export/binary/support
@@ -36,64 +39,27 @@ export class ExportController {
       const currentPlatform = getCurrentPlatform();
       const supportedPlatforms = getSupportedPlatforms();
 
-      // Helper to get version output
+      // Helper to get version output (truly async)
       const getVersion = async (
         cmd: string,
-        args: string[] = [],
-        parse?: (out: string) => string,
+        parse?: (out: string, stderr?: string) => string,
       ): Promise<string | null> => {
         try {
-          const out = execSync([cmd, ...args].join(' '), {
-            encoding: 'utf8',
-            stdio: 'pipe',
-          });
-          if (parse) return parse(out);
-          return out.trim();
-        } catch {
+          const { stdout, stderr } = await execAsync(cmd, { timeout: 5000 });
+          if (parse) return parse(stdout, stderr);
+          return stdout.trim();
+        } catch (err: any) {
+          // Some commands output to stderr (like java -version)
+          if (parse && err.stderr) {
+            try {
+              return parse(err.stdout || '', err.stderr);
+            } catch {
+              return null;
+            }
+          }
           return null;
         }
       };
-
-      // Mobile build tools
-      const gradleVersion = await getVersion('gradle', ['--version'], (out: string) => {
-        const m = out.match(/Gradle (\d+\.\d+(?:\.\d+)?)/);
-        return m ? m[1] : out.split('\n')[0];
-      });
-      const javaVersion = await getVersion('java', ['-version'], (out: string) => {
-        // Java version is printed to stderr, so execSync may not capture it; try again
-        try {
-          const err = execSync('java -version 2>&1', { encoding: 'utf8', stdio: 'pipe' });
-          const m = err.match(/version "([\d._]+)"/);
-          return m ? m[1] : err.split('\n')[0];
-        } catch {
-          return '';
-        }
-      });
-      const cordovaVersion = await getVersion('cordova', ['--version'], (out: string) =>
-        out.split('\n')[0],
-      );
-
-      // iOS build tools (macOS only)
-      let xcodeVersion: string | null = null;
-      let xcodebuildVersion: string | null = null;
-      if (process.platform === 'darwin') {
-        xcodeVersion = await getVersion('xcodebuild', ['-version'], (out: string) => {
-          const m = out.match(/Xcode (\d+\.\d+(?:\.\d+)?)/);
-          return m ? m[1] : out.split('\n')[0];
-        });
-        xcodebuildVersion = xcodeVersion;
-      }
-
-      // Android SDK
-      let androidSdkVersion: string | undefined | null = null;
-      if (process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT) {
-        androidSdkVersion = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
-      } else {
-        androidSdkVersion = await getVersion('adb', ['version'], (out: string) => {
-          const m = out.match(/Android Debug Bridge version ([\d.]+)/);
-          return m ? m[1] : out.split('\n')[0];
-        });
-      }
 
       // Android environment variables (show full path if DEBUG, otherwise just set/unset)
       const isDebug = process.env.DEBUG === 'true';
@@ -108,29 +74,68 @@ export class ExportController {
           : 'set'
         : 'unset';
 
-      // Desktop build tools
-      const electronVersion = await getVersion('npx', ['electron', '--version'], (out) =>
-        out.replace(/^v/, '').trim(),
-      );
-      const electronBuilderVersion = await getVersion(
-        'npx',
-        ['electron-builder', '--version'],
-        (out) => out.trim(),
-      );
+      // Run all version checks in parallel for speed
+      const [
+        gradleVersion,
+        javaVersion,
+        cordovaVersion,
+        xcodeVersion,
+        androidSdkVersion,
+        electronVersion,
+        electronBuilderVersion,
+        tauriVersion,
+        cargoVersion,
+        rustcVersion,
+      ] = await Promise.all([
+        // Gradle
+        getVersion('gradle --version', (out) => {
+          const m = out.match(/Gradle (\d+\.\d+(?:\.\d+)?)/);
+          return m ? m[1] : out.split('\n')[0];
+        }),
+        // Java (outputs to stderr)
+        getVersion('java -version 2>&1', (out, stderr) => {
+          const combined = stderr || out;
+          const m = combined.match(/version "([\d._]+)"/);
+          return m ? m[1] : combined.split('\n')[0];
+        }),
+        // Cordova
+        getVersion('cordova --version', (out) => out.split('\n')[0].trim()),
+        // Xcode (macOS only)
+        process.platform === 'darwin'
+          ? getVersion('xcodebuild -version', (out) => {
+              const m = out.match(/Xcode (\d+\.\d+(?:\.\d+)?)/);
+              return m ? m[1] : out.split('\n')[0];
+            })
+          : Promise.resolve(null),
+        // Android SDK
+        process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT
+          ? Promise.resolve(process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT)
+          : getVersion('adb version', (out) => {
+              const m = out.match(/Android Debug Bridge version ([\d.]+)/);
+              return m ? m[1] : out.split('\n')[0];
+            }),
+        // Electron
+        getVersion('npx electron --version', (out) => out.replace(/^v/, '').trim()),
+        // Electron Builder
+        getVersion('npx electron-builder --version', (out) => out.trim()),
+        // Tauri
+        getVersion('npx tauri --version', (out) => {
+          const m = out.match(/tauri (\d+\.\d+\.\d+)/);
+          return m ? m[1] : out.split('\n')[0];
+        }),
+        // Cargo
+        getVersion('cargo --version', (out) => {
+          const m = out.match(/cargo (\d+\.\d+\.\d+)/);
+          return m ? m[1] : out.split('\n')[0];
+        }),
+        // Rustc
+        getVersion('rustc --version', (out) => {
+          const m = out.match(/rustc (\d+\.\d+\.\d+)/);
+          return m ? m[1] : out.split('\n')[0];
+        }),
+      ]);
 
-      // Tauri build tools
-      const tauriVersion = await getVersion('npx', ['tauri', '--version'], (out) => {
-        const m = out.match(/tauri (\d+\.\d+\.\d+)/);
-        return m ? m[1] : out.split('\n')[0];
-      });
-      const cargoVersion = await getVersion('cargo', ['--version'], (out) => {
-        const m = out.match(/cargo (\d+\.\d+\.\d+)/);
-        return m ? m[1] : out.split('\n')[0];
-      });
-      const rustcVersion = await getVersion('rustc', ['--version'], (out) => {
-        const m = out.match(/rustc (\d+\.\d+\.\d+)/);
-        return m ? m[1] : out.split('\n')[0];
-      });
+      const xcodebuildVersion = xcodeVersion;
 
       // Check Gradle-Java compatibility
       let compatibilityCheck: ReturnType<typeof checkCompatibility> | undefined = undefined;
@@ -267,9 +272,11 @@ export class ExportController {
         frontendHtml, 
         backendUrl, 
         desktopPlatform = 'all', 
-        framework = 'electron',
+        framework = 'tauri',
         buildBinary = false, 
-        stackName 
+        stackName,
+        appName,
+        appIcon
       } = req.body;
 
       // Validate required fields
@@ -315,6 +322,8 @@ export class ExportController {
         framework: framework as 'electron' | 'tauri',
         buildBinary,
         stackName,
+        appName,
+        appIcon,
       });
 
       if (!result.success) {
@@ -367,8 +376,10 @@ export class ExportController {
         backendUrl,
         mobileTarget = 'both',
         buildBinary = false,
-        framework = 'capacitor',
+        framework = 'tauri',
         stackName,
+        appName,
+        appIcon,
       } = req.body;
 
       // Validate required fields
@@ -425,6 +436,8 @@ export class ExportController {
         buildBinary,
         framework: framework as 'capacitor' | 'cordova' | 'tauri',
         stackName,
+        appName,
+        appIcon,
       });
 
       if (!result.success) {

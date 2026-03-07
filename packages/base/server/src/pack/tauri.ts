@@ -7,28 +7,26 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { getTmpDir, LoggerFactory } from '@ha-bits/core';
-import { getTauriConfig } from './templates/tauri-config';
-import { getTauriMain, getTauriLib } from './templates/tauri-main';
-import { getTauriCargo } from './templates/tauri-cargo';
-import { getTauriBuildScript } from './templates/tauri-build';
-import { getApiProxyScript } from './templates/api-proxy';
+import { LoggerFactory } from '@ha-bits/core';
+import { getTauriConfig } from './templates/tauri/tauri-config';
+import { getTauriMain, getTauriLib } from './templates/tauri/tauri-main';
+import { getTauriCargo } from './templates/tauri/tauri-cargo';
+import { getTauriBuildScript } from './templates/tauri/tauri-build';
+import { getTauriFetchProxyScript } from './templates/tauri/tauri-fetch-proxy';
+import { getTauriGradleProperties, getTauriProguardRules } from './templates/tauri/tauri-gradle';
+import { getTauriReadme } from './templates/tauri/tauri-readme';
 import JSZip from 'jszip';
+import {
+  sanitizeStackName,
+  createTmpWorkDir,
+  createCleanupHandler,
+  getMimeTypeForExtension,
+  addDirectoryToZip,
+  buildErrorMessage,
+  PLACEHOLDER_ICON_BASE64,
+} from './utils';
 
 const logger = LoggerFactory.getRoot();
-
-/**
- * Sanitize stack name for use in filenames
- */
-function sanitizeStackName(name: string | undefined): string {
-  if (!name || name.trim() === '' || name === 'Stack Name') {
-    return 'habits';
-  }
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 export interface TauriPackOptions {
   habits: any[];
@@ -42,6 +40,9 @@ export interface TauriPackOptions {
   desktopPlatform?: string;
   // Mobile-specific options
   mobileTarget?: 'ios' | 'android' | 'both';
+  // App customization
+  appName?: string;
+  appIcon?: string; // base64 encoded image
 }
 
 export interface TauriPackResult {
@@ -69,25 +70,17 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     platform,
     desktopPlatform,
     mobileTarget,
+    appName: customAppName,
+    appIcon,
   } = options;
 
   const sanitizedStackName = sanitizeStackName(stackName);
   const isMobile = platform === 'mobile';
-  const workDir = fs.mkdtempSync(path.join(getTmpDir(), `habits-tauri-${platform}-`));
-  const appName = 'Habits App';
+  const workDir = createTmpWorkDir(`tauri-${platform}`);
+  const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
 
-  const cleanup = () => {
-    try {
-      if (process.env.DEBUG) {
-        logger.info(`Debug mode - skipping cleanup of ${workDir}`);
-        return;
-      }
-      fs.rmSync(workDir, { recursive: true, force: true });
-    } catch (e) {
-      // Ignore cleanup errors
-    }
-  };
+  const cleanup = createCleanupHandler(workDir);
 
   try {
     logger.info(`📦 Generating Tauri ${platform} app in ${workDir}`);
@@ -107,7 +100,7 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
             ...(platform === 'mobile' && {
               android: 'tauri android init && tauri android dev',
               ios: 'tauri ios init && tauri ios dev',
-              'build:android': 'tauri android build',
+              'build:android': 'tauri android build --split-per-abi -t aarch64 --apk --debug',
               'build:ios': 'tauri ios build',
             }),
           },
@@ -166,12 +159,6 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
       ...(isMobile && { target: mobileTarget, framework: 'tauri' }),
     };
 
-    // Create root Cargo.toml workspace (required for Tauri v2)
-    const rootCargoToml = `[workspace]
-members = ["src-tauri"]
-resolver = "2"
-`;
-    fs.writeFileSync(path.join(workDir, 'Cargo.toml'), rootCargoToml);
 
     // Create src-tauri directory structure
     const srcTauriDir = path.join(workDir, 'src-tauri');
@@ -192,34 +179,50 @@ resolver = "2"
     fs.writeFileSync(path.join(srcDir, 'main.rs'), mainRs);
     fs.writeFileSync(path.join(srcDir, 'lib.rs'), libRs);
 
-    // Create placeholder icon files
-    const placeholderIcon = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-      'base64'
-    );
-    fs.writeFileSync(path.join(iconsDir, '32x32.png'), placeholderIcon);
-    fs.writeFileSync(path.join(iconsDir, '128x128.png'), placeholderIcon);
-    fs.writeFileSync(path.join(iconsDir, '128x128@2x.png'), placeholderIcon);
-    fs.writeFileSync(path.join(iconsDir, 'icon.png'), placeholderIcon);
-    fs.writeFileSync(path.join(iconsDir, 'icon.icns'), '');
-    fs.writeFileSync(path.join(iconsDir, 'icon.ico'), '');
+    // Create placeholder icon files or use custom icon
+    let iconBuffer: Buffer;
+    
+    if (appIcon) {
+      // Custom icon provided as base64
+      // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+      const base64Data = appIcon.includes(',') ? appIcon.split(',')[1] : appIcon;
+      iconBuffer = Buffer.from(base64Data, 'base64');
+      logger.info('Using custom app icon');
+    } else {
+      // Try to use default habits logo from the assets folder, near the js file in dest
+      const defaultLogoPath = path.join(__dirname, 'assets', 'logo.png');
+      if (fs.existsSync(defaultLogoPath)) {
+        iconBuffer = fs.readFileSync(defaultLogoPath);
+        logger.info('Using default Habits logo');
+      } else {
+        // Fallback to a placeholder 1x1 transparent PNG
+        iconBuffer = Buffer.from(PLACEHOLDER_ICON_BASE64, 'base64');
+        logger.info('Using placeholder icon (default logo not found)');
+      }
+    }
+    fs.writeFileSync(path.join(workDir, 'app-icon.png'), iconBuffer);
+    
 
     // Create www directory with frontend
     const wwwDir = path.join(workDir, 'www');
     fs.mkdirSync(wwwDir);
 
-    // Inject API proxy script
-    const apiProxyScript = `<script>\n${getApiProxyScript(backendUrl)}\n</script>`;
+    // Create script.js with fetch proxy
+    const fetchProxyScript = getTauriFetchProxyScript(backendUrl);
+    fs.writeFileSync(path.join(wwwDir, 'script.js'), fetchProxyScript);
+
+    // Inject script tag for fetch proxy
+    const scriptTag = '<script src="script.js"></script>';
     const modifiedHtml = frontendHtml.includes('</head>')
-      ? frontendHtml.replace('</head>', apiProxyScript + '\n</head>')
+      ? frontendHtml.replace('</head>', scriptTag + '\n</head>')
       : frontendHtml.includes('<body>')
-        ? frontendHtml.replace('<body>', '<body>\n' + apiProxyScript)
-        : apiProxyScript + '\n' + frontendHtml;
+        ? frontendHtml.replace('<body>', '<body>\n' + scriptTag)
+        : scriptTag + '\n' + frontendHtml;
 
     fs.writeFileSync(path.join(wwwDir, 'index.html'), modifiedHtml);
 
     // Create README
-    const readme = createReadme(platform, appName, backendUrl, desktopPlatform, mobileTarget);
+    const readme = getTauriReadme({ platform, appName, backendUrl, desktopPlatform, mobileTarget });
     fs.writeFileSync(path.join(workDir, 'README.md'), readme);
 
     if (buildBinary) {
@@ -276,7 +279,7 @@ async function buildTauriBinary(options: {
     // Install npm dependencies
     logger.info('Installing Tauri CLI...');
     execSync('npm install', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
-
+    execSync('npm run tauri icon', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     if (platform === 'mobile') {
       return await buildMobileBinary({
         workDir,
@@ -327,7 +330,7 @@ async function buildDesktopBinary(options: {
   execSync('npm run build', { cwd: workDir, stdio: 'inherit', timeout: 600000 });
 
   // Find the built binary
-  const bundleDir = path.join(workDir, 'src-tauri', 'target', 'release', 'bundle');
+  const bundleDir = path.join(workDir, 'target', 'release', 'bundle');
   if (!fs.existsSync(bundleDir)) {
     throw new Error('Build completed but bundle directory not found');
   }
@@ -340,7 +343,7 @@ async function buildDesktopBinary(options: {
     const dirPath = path.join(bundleDir, dir);
     if (fs.existsSync(dirPath)) {
       const files = fs.readdirSync(dirPath).map((f) => path.join(dirPath, f));
-      builtFiles.push(...files.filter((f) => fs.statSync(f).isFile()));
+      builtFiles.push(...files.filter((f) => (fs.statSync(f).isFile() && ['.dmg', '.exe', '.msi', '.AppImage', '.deb', '.rpm', '.app'].includes(path.extname(f)))));
     }
   }
 
@@ -348,37 +351,12 @@ async function buildDesktopBinary(options: {
     throw new Error('Build completed but no artifacts found in bundle/');
   }
 
-  // If multiple files, create a zip
-  if (builtFiles.length > 1) {
-    const zip = new JSZip();
-    for (const file of builtFiles) {
-      const relativePath = path.relative(bundleDir, file);
-      zip.file(relativePath, fs.readFileSync(file));
-    }
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-    const zipPath = path.join(workDir, `${sanitizedStackName}.tauri-all.zip`);
-    fs.writeFileSync(zipPath, zipBuffer);
-
-    return {
-      success: true,
-      binaryPath: zipPath,
-      binaryFilename: `${sanitizedStackName}.tauri-all.zip`,
-      binaryMimeType: 'application/zip',
-      cleanup,
-    };
-  }
+  logger.info('Built files:', { builtFiles });
 
   // Return the single built file
   const binaryFile = builtFiles[0];
   const ext = path.extname(binaryFile);
-
-  let mimeType = 'application/octet-stream';
-  if (ext === '.dmg') mimeType = 'application/x-apple-diskimage';
-  else if (ext === '.exe') mimeType = 'application/x-msdownload';
-  else if (ext === '.msi') mimeType = 'application/x-msi';
-  else if (ext === '.AppImage') mimeType = 'application/x-executable';
-  else if (ext === '.deb') mimeType = 'application/x-debian-package';
-  else if (ext === '.rpm') mimeType = 'application/x-rpm';
+  const mimeType = getMimeTypeForExtension(ext);
 
   return {
     success: true,
@@ -423,6 +401,7 @@ async function buildMobileBinary(options: {
     } catch {
       logger.warn('Could not detect Java version, using default');
     }
+    logger.info('Using:', { javaHome, workDir});
 
     const androidExecOpts = {
       cwd: workDir,
@@ -433,7 +412,7 @@ async function buildMobileBinary(options: {
     try {
       execSync('npx tauri android init', androidExecOpts);
     } catch (error: any) {
-      const errorMsg = error.stderr?.toString() || error.stdout?.toString() || error.message || '';
+      const errorMsg = buildErrorMessage(error);
       logger.error('Error initializing Android:', { error });
       
       // Check for common Android environment issues
@@ -454,15 +433,53 @@ async function buildMobileBinary(options: {
       throw new Error('Android project was not created. Check Android SDK/NDK configuration.');
     }
 
-    logger.info('Building Android APK...');
+    // Apply Android size optimizations
+    logger.info('Applying Android size optimizations...');
     try {
-      execSync('npx tauri android build', { ...androidExecOpts, timeout: 600000 });
-    } catch (error: any) {
-      const stderr = error.stderr?.toString() || error.stdout?.toString() || error.message || '';
-      throw new Error(`Android build failed: ${stderr}`);
+      // Add gradle.properties for R8 optimization
+      const gradlePropsPath = path.join(androidProjectDir, 'gradle.properties');
+      const existingProps = fs.existsSync(gradlePropsPath) 
+        ? fs.readFileSync(gradlePropsPath, 'utf8') 
+        : '';
+      fs.writeFileSync(gradlePropsPath, existingProps + '\n' + getTauriGradleProperties());
+      
+      // Add ProGuard rules
+      const appDir = path.join(androidProjectDir, 'app');
+      if (fs.existsSync(appDir)) {
+        fs.writeFileSync(path.join(appDir, 'proguard-rules.pro'), getTauriProguardRules());
+      }
+      
+
+      logger.info('Android optimizations applied successfully');
+    } catch (optimError: any) {
+      logger.warn('Failed to apply some Android optimizations:', { error: optimError.message });
+      // Continue with build even if optimizations fail
     }
 
-    // Find the APK file - Tauri v2 creates universal APKs by default
+    logger.info('Building Android APK (optimized for aarch64 only)...');
+    try {
+      // Build with explicit target - use Gradle properties to ensure aarch64 only
+      const buildEnv = {
+        ...androidExecOpts.env,
+        // Additional environment variables to force aarch64
+        TAURI_ANDROID_TARGETS: 'aarch64',
+      };
+      
+      execSync('npm run build:android', { 
+        ...androidExecOpts, 
+        env: buildEnv,
+        timeout: 600000 
+      });
+    } catch (error: any) {
+      throw new Error(buildErrorMessage(error, 'Android build failed'));
+      
+    }
+
+    // Find the APK file - With optimizations, look for aarch64 specific build first
+    const arm64ApkPath = path.join(
+      workDir,
+      'src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release-unsigned.apk'
+    );
     const universalApkPath = path.join(
       workDir,
       'src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk'
@@ -476,8 +493,11 @@ async function buildMobileBinary(options: {
       'src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk'
     );
 
-    // Try universal first, then release, then debug
-    let finalApkPath = universalApkPath;
+    // Try aarch64 first (optimized), then universal, then release, then debug
+    let finalApkPath = arm64ApkPath;
+    if (!fs.existsSync(finalApkPath)) {
+      finalApkPath = universalApkPath;
+    }
     if (!fs.existsSync(finalApkPath)) {
       finalApkPath = releaseApkPath;
     }
@@ -486,6 +506,10 @@ async function buildMobileBinary(options: {
     }
 
     if (fs.existsSync(finalApkPath)) {
+      const apkSize = fs.statSync(finalApkPath).size;
+      const apkSizeMB = (apkSize / 1024 / 1024).toFixed(2);
+      logger.info(`APK built successfully: ${apkSizeMB} MB`, { path: finalApkPath });
+      
       return {
         success: true,
         binaryPath: finalApkPath,
@@ -503,7 +527,7 @@ async function buildMobileBinary(options: {
     try {
       execSync('npx tauri ios init', { cwd: workDir, stdio: 'inherit' });
     } catch (error: any) {
-      const errorMsg = error.stderr?.toString() || error.stdout?.toString() || error.message || '';
+      const errorMsg = buildErrorMessage(error);
       if (!errorMsg.includes('already exists')) {
         if (errorMsg.includes('Xcode') || errorMsg.includes('xcode')) {
           throw new Error('Xcode not found. Install Xcode from the App Store (macOS only).');
@@ -525,8 +549,7 @@ async function buildMobileBinary(options: {
     try {
       execSync('npx tauri ios build', { cwd: workDir, stdio: 'inherit', timeout: 600000 });
     } catch (error: any) {
-      const stderr = error.stderr?.toString() || error.stdout?.toString() || error.message || '';
-      throw new Error(`iOS build failed: ${stderr}`);
+      throw new Error(buildErrorMessage(error, 'iOS build failed'));
     }
 
     // Find the built app
@@ -565,21 +588,7 @@ async function createProjectZip(
   cleanup: () => void
 ): Promise<TauriPackResult> {
   const zip = new JSZip();
-
-  const addFilesToZip = (dir: string, zipFolder: any) => {
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
-      if (stat.isDirectory()) {
-        addFilesToZip(filePath, zipFolder.folder(file));
-      } else {
-        zipFolder.file(file, fs.readFileSync(filePath));
-      }
-    }
-  };
-
-  addFilesToZip(workDir, zip);
+  addDirectoryToZip(workDir, zip);
 
   const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
   cleanup();
@@ -591,139 +600,4 @@ async function createProjectZip(
     zipBuffer,
     zipFilename: `${sanitizedStackName}.${platform}${suffix}.zip`,
   };
-}
-
-/**
- * Create README content
- */
-function createReadme(
-  platform: 'desktop' | 'mobile',
-  appName: string,
-  backendUrl: string,
-  desktopPlatform?: string,
-  mobileTarget?: 'ios' | 'android' | 'both'
-): string {
-  if (platform === 'mobile') {
-    return `# ${appName} - Tauri Mobile App
-
-Generated by Habits for ${mobileTarget === 'both' ? 'iOS and Android' : mobileTarget}.
-
-## Prerequisites
-
-- Node.js 18+
-- Rust toolchain (install from https://rustup.rs/)
-${
-  mobileTarget === 'ios' || mobileTarget === 'both'
-    ? `- Xcode 14+ (for iOS, macOS only)
-- CocoaPods: \`sudo gem install cocoapods\``
-    : ''
-}
-${
-  mobileTarget === 'android' || mobileTarget === 'both'
-    ? `- Java 17+ (for Android)
-  - Install: \`brew install openjdk@17\` (macOS) or download from Oracle
-  - Set JAVA_HOME: \`export JAVA_HOME=$(/usr/libexec/java_home -v 17)\` (macOS)
-- Android SDK & NDK
-  - Install Android Studio or Android Command Line Tools
-  - Set ANDROID_HOME: \`export ANDROID_HOME=$HOME/Library/Android/sdk\` (macOS)
-  - Install NDK: In Android Studio > SDK Manager > SDK Tools > NDK`
-    : ''
-}
-
-## Setup
-
-\`\`\`bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install Tauri CLI & dependencies
-npm install
-
-# Initialize mobile platforms
-${mobileTarget === 'ios' || mobileTarget === 'both' ? 'npx tauri ios init' : ''}
-${mobileTarget === 'android' || mobileTarget === 'both' ? 'npx tauri android init' : ''}
-\`\`\`
-
-## Development
-
-\`\`\`bash
-${mobileTarget === 'ios' || mobileTarget === 'both' ? '# Run on iOS simulator\nnpm run ios' : ''}
-${mobileTarget === 'android' || mobileTarget === 'both' ? '# Run on Android emulator\nnpm run android' : ''}
-\`\`\`
-
-## Build
-
-\`\`\`bash
-${mobileTarget === 'ios' || mobileTarget === 'both' ? '# Build for iOS\nnpm run build:ios' : ''}
-${mobileTarget === 'android' || mobileTarget === 'both' ? '# Build for Android\nnpm run build:android' : ''}
-\`\`\`
-
-## Output Locations
-
-${mobileTarget === 'ios' || mobileTarget === 'both' ? '- iOS: \`src-tauri/gen/apple/\`' : ''}
-${mobileTarget === 'android' || mobileTarget === 'both' ? '- Android APK: \`src-tauri/gen/android/app/build/outputs/apk/\`' : ''}
-
-## Backend URL
-
-This app connects to: ${backendUrl}
-
-To change the backend URL, edit \`tauri.conf.json\` and update the \`plugins.http.scope\` array.
-`;
-  } else {
-    return `# ${appName} - Tauri Desktop App
-
-This is a Tauri desktop application generated by Habits.
-
-## Prerequisites
-
-- Rust toolchain (install from https://rustup.rs/)
-- Node.js 18+
-${process.platform === 'darwin' ? '- Xcode Command Line Tools (macOS)' : ''}
-${process.platform === 'win32' ? '- Microsoft Visual Studio C++ Build Tools (Windows)' : ''}
-${
-  process.platform === 'linux'
-    ? '- System dependencies: `sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev`'
-    : ''
-}
-
-## Setup
-
-\`\`\`bash
-# Install dependencies
-npm install
-
-# Install Rust (if not already installed)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-\`\`\`
-
-## Development
-
-\`\`\`bash
-npm run dev
-\`\`\`
-
-## Build
-
-\`\`\`bash
-# Build release binary
-npm run build
-
-# Build debug binary (faster)
-npm run build:debug
-\`\`\`
-
-## Output Locations
-
-After building, the application will be in:
-- macOS: \`src-tauri/target/release/bundle/dmg/\`
-- Windows: \`src-tauri/target/release/bundle/msi/\` or \`src-tauri/target/release/bundle/nsis/\`
-- Linux: \`src-tauri/target/release/bundle/appimage/\`, \`deb/\`, or \`rpm/\`
-
-## Backend URL
-
-This app connects to: ${backendUrl}
-
-To change the backend URL, edit \`tauri.conf.json\` and update the \`plugins.http.scope\` array.
-`;
-  }
 }

@@ -191,10 +191,6 @@ You can use base also to edit UI of the habit by clicking the UI button. This is
 
 Already have workflows in n8n or Activepieces? Import them directly into Habits.
 
-::: info Habits is a Runtime, Not a Platform
-Habits doesn't replace n8n or Activepieces: it runs their workflows with a lightweight open-source engine as an API. Design your workflows in n8n or Activepieces, then import them into Habits to run in serverless, edge, or embedded environments.
-:::
-
 > ⚠️ **Note:** Both Activepieces and n8n workflow importing is currently **experimental**.
 
 ### Exporting from n8n

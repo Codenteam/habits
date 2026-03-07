@@ -367,6 +367,9 @@ export function FrontendBuilderVanilla({
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [aiMode, setAiMode] = useState<'intersect' | 'openai'>('intersect');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [openaiModel, setOpenaiModel] = useState('gpt-4o');
   const [sidebarWidth, setSidebarWidth] = useState(560);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -675,24 +678,43 @@ export function FrontendBuilderVanilla({
       setMessage({ type: 'error', text: 'Editor not ready' });
       return;
     }
-    if (!selectedModel) {
-      setMessage({ type: 'error', text: 'Please select a model' });
-      return;
-    }
-    const finalTenantUrl = tenantUrl || config.tenantUrl;
-    const finalApiKey = apiKey || config.apiKey;
-    if (!finalTenantUrl || !validateTenantUrl(finalTenantUrl)) {
-      setMessage({ type: 'error', text: 'Please enter a valid tenant URL' });
-      return;
-    }
-    if (!finalApiKey) {
-      setMessage({ type: 'error', text: 'Please enter an API key' });
-      return;
+    
+    // Validate based on AI mode
+    if (aiMode === 'openai') {
+      if (!openaiApiKey) {
+        setMessage({ type: 'error', text: 'Please enter your OpenAI API key' });
+        return;
+      }
+      if (!openaiModel) {
+        setMessage({ type: 'error', text: 'Please enter a model name' });
+        return;
+      }
+    } else {
+      if (!selectedModel) {
+        setMessage({ type: 'error', text: 'Please select a model' });
+        return;
+      }
+      const finalTenantUrl = tenantUrl || config.tenantUrl;
+      const finalApiKey = apiKey || config.apiKey;
+      if (!finalTenantUrl || !validateTenantUrl(finalTenantUrl)) {
+        setMessage({ type: 'error', text: 'Please enter a valid tenant URL' });
+        return;
+      }
+      if (!finalApiKey) {
+        setMessage({ type: 'error', text: 'Please enter an API key' });
+        return;
+      }
     }
 
     const finalPrompt = prompt.trim() || 'Create a user interface for this';
 
-    handleSaveCredentials(finalTenantUrl, finalApiKey);
+    // Save credentials based on mode
+    if (aiMode === 'intersect') {
+      const finalTenantUrl = tenantUrl || config.tenantUrl;
+      const finalApiKey = apiKey || config.apiKey;
+      handleSaveCredentials(finalTenantUrl!, finalApiKey!);
+    }
+    
     setLoading(true);
     setMessage({ type: 'info', text: 'Generating with AI...' });
 
@@ -715,7 +737,6 @@ export function FrontendBuilderVanilla({
       }
       let currentOutputFromAI = '';
       let lastValue = '';
-      debugger;
       const interval = setInterval(() => {
         if (currentOutputFromAI && currentOutputFromAI !== lastValue) {
           handleAIChange(currentOutputFromAI, true);
@@ -737,10 +758,11 @@ export function FrontendBuilderVanilla({
               }
             }
           },
-          { tenantUrl: finalTenantUrl, apiKey: finalApiKey, model: selectedModel, provider: 'auto' },
+          aiMode === 'openai'
+            ? { apiKey: openaiApiKey, model: openaiModel, provider: 'openai', useDirectOpenAI: true }
+            : { tenantUrl: tenantUrl || config.tenantUrl, apiKey: apiKey || config.apiKey, model: selectedModel, provider: 'auto' },
           hostingResult?.isHosted ?? false
         );
-        debugger;
         if (response.html) {
           handleAIChange(response.html, false); // false = complete
           setMessage({ type: 'success', text: 'Generated successfully!' });
@@ -845,7 +867,38 @@ export function FrontendBuilderVanilla({
 
                 {/* Modal Body */}
                 <div className="p-5 space-y-4">
-                  {/* API Settings Section */}
+                  {/* Mode Selector */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">AI Provider</h3>
+                    <div className="flex gap-2">
+                      <button
+                        className={`flex-1 h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiMode === 'intersect'
+                            ? 'bg-cyan-500 text-white border-2 border-cyan-400'
+                            : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
+                        }`}
+                        onClick={() => setAiMode('intersect')}
+                      >
+                        Intersect API
+                      </button>
+                      <button
+                        className={`flex-1 h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiMode === 'openai'
+                            ? 'bg-cyan-500 text-white border-2 border-cyan-400'
+                            : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
+                        }`}
+                        onClick={() => setAiMode('openai')}
+                      >
+                        Direct OpenAI
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+
+                  {/* API Settings Section - Conditional based on mode */}
+                  {aiMode === 'intersect' ? (
                   <div className="space-y-3">
                     <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">API Configuration</h3>
                     <div>
@@ -880,11 +933,45 @@ export function FrontendBuilderVanilla({
                       <span>Connect & Load Models</span>
                     </button>
                   </div>
+                  ) : (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">OpenAI Configuration</h3>
+                    <div>
+                      <label className="block text-xs font-medium mb-2 text-white">OpenAI API Key</label>
+                      <input
+                        type="password"
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full h-10 px-4 text-sm rounded-lg text-white focus:outline-none transition-all"
+                        style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
+                      />
+                      <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">platform.openai.com</a>
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-2 text-white">Model</label>
+                      <input
+                        type="text"
+                        value={openaiModel}
+                        onChange={(e) => setOpenaiModel(e.target.value)}
+                        placeholder="gpt-4o"
+                        className="w-full h-10 px-4 text-sm rounded-lg text-white focus:outline-none transition-all"
+                        style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
+                      />
+                      <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                        e.g., gpt-4o, gpt-4-turbo, gpt-3.5-turbo, o1-mini, o3-mini
+                      </p>
+                    </div>
+                  </div>
+                  )}
 
                   {/* Divider */}
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
 
-                  {/* Model Selection */}
+                  {/* Model Selection (Only for Intersect mode) */}
+                  {aiMode === 'intersect' && (
                   <div>
                     <label className="block text-xs font-medium mb-2 text-white">Model</label>
                     <div className="relative">
@@ -928,6 +1015,7 @@ export function FrontendBuilderVanilla({
                       </p>
                     )}
                   </div>
+                  )}
                 </div>
 
                 {/* Modal Footer */}
@@ -973,7 +1061,11 @@ export function FrontendBuilderVanilla({
                 className="flex-1 h-9 flex items-center justify-center gap-2 rounded-lg bg-white text-gray-900 hover:bg-gray-100 transition-all cursor-pointer font-medium text-sm disabled:opacity-40"
                 style={{ boxShadow: '0 10px 15px -3px rgba(255,255,255,0.1)' }}
                 onClick={handleGenerate}
-                disabled={loading || !selectedModel || !(tenantUrl || config.tenantUrl) || !(apiKey || config.apiKey)}
+                disabled={
+                  loading ||
+                  (aiMode === 'intersect' && (!selectedModel || !(tenantUrl || config.tenantUrl) || !(apiKey || config.apiKey))) ||
+                  (aiMode === 'openai' && (!openaiApiKey || !openaiModel))
+                }
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

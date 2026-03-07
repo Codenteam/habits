@@ -1,9 +1,4 @@
-import express, { Request, Response } from 'express';
-import dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import * as yaml from 'yaml';
 import { executeN8nModule } from './n8n/n8nExecutor';
 import { executeActivepiecesModule } from './activepieces/activepiecesExecutor';
 import { triggerHelper, TriggerHookType } from './activepieces/activepiecesTrigger';
@@ -13,6 +8,7 @@ import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
 import { LoggerFactory, ILogger } from '@ha-bits/core';
+import { IWebhookHandler } from './WebhookTriggerServer';
 import {
   Workflow,
   WorkflowNode,
@@ -34,188 +30,6 @@ import {
 } from '@habits/shared/types';
 
 // ============================================================================
-// Webhook Server for Trigger Handling
-// ============================================================================
-
-interface WebhookServerOptions {
-  port: number;
-  host: string;
-}
-
-class WebhookTriggerServer {
-  private app: express.Application;
-  private server: any;
-  private webhookHandlers: Map<string, (payload: WebhookPayload) => void> = new Map();
-  private pendingWebhooks: Map<string, {
-    resolve: (payload: any) => void;
-    reject: (error: Error) => void;
-  }> = new Map();
-  private logger = console;
-
-  constructor() {
-    this.app = express();
-    this.setupMiddleware();
-    this.setupRoutes();
-  }
-
-  private setupMiddleware() {
-    this.app.use(express.json({ limit: '1000mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '1000mb' }));
-
-    // CORS headers
-    this.app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-      if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-      } else {
-        next();
-      }
-    });
-  }
-
-  private setupRoutes() {
-    // Health check
-    this.app.get('/health', (req: Request, res: Response) => {
-      res.json({ status: 'healthy', type: 'webhook-trigger-server', timestamp: new Date().toISOString() });
-    });
-
-    // List registered webhooks
-    this.app.get('/webhooks', (req: Request, res: Response) => {
-      const webhooks = Array.from(this.pendingWebhooks.keys()).map(id => {
-        const [workflowId, nodeId] = id.includes(':') ? id.split(':') : [undefined, id];
-        return {
-          workflowId,
-          nodeId,
-          path: workflowId ? `/webhook/${workflowId}/${nodeId}` : `/webhook/${nodeId}`,
-          status: 'waiting'
-        };
-      });
-      res.json({ webhooks });
-    });
-
-    // Dynamic webhook endpoint handler with workflow ID
-    this.app.all('/webhook/:workflowId/:nodeId', async (req: Request, res: Response) => {
-      const { workflowId, nodeId } = req.params;
-      const webhookKey = `${workflowId}:${nodeId}`;
-
-      this.logger.log(`📥 Webhook received for workflow: ${workflowId}, node: ${nodeId}`);
-      this.logger.log(`   Method: ${req.method}`);
-      this.logger.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}...`);
-
-      const webhookPayload: WebhookPayload = {
-        nodeId,
-        payload: req.body,
-        headers: req.headers as Record<string, string>,
-        query: req.query as Record<string, string>,
-      };
-
-      // Check if there's a pending webhook for this workflow/node combo
-      const pending = this.pendingWebhooks.get(webhookKey);
-      if (pending) {
-        this.logger.log(`✅ Resolving pending webhook for workflow: ${workflowId}, node: ${nodeId}`);
-        pending.resolve(webhookPayload);
-        this.pendingWebhooks.delete(webhookKey);
-
-        res.json({
-          success: true,
-          message: 'Webhook received and processed',
-          workflowId,
-          nodeId,
-          timestamp: new Date().toISOString(),
-        });
-      } else {
-        this.logger.warn(`⚠️ No pending handler for webhook: workflow=${workflowId}, node=${nodeId}`);
-        res.status(404).json({
-          success: false,
-          message: `No workflow waiting for webhook on workflow: ${workflowId}, node: ${nodeId}`,
-          availableWebhooks: Array.from(this.pendingWebhooks.keys()),
-        });
-      }
-    });
-
-  }
-
-  /**
-   * Register a webhook and wait for it to be triggered
-   * @param nodeId - The node ID
-   * @param timeout - Timeout in milliseconds
-   * @param workflowId - Optional workflow ID for multi-workflow support
-   */
-  waitForWebhook(nodeId: string, timeout: number = 300000, workflowId?: string): Promise<WebhookPayload> {
-    const webhookKey = workflowId ? `${workflowId}:${nodeId}` : nodeId;
-
-    return new Promise((resolve, reject) => {
-      this.logger.log(`🔔 Registering webhook listener for: ${webhookKey}`);
-
-      // Set timeout for webhook
-      const timeoutId = setTimeout(() => {
-        this.pendingWebhooks.delete(webhookKey);
-        reject(new Error(`Webhook timeout: No webhook received for ${webhookKey} within ${timeout}ms`));
-      }, timeout);
-
-      this.pendingWebhooks.set(webhookKey, {
-        resolve: (payload) => {
-          clearTimeout(timeoutId);
-          resolve(payload);
-        },
-        reject: (error) => {
-          clearTimeout(timeoutId);
-          reject(error);
-        },
-      });
-    });
-  }
-
-  /**
-   * Cancel a pending webhook
-   */
-  cancelWebhook(nodeId: string, workflowId?: string): void {
-    const webhookKey = workflowId ? `${workflowId}:${nodeId}` : nodeId;
-    const pending = this.pendingWebhooks.get(webhookKey);
-    if (pending) {
-      pending.reject(new Error('Webhook cancelled'));
-      this.pendingWebhooks.delete(webhookKey);
-    }
-  }
-
-  async start(options: WebhookServerOptions): Promise<string> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.server = this.app.listen(options.port, options.host, () => {
-          const url = `http://${options.host === '0.0.0.0' ? 'localhost' : options.host}:${options.port}`;
-          this.logger.log(`\n🌐 Webhook Trigger Server started on ${url}`);
-          resolve(url);
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async stop(): Promise<void> {
-    // Cancel all pending webhooks
-    for (const [nodeId, pending] of this.pendingWebhooks) {
-      pending.reject(new Error('Server shutting down'));
-    }
-    this.pendingWebhooks.clear();
-
-    return new Promise((resolve) => {
-      if (this.server) {
-        this.server.close(() => {
-          this.logger.log('🛑 Webhook Trigger Server stopped');
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-    });
-  }
-}
-
-// ============================================================================
 // Workflow Executor
 // ============================================================================
 
@@ -233,23 +47,26 @@ export interface InitFromDataOptions {
 
 export class WorkflowExecutor {
   private executions: Map<string, WorkflowExecution> = new Map();
-  private webhookServer: WebhookTriggerServer | null = null;
-  private webhookServerUrl: string | null = null;
   private loadedWorkflows: Map<string, LoadedWorkflow> = new Map();
   private config: WorkflowConfig | null = null;
   private logger: ILogger = LoggerFactory.getRoot();
+  private env: Record<string, string | undefined> = {};
 
   /**
    * Initialize from in-memory data (no file system access needed)
-   * This is the core initialization method - loadConfig wraps this with file loading
+   * This is the ONLY initialization method - it's platform-agnostic (works in browser and Node.js)
    */
   async initFromData(options: InitFromDataOptions): Promise<void> {
     const { config, workflows, env } = options;
 
-    // Set environment variables if provided (do this first so logging config can use env vars)
+    // Store environment variables in class property (platform-agnostic)
     if (env) {
-      for (const [key, value] of Object.entries(env)) {
-        process.env[key] = value;
+      this.env = { ...env };
+      // Also set process.env for Node.js compatibility with modules that read it directly
+      if (typeof process !== 'undefined' && process.env) {
+        for (const [key, value] of Object.entries(env)) {
+          process.env[key] = value;
+        }
       }
     }
 
@@ -311,11 +128,11 @@ export class WorkflowExecutor {
 
         this.logger.log(`   ✅ Loaded workflow: ${finalWorkflowId} (${workflow.name})`);
 
-        // Print all process.env starting with HABITS_, only the names not values
+        // Print all env variables starting with HABITS_, only the names not values
         this.logger.log(`   🔑 Environment variables:`);
-        for (const key of Object.keys(process.env)) {
+        for (const key of Object.keys(this.env)) {
           if (key.startsWith('HABITS_')) {
-            this.logger.log(`      - ${key}: ${process.env[key]}`);
+            this.logger.log(`      - ${key}: ${this.env[key]}`);
           }
         }
 
@@ -326,7 +143,7 @@ export class WorkflowExecutor {
           for (const param of habitsParams) {
             if (param.startsWith('habits.env.')) {
               const envVar = param.slice('habits.env.'.length);
-              const value = process.env[envVar];
+              const value = this.env[envVar];
               this.logger.log(`      - {{${param}}} → ${value !== undefined ? value : '(not set)'}`);
             } else {
               this.logger.log(`      - {{${param}}} → (resolved at runtime)`);
@@ -351,80 +168,6 @@ export class WorkflowExecutor {
 
     // Pre-load all modules to ensure they're ready before first request
     await this.preloadModules();
-  }
-
-  /**
-   * Load workflows from a config.json file
-   * This is a convenience wrapper around initFromData that handles file loading
-   */
-  async loadConfig(configPath: string): Promise<void> {
-    const absolutePath = path.resolve(configPath);
-    const configDir = path.dirname(absolutePath);
-
-    if (!fs.existsSync(absolutePath)) {
-      throw new Error(`Config file not found: ${absolutePath}`);
-    }
-
-    // Parse .env file if it exists
-    let envVars: Record<string, string> | undefined;
-    const envPath = path.join(configDir, '.env');
-    if (fs.existsSync(envPath)) {
-      this.logger.log(`\n🔐 Loading environment variables from: ${envPath}`);
-      // Parse .env file manually to get as Record
-      const envContent = fs.readFileSync(envPath, 'utf8');
-      envVars = {};
-      for (const line of envContent.split('\n')) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-          const eqIndex = trimmed.indexOf('=');
-          if (eqIndex > 0) {
-            const key = trimmed.slice(0, eqIndex).trim();
-            let value = trimmed.slice(eqIndex + 1).trim();
-            // Remove surrounding quotes if present
-            if ((value.startsWith('"') && value.endsWith('"')) || 
-                (value.startsWith("'") && value.endsWith("'"))) {
-              value = value.slice(1, -1);
-            }
-            envVars[key] = value;
-          }
-        }
-      }
-    }
-
-    // Parse config file - support both JSON and YAML formats
-    const fileContent = fs.readFileSync(absolutePath, 'utf8');
-    const ext = path.extname(absolutePath).toLowerCase();
-    
-    let config: WorkflowConfig;
-      config = yaml.parse(fileContent) as WorkflowConfig;
-  
-
-    // Load workflow files into a map
-    const workflows = new Map<string, Workflow>();
-    for (const workflowRef of config.workflows) {
-      if (workflowRef.enabled === false) continue;
-
-      const workflowPath = path.isAbsolute(workflowRef.path)
-        ? workflowRef.path
-        : path.resolve(configDir, workflowRef.path);
-
-      if (!fs.existsSync(workflowPath)) {
-        this.logger.error(`   ❌ Workflow file not found: ${workflowPath}`);
-        continue;
-      }
-
-      try {
-        const workflowContent = fs.readFileSync(workflowPath, 'utf8');
-        const workflow = yaml.parse(workflowContent) as Workflow;
-        const workflowId = workflowRef.id || workflow.id || workflowRef.path;
-        workflows.set(workflowId, workflow);
-      } catch (error: any) {
-        this.logger.error(`   ❌ Failed to parse workflow file ${workflowPath}: ${error.message}`);
-      }
-    }
-
-    // Now delegate to initFromData
-    await this.initFromData({ config, workflows, env: envVars });
   }
 
   /**
@@ -631,8 +374,7 @@ export class WorkflowExecutor {
    * Execute a complete workflow using dependency-based execution
    */
   async executeWorkflow(workflowOrId: Workflow | string, options?: {
-    webhookPort?: number;
-    webhookHost?: string;
+    webhookHandler?: IWebhookHandler;   // Optional webhook handler for workflow triggers (Node.js server only)
     webhookTimeout?: number;
     initialContext?: Record<string, any>;
     onStream?: StreamCallback;
@@ -693,13 +435,19 @@ export class WorkflowExecutor {
       // Scan for webhook triggers
       const webhookTriggers = this.findWebhookTriggers(workflow.nodes);
 
-      // If there are webhook triggers, start the webhook server
+      // If there are webhook triggers, ensure a webhook handler is provided
       if (webhookTriggers.length > 0) {
-        await this.startWebhookServer(options?.webhookPort || 3001, options?.webhookHost || '0.0.0.0');
+        if (!options?.webhookHandler) {
+          throw new Error(
+            `Workflow "${workflow.name}" contains ${webhookTriggers.length} webhook trigger(s) but no webhookHandler was provided. ` +
+            `Webhook triggers are only supported in Node.js server environments. ` +
+            `Provide a webhookHandler via options or remove webhook triggers from the workflow.`
+          );
+        }
 
         this.logger.log(`\n📋 Detected ${webhookTriggers.length} webhook trigger(s):`);
         for (const trigger of webhookTriggers) {
-          this.logger.log(`   - Node: ${trigger.nodeId} → POST ${this.webhookServerUrl}/webhook/${workflow.id}/${trigger.nodeId}`);
+          this.logger.log(`   - Node: ${trigger.nodeId}`);
         }
         this.logger.log('\n⏳ Waiting for webhook(s) to be triggered...\n');
       }
@@ -813,7 +561,8 @@ export class WorkflowExecutor {
           try {
             // Check if this is a webhook trigger node
             if (this.isWebhookTriggerNode(node)) {
-              const webhookResult = await this.handleWebhookTrigger(node, context, execution, options?.webhookTimeout);
+              // webhookHandler is guaranteed to exist here - we validated at the start of executeWorkflow
+              const webhookResult = await this.handleWebhookTrigger(node, context, execution, options!.webhookHandler!, options?.webhookTimeout);
 
               // Security scanning on webhook trigger output data
               const scannedResult = await scanInputForSecurity(webhookResult.result, securityConfig, this.logger);
@@ -909,11 +658,6 @@ export class WorkflowExecutor {
         // await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      // Stop webhook server if it was started
-      if (this.webhookServer) {
-        await this.stopWebhookServer();
-      }
-
       // Determine final execution status
       const failedNodes = execution.nodeStatuses.filter(s => s.status === 'failed');
       const completedNodes = execution.nodeStatuses.filter(s => s.status === 'completed');
@@ -967,11 +711,6 @@ export class WorkflowExecutor {
         duration: 0,
       });
 
-      // Make sure to stop webhook server on error
-      if (this.webhookServer) {
-        await this.stopWebhookServer();
-      }
-
       // Emit execution failed event
       emitStreamEvent({
         type: 'execution_failed',
@@ -1004,35 +743,14 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Start the webhook server
-   */
-  private async startWebhookServer(port: number, host: string): Promise<void> {
-    if (this.webhookServer) {
-      return; // Already running
-    }
-
-    this.webhookServer = new WebhookTriggerServer();
-    this.webhookServerUrl = await this.webhookServer.start({ port, host });
-  }
-
-  /**
-   * Stop the webhook server
-   */
-  private async stopWebhookServer(): Promise<void> {
-    if (this.webhookServer) {
-      await this.webhookServer.stop();
-      this.webhookServer = null;
-      this.webhookServerUrl = null;
-    }
-  }
-
-  /**
    * Handle webhook trigger execution - waits for webhook to be received
+   * Requires a webhookHandler to be passed (typically provided by the server layer)
    */
   private async handleWebhookTrigger(
     node: WorkflowNode,
     context: Record<string, any>,
     execution: WorkflowExecution,
+    webhookHandler: IWebhookHandler,
     timeout?: number
   ): Promise<ExecutionResult> {
     const startTime = Date.now();
@@ -1044,15 +762,11 @@ export class WorkflowExecutor {
     };
 
     try {
-      if (!this.webhookServer) {
-        throw new Error('Webhook server not started');
-      }
-
       const workflowId = execution.workflowId;
-      this.logger.log(`🔔 Waiting for webhook on: POST ${this.webhookServerUrl}/webhook/${workflowId}/${node.id}`);
+      this.logger.log(`🔔 Waiting for webhook for workflow ${workflowId}, node ${node.id}`);
 
       // Wait for the webhook to be triggered (with workflow ID)
-      const webhookPayload = await this.webhookServer.waitForWebhook(node.id, timeout || 300000, workflowId);
+      const webhookPayload = await webhookHandler.waitForWebhook(node.id, timeout || 300000, workflowId);
 
       this.logger.log(`✅ Webhook received for workflow ${workflowId}, node ${node.id}`);
 
@@ -1496,7 +1210,8 @@ export class WorkflowExecutor {
       if (expression.startsWith('habits.env.')) {
         // Strip 'habits.env.' prefix to get the actual env var name
         const envVar = expression.slice('habits.env.'.length);
-        const value = process.env[envVar];
+        // Check this.env first (platform-agnostic), fall back to process.env for Node.js
+        const value = this.env[envVar] ?? (typeof process !== 'undefined' ? process.env?.[envVar] : undefined);
         if (value === undefined) {
           this.logger.warn(`⚠️  Environment variable ${envVar} is not set`);
         }

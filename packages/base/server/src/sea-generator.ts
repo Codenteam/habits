@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { spawn, execSync } from 'child_process';
 import { LoggerFactory, getTmpDir } from '@ha-bits/core';
-
+import * as yaml from 'yaml';
 const logger = LoggerFactory.getRoot();
 
 export interface SeaConfig {
@@ -85,7 +85,7 @@ ${workflowRefs.join('\n')}
  * Generate habit YAML content
  */
 function generateHabitYaml(habit: SeaConfig['habits'][0]): string {
-  const yaml = require('yaml');
+
   
   const habitData = {
     name: habit.name,
