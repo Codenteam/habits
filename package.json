@@ -10,7 +10,8 @@
   "scripts": {
     "d": "tsx scripts/dev.ts",
     "docs:dev": "pnpm nx dev @ha-bits/habit-viewer & cd docs && pnpm dev",
-    "prepare": "husky"
+    "prepare": "husky",
+    "validate:affected": "bash scripts/validate-affected.sh"
   },
   "keywords": [
     "automation",
@@ -22,7 +23,7 @@
   "author": "Codenteam",
   "license": "Apache-2.0",
   "dependencies": {
-    "@activepieces/piece-openai": "^0.7.1",
+    "jszip": "^3.10.1",
     "@activepieces/pieces-common": "^0.10.1",
     "@activepieces/pieces-framework": "^0.22.2",
     "@activepieces/shared": "^0.29.0",
