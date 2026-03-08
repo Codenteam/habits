@@ -91,6 +91,7 @@ echo ""
 
 # Build docs
 cd docs
+pnpm install
 if pnpm build; then
     echo ""
     echo -e "${GREEN}✅ Documentation build passed!${NC}"
