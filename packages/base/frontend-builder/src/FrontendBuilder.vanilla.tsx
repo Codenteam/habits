@@ -367,9 +367,9 @@ export function FrontendBuilderVanilla({
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [aiMode, setAiMode] = useState<'intersect' | 'openai'>('intersect');
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [openaiModel, setOpenaiModel] = useState('gpt-4o');
+  const [aiProvider, setAiProvider] = useState<'intersect' | 'openai' | 'anthropic' | 'gemini'>('intersect');
+  const [customApiKey, setCustomApiKey] = useState('');
+  const [customModel, setCustomModel] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(560);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -679,17 +679,8 @@ export function FrontendBuilderVanilla({
       return;
     }
     
-    // Validate based on AI mode
-    if (aiMode === 'openai') {
-      if (!openaiApiKey) {
-        setMessage({ type: 'error', text: 'Please enter your OpenAI API key' });
-        return;
-      }
-      if (!openaiModel) {
-        setMessage({ type: 'error', text: 'Please enter a model name' });
-        return;
-      }
-    } else {
+    // Validate based on AI provider
+    if (aiProvider === 'intersect') {
       if (!selectedModel) {
         setMessage({ type: 'error', text: 'Please select a model' });
         return;
@@ -704,12 +695,21 @@ export function FrontendBuilderVanilla({
         setMessage({ type: 'error', text: 'Please enter an API key' });
         return;
       }
+    } else {
+      if (!customApiKey) {
+        setMessage({ type: 'error', text: 'Please enter your API key' });
+        return;
+      }
+      if (!customModel) {
+        setMessage({ type: 'error', text: 'Please enter a model name' });
+        return;
+      }
     }
 
     const finalPrompt = prompt.trim() || 'Create a user interface for this';
 
-    // Save credentials based on mode
-    if (aiMode === 'intersect') {
+    // Save credentials for intersect mode
+    if (aiProvider === 'intersect') {
       const finalTenantUrl = tenantUrl || config.tenantUrl;
       const finalApiKey = apiKey || config.apiKey;
       handleSaveCredentials(finalTenantUrl!, finalApiKey!);
@@ -758,9 +758,9 @@ export function FrontendBuilderVanilla({
               }
             }
           },
-          aiMode === 'openai'
-            ? { apiKey: openaiApiKey, model: openaiModel, provider: 'openai', useDirectOpenAI: true }
-            : { tenantUrl: tenantUrl || config.tenantUrl, apiKey: apiKey || config.apiKey, model: selectedModel, provider: 'auto' },
+          aiProvider === 'intersect'
+            ? { tenantUrl: tenantUrl || config.tenantUrl, apiKey: apiKey || config.apiKey, model: selectedModel, provider: 'auto' }
+            : { apiKey: customApiKey, model: customModel, provider: aiProvider },
           hostingResult?.isHosted ?? false
         );
         if (response.html) {
@@ -867,29 +867,49 @@ export function FrontendBuilderVanilla({
 
                 {/* Modal Body */}
                 <div className="p-5 space-y-4">
-                  {/* Mode Selector */}
+                  {/* Provider Selector */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">AI Provider</h3>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
-                        className={`flex-1 h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
-                          aiMode === 'intersect'
+                        className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiProvider === 'intersect'
                             ? 'bg-cyan-500 text-white border-2 border-cyan-400'
                             : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
                         }`}
-                        onClick={() => setAiMode('intersect')}
+                        onClick={() => setAiProvider('intersect')}
                       >
-                        Intersect API
+                        Intersect
                       </button>
                       <button
-                        className={`flex-1 h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
-                          aiMode === 'openai'
+                        className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiProvider === 'openai'
                             ? 'bg-cyan-500 text-white border-2 border-cyan-400'
                             : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
                         }`}
-                        onClick={() => setAiMode('openai')}
+                        onClick={() => { setAiProvider('openai'); setCustomModel(customModel || 'gpt-4o'); }}
                       >
-                        Direct OpenAI
+                        OpenAI
+                      </button>
+                      <button
+                        className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiProvider === 'anthropic'
+                            ? 'bg-cyan-500 text-white border-2 border-cyan-400'
+                            : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
+                        }`}
+                        onClick={() => { setAiProvider('anthropic'); setCustomModel(customModel || 'claude-opus-4-5'); }}
+                      >
+                        Anthropic
+                      </button>
+                      <button
+                        className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
+                          aiProvider === 'gemini'
+                            ? 'bg-cyan-500 text-white border-2 border-cyan-400'
+                            : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
+                        }`}
+                        onClick={() => { setAiProvider('gemini'); setCustomModel(customModel || 'gemini-2.0-flash-exp'); }}
+                      >
+                        Gemini
                       </button>
                     </div>
                   </div>
@@ -897,8 +917,8 @@ export function FrontendBuilderVanilla({
                   {/* Divider */}
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
 
-                  {/* API Settings Section - Conditional based on mode */}
-                  {aiMode === 'intersect' ? (
+                  {/* API Settings Section */}
+                  {aiProvider === 'intersect' ? (
                   <div className="space-y-3">
                     <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">API Configuration</h3>
                     <div>
@@ -935,33 +955,40 @@ export function FrontendBuilderVanilla({
                   </div>
                   ) : (
                   <div className="space-y-3">
-                    <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">OpenAI Configuration</h3>
+                    <h3 className="text-xs font-medium text-white/70 uppercase tracking-wide">{aiProvider === 'openai' ? 'OpenAI' : aiProvider === 'anthropic' ? 'Anthropic' : 'Gemini'} Configuration</h3>
                     <div>
-                      <label className="block text-xs font-medium mb-2 text-white">OpenAI API Key</label>
+                      <label className="block text-xs font-medium mb-2 text-white">API Key</label>
                       <input
                         type="password"
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                        placeholder="sk-..."
+                        value={customApiKey}
+                        onChange={(e) => setCustomApiKey(e.target.value)}
+                        placeholder={aiProvider === 'anthropic' ? 'sk-ant-...' : aiProvider === 'gemini' ? 'AIza...' : 'sk-...'}
                         className="w-full h-10 px-4 text-sm rounded-lg text-white focus:outline-none transition-all"
                         style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
                       />
                       <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                        Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">platform.openai.com</a>
+                        {aiProvider === 'openai' && 'Get your API key from '}  
+                        {aiProvider === 'anthropic' && 'Get your API key from '}
+                        {aiProvider === 'gemini' && 'Get your API key from '}
+                        {aiProvider === 'openai' && <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">platform.openai.com</a>}
+                        {aiProvider === 'anthropic' && <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">console.anthropic.com</a>}
+                        {aiProvider === 'gemini' && <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-cyan-400">aistudio.google.com</a>}
                       </p>
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-2 text-white">Model</label>
                       <input
                         type="text"
-                        value={openaiModel}
-                        onChange={(e) => setOpenaiModel(e.target.value)}
-                        placeholder="gpt-4o"
+                        value={customModel}
+                        onChange={(e) => setCustomModel(e.target.value)}
+                        placeholder={aiProvider === 'anthropic' ? 'claude-opus-4-5' : aiProvider === 'gemini' ? 'gemini-2.0-flash-exp' : 'gpt-4o'}
                         className="w-full h-10 px-4 text-sm rounded-lg text-white focus:outline-none transition-all"
                         style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
                       />
                       <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                        e.g., gpt-4o, gpt-4-turbo, gpt-3.5-turbo, o1-mini, o3-mini
+                        {aiProvider === 'openai' && 'e.g., gpt-4o, gpt-4-turbo, o1-mini, o3-mini'}
+                        {aiProvider === 'anthropic' && 'e.g., claude-opus-4-5, claude-sonnet-4-5'}
+                        {aiProvider === 'gemini' && 'e.g., gemini-2.0-flash-exp, gemini-1.5-pro'}
                       </p>
                     </div>
                   </div>
@@ -971,7 +998,7 @@ export function FrontendBuilderVanilla({
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }} />
 
                   {/* Model Selection (Only for Intersect mode) */}
-                  {aiMode === 'intersect' && (
+                  {aiProvider === 'intersect' && (
                   <div>
                     <label className="block text-xs font-medium mb-2 text-white">Model</label>
                     <div className="relative">
@@ -1063,8 +1090,8 @@ export function FrontendBuilderVanilla({
                 onClick={handleGenerate}
                 disabled={
                   loading ||
-                  (aiMode === 'intersect' && (!selectedModel || !(tenantUrl || config.tenantUrl) || !(apiKey || config.apiKey))) ||
-                  (aiMode === 'openai' && (!openaiApiKey || !openaiModel))
+                  (aiProvider === 'intersect' && (!selectedModel || !(tenantUrl || config.tenantUrl) || !(apiKey || config.apiKey))) ||
+                  (aiProvider !== 'intersect' && (!customApiKey || !customModel))
                 }
               >
                 {loading ? (

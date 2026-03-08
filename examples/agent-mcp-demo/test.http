@@ -1,0 +1,8 @@
+### Agent MCP Search - List All Channels
+
+POST http://localhost:13000/api/agent-mcp-search
+Content-Type: application/json
+
+{
+    "query": "What is the last channel created on slack? list all channels"
+}

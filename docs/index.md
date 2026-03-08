@@ -45,11 +45,12 @@ my-automation/
 
 ::: code-group
 
+<<< @/../examples/mixed/habit.yaml [habit.yaml]
+
 <<< @/../examples/mixed/.env.example [.env]
 
 <<< @/../examples/mixed/stack.yaml [stack.yaml]
 
-<<< @/../examples/mixed/habit.yaml [habit.yaml]
 
 <<< @/../examples/mixed/frontend/index.html [frontend/index.html]
 

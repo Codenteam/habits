@@ -91,6 +91,11 @@ echo ""
 
 # Build docs
 cd docs
+# Install d2
+curl -fsSL https://d2lang.com/install.sh | sh -s --
+# Install npm deps
+pnpm install
+
 if pnpm build; then
     echo ""
     echo -e "${GREEN}✅ Documentation build passed!${NC}"
