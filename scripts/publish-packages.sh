@@ -5,9 +5,9 @@ set -e
 TAG=${1:-latest}
 echo "Publishing with tag: $TAG"
 
-# 1. bit-intersect (in bits-creator/nodes workspace)
+# 1. bit-intersect (in nodes workspace)
 echo "=== Publishing bit-intersect ==="
-cd bits-creator/nodes
+cd nodes
 
 cd bits/@ha-bits/bit-intersect 
 npm version patch --no-git-tag-version

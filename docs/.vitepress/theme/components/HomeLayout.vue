@@ -97,9 +97,11 @@ const screenshots = [
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">Apache 2.0 Logic & UI Builder and Runner</p>
+          <p class="hero-tagline">AI Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
+            <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Build using UI</a>
+            <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Build using AI</a>
             <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Read more</a>
           </div>
         </div>
@@ -139,25 +141,25 @@ const screenshots = [
         <h2>Full-Stack Your Habits</h2>
         <p>Turn a single workflow or multiple workflows into a complete application stack:</p>
         <div class="stack-items">
-          <div class="stack-item">
+          <a :href="withBase('/getting-started/first-habit#frontend-ui')" class="stack-item">
             <span class="stack-icon" v-html="icon('monitor')"></span>
             <span class="stack-label">Frontend UI</span>
-          </div>
+          </a>
           <span class="stack-plus">+</span>
-          <div class="stack-item">
+          <a :href="withBase('/deep-dive/running#cortex-api')" class="stack-item">
             <span class="stack-icon" v-html="icon('zap')"></span>
             <span class="stack-label">Backend API</span>
-          </div>
+          </a>
           <span class="stack-plus">+</span>
-          <div class="stack-item">
+          <a :href="withBase('/deep-dive/running#swagger-api-documentation')" class="stack-item">
             <span class="stack-icon" v-html="icon('book-open')"></span>
             <span class="stack-label">Swagger OpenAPI Docs</span>
-          </div>
+          </a>
           <span class="stack-plus">+</span>
-          <div class="stack-item">
+          <a :href="withBase('/getting-started/first-habit#management-portal')" class="stack-item">
             <span class="stack-icon" v-html="icon('clipboard')"></span>
             <span class="stack-label">Task Management</span>
-          </div>
+          </a>
         </div>
       </div>
     </section>
@@ -436,6 +438,9 @@ const screenshots = [
   gap: 10px;
   font-weight: 500;
   transition: transform 0.2s, background 0.2s;
+  text-decoration: none;
+  color: white;
+  cursor: pointer;
 }
 
 .stack-item:hover {

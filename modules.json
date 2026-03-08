@@ -58,16 +58,6 @@
     {
       "framework": "bits",
       "source": "npm",
-      "repository": "@ha-bits/bit-database-mongodb"
-    },
-    {
-      "framework": "bits",
-      "source": "npm",
-      "repository": "@ha-bits/bit-database-mysql"
-    },
-    {
-      "framework": "bits",
-      "source": "npm",
       "repository": "@ha-bits/bit-discord"
     },
     {
@@ -99,11 +89,6 @@
       "framework": "bits",
       "source": "npm",
       "repository": "@ha-bits/bit-jsonplaceholder"
-    },
-    {
-      "framework": "bits",
-      "source": "npm",
-      "repository": "@ha-bits/bit-shell"
     },
     {
       "framework": "bits",

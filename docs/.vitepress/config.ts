@@ -70,6 +70,7 @@ export default defineConfig({
           { text: 'Motivation', link: '/getting-started/motivation' },
           { text: 'Build Your First Habit using HaC', link: '/getting-started/first-habit' },
           { text: 'Build Your First Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
+          { text: 'Build Your First Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
           { text: 'Checklists', link: '/getting-started/checklists' },
@@ -96,6 +97,7 @@ export default defineConfig({
           { text: 'Minimal Blog', link: '/examples/minimal-blog' },
           { text: 'Complete Marketing Campaign in Seconds', link: '/examples/marketing-campaign' },
           { text: 'Email Classification', link: '/examples/email-classification' },
+          { text: 'Agent MCP Demo', link: '/examples/agent-mcp-demo' },
         ]
       },
       // Extra reading

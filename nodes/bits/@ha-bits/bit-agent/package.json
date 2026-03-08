@@ -1,0 +1,67 @@
+{
+  "name": "@ha-bits/bit-agent",
+  "version": "0.1.0",
+  "description": "AI Agent bit with LangChain and MCP (Model Context Protocol) integration for multi-tool AI workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "bits",
+    "habits",
+    "agent",
+    "langchain",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "openai",
+    "anthropic",
+    "google"
+  ],
+  "author": "Habits Team",
+  "license": "MIT",
+  "dependencies": {
+    "@ha-bits/cortex": ">=0.1.0",
+    "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.2.0",
+    "@langchain/openai": "^0.3.0",
+    "@langchain/anthropic": "^0.3.0",
+    "@langchain/google-genai": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex": ">=0.1.0"
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-agent/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  }
+}

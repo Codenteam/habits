@@ -1,16 +1,39 @@
 # Habits
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)t
+
+
+
+
 
 Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-Apps. 
 
-<p align="center">
-  <img src="docs/public/images/base.webp" alt="Habits Base - Visual Builder" width="800"/>
-</p>
-<p align="center">
-  <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
-</p>
+Under the hood Habits is an AI Logic & UI builder (Base, from Basal Ganglia) and decentralized runner (Cortex, as in Frontal Cortex) that you can control, audit, monitor and extend (Apache 2.0)
+
+https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
+
+
+
+## Table of Contents
+
+- [What is Habits?](#what-is-habits)
+- [Features](#features)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Create Your First Habit](#create-your-first-habit)
+  - [Run the Server](#run-the-server)
+- [Architecture](#architecture)
+- [Examples](#examples)
+- [Screenshots](#screenshots)
+- [When to Use Habits](#when-to-use-habits)
+- [Enabling Features](#enabling-features)
+- [License Considerations](#license-considerations)
+- [Documentation](#documentation)
+- [Development](#development)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## What is Habits?
 
@@ -121,17 +144,35 @@ npx habits@latest cortex --config ./stack.yaml
 
 ## Screenshots
 
-### Cortex Management UI
+### Habits Base: The Logic Visual Builder
+<p align="center">
+  <img src="docs/public/images/base.webp" alt="Habits Base - Visual Builder" width="800"/>
+</p>
+
+### Habits Base: The UI Visual Builder
+<p align="center">
+  <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
+</p>
+
+### Habits Cortex:  Management UI
+<p align="center">
 <img src="docs/public/images/cortex.webp" alt="Cortex Management UI" width="700"/>
+</p>
 
 ### Base Frontend Builder
+<p align="center">
 <img src="docs/public/images/base-frontend.webp" alt="Base Frontend Builder" width="700"/>
+</p>
 
 ### Swagger API Documentation
+<p align="center">
 <img src="docs/public/images/swagger.webp" alt="Swagger API" width="700"/>
+</p>
 
 ### Example Frontend (Text-to-Audio)
+<p align="center">
 <img src="docs/public/images/mixed-frontend.webp" alt="Mixed Frontend Example" width="700"/>
+</p>
 
 ## When to Use Habits
 
@@ -168,14 +209,18 @@ Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
 
 ## Documentation
 
-Full documentation available at [docs](docs/):
+📚 **[View full documentation](https://codenteam.com/intersect/habits)**
 
-- [Introduction](docs/getting-started/introduction.md)
-- [First Habit](docs/getting-started/first-habit.md)
-- [Concepts](docs/getting-started/concepts.md)
-- [Running Automations](docs/deep-dive/running.md)
-- [Creating Habits](docs/deep-dive/creating.md)
-- [Security](docs/security/index.md)
+Local documentation available at [docs](docs/):
+
+## 📖 Documentation
+
+- [Introduction](https://codenteam.com/intersect/habits/getting-started/introduction.html) ([Source](docs/getting-started/introduction.md))
+- [First Habit](https://codenteam.com/intersect/habits/getting-started/first-habit.html) ([Source](docs/getting-started/first-habit.md))
+- [Concepts](https://codenteam.com/intersect/habits/getting-started/concepts.html) ([Source](docs/getting-started/concepts.md))
+- [Running Automations](https://codenteam.com/intersect/habits/deep-dive/running.html) ([Source](docs/deep-dive/running.md))
+- [Creating Habits](https://codenteam.com/intersect/habits/deep-dive/creating.html) ([Source](docs/deep-dive/creating.md))
+
 
 ## Development
 

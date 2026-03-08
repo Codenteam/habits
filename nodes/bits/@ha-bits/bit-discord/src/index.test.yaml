@@ -1,0 +1,141 @@
+# bit-discord tests — Discord messaging API
+bit: ./index.ts
+tests:
+  # ── sendWebhookMessage ────────────────────────
+
+  - name: "sendWebhookMessage - basic text message"
+    action: sendWebhookMessage
+    input:
+      webhookUrl: "https://discord.com/api/webhooks/12345/abcdef"
+      content: "Hello from Habits!"
+    mocks:
+      fetch:
+        - url: "*/webhooks/12345/abcdef"
+          method: POST
+          status: 204
+          response: ""
+          responseType: text
+    expect:
+      success: true
+
+  - name: "sendWebhookMessage - with embed"
+    action: sendWebhookMessage
+    input:
+      webhookUrl: "https://discord.com/api/webhooks/12345/abcdef"
+      content: "Check this out"
+      embedTitle: "New PR Opened"
+      embedDescription: "A new pull request has been opened"
+      embedColor: "#5865F2"
+      username: "Habits Bot"
+    mocks:
+      fetch:
+        - url: "*/webhooks/12345/abcdef"
+          method: POST
+          status: 204
+          response: ""
+          responseType: text
+    expect:
+      success: true
+
+  - name: "sendWebhookMessage - webhook error propagates"
+    action: sendWebhookMessage
+    input:
+      webhookUrl: "https://discord.com/api/webhooks/invalid/bad"
+      content: "This will fail"
+    mocks:
+      fetch:
+        - url: "*/webhooks/invalid/bad"
+          method: POST
+          status: 404
+          response: "Unknown Webhook"
+          responseType: text
+    expectError: "Discord webhook error"
+
+  # ── sendBotMessage ────────────────────────────
+
+  - name: "sendBotMessage - send to channel"
+    action: sendBotMessage
+    input:
+      botToken: "Bot.test.token"
+      channelId: "1234567890"
+      content: "Hello channel!"
+    mocks:
+      fetch:
+        - url: "*/channels/1234567890/messages"
+          method: POST
+          response:
+            id: "9999"
+            channel_id: "1234567890"
+            content: "Hello channel!"
+            author:
+              id: "5555"
+              username: "HabitsBot"
+    expect:
+      id: "9999"
+      channel_id: "1234567890"
+      content: "Hello channel!"
+
+  - name: "sendBotMessage - with embed"
+    action: sendBotMessage
+    input:
+      botToken: "Bot.test.token"
+      channelId: "1234567890"
+      content: "Check out this PR"
+      embedTitle: "PR #42 - Fix typo"
+      embedDescription: "A small typo fix in the README"
+    mocks:
+      fetch:
+        - url: "*/channels/1234567890/messages"
+          method: POST
+          response:
+            id: "10000"
+            channel_id: "1234567890"
+            content: "Check out this PR"
+            embeds:
+              - title: "PR #42 - Fix typo"
+                description: "A small typo fix in the README"
+    expect:
+      id: "10000"
+      content: "Check out this PR"
+
+  # ── sendDirectMessage ─────────────────────────
+
+  - name: "sendDirectMessage - send DM to user"
+    action: sendDirectMessage
+    input:
+      botToken: "Bot.test.token"
+      userId: "user123"
+      content: "You have a new PR to review"
+    mocks:
+      fetch:
+        - url: "*/users/@me/channels"
+          method: POST
+          response:
+            id: "dm-channel-99"
+            type: 1
+        - url: "*/channels/dm-channel-99/messages"
+          method: POST
+          response:
+            id: "msg-200"
+            channel_id: "dm-channel-99"
+            content: "You have a new PR to review"
+    expect:
+      id: "msg-200"
+      channel_id: "dm-channel-99"
+      content: "You have a new PR to review"
+
+  - name: "sendDirectMessage - DM channel creation fails"
+    action: sendDirectMessage
+    input:
+      botToken: "Bot.bad.token"
+      userId: "user456"
+      content: "Test"
+    mocks:
+      fetch:
+        - url: "*/users/@me/channels"
+          method: POST
+          status: 403
+          response:
+            message: "Missing Access"
+            code: 50001
+    expectError: "Failed to create DM channel"

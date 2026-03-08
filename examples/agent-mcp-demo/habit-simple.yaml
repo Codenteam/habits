@@ -1,0 +1,35 @@
+id: agent-everything-only
+name: Agent Everything Only Demo
+description: |
+  Simple demo using only the Everything MCP server (no auth required).
+  Great for testing the agent locally.
+
+nodes:
+  - id: simple-agent
+    type: bit
+    data:
+      framework: bits
+      module: '@ha-bits/bit-agent'
+      operation: run_agent
+      source: local
+      credentials:
+        agentAuth:
+          llmProvider: openai
+          apiKey: '{{habits.env.OPENAI_API_KEY}}'
+          mcpSecrets: {}
+      params:
+        prompt: '{{habits.input.query}}'
+        systemPrompt: |
+          You are a helpful assistant with access to various utility tools.
+          Use your tools to help answer the user's questions.
+        mcpServers:
+          - type: everything
+        model: gpt-4o-mini
+        maxIterations: 10
+        temperature: 0.5
+
+edges: []
+
+output:
+  response: '{{simple-agent.response}}'
+  tools: '{{simple-agent.toolsAvailable}}'

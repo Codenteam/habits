@@ -36,7 +36,7 @@ Provides REST API endpoints for a blog:
 
 ## Why It's Included
 
-Demonstrates Habits as a backend-for-frontend (BFF) layer—replaces traditional CMS backends with declarative workflows.
+Demonstrates Habits as a backend-for-frontend (BFF) layer, replaces traditional CMS backends with declarative workflows.
 
 ## Quick Start
 
@@ -58,13 +58,14 @@ curl -X POST http://localhost:13000/api/create-post \
 
 ::: code-group
 
+<<< @/../examples/minimal-blog/habits/create-post.yaml [create-post.yaml]
+
 <<< @/../examples/minimal-blog/.env.example [.env.example]
 
 <<< @/../examples/minimal-blog/stack.yaml [stack.yaml]
 
 <<< @/../examples/minimal-blog/habits/get-posts.yaml [get-posts.yaml]
 
-<<< @/../examples/minimal-blog/habits/create-post.yaml [create-post.yaml]
 
 :::
 

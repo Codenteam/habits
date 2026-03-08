@@ -1,6 +1,6 @@
 # AI Cookbook Example
 
-An AI-powered recipe generator that creates personalized recipes based on your available ingredients, dietary restrictions, and cuisine preferences—complete with AI-generated images, shopping lists, and nutritional info.
+An AI-powered recipe generator that creates personalized recipes based on your available ingredients, dietary restrictions, and cuisine preferences, complete with AI-generated images, shopping lists, and nutritional info.
 
 <div id="ai-cookbook-screenshot">
 
@@ -87,9 +87,9 @@ Estimates per-serving nutritional data including:
 
 ::: code-group
 
-<<< @/../examples/ai-cookbook/stack.yaml [stack.yaml]
-
 <<< @/../examples/ai-cookbook/habits/generate-recipe.yaml [generate-recipe.yaml]
+
+<<< @/../examples/ai-cookbook/stack.yaml [stack.yaml]
 
 <<< @/../examples/ai-cookbook/habits/list-recipes.yaml [list-recipes.yaml]
 

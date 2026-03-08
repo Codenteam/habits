@@ -1,6 +1,6 @@
 # AI Journal Example
 
-A personal AI-powered journaling companion that analyzes your entries, tracks mood patterns, provides supportive feedback, and generates weekly insights—like having a compassionate therapist in your pocket.
+A personal AI-powered journaling companion that analyzes your entries, tracks mood patterns, provides supportive feedback, and generates weekly insights, like having a compassionate therapist in your pocket.
 
 <div id="ai-journal-screenshot">
 
@@ -102,7 +102,6 @@ After a week of journaling, get:
 
 ::: code-group
 
-<<< @/../examples/ai-journal/stack.yaml [stack.yaml]
 
 <<< @/../examples/ai-journal/habits/save-entry.yaml [save-entry.yaml]
 
@@ -110,6 +109,7 @@ After a week of journaling, get:
 
 <<< @/../examples/ai-journal/habits/weekly-insights.yaml [weekly-insights.yaml]
 
+<<< @/../examples/ai-journal/stack.yaml [stack.yaml]
 :::
 
 ## Workflow Architecture
