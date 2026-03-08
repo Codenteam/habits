@@ -3,7 +3,7 @@
 This guide walks you through creating your first habit using the **AI Generator** in Base UI. Simply describe what you want to build, and AI will generate the complete backend workflow and frontend UI for you.
 
 ::: tip 🤖 AI-First Approach
-The AI generator creates fully functional habits — including workflow logic, node configuration, and frontend UI — from a single text prompt. Perfect for getting started quickly or prototyping ideas!
+The AI generator creates fully functional habits, including workflow logic, node configuration, and frontend UI, from a single text prompt. Perfect for getting started quickly or prototyping ideas!
 :::
 
 ::: warning Beta Feature
@@ -36,12 +36,12 @@ Or add them to a `.env` file in the server root:
 ```env
 HABITS_AI_GEN=true
 CLAUDE_API_KEY=sk-ant-...
-# Optional — keep staging files for debugging
+# Optional, keep staging files for debugging
 # HABITS_AI_DEBUG=true
 ```
 
 ::: tip
-On **Intersect Cloud** and **Intersect Self-hosted**, these variables are configured for you automatically — you only need to set them when running Base locally.
+On **Intersect Cloud** and **Intersect Self-hosted**, these variables are configured for you automatically, you only need to set them when running Base locally.
 :::
 
 ## Prerequisites
@@ -62,8 +62,8 @@ On **Intersect Cloud** and **Intersect Self-hosted**, these variables are config
 
 In the Generate modal, you can choose between two generation types:
 
-- **Create Habit** — Generates a complete workflow with backend logic and frontend UI
-- **Create Bit** — Generates a reusable node module (bit) for use in workflows
+- **Create Habit**: Generates a complete workflow with backend logic and frontend UI
+- **Create Bit**: Generates a reusable node module (bit) for use in workflows
 
 Select **Create Habit**, then describe what you want to build in the text area. Be as specific as possible about the features, logic, and UI layout you want.
 
@@ -95,10 +95,10 @@ Once generation is complete, you'll see a success message showing:
 
 Click **Done** to close the modal. Your generated habit is now loaded in the Base editor where you can:
 
-- **Inspect the workflow** — View and modify the generated nodes and connections
-- **Edit the frontend** — Customize the generated UI in the Frontend panel
-- **View the code** — Click the **Code** button to see the generated YAML
-- **Test it** — Hit the **Play** button to run the habit immediately
+- **Inspect the workflow**: View and modify the generated nodes and connections
+- **Edit the frontend**: Customize the generated UI in the Frontend panel
+- **View the code**: Click the **Code** button to see the generated YAML
+- **Test it**: Hit the **Play** button to run the habit immediately
 
 ## Step 5: Test Your Habit
 
@@ -106,14 +106,6 @@ Click **Done** to close the modal. Your generated habit is now loaded in the Bas
 2. Fill in any required input fields in the test form
 3. Click **Run Test**
 4. View the results in the output panel
-
-You can also test via the API:
-
-```bash
-curl -X POST http://localhost:3000/habits/base/api/habits/<your-habit-id>/execute \
-  -H "Content-Type: application/json" \
-  -d '{ "your-input": "value" }'
-```
 
 ## Tips for Better Results
 
@@ -130,7 +122,7 @@ The AI-generated habit is a starting point. You can always modify the workflow, 
 
 ## Generating a Bit (Node Module) (Beta)
 
-You can also use the AI generator to create custom **bits** — reusable node modules:
+You can also use the AI generator to create custom **bits**, reusable node modules:
 
 1. Open the Generate modal
 2. Switch to **Create Bit** mode
@@ -143,24 +135,24 @@ The generated bit files will be created and ready for use in your workflows.
 
 ### Generation Fails or Times Out
 
-- Ensure your Intersect Cloud or Self-hosted instance is running and accessible
+- ~~Ensure your Intersect Cloud or Self-hosted instance is running and accessible~~
 - Check that AI generation is enabled in your configuration
 - Try simplifying your prompt and generating again
 
 ### Generated Habit Doesn't Match Expectations
 
-- Add more detail to your prompt — the more specific, the better
+- Add more detail to your prompt, the more specific, the better
 - Try breaking complex ideas into simpler prompts and combining them manually
 - Use the generated habit as a starting point and edit it in the Base UI
 
 ### No "Generate with AI" Button
 
-- AI generation requires Intersect Cloud or Intersect Self-hosted
-- Ensure the feature is enabled (check environment variables)
+~~AI generation requires Intersect Cloud or Intersect Self-hosted~~  
+- Make sure the required environment variables are set correctly (`HABITS_AI_GEN=true` and a valid `CLAUDE_API_KEY`). Without these, the "Generate with AI" button will not appear. See the [Environment Variables](#environment-variables) section above for details.
 
 ## Next Steps
 
-- **[First Habit (Base UI)](./first-habit-using-base.md)** — Learn the visual editor for manual habit building
-- **[First Habit (Habit-as-Code)](./first-habit.md)** — Build habits using YAML/JSON directly
-- **[Examples](/examples/)** — Browse real-world habit examples
-- **[Variables & Expressions](../deep-dive/variables.md)** — Learn how to pass data between nodes
+- **[First Habit (Base UI)](./first-habit-using-base.md)**, Learn the visual editor for manual habit building
+- **[First Habit (Habit-as-Code)](./first-habit.md)**, Build habits using YAML/JSON directly
+- **[Examples](/examples/)**, Browse real-world habit examples
+- **[Variables & Expressions](../deep-dive/variables.md)**, Learn how to pass data between nodes
