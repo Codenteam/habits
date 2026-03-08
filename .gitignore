@@ -32,3 +32,4 @@ docs/public/downloads/*.zip
 docs/.vitepress/.temp
 .secrets
 tmp
+staging

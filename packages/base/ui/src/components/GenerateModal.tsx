@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
-import { X, Wand2, Loader2, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { X, Wand2, Loader2, Check, AlertCircle, AlertTriangle, Sparkles, Code2, Repeat, CheckCircle2 } from 'lucide-react';
 import JSZip from 'jszip';
-import { useAppDispatch } from '../store/hooks';
-import { addHabit, setActiveHabit, clearWorkflow } from '../store/slices/workflowSlice';
-import { setFrontendHtml } from '../store/slices/uiSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { addHabit, setActiveHabit, clearWorkflow, selectHabits } from '../store/slices/workflowSlice';
+import { setFrontendHtml, clearFrontendHtml } from '../store/slices/uiSlice';
 import { api } from '../lib/api';
 import {
   FileEntry,
@@ -17,21 +17,29 @@ interface GenerateModalProps {
 }
 
 type Mode = 'input' | 'generating' | 'loading' | 'result';
+type GenerationType = 'habit' | 'bit';
 
 export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
   const dispatch = useAppDispatch();
+  const existingHabits = useAppSelector(selectHabits);
   
   const [mode, setMode] = useState<Mode>('input');
   const [prompt, setPrompt] = useState('');
+  const [generationType, setGenerationType] = useState<GenerationType>('habit');
+  const [progressSteps, setProgressSteps] = useState<string[]>([]);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [result, setResult] = useState<{
     habitsLoaded: number;
     errors: string[];
     frontendLoaded: boolean;
+    bitFilesCount?: number;
   } | null>(null);
 
   const resetState = useCallback(() => {
     setMode('input');
     setPrompt('');
+    setGenerationType('habit');
+    setProgressSteps([]);
     setResult(null);
   }, []);
 
@@ -92,10 +100,11 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
       throw new Error(parsed.errors.join('; '));
     }
     
-    // Clear existing workflow and load habits
+    // Replace entire state with generated content
+    dispatch(clearWorkflow());
+    dispatch(clearFrontendHtml());
+
     if (parsed.habits.length > 0) {
-      dispatch(clearWorkflow());
-      
       // Add each habit to the store
       parsed.habits.forEach((habit, index) => {
         dispatch(addHabit(habit));
@@ -123,10 +132,26 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
     if (!prompt.trim()) return;
     
     setMode('generating');
+    setProgressSteps([]);
     
     try {
-      // Call the API to generate the habit
-      const zipBlob = await api.generateFromPrompt(prompt);
+      const onProgress = (step: string) => {
+        setProgressSteps((prev) => {
+          // Deduplicate consecutive identical steps
+          if (prev.length > 0 && prev[prev.length - 1] === step) return prev;
+          const next = [...prev, step];
+          // Auto-scroll the progress list
+          setTimeout(() => {
+            progressRef.current?.scrollTo({ top: progressRef.current.scrollHeight, behavior: 'smooth' });
+          }, 50);
+          return next;
+        });
+      };
+
+      // Call the streaming API endpoint
+      const zipBlob = generationType === 'habit'
+        ? await api.generateHabit(prompt, onProgress)
+        : await api.generateBit(prompt, onProgress);
       
       setMode('loading');
       
@@ -136,15 +161,23 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
       if (files.length === 0) {
         throw new Error('Generated ZIP file is empty');
       }
-      
-      // Load the habits from extracted files
-      await loadFromFiles(files);
+
+      if (generationType === 'bit') {
+        setResult({
+          habitsLoaded: 0,
+          errors: [],
+          frontendLoaded: false,
+          bitFilesCount: files.length,
+        });
+      } else {
+        await loadFromFiles(files);
+      }
       
       setMode('result');
     } catch (error) {
       setResult({
         habitsLoaded: 0,
-        errors: [error instanceof Error ? error.message : 'Failed to generate habit'],
+        errors: [error instanceof Error ? error.message : 'Failed to generate'],
         frontendLoaded: false,
       });
       setMode('result');
@@ -160,7 +193,7 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
             <Wand2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-            <h2 className="text-lg font-semibold text-white truncate">Generate Habit with AI</h2>
+            <h2 className="text-lg font-semibold text-white truncate">Generate with AI</h2>
             <span className="ml-2 px-2 py-0.5 rounded bg-purple-700 text-xs text-white font-semibold uppercase tracking-wide">
               Beta
             </span>
@@ -181,8 +214,36 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         <div className="p-6">
           {mode === 'input' && (
             <div className="space-y-4">
+              {/* Generation type toggle */}
+              <div className="flex rounded-lg bg-slate-700 p-1">
+                <button
+                  onClick={() => setGenerationType('habit')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    generationType === 'habit'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Repeat className="w-4 h-4" />
+                  Create Habit
+                </button>
+                <button
+                  onClick={() => setGenerationType('bit')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    generationType === 'bit'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Code2 className="w-4 h-4" />
+                  Create Bit
+                </button>
+              </div>
+
               <p className="text-slate-300 text-sm">
-                Describe the habit you want to create. AI will generate the backend workflow and UI for you.
+                {generationType === 'habit'
+                  ? 'Describe the habit you want to create. AI will generate the backend workflow and UI for you.'
+                  : 'Describe the bit (node module) you want to create. AI will generate the bit files for you.'}
               </p>
               
               <div className="space-y-2">
@@ -192,12 +253,23 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Examples: <Build a habit tracker that lets users add daily habits, mark them as complete, and view a weekly progress chart> Or <Create a complete restaurant ordering website with a menu, shopping cart, and checkout system>"
+                  placeholder={generationType === 'habit'
+                    ? 'Examples: <Build a habit tracker that lets users add daily habits, mark them as complete, and view a weekly progress chart> Or <Create a complete restaurant ordering website with a menu, shopping cart, and checkout system>'
+                    : 'Examples: <A Slack notification bit that sends messages to a channel> Or <A CSV parser bit that reads and transforms CSV data>'}
                   className="w-full h-32 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   autoFocus
                 />
               </div>
               
+              {existingHabits.length > 0 && generationType === 'habit' && (
+                <div className="flex items-start gap-2 p-3 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-amber-300">
+                    This will replace your current stack ({existingHabits.length} habit{existingHabits.length !== 1 ? 's' : ''}) with the newly generated content.
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-start gap-2 p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
                 <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
                 <p className="text-xs text-purple-300">
@@ -225,14 +297,41 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
           )}
 
           {mode === 'generating' && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <div className="relative">
-                <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
-                <Sparkles className="w-5 h-5 text-purple-300 absolute -top-1 -right-1 animate-pulse" />
+            <div className="flex flex-col py-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Generating your {generationType}…</p>
+                  <p className="text-slate-400 text-xs">This may take a few minutes</p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-white font-medium">Generating your habit...</p>
-                <p className="text-slate-400 text-sm mt-1">This may take a moment</p>
+
+              {/* Progress list */}
+              <div
+                ref={progressRef}
+                className="max-h-56 overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-700 px-3 py-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-600"
+              >
+                {progressSteps.length === 0 && (
+                  <p className="text-slate-500 text-xs italic">Waiting for agent…</p>
+                )}
+                {progressSteps.map((step, i) => {
+                  const isLast = i === progressSteps.length - 1;
+                  return (
+                    <div key={i} className="flex items-start gap-2 text-xs">
+                      {isLast ? (
+                        <Loader2 className="w-3.5 h-3.5 text-purple-400 animate-spin mt-0.5 shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                      )}
+                      <span className={isLast ? 'text-slate-200' : 'text-slate-400'}>
+                        {step}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -240,13 +339,14 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
           {mode === 'loading' && (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-              <p className="text-slate-300">Loading generated habit...</p>
+              <p className="text-slate-300">Loading generated {generationType}...</p>
             </div>
           )}
 
           {mode === 'result' && result && (
             <div className="space-y-4">
-              {result.habitsLoaded > 0 ? (
+              {/* Success: habit loaded */}
+              {result.habitsLoaded > 0 && (
                 <div className="flex items-start gap-3 p-4 bg-green-900/20 border border-green-700 rounded-lg">
                   <Check className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
@@ -257,14 +357,27 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                     </p>
                   </div>
                 </div>
-              ) : null}
+              )}
+
+              {/* Success: bit files created */}
+              {result.bitFilesCount && result.bitFilesCount > 0 && result.errors.length === 0 && (
+                <div className="flex items-start gap-3 p-4 bg-green-900/20 border border-green-700 rounded-lg">
+                  <Check className="w-5 h-5 text-green-400 mt-0.5" />
+                  <div>
+                    <p className="text-green-400 font-medium">Bit generated successfully!</p>
+                    <p className="text-green-300 text-sm mt-1">
+                      {result.bitFilesCount} file{result.bitFilesCount !== 1 ? 's' : ''} created
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {result.errors.length > 0 && (
                 <div className="flex items-start gap-3 p-4 bg-red-900/20 border border-red-700 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-red-400 font-medium">
-                      {result.habitsLoaded === 0 ? 'Generation failed' : 'Some issues occurred'}
+                      {result.habitsLoaded === 0 && !result.bitFilesCount ? 'Generation failed' : 'Some issues occurred'}
                     </p>
                     <ul className="text-red-300 text-sm mt-1 space-y-1">
                       {result.errors.map((error, index) => (
@@ -276,7 +389,7 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
               )}
               
               <div className="flex gap-3">
-                {result.habitsLoaded === 0 && (
+                {result.habitsLoaded === 0 && !result.bitFilesCount && (
                   <button
                     onClick={resetState}
                     className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
@@ -286,9 +399,9 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                 )}
                 <button
                   onClick={handleClose}
-                  className={`${result.habitsLoaded === 0 ? 'flex-1' : 'w-full'} px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors`}
+                  className={`${result.habitsLoaded === 0 && !result.bitFilesCount ? 'flex-1' : 'w-full'} px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors`}
                 >
-                  {result.habitsLoaded > 0 ? 'Done' : 'Close'}
+                  {result.habitsLoaded > 0 || result.bitFilesCount ? 'Done' : 'Close'}
                 </button>
               </div>
             </div>

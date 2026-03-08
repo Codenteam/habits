@@ -70,11 +70,14 @@ Once Base is running, you'll see the main interface with several tabs. Let's cre
 
 ### Step 1: Install Required Modules
 
-1. Navigate to the **Modules** tab
-2. Search for "openai" in the search box
-3. Find `@ha-bits/bit-openai` and click **Install**
-4. Search for "database" and install `@ha-bits/bit-database`
-5. Wait for installation to complete (you'll see a success message)
+1. Show the **Nodes Palette** if hidden.
+2. Show bits if disabled.
+3. Click OpenAI to add it.
+4. Click Databae to add it
+
+::: note 🧩 Missing a module?
+If you don't see a required bit, piece, or node in the palette, use the **Add Module** button to install it. This lets you quickly add missing modules directly from the UI before using them in your workflow.
+:::
 
 ### Step 2: Create a New Habit
 

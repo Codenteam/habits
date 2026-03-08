@@ -255,12 +255,97 @@ export const api = {
     return response.data;
   },
 
-  // AI Generation
-  async generateFromPrompt(prompt: string): Promise<Blob> {
-    const response = await axios.post(`/habits/bits-creator/create-habit`, { prompt }, {
-      responseType: 'blob',
-      timeout: 300000, // 5 minute timeout for AI generation
+  // AI Generation — SSE streaming
+
+  /**
+   * Consume an SSE stream from a creator endpoint.
+   * Calls `onProgress` for each progress event.
+   * Resolves with the final ZIP as a Blob when the `complete` event arrives.
+   */
+  async _streamGenerate(
+    endpoint: string,
+    prompt: string,
+    onProgress: (step: string) => void,
+    signal?: AbortSignal,
+  ): Promise<Blob> {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+      signal,
     });
-    return response.data;
+
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = 'Generation failed';
+      try { msg = JSON.parse(text).error || msg; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    return new Promise<Blob>((resolve, reject) => {
+      const pump = async () => {
+        try {
+          // eslint-disable-next-line no-constant-condition
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              reject(new Error('Stream ended without a complete event'));
+              return;
+            }
+            buffer += decoder.decode(value, { stream: true });
+
+            // Parse SSE frames from buffer
+            let idx: number;
+            while ((idx = buffer.indexOf('\n\n')) !== -1) {
+              const frame = buffer.slice(0, idx);
+              buffer = buffer.slice(idx + 2);
+
+              // Skip keepalive comments
+              if (frame.startsWith(':')) continue;
+
+              let event = '';
+              let data = '';
+              for (const line of frame.split('\n')) {
+                if (line.startsWith('event: ')) event = line.slice(7);
+                else if (line.startsWith('data: ')) data = line.slice(6);
+              }
+
+              if (!event || !data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                if (event === 'progress') {
+                  onProgress(parsed.step);
+                } else if (event === 'complete') {
+                  // Decode base64 ZIP
+                  const bytes = Uint8Array.from(atob(parsed.zip), (c) => c.charCodeAt(0));
+                  resolve(new Blob([bytes], { type: 'application/zip' }));
+                  return;
+                } else if (event === 'error') {
+                  reject(new Error(parsed.message || 'AI generation failed'));
+                  return;
+                }
+              } catch { /* ignore malformed frames */ }
+            }
+          }
+        } catch (err) {
+          reject(err);
+        }
+      };
+      pump();
+    });
+  },
+
+  generateHabit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal): Promise<Blob> {
+    return this._streamGenerate('/creator/create-habit', prompt, onProgress, signal);
+  },
+
+  generateBit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal): Promise<Blob> {
+    return this._streamGenerate('/creator/create-bit', prompt, onProgress, signal);
   },
 };

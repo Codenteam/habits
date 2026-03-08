@@ -9,3 +9,4 @@ export { FormsController } from './forms.controller';
 export { TemplatesController } from './templates.controller';
 export { SecurityController } from './security.controller';
 export { ExportController } from './export.controller';
+export { CreatorController } from './creator.controller';

@@ -187,6 +187,7 @@ You can use base also to edit UI of the habit by clicking the UI button. This is
 
 </div>
 
+You can use AI to directly generate a UI that can work with the logic. Use Intersect for best results, if not possible, use Anthropic Opus or Gemini Pro models. 
 ## Option #3: Importing from n8n and Activepieces
 
 Already have workflows in n8n or Activepieces? Import them directly into Habits.
