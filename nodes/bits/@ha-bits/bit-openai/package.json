@@ -1,0 +1,60 @@
+{
+  "name": "@ha-bits/bit-openai",
+  "version": "0.1.10",
+  "description": "openai AI integration bit module - imports from @ha-bits/cortex instead of activepieces",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "bits",
+    "habits",
+    "openai",
+    "openai",
+    "ai"
+  ],
+  "author": "Habits Team",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.0.0",
+    "tiktoken": "^1.0.0",
+    "form-data": "^4.0.0",
+    "mime-types": "^2.1.35",
+    "@ha-bits/cortex": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex": ">=0.1.0"
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-openai/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  }
+}

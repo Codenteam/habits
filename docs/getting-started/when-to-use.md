@@ -82,7 +82,7 @@ You want to run workflows as CLI commands for:
 
 ### Native Execution Mode
 
-Habits runs n8n or ActivePieces modules using their actual runtime dependencies — useful when you need exact behavior matching with the original platforms.
+Habits runs n8n or ActivePieces modules using their actual runtime dependencies, useful when you need exact behavior matching with the original platforms.
 
 ---
 

@@ -197,9 +197,6 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
             <span className="ml-2 px-2 py-0.5 rounded bg-purple-700 text-xs text-white font-semibold uppercase tracking-wide">
               Beta
             </span>
-            <span className="ml-2 text-xs text-slate-400 whitespace-nowrap">
-              Available with Intersect Cloud or Intersect Self-hosted only
-            </span>
           </div>
           <button
             onClick={handleClose}

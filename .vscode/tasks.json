@@ -24,17 +24,6 @@
             }
         },
         {
-            "label": "Server Bits Creator",
-            "type": "shell",
-            "command": "cd bits-creator/server && pnpm dev",
-            "group": "build",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
             "label": "dev:all",
             "dependsOn": ["UI Base", "Server Base", "Server Bits Creator"],
             "group": {

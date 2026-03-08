@@ -1,0 +1,45 @@
+{
+  "name": "@ha-bits/bit-shell",
+  "version": "1.0.0",
+  "description": "Shell command execution bit for running system commands",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "shell",
+    "exec",
+    "command",
+    "terminal"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-shell/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},"publish-private": {}
+    }
+  }
+}

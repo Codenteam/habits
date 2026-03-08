@@ -255,7 +255,7 @@ export const api = {
     return response.data;
   },
 
-  // AI Generation — SSE streaming
+  // AI Generation: SSE streaming
 
   /**
    * Consume an SSE stream from a creator endpoint.

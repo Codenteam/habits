@@ -20,7 +20,7 @@ Output → User Feedback → Base learns → Improved Habit
 
 ### 2. Thrill Seeking (A/B Mutations)
 
-Inspired by how exploration drives learning, habits can apply random mutations to their behavior—trying slight variations to discover better approaches. Users then indicate which variation performed better, similar to A/B testing.
+Inspired by how exploration drives learning, habits can apply random mutations to their behavior, trying slight variations to discover better approaches. Users then indicate which variation performed better, similar to A/B testing.
 
 ```
 Habit A (original) ──┐

@@ -107,7 +107,7 @@ Is the module just types/specs/API docs?
 
 ### ActivePieces Pieces
 
-**Recommended ✅** — Most ActivePieces pieces are MIT licensed.
+**Recommended ✅**:  Most ActivePieces pieces are MIT licensed.
 
 ```bash
 # Safe to use
@@ -123,7 +123,7 @@ ActivePieces pieces are:
 
 ### n8n Nodes
 
-**Use with caution ⚠️** — Distinguish between core and community nodes.
+**Use with caution ⚠️**: Distinguish between core and community nodes.
 
 ::: danger Do NOT Use n8n-nodes-base if you want to use the source code commercially.
 The core n8n nodes package (`n8n-nodes-base`) is licensed under n8n's "Sustainable Use License," which is **NOT open source**. Using it will:
@@ -145,7 +145,7 @@ npm install n8n-nodes-chatwoot  # MIT ✅
 
 ### Scripts
 
-**Generally safe ✅** — But verify imports.
+**Generally safe ✅** But verify imports.
 
 Scripts are inline code you write yourself. However, be careful about:
 - Libraries you import from npm/PyPI

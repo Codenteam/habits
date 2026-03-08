@@ -101,6 +101,7 @@ const screenshots = [
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Build using UI</a>
+            <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Build using AI</a>
             <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Read more</a>
           </div>
         </div>

@@ -1,0 +1,46 @@
+{
+  "name": "@ha-bits/bit-if",
+  "version": "1.0.0",
+  "description": "Conditional logic bit for branching workflows with if/else and switch statements",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "if",
+    "condition",
+    "conditional",
+    "branch",
+    "switch"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-if/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},"publish-private": {}
+    }
+  }
+}

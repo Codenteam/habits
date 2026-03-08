@@ -6,16 +6,16 @@
  * then sends the final ZIP as a base64 payload in a `complete` event.
  *
  * SSE event types:
- *   progress  — { step: string }          live progress line
- *   complete  — { zip: "<base64>" }       final ZIP payload
- *   error     — { message: string }       fatal error
+ *   progress  : { step: string }          live progress line
+ *   complete  : { zip: "<base64>" }       final ZIP payload
+ *   error     : { message: string }       fatal error
  *
  * Requires:
- *   HABITS_AI_GEN=true    — enables the creator endpoints
- *   CLAUDE_API_KEY=sk-... — Anthropic API key
+ *   HABITS_AI_GEN=true    : enables the creator endpoints
+ *   CLAUDE_API_KEY=sk-... : Anthropic API key
  *
  * Optional:
- *   HABITS_AI_DEBUG=true   — keeps staging directories after ZIP is sent
+ *   HABITS_AI_DEBUG=true   : keeps staging directories after ZIP is sent
  */
 
 import { Request, Response } from 'express';
@@ -80,12 +80,12 @@ function extractProgress(msg: any, stagingDir: string): string | null {
 
   const type: string = msg.type;
 
-  // system / init — agent starting
+  // system / init : agent starting
   if (type === 'system' && msg.subtype === 'init') {
     return 'AI agent initialized';
   }
 
-  // assistant — parse content blocks for tool_use (Write, Read, Bash, …)
+  // assistant : parse content blocks for tool_use (Write, Read, Bash, …)
   if (type === 'assistant' && msg.message?.content) {
     const blocks: any[] = Array.isArray(msg.message.content) ? msg.message.content : [];
     for (const block of blocks) {
@@ -124,16 +124,16 @@ function extractProgress(msg: any, stagingDir: string): string | null {
         return `Using tool: ${name}`;
       }
     }
-    return null; // text-only assistant message — skip
+    return null; // text-only assistant message : skip
   }
 
-  // tool_use_summary — short summary of a completed tool invocation
+  // tool_use_summary : short summary of a completed tool invocation
   if (type === 'tool_use_summary' && msg.summary) {
     const sum = String(msg.summary).slice(0, 120);
     return sum;
   }
 
-  // result — agent finished
+  // result : agent finished
   if (type === 'result') {
     if (msg.subtype === 'success') return 'Generation complete';
     return `Agent finished (${msg.subtype || 'unknown'})`;
@@ -239,7 +239,7 @@ export class CreatorController {
 
     // Cleanup
     if (process.env.HABITS_AI_DEBUG === 'true') {
-      logger.info('Debug mode — keeping staging directory', { stagingDir });
+      logger.info('Debug mode : keeping staging directory', { stagingDir });
     } else {
       try {
         fs.rmSync(stagingDir, { recursive: true, force: true });
@@ -273,7 +273,7 @@ export class CreatorController {
       const root = resolveWorkspaceRoot();
       const examplesDir = path.join(root, 'examples');
       const schemaFile = path.join(root, 'schemas', 'habits.schema.yaml');
-      const bitsDir = path.join(root, 'bits-creator', 'nodes', 'bits', '@ha-bits');
+      const bitsDir = path.join(root,  'nodes', 'bits', '@ha-bits');
 
       sseEvent(res, 'progress', { step: 'Preparing prompt…' });
 
@@ -322,25 +322,25 @@ export class CreatorController {
         `        model: gpt-4o-mini`,
         `        prompt: "{{habits.input.question}}"`,
         ``,
-        `== AVAILABLE BITS — read their src/index.ts to learn their actions & props ==`,
+        `== AVAILABLE BITS : read their src/index.ts to learn their actions & props ==`,
         ``,
         `Directory: ${bitsDir}`,
         ``,
-        `  bit-http          — HTTP requests (GET/POST/PUT/DELETE)`,
-        `  bit-openai         — OpenAI chat, embeddings, image generation`,
-        `  bit-string         — String manipulation (split, join, replace, etc.)`,
-        `  bit-if             — Conditional branching`,
-        `  bit-loop           — Iteration over arrays`,
-        `  bit-shell          — Run shell commands`,
-        `  bit-slack          — Send Slack messages`,
-        `  bit-discord        — Send Discord messages`,
-        `  bit-email          — Send emails`,
-        `  bit-telegram       — Send Telegram messages`,
-        `  bit-filesystem     — Read/write files`,
-        `  bit-database       — SQLite database operations`,
-        `  bit-database-mongodb — MongoDB operations`,
-        `  bit-database-mysql — MySQL operations`,
-        `  bit-intersect      — Intersect AI API (OpenAI-compatible)`,
+        `  bit-http          : HTTP requests (GET/POST/PUT/DELETE)`,
+        `  bit-openai         : OpenAI chat, embeddings, image generation`,
+        `  bit-string         : String manipulation (split, join, replace, etc.)`,
+        `  bit-if             : Conditional branching`,
+        `  bit-loop           : Iteration over arrays`,
+        `  bit-shell          : Run shell commands`,
+        `  bit-slack          : Send Slack messages`,
+        `  bit-discord        : Send Discord messages`,
+        `  bit-email          : Send emails`,
+        `  bit-telegram       : Send Telegram messages`,
+        `  bit-filesystem     : Read/write files`,
+        `  bit-database       : SQLite database operations`,
+        `  bit-database-mongodb : MongoDB operations`,
+        `  bit-database-mysql : MySQL operations`,
+        `  bit-intersect      : Intersect AI API (OpenAI-compatible)`,
         ``,
         `IMPORTANT: Before using a bit, READ its src/index.ts to see exact action names and props.`,
         `Start by reading: ${path.join(bitsDir, 'bit-http', 'src', 'index.ts')}`,
@@ -403,7 +403,7 @@ export class CreatorController {
 
     try {
       const root = resolveWorkspaceRoot();
-      const bitsDir = path.join(root, 'bits-creator', 'nodes', 'bits', '@ha-bits');
+      const bitsDir = path.join(root,  'nodes', 'bits', '@ha-bits');
 
       sseEvent(res, 'progress', { step: 'Preparing prompt…' });
 

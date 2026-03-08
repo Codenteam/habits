@@ -1,6 +1,6 @@
 # AI Cookbook Example
 
-An AI-powered recipe generator that creates personalized recipes based on your available ingredients, dietary restrictions, and cuisine preferences—complete with AI-generated images, shopping lists, and nutritional info.
+An AI-powered recipe generator that creates personalized recipes based on your available ingredients, dietary restrictions, and cuisine preferences, complete with AI-generated images, shopping lists, and nutritional info.
 
 <div id="ai-cookbook-screenshot">
 

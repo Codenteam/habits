@@ -1,0 +1,338 @@
+# bit-if tests - conditional branching
+bit: ./index.ts
+tests:
+  # === branch action - singleBranch mode ===
+  - name: "singleBranch - equals matches first"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "hello"
+          operator: equals
+          value2: "hello"
+          output: "first match"
+        - value1: "world"
+          operator: equals
+          value2: "world"
+          output: "second match"
+      includeElse: true
+      defaultOutput: "no match"
+    expect:
+      mode: singleBranch
+      executedBranchIndex: 0
+      executedBranchLabel: "If"
+      output: "first match"
+      matched: true
+      elseExecuted: false
+
+  - name: "singleBranch - second branch matches (Else If)"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "hello"
+          operator: equals
+          value2: "world"
+          output: "first"
+        - value1: "foo"
+          operator: equals
+          value2: "foo"
+          output: "second"
+      includeElse: true
+      defaultOutput: "else"
+    expect:
+      mode: singleBranch
+      executedBranchIndex: 1
+      executedBranchLabel: "Else If"
+      output: "second"
+      matched: true
+      elseExecuted: false
+
+  - name: "singleBranch - else branch executes when no match"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "a"
+          operator: equals
+          value2: "b"
+          output: "wont match"
+      includeElse: true
+      defaultOutput: "else output"
+    expect:
+      mode: singleBranch
+      executedBranchIndex: -1
+      executedBranchLabel: "Else"
+      output: "else output"
+      matched: false
+      elseExecuted: true
+
+  - name: "singleBranch - no else when disabled"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "x"
+          operator: equals
+          value2: "y"
+          output: "nope"
+      includeElse: false
+      defaultOutput: "ignored"
+    expect:
+      mode: singleBranch
+      executedBranchIndex: null
+      output: null
+      matched: false
+      elseExecuted: false
+
+  # === branch action - multipleBranch mode ===
+  - name: "multipleBranch - all matching branches execute"
+    action: branch
+    input:
+      mode: multipleBranch
+      branches:
+        - value1: 10
+          operator: greaterThan
+          value2: 5
+          output: "branch1"
+        - value1: 10
+          operator: lessThan
+          value2: 20
+          output: "branch2"
+        - value1: 10
+          operator: equals
+          value2: 99
+          output: "branch3"
+    expect:
+      mode: multipleBranch
+      matchedCount: 2
+      executedBranchIndices: [0, 1]
+      outputs: ["branch1", "branch2"]
+
+  # === Operators ===
+  - name: "operator - notEquals"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "a"
+          operator: notEquals
+          value2: "b"
+          output: "different"
+      includeElse: false
+    expect:
+      output: "different"
+      matched: true
+
+  - name: "operator - contains"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "hello world"
+          operator: contains
+          value2: "world"
+          output: "found"
+      includeElse: false
+    expect:
+      output: "found"
+      matched: true
+
+  - name: "operator - startsWith"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "hello world"
+          operator: startsWith
+          value2: "hello"
+          output: "starts"
+      includeElse: false
+    expect:
+      output: "starts"
+      matched: true
+
+  - name: "operator - endsWith"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "hello world"
+          operator: endsWith
+          value2: "world"
+          output: "ends"
+      includeElse: false
+    expect:
+      output: "ends"
+      matched: true
+
+  - name: "operator - isEmpty with empty string"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: ""
+          operator: isEmpty
+          output: "empty"
+      includeElse: false
+    expect:
+      output: "empty"
+      matched: true
+
+  - name: "operator - isNotEmpty"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "has value"
+          operator: isNotEmpty
+          output: "not empty"
+      includeElse: false
+    expect:
+      output: "not empty"
+      matched: true
+
+  - name: "operator - isNull with null"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: null
+          operator: isNull
+          output: "is null"
+      includeElse: false
+    expect:
+      output: "is null"
+      matched: true
+
+  - name: "operator - greaterThanOrEqual"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: 10
+          operator: greaterThanOrEqual
+          value2: 10
+          output: "gte"
+      includeElse: false
+    expect:
+      output: "gte"
+      matched: true
+
+  - name: "operator - lessThanOrEqual"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: 5
+          operator: lessThanOrEqual
+          value2: 5
+          output: "lte"
+      includeElse: false
+    expect:
+      output: "lte"
+      matched: true
+
+  - name: "operator - regex match"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "test123"
+          operator: regex
+          value2: "^test\\d+$"
+          output: "regex matched"
+      includeElse: false
+    expect:
+      output: "regex matched"
+      matched: true
+
+  - name: "operator - always true"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "anything"
+          operator: always
+          output: "always runs"
+      includeElse: false
+    expect:
+      output: "always runs"
+      matched: true
+
+  - name: "case sensitive comparison"
+    action: branch
+    input:
+      mode: singleBranch
+      branches:
+        - value1: "Hello"
+          operator: equals
+          value2: "hello"
+          caseSensitive: true
+          output: "wont match"
+      includeElse: true
+      defaultOutput: "case mismatch"
+    expect:
+      output: "case mismatch"
+      elseExecuted: true
+
+  # === AND action ===
+  - name: "and - all true"
+    action: and
+    input:
+      conditions: [true, true, true]
+    expect:
+      result: true
+
+  - name: "and - one false"
+    action: and
+    input:
+      conditions: [true, false, true]
+    expect:
+      result: false
+
+  - name: "and - empty array"
+    action: and
+    input:
+      conditions: []
+    expect:
+      result: false
+
+  # === OR action ===
+  - name: "or - one true"
+    action: or
+    input:
+      conditions: [false, true, false]
+    expect:
+      result: true
+
+  - name: "or - all false"
+    action: or
+    input:
+      conditions: [false, false, false]
+    expect:
+      result: false
+
+  - name: "or - empty array"
+    action: or
+    input:
+      conditions: []
+    expect:
+      result: false
+
+  # === NOT action ===
+  - name: "not - invert true"
+    action: not
+    input:
+      condition: true
+    expect:
+      input: true
+      result: false
+
+  - name: "not - invert false"
+    action: not
+    input:
+      condition: false
+    expect:
+      input: false
+      result: true

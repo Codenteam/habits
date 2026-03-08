@@ -1,0 +1,4 @@
+- Names of inputs to the habit
+- Using || inside the text as anyOf
+- result should always be result.output
+- cast: true should be always added

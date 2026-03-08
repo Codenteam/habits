@@ -59,7 +59,7 @@ The **Basal Ganglia** is a cluster of nuclei deep within the brain responsible f
 - Motor control
 - Routine behaviors
 
-When a behavior becomes habitual, control shifts from the prefrontal cortex to the basal ganglia. This is why habits feel effortless—they literally require less brain power.
+When a behavior becomes habitual, control shifts from the prefrontal cortex to the basal ganglia. This is why habits feel effortless, they literally require less brain power.
 
 > 💡 **Framework Connection**: Our **Base** component is named after the Basal Ganglia's foundational role in habit formation.
 
@@ -83,7 +83,7 @@ The **Cortex** is the outermost layer of the brain, responsible for higher-order
 - Orchestrating complex behaviors
 - Monitoring and adjusting actions
 
-> 💡 **Framework Connection**: Our **Cortex** executor is named after this orchestrating role—it manages and runs all habits.
+> 💡 **Framework Connection**: Our **Cortex** executor is named after this orchestrating role, it manages and runs all habits.
 
 ### Striatum
 
@@ -155,7 +155,7 @@ Keystone habits work by:
 2. **Establishing Platforms** – They create structures for other habits
 3. **Shifting Self-Image** – They change how you see yourself
 
-> 💡 **Framework Connection**: Our **Stack** concept mirrors keystone habits—a set of related workflows that trigger together, creating cascading automation effects.
+> 💡 **Framework Connection**: Our **Stack** concept mirrors keystone habits, a set of related workflows that trigger together, creating cascading automation effects.
 
 ---
 
@@ -171,15 +171,15 @@ After Chunking:
 [Start driving] ─────────────────────────────────────────────────────────────────────────────────────►
 ```
 
-This is why experienced drivers can navigate while having a conversation—the driving actions are chunked into automatic routines.
+This is why experienced drivers can navigate while having a conversation, the driving actions are chunked into automatic routines.
 
-> 💡 **Framework Connection**: Our **Bits** are like neural chunks—small, discrete actions that combine into larger automated routines (Habits).
+> 💡 **Framework Connection**: Our **Bits** are like neural chunks, small, discrete actions that combine into larger automated routines (Habits).
 
 ---
 
 ## Dopamine and Reward Prediction
 
-Dopamine doesn't just signal pleasure—it signals **anticipation of reward**. This is crucial for habit formation:
+Dopamine doesn't just signal pleasure, it signals **anticipation of reward**. This is crucial for habit formation:
 
 1. **Initial**: Dopamine spikes when you receive the reward
 2. **Learning**: Dopamine shifts to spike when you see the cue
@@ -210,7 +210,7 @@ This explains cravings: your brain expects the reward and feels discomfort when 
 
 ## The Golden Rule of Habit Change
 
-You can't extinguish a habit—you can only **change** it. The golden rule:
+You can't extinguish a habit, you can only **change** it. The golden rule:
 
 > **Keep the same cue and reward, but insert a new routine.**
 
