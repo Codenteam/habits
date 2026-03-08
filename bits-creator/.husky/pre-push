@@ -1,0 +1,15 @@
+#!/bin/sh
+
+echo "🔨 Building affected @ha-bits packages before push..."
+
+# Build affected packages, excluding problematic ones that require external deps
+npx nx affected -t build --base=origin/main --head=HEAD \
+  --exclude=pieces-intersect \
+  --exclude=@ha-bits/bit-intersect
+
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed! Push aborted."
+  exit 1
+fi
+
+echo "✅ All affected packages built successfully!"

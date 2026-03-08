@@ -99,5 +99,5 @@ CMD ["npx", "cortex", "serve", "--config", "./config.json"]
 4. **Combine with other security features** – Cortex supports all security features (DLP, capabilities, integrity policies)
 
 ::: tip
-Using Cortex doesn't reduce functionality—it only removes development-time tooling. All runtime capabilities remain fully available.
+Using Cortex doesn't reduce functionality, it only removes development-time tooling. All runtime capabilities remain fully available.
 :::

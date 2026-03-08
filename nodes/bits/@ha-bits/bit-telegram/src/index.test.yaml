@@ -1,0 +1,165 @@
+# bit-telegram tests - Telegram Bot API
+bit: ./index.ts
+tests:
+  - name: "sendMessage - basic text message"
+    action: sendMessage
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input:
+      chatId: "123456789"
+      text: "Hello from Habits!"
+      parseMode: ""
+      disableNotification: false
+    mocks:
+      fetch:
+        - url: "*/sendMessage"
+          response:
+            ok: true
+            result:
+              message_id: 100
+              chat:
+                id: 123456789
+                type: "private"
+              date: 1700000000
+              text: "Hello from Habits!"
+    expect:
+      success: true
+      messageId: 100
+      chatId: 123456789
+      text: "Hello from Habits!"
+
+  - name: "sendMessage - with Markdown formatting"
+    action: sendMessage
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input:
+      chatId: "@mychannel"
+      text: "*Bold* and _italic_ text"
+      parseMode: "Markdown"
+      disableNotification: true
+    mocks:
+      fetch:
+        - url: "*/sendMessage"
+          response:
+            ok: true
+            result:
+              message_id: 101
+              chat:
+                id: -1001234567890
+                type: "channel"
+              date: 1700000001
+              text: "*Bold* and _italic_ text"
+    expect:
+      success: true
+      messageId: 101
+
+  - name: "sendMessage - with reply"
+    action: sendMessage
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input:
+      chatId: "123456789"
+      text: "This is a reply"
+      replyToMessageId: 50
+    mocks:
+      fetch:
+        - url: "*/sendMessage"
+          response:
+            ok: true
+            result:
+              message_id: 102
+              chat:
+                id: 123456789
+              date: 1700000002
+              text: "This is a reply"
+              reply_to_message:
+                message_id: 50
+    expect:
+      success: true
+      messageId: 102
+
+  - name: "sendPhoto - send image with caption"
+    action: sendPhoto
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input:
+      chatId: "123456789"
+      photo: "https://example.com/image.jpg"
+      caption: "Check out this image!"
+      parseMode: "HTML"
+    mocks:
+      fetch:
+        - url: "*/sendPhoto"
+          response:
+            ok: true
+            result:
+              message_id: 200
+              chat:
+                id: 123456789
+              photo:
+                - file_id: "AgACAgQAAxkB"
+                  width: 160
+                  height: 120
+    expect:
+      success: true
+      messageId: 200
+      chatId: 123456789
+
+  - name: "sendDocument - send file"
+    action: sendDocument
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input:
+      chatId: "123456789"
+      document: "https://example.com/report.pdf"
+      caption: "Monthly report"
+      filename: "report-jan-2024.pdf"
+    mocks:
+      fetch:
+        - url: "*/sendDocument"
+          response:
+            ok: true
+            result:
+              message_id: 300
+              chat:
+                id: 123456789
+              document:
+                file_id: "BQACAgQAAxk"
+                file_name: "report-jan-2024.pdf"
+    expect:
+      success: true
+      messageId: 300
+      chatId: 123456789
+
+  - name: "getMe - get bot info"
+    action: getMe
+    auth: { botToken: "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+    input: {}
+    mocks:
+      fetch:
+        - url: "*/getMe"
+          response:
+            ok: true
+            result:
+              id: 123456789
+              is_bot: true
+              first_name: "My Bot"
+              username: "my_habits_bot"
+              can_join_groups: true
+              can_read_all_group_messages: false
+              supports_inline_queries: false
+    expect:
+      id: 123456789
+      isBot: true
+      firstName: "My Bot"
+      username: "my_habits_bot"
+
+  - name: "sendMessage - API error handling"
+    action: sendMessage
+    auth: { botToken: "invalid_token" }
+    input:
+      chatId: "123456789"
+      text: "Test message"
+    mocks:
+      fetch:
+        - url: "*/sendMessage"
+          response:
+            ok: false
+            error_code: 401
+            description: "Unauthorized"
+    expectError: "Telegram API Error: Unauthorized"

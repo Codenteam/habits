@@ -97,10 +97,11 @@ const screenshots = [
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">AI Logic & UI builder and runner that you can control, audit, monitor and extend (Apache 2.0)</p>
+          <p class="hero-tagline">AI Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Build using UI</a>
+            <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Build using AI</a>
             <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Read more</a>
           </div>
         </div>

@@ -15,7 +15,7 @@
 set -e
 
 REGISTRY_URL="${VERDACCIO_REGISTRY_URL:-http://localhost:4873}"
-BITS_DIR="bits-creator/nodes/bits/@ha-bits"
+BITS_DIR="nodes/bits/@ha-bits"
 
 echo "📦 Publishing bits to Verdaccio: $REGISTRY_URL"
 echo ""

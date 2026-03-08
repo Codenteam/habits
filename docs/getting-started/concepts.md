@@ -46,7 +46,7 @@ See [Running Automations](/deep-dive/running) for details.
 ---
 
 ::: tip Naming Origin
-The naming draws from neuroscience—habits, and how the brain's cortex orchestrates behavior with basal ganglia forming habits. Learn more in [Neuroscience](/extra-reading/neuroscience).
+The naming draws from neuroscience, habits, and how the brain's cortex orchestrates behavior with basal ganglia forming habits. Learn more in [Neuroscience](/extra-reading/neuroscience).
 :::
 
 

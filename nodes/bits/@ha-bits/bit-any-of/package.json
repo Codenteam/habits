@@ -1,0 +1,33 @@
+{
+  "name": "@ha-bits/bit-any-of",
+  "version": "1.0.0",
+  "description": "Any-of flow control bit - continues when any one incoming edge completes without waiting for others",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "any-of",
+    "race",
+    "flow-control",
+    "first-to-finish",
+    "parallel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

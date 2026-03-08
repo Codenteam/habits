@@ -11,6 +11,7 @@ import {
   TemplatesController,
   SecurityController,
   ExportController,
+  CreatorController,
 } from './controllers';
 import { setupServeRoutes } from './serve';
 import { createResponse } from './helpers';
@@ -37,6 +38,7 @@ export function setupRoutes(
   const templatesController = new TemplatesController();
   const securityController = new SecurityController();
   const exportController = new ExportController();
+  const creatorController = new CreatorController();
 
   // Root route
   app.get(basePath + '/', rootController.getRoot);
@@ -70,6 +72,10 @@ export function setupRoutes(
   app.post(basePath + '/export/pack/desktop', exportController.packDesktop);
   app.post(basePath + '/export/pack/mobile', exportController.packMobile);
   app.post(basePath + '/export/pack/docker', exportController.packDocker);
+
+  // Creator routes (AI generation)
+  app.post(basePath + '/creator/create-habit', creatorController.createHabit);
+  app.post(basePath + '/creator/create-bit', creatorController.createBit);
 
   // Setup serve routes (workflow server start/stop)
   setupServeRoutes(app, {

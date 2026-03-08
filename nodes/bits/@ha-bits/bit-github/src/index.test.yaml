@@ -1,0 +1,336 @@
+# bit-github tests — GitHub REST API
+bit: ./index.ts
+tests:
+  # ── listPullRequests ──────────────────────────
+
+  - name: "listPullRequests - returns open PRs"
+    action: listPullRequests
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      state: "open"
+      perPage: 10
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/pulls*"
+          method: GET
+          response:
+            - id: 1
+              number: 42
+              title: "Fix typo in README"
+              state: "open"
+              html_url: "https://github.com/octocat/hello-world/pull/42"
+              user: { login: "contributor1" }
+              created_at: "2025-01-15T10:00:00Z"
+              updated_at: "2025-01-15T12:00:00Z"
+              head: { ref: "fix-typo" }
+              base: { ref: "main" }
+              draft: false
+              labels: [{ name: "bug" }]
+    expect:
+      pullRequests:
+        - id: 1
+          number: 42
+          title: "Fix typo in README"
+          state: "open"
+          url: "https://github.com/octocat/hello-world/pull/42"
+          user: "contributor1"
+          head: "fix-typo"
+          base: "main"
+          draft: false
+          labels: ["bug"]
+      count: 1
+
+  # ── getPullRequest ────────────────────────────
+
+  - name: "getPullRequest - returns PR details"
+    action: getPullRequest
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      pullNumber: 42
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/pulls/42"
+          method: GET
+          response:
+            id: 1
+            number: 42
+            title: "Fix typo in README"
+            body: "Fixed a small typo"
+            state: "open"
+            html_url: "https://github.com/octocat/hello-world/pull/42"
+            user: { login: "contributor1" }
+            created_at: "2025-01-15T10:00:00Z"
+            updated_at: "2025-01-15T12:00:00Z"
+            merged_at: null
+            merged: false
+            mergeable: true
+            head: { ref: "fix-typo" }
+            base: { ref: "main" }
+            draft: false
+            additions: 3
+            deletions: 1
+            changed_files: 1
+            labels: [{ name: "bug" }]
+            requested_reviewers: [{ login: "reviewer1" }]
+    expect:
+      id: 1
+      number: 42
+      title: "Fix typo in README"
+      body: "Fixed a small typo"
+      state: "open"
+      merged: false
+      mergeable: true
+      additions: 3
+      deletions: 1
+      changedFiles: 1
+      reviewers: ["reviewer1"]
+
+  # ── createPullRequest ─────────────────────────
+
+  - name: "createPullRequest - creates a new PR"
+    action: createPullRequest
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      title: "Add new feature"
+      body: "This adds a cool new feature"
+      head: "feature-branch"
+      base: "main"
+      draft: false
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/pulls"
+          method: POST
+          response:
+            id: 2
+            number: 43
+            title: "Add new feature"
+            html_url: "https://github.com/octocat/hello-world/pull/43"
+            state: "open"
+            draft: false
+            head: { ref: "feature-branch" }
+            base: { ref: "main" }
+            created_at: "2025-01-16T08:00:00Z"
+    expect:
+      id: 2
+      number: 43
+      title: "Add new feature"
+      url: "https://github.com/octocat/hello-world/pull/43"
+      state: "open"
+      draft: false
+      head: "feature-branch"
+      base: "main"
+
+  # ── listIssues ────────────────────────────────
+
+  - name: "listIssues - returns only real issues (not PRs)"
+    action: listIssues
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      state: "open"
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/issues*"
+          method: GET
+          response:
+            - id: 10
+              number: 5
+              title: "Bug report"
+              state: "open"
+              html_url: "https://github.com/octocat/hello-world/issues/5"
+              user: { login: "reporter" }
+              created_at: "2025-01-10T10:00:00Z"
+              updated_at: "2025-01-10T12:00:00Z"
+              labels: [{ name: "bug" }]
+              assignees: [{ login: "dev1" }]
+              comments: 3
+            - id: 11
+              number: 42
+              title: "This is actually a PR"
+              state: "open"
+              html_url: "https://github.com/octocat/hello-world/pull/42"
+              pull_request: { url: "https://api.github.com/repos/octocat/hello-world/pulls/42" }
+              user: { login: "contributor1" }
+              created_at: "2025-01-15T10:00:00Z"
+              updated_at: "2025-01-15T12:00:00Z"
+              labels: []
+              assignees: []
+              comments: 0
+    expect:
+      issues:
+        - id: 10
+          number: 5
+          title: "Bug report"
+          state: "open"
+          user: "reporter"
+          labels: ["bug"]
+          assignees: ["dev1"]
+          comments: 3
+      count: 1
+
+  # ── createIssue ───────────────────────────────
+
+  - name: "createIssue - creates a new issue with labels"
+    action: createIssue
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      title: "New feature request"
+      body: "Please add dark mode"
+      labels: "enhancement,ui"
+      assignees: "dev1,dev2"
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/issues"
+          method: POST
+          response:
+            id: 20
+            number: 6
+            title: "New feature request"
+            html_url: "https://github.com/octocat/hello-world/issues/6"
+            state: "open"
+            created_at: "2025-01-17T09:00:00Z"
+            labels: [{ name: "enhancement" }, { name: "ui" }]
+            assignees: [{ login: "dev1" }, { login: "dev2" }]
+    expect:
+      id: 20
+      number: 6
+      title: "New feature request"
+      state: "open"
+      labels: ["enhancement", "ui"]
+      assignees: ["dev1", "dev2"]
+
+  # ── createComment ─────────────────────────────
+
+  - name: "createComment - adds comment to an issue"
+    action: createComment
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      issueNumber: 5
+      body: "Thanks for reporting! We'll fix this soon."
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/issues/5/comments"
+          method: POST
+          response:
+            id: 100
+            html_url: "https://github.com/octocat/hello-world/issues/5#issuecomment-100"
+            body: "Thanks for reporting! We'll fix this soon."
+            user: { login: "bot-user" }
+            created_at: "2025-01-17T10:00:00Z"
+    expect:
+      id: 100
+      body: "Thanks for reporting! We'll fix this soon."
+      user: "bot-user"
+
+  # ── getRepo ───────────────────────────────────
+
+  - name: "getRepo - returns repository info"
+    action: getRepo
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world"
+          method: GET
+          response:
+            id: 1296269
+            name: "hello-world"
+            full_name: "octocat/hello-world"
+            description: "My first repository"
+            html_url: "https://github.com/octocat/hello-world"
+            private: false
+            default_branch: "main"
+            language: "JavaScript"
+            stargazers_count: 1000
+            forks_count: 500
+            open_issues_count: 10
+            created_at: "2020-01-01T00:00:00Z"
+            updated_at: "2025-01-01T00:00:00Z"
+            topics: ["awesome", "demo"]
+    expect:
+      id: 1296269
+      name: "hello-world"
+      fullName: "octocat/hello-world"
+      description: "My first repository"
+      private: false
+      defaultBranch: "main"
+      language: "JavaScript"
+      stars: 1000
+      forks: 500
+      openIssues: 10
+      topics: ["awesome", "demo"]
+
+  # ── Error handling ────────────────────────────
+
+  - name: "listPullRequests - fails without token"
+    action: listPullRequests
+    input:
+      owner: "octocat"
+      repo: "hello-world"
+    expectError: "GitHub token is required"
+
+  - name: "getPullRequest - API error propagates"
+    action: getPullRequest
+    input:
+      token: "ghp_bad_token"
+      owner: "octocat"
+      repo: "private-repo"
+      pullNumber: 1
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/private-repo/pulls/1"
+          method: GET
+          status: 404
+          response: '{"message": "Not Found"}'
+    expectError: "GitHub API error (404)"
+
+  # ══════════════════════════════════════════════
+  #  newPullRequest (action version of trigger)
+  # ══════════════════════════════════════════════
+
+  - name: "newPullRequest - returns recent open PRs"
+    action: newPullRequest
+    input:
+      token: "ghp_test_token"
+      owner: "octocat"
+      repo: "hello-world"
+      perPage: 5
+    mocks:
+      fetch:
+        - url: "*/repos/octocat/hello-world/pulls*"
+          method: GET
+          response:
+            - id: 1
+              number: 50
+              title: "Add dark mode"
+              state: "open"
+              html_url: "https://github.com/octocat/hello-world/pull/50"
+              user: { login: "darkmode-fan" }
+              created_at: "2025-02-10T10:00:00Z"
+              updated_at: "2025-02-10T12:00:00Z"
+              head: { ref: "dark-mode" }
+              base: { ref: "main" }
+              draft: false
+              labels: [{ name: "enhancement" }]
+    expect:
+      pullRequests:
+        - number: 50
+          title: "Add dark mode"
+          state: "open"
+          user: "darkmode-fan"
+          draft: false
+      count: 1
+      repository: "octocat/hello-world"

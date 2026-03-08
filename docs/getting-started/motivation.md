@@ -6,6 +6,8 @@ Build backend logic (agents, automations, SaaS) using pre-built, tested building
 
 Building logic requires connecting to APIs, handling errors/retries, securing vulnerabilities, and tracking execution. When you write custom code, all these responsibilities are on you.
 
+Current tools run in a centralized way, with almost no way to audit the runtime or decentralize specific workflows. Making it impossible to pack specific workflows to run on serverless functions or as standalone apps.
+
 ## The Solution
 
 Habits provides **pre-built nodes** that handle the hard parts:
@@ -21,9 +23,6 @@ nodes:
       params:
         collection: survey-responses
 ```
-
-The Database node handles validation, error handling, and retries. You just configure it.
-
 ## Key Benefits
 
 | Benefit | What it means |
