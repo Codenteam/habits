@@ -1,9 +1,0 @@
-packages:
-  - '.'
-  - 'server'
-
-onlyBuiltDependencies:
-  - esbuild
-  - nx
-
-recursiveInstall: true
