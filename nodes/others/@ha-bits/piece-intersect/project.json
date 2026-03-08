@@ -1,0 +1,51 @@
+{
+  "name": "pieces-intersect",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "activepieces/@ha-bits/piece-intersect/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/activepieces/@ha-bits/piece-intersect",
+        "tsConfig": "activepieces/@ha-bits/piece-intersect/tsconfig.lib.json",
+        "packageJson": "activepieces/@ha-bits/piece-intersect/package.json",
+        "main": "activepieces/@ha-bits/piece-intersect/src/index.ts",
+        "assets": [
+          "activepieces/@ha-bits/piece-intersect/*.md",
+          {
+            "input": "activepieces/@ha-bits/piece-intersect/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "activepieces/@ha-bits/piece-intersect",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    }
+  }
+}
