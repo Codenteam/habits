@@ -104,9 +104,10 @@ See complete working examples:
 
 ::: code-group
 
+<<< @/../examples/mixed/habit.yaml [Mixed Workflow]
+
 <<< @/../examples/mixed/stack.yaml [Stack Config]
 
-<<< @/../examples/mixed/habit.yaml [Mixed Workflow]
 
 <<< @/../examples/basic-habit/habit.yaml [Script Workflow]
 

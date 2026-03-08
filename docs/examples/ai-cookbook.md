@@ -87,9 +87,9 @@ Estimates per-serving nutritional data including:
 
 ::: code-group
 
-<<< @/../examples/ai-cookbook/stack.yaml [stack.yaml]
-
 <<< @/../examples/ai-cookbook/habits/generate-recipe.yaml [generate-recipe.yaml]
+
+<<< @/../examples/ai-cookbook/stack.yaml [stack.yaml]
 
 <<< @/../examples/ai-cookbook/habits/list-recipes.yaml [list-recipes.yaml]
 

@@ -180,7 +180,7 @@ http://your-host/api
 ### Example: Execute a Habit
 
 ```bash
-curl -X POST http://localhost:3000/misc/workflows/my-habit-id/execute \
+curl -X POST http://localhost:3000/api/my-habit-id \
   -H "Content-Type: application/json" \
   -d '{"input": {"key": "value"}}'
 ```

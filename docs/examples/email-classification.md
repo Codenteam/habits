@@ -53,8 +53,8 @@ curl -X POST http://localhost:13000/api/email-classification-test \
 ::: code-group
 
 
-<<< @/../examples/email-classification/stack.yaml [stack.yaml]
 <<< @/../examples/email-classification/habit.yaml [habit.yaml]
+<<< @/../examples/email-classification/stack.yaml [stack.yaml]
 <<< @/../examples/email-classification/.env.example [.env]
 
 :::

@@ -96,6 +96,7 @@ export default defineConfig({
           { text: 'Minimal Blog', link: '/examples/minimal-blog' },
           { text: 'Complete Marketing Campaign in Seconds', link: '/examples/marketing-campaign' },
           { text: 'Email Classification', link: '/examples/email-classification' },
+          { text: 'Agent MCP Demo', link: '/examples/agent-mcp-demo' },
         ]
       },
       // Extra reading

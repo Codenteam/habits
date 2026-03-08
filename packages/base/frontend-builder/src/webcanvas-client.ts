@@ -432,26 +432,51 @@ export function buildWebCanvasUrl(config: WebCanvasConfig, isHosted: boolean): s
 }
 
 /**
- * Generate frontend HTML using AI - directly via OpenAI API
+ * Get OpenAI-compatible base URL for different providers
  */
-async function generateWithDirectOpenAI(
+function getProviderBaseUrl(provider: string): string {
+  switch (provider) {
+    case 'openai':
+      return 'https://api.openai.com/v1';
+    case 'anthropic':
+      return 'https://api.anthropic.com/v1';
+    case 'gemini':
+      return 'https://generativelanguage.googleapis.com/v1beta/openai';
+    default:
+      return 'https://api.openai.com/v1';
+  }
+}
+
+/**
+ * Generate frontend HTML using AI - directly via OpenAI-compatible API
+ */
+async function generateWithOpenAICompatible(
   request: AIGenerationRequest,
   config: WebCanvasConfig,
   enhancedPrompt: string
 ): Promise<AIGenerationResponse> {
   const apiKey = config.apiKey || request.apiToken;
   if (!apiKey) {
-    throw new Error('OpenAI API key is required for direct mode');
+    throw new Error('API key is required for direct provider mode');
   }
 
+  const provider = request.provider || config.provider || 'openai';
   const model = request.model || config.model || 'gpt-4.1-mini';
+  const baseUrl = getProviderBaseUrl(provider);
   
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`,
+  };
+  
+  // Add Anthropic-specific header for browser access
+  if (provider === 'anthropic') {
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages: [
@@ -470,7 +495,7 @@ async function generateWithDirectOpenAI(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`OpenAI API failed: ${response.statusText}. ${errorText}`);
+    throw new Error(`${provider} API failed: ${response.statusText}. ${errorText}`);
   }
 
   // Handle streaming response
@@ -612,9 +637,10 @@ Test HTML Date: ${new Date().toISOString()}
     return { html: mockHtml };
   }
 
-  // Use direct OpenAI mode if configured
-  if (config.useDirectOpenAI) {
-    return generateWithDirectOpenAI(request, config, enhancedPrompt);
+  // Use OpenAI-compatible direct mode for external providers
+  const provider = request.provider || config.provider || 'auto';
+  if (provider !== 'auto' && provider !== 'intersect') {
+    return generateWithOpenAICompatible(request, config, enhancedPrompt);
   }
 
   const url = buildWebCanvasUrl(config, isHosted);

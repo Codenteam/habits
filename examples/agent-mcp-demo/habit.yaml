@@ -1,0 +1,55 @@
+id: agent-mcp-search
+name: Agent MCP Search Demo
+description: |
+  Demonstrates using bit-agent to search across multiple data sources:
+  - Google Drive for documents
+  - Slack for messages  
+  - Local filesystem via Everything MCP server
+
+nodes:
+  # Agent that searches across Google Drive, Slack, and local files
+  - id: multi-source-search
+    type: bit
+    data:
+      framework: bits
+      module: '@ha-bits/bit-agent'
+      operation: run_agent
+      source: local
+      credentials:
+        agentAuth:
+          llmProvider: openai
+          apiKey: '{{habits.env.OPENAI_API_KEY}}'
+          mcpSecrets:
+            # GDRIVE_CREDENTIALS: '{{habits.env.GDRIVE_CREDENTIALS}}'
+            SLACK_BOT_TOKEN: '{{habits.env.SLACK_BOT_TOKEN}}'
+            SLACK_TEAM_ID: '{{habits.env.SLACK_TEAM_ID}}'
+      params:
+        prompt: '{{habits.input.query}}'
+        systemPrompt: |
+          You are a helpful research assistant with access to multiple tools.
+          
+          You can search:
+          1. Google Drive - for documents, spreadsheets, and files
+          2. Slack - for messages and conversations
+          3. Local filesystem - for local files and data
+          
+          When the user asks to search for something, use ALL available tools 
+          to provide comprehensive results. Summarize your findings clearly.
+        mcpServers:
+          # Google Drive MCP - requires GDRIVE_CREDENTIALS
+          # - type: google-drive
+          # Slack MCP - requires SLACK_BOT_TOKEN
+          - type: slack
+          # Everything MCP - no auth required, great for testing
+          - type: everything
+        model: gpt-4o
+        maxIterations: 15
+        temperature: 0.3
+
+edges: []
+
+# Optional: Output the agent's response
+output:
+  response: '{{multi-source-search.response.output.response}}'
+  # toolsUsed: '{{multi-source-search.toolCalls}}'
+  # mcpServers: '{{multi-source-search.mcpServersConnected}}'

@@ -49,11 +49,11 @@ curl -X POST http://localhost:13000/api/marketing-campaign \
 ## Key Files
 
 ::: code-group
+<<< @/../examples/business-intersect-standalone/habit.yaml [habit.yaml]
 
 <<< @/../examples/business-intersect-standalone/.env.example [.env.example]
 
 <<< @/../examples/business-intersect-standalone/stack.yaml [stack.yaml]
 
-<<< @/../examples/business-intersect-standalone/habit.yaml [habit.yaml]
 
 :::

@@ -22,9 +22,9 @@ The most powerful way to create habits is writing them directly as YAML or JSON 
 
 ::: code-group
 
-<<< @/../examples/hello-world/stack.yaml [stack.yaml]
-
 <<< @/../examples/hello-world/habit.yaml [habit.yaml]
+
+<<< @/../examples/hello-world/stack.yaml [stack.yaml]
 
 :::
 

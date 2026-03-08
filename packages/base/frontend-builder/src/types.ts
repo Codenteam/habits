@@ -7,11 +7,9 @@ export interface WebCanvasConfig {
   /** API key for authentication */
   apiKey?: string;
   /** AI provider to use */
-  provider?: 'auto' | 'openai' | 'anthropic';
+  provider?: 'auto' | 'openai' | 'anthropic' | 'gemini';
   /** AI model to use */
   model?: string;
-  /** Use OpenAI API directly instead of going through WebCanvas backend */
-  useDirectOpenAI?: boolean;
 }
 
 /**

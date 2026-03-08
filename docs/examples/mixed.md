@@ -50,11 +50,11 @@ curl -X POST http://localhost:13000/api/text-to-voice-to-s3
 ## Key Files
 
 ::: code-group
+<<< @/../examples/mixed/habit.yaml [habit.yaml]
 
 <<< @/../examples/mixed/.env.example [.env.example]
 
 <<< @/../examples/mixed/stack.yaml [stack.yaml]
 
-<<< @/../examples/mixed/habit.yaml [habit.yaml]
 
 :::
