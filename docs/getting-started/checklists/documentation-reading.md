@@ -6,7 +6,7 @@
 - [ ] Read [When to Use](/getting-started/when-to-use.md) - see if Habits fits your use case
 - [ ] Read [Concepts](/getting-started/concepts.md) - learn core concepts (stacks, habits, nodes)
 - [ ] Read [First Habit](/getting-started/first-habit.md) - build your first habit
-- [ ] Browse [Examples Index](/examples/index.md) - see what's possible
+- [ ] Browse [Examples Index](/showcase/index.md) - see what's possible
 
 ### If you want to understand Habits in-depth
 - [ ] Read [Variables](/deep-dive/variables.md) - learn how to pass data between nodes
@@ -16,11 +16,11 @@
 - [ ] Read [Logging](/deep-dive/logging.md) - debugging and monitoring
 
 ### If you want to see working examples
-- [ ] Check [Mixed Framework Example](/examples/mixed.md) - combines multiple frameworks
-- [ ] Check [AI Cookbook Example](/examples/ai-cookbook.md) - AI-powered recipe generation
-- [ ] Check [Email Classification Example](/examples/email-classification.md) - email processing
-- [ ] Check [Minimal Blog Example](/examples/minimal-blog.md) - simple content management
-- [ ] Browse [Examples Directory](/examples/) - all example stacks with code
+- [ ] Check [Mixed Framework Example](/showcase/mixed.md) - combines multiple frameworks
+- [ ] Check [AI Cookbook Example](/showcase/ai-cookbook.md) - AI-powered recipe generation
+- [ ] Check [Email Classification Example](/showcase/email-classification.md) - email processing
+- [ ] Check [Minimal Blog Example](/showcase/minimal-blog.md) - simple content management
+- [ ] Browse [Examples Directory](/showcase/) - all example stacks with code
 
 ### If you want to import from existing tools
 - [ ] Read [Importing & Converting](/deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.

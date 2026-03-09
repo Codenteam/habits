@@ -102,7 +102,7 @@ const screenshots = [
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Build using UI</a>
             <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Build using AI</a>
-            <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Read more</a>
+            <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Introduction</a>
           </div>
         </div>
         
@@ -396,6 +396,7 @@ const screenshots = [
 
 .dark .highlighted-code :deep(.shiki span) {
   color: var(--shiki-dark);
+  filter: brightness(1.35) saturate(1.1);
 }
 
 /* Full-Stack Hero - using existing styles */

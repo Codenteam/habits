@@ -1,0 +1,34 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Mixed Frameworks
+description: Multi-framework demo showcasing OpenAI to ElevenLabs pipelines with local storage for voice synthesis and AI-generated content.
+
+longDescription: |
+  The Mixed Frameworks example demonstrates how Habits can seamlessly orchestrate
+  multiple AI services and frameworks in a single workflow.
+
+  ## What It Does
+
+  - **OpenAI Integration**: Generate text content using GPT models
+  - **ElevenLabs Voice**: Convert text to natural-sounding speech
+  - **Local Storage**: Save generated assets locally for reuse
+  - **Pipeline Architecture**: Chain services together elegantly
+
+  This example is perfect for understanding how to combine different AI providers
+  into cohesive workflows using Habits.
+
+type: automation
+
+tags:
+  - ai
+  - automation
+  - creative
+
+difficulty: intermediate
+
+featured: true
+
+requirements:
+  - OpenAI API key
+  - ElevenLabs API key

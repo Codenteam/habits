@@ -51,7 +51,9 @@ export default defineConfig({
     }, 
     toc: {
       level: [2]
-    }
+    },
+    // theme: 'houston'
+    
   },
 
   head: [
@@ -87,16 +89,20 @@ export default defineConfig({
 
         ]
       },
-      // Examples
+      // Showcase (Examples)
       {
-        text: '📦 Examples',
+        text: '🌟 Showcase',
         items: [
-          { text: 'Overview', link: '/examples/' },
-          { text: 'Mixed Frameworks', link: '/examples/mixed' },
-          { text: 'Minimal Blog', link: '/examples/minimal-blog' },
-          { text: 'Complete Marketing Campaign in Seconds', link: '/examples/marketing-campaign' },
-          { text: 'Email Classification', link: '/examples/email-classification' },
-          { text: 'Agent MCP Demo', link: '/examples/agent-mcp-demo' },
+          { text: 'Browse All', link: '/showcase/' },
+
+          { text: 'AI Cookbook', link: '/showcase/ai-cookbook' },
+          { text: 'AI Journal', link: '/showcase/ai-journal' },
+
+          { text: 'Agent MCP Demo', link: '/showcase/agent-mcp-demo' },
+          { text: 'Email Classification', link: '/showcase/email-classification' },
+          { text: 'Mixed Frameworks', link: '/showcase/mixed' },
+          { text: 'Minimal Blog', link: '/showcase/minimal-blog' },
+          { text: 'Marketing Campaign', link: '/showcase/marketing-campaign' },
         ]
       },
       // Extra reading

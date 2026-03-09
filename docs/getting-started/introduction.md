@@ -59,7 +59,7 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 
 <Checklist name="documentation-reading" title="Documentation Reading Order Checklist" icon="📚">
 
-<!--@include: ./checklists/documentation-reading.md{3,}-->
+<!--@include: ./checklists/documentation-reading.md{4,}-->
 
 </Checklist>
 

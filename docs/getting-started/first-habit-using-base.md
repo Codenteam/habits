@@ -260,9 +260,9 @@ Now that you've built your first habit using Base, here are some things to explo
 
 ### Try More Examples
 
-- **[Email Classification](../examples/email-classification.md)** - AI-powered email categorization
-- **[Minimal Blog](../examples/minimal-blog.md)** - Full CMS backend with authentication
-- **[AI Cookbook](../examples/ai-cookbook.md)** - Generate recipes from ingredients
+- **[Email Classification](../showcase/email-classification.md)** - AI-powered email categorization
+- **[Minimal Blog](../showcase/minimal-blog.md)** - Full CMS backend with authentication
+- **[AI Cookbook](../showcase/ai-cookbook.md)** - Generate recipes from ingredients
 
 ### Switch to Code-First Approach
 
@@ -315,7 +315,7 @@ If changes aren't reflected:
 
 ## Getting Help
 
-- **[Examples Directory](../examples/)** - Working example stacks
+- **[Examples Directory](../showcase/)** - Working example stacks
 
 ---
 

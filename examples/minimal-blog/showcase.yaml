@@ -1,0 +1,31 @@
+# Showcase metadata for Minimal Blog example
+# A simple blog backend demonstrating CRUD operations
+
+name: Minimal Blog
+description: A complete blog API backend with authentication, CRUD endpoints, and database integration using Habits bits.
+
+longDescription: |
+  Build a production-ready blog API in minutes with the Minimal Blog example.
+  This showcases how Habits can create full backend applications with minimal code.
+
+  ## Features
+
+  - **User Authentication**: JWT-based login and registration
+  - **Blog Posts CRUD**: Create, read, update, and delete posts
+  - **Database Integration**: SQLite/PostgreSQL with automatic migrations
+  - **API Documentation**: Well-structured RESTful endpoints
+
+  Perfect for learning how to build API backends with Habits, or as a starter
+  template for your own content management systems.
+
+type: app
+
+tags:
+  - api
+  - database
+  - backend
+
+difficulty: beginner
+
+requirements:
+  - Node.js 18+

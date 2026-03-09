@@ -1,0 +1,39 @@
+# Marketplace metadata for AI Journal example
+# This file provides metadata for the marketplace showcase page
+
+name: AI Journal
+description: Your personal AI-powered journaling companion that analyzes entries, tracks mood patterns, and provides compassionate weekly insights.
+
+longDescription: |
+  Meet your new journaling companion — an AI-powered personal journal that goes beyond
+  simple note-taking. AI Journal understands your emotions, tracks your mental well-being,
+  and provides supportive, non-judgmental feedback like having a compassionate therapist
+  in your pocket.
+
+  ## Why AI Journal?
+
+  - **Emotional Intelligence**: Advanced sentiment analysis detects mood, energy levels, and stress indicators
+  - **Theme Tracking**: Automatically identifies recurring topics, concerns, and gratitudes
+  - **Supportive Responses**: Warm, validating feedback that encourages self-reflection
+  - **Weekly Insights**: Aggregated mood trends, patterns, and personalized encouragement
+  - **Privacy First**: Your entries stay on your device, processed locally
+
+  Whether you're practicing mindfulness, working through challenges, or simply want
+  to build a journaling habit, AI Journal makes the experience more meaningful and insightful.
+
+tags:
+  - ai
+  - health
+  - productivity
+  - frontend
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (for GPT-4o)
+
+habits:
+  - habits/save-entry.yaml
+  - habits/weekly-insights.yaml

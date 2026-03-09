@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { codeToHtml } from 'shiki'
 
 const props = defineProps<{
   examplePath: string  // e.g., "mixed" or "minimal-blog"
 }>()
 
 const activeTab = ref(0)
+const highlightedCode = ref<Record<number, string>>({})
 
 // Generate commands for different run options
 const commands = computed(() => {
@@ -28,6 +30,23 @@ const commands = computed(() => {
     }
   ]
 })
+
+async function highlightCommands() {
+  for (let i = 0; i < commands.value.length; i++) {
+    highlightedCode.value[i] = await codeToHtml(commands.value[i].cmd, {
+      lang: 'bash',
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark'
+      }
+    })
+  }
+}
+
+onMounted(highlightCommands)
+
+// Re-highlight if examplePath changes
+watch(() => props.examplePath, highlightCommands)
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text)
@@ -53,8 +72,15 @@ function copyToClipboard(text: string) {
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
         </svg>
       </button>
-      <p class="cmd-description">{{ commands[activeTab].description }}</p>
-      <pre><code>{{ commands[activeTab].cmd }}</code></pre>
+      <p class="cmd-description">
+      {{ commands[activeTab].description }}
+      </p>
+      <div 
+        v-if="highlightedCode[activeTab]" 
+        class="highlighted-code"
+        v-html="highlightedCode[activeTab]"
+      ></div>
+      <pre v-else><code>{{ commands[activeTab].cmd }}</code></pre>
     </div>
   </div>
 </template>
@@ -98,7 +124,7 @@ function copyToClipboard(text: string) {
 .code-block {
   position: relative;
   background: var(--vp-code-block-bg);
-  padding: 1rem;
+  padding: 20px 24px;
 }
 
 .code-block pre {
@@ -108,10 +134,39 @@ function copyToClipboard(text: string) {
 
 .code-block code {
   font-family: var(--vp-font-family-mono);
-  font-size: 0.875rem;
-  color: var(--vp-c-text-1);
+  font-size: var(--vp-code-font-size);
+  line-height: var(--vp-code-line-height);
+  color: var(--vp-code-block-color);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.highlighted-code :deep(pre) {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  overflow-x: auto;
+}
+
+.highlighted-code :deep(code) {
+  font-family: var(--vp-font-family-mono);
+  font-size: var(--vp-code-font-size);
+  line-height: var(--vp-code-line-height);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Shiki dual theme support */
+.highlighted-code :deep(.shiki) {
+  background: transparent !important;
+}
+
+.highlighted-code :deep(.shiki span) {
+  color: var(--shiki-light);
+}
+
+.dark .highlighted-code :deep(.shiki span) {
+  color: var(--shiki-dark);
 }
 
 .copy-btn {

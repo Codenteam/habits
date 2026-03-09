@@ -26,7 +26,6 @@ const displayName = computed(() => {
       </svg>
       <span>Download {{ displayName }}</span>
     </a>
-    <p class="download-note">Ready-to-run example (you need to create .env if needed)</p>
   </div>
 </template>
 

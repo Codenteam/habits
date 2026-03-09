@@ -27,9 +27,13 @@ logs/
 sample-nodes
 nohup.out
 nohup*
-docs/public/viewer/*
-docs/public/downloads/*.zip
-docs/.vitepress/.temp
 .secrets
 tmp
 staging
+
+# Docs related stuff
+docs/public/viewer/*
+docs/public/downloads/*.zip
+docs/.vitepress/.temp
+docs/public/showcase
+docs/showcase

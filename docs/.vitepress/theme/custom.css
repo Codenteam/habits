@@ -266,6 +266,7 @@
   width: 100%;
 }
 
+
 .vertical-tabs .plugin-tabs > .plugin-tabs--tab-list button[aria-selected="true"] {
   background: var(--vp-c-brand-soft);
   color: var(--vp-c-brand-1);

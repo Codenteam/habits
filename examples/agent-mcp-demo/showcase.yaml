@@ -1,0 +1,33 @@
+# Showcase metadata for Agent MCP Demo
+# AI agent with Model Context Protocol integration
+
+name: Agent MCP Demo
+description: An intelligent AI agent with MCP integration enabling multi-source search across Google Drive, Slack, and filesystem.
+
+longDescription: |
+  Experience the power of AI agents with Model Context Protocol (MCP) integration.
+  This example demonstrates how to build agents that can access multiple data sources.
+
+  ## Capabilities
+
+  - **Multi-Source Search**: Query across Google Drive, Slack, and local files
+  - **MCP Integration**: Uses the Model Context Protocol for tool access
+  - **Intelligent Agent**: Claude-powered reasoning and task execution
+  - **Context Awareness**: Maintains conversation context across queries
+
+  This example showcases how Habits can power sophisticated AI agents that go
+  beyond simple chat to actually interact with your tools and data.
+
+type: agent
+
+tags:
+  - ai
+  - integration
+  - developer
+
+difficulty: advanced
+
+requirements:
+  - Claude API key (via env var)
+  - MCP server running (optional)
+  - Google Drive credentials (optional)

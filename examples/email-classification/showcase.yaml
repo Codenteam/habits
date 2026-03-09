@@ -1,0 +1,32 @@
+# Showcase metadata for Email Classification example
+# AI-powered email routing and categorization
+
+name: Email Classification
+description: Smart email router that uses AI to automatically categorize and route emails to appropriate handlers using branching logic.
+
+longDescription: |
+  Automate your email processing with AI-powered classification. This example
+  demonstrates how to build intelligent email routing workflows.
+
+  ## How It Works
+
+  - **AI Classification**: Uses GPT to analyze email content and intent
+  - **Smart Routing**: Routes to sales, support, or spam based on classification
+  - **IMAP Integration**: Works with any email provider
+  - **Branching Logic**: Conditional workflows based on AI decisions
+
+  Great for building automated customer support systems, lead routing,
+  or any email processing automation.
+
+type: automation
+
+tags:
+  - ai
+  - email
+  - automation
+
+difficulty: intermediate
+
+requirements:
+  - OpenAI API key
+  - IMAP-enabled email account

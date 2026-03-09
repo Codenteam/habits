@@ -1,0 +1,124 @@
+# Marketplace metadata schema for Habits examples
+# This file defines the structure for marketplace.yaml files in example directories
+
+$schema: "http://json-schema.org/draft-07/schema#"
+title: Marketplace Metadata
+description: Schema for marketplace.yaml files that provide metadata for example showcase pages
+type: object
+
+required:
+  - name
+  - description
+  - tags
+  - difficulty
+
+properties:
+  name:
+    type: string
+    description: Display name for the example (used as page title)
+    minLength: 3
+    maxLength: 100
+    examples:
+      - "AI Cookbook"
+      - "AI Journal"
+      - "Smart Home Commander"
+
+  description:
+    type: string
+    description: Short marketing description (1-2 sentences) shown on cards
+    minLength: 20
+    maxLength: 200
+    examples:
+      - "Generate personalized recipes from your available ingredients with AI-powered images"
+
+  longDescription:
+    type: string
+    description: Extended description for the landing page (supports markdown)
+    maxLength: 2000
+
+  tags:
+    type: array
+    description: Categorization tags for filtering
+    minItems: 1
+    maxItems: 5
+    items:
+      type: string
+      enum:
+        - ai
+        - automation
+        - productivity
+        - api
+        - frontend
+        - database
+        - email
+        - social
+        - finance
+        - health
+        - education
+        - business
+        - creative
+        - developer
+        - integration
+    examples:
+      - ["ai", "creative", "frontend"]
+
+  difficulty:
+    type: string
+    description: Skill level required to understand/modify the example
+    enum:
+      - beginner
+      - intermediate
+      - advanced
+    default: intermediate
+
+  featured:
+    type: boolean
+    description: Whether to highlight this example on the homepage
+    default: false
+
+  author:
+    type: string
+    description: Optional author or contributor name
+    maxLength: 100
+
+  version:
+    type: string
+    description: Version of the example (typically matches stack.yaml version)
+    pattern: "^\\d+\\.\\d+(\\.\\d+)?$"
+    default: "1.0"
+
+  links:
+    type: object
+    description: Related links
+    properties:
+      github:
+        type: string
+        format: uri
+        description: Link to GitHub repository or folder
+      demo:
+        type: string
+        format: uri
+        description: Link to live demo if available
+      video:
+        type: string
+        format: uri
+        description: Link to tutorial video
+    additionalProperties: false
+
+  requirements:
+    type: array
+    description: List of requirements or dependencies (e.g., API keys needed)
+    items:
+      type: string
+    examples:
+      - ["OpenAI API key", "PostgreSQL database"]
+
+  habits:
+    type: array
+    description: List of habit YAML files to show in the workflow viewer (relative paths from example root). If not specified, auto-detects from habits/ folder.
+    items:
+      type: string
+    examples:
+      - ["habits/save-entry.yaml", "habits/get-entries.yaml"]
+
+additionalProperties: false

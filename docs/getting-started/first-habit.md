@@ -87,10 +87,10 @@ Enable `HABITS_MANAGE_ENABLED=true` to access the built-in management portal at 
 
 ## Next Steps
 
-Ready to explore more? Check out the [Examples](/examples/) section for real-world use cases including:
-- [Email Classification](/examples/email-classification) - AI-powered email categorization
-- [Minimal Blog](/examples/minimal-blog) - Full CMS backend with authentication
-- [Marketing Campaign](/examples/marketing-campaign) - Multi-channel content generation
+Ready to explore more? Check out the [Examples](/showcase/) section for real-world use cases including:
+- [Email Classification](/showcase/email-classification) - AI-powered email categorization
+- [Minimal Blog](/showcase/minimal-blog) - Full CMS backend with authentication
+- [Marketing Campaign](/showcase/marketing-campaign) - Multi-channel content generation
 
 ### Deployment Options
 

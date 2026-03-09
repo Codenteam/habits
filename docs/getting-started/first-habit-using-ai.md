@@ -199,5 +199,5 @@ The generated bit files will be created and ready for use in your workflows.
 
 - **[First Habit (Base UI)](./first-habit-using-base.md)**, Learn the visual editor for manual habit building
 - **[First Habit (Habit-as-Code)](./first-habit.md)**, Build habits using YAML/JSON directly
-- **[Examples](/examples/)**, Browse real-world habit examples
+- **[Examples](/showcase/)**, Browse real-world habit examples
 - **[Variables & Expressions](../deep-dive/variables.md)**, Learn how to pass data between nodes

@@ -1,0 +1,39 @@
+# Marketplace metadata for AI Cookbook example
+# This file provides metadata for the marketplace showcase page
+
+name: AI Cookbook
+description: Generate personalized recipes from your available ingredients with AI-powered recipe creation and beautiful food photography.
+
+longDescription: |
+  Transform your available ingredients into culinary masterpieces with the AI Cookbook.
+  This intelligent recipe generator analyzes what you have on hand and creates complete,
+  customized recipes tailored to your dietary preferences and cuisine choices.
+
+  ## Features at a Glance
+
+  - **Smart Ingredient Matching**: Input what's in your kitchen and let AI do the magic
+  - **Beautiful AI Images**: Every recipe comes with stunning, AI-generated food photography
+  - **Dietary Flexibility**: Supports gluten-free, vegan, vegetarian, and more
+  - **Nutritional Insights**: Get estimated calories, macros, and dietary information
+  - **Shopping Assistant**: Identifies missing ingredients with smart substitutions
+
+  Perfect for home cooks looking to reduce food waste, try new cuisines, or find
+  inspiration when staring at a fridge full of random ingredients.
+
+tags:
+  - ai
+  - creative
+  - frontend
+  - health
+
+difficulty: intermediate
+
+featured: true
+
+requirements:
+  - OpenAI API key (for GPT-4o and DALL-E 3)
+  - SQLite (auto-configured)
+
+habits:
+  - habits/generate-recipe.yaml
+  - habits/list-recipes.yaml

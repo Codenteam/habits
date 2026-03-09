@@ -1,0 +1,34 @@
+# Showcase metadata for OpenClaw Clone
+# AI-powered legal document analysis platform
+disabled: true
+name: OpenClaw Clone
+description: A full-stack legal document analysis platform with AI-powered contract review, clause extraction, and risk assessment.
+
+longDescription: |
+  Build a complete legal tech platform with the OpenClaw Clone example.
+  This demonstrates how Habits can power sophisticated full-stack applications.
+
+  ## Features
+
+  - **Contract Analysis**: AI-powered review of legal documents
+  - **Clause Extraction**: Automatically identify key contract clauses
+  - **Risk Assessment**: Flag potentially problematic terms
+  - **Frontend UI**: Complete React-based interface
+  - **Database Storage**: Persist documents and analysis results
+
+  This is a comprehensive example showing how to build production-ready
+  SaaS applications with Habits.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - business
+  - database
+
+difficulty: advanced
+
+requirements:
+  - OpenAI API key
+  - PostgreSQL database

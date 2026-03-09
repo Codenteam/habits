@@ -117,4 +117,4 @@ See complete working examples:
 
 - [Creating Habits](/deep-dive/creating) - Build workflows visually or as code
 - [Running Automations](/deep-dive/running) - Execute and monitor workflows
-- [Examples](/examples/) - Browse complete examples
+- [Examples](/showcase/) - Browse complete examples
