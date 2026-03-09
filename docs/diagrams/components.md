@@ -43,11 +43,19 @@ types: Node Types {
   }
 }
 
-definition: Create Automation {
+definition: Create Automation/Logic/Workflow {
   link: /intersect/habits/deep-dive/creating
   style.fill: "#744210"
   style.stroke: "#f6ad55"
   
+  m0: Using AI {
+    link: /intersect/habits/getting-started/first-habit-using-ai
+    shape: hexagon
+    style.fill: "#975a16"
+    style.stroke: "#fbd38d"
+    style.font-color: "#fefcbf"
+  }
+
   m1: Habits as Code {
     link: /intersect/habits/getting-started/first-habit
     shape: hexagon
