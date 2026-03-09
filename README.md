@@ -1,17 +1,19 @@
 # Habits
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)t
+
+
+
+
 
 Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-Apps. 
 
 Under the hood Habits is an AI Logic & UI builder (Base, from Basal Ganglia) and decentralized runner (Cortex, as in Frontal Cortex) that you can control, audit, monitor and extend (Apache 2.0)
-<p align="center">
-  <img src="docs/public/images/base.webp" alt="Habits Base - Visual Builder" width="800"/>
-</p>
-<p align="center">
-  <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
-</p>
+
+https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
+
+
 
 ## Table of Contents
 
@@ -142,17 +144,35 @@ npx habits@latest cortex --config ./stack.yaml
 
 ## Screenshots
 
-### Cortex Management UI
+### Habits Base: The Logic Visual Builder
+<p align="center">
+  <img src="docs/public/images/base.webp" alt="Habits Base - Visual Builder" width="800"/>
+</p>
+
+### Habits Base: The UI Visual Builder
+<p align="center">
+  <img src="docs/public/images/base-frontend.webp" alt="Habits Base - Visual Builder" width="800"/>
+</p>
+
+### Habits Cortex:  Management UI
+<p align="center">
 <img src="docs/public/images/cortex.webp" alt="Cortex Management UI" width="700"/>
+</p>
 
 ### Base Frontend Builder
+<p align="center">
 <img src="docs/public/images/base-frontend.webp" alt="Base Frontend Builder" width="700"/>
+</p>
 
 ### Swagger API Documentation
+<p align="center">
 <img src="docs/public/images/swagger.webp" alt="Swagger API" width="700"/>
+</p>
 
 ### Example Frontend (Text-to-Audio)
+<p align="center">
 <img src="docs/public/images/mixed-frontend.webp" alt="Mixed Frontend Example" width="700"/>
+</p>
 
 ## When to Use Habits
 
