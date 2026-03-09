@@ -16,7 +16,7 @@ Provide project context and coding guidelines that AI should follow when generat
 
 - Prefer using `.http` files with httpyac for testing Cortex API endpoints instead of `curl` if a file exists
 
-- If you need to test a habit, test examples/mixed/stack.yaml or examples/business-intersect-standalone/stack.yaml
+- If you need to test a habit, test examples/mixed/stack.yaml or examples/marketing-campaign/stack.yaml
 
 - If you need to test habits app, run the server with either npx habits@latest for the npm version or npx nx <action> habits for the local version. 
 

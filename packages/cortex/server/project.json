@@ -70,7 +70,7 @@
       "options": {
         "command": "pnpm tsx watch packages/cortex/server/src/main.ts server --config {args.config}",
         "cwd": "{workspaceRoot}",
-        "config": "examples/business-intersect-standalone/config.json"
+        "config": "examples/marketing-campaign/config.json"
       }
     },
         

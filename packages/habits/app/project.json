@@ -114,7 +114,7 @@
           "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
           "mkdir -p dist/packages/habits/examples",
           "cp -r examples/mixed dist/packages/habits/examples/mixed",
-          "cp -r examples/business-intersect-standalone dist/packages/habits/examples/business-intersect-standalone",
+          "cp -r examples/marketing-campaign dist/packages/habits/examples/marketing-campaign",
           "find dist/packages/habits/examples -name '.env' -type f -delete",
           "cp packages/habits/app/.npmignore dist/packages/habits/.npmignore",
           "chmod +x dist/packages/habits/app/main.cjs dist/packages/habits/base-server/main.cjs"
