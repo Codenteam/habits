@@ -1,0 +1,43 @@
+# Showcase metadata for Marketing Campaign example
+# This file provides metadata for the marketplace showcase page
+
+name: Marketing Campaign Generator
+description: AI-powered marketing campaign generator that creates expanded prompts, images, posters, and landing pages in parallel using the Intersect AI gateway.
+
+longDescription: |
+  Take a simple marketing idea and transform it into a complete campaign with AI-generated assets.
+  This workflow demonstrates advanced patterns like parallel execution and fan-out strategies,
+  all powered by the Intersect platform's unified AI gateway.
+
+  ## What It Does
+
+  Takes a marketing prompt and generates:
+
+  - **Expanded Prompt** - AI summarizes and refines the original idea
+  - **Image Prompt** - Optimized prompt for image generation
+  - **Poster/SVG Prompt** - Prompt for vector graphics creation
+  - **Landing Page Prompt** - Copy and structure for web pages
+  - **Final Assets** - All assets generated in parallel for speed
+
+  ## Why It's Included
+
+  Shows parallel execution, fan-out patterns, and integration with Intersect's AI gateway
+  for unified model access across multiple AI providers.
+
+type: app
+
+tags:
+  - ai
+  - creative
+  - frontend
+  - automation
+
+difficulty: intermediate
+
+featured: false
+
+requirements:
+  - Intersect API key (for AI gateway access)
+
+habits:
+  - habit.yaml

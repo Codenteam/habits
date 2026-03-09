@@ -15,6 +15,7 @@ import { existsSync, mkdirSync, readdirSync, statSync, readFileSync, writeFileSy
 import { join, relative, extname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
+import { execSync } from 'child_process';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
@@ -22,6 +23,7 @@ const examplesDir = join(rootDir, 'examples');
 const docsDir = join(rootDir, 'docs');
 const showcaseDir = join(docsDir, 'showcase');
 const publicShowcaseDir = join(docsDir, 'public/showcase');
+const downloadsDir = join(docsDir, 'public/downloads');
 
 interface ShowcaseMetadata {
   name: string;
@@ -511,6 +513,34 @@ function generateMarkdownFiles(examples: ExampleData[]): void {
   console.log(`  📄 index.md`);
 }
 
+function generateZipFiles(examples: ExampleData[]): void {
+  console.log('\n📦 Generating download zip files...');
+  
+  // Create downloads folder if it doesn't exist
+  mkdirSync(downloadsDir, { recursive: true });
+  
+  for (const example of examples) {
+    const zipName = `${example.slug}.zip`;
+    const zipPath = join(downloadsDir, zipName);
+    
+    // Remove existing zip if present
+    if (existsSync(zipPath)) {
+      rmSync(zipPath);
+    }
+    
+    try {
+      // Create zip from example directory, excluding .env and existing .zip files
+      execSync(
+        `zip -r "${zipPath}" . -x ".env" -x "*.zip" -x "node_modules/*" -x ".git/*"`,
+        { cwd: example.path, stdio: 'pipe' }
+      );
+      console.log(`  📦 ${zipName}`);
+    } catch (err) {
+      console.error(`  ❌ Failed to create ${zipName}:`, (err as Error).message);
+    }
+  }
+}
+
 function generateDataFile(examples: ExampleData[]): void {
   console.log('\n💾 Generating data files...');
   
@@ -552,6 +582,9 @@ function main(): void {
   
   // Copy demo images to public folder
   copyDemoImages(examples);
+  
+  // Generate zip files for download
+  generateZipFiles(examples);
   
   // Generate markdown pages
   generateMarkdownFiles(examples);
