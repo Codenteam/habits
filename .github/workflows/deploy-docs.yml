@@ -56,54 +56,6 @@ jobs:
           cd docs
           pnpm install
 
-      - name: Generate example downloads
-        run: |
-          mkdir -p docs/public/downloads
-          
-          # mixed example → example.zip and mixed.zip
-          cd examples/mixed
-          zip -r example.zip . -x ".env" -x "*.zip"
-          cp example.zip mixed.zip
-          mv example.zip ../../docs/public/downloads/example.zip
-          mv mixed.zip ../../docs/public/downloads/mixed.zip
-          cd ../../
-          
-          # minimal-blog → minimal-blog.zip
-          cd examples/minimal-blog
-          zip -r minimal-blog.zip . -x ".env" -x "*.zip"
-          mv minimal-blog.zip ../../docs/public/downloads/minimal-blog.zip
-          cd ../../
-          
-          # openclaw-clone → openclaw-clone.zip
-          cd examples/openclaw-clone
-          zip -r openclaw-clone.zip . -x ".env" -x "*.zip"
-          mv openclaw-clone.zip ../../docs/public/downloads/openclaw-clone.zip
-          cd ../../
-          
-          # business-intersect-standalone → intersect.zip
-          cd examples/business-intersect-standalone
-          zip -r intersect.zip . -x ".env" -x "*.zip"
-          mv intersect.zip ../../docs/public/downloads/intersect.zip
-          cd ../../
-          
-          # email-classification → email-classification.zip
-          cd examples/email-classification
-          zip -r email-classification.zip . -x ".env" -x "*.zip"
-          mv email-classification.zip ../../docs/public/downloads/email-classification.zip
-          cd ../../
-          
-          # ai-cookbook → ai-cookbook.zip
-          cd examples/ai-cookbook
-          zip -r ai-cookbook.zip . -x ".env" -x "*.zip"
-          mv ai-cookbook.zip ../../docs/public/downloads/ai-cookbook.zip
-          cd ../../
-          
-          # ai-journal → ai-journal.zip
-          cd examples/ai-journal
-          zip -r ai-journal.zip . -x ".env" -x "*.zip"
-          mv ai-journal.zip ../../docs/public/downloads/ai-journal.zip
-          cd ../../
-
           
 
 
