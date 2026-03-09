@@ -27,6 +27,7 @@ import dotenv from 'dotenv';
 import { startHabitsServer, startBaseServer } from './server';
 import { WorkflowExecutor } from '@ha-bits/cortex';
 import { convertWorkflow, convertWorkflowWithConnections, generateEnvContent } from '@ha-bits/core';
+import { defaultModules } from './modules';
 import {
   getSupportedPlatforms,
   runPackCommand as executePackCommand,
@@ -438,20 +439,7 @@ HABITS_ALLOW_SERVE=true
 `;
 
   // Default modules.json content
-  const modulesContent = {
-    modules: [
-      {
-        framework: 'activepieces',
-        source: 'npm',
-        repository: '@ha-bits/piece-intersect'
-      },
-      {
-        framework: 'activepieces',
-        source: 'npm',
-        repository: '@activepieces/piece-openai'
-      }
-    ]
-  };
+  const modulesContent = defaultModules;
 
   // Create .env file
   if (fs.existsSync(envPath) && !argv.force) {

@@ -24,14 +24,24 @@ import * as path from 'path';
 import JSZip from 'jszip';
 import { LoggerFactory } from '@ha-bits/core';
 import { createResponse } from '../helpers';
-import { query } from '@anthropic-ai/claude-agent-sdk';
 
-// The claude-agent-sdk is ESM-only; declare the module for CJS resolution.
-declare module '@anthropic-ai/claude-agent-sdk' {
-  export function query(opts: {
-    prompt: string;
-    options?: { allowedTools?: string[] };
-  }): AsyncIterable<unknown>;
+/**
+ * Lazily import the ESM-only claude-agent-sdk.
+ * Called only when AI generation is actually triggered, so the
+ * server starts normally even when the SDK is not installed.
+ */
+async function loadClaudeAgent(): Promise<
+  (opts: { prompt: string; options?: { allowedTools?: string[] } }) => AsyncIterable<unknown>
+> {
+  try {
+    const mod = await import('@anthropic-ai/claude-agent-sdk');
+    return mod.query;
+  } catch {
+    throw new Error(
+      'Could not load @anthropic-ai/claude-agent-sdk. ' +
+      'Install it with: npm g i @anthropic-ai/claude-agent-sdk',
+    );
+  }
 }
 
 const logger = LoggerFactory.getRoot();
@@ -185,6 +195,8 @@ export class CreatorController {
 
     logger.info('Starting Claude agent execution', { stagingDir });
     sseEvent(res, 'progress', { step: 'Starting AI agent…' });
+
+    const query = await loadClaudeAgent();
 
     for await (const message of query({
       prompt,

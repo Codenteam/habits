@@ -1,0 +1,123 @@
+/**
+ * Default modules list for `habits init` command.
+ * This is the full set of available modules that gets written to modules.json.
+ */
+export const defaultModules = {
+  modules: [
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-intersect'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-if'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-loop'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-openai'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-string'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-httpbin'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-any-of'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-auth'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-cookie'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-crm'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-database'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-discord'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-email'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-filesystem'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-github'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-hello-world'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-http'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-jsonplaceholder'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-slack'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-tasks'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-telegram'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-text'
+    },
+    {
+      framework: 'bits',
+      source: 'npm',
+      repository: '@ha-bits/bit-whatsapp'
+    }
+  ]
+};
