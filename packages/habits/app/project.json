@@ -106,8 +106,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm ncc build dist/packages/habits/app/main.cjs -o dist/packages/habits/pack",
-          "pnpm ncc build dist/packages/base/server/main.cjs -o dist/packages/habits/base-server",
+          "pnpm esbuild dist/packages/habits/app/main.cjs --bundle --platform=node --format=cjs --outfile=dist/packages/habits/pack/index.cjs --external:@activepieces/* --minify --banner:js='#!/usr/bin/env node'",
+          "pnpm esbuild dist/packages/base/server/main.cjs --bundle --platform=node --format=cjs --outfile=dist/packages/habits/base-server/index.cjs --external:@activepieces/* --minify --banner:js='#!/usr/bin/env node'",
           "cp -r dist/packages/cortex/ui dist/packages/habits/cortex-ui",
           "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
           "mkdir -p dist/packages/habits/examples",

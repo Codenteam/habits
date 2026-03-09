@@ -91,7 +91,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm ncc build dist/packages/cortex/server/main.cjs -o dist/packages/cortex/pack"
+          "pnpm esbuild dist/packages/cortex/server/main.cjs --bundle --platform=node --format=cjs --outfile=dist/packages/cortex/pack/index.cjs --external:@activepieces/* --minify --banner:js='#!/usr/bin/env node'"
         ],
         "cwd": "{workspaceRoot}",
         "parallel": false
@@ -131,7 +131,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm ncc build dist/packages/cortex/lib/index.cjs -o dist/packages/cortex/lib-pack"
+          "pnpm esbuild dist/packages/cortex/lib/index.cjs --bundle --platform=node --format=cjs --outfile=dist/packages/cortex/lib-pack/index.cjs --external:@activepieces/* --minify"
         ],
         "cwd": "{workspaceRoot}",
         "parallel": false
