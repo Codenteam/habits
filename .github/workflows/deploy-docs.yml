@@ -138,7 +138,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          npx -y tsx gneerate-showcase.ts
+          npx -y tsx scripts/generate-showcase.ts
           cd docs
           npm run build
       - name: Upload and extract files
