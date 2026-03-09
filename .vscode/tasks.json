@@ -25,7 +25,7 @@
         },
         {
             "label": "dev:all",
-            "dependsOn": ["UI Base", "Server Base", "Server Bits Creator"],
+            "dependsOn": ["UI Base", "Server Base"],
             "group": {
                 "kind": "build",
                 "isDefault": true

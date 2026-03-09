@@ -453,7 +453,7 @@ export class WorkflowExecutor {
       }
 
       // Build dependency arrays
-      const dependencies = this.buildDependencyMap(workflow.nodes, workflow.edges);
+      const dependencies = this.buildDependencyMap(workflow.nodes, workflow?.edges || []);
 
       // Initialize node statuses
       execution.nodeStatuses = workflow.nodes.map(node => ({
@@ -818,7 +818,7 @@ export class WorkflowExecutor {
     });
 
     // Build dependency relationships from edges
-    edges.forEach(edge => {
+    (edges || []).forEach(edge => {
       const sourceDeps = dependencyMap.get(edge.source);
       const targetDeps = dependencyMap.get(edge.target);
 

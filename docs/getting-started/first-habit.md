@@ -6,6 +6,18 @@ This guide walks you through creating a multi-module workflow that generates tex
 Already packed and ready to go! [Download example.zip](/downloads/example.zip) and extract it to get started immediately.
 :::
 
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+
+<!--@include: ./checklists/environment-setup.md{3,}-->
+
+</Checklist>
+
+<Checklist name="hac" title="Code-First Approach (HaC) Checklist" icon="💻">
+
+<!--@include: ./checklists/hac.md{3,}-->
+
+</Checklist>
+
 ## Workflow
 
 The workflow chains three nodes across different modules: an **Activepieces** node for text generation, an **n8n** node for text-to-speech, and a **script** node for saving locally. Each node references the previous node's output via <code v-pre>{{&lt;id&gt;}}</code>.
@@ -41,7 +53,7 @@ npx @ha-bits/cortex@latest server --config ./stack.yaml
 
 - **Swagger API**: Set Env var `HABITS_OPENAPI_ENABLED=true` → access at `http://localhost:3000/api/docs`
 - **Management Portal**: Set Env var `HABITS_MANAGE_ENABLED=true` to enable the built-in workflow management UI
-- **Frontend**: Set `"frontend": "frontend/index.html"` → served at root `/`
+- **Frontend**: Set `"frontend": "frontend"` in the server block in stack.yaml → served at root `/`
 
 ## Swagger API Explorer
 
@@ -60,6 +72,18 @@ Set the `frontend` config option to serve a simple web interface at the root pat
 Enable `HABITS_MANAGE_ENABLED=true` to access the built-in management portal at `/manage`. This UI lets you view registered workflows, monitor execution status, and inspect node configurations without touching the JSON files.
 
 ![Management Portal](/images/cortex.webp)
+
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+
+<!--@include: ./checklists/stack-readiness.md{3,}-->
+
+</Checklist>
+
+<Checklist name="exporting" title="Exporting for Production" icon="📦">
+
+<!--@include: ./checklists/exporting.md{3,}-->
+
+</Checklist>
 
 ## Next Steps
 

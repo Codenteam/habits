@@ -20,8 +20,13 @@
         "platform": "node",
         "format": ["cjs"],
         "bundle": true,
+            "thirdParty": true,
+
         "sourcemap": true,
         "declaration": false,
+        "generatePackageJson": false,
+        "packages": "bundle",
+        "minify": true,
         "assets": [
           {
             "input": "packages/base/server",
@@ -68,7 +73,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "chmod +x dist/packages/base/pack/index.cjs",
+          "chmod +x dist/packages/base/server/main.cjs",
           "cd packages/base && npm version patch --no-git-tag-version",
           "cd dist/packages/base && npm publish"
         ],

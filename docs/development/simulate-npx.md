@@ -15,7 +15,7 @@ pnpm nx pack @ha-bits/cortex-server
 
 # 3. Run from dist folder
 cd dist/packages/base
-node pack/index.cjs
+node server/main.cjs
 ```
 
 ## Npx from local directory 

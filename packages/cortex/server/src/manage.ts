@@ -218,8 +218,7 @@ export class ManageModule {
       } else {
         res.status(503).json({
           error: 'UI not available',
-          message: 'The management UI has not been built. Run `pnpm run build` in packages/cortex/ui to build it.',
-          hint: 'In development, start the UI dev server with `pnpm --filter @ha-bits/cortex-ui dev`',
+          message: 'The management UI is not bundled.',
         });
       }
     });

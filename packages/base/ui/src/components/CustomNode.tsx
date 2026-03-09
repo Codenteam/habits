@@ -241,7 +241,7 @@ export default memo(({ data, selected, id }: NodeProps) => {
   };
 
   return (
-    <div className={`px-4 py-3 shadow-lg shadow-black/30 rounded-lg border-2 ${bgColor} ${borderColor} ${selectedBorder} ${hasScript ? 'min-w-[600px]' : hasLongValues ? 'w-100' : 'w-50'} relative transition-all duration-200`}>
+    <div className={`px-4 py-3 shadow-lg shadow-black/30 rounded-lg border-2 ${bgColor} ${borderColor} ${selectedBorder} ${hasScript ? 'min-w-150' : hasLongValues ? 'w-100' : 'w-75'} relative transition-all duration-200`}>
       {/* Description above the node */}
       {(isEditingDescription || data.description) && (
         <div 

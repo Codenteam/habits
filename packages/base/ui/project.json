@@ -15,7 +15,8 @@
       ],
       "options": {
         "outputPath": "dist/packages/base/ui",
-        "root": "packages/base/ui"
+        "root": "packages/base/ui",
+        "minify": true
       },
       "dependsOn": [
         "@ha-bits/workflow-canvas:build",

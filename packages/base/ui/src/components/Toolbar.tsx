@@ -188,11 +188,11 @@ export default function Toolbar() {
           position: node.position,
           data: node.data,
         })),
-        edges: habit.edges.map((edge: any) => ({
+        edges: habit.edges?.map((edge: any) => ({
           id: edge.id,
           source: edge.source,
           target: edge.target,
-        })),
+        })) || [],
         version: '1.0'
       };
       

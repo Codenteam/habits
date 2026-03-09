@@ -118,7 +118,7 @@ Cortex consists of several components that work together to execute and manage h
 
 | Component | Path | Description |
 |-----------|------|-------------|
-| **Web UI** | `/cortex` | Visual interface for managing and monitoring habits |
+| **Web UI** | `/manage` | Visual interface for managing and monitoring habits |
 | **API** | `/api` | RESTful API for programmatic access |
 | **Swagger Docs** | `/api/docs` | Interactive API documentation |
 
