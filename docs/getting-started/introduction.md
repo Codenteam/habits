@@ -1,95 +1,72 @@
 # Introduction
 
-Habits is a **lightweight automation creator, runtime and packer**. It's designed for environments where full platforms are overkill: serverless functions, edge computing, embedded systems, or when you want to bundle automation into your own SaaS product and serve it as a full-stack application. Allowing you to create, run and pack-to-distribute Agents, Automations, Full-Stacks, SaaS and Micro-Apps.
+Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**) — all under Apache 2.0.
 
-With Apache 2.0 licensing, Habits combined with open-source nodes gives you a completely open-source workflow runner.
+## What Can You Build?
 
-## What is Habits?
-
-At its core, Habits is an execution engine inspired by how the human brain forms habits. Just as your brain automates repeated behaviors through the **Habit Loop** (Cue → Routine → Reward), Habits automates your workflows through a similar pattern:
-
-| Concept | Role | Description |
-|---------|------|-------------|
-| **Habit** | Workflow | A complete automation logic composed of connected nodes |
-| **Stack** | Workflow Set | A collection of habits executed together |
-| **Bit** | Node | A single step: a bit, an ActivePieces piece, n8n node, or a script |
-| **Base** | Builder | Visual workflow designer for constructing habits |
-| **Cortex** | Executor | The orchestration engine that runs everything |
-
-## Why Choose Habits?
-
-### 🔀 Multi-Framework Support
-Combine the best of each ecosystem in a single workflow. Use an ActivePieces piece for OpenAI, an n8n node for text processing, and a script for custom logic. All chained together seamlessly.
-
-### 📜 True Open Source (Apache 2.0)
-Habits is fully Apache 2.0 licensed. This means you can:
-- Embed it in commercial products
-- Distribute to customers without restrictions
-- Modify without source-available obligations
-- Ship automation as a product feature
-
-### 🚀 Flexible Execution
-Run workflows your way:
-- **CLI**: Perfect for CI/CD pipelines, cron jobs, and scripts
-- **REST API**: Trigger workflows via HTTP endpoints with auto-generated Swagger docs
-- **Frontend**: Put your automation behind an automatically generated Frontend or build your own.
-- **Cortex Management UI**: Built-in management portal for monitoring and control
+| Category | Examples |
+|----------|----------|
+| **AI/ML** | AI assistants, image analyzers, voice generators, quiz creators |
+| **Business** | Invoice generators, competitor analysis, real estate tools |
+| **Communication** | Email classifiers, newsletter generators, social media managers |
+| **Development** | Code reviewers, bug reporters, documentation generators |
+| **Productivity** | Meeting summarizers, research assistants, resume analyzers |
 
 
-### 📦 Dynamic Module Loading
-Install and use modules from npm, GitHub, or local sources on-the-fly. No rebuilding required.
+## Core Components
 
-## Architecture Overview
+| Component | Role | Description |
+|-----------|------|-------------|
+| **Stack** | Workflow Set | Multiple habits running together |
+| **Habit** | Workflow | A YAML file defining connected nodes |
+| **Bit** | Node | A single step: Habits bit, ActivePieces piece, n8n node, or script |
+| **Base** | Builder | Visual editor for creating habits |
+| **Cortex** | Executor | Runtime that executes workflows |
 
-Habits is composed of two main components:
+::: tip Naming Origin
+The naming draws from neuroscience, the brain's **cortex** orchestrates behavior while **basal ganglia** forms habits.
+:::
 
-- **Cortex**: The execution engine that runs your habits via CLI or REST API
-- **Base**: The experimental visual builder for designing workflows through drag-and-drop
+## How It Works
 
-<!--@include: ../diagrams/components.md-->
+## Visual Overview
 
-## Habits vs Other Platforms
+|            | **Base** (Visual Builder)         | **Cortex** (Execution Engine)      |
+|------------|-----------------------------------|------------------------------------|
+| **Purpose**| Drag-and-drop workflow creation   | Executes workflows (habits)        |
+| **Features** | - Visual editor<br>- Export to YAML<br>- Frontend builder<br>- Template library | - CLI execution<br>- REST API server<br>- Multi-framework support<br>- Dynamic module loading |
 
-| Aspect | Habits | n8n / ActivePieces |
-|--------|--------|--------------------|
-| **Purpose** | Create, run and pack automations | Centeralized automation platforms |
-| **Deployment** | Serverless, edge, embedded, anywhere | Self-hosted or cloud |
-| **UI** | Optional (Base is experimental) | Full visual builder |
-| **Footprint** | Minimal | Full application stack |
-| **Use Case** | Embed automation in your app | Standalone automation |
-| **Frontend Bundling** | Built-in SaaS builder | Separate concern |
+- **Base**: Design and prototype workflows visually, then export to YAML for version control or CI/CD.
+- **Cortex**: Run workflows via CLI or REST API, supporting multiple frameworks and dynamic module loading.
 
-### Native Execution Mode
+**Ways to create habits:**
+1. **Visual Builder**: Use Base UI to drag-and-drop nodes
+2. **Code-first**: Write YAML directly for version control and CI/CD
+3. **AI**: As the AI to directly create you the habit.
 
-Habits runs n8n or ActivePieces modules using their actual runtime dependencies, providing maximum compatibility when exact behavior matching is required.
+**Ways to run:**
+- **REST API**: Start a server and trigger via HTTP/Frontend
+- **CLI**: `habits execute --config ./stack.yaml`
 
-## License Considerations
+## Key Features
 
-When mixing modules, the **most restrictive license applies**:
+- **Multi-Framework Support** — Combine ActivePieces pieces, n8n nodes, custom bits, and scripts in one workflow
+- **Apache 2.0 License** — Embed in commercial products, distribute without restrictions
+- **Flexible Execution** — Run via CLI, REST API, or with an auto-generated frontend
+- **Dynamic Module Loading** — Install modules from npm, GitHub, or local sources on-the-fly
+- **Lightweight** — Minimal footprint for serverless, edge, and embedded deployments
+- **Security** — Built-in DLP, PII protection, supply chain integrity, and sandboxing
 
-| Module Source | License | Safe to Distribute? |
-|--------------|---------|---------------------|
-| Habits core | Apache 2.0 | ✅ Yes |
-| ActivePieces pieces | MIT | ✅ Yes |
-| Community n8n nodes | Usually MIT | ✅ Check each |
-| n8n-nodes-base | Sustainable Use | ❌ No |
+<Checklist name="documentation-reading" title="Documentation Reading Order Checklist" icon="📚">
 
-Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
+<!--@include: ./checklists/documentation-reading.md{3,}-->
 
-## What's in This Documentation
+</Checklist>
 
-| Section | What You'll Learn |
-|---------|-------------------|
-| **Getting Started** | Build your first habit, understand when to use Habits, and learn core concepts |
-| **Deep Dive** | Create workflows with Base, run them with Cortex, and master the habit schema |
-| **Extra Reading** | Explore the neuroscience inspiration and licensing details |
-| **Roadmap** | Discover upcoming features like self-improving habits and bits |
 
 ## Next Steps
 
-Ready to build? Start with these guides:
-
-- [Build Your First Habit](/getting-started/first-habit): Create a working workflow in 5 minutes
-- [When to Use Habits](/getting-started/when-to-use): Understand the ideal use cases
-- [Concepts](/getting-started/concepts): Deep dive into the core architecture
-- [Running Automations](/deep-dive/running): Master CLI and API execution
+- [Core Concepts](/getting-started/concepts) — Deep dive into terminology
+- [Build Your First Habit](/getting-started/first-habit) — Hands-on tutorial
+- [When to Use Habits](/getting-started/when-to-use) — Check if it fits your use case
+- [Why Habits?](/getting-started/motivation) — Detailed rationale and comparison

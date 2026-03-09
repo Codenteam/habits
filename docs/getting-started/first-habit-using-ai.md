@@ -6,9 +6,31 @@ This guide walks you through creating your first habit using the **AI Generator*
 The AI generator creates fully functional habits, including workflow logic, node configuration, and frontend UI, from a single text prompt. Perfect for getting started quickly or prototyping ideas!
 :::
 
-::: warning Beta Feature
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+
+<!--@include: ./checklists/environment-setup.md{3,}-->
+
+</Checklist>
+
+
+::: warning Clone the Repository for AI Generation
+The AI generator requires access to **reference materials** (existing bits and example habits) to generate quality output. These are **not included** when you install Habits via `npx habits@latest` or npm.
+
+**Otherwise you might see similar error:**
+> AI generation requires reference materials that are not present: nodes/bits/@ha-bits (bit modules), examples (reference habits).
+
+**You need to clone the full repository:**
+
+```bash
+git clone https://github.com/codenteam/habits.git
+cd habits
+pnpm install
+```
+:::
+
+::: tip Beta Feature
 ~~AI generation is currently in **Beta** and is available with **Intersect Cloud** or **Intersect Self-hosted** only.~~  
-AI generation is now available to everyone!
+🎊 🎊 AI generation is now available to everyone! 🎉🎉
 :::
 
 ## Environment Variables
@@ -48,6 +70,17 @@ On **Intersect Cloud** and **Intersect Self-hosted**, these variables are config
 
 - Habits Base UI running (see [Setup Base Locally](./first-habit-using-base.md#setup-base-locally))
 - The environment variables above configured (at minimum `HABITS_AI_GEN=true` and `CLAUDE_API_KEY`)
+
+Then run the server from the cloned repository:
+
+```bash
+HABITS_AI_GEN=true \
+CLAUDE_API_KEY=sk-ant-… \
+pnpm nx dev @ha-bits/base
+```
+
+The AI uses the `nodes/bits/@ha-bits/` directory (bit modules) and `examples/` directory (reference habits) to understand how to build new habits properly.
+:::
 
 ## Step 1: Open the Generate Modal
 
@@ -149,6 +182,18 @@ The generated bit files will be created and ready for use in your workflows.
 
 ~~AI generation requires Intersect Cloud or Intersect Self-hosted~~  
 - Make sure the required environment variables are set correctly (`HABITS_AI_GEN=true` and a valid `CLAUDE_API_KEY`). Without these, the "Generate with AI" button will not appear. See the [Environment Variables](#environment-variables) section above for details.
+
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+
+<!--@include: ./checklists/stack-readiness.md{3,}-->
+
+</Checklist>
+
+<Checklist name="exporting" title="Exporting for Production" icon="📦">
+
+<!--@include: ./checklists/exporting.md{3,}-->
+
+</Checklist>
 
 ## Next Steps
 

@@ -5,7 +5,8 @@ import {
   ArrowUpFromLineIcon,
   FolderOpen,
   AlertTriangle,
-  SquareArrowRightExitIcon
+  SquareArrowRightExitIcon,
+  Pencil
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { 
@@ -413,6 +414,23 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                           Please give the habit a descriptive name representing what it does
                         </div>
                       </div>
+                    )}
+
+                    {/* Rename button */}
+                    {editingId !== habit.id && (
+                      <button
+                        onClick={(e) => handleStartEdit(e, habit.id, habit.name)}
+                        className={`
+                          p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity
+                          ${habit.id === activeHabitId 
+                            ? 'hover:bg-blue-500 text-blue-200' 
+                            : 'hover:bg-slate-600 text-slate-400'
+                          }
+                        `}
+                        title="Rename habit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                     )}
 
                     {/* Outputs button - only show for active habit */}

@@ -44,6 +44,47 @@
     },
     "typecheck": {
       "cache": true
+    },
+    "pack-cjs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm esbuild {args.input} --bundle --platform=node --format=cjs --outfile={args.output} --external:@activepieces/* --minify{args.banner}"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false,
+        "banner": " --banner:js='#!/usr/bin/env node'"
+      },
+      "dependsOn": [
+        "build"
+      ],
+      "cache": true
+    },
+    "pack-esm": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm esbuild {args.input} --bundle --platform=node --format=esm --outfile={args.output} --external:@activepieces/* --minify"
+        ],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "build"
+      ],
+      "cache": true
+    },
+    "pack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["echo 'Pack completed'"],
+        "cwd": "{workspaceRoot}",
+        "parallel": false
+      },
+      "dependsOn": [
+        "pack-esm"
+      ],
+      "cache": false
     }
   },
   "defaultBase": "main"

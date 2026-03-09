@@ -62,11 +62,6 @@ export const defaultModules = {
     {
       framework: 'bits',
       source: 'npm',
-      repository: '@ha-bits/bit-discord'
-    },
-    {
-      framework: 'bits',
-      source: 'npm',
       repository: '@ha-bits/bit-email'
     },
     {

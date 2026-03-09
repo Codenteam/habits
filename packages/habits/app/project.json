@@ -24,6 +24,7 @@
         "bundle": true,
         "sourcemap": true,
         "declaration": false,
+        "minify": true,
         "assets": [
           {
             "input": "packages/habits/app",
@@ -106,8 +107,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm ncc build dist/packages/habits/app/main.cjs -o dist/packages/habits/pack",
-          "pnpm ncc build dist/packages/base/server/main.cjs -o dist/packages/habits/base-server",
+          "mkdir -p dist/packages/habits/base-server",
+          "cp dist/packages/base/server/main.cjs dist/packages/habits/base-server/main.cjs",
+          "rm -rf dist/packages/habits/cortex-ui dist/packages/habits/base-ui dist/packages/habits/examples",
           "cp -r dist/packages/cortex/ui dist/packages/habits/cortex-ui",
           "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
           "mkdir -p dist/packages/habits/examples",
@@ -115,7 +117,7 @@
           "cp -r examples/business-intersect-standalone dist/packages/habits/examples/business-intersect-standalone",
           "find dist/packages/habits/examples -name '.env' -type f -delete",
           "cp packages/habits/app/.npmignore dist/packages/habits/.npmignore",
-          "chmod +x dist/packages/habits/app/main.cjs dist/packages/habits/pack/index.cjs"
+          "chmod +x dist/packages/habits/app/main.cjs dist/packages/habits/base-server/main.cjs"
         ],
         "cwd": "{workspaceRoot}",
         "parallel": false
@@ -128,7 +130,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "chmod +x dist/packages/habits/pack/index.cjs",
+          "chmod +x dist/packages/habits/app/main.cjs",
           "cd packages/habits && npm version patch --no-git-tag-version",
           "nx pack habits",
           "cd dist/packages/habits && npm publish --access public"

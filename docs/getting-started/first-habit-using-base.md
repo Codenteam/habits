@@ -6,6 +6,12 @@ This guide walks you through creating your first habit using the **Base UI** - a
 Base mode provides a visual interface for creating habits (Both Logic and UI) without writing code. Perfect for rapid prototyping and users who prefer GUI tools!
 :::
 
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+
+<!--@include: ./checklists/environment-setup.md{3,}-->
+
+</Checklist>
+
 ## Video Tutorial
 
 <ClientOnly>
@@ -59,38 +65,39 @@ yarn global add habits
 Then run:
 
 ```bash
+# If you haven't initialized base bafore, run:
+habits init
+
+# Start serving the base:
 habits base
 ```
 
+<Checklist name="prepare-base" title="Prepare Base Directory Checklist" icon="🚀">
+
+<!--@include: ./checklists/prepare-base.md{3,}-->
+
+</Checklist>
 
 
 ## Creating Your First Habit
 
 Once Base is running, you'll see the main interface with several tabs. Let's create a simple calorie calculator habit.
 
-### Step 1: Install Required Modules
 
-1. Show the **Nodes Palette** if hidden.
-2. Show bits if disabled.
-3. Click OpenAI to add it.
-4. Click Databae to add it
 
-::: note 🧩 Missing a module?
-If you don't see a required bit, piece, or node in the palette, use the **Add Module** button to install it. This lets you quickly add missing modules directly from the UI before using them in your workflow.
-:::
-
-### Step 2: Create a New Habit
+### Step 1: Create a New Habit
 
 1. Go to the **Habits** tab
 2. Click **+ New Habit** button
-3. Name the habit details `Calculate Calories in Images`
+3. Name the habit `Calculate Calories in Images`
 4. Optionally, you can set the description to `Analyze food images and estimates calorie content`
+5. Set the Stack Name to the project name, like `Calories Manager`
 
-### Step 3: Add Nodes to the Workflow
+### Step 2: Add Nodes to the Workflow
 
 #### Add OpenAI Vision Node
 
-1. In the habit editor, active **Bits** as the node type if not active
+1. In the Node Palette, activate **Bits** as the node type if not active
 3. Choose `@ha-bits/bit-openai` from the module dropdown
 4. Select `Vision Prompt` as the operation
 5. Configure the node:
@@ -101,6 +108,10 @@ If you don't see a required bit, piece, or node in the palette, use the **Add Mo
      - **prompt**: `You are a knowledgable nutritionist who can guess the amounts of ingredients in the picture in oz, bowls, plates, pieces or in weight. Then know the calories, if you don't know something try to guess it as close as possible. Don't say I don't know.`
    - **Credentials**:
      - **apiKey**:  <code v-pre>{{habits.env.OPENAI_API_KEY}}</code>
+
+
+🧩 Missing a module?
+If you don't see a required bit, piece, or node in the palette, use the **Add Module** button to install it. This lets you quickly add missing modules directly from the UI before using them in your workflow.
 
 #### Add Database Storage Node
 
@@ -113,20 +124,20 @@ If you don't see a required bit, piece, or node in the palette, use the **Add Mo
    - **Label**: `Store Analysis`
    - **Params**:
      - **collection**: `calories-diary`
-     - **document**: `{{analysis}}`
+     - **document**: <code v-pre>{{analysis}}</code>
 
-### Step 4: Connect the Nodes
+### Step 3: Connect the Nodes
 
 1. Click and drag from the **output port** of the `analysis` node
 2. Connect it to the **input port** of the `store-analysis` node
 3. The edge will be created automatically
 
-### Step 5: Define Habit Output
+### Step 4: Define Habit Output
 
 1. Click the small output icon in the habit panel.
 2. Add an output field:
    - **Key**: `analysis`
-   - **Value**: `{{analysis}}`
+   - **Value**: <code v-pre>{{analysis}}</code>
 
 
 ## Generate UI
@@ -174,6 +185,12 @@ Want to see what you built? Click the **< > Code** button in the habit editor to
 
 :::
 
+
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+
+<!--@include: ./checklists/stack-readiness.md{3,}-->
+
+</Checklist>
 
 ## Exporting Your Habit
 
@@ -224,6 +241,12 @@ habits-bundle.exe
 4. Configure backend URL
 5. Click **Export**
 6. Download APK (Android) or IPA (iOS)
+
+<Checklist name="exporting" title="Exporting for Production Checklist" icon="📦">
+
+<!--@include: ./checklists/exporting.md{3,}-->
+
+</Checklist>
 
 ## Next Steps
 
@@ -293,7 +316,6 @@ If changes aren't reflected:
 ## Getting Help
 
 - **[Examples Directory](../examples/)** - Working example stacks
-- **[Checklists](./checklists.md)** - Step-by-step checklists for common tasks
 
 ---
 

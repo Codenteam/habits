@@ -73,7 +73,6 @@ export default defineConfig({
           { text: 'Build Your First Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
-          { text: 'Checklists', link: '/getting-started/checklists' },
         ]
       },
             {

@@ -19,8 +19,8 @@ export function getTmpDir(): string {
 export function findBaseServerPath(): string | undefined {
   const possiblePaths = [
     // When running from pack/npx (bundled base-server)
-    path.resolve(__dirname, '../base-server/index.cjs'),
-    path.resolve(__dirname, '../../base-server/index.cjs'),
+    path.resolve(__dirname, '../base-server/main.cjs'),
+    path.resolve(__dirname, '../../base-server/main.cjs'),
     // When running with tsx in dev
     path.join(process.cwd(), 'packages/base/server/src/main.ts'),
     // When running from dist (cjs extension)

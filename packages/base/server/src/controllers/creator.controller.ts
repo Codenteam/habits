@@ -24,25 +24,26 @@ import * as path from 'path';
 import JSZip from 'jszip';
 import { LoggerFactory } from '@ha-bits/core';
 import { createResponse } from '../helpers';
+import {query } from '@anthropic-ai/claude-agent-sdk';
 
 /**
  * Lazily import the ESM-only claude-agent-sdk.
  * Called only when AI generation is actually triggered, so the
  * server starts normally even when the SDK is not installed.
  */
-async function loadClaudeAgent(): Promise<
-  (opts: { prompt: string; options?: { allowedTools?: string[] } }) => AsyncIterable<unknown>
-> {
-  try {
-    const mod = await import('@anthropic-ai/claude-agent-sdk');
-    return mod.query;
-  } catch {
-    throw new Error(
-      'Could not load @anthropic-ai/claude-agent-sdk. ' +
-      'Install it with: npm g i @anthropic-ai/claude-agent-sdk',
-    );
-  }
-}
+// async function loadClaudeAgent(): Promise<
+//   (opts: { prompt: string; options?: { allowedTools?: string[] } }) => AsyncIterable<unknown>
+// > {
+//   try {
+//     const mod = await import('@anthropic-ai/claude-agent-sdk');
+//     return mod.query;
+//   } catch {
+//     throw new Error(
+//       'Could not load @anthropic-ai/claude-agent-sdk. ' +
+//       'Install it with: npm g i @anthropic-ai/claude-agent-sdk',
+//     );
+//   }
+// }
 
 const logger = LoggerFactory.getRoot();
 
@@ -173,6 +174,43 @@ export class CreatorController {
     return false;
   }
 
+  /**
+   * Guard that checks if bits and examples directories exist.
+   * These are required for the AI to learn from and generate quality output.
+   */
+  private guardMissingReferences(res: Response): boolean {
+    const root = resolveWorkspaceRoot();
+    const bitsDir = path.join(root, 'nodes', 'bits', '@ha-bits');
+    const examplesDir = path.join(root, 'examples');
+
+    const missingBits = !fs.existsSync(bitsDir);
+    const missingExamples = !fs.existsSync(examplesDir);
+
+    if (missingBits || missingExamples) {
+      const missing: string[] = [];
+      if (missingBits) missing.push('nodes/bits/@ha-bits (bit modules)');
+      if (missingExamples) missing.push('examples (reference habits)');
+
+      const message = [
+        `AI generation requires reference materials that are not present: ${missing.join(', ')}.`,
+        '',
+        'The AI needs access to existing bits and example habits to generate quality output.',
+        '',
+        'To fix this, clone the full habits repository instead of using npx/npm:',
+        '',
+        '  git clone https://github.com/codenteam/habits.git',
+        '  cd habits',
+        '  pnpm install',
+        '',
+        'Then run the server from the cloned repository.',
+      ].join('\n');
+
+      res.status(400).json(createResponse(false, undefined, message));
+      return true;
+    }
+    return false;
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────
 
   private createStagingDir(): string {
@@ -196,7 +234,7 @@ export class CreatorController {
     logger.info('Starting Claude agent execution', { stagingDir });
     sseEvent(res, 'progress', { step: 'Starting AI agent…' });
 
-    const query = await loadClaudeAgent();
+    // const query = await loadClaudeAgent();
 
     for await (const message of query({
       prompt,
@@ -271,6 +309,7 @@ export class CreatorController {
    */
   createHabit = async (req: Request, res: Response): Promise<void> => {
     if (this.guardDisabled(res)) return;
+    if (this.guardMissingReferences(res)) return;
 
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
@@ -304,6 +343,7 @@ export class CreatorController {
         `• The output MUST include a stack.yaml and one or more habit YAML files.`,
         `• Create a frontend/index.html if the habit benefits from a UI.`,
         `• Do NOT create, modify, or delete any files outside ${stagingDir}.`,
+        `Make sure to add edges to all habits, empty if needed. `,
         ``,
         `== HOW A BIT NODE LOOKS IN A HABIT (COPY THIS PATTERN) ==`,
         ``,
@@ -403,6 +443,7 @@ export class CreatorController {
    */
   createBit = async (req: Request, res: Response): Promise<void> => {
     if (this.guardDisabled(res)) return;
+    if (this.guardMissingReferences(res)) return;
 
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {

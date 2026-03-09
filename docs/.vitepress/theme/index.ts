@@ -6,6 +6,7 @@ import HabitViewer from './components/HabitViewer.vue'
 import ExampleRunner from './components/ExampleRunner.vue'
 import DownloadExample from './components/DownloadExample.vue'
 import ScreenshotGallery from './components/ScreenshotGallery.vue'
+import Checklist from './components/Checklist.vue'
 import './custom.css'
 import './d2-custom.css'
 
@@ -18,6 +19,7 @@ export default {
     app.component('ExampleRunner', ExampleRunner)
     app.component('DownloadExample', DownloadExample)
     app.component('ScreenshotGallery', ScreenshotGallery)
+    app.component('Checklist', Checklist)
     enhanceAppWithTabs(app)
   }
 }

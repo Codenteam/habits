@@ -2,13 +2,12 @@
   "name": "habits",
   "version": "0.1.13",
   "description": "Habits - Unified automation workflow platform combining Cortex executor and Base builder",
-  "main": "pack/index.cjs",
-  "types": "pack/index.d.ts",
+  "main": "app/main.cjs",
+  "types": "app/main.d.ts",
   "bin": {
-    "habits": "pack/index.cjs"
+    "habits": "app/main.cjs"
   },
   "files": [
-    "pack",
     "app",
     "base-server",
     "base-ui",
