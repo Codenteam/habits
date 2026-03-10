@@ -30,7 +30,7 @@ export { intersectAuth, openaiAuth };
 
 export const intersect = createBit({
   displayName: 'Intersect',
-  description: 'Use Intersect AI tools including ChatGPT, image generation, and canvas features.',
+  description: 'Use Intersect AI tools including ChatGPT, Gemini, Claude for text generaiton, image generation, Website Generation, Document drafts generations, Vector designs and more.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'lucide:Sparkles',
   categories: [],

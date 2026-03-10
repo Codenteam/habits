@@ -1,0 +1,497 @@
+[
+  {
+    "slug": "bit-agent",
+    "packageName": "@ha-bits/bit-agent",
+    "name": "Agent",
+    "displayName": "Agent",
+    "description": "AI Agent with LangChain and MCP integration. Connect to multiple MCP servers to give your agent access to tools like Google Drive, Slack, GitHub, Notion, Figma, and more.",
+    "version": "0.1.0",
+    "categories": [
+      "agent",
+      "langchain",
+      "mcp",
+      "model-context-protocol",
+      "ai"
+    ],
+    "featured": true,
+    "icon": "Bot",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-database",
+    "packageName": "@ha-bits/bit-database",
+    "name": "Database",
+    "displayName": "Database / Storage (Memory)",
+    "description": "Database/storage bit for persisting data in workflows",
+    "version": "1.0.0",
+    "categories": [
+      "database",
+      "storage",
+      "persist"
+    ],
+    "featured": true,
+    "icon": "Database",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 4
+  },
+  {
+    "slug": "bit-email",
+    "packageName": "@ha-bits/bit-email",
+    "name": "Email",
+    "displayName": "Email (IMAP/SMTP)",
+    "description": "Email integration bit for IMAP fetching and SMTP sending",
+    "version": "1.0.2",
+    "categories": [
+      "email",
+      "imap",
+      "smtp",
+      "mail"
+    ],
+    "featured": true,
+    "icon": "Mail",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 3
+  },
+  {
+    "slug": "bit-if",
+    "packageName": "@ha-bits/bit-if",
+    "name": "If",
+    "displayName": "If / Branch",
+    "description": "Conditional logic bit for branching workflows with if/else and switch statements",
+    "version": "1.0.0",
+    "categories": [
+      "if",
+      "condition",
+      "conditional",
+      "branch",
+      "switch"
+    ],
+    "featured": true,
+    "icon": "GitBranch",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 2
+  },
+  {
+    "slug": "bit-intersect",
+    "packageName": "@ha-bits/bit-intersect",
+    "name": "Intersect",
+    "displayName": "Intersect",
+    "description": "Use Intersect AI tools including ChatGPT, Gemini, Claude for text generaiton, image generation, Website Generation, Document drafts generations, Vector designs and more.",
+    "version": "0.1.13",
+    "categories": [
+      "intersect",
+      "openai",
+      "ai"
+    ],
+    "featured": true,
+    "icon": "Sparkles",
+    "actionCount": 11,
+    "triggerCount": 0,
+    "showcaseCount": 4
+  },
+  {
+    "slug": "bit-openai",
+    "packageName": "@ha-bits/bit-openai",
+    "name": "Openai",
+    "displayName": "openai",
+    "description": "Use openai AI tools including ChatGPT, image generation, and canvas features.",
+    "version": "0.1.10",
+    "categories": [
+      "openai",
+      "openai",
+      "ai"
+    ],
+    "featured": true,
+    "icon": "Sparkles",
+    "actionCount": 8,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-any-of",
+    "packageName": "@ha-bits/bit-any-of",
+    "name": "Any Of",
+    "displayName": "Any Of (Race)",
+    "description": "Any-of flow control bit - continues when any one incoming edge completes without waiting for others",
+    "version": "1.0.0",
+    "categories": [
+      "any-of",
+      "race",
+      "flow-control",
+      "first-to-finish",
+      "parallel"
+    ],
+    "featured": false,
+    "icon": "GitBranch",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-auth",
+    "packageName": "@ha-bits/bit-auth",
+    "name": "Auth",
+    "displayName": "Authentication",
+    "description": "Authentication bit with JWT sign, verify, and decode operations",
+    "version": "1.0.0",
+    "categories": [
+      "auth",
+      "jwt",
+      "authentication"
+    ],
+    "featured": false,
+    "icon": "Shield",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-cookie",
+    "packageName": "@ha-bits/bit-cookie",
+    "name": "Cookie",
+    "displayName": "Cookie",
+    "description": "Cookie management bit for setting and reading cookies in HTTP workflows",
+    "version": "1.0.0",
+    "categories": [
+      "cookie",
+      "http",
+      "session"
+    ],
+    "featured": false,
+    "icon": "Cookie",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-crm",
+    "packageName": "@ha-bits/bit-crm",
+    "name": "Crm",
+    "displayName": "CRM",
+    "description": "CRM integration bit for lead and contact management",
+    "version": "1.0.0",
+    "categories": [
+      "crm",
+      "leads",
+      "contacts",
+      "sales"
+    ],
+    "featured": false,
+    "icon": "Users",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-database-mongodb",
+    "packageName": "@ha-bits/bit-database-mongodb",
+    "name": "Database Mongodb",
+    "displayName": "Database / Storage (MongoDB)",
+    "description": "MongoDB database storage bit - replaces @ha-bits/bit-database",
+    "version": "1.0.0",
+    "categories": [
+      "database",
+      "storage",
+      "mongodb"
+    ],
+    "featured": false,
+    "icon": "Database",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-database-mysql",
+    "packageName": "@ha-bits/bit-database-mysql",
+    "name": "Database Mysql",
+    "displayName": "Database / Storage (MySQL)",
+    "description": "MySQL database storage bit - replaces @ha-bits/bit-database",
+    "version": "1.0.0",
+    "categories": [
+      "database",
+      "storage",
+      "mysql"
+    ],
+    "featured": false,
+    "icon": "Database",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-discord",
+    "packageName": "@ha-bits/bit-discord",
+    "name": "Discord",
+    "displayName": "Discord",
+    "description": "Discord Bot integration bit for sending messages and notifications",
+    "version": "1.0.0",
+    "categories": [
+      "discord",
+      "bot",
+      "messaging",
+      "notifications"
+    ],
+    "featured": false,
+    "icon": "MessageCircle",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-filesystem",
+    "packageName": "@ha-bits/bit-filesystem",
+    "name": "Filesystem",
+    "displayName": "Filesystem",
+    "description": "Filesystem operations bit for reading, writing, and managing files",
+    "version": "1.0.0",
+    "categories": [
+      "filesystem",
+      "files",
+      "io",
+      "storage"
+    ],
+    "featured": false,
+    "icon": "FolderOpen",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-github",
+    "packageName": "@ha-bits/bit-github",
+    "name": "Github",
+    "displayName": "GitHub",
+    "description": "GitHub integration bit for managing pull requests, issues, and repositories",
+    "version": "1.0.0",
+    "categories": [
+      "github",
+      "pull-requests",
+      "issues",
+      "repositories"
+    ],
+    "featured": false,
+    "icon": "Github",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-hello-world",
+    "packageName": "@ha-bits/bit-hello-world",
+    "name": "Hello World",
+    "displayName": "Hello World",
+    "description": "A simple hello world bit for demonstration and testing",
+    "version": "1.0.0",
+    "categories": [
+      "hello-world",
+      "demo"
+    ],
+    "featured": false,
+    "icon": "Hand",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-http",
+    "packageName": "@ha-bits/bit-http",
+    "name": "Http",
+    "displayName": "HTTP Request",
+    "description": "HTTP request bit for making web API calls",
+    "version": "1.0.1",
+    "categories": [
+      "http",
+      "api",
+      "fetch",
+      "request"
+    ],
+    "featured": false,
+    "icon": "Globe",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-httpbin",
+    "packageName": "@ha-bits/bit-httpbin",
+    "name": "Httpbin",
+    "displayName": "HTTPBin",
+    "description": "Declarative bit for HTTPBin API - testing HTTP requests",
+    "version": "1.0.0",
+    "categories": [
+      "httpbin",
+      "declarative",
+      "api"
+    ],
+    "featured": false,
+    "icon": "Server",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-jsonplaceholder",
+    "packageName": "@ha-bits/bit-jsonplaceholder",
+    "name": "Jsonplaceholder",
+    "displayName": "JSONPlaceholder",
+    "description": "JSONPlaceholder API declarative bit for testing",
+    "version": "0.1.0",
+    "categories": [],
+    "featured": false,
+    "icon": "Package",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-loop",
+    "packageName": "@ha-bits/bit-loop",
+    "name": "Loop",
+    "displayName": "Loop / Split",
+    "description": "Loop and split bit for iterating, filtering, mapping, and aggregating data in workflows",
+    "version": "1.0.0",
+    "categories": [
+      "loop",
+      "split",
+      "iterate",
+      "filter",
+      "map"
+    ],
+    "featured": false,
+    "icon": "Repeat",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-shell",
+    "packageName": "@ha-bits/bit-shell",
+    "name": "Shell",
+    "displayName": "Shell",
+    "description": "Shell command execution bit for running system commands",
+    "version": "1.0.0",
+    "categories": [
+      "shell",
+      "exec",
+      "command",
+      "terminal"
+    ],
+    "featured": false,
+    "icon": "Terminal",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-slack",
+    "packageName": "@ha-bits/bit-slack",
+    "name": "Slack",
+    "displayName": "Slack",
+    "description": "Slack integration bit for sending messages and notifications",
+    "version": "1.0.0",
+    "categories": [
+      "slack",
+      "messaging",
+      "notifications"
+    ],
+    "featured": false,
+    "icon": "MessageSquare",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1
+  },
+  {
+    "slug": "bit-string",
+    "packageName": "@ha-bits/bit-string",
+    "name": "String",
+    "displayName": "String Utils",
+    "description": "Simple string manipulation bit",
+    "version": "0.1.0",
+    "categories": [],
+    "featured": false,
+    "icon": "Package",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-tasks",
+    "packageName": "@ha-bits/bit-tasks",
+    "name": "Tasks",
+    "displayName": "Tasks / Tickets",
+    "description": "Task management bit for Jira, Asana, and generic ticket systems",
+    "version": "1.0.0",
+    "categories": [
+      "tasks",
+      "jira",
+      "asana",
+      "tickets"
+    ],
+    "featured": false,
+    "icon": "Package",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-telegram",
+    "packageName": "@ha-bits/bit-telegram",
+    "name": "Telegram",
+    "displayName": "Telegram",
+    "description": "Telegram Bot integration bit for sending messages and notifications",
+    "version": "1.0.1",
+    "categories": [
+      "telegram",
+      "bot",
+      "messaging",
+      "notifications"
+    ],
+    "featured": false,
+    "icon": "Send",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 2
+  },
+  {
+    "slug": "bit-text",
+    "packageName": "@ha-bits/bit-text",
+    "name": "Text",
+    "displayName": "Text Processing",
+    "description": "Text processing bit for diff, cleanup, extraction, and formatting",
+    "version": "1.0.0",
+    "categories": [
+      "text",
+      "diff",
+      "cleanup",
+      "extract"
+    ],
+    "featured": false,
+    "icon": "Type",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0
+  },
+  {
+    "slug": "bit-whatsapp",
+    "packageName": "@ha-bits/bit-whatsapp",
+    "name": "Whatsapp",
+    "displayName": "WhatsApp",
+    "description": "WhatsApp Business API integration bit for sending messages",
+    "version": "1.0.0",
+    "categories": [
+      "whatsapp",
+      "messaging",
+      "business"
+    ],
+    "featured": false,
+    "icon": "MessageCircle",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 2
+  }
+]

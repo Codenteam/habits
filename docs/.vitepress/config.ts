@@ -105,6 +105,19 @@ export default defineConfig({
           { text: 'Marketing Campaign', link: '/showcase/marketing-campaign' },
         ]
       },
+      // Bits Catalog
+      {
+        text: '🧩 Bits',
+        items: [
+          { text: 'Browse All', link: '/bits/' },
+          { text: 'Intersect AI', link: '/bits/bit-intersect' },
+          { text: 'OpenAI', link: '/bits/bit-openai' },
+          { text: 'Database', link: '/bits/bit-database' },
+          { text: 'AI Agent', link: '/bits/bit-agent' },
+          { text: 'Conditional (If)', link: '/bits/bit-if' },
+          { text: 'Email', link: '/bits/bit-email' },
+        ]
+      },
       // Extra reading
       {
         text: '📖 Extra Reading',

@@ -56,5 +56,9 @@
       "publish-npm": {},
       "publish-private": {}
     }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true
   }
 }

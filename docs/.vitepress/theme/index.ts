@@ -11,6 +11,8 @@ import Checklist from './components/Checklist.vue'
 import ShowcaseGrid from './components/ShowcaseGrid.vue'
 import ShowcaseCard from './components/ShowcaseCard.vue'
 import ShowcaseHero from './components/ShowcaseHero.vue'
+import BitsGrid from './components/BitsGrid.vue'
+import BitsCard from './components/BitsCard.vue'
 import './custom.css'
 import './d2-custom.css'
 
@@ -28,6 +30,8 @@ export default {
     app.component('ShowcaseGrid', ShowcaseGrid)
     app.component('ShowcaseCard', ShowcaseCard)
     app.component('ShowcaseHero', ShowcaseHero)
+    app.component('BitsGrid', BitsGrid)
+    app.component('BitsCard', BitsCard)
     enhanceAppWithTabs(app)
   }
 }

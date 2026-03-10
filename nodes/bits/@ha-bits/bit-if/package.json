@@ -40,7 +40,12 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true
   }
 }

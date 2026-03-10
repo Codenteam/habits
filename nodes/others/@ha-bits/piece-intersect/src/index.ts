@@ -22,7 +22,7 @@ export { intersectAuth, openaiAuth };
 
 export const intersect = createPiece({
   displayName: 'Intersect',
-  description: 'Use Intersect AI tools including ChatGPT, image generation, and canvas features.',
+  description: 'Use Intersect AI tools including ChatGPT, Gemini, Claude for text generaiton, image generation, Website Generation, Document drafts generations, Vector designs and more.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'https://codenteam.com/assets/logos/Icon-Round-Dark.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],

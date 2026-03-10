@@ -1,0 +1,2 @@
+TODO:
+Move bits and showcase templates into standalone Vue file to make the generator TS code cleaner. 

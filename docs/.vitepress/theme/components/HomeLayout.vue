@@ -4,8 +4,10 @@ import { withBase } from 'vitepress'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
+import BitsCard from './BitsCard.vue'
 import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
+import bitsData from '../data/bits-data.json'
 
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 
@@ -93,6 +95,11 @@ const showcaseItems = computed(() =>
   featuredSlugs
     .map(slug => showcaseData.find(item => item.slug === slug))
     .filter(Boolean)
+)
+
+// Featured bits to display on homepage
+const featuredBits = computed(() => 
+  bitsData.filter(bit => bit.featured).slice(0, 6)
 )
 </script>
 
@@ -188,7 +195,7 @@ const showcaseItems = computed(() =>
     <!-- Showcase Section -->
     <section class="showcase-section">
       <div class="showcase-header">
-        <h2>Featured Examples</h2>
+        <h2>Featured Showcase</h2>
         <p>Production-ready habits you can run, customize, and learn from</p>
         <a :href="withBase('/showcase/')" class="view-all-link">View all examples →</a>
       </div>
@@ -197,6 +204,17 @@ const showcaseItems = computed(() =>
       </div>
     </section>
 
+    <!-- Featured Bits Section -->
+    <section class="bits-section" v-if="featuredBits.length > 0">
+      <div class="bits-header">
+        <h2>Featured Bits</h2>
+        <p>Pre-built integrations for AI, databases, messaging, and more</p>
+        <a :href="withBase('/bits/')" class="view-all-link">Browse all bits →</a>
+      </div>
+      <div class="bits-row">
+        <BitsCard v-for="bit in featuredBits" :key="bit.slug" :bit="bit" />
+      </div>
+    </section>
 
     <!-- Rest of content slot -->
     <section class="content-section vp-doc">
@@ -593,6 +611,56 @@ const showcaseItems = computed(() =>
   }
   
   .showcase-header h2 {
+    font-size: 1.6rem;
+  }
+}
+
+/* Bits Section */
+.bits-section {
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--vp-c-bg-soft);
+  border-radius: 24px;
+  margin-top: 20px;
+}
+
+.bits-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.bits-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--vp-c-text-1);
+}
+
+.bits-header p {
+  font-size: 1.1rem;
+  color: var(--vp-c-text-2);
+  margin: 0 0 16px;
+}
+
+.bits-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 960px) {
+  .bits-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .bits-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .bits-header h2 {
     font-size: 1.6rem;
   }
 }
