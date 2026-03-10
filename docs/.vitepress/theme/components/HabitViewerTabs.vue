@@ -23,7 +23,7 @@
         class="tab-panel"
       >
         <HabitViewer 
-          :content="tab.content" 
+          :url="tab.url" 
           :hide-controls="hideControls"
           :fit-view="fitView"
           :height="height"
@@ -39,7 +39,7 @@ import HabitViewer from './HabitViewer.vue'
 
 interface HabitTab {
   label: string
-  content: string
+  url: string
 }
 
 withDefaults(defineProps<{

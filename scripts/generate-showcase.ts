@@ -23,7 +23,6 @@ const examplesDir = join(rootDir, 'examples');
 const docsDir = join(rootDir, 'docs');
 const showcaseDir = join(docsDir, 'showcase');
 const publicShowcaseDir = join(docsDir, 'public/showcase');
-const downloadsDir = join(docsDir, 'public/downloads');
 
 interface ShowcaseMetadata {
   name: string;
@@ -242,8 +241,8 @@ function scanExamples(): ExampleData[] {
   return examples;
 }
 
-function copyDemoImages(examples: ExampleData[]): void {
-  console.log('\n📸 Copying demo images...');
+function copyShowcaseAssets(examples: ExampleData[]): void {
+  console.log('\n📸 Copying showcase assets (images, habits, stack files)...');
   
   // Create showcase public folder if it doesn't exist (don't wipe existing content)
   mkdirSync(publicShowcaseDir, { recursive: true });
@@ -251,12 +250,13 @@ function copyDemoImages(examples: ExampleData[]): void {
   for (const example of examples) {
     const destDir = join(publicShowcaseDir, example.slug);
     
-    // Clean only the specific example's image folder (not the entire showcase folder)
+    // Clean only the specific example's folder (not the entire showcase folder)
     if (existsSync(destDir)) {
       rmSync(destDir, { recursive: true });
     }
     mkdirSync(destDir, { recursive: true });
     
+    // Copy demo images
     for (const image of example.images) {
       let srcPath: string;
       if (example.useDefaultImage) {
@@ -270,7 +270,24 @@ function copyDemoImages(examples: ExampleData[]): void {
       copyFileSync(srcPath, destPath);
     }
     
-    console.log(`  📁 ${example.slug}/ (${example.images.length} files)${example.useDefaultImage ? ' [default]' : ''}`);
+    // Copy stack.yaml if exists
+    const stackFile = join(example.path, 'stack.yaml');
+    if (existsSync(stackFile)) {
+      copyFileSync(stackFile, join(destDir, 'stack.yaml'));
+    }
+    
+    // Copy habit files
+    for (const habitFile of example.habitFiles) {
+      const srcPath = join(example.path, habitFile);
+      if (existsSync(srcPath)) {
+        // Keep the filename only (flatten the path)
+        const destFileName = basename(habitFile);
+        copyFileSync(srcPath, join(destDir, destFileName));
+      }
+    }
+    
+    const assetCount = example.images.length + example.habitFiles.length + (existsSync(stackFile) ? 1 : 0);
+    console.log(`  📁 ${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}`);
   }
 }
 
@@ -318,15 +335,11 @@ ${example.keyFiles.map(file => {
   // Use habit files from ExampleData (either from showcase.yaml or auto-detected)
   const habitFiles = example.habitFiles;
   
-  // Generate imports and tabs data for habit viewer
-  const habitImports = habitFiles.map((file, i) => {
-    const varName = `habit${i}`;
-    return `import ${varName} from '../../examples/${example.slug}/${file}?raw'`;
-  }).join('\n');
-  
-  const habitTabsArray = habitFiles.map((file, i) => {
+  // Generate tabs data for habit viewer using URLs (files are copied to public/showcase/{slug}/)
+  const habitTabsArray = habitFiles.map(file => {
     const label = basename(file, extname(file));
-    return `{ label: '${label}', content: habit${i} }`;
+    const fileName = basename(file);
+    return `{ label: '${label}', url: '/showcase/${example.slug}/${fileName}' }`;
   }).join(',\n    ');
   
   const habitViewerSection = habitFiles.length > 0
@@ -346,7 +359,6 @@ ${example.keyFiles.map(file => {
   // Build script setup content
   const scriptSetupContent = [
     iconImport,
-    habitImports,
     `const images = [\n    ${imagesList}\n]`,
     habitFiles.length > 0 ? `const habitTabs = [\n    ${habitTabsArray}\n]` : '',
   ].filter(Boolean).join('\n\n');
@@ -516,12 +528,13 @@ function generateMarkdownFiles(examples: ExampleData[]): void {
 function generateZipFiles(examples: ExampleData[]): void {
   console.log('\n📦 Generating download zip files...');
   
-  // Create downloads folder if it doesn't exist
-  mkdirSync(downloadsDir, { recursive: true });
-  
   for (const example of examples) {
     const zipName = `${example.slug}.zip`;
-    const zipPath = join(downloadsDir, zipName);
+    const destDir = join(publicShowcaseDir, example.slug);
+    const zipPath = join(destDir, zipName);
+    
+    // Ensure destination directory exists
+    mkdirSync(destDir, { recursive: true });
     
     // Remove existing zip if present
     if (existsSync(zipPath)) {
@@ -534,7 +547,7 @@ function generateZipFiles(examples: ExampleData[]): void {
         `zip -r "${zipPath}" . -x ".env" -x "*.zip" -x "node_modules/*" -x ".git/*"`,
         { cwd: example.path, stdio: 'pipe' }
       );
-      console.log(`  📦 ${zipName}`);
+      console.log(`  📦 ${example.slug}/${zipName}`);
     } catch (err) {
       console.error(`  ❌ Failed to create ${zipName}:`, (err as Error).message);
     }
@@ -580,8 +593,8 @@ function main(): void {
   
   console.log(`\n📦 Found ${examples.length} showcase examples`);
   
-  // Copy demo images to public folder
-  copyDemoImages(examples);
+  // Copy showcase assets (images, habits, stack files) to public folder
+  copyShowcaseAssets(examples);
   
   // Generate zip files for download
   generateZipFiles(examples);
