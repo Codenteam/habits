@@ -1,7 +1,7 @@
 # Habits
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)t
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)
 
 
 
@@ -14,9 +14,24 @@ Under the hood Habits is an AI Logic & UI builder (Base, from Basal Ganglia) and
 https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
 
 
+## Documentation
+
+📚 **[View full documentation](https://codenteam.com/intersect/habits)**
+
+Local documentation available at [docs](docs/):
+
+## 📖 Documentation
+
+- [Introduction](https://codenteam.com/intersect/habits/getting-started/introduction.html) ([Source](docs/getting-started/introduction.md))
+- [First Habit](https://codenteam.com/intersect/habits/getting-started/first-habit.html) ([Source](docs/getting-started/first-habit.md))
+- [Concepts](https://codenteam.com/intersect/habits/getting-started/concepts.html) ([Source](docs/getting-started/concepts.md))
+- [Running Automations](https://codenteam.com/intersect/habits/deep-dive/running.html) ([Source](docs/deep-dive/running.md))
+- [Creating Habits](https://codenteam.com/intersect/habits/deep-dive/creating.html) ([Source](docs/deep-dive/creating.md))
+
 
 ## Table of Contents
 
+- [Documentation](#documentation)
 - [What is Habits?](#what-is-habits)
 - [Features](#features)
 - [Quick Start](#quick-start)
@@ -29,7 +44,6 @@ https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
 - [When to Use Habits](#when-to-use-habits)
 - [Enabling Features](#enabling-features)
 - [License Considerations](#license-considerations)
-- [Documentation](#documentation)
 - [Development](#development)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
@@ -206,20 +220,6 @@ npx habits@latest cortex --config ./stack.yaml
 | n8n-nodes-base | Sustainable Use | No |
 
 Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
-
-## Documentation
-
-📚 **[View full documentation](https://codenteam.com/intersect/habits)**
-
-Local documentation available at [docs](docs/):
-
-## 📖 Documentation
-
-- [Introduction](https://codenteam.com/intersect/habits/getting-started/introduction.html) ([Source](docs/getting-started/introduction.md))
-- [First Habit](https://codenteam.com/intersect/habits/getting-started/first-habit.html) ([Source](docs/getting-started/first-habit.md))
-- [Concepts](https://codenteam.com/intersect/habits/getting-started/concepts.html) ([Source](docs/getting-started/concepts.md))
-- [Running Automations](https://codenteam.com/intersect/habits/deep-dive/running.html) ([Source](docs/deep-dive/running.md))
-- [Creating Habits](https://codenteam.com/intersect/habits/deep-dive/creating.html) ([Source](docs/deep-dive/creating.md))
 
 
 ## Development
