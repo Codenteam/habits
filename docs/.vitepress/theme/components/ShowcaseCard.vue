@@ -145,7 +145,7 @@ const navigateToExample = () => {
   inset: 0;
   border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(6, 182, 212, 0.4) 50%, rgba(236, 72, 153, 0.4) 100%);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(14, 165, 233, 0.4) 50%, rgba(168, 85, 247, 0.4) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -156,38 +156,37 @@ const navigateToExample = () => {
   z-index: 10;
 }
 
-.showcase-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 
-    0 20px 40px rgba(139, 92, 246, 0.15),
-    0 0 60px rgba(6, 182, 212, 0.1);
-  border-color: transparent;
-}
-
 .showcase-card:hover::before {
   opacity: 1;
 }
 
-.showcase-card.featured {
-  border-color: rgba(139, 92, 246, 0.3);
-  background: linear-gradient(145deg, rgba(139, 92, 246, 0.05) 0%, rgba(6, 182, 212, 0.03) 100%);
+.showcase-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(99, 102, 241, 0.1);
 }
 
+.showcase-card.featured {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Featured Badge - matches BitsCard style */
 .featured-badge {
   position: absolute;
   top: 12px;
-  left: 12px;
-  z-index: 10;
-  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+  right: 12px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
   color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  padding: 4px 8px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .featured-badge .badge-icon {
@@ -198,7 +197,7 @@ const navigateToExample = () => {
 .card-image {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 160px;
   overflow: hidden;
   background: var(--vp-c-bg-alt);
 }
@@ -206,93 +205,42 @@ const navigateToExample = () => {
 .card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: saturate(0.7) contrast(1.1) brightness(0.95);
+  object-fit: contain;
+  transition: transform 0.3s ease;
 }
 
 .showcase-card:hover .card-image img {
-  transform: scale(1.08);
-  filter: saturate(1) contrast(1) brightness(1);
-  box-shadow: 
-    0 12px 40px rgba(139, 92, 246, 0.3),
-    0 0 20px rgba(6, 182, 212, 0.2);
+  transform: scale(1.05);
 }
 
-/* Holographic scanline overlay */
-.card-image::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: 
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(139, 92, 246, 0.03) 2px,
-      rgba(139, 92, 246, 0.03) 4px
-    ),
-    linear-gradient(
-      135deg,
-      rgba(15, 23, 42, 0.4) 0%,
-      rgba(88, 28, 135, 0.25) 50%,
-      rgba(6, 182, 212, 0.2) 100%
-    );
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.4s ease;
-  z-index: 1;
-}
-
-.showcase-card:hover .card-image::after {
-  opacity: 0;
-}
-
+/* Gradient overlay on images */
 .image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 16px;
-  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.3) 0%,
+    rgba(99, 102, 241, 0.15) 50%,
+    rgba(14, 165, 233, 0.15) 100%
+  );
+  pointer-events: none;
   transition: opacity 0.3s ease;
-  z-index: 2;
 }
+.image-overlay img{
 
+}
 .showcase-card:hover .image-overlay {
-  opacity: 1;
-}
-
-.view-btn {
-  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-  color: white;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transform: translateY(10px);
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
-}
-
-.showcase-card:hover .view-btn {
-  transform: translateY(0);
-}
-
-.view-btn:hover {
-  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+  opacity: 0.5;
 }
 
 .image-count {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
   font-size: 0.75rem;
   display: flex;
   align-items: center;
@@ -307,20 +255,23 @@ const navigateToExample = () => {
 }
 
 .card-content {
-  padding: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .card-title {
-  margin: 0 0 8px;
-  font-size: 1.2rem;
-  font-weight: 700;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--vp-c-text-1);
   line-height: 1.3;
 }
 
 .card-description {
-  margin: 0 0 16px;
-  font-size: 0.9rem;
+  margin: 0;
+  font-size: 0.875rem;
   color: var(--vp-c-text-2);
   line-height: 1.5;
   display: -webkit-box;
@@ -333,16 +284,15 @@ const navigateToExample = () => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
 }
 
 .tag {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
-  background: var(--vp-c-bg-alt);
-  color: var(--vp-c-text-2);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -355,16 +305,16 @@ const navigateToExample = () => {
   flex-shrink: 0;
 }
 
-
 .tag-more {
-  background: var(--vp-c-divider);
-  color: var(--vp-c-text-3);
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--vp-c-divider);
 }
@@ -373,16 +323,6 @@ const navigateToExample = () => {
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.difficulty-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .difficulty-beginner { color: #22c55e; }
@@ -391,18 +331,17 @@ const navigateToExample = () => {
 
 .details-link {
   font-size: 0.85rem;
-  color: #8b5cf6;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--vp-c-brand-1);
   text-decoration: none;
-  transition: all 0.3s ease;
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
 }
 
 .details-link:hover {
-  color: #a78bfa;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  color: var(--vp-c-brand-2);
 }
+
 </style>

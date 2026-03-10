@@ -35,7 +35,7 @@ staging
 docs/public/viewer/*
 docs/public/downloads/*.zip
 docs/.vitepress/.temp
-docs/.vitepress/data
+docs/.vitepress/theme/data/
 docs/public/showcase
 docs/showcase
 docs/bits

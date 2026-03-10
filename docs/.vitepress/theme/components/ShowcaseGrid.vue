@@ -23,7 +23,7 @@
           <span class="filter-label">Tags:</span>
           <div class="tag-chips">
             <button 
-              v-for="tag in availableTags"
+              v-for="tag in visibleTags"
               :key="tag"
               class="tag-chip"
               :class="{ active: selectedTags.includes(tag) }"
@@ -32,11 +32,19 @@
               <component :is="tagIcons[tag] || Tag" :size="14" class="filter-icon" />
               {{ tag }}
             </button>
+            <button 
+              v-if="availableTags.length > MAX_VISIBLE_TAGS"
+              class="tag-chip expand-chip"
+              @click="tagsExpanded = !tagsExpanded"
+            >
+              <component :is="tagsExpanded ? ChevronUp : ChevronDown" :size="14" class="filter-icon" />
+              {{ tagsExpanded ? 'Show less' : `+${availableTags.length - MAX_VISIBLE_TAGS} more` }}
+            </button>
           </div>
         </div>
         
         <!-- Difficulty Filter -->
-        <div class="filter-group">
+        <div class="filter-group difficulty-group">
           <span class="filter-label">Difficulty:</span>
           <div class="difficulty-chips">
             <button 
@@ -46,7 +54,6 @@
               :class="[`diff-${diff}`, { active: selectedDifficulty === diff }]"
               @click="toggleDifficulty(diff)"
             >
-              <span class="diff-dot"></span>
               {{ diff }}
             </button>
           </div>
@@ -141,6 +148,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Tag,
   Bot,
   Zap,
@@ -194,12 +203,14 @@ const props = defineProps<{
 }>()
 
 const ITEMS_PER_PAGE = 12
+const MAX_VISIBLE_TAGS = 8
 
 // State
 const searchQuery = ref('')
 const selectedTags = ref<string[]>([])
 const selectedDifficulty = ref<string | null>(null)
 const currentPage = ref(1)
+const tagsExpanded = ref(false)
 
 // Constants
 const difficulties = ['beginner', 'intermediate', 'advanced'] as const
@@ -209,6 +220,14 @@ const availableTags = computed(() => {
   const tags = new Set<string>()
   props.examples.forEach(ex => ex.tags.forEach(t => tags.add(t)))
   return Array.from(tags).sort()
+})
+
+// Visible tags (limited unless expanded)
+const visibleTags = computed(() => {
+  if (tagsExpanded.value) {
+    return availableTags.value
+  }
+  return availableTags.value.slice(0, MAX_VISIBLE_TAGS)
 })
 
 const hasActiveFilters = computed(() => {
@@ -309,32 +328,39 @@ watch([searchQuery, selectedTags, selectedDifficulty], () => {
 
 <style scoped>
 .showcase-grid-container {
-  margin-top: 24px;
+  width: 100%;
+}
+
+/* Filters Section - unified container like BitsGrid */
+.filters-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--vp-c-bg-soft);
+  border-radius: 16px;
+  border: 1px solid var(--vp-c-divider);
 }
 
 /* Search Bar */
 .search-bar {
   position: relative;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .search-icon {
   position: absolute;
   left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
   color: var(--vp-c-text-3);
 }
 
 .search-input {
   width: 100%;
-  padding: 14px 48px;
-  border: 2px solid var(--vp-c-divider);
-  border-radius: 12px;
+  padding: 12px 44px;
   font-size: 1rem;
-  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
   transition: all 0.2s ease;
 }
@@ -342,7 +368,7 @@ watch([searchQuery, selectedTags, selectedDifficulty], () => {
 .search-input:focus {
   outline: none;
   border-color: var(--vp-c-brand-1);
-  box-shadow: 0 0 0 4px rgba(var(--vp-c-brand-1-rgb), 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .search-input::placeholder {
@@ -351,50 +377,45 @@ watch([searchQuery, selectedTags, selectedDifficulty], () => {
 
 .clear-btn {
   position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
+  right: 12px;
   padding: 4px;
+  border: none;
+  background: transparent;
   color: var(--vp-c-text-3);
-  transition: color 0.2s ease;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .clear-btn:hover {
+  background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
-}
-
-.clear-btn svg {
-  width: 18px;
-  height: 18px;
 }
 
 /* Filter Controls */
 .filter-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
   align-items: flex-start;
-  padding: 20px;
-  background: var(--vp-c-bg-soft);
-  border-radius: 12px;
-  margin-bottom: 24px;
 }
 
 .filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.difficulty-group {
+  flex: 0 0 auto;
+  min-width: auto;
 }
 
 .filter-label {
+  display: block;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--vp-c-text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  margin-bottom: 8px;
 }
 
 .tag-chips,
@@ -406,29 +427,44 @@ watch([searchQuery, selectedTags, selectedDifficulty], () => {
 
 .tag-chip,
 .difficulty-chip {
-  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
   border: 1px solid var(--vp-c-divider);
   border-radius: 20px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-2);
-  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .tag-chip:hover,
 .difficulty-chip:hover {
   border-color: var(--vp-c-brand-1);
-  color: var(--vp-c-text-1);
+  color: var(--vp-c-brand-1);
 }
 
 .tag-chip.active {
   background: var(--vp-c-brand-soft);
   border-color: var(--vp-c-brand-1);
   color: var(--vp-c-brand-1);
+}
+
+.tag-chip.expand-chip {
+  background: var(--vp-c-bg-soft);
+  border-style: dashed;
+  color: var(--vp-c-text-3);
+}
+
+.tag-chip.expand-chip:hover {
+  border-color: var(--vp-c-text-2);
+  color: var(--vp-c-text-2);
+}
+
+.filter-icon {
+  flex-shrink: 0;
 }
 
 .difficulty-chip.active.diff-beginner {
@@ -450,17 +486,16 @@ watch([searchQuery, selectedTags, selectedDifficulty], () => {
 }
 
 .clear-filters-btn {
-  align-self: flex-end;
   padding: 8px 16px;
-  background: var(--vp-c-danger-soft);
-  color: var(--vp-c-danger-1);
-  border: none;
-  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: var(--vp-c-danger-soft);
+  color: var(--vp-c-danger-1);
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: auto;
+  margin-top: auto;
 }
 
 .clear-filters-btn:hover {

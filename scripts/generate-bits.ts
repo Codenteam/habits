@@ -271,24 +271,60 @@ function findActionInfo(bitPath: string, actionVarName: string, indexContent: st
   
   if (importMatch) {
     const importPath = importMatch[1];
-    let actionFilePath: string;
-    
-    if (importPath.startsWith('./')) {
-      actionFilePath = join(bitPath, 'src', importPath.slice(2) + '.ts');
-    } else if (importPath.startsWith('../')) {
-      actionFilePath = join(bitPath, 'src', importPath + '.ts');
-    } else {
-      return null;
-    }
-    
-    if (existsSync(actionFilePath)) {
-      const actionContent = readFileSync(actionFilePath, 'utf-8');
-      return extractActionFromContent(actionContent, actionVarName);
-    }
+    const srcDir = join(bitPath, 'src');
+    const result = resolveImportAndExtractAction(srcDir, importPath, actionVarName);
+    if (result) return result;
   }
   
   // Try to find inline definition in index.ts
   return extractActionFromContent(indexContent, actionVarName);
+}
+
+/**
+ * Resolve import path (handling barrel exports) and extract action info
+ * @param baseDir - The directory to resolve relative imports from
+ * @param importPath - The import path (e.g., './lib/actions' or './run-agent')
+ * @param actionVarName - The variable name to find
+ */
+function resolveImportAndExtractAction(baseDir: string, importPath: string, actionVarName: string): ActionInfo | null {
+  let targetPath: string;
+  
+  if (importPath.startsWith('./')) {
+    targetPath = join(baseDir, importPath.slice(2));
+  } else if (importPath.startsWith('../')) {
+    targetPath = join(baseDir, importPath);
+  } else {
+    return null;
+  }
+  
+  // Try direct file first (e.g., ./lib/actions/run-agent.ts)
+  const directFilePath = targetPath + '.ts';
+  if (existsSync(directFilePath)) {
+    const content = readFileSync(directFilePath, 'utf-8');
+    return extractActionFromContent(content, actionVarName);
+  }
+  
+  // Try barrel/index.ts (e.g., ./lib/actions -> ./lib/actions/index.ts)
+  const indexFilePath = join(targetPath, 'index.ts');
+  if (existsSync(indexFilePath)) {
+    const indexContent = readFileSync(indexFilePath, 'utf-8');
+    
+    // Look for re-export: export { actionName } from './action-file'
+    const reExportMatch = indexContent.match(
+      new RegExp(`export\\s*\\{[^}]*\\b${actionVarName}\\b[^}]*\\}\\s*from\\s*['"\`]([^'"\`]+)['"\`]`)
+    );
+    
+    if (reExportMatch) {
+      const reExportPath = reExportMatch[1];
+      // Recursively resolve the re-export, using the barrel's directory as base
+      return resolveImportAndExtractAction(dirname(indexFilePath), reExportPath, actionVarName);
+    }
+    
+    // Maybe it's defined inline in the barrel file
+    return extractActionFromContent(indexContent, actionVarName);
+  }
+  
+  return null;
 }
 
 /**
@@ -322,30 +358,64 @@ function extractActionFromContent(content: string, varName: string): ActionInfo 
  * Similar to findActionInfo but for triggers
  */
 function findTriggerInfo(bitPath: string, triggerVarName: string, indexContent: string): TriggerInfo | null {
-  // Similar logic to findActionInfo
+  // First, check if we can find the import and then the file
   const importMatch = indexContent.match(
     new RegExp(`import\\s*\\{[^}]*\\b${triggerVarName}\\b[^}]*\\}\\s*from\\s*['"\`]([^'"\`]+)['"\`]`)
   );
   
   if (importMatch) {
     const importPath = importMatch[1];
-    let triggerFilePath: string;
-    
-    if (importPath.startsWith('./')) {
-      triggerFilePath = join(bitPath, 'src', importPath.slice(2) + '.ts');
-    } else if (importPath.startsWith('../')) {
-      triggerFilePath = join(bitPath, 'src', importPath + '.ts');
-    } else {
-      return null;
-    }
-    
-    if (existsSync(triggerFilePath)) {
-      const triggerContent = readFileSync(triggerFilePath, 'utf-8');
-      return extractTriggerFromContent(triggerContent, triggerVarName);
-    }
+    const srcDir = join(bitPath, 'src');
+    const result = resolveImportAndExtractTrigger(srcDir, importPath, triggerVarName);
+    if (result) return result;
   }
   
   return extractTriggerFromContent(indexContent, triggerVarName);
+}
+
+/**
+ * Resolve import path (handling barrel exports) and extract trigger info
+ * @param baseDir - The directory to resolve relative imports from
+ * @param importPath - The import path (e.g., './lib/triggers' or './new-email')
+ * @param triggerVarName - The variable name to find
+ */
+function resolveImportAndExtractTrigger(baseDir: string, importPath: string, triggerVarName: string): TriggerInfo | null {
+  let targetPath: string;
+  
+  if (importPath.startsWith('./')) {
+    targetPath = join(baseDir, importPath.slice(2));
+  } else if (importPath.startsWith('../')) {
+    targetPath = join(baseDir, importPath);
+  } else {
+    return null;
+  }
+  
+  // Try direct file first
+  const directFilePath = targetPath + '.ts';
+  if (existsSync(directFilePath)) {
+    const content = readFileSync(directFilePath, 'utf-8');
+    return extractTriggerFromContent(content, triggerVarName);
+  }
+  
+  // Try barrel/index.ts
+  const indexFilePath = join(targetPath, 'index.ts');
+  if (existsSync(indexFilePath)) {
+    const indexContent = readFileSync(indexFilePath, 'utf-8');
+    
+    // Look for re-export
+    const reExportMatch = indexContent.match(
+      new RegExp(`export\\s*\\{[^}]*\\b${triggerVarName}\\b[^}]*\\}\\s*from\\s*['"\`]([^'"\`]+)['"\`]`)
+    );
+    
+    if (reExportMatch) {
+      const reExportPath = reExportMatch[1];
+      return resolveImportAndExtractTrigger(dirname(indexFilePath), reExportPath, triggerVarName);
+    }
+    
+    return extractTriggerFromContent(indexContent, triggerVarName);
+  }
+  
+  return null;
 }
 
 /**
