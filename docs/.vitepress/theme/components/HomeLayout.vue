@@ -196,7 +196,7 @@ const featuredBits = computed(() =>
     <section class="showcase-section">
       <div class="showcase-header">
         <h2>Featured Showcase</h2>
-        <p>Production-ready habits you can run, customize, and learn from</p>
+        <p>Habits you can run, customize, and learn from</p>
         <a :href="withBase('/showcase/')" class="view-all-link">View all examples →</a>
       </div>
       <div class="showcase-row">
