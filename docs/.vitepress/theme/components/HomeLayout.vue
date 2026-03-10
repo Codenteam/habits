@@ -312,7 +312,7 @@ const hoveredUseCase = ref(null)
         
         <!-- Feature Cards -->
         <div class="bento-card feature-mini apache">
-          <span class="feature-emoji">📜</span>
+          <span class="feature-icon" v-html="icon('unlock')"></span>
           <div class="feature-text">
             <strong>Apache 2.0</strong>
             <span>No fair-code restrictions</span>
@@ -320,7 +320,7 @@ const hoveredUseCase = ref(null)
         </div>
         
         <div class="bento-card feature-mini cli">
-          <span class="feature-emoji">🚀</span>
+          <span class="feature-icon" v-html="icon('terminal')"></span>
           <div class="feature-text">
             <strong>CLI & API</strong>
             <span>Run anywhere, expose as REST</span>
@@ -328,7 +328,7 @@ const hoveredUseCase = ref(null)
         </div>
         
         <div class="bento-card feature-mini visual">
-          <span class="feature-emoji">🎨</span>
+          <span class="feature-icon" v-html="icon('edit-3')"></span>
           <div class="feature-text">
             <strong>Visual Builder</strong>
             <span>Node-based UI</span>
@@ -1496,9 +1496,34 @@ const hoveredUseCase = ref(null)
   transform: translateY(-2px);
 }
 
-.feature-emoji {
-  font-size: 2rem;
-  flex-shrink: 0;
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--vp-c-bg-soft);
+  transition: all 0.3s ease;
+}
+
+.feature-icon :deep(svg) {
+  width: 22px;
+  height: 22px;
+  stroke: var(--vp-c-brand-1);
+}
+
+.feature-mini.apache .feature-icon :deep(svg) {
+  stroke: #22c55e;
+}
+
+.feature-mini.cli .feature-icon :deep(svg) {
+  stroke: #5865F2;
+}
+
+.feature-mini.visual .feature-icon :deep(svg) {
+  stroke: #f59e0b;
 }
 
 .feature-text {
