@@ -1,2 +1,3 @@
 TODO:
 Move bits and showcase templates into standalone Vue file to make the generator TS code cleaner. 
+Decide on yaml or js-yaml for generators and docs stuff specifically.

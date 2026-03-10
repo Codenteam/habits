@@ -27,6 +27,7 @@ import { existsSync, mkdirSync, readdirSync, statSync, readFileSync, writeFileSy
 import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { globSync } from 'glob';
+import { parse as parseYaml } from 'yaml';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
@@ -412,10 +413,19 @@ function findShowcasesUsingBit(packageName: string): string[] {
         const relativePath = yamlFile.replace(examplesDir + '/', '');
         const slug = relativePath.split('/')[0];
         
-        // Check if this example has showcase.yaml (is a showcase)
+        // Check if this example has showcase.yaml (is a showcase) and isn't disabled
         const showcaseYaml = join(examplesDir, slug, 'showcase.yaml');
+
         if (existsSync(showcaseYaml) && !showcases.includes(slug)) {
-          showcases.push(slug);
+          try {
+            const showcaseContent = readFileSync(showcaseYaml, 'utf-8');
+            const showcaseData = parseYaml(showcaseContent);
+            if (!showcaseData.disabled) {
+              showcases.push(slug);
+            }
+          } catch {
+            // If we can't parse the yaml, skip it
+          }
         }
       }
     }
