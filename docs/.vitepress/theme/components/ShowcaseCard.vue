@@ -48,7 +48,6 @@
       <!-- Footer -->
       <div class="card-footer">
         <span class="difficulty" :class="`difficulty-${example.difficulty}`">
-          <span class="difficulty-dot"></span>
           {{ example.difficulty }}
         </span>
         <a 

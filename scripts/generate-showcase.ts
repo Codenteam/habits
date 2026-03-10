@@ -423,17 +423,14 @@ ${linksSection}
   }
 
 .difficulty-beginner {
-  background: rgba(34, 197, 94, 0.15);
   color: #22c55e;
 }
 
 .difficulty-intermediate {
-  background: rgba(234, 179, 8, 0.15);
   color: #eab308;
 }
 
 .difficulty-advanced {
-  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
 
