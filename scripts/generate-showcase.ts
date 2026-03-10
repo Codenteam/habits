@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 /**
  * Generate showcase pages for examples with demo images.
- * Scans examples/ for directories containing demo/ folder and showcase.yaml.
+ * Scans showcase/ for directories containing demo/ folder and showcase.yaml.
  * 
  * Usage: npx tsx scripts/generate-showcase.ts
  * 
@@ -19,7 +19,7 @@ import { execSync } from 'child_process';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
-const examplesDir = join(rootDir, 'examples');
+const examplesDir = join(rootDir, 'showcase');
 const docsDir = join(rootDir, 'docs');
 const showcaseDir = join(docsDir, 'showcase');
 const publicShowcaseDir = join(docsDir, 'public/showcase');
@@ -326,7 +326,7 @@ function generateLandingPage(example: ExampleData): string {
 ::: code-group
 ${example.keyFiles.map(file => {
   const displayName = basename(file);
-  return `<<< @/../examples/${example.slug}/${file} [${displayName}]`;
+  return `<<< @/../showcase/${example.slug}/${file} [${displayName}]`;
 }).join('\n\n')}
 :::
 `
@@ -489,7 +489,7 @@ const examples = ${examplesJson}
 Discover production-ready examples showcasing what you can build with Habits.
 Each example includes source code, demo images, and one-click deployment.
 
-<ShowcaseGrid :examples="examples" />
+<ShowcaseGrid :showcases="examples" />
 
 <style>
 .vp-doc h1 {

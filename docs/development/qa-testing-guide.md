@@ -26,7 +26,7 @@ Stop server: `Ctrl+C`
 
 ## 2. Test Cortex Mode
 
-Download example configs from https://codenteam.com/intersect/habits/examples
+Download example configs from https://codenteam.com/intersect/habits/showcase
 
 Test each example:
 

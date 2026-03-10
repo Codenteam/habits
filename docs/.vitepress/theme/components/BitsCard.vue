@@ -52,6 +52,10 @@
           <Eye :size="14" />
           {{ bit.showcaseCount }} showcase{{ bit.showcaseCount !== 1 ? 's' : '' }}
         </span>
+        <span class="stat" v-if="bit.downloads > 0">
+          <Download :size="14" />
+          {{ bit.downloadsFormatted }}
+        </span>
       </div>
       
       <!-- Footer -->
@@ -77,6 +81,7 @@ import {
   Zap,
   Radio,
   Eye,
+  Download,
   Package,
   Brain,
   Sparkles,
@@ -152,6 +157,8 @@ interface BitInfo {
   actionCount: number
   triggerCount: number
   showcaseCount: number
+  downloads: number
+  downloadsFormatted: string
 }
 
 const props = defineProps<{

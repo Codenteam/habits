@@ -174,14 +174,14 @@ Want to see what you built? Click the **< > Code** button in the habit editor to
 
 ::: code-group
 
-<<< @/../examples/image-calories-calculator/calculate-calories-in-images.yaml [calculate-calories-in-images.yaml]
+<<< @/../showcase/image-calories-calculator/calculate-calories-in-images.yaml [calculate-calories-in-images.yaml]
 
-<<< @/../examples/image-calories-calculator/.env.example [.env.example]
+<<< @/../showcase/image-calories-calculator/.env.example [.env.example]
 
-<<< @/../examples/image-calories-calculator/stack.yaml [stack.yaml]
+<<< @/../showcase/image-calories-calculator/stack.yaml [stack.yaml]
 
 
-<<< @/../examples/image-calories-calculator/frontend/index.html [Frontend (frontend/index.html)]
+<<< @/../showcase/image-calories-calculator/frontend/index.html [Frontend (frontend/index.html)]
 
 :::
 

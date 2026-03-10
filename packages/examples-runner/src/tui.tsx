@@ -37,7 +37,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
-const EXAMPLES_DIR = path.join(PROJECT_ROOT, 'examples');
+const EXAMPLES_DIR = path.join(PROJECT_ROOT, 'showcase');
 const DEFAULT_PORT = 3000;
 const SERVER_STARTUP_TIMEOUT = 45000;
 const SKIP_DIRS = ['unit-tests', 'bits', 'docs', 'test-script', 'logs'];
@@ -74,7 +74,7 @@ interface ManagedProcess {
 }
 
 type View =
-  | { kind: 'examples' }
+  | { kind: 'showcase' }
   | { kind: 'detail'; example: ExampleInfo }
   | { kind: 'logs'; processId: string }
   | { kind: 'processes' };
@@ -853,7 +853,7 @@ function statusIcon(status: ProcessStatus): string {
 
 function App() {
   const { exit } = useApp();
-  const [view, setView] = useState<View>({ kind: 'examples' });
+  const [view, setView] = useState<View>({ kind: 'showcase' });
   const [, forceUpdate] = useState(0);
   const tick = useCallback(() => forceUpdate((n) => n + 1), []);
   const managerRef = useRef<ProcessManager | null>(null);
@@ -873,7 +873,7 @@ function App() {
 
   // Global quit
   useInput((input) => {
-    if (input === 'q' && view.kind === 'examples') {
+    if (input === 'q' && view.kind === 'showcase') {
       manager.stopAll();
       setTimeout(() => exit(), 500);
     }
@@ -883,7 +883,7 @@ function App() {
     <Box flexDirection="column" padding={1}>
       <Header runningCount={manager.getRunningCount()} />
 
-      {view.kind === 'examples' && (
+      {view.kind === 'showcase' && (
         <ExampleListView
           examples={examples.current}
           manager={manager}
@@ -896,7 +896,7 @@ function App() {
         <ExampleDetailView
           example={view.example}
           manager={manager}
-          onBack={() => setView({ kind: 'examples' })}
+          onBack={() => setView({ kind: 'showcase' })}
           onViewLogs={(pid) => setView({ kind: 'logs', processId: pid })}
         />
       )}
@@ -914,7 +914,7 @@ function App() {
                 return;
               }
             }
-            setView({ kind: 'examples' });
+            setView({ kind: 'showcase' });
           }}
         />
       )}
@@ -922,7 +922,7 @@ function App() {
       {view.kind === 'processes' && (
         <ProcessesView
           manager={manager}
-          onBack={() => setView({ kind: 'examples' })}
+          onBack={() => setView({ kind: 'showcase' })}
           onViewLogs={(pid) => setView({ kind: 'logs', processId: pid })}
         />
       )}

@@ -22,25 +22,25 @@ Already packed and ready to go! [Download example.zip](/downloads/example.zip) a
 
 The workflow chains three nodes across different modules: an **Activepieces** node for text generation, an **n8n** node for text-to-speech, and a **script** node for saving locally. Each node references the previous node's output via <code v-pre>{{&lt;id&gt;}}</code>.
 
-<<< @/../examples/mixed/habit.yaml
+<<< @/../showcase/mixed/habit.yaml
 
 <HabitViewer :content="mixedHabitYaml" :hide-controls="true" :fit-view="true" :height="800" />
 
 <script setup>
-import mixedHabitYaml from '../../examples/mixed/habit.yaml?raw'
+import mixedHabitYaml from '../../showcase/mixed/habit.yaml?raw'
 </script>
 
 ## Configuration
 
 Create `stack.yaml` to define the server settings and workflow paths:
 
-<<< @/../examples/mixed/stack.yaml
+<<< @/../showcase/mixed/stack.yaml
 
 ## Environment Variables
 
 Create a `.env` file for secrets:
 
-<<< @/../examples/mixed/.env.example
+<<< @/../showcase/mixed/.env.example
 
 ## Run the Habit
 

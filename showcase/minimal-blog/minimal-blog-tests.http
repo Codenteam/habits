@@ -14,10 +14,10 @@
 #   6. List posts and verify the post is deleted
 #
 # Start the server:
-#   npx nx dev @ha-bits/cortex --config examples/minimal-blog/stack.yaml
+#   npx nx dev @ha-bits/cortex --config showcase/minimal-blog/stack.yaml
 #
 # Run all tests in order:
-#   cd /path/to/habits && httpyac examples/minimal-blog/minimal-blog-tests.http --all
+#   cd /path/to/habits && httpyac showcase/minimal-blog/minimal-blog-tests.http --all
 #
 # =============================================================================
 

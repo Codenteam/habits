@@ -64,7 +64,7 @@ cortex convert -i ./workflow.json -o ./habits.yaml --env  # Generate .env templa
 ### Local Development
 
 ```bash
-pnpm nx dev @ha-bits/cortex --config examples/mixed/stack.yaml
+pnpm nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml
 ```
 
 ## API Endpoints

@@ -3,10 +3,10 @@
 # Test the hello-world habit using bit-hello-world module.
 #
 # Prerequisites:
-# - Start cortex server: pnpm nx dev @ha-bits/cortex --config examples/hello-world/stack.yaml
+# - Start cortex server: pnpm nx dev @ha-bits/cortex --config showcase/hello-world/stack.yaml
 #
 # Usage:
-#   cd habits && httpyac examples/hello-world/test-hello-world.http --all
+#   cd habits && httpyac showcase/hello-world/test-hello-world.http --all
 
 @baseUrl = http://localhost:13000
 

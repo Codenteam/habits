@@ -6,11 +6,11 @@
 # - multipleBranch: All matching branches execute
 #
 # Start server first:
-#   cd examples/bit-if-branch-test
+#   cd showcase/bit-if-branch-test
 #   npx nx dev @ha-bits/cortex --config stack.yaml
 #
 # Or from workspace root:
-#   nohup npx nx dev @ha-bits/cortex --config examples/bit-if-branch-test/stack.yaml &
+#   nohup npx nx dev @ha-bits/cortex --config showcase/bit-if-branch-test/stack.yaml &
 ###############################################################################
 
 @baseUrl = http://localhost:3001

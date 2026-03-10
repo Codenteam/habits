@@ -24,7 +24,7 @@ EOF
 ## 3. Run Cortex
 
 ```bash
-pnpm nx dev @ha-bits/cortex --config ./examples/activepieces-imap-trigger/stack.yaml
+pnpm nx dev @ha-bits/cortex --config ./showcase/activepieces-imap-trigger/stack.yaml
 ```
 
 The trigger hooks immediately and fetches emails from GreenMail.

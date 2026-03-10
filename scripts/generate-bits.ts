@@ -32,7 +32,7 @@ import { parse as parseYaml } from 'yaml';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 const bitsDir = join(rootDir, 'nodes/bits/@ha-bits');
-const examplesDir = join(rootDir, 'examples');
+const examplesDir = join(rootDir, 'showcase');
 const docsDir = join(rootDir, 'docs');
 const bitsPagesDir = join(docsDir, 'bits');
 const dataDir = join(docsDir, '.vitepress/theme/data');
@@ -513,7 +513,7 @@ function findShowcasesUsingBit(packageName: string): string[] {
   const showcases: string[] = [];
   
   try {
-    // Scan all yaml files in examples/
+    // Scan all yaml files in showcase/
     const yamlFiles = globSync('**/*.yaml', { cwd: examplesDir, absolute: true });
     
     for (const yamlFile of yamlFiles) {

@@ -64,11 +64,11 @@ const screenshots = [
   { img: '/images/base.webp', caption: 'Habits Base (Builder)', link: '/getting-started/introduction#habits-base-screenshot' },
   { img: '/images/base-frontend.webp', caption: 'Habits Base UI Editor (Frontend Builder)', link: '/getting-started/introduction#habits-base-frontend-screenshot' },
   { img: '/images/cortex.webp', caption: 'Cortex Engine', link: '/deep-dive/running#cortex-engine-screenshot' },
-  { img: '/images/mixed.webp', caption: 'Mix bits, n8n, ActivePieces and scripts', link: '/examples/mixed#mixed-frameworks-screenshot' },
+  { img: '/images/mixed.webp', caption: 'Mix bits, n8n, ActivePieces and scripts', link: '/showcase/mixed#mixed-frameworks-screenshot' },
   { img: '/images/swagger.webp', caption: 'OpenAPI Swagger', link: '/deep-dive/running#swagger-screenshot' },
-  { img: '/images/mixed-frontend.webp', caption: 'Text to Audio Example', link: '/examples/mixed#text-to-audio-screenshot' },
-  { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/examples/minimal-blog#minimal-blog-screenshot' },
-  { img: '/images/marketing-campaign.webp', caption: 'Marketing Campaign', link: '/examples/marketing-campaign' },
+  { img: '/images/mixed-frontend.webp', caption: 'Text to Audio Example', link: '/showcase/mixed#text-to-audio-screenshot' },
+  { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/showcase/minimal-blog#minimal-blog-screenshot' },
+  { img: '/images/marketing-campaign.webp', caption: 'Marketing Campaign', link: '/showcase/marketing-campaign' },
 ]
 
 // Featured showcase items to display on homepage (slugs only)
@@ -97,7 +97,7 @@ const useCases = ref([
   {
     id: 'backend',
     need: 'a backend',
-    solution: 'Use {{habits.input.param}} for dynamic APIs',
+    solution: 'Use {{habits.input.param}} to hook HTTP request',
     icon: 'server',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     example: 'POST /api → habits.input → response'
@@ -119,36 +119,20 @@ const useCases = ref([
     example: 'prompt → agent → autonomous tasks'
   },
   {
-    id: 'mobile',
-    need: 'a mobile app',
-    solution: 'Generate UI, pack as Android or iOS',
+    id: 'app',
+    need: 'a mobile or desktop app',
+    solution: 'Pack for Android, iOS, Windows, Mac, Linux',
     icon: 'smartphone',
     gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    example: 'logic → UI → .apk / .ipa'
+    example: 'logic → pack → .apk / .exe / .dmg'
   },
   {
-    id: 'desktop',
-    need: 'a desktop app',
-    solution: 'Pack with Tauri for Windows, Mac, Linux',
-    icon: 'monitor',
-    gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    example: 'logic → pack → .exe / .dmg'
-  },
-  {
-    id: 'docker',
-    need: 'a Docker image',
-    solution: 'Export directly from Habits Base',
-    icon: 'box',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    example: 'habit → export → docker run'
-  },
-  {
-    id: 'serverless',
-    need: 'serverless',
-    solution: 'Export as files or Docker for any platform',
+    id: 'deploy',
+    need: 'to deploy anywhere',
+    solution: 'Export as Docker, serverless, or standalone',
     icon: 'cloud',
     gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-    example: 'logic → export → AWS / Vercel'
+    example: 'habit → export → AWS / Docker / Vercel'
   }
 ])
 
@@ -359,7 +343,7 @@ const hoveredUseCase = ref(null)
       <div class="showcase-header">
         <h2>Featured Showcase</h2>
         <p>Habits you can run, customize, and learn from</p>
-        <a :href="withBase('/showcase/')" class="view-all-link">View all examples →</a>
+        <a :href="withBase('/showcase/')" class="view-all-link">View All →</a>
       </div>
       <div class="showcase-row">
         <ShowcaseCard v-for="item in showcaseItems" :key="item.slug" :example="item" />
@@ -1061,7 +1045,7 @@ const hoveredUseCase = ref(null)
 
 .use-cases-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
@@ -1138,8 +1122,15 @@ const hoveredUseCase = ref(null)
   text-overflow: ellipsis;
 }
 
-.use-case-need::before {
+.use-case-card:first-child .use-case-need::before {
   content: 'If you need ';
+  font-weight: 400;
+  color: var(--vp-c-text-3);
+  font-size: 0.75rem;
+}
+
+.use-case-card:not(:first-child) .use-case-need::before {
+  content: 'Then if you need ';
   font-weight: 400;
   color: var(--vp-c-text-3);
   font-size: 0.75rem;
@@ -1426,6 +1417,10 @@ const hoveredUseCase = ref(null)
   justify-content: center;
   border-radius: 50%;
   z-index: 1;
+
+  border: 1px solid var(--vp-c-divider);
+  border-right-width: 0;
+  border-left-width: 0;
 }
 
 .grid-plus.center {
@@ -1435,26 +1430,26 @@ const hoveredUseCase = ref(null)
 }
 
 .grid-plus.top {
-  top: calc(25% - 6px);
+  top: calc(25% - 15px);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .grid-plus.bottom {
-  top: calc(75% + 6px);
+  top: calc(75% - 10px);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .grid-plus.left {
   top: 50%;
-  left: calc(25% - 6px);
+  left: calc(25% - 15px);
   transform: translateY(-50%);
 }
 
 .grid-plus.right {
   top: 50%;
-  left: calc(75% + 6px);
+  left: calc(75% - 10px);
   transform: translateY(-50%);
 }
 

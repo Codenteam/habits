@@ -34,8 +34,8 @@ function findWorkspaceRoot(): string {
 }
 
 const WORKSPACE_ROOT = findWorkspaceRoot();
-const IMAP_SMTP_JSON_PATH = path.join(WORKSPACE_ROOT, 'examples/activepieces-export/imap_stmp_activepieces.json');
-const EXPECTED_HABIT_YAML_PATH = path.join(WORKSPACE_ROOT, 'examples/activepieces-export/habit.yaml');
+const IMAP_SMTP_JSON_PATH = path.join(WORKSPACE_ROOT, 'showcase/activepieces-export/imap_stmp_activepieces.json');
+const EXPECTED_HABIT_YAML_PATH = path.join(WORKSPACE_ROOT, 'showcase/activepieces-export/habit.yaml');
 
 // ============================================================================
 // Types

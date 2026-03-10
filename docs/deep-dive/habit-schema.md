@@ -104,12 +104,12 @@ See complete working examples:
 
 ::: code-group
 
-<<< @/../examples/mixed/habit.yaml [Mixed Workflow]
+<<< @/../showcase/mixed/habit.yaml [Mixed Workflow]
 
-<<< @/../examples/mixed/stack.yaml [Stack Config]
+<<< @/../showcase/mixed/stack.yaml [Stack Config]
 
 
-<<< @/../examples/basic-habit/habit.yaml [Script Workflow]
+<<< @/../showcase/basic-habit/habit.yaml [Script Workflow]
 
 :::
 
@@ -117,4 +117,4 @@ See complete working examples:
 
 - [Creating Habits](/deep-dive/creating) - Build workflows visually or as code
 - [Running Automations](/deep-dive/running) - Execute and monitor workflows
-- [Examples](/showcase/) - Browse complete examples
+- [Showcase](/showcase/) - Browse complete showcase

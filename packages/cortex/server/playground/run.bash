@@ -1,6 +1,6 @@
 # Run: bash packages/cortex/server/playground/run.bash -r
-# Run with a different example: bash packages/cortex/server/playground/run.bash -r --config=--config ./examples/marketing-campaign/config.json
-# Run with a different example: bash packages/cortex/server/playground/run.bash --rebuild --config=--config ./examples/marketing-campaign/config.json
+# Run with a different example: bash packages/cortex/server/playground/run.bash -r --config=--config ./showcase/marketing-campaign/config.json
+# Run with a different example: bash packages/cortex/server/playground/run.bash --rebuild --config=--config ./showcase/marketing-campaign/config.json
 
 # Possible examples: n8n-top-6
 

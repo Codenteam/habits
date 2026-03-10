@@ -4,8 +4,8 @@ This guide covers all the ways to create habits: writing YAML/JSON directly (Hab
 
 
 <script setup>
-import helloWorldHabitYaml from '../../examples/hello-world/habit.yaml?raw'
-import helloWorldStackYaml from '../../examples/hello-world/stack.yaml?raw'
+import helloWorldHabitYaml from '../../showcase/hello-world/habit.yaml?raw'
+import helloWorldStackYaml from '../../showcase/hello-world/stack.yaml?raw'
 </script>
 
 
@@ -22,9 +22,9 @@ The most powerful way to create habits is writing them directly as YAML or JSON 
 
 ::: code-group
 
-<<< @/../examples/hello-world/habit.yaml [habit.yaml]
+<<< @/../showcase/hello-world/habit.yaml [habit.yaml]
 
-<<< @/../examples/hello-world/stack.yaml [stack.yaml]
+<<< @/../showcase/hello-world/stack.yaml [stack.yaml]
 
 :::
 

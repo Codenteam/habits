@@ -71,11 +71,11 @@ function initSSE(res: Response): () => void {
 
 function resolveWorkspaceRoot(): string {
   const cwd = process.cwd();
-  if (fs.existsSync(path.join(cwd, 'examples'))) return cwd;
+  if (fs.existsSync(path.join(cwd, 'showcase'))) return cwd;
   let dir = __dirname;
   for (let i = 0; i < 5; i++) {
     dir = path.dirname(dir);
-    if (fs.existsSync(path.join(dir, 'examples'))) return dir;
+    if (fs.existsSync(path.join(dir, 'showcase'))) return dir;
   }
   return cwd;
 }
@@ -181,7 +181,7 @@ export class CreatorController {
   private guardMissingReferences(res: Response): boolean {
     const root = resolveWorkspaceRoot();
     const bitsDir = path.join(root, 'nodes', 'bits', '@ha-bits');
-    const examplesDir = path.join(root, 'examples');
+    const examplesDir = path.join(root, 'showcase');
 
     const missingBits = !fs.existsSync(bitsDir);
     const missingExamples = !fs.existsSync(examplesDir);
@@ -322,7 +322,7 @@ export class CreatorController {
 
     try {
       const root = resolveWorkspaceRoot();
-      const examplesDir = path.join(root, 'examples');
+      const examplesDir = path.join(root, 'showcase');
       const schemaFile = path.join(root, 'schemas', 'habits.schema.yaml');
       const bitsDir = path.join(root,  'nodes', 'bits', '@ha-bits');
 

@@ -136,7 +136,7 @@ Content-Type: application/json
 ###############################################################################
 # 5. Evolution API Workflow
 # Run this to get it working using docker:
-#   docker compose -f examples/n8n-top-6/evolution/docker-compose.yml up -d
+#   docker compose -f showcase/n8n-top-6/evolution/docker-compose.yml up -d
 # Or: docker run -d -p 8080:8080 --name evolution-api -e AUTHENTICATION_API_KEY=test123 atendai/evolution-api:latest
 
 

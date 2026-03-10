@@ -8,7 +8,7 @@
         <input 
           v-model="searchQuery"
           type="text" 
-          placeholder="Search examples..."
+          placeholder="Search Showcase..."
           class="search-input"
         />
         <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''">
@@ -72,23 +72,23 @@
     
     <!-- Results Summary -->
     <div class="results-summary">
-      <span v-if="filteredExamples.length === examples.length">
-        Showing all {{ examples.length }} examples
+      <span v-if="filteredShowcases.length === showcases.length">
+        Showing all {{ showcases.length }}
       </span>
-      <span v-else-if="filteredExamples.length === 0">
-        No examples match your filters
+      <span v-else-if="filteredShowcases.length === 0">
+        No Showcase items match your filters
       </span>
       <span v-else>
-        Showing {{ filteredExamples.length }} of {{ examples.length }} examples
+        Showing {{ filteredShowcases.length }} of {{ showcases.length }} Showcase items
       </span>
     </div>
     
     <!-- Cards Grid -->
-    <div class="cards-grid" v-if="paginatedExamples.length > 0">
+    <div class="cards-grid" v-if="paginatedShowcases.length > 0">
       <ShowcaseCard 
-        v-for="example in paginatedExamples"
-        :key="example.slug"
-        :example="example"
+        v-for="showcase in paginatedShowcases"
+        :key="showcase.slug"
+        :example="showcase"
       />
     </div>
     
@@ -97,7 +97,7 @@
       <div class="empty-icon">
         <Search :size="48" />
       </div>
-      <h3>No examples found</h3>
+      <h3>No Showcase items found</h3>
       <p>Try adjusting your search or filters</p>
       <button class="reset-btn" @click="clearAllFilters">
         Reset filters
@@ -187,7 +187,7 @@ const tagIcons: Record<string, any> = {
   integration: Link2,
 }
 
-interface Example {
+interface Showcase {
   slug: string
   name: string
   description: string
@@ -199,7 +199,7 @@ interface Example {
 }
 
 const props = defineProps<{
-  examples: Example[]
+  showcases: Showcase[]
 }>()
 
 const ITEMS_PER_PAGE = 12
@@ -218,7 +218,7 @@ const difficulties = ['beginner', 'intermediate', 'advanced'] as const
 // Computed
 const availableTags = computed(() => {
   const tags = new Set<string>()
-  props.examples.forEach(ex => ex.tags.forEach(t => tags.add(t)))
+  props.showcases.forEach(ex => ex.tags.forEach(t => tags.add(t)))
   return Array.from(tags).sort()
 })
 
@@ -234,8 +234,8 @@ const hasActiveFilters = computed(() => {
   return searchQuery.value || selectedTags.value.length > 0 || selectedDifficulty.value
 })
 
-const filteredExamples = computed(() => {
-  let results = [...props.examples]
+const filteredShowcases = computed(() => {
+  let results = [...props.showcases]
   
   // Search filter
   if (searchQuery.value) {
@@ -268,12 +268,12 @@ const filteredExamples = computed(() => {
 })
 
 const totalPages = computed(() => 
-  Math.ceil(filteredExamples.value.length / ITEMS_PER_PAGE)
+  Math.ceil(filteredShowcases.value.length / ITEMS_PER_PAGE)
 )
 
-const paginatedExamples = computed(() => {
+const paginatedShowcases = computed(() => {
   const start = (currentPage.value - 1) * ITEMS_PER_PAGE
-  return filteredExamples.value.slice(start, start + ITEMS_PER_PAGE)
+  return filteredShowcases.value.slice(start, start + ITEMS_PER_PAGE)
 })
 
 const visiblePages = computed(() => {

@@ -101,10 +101,10 @@ my-automation/
 └── habit.yaml
 ```
 
-See the [mixed example](examples/mixed) for a complete working setup:
-- [stack.yaml](examples/mixed/stack.yaml) - Server configuration and workflow paths
-- [habit.yaml](examples/mixed/habit.yaml) - Workflow definition with nodes
-- [.env.example](examples/mixed/.env.example) - Environment variables template
+See the [mixed example](showcase/mixed) for a complete working setup:
+- [stack.yaml](showcase/mixed/stack.yaml) - Server configuration and workflow paths
+- [habit.yaml](showcase/mixed/habit.yaml) - Workflow definition with nodes
+- [.env.example](showcase/mixed/.env.example) - Environment variables template
 
 ### Run the Server
 
@@ -144,15 +144,15 @@ Habits is composed of two main components:
 
 | Example | Description | Key Features |
 |---------|-------------|--------------|
-| [Mixed](examples/mixed) | Multi-framework demo | OpenAI + ElevenLabs + local save |
-| [Minimal Blog](examples/minimal-blog) | Blog API backend | CRUD endpoints + database |
-| [Email Classification](examples/email-classification) | Smart email router | Branching logic, IMAP/HTTP input |
-| [AI Cookbook](examples/ai-cookbook) | AI recipe generator | Ingredients to recipes, images |
+| [Mixed](showcase/mixed) | Multi-framework demo | OpenAI + ElevenLabs + local save |
+| [Minimal Blog](showcase/minimal-blog) | Blog API backend | CRUD endpoints + database |
+| [Email Classification](showcase/email-classification) | Smart email router | Branching logic, IMAP/HTTP input |
+| [AI Cookbook](showcase/ai-cookbook) | AI recipe generator | Ingredients to recipes, images |
 
 Run any example:
 
 ```bash
-cd examples/mixed
+cd showcase/mixed
 npx habits@latest cortex --config ./stack.yaml
 ```
 
@@ -233,7 +233,7 @@ cd habits
 pnpm install
 
 # Run Cortex in dev mode
-pnpm nx dev @ha-bits/cortex --config examples/mixed/stack.yaml
+pnpm nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml
 
 # Run Base (visual builder)
 pnpm nx dev @ha-bits/base
@@ -249,7 +249,7 @@ habits/
 │   ├── bits/        # Custom nodes
 │   ├── core/        # Shared utilities
 │   └── habits/      # CLI tool
-├── examples/        # Example workflows
+├── showcase/        # Example workflows
 ├── docs/            # Documentation
 └── schemas/         # YAML/JSON schemas
 ```

@@ -79,7 +79,7 @@ CLAUDE_API_KEY=sk-ant-… \
 pnpm nx dev @ha-bits/base
 ```
 
-The AI uses the `nodes/bits/@ha-bits/` directory (bit modules) and `examples/` directory (reference habits) to understand how to build new habits properly.
+The AI uses the `nodes/bits/@ha-bits/` directory (bit modules) and `showcase/` directory (reference habits) to understand how to build new habits properly.
 :::
 
 ## Step 1: Open the Generate Modal

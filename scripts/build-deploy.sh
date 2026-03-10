@@ -11,4 +11,4 @@ cd ..
 
 
 ./scripts/sync-directory.sh "habits/dist/packages/cortex" "intersect-dev_intersect-habits-business" ""
-./scripts/sync-directory.sh "habits/examples/business-intersect-embed" "intersect-dev_intersect-habits-business" ""
+./scripts/sync-directory.sh "habits/showcase/business-intersect-embed" "intersect-dev_intersect-habits-business" ""

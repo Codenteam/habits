@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'examples/**'
+      - 'showcase/**'
       - 'packages/habit-viewer/**'
       - 'packages/workflow-canvas/**'
       - '.github/workflows/deploy-docs.yml'
@@ -61,13 +61,13 @@ jobs:
 
       - name: Copy all example YAML files for HabitViewer
         run: |
-          # Copy all YAML files from examples/ to docs/public/examples/ maintaining directory structure
+          # Copy all YAML files from showcase/ to docs/public/showcase/ maintaining directory structure
           mkdir -p docs/public/examples
           cd examples
           find . -name "*.yaml" -o -name "*.yml" | while read file; do
             dir=$(dirname "$file")
-            mkdir -p "../docs/public/examples/$dir"
-            cp "$file" "../docs/public/examples/$file"
+            mkdir -p "../docs/public/showcase/$dir"
+            cp "$file" "../docs/public/showcase/$file"
           done
           cd ..
       
@@ -78,14 +78,14 @@ jobs:
       - name: Copy example demo folders (screenshots)
         run: |
           # Copy demo folders with screenshots for documentation
-          if [ -d "examples/ai-cookbook/demo" ]; then
-            mkdir -p docs/public/examples/ai-cookbook
-            cp -r examples/ai-cookbook/demo docs/public/examples/ai-cookbook/
+          if [ -d "showcase/ai-cookbook/demo" ]; then
+            mkdir -p docs/public/showcase/ai-cookbook
+            cp -r showcase/ai-cookbook/demo docs/public/showcase/ai-cookbook/
           fi
           
-          if [ -d "examples/ai-journal/demo" ]; then
-            mkdir -p docs/public/examples/ai-journal
-            cp -r examples/ai-journal/demo docs/public/examples/ai-journal/
+          if [ -d "showcase/ai-journal/demo" ]; then
+            mkdir -p docs/public/showcase/ai-journal
+            cp -r showcase/ai-journal/demo docs/public/showcase/ai-journal/
           fi
 
       - name: Build documentation

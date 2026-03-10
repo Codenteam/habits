@@ -49,11 +49,11 @@ export function getTemplatesBasePath(): string {
   
   // Templates are stored in examples (dev) or examples (npx)
   const possiblePaths = [
-    path.join(__dirname, '../../../cortex/server/examples'),           // Dev: relative to server src
-    path.join(__dirname, '../../cortex/server/examples'),              // Dev: another relative path
-    path.join(process.cwd(), 'examples'),       // Dev: from workspace root
-    path.join(__dirname, '../examples'),                               // npx: relative to base-server/index.cjs
-    path.join(__dirname, '../../examples'),                            // npx: another relative path
+    path.join(__dirname, '../../../cortex/server/examshowcaseples'),           // Dev: relative to server src
+    path.join(__dirname, '../../cortex/server/showcase'),              // Dev: another relative path
+    path.join(process.cwd(), 'showcase'),       // Dev: from workspace root
+    path.join(__dirname, '../showcase'),                               // npx: relative to base-server/index.cjs
+    path.join(__dirname, '../../showcase'),                            // npx: another relative path
     path.join(__dirname, 'templates'),                                  // Prod: bundled templates
   ];
   

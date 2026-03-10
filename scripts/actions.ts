@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const PROJECT_ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
-const EXAMPLES_DIR = path.join(PROJECT_ROOT, 'examples');
+const EXAMPLES_DIR = path.join(PROJECT_ROOT, 'showcase');
 const SKIP_DIRS = ['unit-tests', 'bits', 'docs', 'test-script', 'logs', 'node_modules'];
 
 export const c = { red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', blue: '\x1b[34m', cyan: '\x1b[36m', gray: '\x1b[90m', reset: '\x1b[0m', bold: '\x1b[1m', dim: '\x1b[2m' };
@@ -53,7 +53,7 @@ export const packBase = () => run('pnpm nx pack @ha-bits/base');
 export const packAll = () => { packHabits(); packCortex(); packBase(); };
 
 // Pack formats
-const DEFAULT_CONFIG = 'examples/mixed/stack.yaml';
+const DEFAULT_CONFIG = 'showcase/mixed/stack.yaml';
 const DEFAULT_BACKEND = 'http://localhost:3000';
 export const packSea = (config = DEFAULT_CONFIG) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format single-executable -o /tmp/habits-sea`);
 export const packDesktop = (config = DEFAULT_CONFIG, backendUrl = DEFAULT_BACKEND) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format desktop --backend-url ${backendUrl} --desktop-platform dmg -o /tmp/habits-desktop`);
@@ -96,7 +96,7 @@ export const npmLogin = () => run('npm login --registry https://registry.npmjs.o
 export const npmWhoami = () => run('npm whoami --registry https://registry.npmjs.org/');
 
 // Dev servers
-export const devCortex = (config = 'examples/mixed/stack.yaml') => run(`pnpm nx cortex habits --config ${config}`);
+export const devCortex = (config = 'showcase/mixed/stack.yaml') => run(`pnpm nx cortex habits --config ${config}`);
 export const devBase = () => run('pnpm nx dev @ha-bits/base');
 
 // Run example

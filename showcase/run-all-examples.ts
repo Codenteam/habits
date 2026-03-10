@@ -13,7 +13,7 @@
  *   logs/{example}/yaml-tests.log  - YAML test results (.test.yaml files)
  * 
  * Usage:
- *   npx tsx examples/run-all-examples.ts [options]
+ *   npx tsx showcase/run-all-examples.ts [options]
  * 
  * Options:
  *   --only <name>        Only run specific example(s) (comma-separated)
@@ -185,7 +185,7 @@ function printHelp(): void {
 ${c.bold}Habits Examples Test Runner${c.reset}
 
 ${c.cyan}Usage:${c.reset}
-  npx tsx examples/run-all-examples.ts [options]
+  npx tsx showcase/run-all-examples.ts [options]
 
 ${c.cyan}Options:${c.reset}
   --only <name>        Only run specific example(s) (comma-separated)
@@ -202,9 +202,9 @@ ${c.cyan}Output:${c.reset}
   logs/summary.txt                Overall summary
 
 ${c.cyan}Examples:${c.reset}
-  npx tsx examples/run-all-examples.ts
-  npx tsx examples/run-all-examples.ts --only hello-world,mixed
-  npx tsx examples/run-all-examples.ts --skip activepieces-export
+  npx tsx showcase/run-all-examples.ts
+  npx tsx showcase/run-all-examples.ts --only hello-world,mixed
+  npx tsx showcase/run-all-examples.ts --skip activepieces-export
 `);
 }
 

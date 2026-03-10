@@ -51,7 +51,7 @@ Pass habit content and rendering options via URL query parameters:
 
 The viewer accepts habits in YAML or JSON format. Here's a minimal example:
 
-<<< @/../examples/docs/example-habit/habit.yaml
+<<< @/../showcase/docs/example-habit/habit.yaml
 
 <HabitViewer :content="exampleHabitYaml" :hide-controls="false" :fit-view="true" :height="400" />
 
@@ -110,7 +110,7 @@ Nodes are colored based on their framework and type:
 
 ### Node Colors Example
 
-<<< @/../examples/docs/framework-colors-demo/habit.yaml
+<<< @/../showcase/docs/framework-colors-demo/habit.yaml
 
 <HabitViewer :content="frameworkColorsDemoYaml" :hide-controls="false" :fit-view="true" :height="500" />
 
@@ -135,7 +135,7 @@ This example shows the viewer embedded with `hideControls=true` for a cleaner lo
 
 
 <script setup>
-import exampleHabitYaml from '../../examples/docs/example-habit/habit.yaml?raw'
-import frameworkColorsDemoYaml from '../../examples/docs/framework-colors-demo/habit.yaml?raw'
-import embeddedDemoYaml from '../../examples/docs/embedded-demo/habit.yaml?raw'
+import exampleHabitYaml from '../../showcase/docs/example-habit/habit.yaml?raw'
+import frameworkColorsDemoYaml from '../../showcase/docs/framework-colors-demo/habit.yaml?raw'
+import embeddedDemoYaml from '../../showcase/docs/embedded-demo/habit.yaml?raw'
 </script>

@@ -26,7 +26,7 @@ const commands = computed(() => {
     {
       label: 'Local Dev',
       description: 'Run from local workspace for development, recommended if you develop Habits itself and have the source-code locally',
-      cmd: `npx nx dev @ha-bits/cortex --config examples/${path}/stack.yaml`
+      cmd: `npx nx dev @ha-bits/cortex --config showcase/${path}/stack.yaml`
     }
   ]
 })

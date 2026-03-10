@@ -1308,7 +1308,7 @@ import { createTrigger } from '@ha-bits/bits';
 ```
 
 <script setup>
-import automatedReportingYaml from '../../examples/docs/automated-reporting/habit.yaml?raw'
-import mixedNodesMigrationYaml from '../../examples/docs/mixed-nodes-migration/habit.yaml?raw'
+import automatedReportingYaml from '../../showcase/docs/automated-reporting/habit.yaml?raw'
+import mixedNodesMigrationYaml from '../../showcase/docs/mixed-nodes-migration/habit.yaml?raw'
 </script>
 

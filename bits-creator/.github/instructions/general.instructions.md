@@ -9,14 +9,14 @@ Provide project context and coding guidelines that AI should follow when generat
 
 ## Server Management
 
-- When running Cortex server and sending requests in the same script/session, always use `nohup` with `&` to run the server in the background: nohup npx nx dev @ha-bits/cortex --config examples/mixed/stack.yaml &
+- When running Cortex server and sending requests in the same script/session, always use `nohup` with `&` to run the server in the background: nohup npx nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml &
 - This prevents the server from terminating when subsequent commands are executed.
 
 ## API Testing
 
 - Prefer using `.http` files with httpyac for testing Cortex API endpoints instead of `curl` if a file exists
 
-- If you need to test a habit, test examples/mixed/stack.yaml or examples/marketing-campaign/stack.yaml
+- If you need to test a habit, test showcase/mixed/stack.yaml or showcase/marketing-campaign/stack.yaml
 
 - If you need to test habits app, run the server with either npx habits@latest for the npm version or npx nx <action> habits for the local version. 
 
@@ -83,7 +83,7 @@ pkill -f habits
 **Cortex Mode Test with httpyac:**
 ```bash
 # Start server from /tmp with config from dist (emulates remote npx)
-cd /tmp && nohup npx /path/to/habits/dist/packages/habits cortex --config /path/to/habits/dist/packages/habits/examples/mixed/stack.yaml > /tmp/habits-cortex.log 2>&1 &
+cd /tmp && nohup npx /path/to/habits/dist/packages/habits cortex --config /path/to/habits/dist/packages/habits/showcase/mixed/stack.yaml > /tmp/habits-cortex.log 2>&1 &
 sleep 10  # Needs longer for module preload
 
 # Run httpyac tests (MUST run from workspace root)
@@ -122,7 +122,7 @@ pkill -f habits
   **Cortex Mode Test:**
   ```bash
   # Start server with example config
-  cd /tmp && nohup npx /path/to/habits/dist/packages/habits cortex --config /path/to/habits/dist/packages/habits/examples/mixed/stack.yaml > /tmp/habits-cortex.log 2>&1 &
+  cd /tmp && nohup npx /path/to/habits/dist/packages/habits cortex --config /path/to/habits/dist/packages/habits/showcase/mixed/stack.yaml > /tmp/habits-cortex.log 2>&1 &
   sleep 10  # Longer wait for module preload
   
   # Test endpoints:
@@ -139,7 +139,7 @@ pkill -f habits
 - If I ask you "test all habits scenarios published in npx", you should:
   1. Clear npx cache if needed: `rm -rf ~/.npm/_npx`
   2. Test with `npx habits@latest base` and `npx habits@latest cortex --config <path>`
-  3. For cortex, use example from the package: `~/.npm/_npx/*/node_modules/habits/examples/mixed/stack.yaml`
+  3. For cortex, use example from the package: `~/.npm/_npx/*/node_modules/habits/showcase/mixed/stack.yaml`
 This can be done with latest or @next based on my request
 
 

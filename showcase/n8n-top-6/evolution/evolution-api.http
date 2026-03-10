@@ -3,7 +3,7 @@
 #
 # Prerequisites:
 # 1. Run Evolution API:
-#    docker compose -f examples/n8n-top-6/evolution/docker-compose.yml up -d
+#    docker compose -f showcase/n8n-top-6/evolution/docker-compose.yml up -d
 #
 # 2. Update .env with your phone number and instance name
 # 3. For Twilio WhatsApp Business, fill in HABITS_TWILIO_* credentials

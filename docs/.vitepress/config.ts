@@ -76,8 +76,7 @@ export default defineConfig({
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
         ]
-      },
-            {
+      },      {
         text: 'Deep Dive',
         items: [
           // { text: 'Habits Schema: Understanding Habits', link: '/deep-dive/habit-schema' },
@@ -169,6 +168,9 @@ export default defineConfig({
     editLink: {
       pattern: 'https://github.com/codenteam/habits/edit/main/docs/:path',
       text: 'Edit this page on GitHub'
-    }
+    },
+  },
+  sitemap: {
+    hostname: 'https://codenteam.com/intersect/habits'
   }
 })

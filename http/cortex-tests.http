@@ -6,9 +6,9 @@
 # =============================================================================
 # 
 # This file tests all Cortex mode endpoints when running:
-#   npx habits cortex --config ./examples/mixed/stack.yaml
+#   npx habits cortex --config ./showcase/mixed/stack.yaml
 #   OR
-#   npx ./dist/packages/habits cortex --config ./dist/packages/habits/examples/mixed/stack.yaml (local testing)
+#   npx ./dist/packages/habits cortex --config ./dist/packages/habits/showcase/mixed/stack.yaml (local testing)
 #
 # Run all tests:
 #   httpyac http/cortex-tests.http --all

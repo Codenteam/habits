@@ -54,11 +54,11 @@ WHATSAPP_PHONE=+1234567890
 
 ```bash
 # Local source (bits from workspace)
-npx habits cortex --config examples/email-classification/stack.yaml
+npx habits cortex --config showcase/email-classification/stack.yaml
 
 # NPM source (bits from private registry)
 export HABITS_NPM_REGISTRY_URL=http://localhost:4873
-npx habits cortex --config examples/email-classification/stack-npm.yaml
+npx habits cortex --config showcase/email-classification/stack-npm.yaml
 ```
 
 ## Files
@@ -78,7 +78,7 @@ cd docker && docker compose up -d
 
 Run the Greenmail test workflow:
 ```bash
-npx habits cortex --config examples/email-classification/stack-greenmail.yaml
+npx habits cortex --config showcase/email-classification/stack-greenmail.yaml
 ```
 
 Execute via API:

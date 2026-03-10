@@ -11,7 +11,7 @@ The simplest way to test is with the Everything MCP server, which requires no au
 export OPENAI_API_KEY=sk-...
 
 # Run the server
-npx nx dev @ha-bits/cortex --config examples/agent-mcp-demo/stack.yaml
+npx nx dev @ha-bits/cortex --config showcase/agent-mcp-demo/stack.yaml
 
 # Test (in another terminal)
 curl -X POST http://localhost:13000/api/agent-mcp-search \
@@ -25,7 +25,7 @@ To use Google Drive and Slack MCPs, you need to configure credentials:
 
 1. Copy `.env.example` to `.env`:
    ```bash
-   cp examples/agent-mcp-demo/.env.example examples/agent-mcp-demo/.env
+   cp showcase/agent-mcp-demo/.env.example showcase/agent-mcp-demo/.env
    ```
 
 2. Edit `.env` with your credentials:
@@ -35,7 +35,7 @@ To use Google Drive and Slack MCPs, you need to configure credentials:
 
 3. Run the server with env file:
    ```bash
-   npx nx dev @ha-bits/cortex --config examples/agent-mcp-demo/stack.yaml --env examples/agent-mcp-demo/.env
+   npx nx dev @ha-bits/cortex --config showcase/agent-mcp-demo/stack.yaml --env showcase/agent-mcp-demo/.env
    ```
 
 ## Available MCP Presets
