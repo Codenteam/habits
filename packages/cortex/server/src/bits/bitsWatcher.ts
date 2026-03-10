@@ -4,9 +4,8 @@
  * Handles bits module triggers (polling, webhook, app webhook).
  */
 
-import { inspect } from 'node:util';
-import { getModuleName, ensureModuleInstalled } from '../utils/moduleLoader';
-import { getModuleMainFile, ModuleDefinition } from '../utils/moduleCloner';
+import { ensureModuleInstalled } from '../utils/moduleLoader';
+import { ModuleDefinition } from '../utils/moduleCloner';
 import { 
   pieceFromModule, 
   BitsPiece, 
@@ -277,7 +276,7 @@ export const bitsTriggerHelper = {
       logger.error(`Error executing trigger ${triggerName}:`, error);
       return {
         success: false,
-        message: `Error executing trigger: ${inspect(error)}`,
+        message: `Error executing trigger: ${(error)}`,
         output: [],
       };
     }
