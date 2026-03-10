@@ -6,20 +6,20 @@ This document outlines the stability status of Habits components and features.
 
 | Level | Icon | Description |
 |-------|------|-------------|
-| **Stable** | ✅ | Production-ready, API is stable |
-| **Beta** | ✓ | Feature-complete, may have minor changes |
-| **Alpha** | ❕ | Functional but API may change |
-| **Nightly** | ⚠️ | Experimental, not recommended for production |
+| **Stable** | <Icon name="check-circle" /> | Production-ready, API is stable |
+| **Beta** | <Icon name="check" /> | Feature-complete, may have minor changes |
+| **Alpha** | <Icon name="alert" /> | Functional but API may change |
+| **Nightly** | <Icon name="warning" /> | Experimental, not recommended for production |
 
 ## Component Status
 
-| Component | ✅ Stable | ✓ Beta | ❕ Alpha | ⚠️ Nightly | Description |
+| Component | <Icon name="check-circle" /> Stable | <Icon name="check" /> Beta | <Icon name="alert" /> Alpha | <Icon name="warning" /> Nightly | Description |
 |-----------|:--------:|:------:|:-------:|:---------:|-------------|
-| Cortex | ✅ |  |  |  | Workflow execution engine |
-| Habits CLI |  | ✓ |  |  | Command-line interface for running habits |
-| Base |  |  | ❕ |  | Visual workflow builder UI |
-| Standalone |  |  | ❕ |  | Single executable packaging |
-| Frontend Generator |  |  | ❕ |  | Automatic UI generation from workflows |
-| Security Features |  |  |  | ⚠️ | Authentication, encryption, and access control |
-| Mobile App |  |  |  | ⚠️ | iOS/Android application |
-| Desktop App |  |  |  | ⚠️ | Electron-based desktop application |
+| Cortex | <Icon name="check-circle" /> |  |  |  | Workflow execution engine |
+| Habits CLI |  | <Icon name="check" /> |  |  | Command-line interface for running habits |
+| Base |  |  | <Icon name="alert" /> |  | Visual workflow builder UI |
+| Standalone |  |  | <Icon name="alert" /> |  | Single executable packaging |
+| Frontend Generator |  |  | <Icon name="alert" /> |  | Automatic UI generation from workflows |
+| Security Features |  |  |  | <Icon name="warning" /> | Authentication, encryption, and access control |
+| Mobile App |  |  |  | <Icon name="warning" /> | iOS/Android application |
+| Desktop App |  |  |  | <Icon name="warning" /> | Electron-based desktop application |

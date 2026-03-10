@@ -2,11 +2,11 @@
 
 This guide walks you through creating your first habit using the **Base UI** - a visual, no-code interface for building logic and UI. You'll create a simple workflow that analyzes images and calculates their calorie content using OpenAI's vision API.
 
-::: tip 🎨 GUI-First Approach
+::: tip <Icon name="palette" /> GUI-First Approach
 Base mode provides a visual interface for creating habits (Both Logic and UI) without writing code. Perfect for rapid prototyping and users who prefer GUI tools!
 :::
 
-<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="wrench">
 
 <!--@include: ./checklists/environment-setup.md{3,}-->
 
@@ -72,7 +72,7 @@ habits init
 habits base
 ```
 
-<Checklist name="prepare-base" title="Prepare Base Directory Checklist" icon="🚀">
+<Checklist name="prepare-base" title="Prepare Base Directory Checklist" icon="rocket">
 
 <!--@include: ./checklists/prepare-base.md{3,}-->
 
@@ -110,7 +110,7 @@ Once Base is running, you'll see the main interface with several tabs. Let's cre
      - **apiKey**:  <code v-pre>{{habits.env.OPENAI_API_KEY}}</code>
 
 
-🧩 Missing a module?
+<Icon name="puzzle" /> Missing a module?
 If you don't see a required bit, piece, or node in the palette, use the **Add Module** button to install it. This lets you quickly add missing modules directly from the UI before using them in your workflow.
 
 #### Add Database Storage Node
@@ -186,7 +186,7 @@ Want to see what you built? Click the **< > Code** button in the habit editor to
 :::
 
 
-<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="clipboard">
 
 <!--@include: ./checklists/stack-readiness.md{3,}-->
 
@@ -242,7 +242,7 @@ habits-bundle.exe
 5. Click **Export**
 6. Download APK (Android) or IPA (iOS)
 
-<Checklist name="exporting" title="Exporting for Production Checklist" icon="📦">
+<Checklist name="exporting" title="Exporting for Production Checklist" icon="package">
 
 <!--@include: ./checklists/exporting.md{3,}-->
 
@@ -319,6 +319,6 @@ If changes aren't reflected:
 
 ---
 
-::: tip 💡 Pro Tip
+::: tip <Icon name="lightbulb" /> Pro Tip
 You can switch between GUI (Base) and code editing at any time. Changes made in Base are immediately reflected in the underlying YAML files, and vice versa!
 :::

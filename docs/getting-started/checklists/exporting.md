@@ -1,4 +1,4 @@
-## 📦 Exporting for Production
+## <Icon name="package" /> Exporting for Production
 
 > **Note:** We are deprecating support for `capacitor`, `cordova`, and `electron`. Future releases will rely exclusively on `tauri` for desktop and mobile exports. Please migrate any existing projects to use `tauri` for best support and compatibility.
 

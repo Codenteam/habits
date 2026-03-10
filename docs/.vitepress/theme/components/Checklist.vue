@@ -1,16 +1,35 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import {
+  ClipboardList,
+  Package,
+  Rocket,
+  Wrench,
+  BookOpen,
+  Monitor,
+  type LucideIcon,
+} from 'lucide-vue-next'
 
 const props = defineProps<{
   /** Checklist file name without .md extension (e.g., "documentation-reading") */
   name: string
   /** Custom title for the details summary */
   title?: string
-  /** Emoji icon to display before title */
+  /** Icon name (Lucide icon key) to display before title */
   icon?: string
   /** Start expanded (default: false) */
   expanded?: boolean
 }>()
+
+// Map icon names to Lucide components
+const iconMap: Record<string, LucideIcon> = {
+  clipboard: ClipboardList,
+  package: Package,
+  rocket: Rocket,
+  wrench: Wrench,
+  book: BookOpen,
+  monitor: Monitor,
+}
 
 const isOpen = ref(props.expanded ?? false)
 const contentRef = ref<HTMLElement | null>(null)
@@ -24,7 +43,10 @@ const displayTitle = computed(() => {
     .join(' ')
 })
 
-const iconDisplay = computed(() => props.icon ?? '📋')
+const IconComponent = computed(() => {
+  const iconName = props.icon ?? 'clipboard'
+  return iconMap[iconName] ?? ClipboardList
+})
 
 // Convert markdown [ ] and [x] to actual checkboxes
 const convertCheckboxes = () => {
@@ -72,7 +94,9 @@ watch(isOpen, (open) => {
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </span>
-      <span class="checklist-icon">{{ iconDisplay }}</span>
+      <span class="checklist-icon">
+        <component :is="IconComponent" :size="18" />
+      </span>
       <span class="checklist-title">{{ displayTitle }}</span>
     </summary>
     <div ref="contentRef" class="checklist-content">

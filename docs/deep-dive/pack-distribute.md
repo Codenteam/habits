@@ -14,11 +14,11 @@ The Pack feature allows you to package your habits configuration into distributa
 
 | Format | Description | Backend | Status |
 |--------|-------------|---------|--------|
-| `single-executable` | Node.js Full-stack Binary | Embedded | ✅ Available |
-| `desktop` | Electron app | Remote URL | ✅ Available |
-| `desktop-full` | Electron with embedded backend | Embedded | 🚧 Coming Soon |
-| `mobile` | Cordova app | Remote URL | ✅ Available |
-| `mobile-full` | Mobile with embedded backend | Embedded | 🚧 Coming Soon |
+| `single-executable` | Node.js Full-stack Binary | Embedded | <Icon name="check-circle" /> Available |
+| `desktop` | Electron app | Remote URL | <Icon name="check-circle" /> Available |
+| `desktop-full` | Electron with embedded backend | Embedded | <Icon name="wrench" /> Coming Soon |
+| `mobile` | Cordova app | Remote URL | <Icon name="check-circle" /> Available |
+| `mobile-full` | Mobile with embedded backend | Embedded | <Icon name="wrench" /> Coming Soon |
 
 ---
 

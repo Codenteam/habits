@@ -2,7 +2,7 @@
 
 Habits is a **lightweight runtime engine**, not a full automation platform like n8n or ActivePieces. It's designed for specific scenarios where you need a minimal, embeddable, or serverless-friendly execution layer.
 
-## ✅ When to Use Habits
+## <Icon name="check-circle" /> When to Use Habits
 
 ### Serverless & Edge Deployments
 
@@ -50,8 +50,8 @@ You need a fully **Apache 2.0 licensed** runner that you can:
 ::: info License Comparison
 | Platform | License |
 |----------|---------|
-| **Habits** | Apache 2.0 ✅ |
-| ActivePieces | MIT ✅ |
+| **Habits** | Apache 2.0 <Icon name="check-circle" /> |
+| ActivePieces | MIT <Icon name="check-circle" /> |
 | n8n | Sustainable Use License (fair-code) |
 :::
 
@@ -86,7 +86,7 @@ Habits runs n8n or ActivePieces modules using their actual runtime dependencies,
 
 ---
 
-## ❌ When NOT to Use Habits
+## <Icon name="x-circle" /> When NOT to Use Habits
 
 ### You Need a Full Visual Builder
 

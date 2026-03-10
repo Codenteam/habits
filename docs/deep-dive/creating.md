@@ -105,8 +105,8 @@ pnpm nx dev @ha-bits/base
 
 | Endpoint | URL | Description |
 |----------|-----|-------------|
-| 🎨 **Base UI** | http://localhost:3001 | Visual Workflow Builder |
-| 🔧 **Base API** | http://localhost:3001/api (Proxied to http://localhost:3000) | REST API Backend |
+| <Icon name="palette" /> **Base UI** | http://localhost:3001 | Visual Workflow Builder |
+| <Icon name="wrench" /> **Base API** | http://localhost:3001/api (Proxied to http://localhost:3000) | REST API Backend |
 
 ### Accessing Base
 
@@ -192,7 +192,7 @@ You can use AI to directly generate a UI that can work with the logic. Use Inter
 
 Already have workflows in n8n or Activepieces? Import them directly into Habits.
 
-> ⚠️ **Note:** Both Activepieces and n8n workflow importing is currently **experimental**.
+> <Icon name="warning" /> **Note:** Both Activepieces and n8n workflow importing is currently **experimental**.
 
 ### Exporting from n8n
 
@@ -241,11 +241,11 @@ habits convert --input ./workflow.json --output ./habits.json --env
 
 | Component | n8n | Activepieces |
 |-----------|-----|--------------|
-| Nodes/Actions | ⚠️ Experimental | ✅ Full support |
-| Triggers | ⚠️ Experimental | ✅ Full support |
-| Connections | ⚠️ Experimental | ⚠️ Partial |
-| Parameters | ⚠️ Experimental | ✅ Full support |
-| Credentials | ⚠️ Experimental | ⚠️ Env var refs |
+| Nodes/Actions | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
+| Triggers | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
+| Connections | <Icon name="warning" /> Experimental | <Icon name="warning" /> Partial |
+| Parameters | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
+| Credentials | <Icon name="warning" /> Experimental | <Icon name="warning" /> Env var refs |
 
 ### Credential Handling
 

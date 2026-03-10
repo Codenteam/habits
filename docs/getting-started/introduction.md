@@ -57,7 +57,7 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 - **Lightweight** — Minimal footprint for serverless, edge, and embedded deployments
 - **Security** — Built-in DLP, PII protection, supply chain integrity, and sandboxing
 
-<Checklist name="documentation-reading" title="Documentation Reading Order Checklist" icon="📚">
+<Checklist name="documentation-reading" title="Documentation Reading Order Checklist" icon="book">
 
 <!--@include: ./checklists/documentation-reading.md{4,}-->
 

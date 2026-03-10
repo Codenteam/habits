@@ -33,7 +33,7 @@ A **Bit** is a single node in a habit. It can be:
 
 **Base** is the visual builder for creating and editing habits.
 
-> ⚠️ **Experimental**: Base is under active development.
+> <Icon name="warning" /> **Experimental**: Base is under active development.
 
 See [Creating Habits](/deep-dive/creating) for details.
 

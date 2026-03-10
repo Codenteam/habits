@@ -8,7 +8,7 @@ This guide explains how to import existing workflows from **n8n** and **Activepi
 
 Habits provides built-in converters that automatically detect and transform workflows from popular automation platforms.
 
-> ⚠️ **Note:** n8n workflow importing is currently **experimental**. While basic workflows convert successfully, complex workflows with advanced n8n-specific features may require manual adjustments after import. Activepieces importing is fully supported.
+> <Icon name="warning" /> **Note:** n8n workflow importing is currently **experimental**. While basic workflows convert successfully, complex workflows with advanced n8n-specific features may require manual adjustments after import. Activepieces importing is fully supported.
 
 The converter handles:
 - Node/action mapping to Habits format
@@ -164,7 +164,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 | Option | Alias | Description | Required |
 |--------|-------|-------------|----------|
-| `--input` | `-i` | Path to input workflow JSON file | ✅ Yes |
+| `--input` | `-i` | Path to input workflow JSON file | <Icon name="check-circle" /> Yes |
 | `--output` | `-o` | Path to output file (prints to stdout if omitted) | No |
 | `--env` | `-e` | Generate .env file for credentials | No |
 | `--pretty` | | Pretty print JSON output (default: true) | No |
@@ -206,13 +206,13 @@ habits convert --input ./workflow.json --no-pretty | jq '.nodes | length'
 
 | Component | n8n | Activepieces | Notes |
 |-----------|-----|--------------|-------|
-| Nodes/Actions | ⚠️ | ✅ | Mapped to Habits node format |
-| Triggers | ⚠️ | ✅ | Converted to trigger nodes |
-| Connections | ⚠️ | ⚠️ | Preserved as edges |
-| Parameters | ⚠️ | ✅ | Mapped to params object |
-| Credentials | ⚠️ | ⚠️ | Extracted as env var references |
+| Nodes/Actions | <Icon name="warning" /> | <Icon name="check-circle" /> | Mapped to Habits node format |
+| Triggers | <Icon name="warning" /> | <Icon name="check-circle" /> | Converted to trigger nodes |
+| Connections | <Icon name="warning" /> | <Icon name="warning" /> | Preserved as edges |
+| Parameters | <Icon name="warning" /> | <Icon name="check-circle" /> | Mapped to params object |
+| Credentials | <Icon name="warning" /> | <Icon name="warning" /> | Extracted as env var references |
 
-> ⚠️ = Experimental support (n8n)
+> <Icon name="warning" /> = Experimental support (n8n)
 
 ### Node Mapping
 

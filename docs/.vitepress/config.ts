@@ -66,7 +66,7 @@ export default defineConfig({
     
     sidebar: [
       {
-        text: '🚀 Getting Started',
+        text: 'Getting Started',
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
@@ -78,7 +78,7 @@ export default defineConfig({
         ]
       },
             {
-        text: '📚 Deep Dive',
+        text: 'Deep Dive',
         items: [
           // { text: 'Habits Schema: Understanding Habits', link: '/deep-dive/habit-schema' },
           { text: 'Creating Habits (Base)', link: '/deep-dive/creating' },
@@ -91,7 +91,7 @@ export default defineConfig({
       },
       // Showcase (Examples)
       {
-        text: '🌟 Showcase',
+        text: 'Showcase',
         items: [
           { text: 'Browse All', link: '/showcase/' },
 
@@ -107,7 +107,7 @@ export default defineConfig({
       },
       // Bits Catalog
       {
-        text: '🧩 Bits',
+        text: 'Bits',
         items: [
           { text: 'Browse All', link: '/bits/' },
           { text: 'Intersect AI', link: '/bits/bit-intersect' },
@@ -119,7 +119,7 @@ export default defineConfig({
       },
       // Extra reading
       {
-        text: '📖 Extra Reading',
+        text: 'Extra Reading',
         items: [
                     { text: 'Logging Configuration', link: '/deep-dive/logging' },
           { text: 'Habit Viewer', link: '/misc/habit-viewer' },
@@ -132,7 +132,7 @@ export default defineConfig({
 
       // Roadmap
       {
-        text: '🛣️ Roadmap',
+        text: 'Roadmap',
         items: [
           { text: 'Stability', link: '/stability' },
                     { text: 'Self-Improving (WIP)', link: '/roadmap/self-improving' },
@@ -142,7 +142,7 @@ export default defineConfig({
       },
       // Development
       {
-        text: '👨‍💻 Development',
+        text: 'Development',
         items: [
           { text: 'Testing Bits', link: '/development/testing-bits' },
           { text: 'Versioning', link: '/development/versioning' },

@@ -2,11 +2,11 @@
 
 This guide walks you through creating your first habit using the **AI Generator** in Base UI. Simply describe what you want to build, and AI will generate the complete backend workflow and frontend UI for you.
 
-::: tip 🤖 AI-First Approach
+::: tip <Icon name="bot" /> AI-First Approach
 The AI generator creates fully functional habits, including workflow logic, node configuration, and frontend UI, from a single text prompt. Perfect for getting started quickly or prototyping ideas!
 :::
 
-<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="wrench">
 
 <!--@include: ./checklists/environment-setup.md{3,}-->
 
@@ -30,7 +30,7 @@ pnpm install
 
 ::: tip Beta Feature
 ~~AI generation is currently in **Beta** and is available with **Intersect Cloud** or **Intersect Self-hosted** only.~~  
-🎊 🎊 AI generation is now available to everyone! 🎉🎉
+<Icon name="sparkles" /> <Icon name="sparkles" /> AI generation is now available to everyone! <Icon name="sparkles" /><Icon name="sparkles" />
 :::
 
 ## Environment Variables
@@ -89,7 +89,7 @@ The AI uses the `nodes/bits/@ha-bits/` directory (bit modules) and `examples/` d
    npx habits@latest base
    ```
 2. Open your browser to `http://localhost:3000/habits/base/`
-3. Click the **Generate with AI** button (✨ wand icon) in the toolbar
+3. Click the **Generate with AI** button (<Icon name="sparkles" /> wand icon) in the toolbar
 
 ## Step 2: Describe Your Habit
 
@@ -149,7 +149,7 @@ Click **Done** to close the modal. Your generated habit is now loaded in the Bas
 | **Describe the UI layout** | "sidebar navigation with a main content area" |
 | **Specify integrations** | "use OpenAI for text analysis and store results in the database" |
 
-::: info 💡 Iterate and Refine
+::: info <Icon name="lightbulb" /> Iterate and Refine
 The AI-generated habit is a starting point. You can always modify the workflow, tweak the UI, or add more nodes manually after generation. Switch to the [Base UI guide](./first-habit-using-base.md) or [Habit-as-Code guide](./first-habit.md) for manual editing techniques.
 :::
 
@@ -183,13 +183,13 @@ The generated bit files will be created and ready for use in your workflows.
 ~~AI generation requires Intersect Cloud or Intersect Self-hosted~~  
 - Make sure the required environment variables are set correctly (`HABITS_AI_GEN=true` and a valid `CLAUDE_API_KEY`). Without these, the "Generate with AI" button will not appear. See the [Environment Variables](#environment-variables) section above for details.
 
-<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="clipboard">
 
 <!--@include: ./checklists/stack-readiness.md{3,}-->
 
 </Checklist>
 
-<Checklist name="exporting" title="Exporting for Production" icon="📦">
+<Checklist name="exporting" title="Exporting for Production" icon="package">
 
 <!--@include: ./checklists/exporting.md{3,}-->
 

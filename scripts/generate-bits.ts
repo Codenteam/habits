@@ -81,6 +81,48 @@ interface BitData {
   triggers: TriggerInfo[];
   showcases: string[];  // Slugs of showcases that use this bit
   hasReadme: boolean;
+  downloads: number;  // Lifetime npm downloads
+}
+
+// ============================================================================
+// NPM Downloads API
+// ============================================================================
+
+/**
+ * Fetch lifetime npm downloads for a package
+ * Uses npm registry API with a wide date range for "lifetime" downloads
+ */
+async function fetchNpmDownloads(packageName: string): Promise<number> {
+  try {
+    // Use a date range from 2015 (when npm started tracking) to today
+    const today = new Date().toISOString().split('T')[0];
+    const url = `https://api.npmjs.org/downloads/point/2015-01-01:${today}/${encodeURIComponent(packageName)}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      // Package may not be published yet
+      return 0;
+    }
+    
+    const data = await response.json() as { downloads?: number };
+    return data.downloads || 0;
+  } catch (err) {
+    // Silently return 0 if fetch fails (package not published, network error, etc.)
+    return 0;
+  }
+}
+
+/**
+ * Format download count for display (e.g., 1234 -> "1.2K", 1234567 -> "1.2M")
+ */
+function formatDownloads(count: number): string {
+  if (count >= 1_000_000) {
+    return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  }
+  if (count >= 1_000) {
+    return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return count.toString();
 }
 
 // ============================================================================
@@ -507,9 +549,9 @@ function findShowcasesUsingBit(packageName: string): string[] {
 }
 
 /**
- * Scan all bits and extract their data
+ * Scan all bits and extract their data (including npm downloads)
  */
-function scanBits(): BitData[] {
+async function scanBits(): Promise<BitData[]> {
   const bits: BitData[] = [];
   
   if (!existsSync(bitsDir)) {
@@ -521,6 +563,13 @@ function scanBits(): BitData[] {
     const fullPath = join(bitsDir, name);
     return statSync(fullPath).isDirectory() && name.startsWith('bit-');
   });
+  
+  // First pass: collect all bit metadata
+  const bitCandidates: Array<{
+    dir: string;
+    packageJson: PackageJson;
+    bitPath: string;
+  }> = [];
   
   for (const dir of bitDirs) {
     const bitPath = join(bitsDir, dir);
@@ -540,6 +589,27 @@ function scanBits(): BitData[] {
         console.log(`  ⏭️  Skipping ${dir}: catalog disabled`);
         continue;
       }
+      
+      bitCandidates.push({ dir, packageJson, bitPath });
+    } catch (err) {
+      console.error(`❌ Error processing ${dir}:`, (err as Error).message);
+    }
+  }
+  
+  // Fetch npm downloads in parallel for all packages
+  console.log(`\n📊 Fetching npm download stats for ${bitCandidates.length} packages...`);
+  const downloadPromises = bitCandidates.map(({ packageJson }) => 
+    fetchNpmDownloads(packageJson.name)
+  );
+  const downloadCounts = await Promise.all(downloadPromises);
+  
+  // Second pass: build BitData with downloads
+  for (let i = 0; i < bitCandidates.length; i++) {
+    const { packageJson, bitPath } = bitCandidates[i];
+    const downloads = downloadCounts[i];
+    
+    try {
+      const habitsConfig = packageJson.habits || {};
       
       // Extract categories from keywords
       const categories = extractCategories(packageJson.keywords);
@@ -573,13 +643,15 @@ function scanBits(): BitData[] {
         triggers: parsedIndex.triggers,
         showcases,
         hasReadme,
+        downloads,
       };
       
       bits.push(bitData);
-      console.log(`✅ ${bitData.displayName}: ${bitData.actions.length} actions, ${bitData.triggers.length} triggers, ${showcases.length} showcases`);
+      const downloadsStr = downloads > 0 ? `, ${formatDownloads(downloads)} downloads` : '';
+      console.log(`✅ ${bitData.displayName}: ${bitData.actions.length} actions, ${bitData.triggers.length} triggers, ${showcases.length} showcases${downloadsStr}`);
       
     } catch (err) {
-      console.error(`❌ Error processing ${dir}:`, (err as Error).message);
+      console.error(`❌ Error processing ${packageJson.name}:`, (err as Error).message);
     }
   }
   
@@ -616,6 +688,8 @@ function generateDataFile(bits: BitData[]): void {
     actionCount: b.actions.length,
     triggerCount: b.triggers.length,
     showcaseCount: b.showcases.length,
+    downloads: b.downloads,
+    downloadsFormatted: formatDownloads(b.downloads),
   }));
   
   mkdirSync(dataDir, { recursive: true });
@@ -663,6 +737,11 @@ ${bit.showcases.map(s => `- [${s}](/showcase/${s})`).join('\n')}
 `
     : '';
   
+  // Downloads badge (only show if > 0)
+  const downloadsBadge = bit.downloads > 0
+    ? `<span class="bit-downloads">📥 ${formatDownloads(bit.downloads)} downloads</span>`
+    : '';
+  
   return `---
 title: "${bit.displayName}"
 description: "${bit.description}"
@@ -678,6 +757,7 @@ import { ${bit.icon} } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">\`${bit.packageName}\`</span>
   <span class="bit-version">v${bit.version}</span>
+  ${downloadsBadge}
   <span class="bit-categories">${categoriesBadges}</span>
 </div>
 
@@ -717,6 +797,14 @@ ${actionsTable}${triggersTable}${showcasesSection}
 .bit-version {
   color: var(--vp-c-text-2);
   font-size: 0.85em;
+}
+
+.bit-downloads {
+  color: var(--vp-c-text-2);
+  font-size: 0.85em;
+  background: var(--vp-c-bg-alt);
+  padding: 4px 10px;
+  border-radius: 12px;
 }
 
 .bit-categories {
@@ -770,6 +858,8 @@ function generateIndexPage(bits: BitData[]): string {
     actionCount: b.actions.length,
     triggerCount: b.triggers.length,
     showcaseCount: b.showcases.length,
+    downloads: b.downloads,
+    downloadsFormatted: formatDownloads(b.downloads),
   })));
 
   return `---
@@ -849,11 +939,11 @@ function printSidebarConfig(bits: BitData[]): void {
 // Main
 // ============================================================================
 
-function main(): void {
+async function main(): Promise<void> {
   console.log('🧩 Generating Bits Documentation...\n');
   
-  // Scan for bits
-  const bits = scanBits();
+  // Scan for bits (includes npm download fetching)
+  const bits = await scanBits();
   
   if (bits.length === 0) {
     console.log('\n⚠️  No eligible bits found.');
@@ -861,7 +951,9 @@ function main(): void {
     process.exit(0);
   }
   
-  console.log(`\n📦 Found ${bits.length} bits`);
+  // Report total downloads
+  const totalDownloads = bits.reduce((sum, b) => sum + b.downloads, 0);
+  console.log(`\n📦 Found ${bits.length} bits (${formatDownloads(totalDownloads)} total npm downloads)`);
   
   // Generate data file for Vue components
   generateDataFile(bits);
@@ -872,9 +964,25 @@ function main(): void {
   // Print sidebar config
   printSidebarConfig(bits);
   
+  // Print downloads summary
+  console.log('\n📊 NPM Downloads Summary:');
+  console.log('─'.repeat(50));
+  const sortedByDownloads = [...bits].sort((a, b) => b.downloads - a.downloads);
+  for (const bit of sortedByDownloads) {
+    const downloadsStr = bit.downloads > 0 
+      ? formatDownloads(bit.downloads).padStart(8) 
+      : '      -';
+    console.log(`  ${downloadsStr}  ${bit.displayName}`);
+  }
+  console.log('─'.repeat(50));
+  console.log(`     Total: ${formatDownloads(totalDownloads)} downloads`);
+  
   console.log('\n✨ Bits documentation generation complete!');
   console.log(`   ${bits.length} bits processed`);
   console.log(`   Output: docs/bits/`);
 }
 
-main();
+main().catch(err => {
+  console.error('❌ Fatal error:', err);
+  process.exit(1);
+});

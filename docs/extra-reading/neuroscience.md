@@ -61,7 +61,7 @@ The **Basal Ganglia** is a cluster of nuclei deep within the brain responsible f
 
 When a behavior becomes habitual, control shifts from the prefrontal cortex to the basal ganglia. This is why habits feel effortless, they literally require less brain power.
 
-> 💡 **Framework Connection**: Our **Base** component is named after the Basal Ganglia's foundational role in habit formation.
+> <Icon name="lightbulb" /> **Framework Connection**: Our **Base** component is named after the Basal Ganglia's foundational role in habit formation.
 
 ### Prefrontal Cortex
 
@@ -83,7 +83,7 @@ The **Cortex** is the outermost layer of the brain, responsible for higher-order
 - Orchestrating complex behaviors
 - Monitoring and adjusting actions
 
-> 💡 **Framework Connection**: Our **Cortex** executor is named after this orchestrating role, it manages and runs all habits.
+> <Icon name="lightbulb" /> **Framework Connection**: Our **Cortex** executor is named after this orchestrating role, it manages and runs all habits.
 
 ### Striatum
 
@@ -104,7 +104,7 @@ The **Hippocampus** is the brain's memory center, essential for:
 
 The hippocampus works with the basal ganglia to encode the contextual cues that trigger habits. It remembers the "where" and "when" of your routines.
 
-> 💡 **Framework Connection**: Our **context** and **environment variables** act like the hippocampus: providing the situational awareness that determines which workflows activate and how they behave.
+> <Icon name="lightbulb" /> **Framework Connection**: Our **context** and **environment variables** act like the hippocampus: providing the situational awareness that determines which workflows activate and how they behave.
 
 ---
 
@@ -155,7 +155,7 @@ Keystone habits work by:
 2. **Establishing Platforms** – They create structures for other habits
 3. **Shifting Self-Image** – They change how you see yourself
 
-> 💡 **Framework Connection**: Our **Stack** concept mirrors keystone habits, a set of related workflows that trigger together, creating cascading automation effects.
+> <Icon name="lightbulb" /> **Framework Connection**: Our **Stack** concept mirrors keystone habits, a set of related workflows that trigger together, creating cascading automation effects.
 
 ---
 
@@ -173,7 +173,7 @@ After Chunking:
 
 This is why experienced drivers can navigate while having a conversation, the driving actions are chunked into automatic routines.
 
-> 💡 **Framework Connection**: Our **Bits** are like neural chunks, small, discrete actions that combine into larger automated routines (Habits).
+> <Icon name="lightbulb" /> **Framework Connection**: Our **Bits** are like neural chunks, small, discrete actions that combine into larger automated routines (Habits).
 
 ---
 
@@ -188,7 +188,7 @@ Dopamine doesn't just signal pleasure, it signals **anticipation of reward**. Th
 ```
 Dopamine Response Over Time:
 
-Early:     Cue ─── Routine ─── Reward 📈
+Early:     Cue ─── Routine ─── Reward [UP]
            │                      │
            ▼                      ▼
           (none)              (spike!)
@@ -201,7 +201,7 @@ Later:     Cue ─── Routine ─── Reward
 Habit:     Cue ─── Routine ─── No Reward
            │                      │
            ▼                      ▼
-        (spike!)              (crash 📉)
+        (spike!)              (crash [DOWN])
 ```
 
 This explains cravings: your brain expects the reward and feels discomfort when it doesn't arrive.

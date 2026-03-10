@@ -2,17 +2,17 @@
 
 This guide walks you through creating a multi-module workflow that generates text with OpenAI (Activepieces), converts it to speech with ElevenLabs (n8n), and uploads the audio to S3 (script)
 
-::: tip 📦 Quick Start
+::: tip <Icon name="package" /> Quick Start
 Already packed and ready to go! [Download example.zip](/downloads/example.zip) and extract it to get started immediately.
 :::
 
-<Checklist name="environment-setup" title="Environment Setup Checklist" icon="🛠️">
+<Checklist name="environment-setup" title="Environment Setup Checklist" icon="wrench">
 
 <!--@include: ./checklists/environment-setup.md{3,}-->
 
 </Checklist>
 
-<Checklist name="hac" title="Code-First Approach (HaC) Checklist" icon="💻">
+<Checklist name="hac" title="Code-First Approach (HaC) Checklist" icon="monitor">
 
 <!--@include: ./checklists/hac.md{3,}-->
 
@@ -73,13 +73,13 @@ Enable `HABITS_MANAGE_ENABLED=true` to access the built-in management portal at 
 
 ![Management Portal](/images/cortex.webp)
 
-<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="📋">
+<Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="clipboard">
 
 <!--@include: ./checklists/stack-readiness.md{3,}-->
 
 </Checklist>
 
-<Checklist name="exporting" title="Exporting for Production" icon="📦">
+<Checklist name="exporting" title="Exporting for Production" icon="package">
 
 <!--@include: ./checklists/exporting.md{3,}-->
 

@@ -1,6 +1,6 @@
 # Self-Improving Habits (Reward)
 
-> ⚠️ **Planning Phase**: This feature is currently in the planning phase and not yet implemented.
+> <Icon name="warning" /> **Planning Phase**: This feature is currently in the planning phase and not yet implemented.
 
 ---
 

@@ -25,11 +25,11 @@ In the [Habit Loop](/extra-reading/neuroscience), the **Cue** is the trigger tha
 
 | Trigger Type | Description | Status |
 |-------------|-------------|--------|
-| **CLI** | Execute workflows from the command line | ✅ Available |
-| **REST API** | Trigger workflows via HTTP endpoints | ✅ Available |
-| **Bits Watchers**| Event-based triggers from Habits bits | ✅ Available |
-| **ActivePieces Triggers** | Event-based triggers from ActivePieces Pieces | 🚧 WIP |
-| **n8n Triggers** | Event-based triggers from n8n nodes | 🔜 Coming Soon |
+| **CLI** | Execute workflows from the command line | <Icon name="check-circle" /> Available |
+| **REST API** | Trigger workflows via HTTP endpoints | <Icon name="check-circle" /> Available |
+| **Bits Watchers**| Event-based triggers from Habits bits | <Icon name="check-circle" /> Available |
+| **ActivePieces Triggers** | Event-based triggers from ActivePieces Pieces | <Icon name="wrench" /> WIP |
+| **n8n Triggers** | Event-based triggers from n8n nodes | <Icon name="clock" /> Coming Soon |
 
 ### CLI Triggers
 

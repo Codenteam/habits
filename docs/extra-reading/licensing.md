@@ -10,17 +10,17 @@ Habits is Apache 2.0. Stick to **Apache 2.0** or **MIT** licensed modules to kee
 
 Habits is released under the **Apache License 2.0**, which means:
 
-- ✅ You can use it commercially
-- ✅ You can modify and distribute it
-- ✅ You can include it in proprietary software
-- ✅ You can ship it to customers without royalties
-- ⚠️ You must include the license and attribution notices
+- <Icon name="check-circle" /> You can use it commercially
+- <Icon name="check-circle" /> You can modify and distribute it
+- <Icon name="check-circle" /> You can include it in proprietary software
+- <Icon name="check-circle" /> You can ship it to customers without royalties
+- <Icon name="warning" /> You must include the license and attribution notices
 
 ## The Three Levels of Dependency
 
 When using modules from bits, n8n, ActivePieces, or scripts, you need to understand **what you're actually depending on**:
 
-### Level 1: Specs & Types (✅ Always Safe)
+### Level 1: Specs & Types (<Icon name="check-circle" /> Always Safe)
 
 If you're only relying on:
 - **Type definitions** (TypeScript interfaces, schemas)
@@ -33,12 +33,12 @@ If you're only relying on:
 
 | Scenario | Status | Explanation |
 |----------|--------|-------------|
-| Using a TypeScript interface that describes a Slack message format | ✅ Safe | Types describe a structure, not implementation |
-| Following the Stripe API documentation to make HTTP calls | ✅ Safe | API specs are factual descriptions |
-| Implementing a webhook handler based on documented payload format | ✅ Safe | You're writing your own code |
-| Copying a JSON schema for validation | ✅ Safe | Schemas are specifications |
+| Using a TypeScript interface that describes a Slack message format | <Icon name="check-circle" /> Safe | Types describe a structure, not implementation |
+| Following the Stripe API documentation to make HTTP calls | <Icon name="check-circle" /> Safe | API specs are factual descriptions |
+| Implementing a webhook handler based on documented payload format | <Icon name="check-circle" /> Safe | You're writing your own code |
+| Copying a JSON schema for validation | <Icon name="check-circle" /> Safe | Schemas are specifications |
 
-### Level 2: Open Source Modules (✅ Check the License)
+### Level 2: Open Source Modules (<Icon name="check-circle" /> Check the License)
 
 If you're using a **fully open source** module where:
 - The source code is available
@@ -51,12 +51,12 @@ If you're using a **fully open source** module where:
 
 | Module | License | Status | Explanation |
 |--------|---------|--------|-------------|
-| `@activepieces/piece-slack` | MIT | ✅ Safe | MIT is permissive, module is self-contained |
-| `@activepieces/piece-openai` | MIT | ✅ Safe | Calls an API, doesn't include proprietary code |
-| `@activepieces/piece-text-helper` | MIT | ✅ Safe | Pure utility, no external dependencies |
-| Community n8n nodes (check each) | Varies | ⚠️ Check | Verify the specific license |
+| `@activepieces/piece-slack` | MIT | <Icon name="check-circle" /> Safe | MIT is permissive, module is self-contained |
+| `@activepieces/piece-openai` | MIT | <Icon name="check-circle" /> Safe | Calls an API, doesn't include proprietary code |
+| `@activepieces/piece-text-helper` | MIT | <Icon name="check-circle" /> Safe | Pure utility, no external dependencies |
+| Community n8n nodes (check each) | Varies | <Icon name="warning" /> Check | Verify the specific license |
 
-### Level 3: Modules with Proprietary Dependencies (⚠️ Problematic)
+### Level 3: Modules with Proprietary Dependencies (<Icon name="warning" /> Problematic)
 
 **This is where it gets tricky.** A module is problematic if it:
 
@@ -71,43 +71,43 @@ Using such modules **may convert your project to non-open-source** or require yo
 
 | Scenario | Limitation | Problem |
 |----------|--------|---------|
-| Using `n8n-nodes-base` (core n8n nodes) | ❌ Non Commercial | Uses n8n's "Sustainable Use License" (not OSS) |
-| A module that requires an AGPL-licensed library | ❌ Requires releasing source code | AGPL requires you to open-source your entire project |
-| A wrapper that calls a GPL tool as a subprocess | ⚠️ Careful | May trigger copyleft depending on integration (If statically linked)|
+| Using `n8n-nodes-base` (core n8n nodes) | <Icon name="x-circle" /> Non Commercial | Uses n8n's "Sustainable Use License" (not OSS) |
+| A module that requires an AGPL-licensed library | <Icon name="x-circle" /> Requires releasing source code | AGPL requires you to open-source your entire project |
+| A wrapper that calls a GPL tool as a subprocess | <Icon name="warning" /> Careful | May trigger copyleft depending on integration (If statically linked)|
 
 ## License Compatibility Matrix
 
 | Module License | Compatible with Apache 2.0? | Can Ship Commercially? | Notes |
 |----------------|---------------------------|----------------------|-------|
-| **MIT** | ✅ Yes | ✅ Yes | Most permissive, prefer this |
-| **Apache 2.0** | ✅ Yes | ✅ Yes | Same as Habits, ideal choice |
-| **BSD 2/3-Clause** | ✅ Yes | ✅ Yes | Permissive, minimal restrictions |
-| **ISC** | ✅ Yes | ✅ Yes | Equivalent to MIT |
-| **MPL 2.0** | ⚠️ Partially | ⚠️ Partially | File-level copyleft, manageable |
-| **LGPL** | ⚠️ Partially | ⚠️ Partially | Dynamic linking usually OK |
-| **GPL** | ❌ No | ❌ No | Copyleft infects your project |
-| **AGPL** | ❌ No | ❌ No | Network copyleft, avoid completely |
-| **Proprietary** | ❌ No | ❌ No | Cannot redistribute |
-| **Fair-Code / Sustainable Use** | ❌ No | ❌ No | n8n-nodes-base uses this |
+| **MIT** | <Icon name="check-circle" /> Yes | <Icon name="check-circle" /> Yes | Most permissive, prefer this |
+| **Apache 2.0** | <Icon name="check-circle" /> Yes | <Icon name="check-circle" /> Yes | Same as Habits, ideal choice |
+| **BSD 2/3-Clause** | <Icon name="check-circle" /> Yes | <Icon name="check-circle" /> Yes | Permissive, minimal restrictions |
+| **ISC** | <Icon name="check-circle" /> Yes | <Icon name="check-circle" /> Yes | Equivalent to MIT |
+| **MPL 2.0** | <Icon name="warning" /> Partially | <Icon name="warning" /> Partially | File-level copyleft, manageable |
+| **LGPL** | <Icon name="warning" /> Partially | <Icon name="warning" /> Partially | Dynamic linking usually OK |
+| **GPL** | <Icon name="x-circle" /> No | <Icon name="x-circle" /> No | Copyleft infects your project |
+| **AGPL** | <Icon name="x-circle" /> No | <Icon name="x-circle" /> No | Network copyleft, avoid completely |
+| **Proprietary** | <Icon name="x-circle" /> No | <Icon name="x-circle" /> No | Cannot redistribute |
+| **Fair-Code / Sustainable Use** | <Icon name="x-circle" /> No | <Icon name="x-circle" /> No | n8n-nodes-base uses this |
 
 ## Real-World Decision Tree
 
 ```
 Is the module just types/specs/API docs?
-├── Yes → ✅ SAFE: Use it freely
+├── Yes → <Icon name="check-circle" /> SAFE: Use it freely
 └── No → Is it fully open source?
-    ├── No → ❌ AVOID: Proprietary dependency
+    ├── No → <Icon name="x-circle" /> AVOID: Proprietary dependency
     └── Yes → What's the license?
-        ├── MIT, Apache 2.0, BSD → ✅ SAFE: Use freely
-        ├── LGPL, MPL → ⚠️ CAREFUL: Check integration type
-        └── GPL, AGPL → ❌ AVOID: Copyleft will infect your project
+        ├── MIT, Apache 2.0, BSD → <Icon name="check-circle" /> SAFE: Use freely
+        ├── LGPL, MPL → <Icon name="warning" /> CAREFUL: Check integration type
+        └── GPL, AGPL → <Icon name="x-circle" /> AVOID: Copyleft will infect your project
 ```
 
 ## Framework-Specific Guidance
 
 ### ActivePieces Pieces
 
-**Recommended ✅**:  Most ActivePieces pieces are MIT licensed.
+**Recommended <Icon name="check-circle" />**:  Most ActivePieces pieces are MIT licensed.
 
 ```bash
 # Safe to use
@@ -123,7 +123,7 @@ ActivePieces pieces are:
 
 ### n8n Nodes
 
-**Use with caution ⚠️**: Distinguish between core and community nodes.
+**Use with caution <Icon name="warning" />**: Distinguish between core and community nodes.
 
 ::: danger Do NOT Use n8n-nodes-base if you want to use the source code commercially.
 The core n8n nodes package (`n8n-nodes-base`) is licensed under n8n's "Sustainable Use License," which is **NOT open source**. Using it will:
@@ -136,16 +136,16 @@ n8n **community** nodes (tagged `n8n-community-node-package`) are typically MIT 
 :::
 
 ```bash
-# ❌ AVOID - Proprietary license
+# <Icon name="x-circle" /> AVOID - Proprietary license
 npm install n8n-nodes-base  # DO NOT USE
 
-# ✅ Check first - Community nodes (verify license)
-npm install n8n-nodes-chatwoot  # MIT ✅
+# <Icon name="check-circle" /> Check first - Community nodes (verify license)
+npm install n8n-nodes-chatwoot  # MIT <Icon name="check-circle" />
 ```
 
 ### Scripts
 
-**Generally safe ✅** But verify imports.
+**Generally safe <Icon name="check-circle" />** But verify imports.
 
 Scripts are inline code you write yourself. However, be careful about:
 - Libraries you import from npm/PyPI
@@ -157,29 +157,29 @@ Scripts are inline code you write yourself. However, be careful about:
 ### Pitfall 1: The "Thin Wrapper" Trap
 
 ```
-❌ Bad: Your workflow uses a node that's MIT-licensed,
+<Icon name="x-circle" /> Bad: Your workflow uses a node that's MIT-licensed,
    but it downloads and executes proprietary code at runtime.
    
-✅ Good: Use a self-contained MIT node that makes API calls
+<Icon name="check-circle" /> Good: Use a self-contained MIT node that makes API calls
    to external services (calling an API ≠ incorporating code).
 ```
 
 ### Pitfall 2: Transitive Dependencies
 
 ```
-❌ Bad: Package A (MIT) depends on Package B (GPL).
+<Icon name="x-circle" /> Bad: Package A (MIT) depends on Package B (GPL).
    Your project is now GPL-infected.
    
-✅ Good: Before adding a module, check its full dependency tree:
+<Icon name="check-circle" /> Good: Before adding a module, check its full dependency tree:
    npm ls --all @some/package
 ```
 
 ### Pitfall 3: Confusing "Free to Use" with "Open Source"
 
 ```
-❌ Bad: "It's on npm and I can install it, so it's open source"
+<Icon name="x-circle" /> Bad: "It's on npm and I can install it, so it's open source"
    
-✅ Good: Check the LICENSE file. Look for OSI-approved licenses:
+<Icon name="check-circle" /> Good: Check the LICENSE file. Look for OSI-approved licenses:
    MIT, Apache 2.0, BSD, ISC
 ```
 
@@ -245,12 +245,12 @@ Visit [opensource.org/licenses](https://opensource.org/licenses) to confirm the 
 
 | What You're Using | Your Project Remains Open Source? |
 |-------------------|----------------------------------|
-| Specs, types, API documentation | ✅ Yes, always |
-| MIT/Apache 2.0 self-contained modules | ✅ Yes |
-| GPL/AGPL licensed code | ❌ No, copyleft applies |
-| n8n-nodes-base (core n8n) | ❌ No, proprietary license |
-| Modules that fetch proprietary code | ❌ No |
-| Modules with proprietary runtime dependencies | ❌ No |
+| Specs, types, API documentation | <Icon name="check-circle" /> Yes, always |
+| MIT/Apache 2.0 self-contained modules | <Icon name="check-circle" /> Yes |
+| GPL/AGPL licensed code | <Icon name="x-circle" /> No, copyleft applies |
+| n8n-nodes-base (core n8n) | <Icon name="x-circle" /> No, proprietary license |
+| Modules that fetch proprietary code | <Icon name="x-circle" /> No |
+| Modules with proprietary runtime dependencies | <Icon name="x-circle" /> No |
 
 ::: warning When in Doubt
 If you're unsure about a module's licensing implications, **don't use it**. There are plenty of MIT/Apache 2.0 alternatives available. Your peace of mind (and legal safety) is worth the extra effort of finding a compatible module.

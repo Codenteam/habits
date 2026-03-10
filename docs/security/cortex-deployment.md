@@ -85,10 +85,10 @@ CMD ["npx", "cortex", "serve", "--config", "./config.json"]
 |--------|----------|-------------------|
 | Package size | ~50MB | ~15MB |
 | Dependencies | ~200 | ~50 |
-| CLI tools | ✓ | ✗ |
-| Template authoring | ✓ | ✗ |
-| Workflow execution | ✓ | ✓ |
-| Security features | ✓ | ✓ |
+| CLI tools | <Icon name="check" /> | <Icon name="x" /> |
+| Template authoring | <Icon name="check" /> | <Icon name="x" /> |
+| Workflow execution | <Icon name="check" /> | <Icon name="check" /> |
+| Security features | <Icon name="check" /> | <Icon name="check" /> |
 | Recommended for | Development | Production |
 
 ## Best Practices

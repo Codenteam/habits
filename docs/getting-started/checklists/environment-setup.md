@@ -1,4 +1,4 @@
-## 🛠️ Environment Setup Checklist
+## <Icon name="wrench" /> Environment Setup Checklist
 
 ### Install Node Version Manager (nvm)
 - [ ] **macOS/Linux:** Install nvm:  `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash`

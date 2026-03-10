@@ -13,6 +13,7 @@ import ShowcaseCard from './components/ShowcaseCard.vue'
 import ShowcaseHero from './components/ShowcaseHero.vue'
 import BitsGrid from './components/BitsGrid.vue'
 import BitsCard from './components/BitsCard.vue'
+import Icon from './components/Icon.vue'
 import './custom.css'
 import './d2-custom.css'
 
@@ -32,6 +33,7 @@ export default {
     app.component('ShowcaseHero', ShowcaseHero)
     app.component('BitsGrid', BitsGrid)
     app.component('BitsCard', BitsCard)
+    app.component('Icon', Icon)
     enhanceAppWithTabs(app)
   }
 }

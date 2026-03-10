@@ -8,13 +8,13 @@ Enhanced workflow nodes with built-in capabilities, mandatory testing, and an Ac
 
 | Feature | Activepieces/n8n Nodes | Bits |
 |---------|------------------------|------|
-| Execution | ✅ Works | ✅ Works |
-| Capabilities Model | ❌ Unrestricted | ✅ Explicit capabilities (`fs:read`, `http:request`, etc.) |
-| Mandatory Tests | ❌ Optional | ✅ Required end-to-end test |
-| Script Support | ❌ Limited | ✅ TypeScript, Python, and more |
-| Familiar API | - | ✅ Activepieces-like `createDoer`/`createWatcher` |
+| Execution | <Icon name="check-circle" /> Works | <Icon name="check-circle" /> Works |
+| Capabilities Model | <Icon name="x-circle" /> Unrestricted | <Icon name="check-circle" /> Explicit capabilities (`fs:read`, `http:request`, etc.) |
+| Mandatory Tests | <Icon name="x-circle" /> Optional | <Icon name="check-circle" /> Required end-to-end test |
+| Script Support | <Icon name="x-circle" /> Limited | <Icon name="check-circle" /> TypeScript, Python, and more |
+| Familiar API | - | <Icon name="check-circle" /> Activepieces-like `createDoer`/`createWatcher` |
 
-> ⚠️ **n8n Runtime Note**: Using n8n nodes requires installing the entire n8n runtime (`n8n-core`, `n8n-workflow`, etc.) via npm. This significantly bloats your runtime and **immediately applies the [Sustainable Use License (SUL)](https://github.com/n8n-io/n8n/blob/master/LICENSE.md)** to your project. Consider using Bits or Activepieces nodes if licensing or bundle size is a concern.
+> <Icon name="warning" /> **n8n Runtime Note**: Using n8n nodes requires installing the entire n8n runtime (`n8n-core`, `n8n-workflow`, etc.) via npm. This significantly bloats your runtime and **immediately applies the [Sustainable Use License (SUL)](https://github.com/n8n-io/n8n/blob/master/LICENSE.md)** to your project. Consider using Bits or Activepieces nodes if licensing or bundle size is a concern.
 
 ---
 
@@ -1201,10 +1201,10 @@ edges:
 
 ### 1. Use Descriptive Names
 Follow snake_case for `name` and clear display names:
-- ✅ `send_slack_message` / "Send Slack Message"
-- ✅ `new_github_issue` / "New GitHub Issue"  
-- ❌ `slack1` / "Slack"
-- ❌ `handler` / "Handler"
+- <Icon name="check-circle" /> `send_slack_message` / "Send Slack Message"
+- <Icon name="check-circle" /> `new_github_issue` / "New GitHub Issue"  
+- <Icon name="x-circle" /> `slack1` / "Slack"
+- <Icon name="x-circle" /> `handler` / "Handler"
 
 ### 2. Minimal Capabilities
 Request only the capabilities your bit actually needs:
@@ -1218,11 +1218,11 @@ capabilities: ['http:request', 'http:webhook', 'secrets:read', 'secrets:write', 
 
 ### 3. Comprehensive Tests
 Every bit must have tests covering:
-- ✅ Happy path execution
-- ✅ Error handling
-- ✅ Edge cases
-- ✅ Capability requirements verified
-- ✅ All required props validated
+- <Icon name="check-circle" /> Happy path execution
+- <Icon name="check-circle" /> Error handling
+- <Icon name="check-circle" /> Edge cases
+- <Icon name="check-circle" /> Capability requirements verified
+- <Icon name="check-circle" /> All required props validated
 
 ### 4. Semantic Versioning
 When publishing bit packages, follow semver strictly. Breaking changes require major version bumps.

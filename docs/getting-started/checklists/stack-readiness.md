@@ -1,4 +1,4 @@
-## 📋 Habits Stack Preparation Checklist
+## <Icon name="clipboard" /> Habits Stack Preparation Checklist
 Do this before exporting your stack
 
 ### Basic Stack Requirements

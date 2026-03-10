@@ -1,4 +1,4 @@
-## 🚀 First Project Checklist
+## <Icon name="rocket" /> First Project Checklist
 
 ### Prepare Base Directory
 - [ ] Create a new directory: `mkdir my-habits && cd my-habits`
