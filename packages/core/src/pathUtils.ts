@@ -47,9 +47,9 @@ export function getTemplatesBasePath(): string {
     return process.env.HABITS_TEMPLATES_PATH;
   }
   
-  // Templates are stored in examples (dev) or examples (npx)
+  // Templates are stored in showcase
   const possiblePaths = [
-    path.join(__dirname, '../../../cortex/server/examshowcaseples'),           // Dev: relative to server src
+    path.join(__dirname, '../../../cortex/server/showcase'),           // Dev: relative to server src
     path.join(__dirname, '../../cortex/server/showcase'),              // Dev: another relative path
     path.join(process.cwd(), 'showcase'),       // Dev: from workspace root
     path.join(__dirname, '../showcase'),                               // npx: relative to base-server/index.cjs
