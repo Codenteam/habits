@@ -115,7 +115,6 @@ export default defineConfig({
           { text: 'Database', link: '/bits/bit-database' },
           { text: 'AI Agent', link: '/bits/bit-agent' },
           { text: 'Conditional (If)', link: '/bits/bit-if' },
-          { text: 'Email', link: '/bits/bit-email' },
         ]
       },
       // Extra reading
