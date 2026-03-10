@@ -3,7 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { withBase } from 'vitepress'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
+import ShowcaseCard from './ShowcaseCard.vue'
 import { codeToHtml } from 'shiki'
+import showcaseData from '../data/showcase-data.json'
 
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 
@@ -84,6 +86,14 @@ const screenshots = [
   { img: '/images/openclaw-clone.webp', caption: 'OpenClaw-clone built with Habits', link: '/examples/openclaw-clone#openclaw-clone-screenshot' },
   { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/examples/minimal-blog#minimal-blog-screenshot' },
 ]
+
+// Featured showcase items to display on homepage (slugs only)
+const featuredSlugs = ['ai-cookbook', 'ai-journal', 'mixed']
+const showcaseItems = computed(() => 
+  featuredSlugs
+    .map(slug => showcaseData.find(item => item.slug === slug))
+    .filter(Boolean)
+)
 </script>
 
 <template>
@@ -172,6 +182,18 @@ const screenshots = [
           <h3>{{ feature.title }}</h3>
           <p>{{ feature.details }}</p>
         </div>
+      </div>
+    </section>
+
+    <!-- Showcase Section -->
+    <section class="showcase-section">
+      <div class="showcase-header">
+        <h2>Featured Examples</h2>
+        <p>Production-ready habits you can run, customize, and learn from</p>
+        <a :href="withBase('/showcase/')" class="view-all-link">View all examples →</a>
+      </div>
+      <div class="showcase-row">
+        <ShowcaseCard v-for="item in showcaseItems" :key="item.slug" :example="item" />
       </div>
     </section>
 
@@ -514,6 +536,65 @@ const screenshots = [
   font-size: 0.95rem;
   color: var(--vp-c-text-2);
   line-height: 1.6;
+}
+
+/* Showcase Section */
+.showcase-section {
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.showcase-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.showcase-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--vp-c-text-1);
+}
+
+.showcase-header p {
+  font-size: 1.1rem;
+  color: var(--vp-c-text-2);
+  margin: 0 0 16px;
+}
+
+.view-all-link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #5865F2;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.view-all-link:hover {
+  color: #4752c4;
+}
+
+.showcase-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 960px) {
+  .showcase-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .showcase-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .showcase-header h2 {
+    font-size: 1.6rem;
+  }
 }
 
 /* Apache Tip */

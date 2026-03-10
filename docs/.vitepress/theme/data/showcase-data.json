@@ -1,0 +1,103 @@
+[
+  {
+    "slug": "ai-cookbook",
+    "name": "AI Cookbook",
+    "description": "Generate personalized recipes from your available ingredients with AI-powered recipe creation and beautiful food photography.",
+    "tags": [
+      "ai",
+      "creative",
+      "frontend",
+      "health"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/ai-cookbook/1.png",
+    "imageCount": 2
+  },
+  {
+    "slug": "ai-journal",
+    "name": "AI Journal",
+    "description": "Your personal AI-powered journaling companion that analyzes entries, tracks mood patterns, and provides compassionate weekly insights.",
+    "tags": [
+      "ai",
+      "health",
+      "productivity",
+      "frontend"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/ai-journal/1.png",
+    "imageCount": 2
+  },
+  {
+    "slug": "mixed",
+    "name": "Mixed Frameworks",
+    "description": "Multi-framework demo showcasing OpenAI to ElevenLabs pipelines with local storage for voice synthesis and AI-generated content.",
+    "tags": [
+      "ai",
+      "automation",
+      "creative"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/mixed/1.webp",
+    "imageCount": 1
+  },
+  {
+    "slug": "agent-mcp-demo",
+    "name": "Agent MCP Demo",
+    "description": "An intelligent AI agent with MCP integration enabling multi-source search across Google Drive, Slack, and filesystem.",
+    "tags": [
+      "ai",
+      "integration",
+      "developer"
+    ],
+    "difficulty": "advanced",
+    "featured": false,
+    "thumbnail": "/showcase/agent-mcp-demo/agent-default.svg",
+    "imageCount": 1
+  },
+  {
+    "slug": "email-classification",
+    "name": "Email Classification",
+    "description": "Smart email router that uses AI to automatically categorize and route emails to appropriate handlers using branching logic.",
+    "tags": [
+      "ai",
+      "email",
+      "automation"
+    ],
+    "difficulty": "intermediate",
+    "featured": false,
+    "thumbnail": "/showcase/email-classification/automation-default.svg",
+    "imageCount": 1
+  },
+  {
+    "slug": "marketing-campaign",
+    "name": "Marketing Campaign Generator",
+    "description": "AI-powered marketing campaign generator that creates expanded prompts, images, posters, and landing pages in parallel using the Intersect AI gateway.",
+    "tags": [
+      "ai",
+      "creative",
+      "frontend",
+      "automation"
+    ],
+    "difficulty": "intermediate",
+    "featured": false,
+    "thumbnail": "/showcase/marketing-campaign/1.webp",
+    "imageCount": 1
+  },
+  {
+    "slug": "minimal-blog",
+    "name": "Minimal Blog",
+    "description": "A complete blog API backend with authentication, CRUD endpoints, and database integration using Habits bits.",
+    "tags": [
+      "api",
+      "database",
+      "backend"
+    ],
+    "difficulty": "beginner",
+    "featured": false,
+    "thumbnail": "/showcase/minimal-blog/1.webp",
+    "imageCount": 1
+  }
+]

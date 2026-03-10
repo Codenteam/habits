@@ -557,17 +557,30 @@ function generateZipFiles(examples: ExampleData[]): void {
 function generateDataFile(examples: ExampleData[]): void {
   console.log('\n💾 Generating data files...');
   
+  // Sort featured first, then by name
+  const sortedExamples = [...examples].sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return a.name.localeCompare(b.name);
+  });
+  
   // Showcase data for Vue components
-  const data = examples.map(e => ({
+  const data = sortedExamples.map(e => ({
     slug: e.slug,
     name: e.name,
     description: e.description,
     tags: e.tags,
     difficulty: e.difficulty,
     featured: e.featured || false,
-    images: e.images.map(img => `/showcase/${e.slug}/${img}`),
+    thumbnail: `/showcase/${e.slug}/${e.images[0]}`,
+    imageCount: e.images.length,
   }));
   
+  // Write JSON file for Vue components to import
+  const dataFilePath = join(docsDir, '.vitepress/theme/data/showcase-data.json');
+  mkdirSync(join(docsDir, '.vitepress/theme/data'), { recursive: true });
+  writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+  console.log('  📄 .vitepress/theme/data/showcase-data.json');
   
   // Sidebar items for VitePress config
   const sidebarItems = [

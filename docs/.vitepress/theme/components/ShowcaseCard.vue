@@ -130,23 +130,48 @@ const navigateToExample = () => {
 <style scoped>
 .showcase-card {
   position: relative;
-  background: var(--vp-c-bg-soft);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(10px);
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid var(--vp-c-divider);
 }
 
+/* Gradient border effect */
+.showcase-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(6, 182, 212, 0.4) 50%, rgba(236, 72, 153, 0.4) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
 .showcase-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
-  border-color: var(--vp-c-brand-1);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 40px rgba(139, 92, 246, 0.15),
+    0 0 60px rgba(6, 182, 212, 0.1);
+  border-color: transparent;
+}
+
+.showcase-card:hover::before {
+  opacity: 1;
 }
 
 .showcase-card.featured {
-  border-color: var(--vp-c-brand-1);
-  background: linear-gradient(135deg, var(--vp-c-bg-soft), rgba(var(--vp-c-brand-1-rgb), 0.05));
+  border-color: rgba(139, 92, 246, 0.3);
+  background: linear-gradient(145deg, rgba(139, 92, 246, 0.05) 0%, rgba(6, 182, 212, 0.03) 100%);
 }
 
 .featured-badge {
@@ -154,13 +179,13 @@ const navigateToExample = () => {
   top: 12px;
   left: 12px;
   z-index: 10;
-  background: black;
+  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -183,11 +208,45 @@ const navigateToExample = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: saturate(0.7) contrast(1.1) brightness(0.95);
 }
 
 .showcase-card:hover .card-image img {
   transform: scale(1.08);
+  filter: saturate(1) contrast(1) brightness(1);
+  box-shadow: 
+    0 12px 40px rgba(139, 92, 246, 0.3),
+    0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+/* Holographic scanline overlay */
+.card-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 92, 246, 0.03) 2px,
+      rgba(139, 92, 246, 0.03) 4px
+    ),
+    linear-gradient(
+      135deg,
+      rgba(15, 23, 42, 0.4) 0%,
+      rgba(88, 28, 135, 0.25) 50%,
+      rgba(6, 182, 212, 0.2) 100%
+    );
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+.showcase-card:hover .card-image::after {
+  opacity: 0;
 }
 
 .image-overlay {
@@ -200,6 +259,7 @@ const navigateToExample = () => {
   padding-bottom: 16px;
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 2;
 }
 
 .showcase-card:hover .image-overlay {
@@ -207,18 +267,23 @@ const navigateToExample = () => {
 }
 
 .view-btn {
-  background: var(--vp-c-brand-1);
+  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
   color: white;
   padding: 8px 20px;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.85rem;
   transform: translateY(10px);
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
 }
 
 .showcase-card:hover .view-btn {
   transform: translateY(0);
+}
+
+.view-btn:hover {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
 }
 
 .image-count {
@@ -234,6 +299,7 @@ const navigateToExample = () => {
   align-items: center;
   gap: 4px;
   backdrop-filter: blur(4px);
+  z-index: 3;
 }
 
 .image-count svg {
@@ -326,13 +392,18 @@ const navigateToExample = () => {
 
 .details-link {
   font-size: 0.85rem;
-  color: var(--vp-c-brand-1);
+  color: #8b5cf6;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: all 0.3s ease;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
 }
 
 .details-link:hover {
-  color: var(--vp-c-brand-2);
+  color: #a78bfa;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
 }
 </style>
