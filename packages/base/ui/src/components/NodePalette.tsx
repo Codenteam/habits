@@ -62,12 +62,12 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
         <h3 className="font-semibold text-lg mb-3 text-white">Node Palette</h3>
         
         {/* Framework toggle buttons */}
-        <div className="grid grid-cols-3 gap-1 mb-4">
+        <div className="grid grid-cols-4 gap-1 mb-4">
           <button
-            onClick={() => toggleFramework('activepieces')}
+            onClick={() => toggleFramework('bits')}
             className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs ${
-              selectedFrameworks.includes('activepieces')
-                ? 'bg-purple-600/20 text-purple-400 border-2 border-purple-500/50'
+              selectedFrameworks.includes('bits')
+                ? 'bg-emerald-600/20 text-emerald-400 border-2 border-emerald-500/50'
                 : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border-2 border-transparent'
             }`}
           >
@@ -75,13 +75,28 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
             bits
           </button>
           <button
+            onClick={() => toggleFramework('activepieces')}
+            title="Deprecating: Activepieces pieces support will be removed in a future release"
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs relative ${
+              selectedFrameworks.includes('activepieces')
+                ? 'bg-purple-600/20 text-purple-400 border-2 border-purple-500/50'
+                : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border-2 border-transparent'
+            }`}
+          >
+            <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[8px] bg-yellow-500/80 text-yellow-900 rounded font-bold">DEP</span>
+            <Zap className="w-4 h-4" />
+            AP
+          </button>
+          <button
             onClick={() => toggleFramework('n8n')}
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs ${
+            title="Deprecating: n8n nodes support will be removed in a future release"
+            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs relative ${
               selectedFrameworks.includes('n8n')
                 ? 'bg-red-600/20 text-red-400 border-2 border-red-500/50'
                 : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border-2 border-transparent'
             }`}
           >
+            <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[8px] bg-yellow-500/80 text-yellow-900 rounded font-bold">DEP</span>
             <Activity className="w-4 h-4" />
             n8n
           </button>
@@ -110,7 +125,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
 
       <div className="p-4 space-y-3">
         {/* Bits - Always visible when bits filter is active */}
-        {selectedFrameworks.includes('activepieces') && (
+        {selectedFrameworks.includes('bits') && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-emerald-400 border-b border-emerald-500/30 pb-1">Bits</h4>
             {BITS.map((bit) => {
@@ -144,15 +159,15 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
           </div>
         )}
 
-        {/* Bits modules */}
+        {/* Activepieces modules */}
         {selectedFrameworks.includes('activepieces') && (
           <div className="space-y-2">
             {activepiecesModules.length > 0 && (
-              <h4 className="text-sm font-medium text-purple-400 border-b border-purple-500/30 pb-1">Bits Modules</h4>
+              <h4 className="text-sm font-medium text-purple-400 border-b border-purple-500/30 pb-1">Activepieces Modules <span className="text-yellow-400 text-xs">(Deprecating)</span></h4>
             )}
             {activepiecesModules.length === 0 && selectedFrameworks.length === 1 && (
               <div className="text-sm text-slate-500 text-center py-4">
-                No bits modules available
+                No Activepieces modules available
               </div>
             )}
             {activepiecesModules.map((module) => (
@@ -191,7 +206,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
         {selectedFrameworks.includes('n8n') && (
           <div className="space-y-2">
             {n8nModules.length > 0 && (
-              <h4 className="text-sm font-medium text-red-400 border-b border-red-500/30 pb-1">n8n Modules</h4>
+              <h4 className="text-sm font-medium text-red-400 border-b border-red-500/30 pb-1">n8n Modules <span className="text-yellow-400 text-xs">(Deprecating)</span></h4>
             )}
             {n8nModules.length === 0 && selectedFrameworks.length === 1 && (
               <div className="text-sm text-slate-500 text-center py-4">

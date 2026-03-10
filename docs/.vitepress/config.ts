@@ -70,9 +70,9 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
-          { text: 'Build Your First Habit using HaC', link: '/getting-started/first-habit' },
-          { text: 'Build Your First Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
-          { text: 'Build Your First Habit using AI', link: '/getting-started/first-habit-using-ai' },
+          { text: 'Build Habit using HaC', link: '/getting-started/first-habit' },
+          { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
+          { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
         ]
