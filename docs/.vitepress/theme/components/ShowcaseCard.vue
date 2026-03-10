@@ -17,7 +17,6 @@
         loading="lazy"
       />
       <div class="image-overlay">
-        <span class="view-btn">View Details →</span>
       </div>
       <div v-if="example.imageCount > 1" class="image-count">
         <Images :size="14" />
@@ -291,14 +290,6 @@ const navigateToExample = () => {
   flex-shrink: 0;
 }
 
-.tag-ai { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
-.tag-creative { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
-.tag-frontend { background: rgba(34, 211, 238, 0.15); color: #22d3ee; }
-.tag-health { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-.tag-productivity { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-.tag-automation { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-.tag-business { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
-.tag-database { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
 
 .tag-more {
   background: var(--vp-c-divider);
@@ -330,11 +321,8 @@ const navigateToExample = () => {
 }
 
 .difficulty-beginner { color: #22c55e; }
-.difficulty-beginner .difficulty-dot { background: #22c55e; }
 .difficulty-intermediate { color: #eab308; }
-.difficulty-intermediate .difficulty-dot { background: #eab308; }
 .difficulty-advanced { color: #ef4444; }
-.difficulty-advanced .difficulty-dot { background: #ef4444; }
 
 .details-link {
   font-size: 0.85rem;
