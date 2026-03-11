@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { withBase } from 'vitepress'
+import { withBase, useData } from 'vitepress'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
@@ -9,7 +9,33 @@ import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
 import bitsData from '../data/bits-data.json'
 
+const { isDark } = useData()
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+}
+
+// Parse CSS gradient string to extract colors
+function parseGradient(gradientStr) {
+  const matches = gradientStr.match(/#[a-fA-F0-9]{6}/g)
+  return matches || ['#667eea', '#764ba2']
+}
+
+// Generate icon SVG with embedded gradient for stroke
+function gradientIcon(iconName, gradientStr, gradientId) {
+  const colors = parseGradient(gradientStr)
+  const baseSvg = feather.icons[iconName].toSvg({ class: 'feather-icon' })
+  
+  const gradientDef = `<defs><linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="${colors[0]}"/>
+    <stop offset="100%" stop-color="${colors[1] || colors[0]}"/>
+  </linearGradient></defs>`
+  
+  return baseSvg
+    .replace('>', `>${gradientDef}`)
+    .replace(/stroke="[^"]*"/, `stroke="url(#${gradientId})"`)
+}
 
 const activeTab = ref(0)
 const highlightedCode = ref({})
@@ -29,6 +55,7 @@ npx habits@latest`
   {
     label: 'Create',
     code: `# Start Habits Base (visual builder)
+habits init
 habits base`
   },
   {
@@ -142,6 +169,35 @@ const hoveredUseCase = ref(null)
 
 <template>
   <div class="home-layout">
+    <!-- Header with theme toggle and GitHub -->
+    <header class="home-header">
+      <div class="header-content">
+        <a :href="withBase('/')" class="header-logo">
+          <img :src="withBase('/logo.png')" alt="Habits" />
+          <span>Habits</span>
+        </a>
+        <div class="header-actions">
+          <button 
+            class="theme-toggle" 
+            @click="toggleTheme" 
+            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <span v-if="isDark" v-html="icon('sun')"></span>
+            <span v-else v-html="icon('moon')"></span>
+          </button>
+          <a 
+            href="https://github.com/codenteam/habits" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="github-link"
+            aria-label="GitHub"
+          >
+            <span v-html="icon('github')"></span>
+          </a>
+        </div>
+      </div>
+    </header>
+
     <!-- Hero Section with Quick Start -->
     <section class="hero">
       <div class="hero-bg"></div>
@@ -245,8 +301,8 @@ const hoveredUseCase = ref(null)
           @mouseenter="hoveredUseCase = useCase.id"
           @mouseleave="hoveredUseCase = null"
         >
-          <div class="use-case-icon" :style="{ background: useCase.gradient }">
-            <span v-html="icon(useCase.icon)"></span>
+          <div class="use-case-icon">
+            <span v-html="gradientIcon(useCase.icon, useCase.gradient, `gradient-${useCase.id}`)"></span>
           </div>
           <div class="use-case-content">
             <div class="use-case-need">{{ useCase.need }}</div>
@@ -482,6 +538,73 @@ const hoveredUseCase = ref(null)
 .home-layout {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Header */
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-divider);
+  backdrop-filter: blur(8px);
+}
+
+.header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.header-logo img {
+  height: 32px;
+  width: 32px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle,
+.github-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.theme-toggle:hover,
+.github-link:hover {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-default-soft);
+}
+
+.theme-toggle :deep(.feather-icon),
+.github-link :deep(.feather-icon) {
+  width: 20px;
+  height: 20px;
 }
 
 /* Hero */
@@ -1095,13 +1218,12 @@ const hoveredUseCase = ref(null)
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  background: var(--vp-c-bg-soft);
 }
 
 .use-case-icon :deep(svg) {
-  width: 18px;
-  height: 18px;
-  color: white;
-  stroke: white;
+  width: 20px;
+  height: 20px;
 }
 
 .use-case-card:hover .use-case-icon {

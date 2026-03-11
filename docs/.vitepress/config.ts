@@ -19,8 +19,8 @@ export default defineConfig({
     /^http:\/\/localhost/
   ],
 
-  // Default to dark mode
-  appearance: 'dark',
+  // Match browser/system preference
+  appearance: true,
 
   // Configure markdown to escape Vue template syntax in code
   markdown: {
