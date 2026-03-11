@@ -55,6 +55,7 @@ npx habits@latest`
   {
     label: 'Create',
     code: `# Start Habits Base (visual builder)
+habits init
 habits base`
   },
   {

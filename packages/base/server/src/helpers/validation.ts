@@ -4,11 +4,13 @@
 
 import * as path from "path";
 import * as fs from "fs";
-import { extractPieceFromModule } from "@activepieces/shared";
-import { Piece } from "@activepieces/pieces-framework";
 import { getModulePath, getModuleMainFile } from "@ha-bits/cortex/utils/moduleCloner";
 import { getModuleName } from "@ha-bits/cortex/utils/moduleLoader";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
+import { extractPiece } from './activepieces-loader';
+
+// Type imports (compile-time only, not bundled)
+import type { Piece } from "@activepieces/pieces-framework";
 
 /**
  * Validate form data for a module action
@@ -43,7 +45,8 @@ export async function validateFormData(
       const module = customRequire(mainFile, modulePathDir);
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-      const piece = extractPieceFromModule<Piece>({
+      // JIT load activepieces and extract piece
+      const piece = await extractPiece<Piece>({
         module,
         pieceName: getModuleName(moduleDefinition),
         pieceVersion: packageJson.version,
@@ -176,7 +179,8 @@ export async function verifyAuthCredentials(
       const packageJsonPath = path.join(modulePathDir, "package.json");
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-      const piece = extractPieceFromModule<Piece>({
+      // JIT load activepieces and extract piece
+      const piece = await extractPiece<Piece>({
         module,
         pieceName: moduleDefinition.name || packageJson.name,
         pieceVersion: packageJson.version,
