@@ -90,11 +90,15 @@ echo "📚 Building documentation..."
 echo ""
 
 # Build docs
+npx -y tsx scripts/generate-showcase.ts
+npx -y tsx scripts/generate-bits.ts
 cd docs
 # Install d2
 curl -fsSL https://d2lang.com/install.sh | sh -s --
 # Install npm deps
 pnpm install
+
+
 
 if pnpm build; then
     echo ""
