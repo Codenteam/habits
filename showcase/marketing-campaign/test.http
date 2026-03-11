@@ -1,5 +1,5 @@
 # @host = http://localhost:11000
-@host = https://staging.staging.intersect.site
+@host = {{$dotenv HABITS_INTERSECT_HOST}}
 @port = 13000
 
 @intersect_api_key={{$dotenv INTERSECT_API_KEY}}

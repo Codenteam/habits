@@ -16,9 +16,11 @@ import {
   getModulePath,
 } from "@ha-bits/cortex/utils/moduleCloner";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractPieceFromModule } from "@activepieces/shared";
-import { Action, Piece } from "@activepieces/pieces-framework";
+import { extractPiece } from '../helpers/activepieces-loader';
 import { LoggerFactory } from '@ha-bits/core';
+
+// Type imports (compile-time only, not bundled)
+import type { Action, Piece } from "@activepieces/pieces-framework";
 
 const logger = LoggerFactory.getRoot();
 
@@ -197,7 +199,7 @@ export class FormsController {
           require("fs").readFileSync(packageJsonPath, "utf8"),
         );
 
-        const piece = extractPieceFromModule<Piece>({
+        const piece = await extractPiece<Piece>({
           module,
           pieceName: getModuleName(moduleDefinition),
           pieceVersion: packageJson.version,
