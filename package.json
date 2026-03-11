@@ -23,27 +23,23 @@
   "author": "Codenteam",
   "license": "Apache-2.0",
   "dependencies": {
-    "jszip": "^3.10.1",
     "@activepieces/pieces-common": "^0.10.1",
     "@activepieces/pieces-framework": "^0.22.2",
     "@activepieces/shared": "^0.29.0",
-    "@aws-sdk/client-s3": "^3.481.0",
-    "@aws-sdk/s3-request-presigner": "^3.481.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@vercel/ncc": "^0.38.4",
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
     "express": "^5.0.1",
     "form-data": "^4.0.5",
     "install-modules": "^1.0.9",
+    "jszip": "^3.10.1",
     "qs": "^6.14.0",
     "react": "^19.0.0",
     "tailwindcss": "^4.0.0",
     "uuid": "^9.0.1",
     "winston": "^3.19.0",
-    "yargs": "^17.7.2",
-
-
-    "@vercel/ncc": "^0.38.4"
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@nx/esbuild": "^22.4.5",
@@ -57,7 +53,6 @@
     "@types/redis": "^4.0.11",
     "@types/uuid": "^9.0.7",
     "@types/yargs": "^17.0.32",
-
     "esbuild": "^0.24.2",
     "husky": "^9.1.7",
     "jest": "^30.2.0",

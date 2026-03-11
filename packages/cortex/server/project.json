@@ -19,7 +19,7 @@
         "outputFileName": "main.cjs",
         "tsConfig": "packages/cortex/server/tsconfig.lib.json",
         "platform": "node",
-        "format": ["cjs"],
+        "format": ["cjs", "esm"],
         "bundle": true,
         "sourcemap": true,
         "declaration": false,
