@@ -16,9 +16,9 @@
  * - security/config.json: Permissions configuration (fs, net, env access)
  */
 
-import { spawn } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import { nodeSpawn } from '@ha-bits/bindings/shell';
+import * as fs from '@ha-bits/bindings/fs';
+import * as path from '@ha-bits/bindings/path';
 
 // ============================================================================
 // Types
@@ -258,7 +258,7 @@ function spawnCortexWithSecurity(
     }
     console.log('');
     
-    const child = spawn(process.execPath, fullArgs, {
+    const child = nodeSpawn(process.execPath, fullArgs, {
       stdio: 'inherit',
       env: process.env,
     });

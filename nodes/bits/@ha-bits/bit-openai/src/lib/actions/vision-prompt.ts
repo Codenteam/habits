@@ -6,7 +6,7 @@
 import {
   createAction,
   Property,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { openaiAuthValue, castMarkdownProperty, castMarkdownCodeBlocks } from '../common/common';

@@ -3,7 +3,7 @@
  * Returns structured data from provided unstructured text.
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth, notLLMs, openaiAuthValue } from '../common/common';
 

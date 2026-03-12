@@ -8,7 +8,7 @@ import {
   httpClient,
   Property,
   createAction,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import { openaiAuth, baseUrl as openAiBaseUrl, openaiAuthValue } from '../common/common';
 import FormData from 'form-data';
 import mime from 'mime-types';

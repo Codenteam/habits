@@ -6,7 +6,7 @@
  * Modules can import from '@ha-bits/cortex' to access these utilities.
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
+import { fetch } from '@ha-bits/bindings';
 import { ILogger } from '@ha-bits/core';
 // ============================================================================
 // HTTP Client Types and Implementation
@@ -70,46 +70,50 @@ export interface HttpResponse<T = any> {
  */
 export const httpClient = {
   async sendRequest<T = any>(request: HttpRequest): Promise<HttpResponse<T>> {
-    const config: AxiosRequestConfig = {
-      url: request.url,
-      method: request.method as Method,
-      headers: { ...request.headers },
-      data: request.body,
-      params: request.queryParams,
-      timeout: request.timeout || 30000,
-    };
+    const headers: Record<string, string> = { ...request.headers };
 
     // Handle authentication
     if (request.authentication) {
       switch (request.authentication.type) {
         case AuthenticationType.BEARER_TOKEN:
-          config.headers = {
-            ...config.headers,
-            Authorization: `Bearer ${request.authentication.token}`,
-          };
+          headers['Authorization'] = `Bearer ${request.authentication.token}`;
           break;
         case AuthenticationType.BASIC:
-          config.auth = {
-            username: request.authentication.username || '',
-            password: request.authentication.password || '',
-          };
+          const credentials = Buffer.from(
+            `${request.authentication.username || ''}:${request.authentication.password || ''}`
+          ).toString('base64');
+          headers['Authorization'] = `Basic ${credentials}`;
           break;
         case AuthenticationType.API_KEY:
           const headerName = request.authentication.headerName || 'X-API-Key';
-          config.headers = {
-            ...config.headers,
-            [headerName]: request.authentication.apiKey || '',
-          };
+          headers[headerName] = request.authentication.apiKey || '';
           break;
       }
     }
 
-    const response: AxiosResponse<T> = await axios(config);
+    // Build URL with query params
+    let url = request.url;
+    if (request.queryParams && Object.keys(request.queryParams).length > 0) {
+      const params = new URLSearchParams(request.queryParams);
+      url += (url.includes('?') ? '&' : '?') + params.toString();
+    }
+
+    const response = await fetch(url, {
+      method: request.method,
+      headers,
+      body: request.body ? JSON.stringify(request.body) : undefined,
+    });
+
+    // Convert Headers to plain object
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
 
     return {
       status: response.status,
-      headers: response.headers as Record<string, string>,
-      body: response.data,
+      headers: responseHeaders,
+      body: await response.json() as T,
     };
   },
 };

@@ -6,7 +6,7 @@
  */
 
 import { Application, Request, Response } from 'express';
-import { WorkflowExecutor } from '../WorkflowExecutor';
+import { WorkflowExecutor } from '@ha-bits/cortex-core';
 import { Workflow, LoadedWorkflow } from '@habits/shared/types';
 import { getComponentSchemas } from './schemas';
 import { 

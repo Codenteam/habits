@@ -3,8 +3,8 @@
  * Handles loading credential type definitions and applying authentication
  */
 
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from '@ha-bits/bindings/path';
+import * as fs from '@ha-bits/bindings/fs';
 import { customRequire } from '../utils/customRequire';
 import { getModulePath, ModuleDefinition } from '../utils/moduleCloner';
 import {

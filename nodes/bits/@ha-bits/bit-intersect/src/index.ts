@@ -8,8 +8,7 @@
 import {
   createBit,
   createCustomApiCallAction,
-  BitCategory,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';

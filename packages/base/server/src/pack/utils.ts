@@ -23,10 +23,96 @@ export function sanitizeStackName(name: string | undefined): string {
 }
 
 /**
- * Create temporary work directory with prefix
+ * Find the workspace root by looking for nx.json or package.json with workspaces
+ */
+export function findWorkspaceRoot(startDir?: string): string | null {
+  let dir = startDir || process.cwd();
+  
+  // Walk up the directory tree
+  while (dir !== path.dirname(dir)) {
+    // Check for habits workspace markers
+    if (fs.existsSync(path.join(dir, 'nx.json')) && fs.existsSync(path.join(dir, 'nodes', 'bits', '@ha-bits'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  
+  return null;
+}
+
+/**
+ * Get the path to the bits node_modules directory
+ * This is where @ha-bits/* packages are located (nodes/bits/)
+ */
+export function getBitsNodeModulesPath(workspaceRoot?: string): string | null {
+  const root = workspaceRoot || findWorkspaceRoot();
+  if (!root) return null;
+  
+  const bitsPath = path.join(root, 'nodes', 'bits');
+  if (fs.existsSync(bitsPath)) {
+    return bitsPath;
+  }
+  
+  return null;
+}
+
+/**
+ * Create temporary work directory with prefix using timestamp
  */
 export function createTmpWorkDir(prefix: string): string {
-  return fs.mkdtempSync(path.join(getTmpDir(), `habits-${prefix}-`));
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+  const workDir = path.join(getTmpDir(), `habits-${prefix}-${timestamp}`);
+  fs.mkdirSync(workDir, { recursive: true });
+  return workDir;
+}
+
+/**
+ * Get or create work directory with optional stack ID for caching.
+ * If stackId is provided, uses a predictable directory name for incremental builds.
+ * Returns whether the directory already existed (for cache hit detection).
+ */
+export function getOrCreateWorkDir(prefix: string, stackId?: string): { workDir: string; existed: boolean } {
+  if (stackId) {
+    // Use predictable path based on stack ID for build caching
+    const workDir = path.join(getTmpDir(), `habits-${prefix}-${stackId}`);
+    const existed = fs.existsSync(workDir);
+    
+    if (!existed) {
+      fs.mkdirSync(workDir, { recursive: true });
+      logger.info(`Created new work directory for stack`, { workDir, stackId });
+    } else {
+      logger.info(`Reusing existing work directory for stack`, { workDir, stackId });
+    }
+    
+    return { workDir, existed };
+  }
+  
+  // Fallback to timestamp-based directory (no caching)
+  return { workDir: createTmpWorkDir(prefix), existed: false };
+}
+
+/**
+ * Sync files to an existing work directory.
+ * Overwrites all files but preserves build artifacts (node_modules, target).
+ */
+export function syncWorkDir(workDir: string, files: Record<string, string | Buffer>): void {
+  logger.info(`Syncing files to work directory`, { workDir, fileCount: Object.keys(files).length });
+  
+  for (const [relativePath, content] of Object.entries(files)) {
+    const fullPath = path.join(workDir, relativePath);
+    const dir = path.dirname(fullPath);
+    
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    if (Buffer.isBuffer(content)) {
+      fs.writeFileSync(fullPath, content);
+    } else {
+      fs.writeFileSync(fullPath, content, 'utf-8');
+    }
+  }
 }
 
 /**

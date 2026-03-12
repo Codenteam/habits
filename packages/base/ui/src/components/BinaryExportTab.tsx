@@ -178,6 +178,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   const [mobileMode, setMobileMode] = useState<AppMode>('client');
   const [buildDesktopBinary, setBuildDesktopBinary] = useState(true);
   const [buildMobileBinary, setBuildMobileBinary] = useState(true);
+  const [debugBuild, setDebugBuild] = useState(false);
   
   // App customization state
   const [appName, setAppName] = useState(stackName || 'Habits App');
@@ -378,7 +379,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   };
 
   const handleGenerateDesktop = async () => {
-    if (generating || habits.length === 0 || !backendUrl) return;
+    if (generating || habits.length === 0 || (desktopMode === 'client' && !backendUrl)) return;
     
     setGenerating(true);
     setGenerationError(null);
@@ -396,13 +397,15 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
           })),
           serverConfig,
           frontendHtml,
-          backendUrl,
+          backendUrl: desktopMode === 'full' ? '' : backendUrl,
           desktopPlatform: selectedDesktopPlatform,
           framework: selectedDesktopFramework,
           buildBinary: buildDesktopBinary,
+          debugBuild: debugBuild,
           stackName,
           appName: appName || 'Habits App',
           appIcon: appIcon || null,
+          executionMode: desktopMode,
         }),
       });
 
@@ -448,7 +451,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   };
 
   const handleGenerateMobile = async () => {
-    if (generating || habits.length === 0 || !backendUrl) return;
+    if (generating || habits.length === 0 || (mobileMode === 'client' && !backendUrl)) return;
     
     setGenerating(true);
     setGenerationError(null);
@@ -466,13 +469,15 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
           })),
           serverConfig,
           frontendHtml,
-          backendUrl,
+          backendUrl: mobileMode === 'full' ? '' : backendUrl,
           mobileTarget: selectedMobileTarget,
           buildBinary: buildMobileBinary,
+          debugBuild: debugBuild,
           framework: selectedMobileFramework,
           stackName,
           appName: appName || 'Habits App',
           appIcon: appIcon || null,
+          executionMode: mobileMode,
         }),
       });
 
@@ -1109,17 +1114,22 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </button>
                 <button
                   onClick={() => setDesktopMode('full')}
-                  disabled
-                  className="flex flex-col items-start p-3 rounded-lg border border-slate-700 bg-slate-800/30 opacity-60 cursor-not-allowed text-left"
+                  className={`flex flex-col items-start p-3 rounded-lg border transition-colors text-left ${
+                    desktopMode === 'full'
+                      ? 'bg-purple-600/20 border-purple-500'
+                      : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-3 h-3 rounded-full border-2 border-slate-600 flex items-center justify-center">
-                      {desktopMode === 'full' && <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
+                    <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                      desktopMode === 'full' ? 'border-purple-400' : 'border-slate-500'
+                    }`}>
+                      {desktopMode === 'full' && <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />}
                     </div>
-                    <span className="text-sm font-medium text-slate-500">Full App</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-600/30 text-purple-300 rounded">Coming Soon</span>
+                    <span className={`text-sm font-medium ${desktopMode === 'full' ? 'text-purple-300' : 'text-slate-300'}`}>Full App</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-600/30 text-purple-300 rounded">Standalone</span>
                   </div>
-                  <p className="text-xs text-slate-600 ml-5">Embedded backend, doesn't require a serverside</p>
+                  <p className="text-xs text-slate-500 ml-5">Workflows execute locally (no server needed)</p>
                 </button>
               </div>
             </div>
@@ -1303,6 +1313,29 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                   )}
                 </div>
               </div>
+              
+              {/* Debug Build Option */}
+              {buildDesktopBinary && (
+                <div className="flex items-start gap-3 mt-3 pt-3 border-t border-slate-700">
+                  <input
+                    type="checkbox"
+                    id="desktop-debug-build"
+                    checked={debugBuild}
+                    onChange={(e) => setDebugBuild(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 bg-slate-800 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="desktop-debug-build" className="text-sm font-medium text-slate-300 cursor-pointer">
+                      Debug build
+                    </label>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {debugBuild 
+                        ? 'Build with debug symbols and logging enabled. Useful for development and debugging.' 
+                        : 'Build an optimized release version for production use.'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Requirements Notice (only show when building binary) */}
@@ -1337,7 +1370,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             {/* Generate Button */}
             <button
               onClick={handleGenerateDesktop}
-              disabled={generating || habits.length === 0 || !backendUrl || !hasFrontend}
+              disabled={generating || habits.length === 0 || (desktopMode === 'client' && !backendUrl) || !hasFrontend}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
             >
               {generating ? (
@@ -1352,19 +1385,21 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </>
               )}
             </button>
-            {(generating || habits.length === 0 || !backendUrl || !hasFrontend) && (
+            {(generating || habits.length === 0 || (desktopMode === 'client' && !backendUrl) || !hasFrontend) && (
               <p className="text-xs text-amber-400 text-center">
                 {generating && 'Generation in progress...'}
                 {!generating && habits.length === 0 && 'Cannot generate: No habits to bundle'}
                 {!generating && habits.length > 0 && !hasFrontend && 'Cannot generate: Frontend HTML required (add in Frontend tab)'}
-                {!generating && habits.length > 0 && hasFrontend && !backendUrl && 'Cannot generate: Backend URL required'}
+                {!generating && habits.length > 0 && hasFrontend && desktopMode === 'client' && !backendUrl && 'Cannot generate: Backend URL required for Client mode'}
               </p>
             )}
-            {!generating && habits.length > 0 && backendUrl && hasFrontend && (
+            {!generating && habits.length > 0 && (desktopMode === 'full' || backendUrl) && hasFrontend && (
               <p className="text-xs text-slate-500 text-center">
-                {buildDesktopBinary 
-                  ? 'Building binary requires Electron Builder (~3-10 mins)' 
-                  : 'Downloads project files instantly, build later with npm commands'}
+                {desktopMode === 'full' 
+                  ? 'Full mode: Workflows execute directly in the app (no server needed)'
+                  : buildDesktopBinary 
+                    ? 'Building binary requires Electron Builder (~3-10 mins)' 
+                    : 'Downloads project files instantly, build later with npm commands'}
               </p>
             )}
 
@@ -1507,17 +1542,22 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </button>
                 <button
                   onClick={() => setMobileMode('full')}
-                  disabled
-                  className="flex flex-col items-start p-3 rounded-lg border border-slate-700 bg-slate-800/30 opacity-60 cursor-not-allowed text-left"
+                  className={`flex flex-col items-start p-3 rounded-lg border transition-colors text-left ${
+                    mobileMode === 'full'
+                      ? 'bg-purple-600/20 border-purple-500'
+                      : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-3 h-3 rounded-full border-2 border-slate-600 flex items-center justify-center">
-                      {mobileMode === 'full' && <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
+                    <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                      mobileMode === 'full' ? 'border-purple-400' : 'border-slate-500'
+                    }`}>
+                      {mobileMode === 'full' && <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />}
                     </div>
-                    <span className="text-sm font-medium text-slate-500">Full App</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-600/30 text-purple-300 rounded">Coming Soon</span>
+                    <span className={`text-sm font-medium ${mobileMode === 'full' ? 'text-purple-300' : 'text-slate-300'}`}>Full App</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-purple-600/30 text-purple-300 rounded">Standalone</span>
                   </div>
-                  <p className="text-xs text-slate-600 ml-5">Embedded backend, doesn't require a serverside</p>
+                  <p className="text-xs text-slate-500 ml-5">Workflows execute locally (no server needed)</p>
                 </button>
               </div>
             </div>
@@ -1738,6 +1778,29 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                   )}
                 </div>
               </div>
+              
+              {/* Debug Build Option */}
+              {buildMobileBinary && (
+                <div className="flex items-start gap-3 mt-3 pt-3 border-t border-slate-700">
+                  <input
+                    type="checkbox"
+                    id="mobile-debug-build"
+                    checked={debugBuild}
+                    onChange={(e) => setDebugBuild(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-green-600 bg-slate-800 border-slate-600 rounded focus:ring-green-500 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="mobile-debug-build" className="text-sm font-medium text-slate-300 cursor-pointer">
+                      Debug build
+                    </label>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {debugBuild 
+                        ? 'Build with debug symbols and logging enabled. Useful for development and debugging.' 
+                        : 'Build an optimized release version for production use.'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Requirements Notice */}
@@ -1770,7 +1833,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             {/* Generate Button */}
             <button
               onClick={handleGenerateMobile}
-              disabled={generating || habits.length === 0 || !backendUrl || !hasFrontend}
+              disabled={generating || habits.length === 0 || (mobileMode === 'client' && !backendUrl) || !hasFrontend}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
             >
               {generating ? (
@@ -1785,17 +1848,19 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 </>
               )}
             </button>
-            {(generating || habits.length === 0 || !backendUrl || !hasFrontend) && (
+            {(generating || habits.length === 0 || (mobileMode === 'client' && !backendUrl) || !hasFrontend) && (
               <p className="text-xs text-amber-400 text-center">
                 {generating && 'Generation in progress...'}
                 {!generating && habits.length === 0 && 'Cannot generate: No habits to bundle'}
                 {!generating && habits.length > 0 && !hasFrontend && 'Cannot generate: Frontend HTML required (add in Frontend tab)'}
-                {!generating && habits.length > 0 && hasFrontend && !backendUrl && 'Cannot generate: Backend URL required'}
+                {!generating && habits.length > 0 && hasFrontend && mobileMode === 'client' && !backendUrl && 'Cannot generate: Backend URL required for Client mode'}
               </p>
             )}
-            {!generating && habits.length > 0 && backendUrl && hasFrontend && (
+            {!generating && habits.length > 0 && (mobileMode === 'full' || backendUrl) && hasFrontend && (
               <p className="text-xs text-slate-500 text-center">
-                Generates a Cordova project ready to build with platform tools
+                {mobileMode === 'full' 
+                  ? 'Full mode: Workflows execute directly in the app (no server needed)'
+                  : 'Generates a mobile project ready to build with platform tools'}
               </p>
             )}
 

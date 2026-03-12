@@ -1,0 +1,222 @@
+/**
+ * Bundle Generator CLI Wrapper
+ * 
+ * Calls @ha-bits/bundle-generator via npx to generate IIFE bundles
+ * for habits workflows that can run in environments without a server.
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { execSync } from 'child_process';
+import { LoggerFactory } from '@ha-bits/core';
+
+const logger = LoggerFactory.getRoot();
+
+/**
+ * Find the local bundle-generator CLI if available
+ */
+function findLocalBundleGenerator(): string | null {
+  // Try multiple possible locations
+  const possiblePaths = [
+    // From workspace root (when running via npx or node from workspace)
+    path.join(process.cwd(), 'bundle-generator', 'cli.js'),
+    // From dist/packages/habits (when installed via npm)
+    path.join(__dirname, '..', '..', '..', '..', '..', 'bundle-generator', 'cli.js'),
+    // From packages/base/server/src/pack (when running from source)
+    path.join(__dirname, '..', '..', '..', '..', '..', '..', 'bundle-generator', 'cli.js'),
+  ];
+  
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+  return null;
+}
+
+/**
+ * Options for generating a bundle via npx
+ */
+export interface BundleGeneratorOptions {
+  /** Array of workflow objects to embed in the bundle */
+  habits: any[];
+  /** Application name for bundle identification */
+  appName?: string;
+  /** Environment variables to embed (from .env file) */
+  envVars?: Record<string, string>;
+}
+
+/**
+ * Result of bundle generation
+ */
+export interface BundleGeneratorResult {
+  success: boolean;
+  /** The generated JavaScript code */
+  code?: string;
+  /** List of bits modules that were bundled */
+  bundledBits?: string[];
+  /** Any errors that occurred */
+  error?: string;
+  /** Bundle size in bytes */
+  size?: number;
+}
+
+/**
+ * Extract bits modules from workflows
+ */
+function extractBitsFromWorkflows(workflows: any[]): Array<{ id: string; module: string }> {
+  const bitsSet = new Set<string>();
+
+  for (const workflow of workflows) {
+    for (const node of workflow.nodes || []) {
+      if (node.type === 'bits' || node.data?.framework === 'bits') {
+        const moduleName = node.data?.module;
+        if (moduleName) {
+          bitsSet.add(moduleName);
+        }
+      }
+    }
+  }
+
+  // Convert to array with IDs
+  return Array.from(bitsSet).map((moduleName) => {
+    // Generate id from module name (e.g., @ha-bits/bit-intersect -> intersect)
+    const id = moduleName
+      .replace('@ha-bits/', '')
+      .replace(/^bit-/, '')
+      .replace(/-([a-z])/g, (_: string, char: string) => char.toUpperCase());
+    
+    return { id, module: moduleName };
+  });
+}
+
+/**
+ * Generate a bundle using @ha-bits/bundle-generator via npx
+ */
+export async function generateBundle(options: BundleGeneratorOptions): Promise<BundleGeneratorResult> {
+  const {
+    habits,
+    appName = 'HabitsApp',
+    envVars = {},
+  } = options;
+
+  if (!habits || habits.length === 0) {
+    return {
+      success: false,
+      error: 'No habits (workflows) provided',
+    };
+  }
+
+  logger.info(`Generating bundle via npx for ${habits.length} workflow(s)`);
+
+  // Extract bits modules from workflows
+  const bits = extractBitsFromWorkflows(habits);
+  logger.info(`Found ${bits.length} bits module(s): ${bits.map(b => b.module).join(', ') || 'none'}`);
+
+  // Create workflows map
+  const workflowsMap: Record<string, any> = {};
+  for (const workflow of habits) {
+    const id = workflow.id || `workflow-${habits.indexOf(workflow)}`;
+    workflowsMap[id] = workflow;
+  }
+
+  // Build stack config
+  const stackConfig = {
+    name: appName,
+    version: '1.0',
+    workflows: habits.map((w, i) => ({
+      id: w.id || `workflow-${i}`,
+      path: `inline:${w.id || `workflow-${i}`}`,
+      enabled: true,
+    })),
+  };
+
+  // Build input JSON for CLI
+  const inputJson = {
+    stack: {
+      config: stackConfig,
+      bits: bits,
+    },
+    workflows: workflowsMap,
+    env: envVars,
+  };
+
+  // Create temp directory for input/output
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bundle-gen-'));
+  const inputPath = path.join(tmpDir, 'input.json');
+  const outputPath = path.join(tmpDir, 'bundle.js');
+
+  try {
+    // Write input JSON
+    fs.writeFileSync(inputPath, JSON.stringify(inputJson, null, 2));
+    logger.debug(`Written input file: ${inputPath}`);
+
+    // Try to find local bundle-generator first (for development), then fall back to npx
+    const localBundleGenerator = findLocalBundleGenerator();
+    
+    const command = localBundleGenerator
+      ? `node "${localBundleGenerator}" --input "${inputPath}" --output "${outputPath}"`
+      : `npx @ha-bits/bundle-generator --input "${inputPath}" --output "${outputPath}"`;
+    
+    logger.info(`Running bundle-generator${localBundleGenerator ? ' (local)' : ' (npx)'}...`);
+    
+    try {
+      execSync(command, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 120000, // 2 minutes timeout
+        env: { ...process.env, NODE_ENV: 'production' },
+        cwd: localBundleGenerator ? path.dirname(localBundleGenerator) : process.cwd(),
+      });
+    } catch (execError: any) {
+      const stderr = execError.stderr?.toString() || '';
+      const stdout = execError.stdout?.toString() || '';
+      logger.error(`Bundle generator failed: ${stderr || stdout || execError.message}`);
+      return {
+        success: false,
+        error: `Bundle generation failed: ${stderr || stdout || execError.message}`,
+      };
+    }
+
+    // Read the generated bundle
+    if (!fs.existsSync(outputPath)) {
+      return {
+        success: false,
+        error: 'Bundle generator completed but output file not found',
+      };
+    }
+
+    const code = fs.readFileSync(outputPath, 'utf8');
+    logger.info(`Bundle generated: ${(code.length / 1024).toFixed(2)} KB`);
+
+    // Cleanup
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+
+    return {
+      success: true,
+      code,
+      bundledBits: bits.map(b => b.module),
+      size: code.length,
+    };
+  } catch (error: any) {
+    logger.error(`Bundle generation failed: ${error.message}`);
+
+    // Cleanup on error
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Ignore
+    }
+
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+export default generateBundle;

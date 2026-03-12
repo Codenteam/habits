@@ -3,7 +3,7 @@
  * Generate an image using DALL-E
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { openaiAuthValue } from '../common/common';

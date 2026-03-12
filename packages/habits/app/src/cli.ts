@@ -8,7 +8,9 @@
  *   npx habits convert --input ./workflow.json --output ./habits.json
  *   npx habits edit [--port 3000]
  *   npx habits base [--port 3000]  (alias for edit)
- *   npx habits pack --config ./stack.yaml --output ./habits-binary
+ *   npx habits pack --config ./stack.yaml --format bundle
+ *   npx habits pack --config ./stack.yaml --format tauri
+ *   npx habits pack --config ./stack.yaml --format single-executable
  * 
  * Commands:
  *   init     Initialize a new Habits project with .env and modules.json
@@ -16,7 +18,7 @@
  *   execute  Execute a workflow from file or config
  *   convert  Convert a workflow from n8n/Activepieces to Habits format
  *   edit|base     Start the Base server for editing modules and workflows
- *   pack     Generate a standalone binary (SEA) from a habits config
+ *   pack     Generate standalone bundle, Tauri app, binary (SEA), or mobile app
  */
 
 import * as fs from 'fs';
@@ -156,7 +158,7 @@ export async function runCLI(): Promise<void> {
         default: false,
       },
     })
-    .command('pack', 'Package habits into executable, desktop app, or mobile app', {
+    .command('pack', 'Package habits into executable, bundle, Tauri app, desktop app, or mobile app', {
       config: {
         alias: 'c',
         describe: 'Path to stack.yaml config file',
@@ -170,7 +172,7 @@ export async function runCLI(): Promise<void> {
       },
       format: {
         alias: 'f',
-        describe: 'Output format: single-executable, desktop, desktop-full, mobile, mobile-full',
+        describe: 'Output format: single-executable, bundle, tauri, desktop, desktop-full, mobile, mobile-full',
         type: 'string',
         default: 'single-executable',
         choices: getSupportedPackFormats(),

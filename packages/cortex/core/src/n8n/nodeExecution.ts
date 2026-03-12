@@ -4,7 +4,7 @@
  */
 
 import * as path from 'path';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { fetch } from '@ha-bits/bindings';
 import { customRequire } from '../utils/customRequire';
 import { getModuleName } from '../utils/moduleLoader';
 import { ModuleDefinition } from '../utils/moduleCloner';
@@ -330,30 +330,41 @@ export async function executeRoutingBasedNode(
   logger.log(`🌐 Making routing-based request: ${method} ${url}`);
   logger.log(`📤 Request body:`, { body: body });
   
-  // Make the HTTP request
-  const axiosConfig: AxiosRequestConfig = {
-    method: method as any,
-    url,
-    headers,
-    params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
-    data: Object.keys(body).length > 0 ? body : undefined,
-  };
+  // Build URL with query params
+  let fullUrl = url;
+  if (Object.keys(queryParams).length > 0) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
+    }
+    fullUrl += (fullUrl.includes('?') ? '&' : '?') + params.toString();
+  }
   
-  // Handle arraybuffer encoding for binary responses
-  if (requestConfig.encoding === 'arraybuffer') {
-    axiosConfig.responseType = 'arraybuffer';
+  // Prepare request body
+  const requestBody = Object.keys(body).length > 0 ? JSON.stringify(body) : undefined;
+  if (requestBody && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
   
   try {
-    const response: AxiosResponse = await axios(axiosConfig);
+    const response = await fetch(fullUrl, {
+      method,
+      headers,
+      body: requestBody,
+    });
     
     logger.log(`✅ Routing-based request successful: ${response.status}`);
     
+    const contentType = response.headers.get('content-type') || '';
+    
     // Handle binary response (audio data)
-    if (requestConfig.encoding === 'arraybuffer' || response.headers['content-type']?.includes('audio')) {
-      const binaryData = Buffer.from(response.data);
+    if (requestConfig.encoding === 'arraybuffer' || contentType.includes('audio')) {
+      const arrayBuffer = await response.arrayBuffer();
+      const binaryData = Buffer.from(arrayBuffer);
       const base64Data = binaryData.toString('base64');
-      const mimeType = response.headers['content-type'] || 'audio/mpeg';
+      const mimeType = contentType || 'audio/mpeg';
       
       return [[{
         json: {
@@ -373,18 +384,34 @@ export async function executeRoutingBasedNode(
     }
     
     // Handle JSON response
-    return [[{ json: response.data }]];
+    let responseData: any;
+    if (contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        responseData = JSON.parse(text);
+      } catch {
+        responseData = text;
+      }
+    }
+    
+    // Check for HTTP errors
+    if (!response.ok) {
+      const errorMessage = typeof responseData === 'object' 
+        ? JSON.stringify(responseData) 
+        : String(responseData);
+      logger.error(`HTTP Error (${response.status}): ${errorMessage}`);
+      throw new Error(`HTTP Error (${response.status}): ${errorMessage}`);
+    }
+    
+    return [[{ json: responseData }]];
     
   } catch (error: any) {
-    if (error.response) {
-      const errorData = error.response.data;
-      // If it's a buffer, try to convert to string
-      const errorMessage = Buffer.isBuffer(errorData) 
-        ? errorData.toString('utf-8') 
-        : JSON.stringify(errorData);
-      logger.error(`HTTP Error (${error.response.status}): ${errorMessage}`);
-      throw new Error(`HTTP Error (${error.response.status}): ${errorMessage}`);
+    if (error.message?.startsWith('HTTP Error')) {
+      throw error;
     }
+    logger.error(`Request failed: ${error.message}`);
     throw error;
   }
 }

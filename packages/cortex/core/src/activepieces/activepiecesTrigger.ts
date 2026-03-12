@@ -1,7 +1,7 @@
 import { inspect } from 'node:util';
 import { getModuleName } from '../utils/moduleLoader';
 import { getModuleMainFile, ModuleDefinition, ensureActivepiecesReady } from '../utils/moduleCloner';
-import * as path from 'path';
+import * as path from '@ha-bits/bindings/path';
 
 // Lazy-loaded activepieces modules - will be loaded after ensureActivepiecesReady() is called
 let isNil: any;

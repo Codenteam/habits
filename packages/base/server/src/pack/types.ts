@@ -10,7 +10,9 @@ export type PackFormat =
   | 'desktop-full'
   | 'mobile'
   | 'mobile-full'
-  | 'docker';
+  | 'docker'
+  | 'bundle'
+  | 'tauri';
 
 export type DesktopPlatform = 
   | 'dmg'
