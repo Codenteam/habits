@@ -4,13 +4,15 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { extractPieceFromModule } from "@activepieces/shared";
-import { Piece } from "@activepieces/pieces-framework";
 import { getModulePath, getModuleMainFile } from "@ha-bits/cortex/utils/moduleCloner";
 import { getModuleName } from "@ha-bits/cortex/utils/moduleLoader";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
 import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
+import { extractPiece } from './activepieces-loader';
 import { LoggerFactory } from '@ha-bits/core';
+
+// Type imports (compile-time only, not bundled)
+import type { Piece } from "@activepieces/pieces-framework";
 
 const logger = LoggerFactory.getRoot();
 
@@ -125,7 +127,8 @@ export async function extractActivepiecesSchema(
   // Import module using customRequire to handle external paths
   const module = customRequire(mainFile, modulePathDir);
 
-  const piece = extractPieceFromModule<Piece>({
+  // JIT load activepieces and extract piece
+  const piece = await extractPiece<Piece>({
     module,
     pieceName: moduleName,
     pieceVersion: packageJson.version,
