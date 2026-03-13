@@ -51,6 +51,8 @@ const MENU: MenuItem[] = [
   { id: 'clean-dist', label: 'Clean Dist' },
   { id: 'kill-port', label: 'Kill Port 3000' },
   { id: 'list-examples', label: 'List Examples' },
+  { id: 'link-cortex-core', label: 'Link Cortex Core', desc: 'npm link from dist' },
+  { id: 'unlink-cortex-core', label: 'Unlink Cortex Core' },
   { id: 'exit', label: 'Exit' },
 ];
 
@@ -94,6 +96,8 @@ async function menu(): Promise<boolean> {
     case 'clean-dist': logHeader('Clean Dist'); actions.cleanDist(); logSuccess('Cleaned'); break;
     case 'kill-port': logHeader('Kill Port 3000'); actions.killPort(); logSuccess('Done'); break;
     case 'list-examples': logHeader('Examples'); actions.listExamples(); break;
+    case 'link-cortex-core': logHeader('Linking Cortex Core'); actions.linkCortexCore(); logSuccess('Linked'); break;
+    case 'unlink-cortex-core': logHeader('Unlinking Cortex Core'); actions.unlinkCortexCore(); logSuccess('Unlinked'); break;
     case 'exit': case null: return false;
   }
 

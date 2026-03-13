@@ -4,7 +4,7 @@ import { getModuleMainFile, getModulePath, ModuleDefinition } from '../utils/mod
 import { INodeType, ITriggerFunctions, ITriggerResponse, IPollFunctions, IWebhookFunctions, IWebhookResponseData, IHttpRequestOptions, INodeExecutionData } from './types';
 import * as path from 'path';
 import * as fs from 'fs';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { fetch } from '@ha-bits/bindings';
 import { LoggerFactory } from '@ha-bits/core';
 
 const logger = LoggerFactory.getRoot();
@@ -80,66 +80,28 @@ function createSimpleStore(prefix: string = ''): SimpleStore {
 // ============================================================================
 
 /**
- * Convert n8n request options to axios config
+ * Build URL with query parameters and base URL
  */
-function convertN8nRequestToAxios(requestOptions: IHttpRequestOptions): AxiosRequestConfig {
-  const { headers, method, timeout, auth, url, body, qs } = requestOptions;
-
-  const axiosConfig: AxiosRequestConfig = {
-    headers: (headers as Record<string, string>) ?? {},
-    method: method || 'GET',
-    timeout: timeout || 300000,
-    url,
-    maxBodyLength: Infinity,
-    maxContentLength: Infinity,
-  };
-
-  if (qs) {
-    axiosConfig.params = qs;
+function buildUrl(url: string, baseURL?: string, qs?: Record<string, any>): string {
+  let fullUrl = url;
+  
+  // Resolve base URL
+  if (baseURL && !url.startsWith('http://') && !url.startsWith('https://')) {
+    fullUrl = baseURL.replace(/\/$/, '') + '/' + url.replace(/^\//, '');
   }
-
-  if (auth) {
-    axiosConfig.auth = {
-      username: auth.username || '',
-      password: auth.password || '',
-    };
-  }
-
-  if (requestOptions.baseURL) {
-    axiosConfig.baseURL = requestOptions.baseURL;
-  }
-
-  if (requestOptions.disableFollowRedirect) {
-    axiosConfig.maxRedirects = 0;
-  }
-
-  if (body) {
-    if (typeof body === 'object' && Object.keys(body).length > 0) {
-      axiosConfig.data = body;
-    } else if (typeof body === 'string') {
-      axiosConfig.data = body;
+  
+  // Add query parameters
+  if (qs && Object.keys(qs).length > 0) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(qs)) {
+      if (value !== undefined && value !== null) {
+        params.append(key, String(value));
+      }
     }
+    fullUrl += (fullUrl.includes('?') ? '&' : '?') + params.toString();
   }
-
-  if (requestOptions.json) {
-    axiosConfig.headers = {
-      ...axiosConfig.headers,
-      Accept: 'application/json',
-    };
-  }
-
-  if (!axiosConfig.headers?.['User-Agent']) {
-    axiosConfig.headers = {
-      ...axiosConfig.headers,
-      'User-Agent': 'n8n-habits-trigger',
-    };
-  }
-
-  if (requestOptions.ignoreHttpStatusErrors) {
-    axiosConfig.validateStatus = () => true;
-  }
-
-  return axiosConfig;
+  
+  return fullUrl;
 }
 
 /**
@@ -154,32 +116,96 @@ async function httpRequest(
     delete requestOptions.body;
   }
 
-  const axiosConfig = convertN8nRequestToAxios(requestOptions);
-  
-  if (axiosConfig.data === undefined || (axiosConfig.method?.toUpperCase() === 'GET')) {
-    delete axiosConfig.data;
+  const headers: Record<string, string> = {
+    ...(requestOptions.headers as Record<string, string>) ?? {},
+  };
+
+  // Add authentication
+  if (requestOptions.auth) {
+    const credentials = Buffer.from(
+      `${requestOptions.auth.username || ''}:${requestOptions.auth.password || ''}`
+    ).toString('base64');
+    headers['Authorization'] = `Basic ${credentials}`;
   }
 
-  logger.log(`🌐 [Trigger] Making HTTP request: ${axiosConfig.method} ${axiosConfig.url}`);
+  // Add JSON accept header if requested
+  if (requestOptions.json) {
+    headers['Accept'] = 'application/json';
+  }
+
+  // Add User-Agent header
+  if (!headers['User-Agent']) {
+    headers['User-Agent'] = 'n8n-habits-trigger';
+  }
+
+  // Build full URL
+  const url = buildUrl(requestOptions.url, requestOptions.baseURL, requestOptions.qs);
+
+  // Prepare body (skip for GET requests)
+  let body: string | undefined;
+  if (!noBodyMethods.includes(method) && requestOptions.body) {
+    if (typeof requestOptions.body === 'object' && Object.keys(requestOptions.body).length > 0) {
+      if (!headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+      body = JSON.stringify(requestOptions.body);
+    } else if (typeof requestOptions.body === 'string') {
+      body = requestOptions.body;
+    }
+  }
+
+  logger.log(`🌐 [Trigger] Making HTTP request: ${method} ${url}`);
   
   try {
-    const response: AxiosResponse = await axios(axiosConfig);
+    const response = await fetch(url, {
+      method,
+      headers,
+      body,
+      redirect: requestOptions.disableFollowRedirect ? 'manual' : 'follow',
+    });
+
+    // Handle response
+    let responseData: any;
+    const contentType = response.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      responseData = await response.text();
+      // Try to parse as JSON
+      try {
+        responseData = JSON.parse(responseData);
+      } catch {
+        // Keep as text
+      }
+    }
+
+    // Check for HTTP errors unless ignoreHttpStatusErrors is set
+    if (!response.ok && !requestOptions.ignoreHttpStatusErrors) {
+      logger.error(`HTTP Error (${response.status}): ${JSON.stringify(responseData)}`);
+      throw new Error(`HTTP Error (${response.status}): ${JSON.stringify(responseData)}`);
+    }
 
     if (requestOptions.returnFullResponse) {
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+      
       return {
-        body: response.data,
-        headers: response.headers as Record<string, string>,
+        body: responseData,
+        headers: responseHeaders,
         statusCode: response.status,
         statusMessage: response.statusText,
       };
     }
 
-    return response.data;
+    return responseData;
   } catch (error: any) {
-    if (error.response) {
-      logger.error(`HTTP Error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
-      throw new Error(`HTTP Error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+    if (error.message?.startsWith('HTTP Error')) {
+      throw error;
     }
+    logger.error(`Request failed: ${error.message}`);
     throw error;
   }
 }

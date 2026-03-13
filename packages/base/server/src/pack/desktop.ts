@@ -16,6 +16,7 @@ import { getElectronMain } from './templates/deprecated/electron-main';
 import { getElectronPreload } from './templates/deprecated/electron-preload';
 import { packTauri } from './tauri';
 import { sanitizeStackName, createTmpWorkDir, createCleanupHandler } from './utils';
+import { generateBundle } from './bundle-generator-wrapper';
 import JSZip from 'jszip';
 
 const logger = LoggerFactory.getRoot();
@@ -42,9 +43,15 @@ export interface WebDesktopPackOptions {
   desktopPlatform: DesktopPlatform;
   framework?: DesktopFramework;
   buildBinary?: boolean;
+  debugBuild?: boolean;
   stackName?: string;
+  stackId?: string; // Stack UUID for build caching
   appName?: string;
   appIcon?: string; // base64 encoded image
+  /** Execution mode: 'client' proxies to backend, 'full' embeds workflow execution */
+  executionMode?: 'client' | 'full';
+  /** Environment variables to embed (for 'full' mode) */
+  envVars?: Record<string, string>;
 }
 
 /**
@@ -353,7 +360,22 @@ function findBuildOutputs(distDir: string): string[] {
  * Returns either a zip buffer (project files) or a binary file path (DMG/EXE/AppImage/etc.)
  */
 export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise<WebDesktopPackResult> {
-  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, stackName, appName, appIcon } = options;
+  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, desktopPlatform = 'all', buildBinary = false, debugBuild = false, stackName, stackId, appName, appIcon, executionMode = 'client', envVars } = options;
+  
+  // Generate bundle for 'full' mode using npx @ha-bits/bundle-generator
+  let cortexBundle: string | undefined;
+  if (executionMode === 'full') {
+    logger.info('Generating bundle for full execution mode via npx @ha-bits/bundle-generator');
+    const bundleResult = await generateBundle({
+      habits,
+      appName,
+      envVars,
+    });
+    if (!bundleResult.success) {
+      throw new Error(`Failed to generate bundle: ${bundleResult.error}`);
+    }
+    cortexBundle = bundleResult.code;
+  }
   
   // Route to the appropriate framework handler
   if (framework === 'tauri') {
@@ -363,11 +385,15 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
       frontendHtml,
       backendUrl,
       buildBinary,
+      debugBuild,
       stackName,
+      stackId,
       platform: 'desktop',
       desktopPlatform,
       appName,
       appIcon,
+      executionMode: executionMode === 'full' ? 'full' : 'api',
+      cortexBundle,
     });
   } else {
     return packElectronDesktopForWeb(options);

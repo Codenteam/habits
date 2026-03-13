@@ -7,8 +7,9 @@
  * - convert: Convert workflows from n8n/Activepieces to Habits format
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '@ha-bits/bindings/fs';
+import * as path from '@ha-bits/bindings/path';
+import * as yaml from 'yaml';
 import yargs, { Argv } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import dotenv from 'dotenv';
@@ -120,6 +121,19 @@ export function createCortexCLI(yargsInstance: Argv): Argv {
         type: 'boolean',
         default: true
       }
+    })
+    .command('prepare', 'Install all bits dependencies for a habit configuration', {
+      config: {
+        alias: 'c',
+        describe: 'Path to stack.yaml or config.json file',
+        type: 'string',
+        demandOption: true
+      },
+      registry: {
+        alias: 'r',
+        describe: 'Custom npm registry URL',
+        type: 'string'
+      }
     });
 }
 
@@ -139,6 +153,9 @@ export async function runCortexCommand(
       break;
     case 'convert':
       await runConvertCommand(options);
+      break;
+    case 'prepare':
+      await runPrepareCommand(options);
       break;
     default:
       throw new Error(`Unknown command: ${command}`);
@@ -436,6 +453,123 @@ async function runConvertCommand(options: CortexCommandOptions): Promise<void> {
 }
 
 /**
+ * Extract all @ha-bits/* packages from a workflow's nodes
+ */
+function extractBitsPackages(workflow: any): string[] {
+  const packages = new Set<string>();
+  
+  if (!workflow.nodes) return [];
+  
+  for (const node of workflow.nodes) {
+    // Check for bits nodes
+    if (node.type === 'bits' || node.data?.framework === 'bits') {
+      const moduleName = node.data?.module;
+      if (moduleName && moduleName.startsWith('@ha-bits/')) {
+        packages.add(moduleName);
+      }
+    }
+  }
+  
+  return Array.from(packages);
+}
+
+/**
+ * Run the prepare command - installs all bits dependencies
+ */
+async function runPrepareCommand(options: CortexCommandOptions): Promise<void> {
+  const configPath = options.config;
+  const registry = (options as any).registry;
+  
+  if (!configPath) {
+    console.error('❌ Config file path is required');
+    process.exit(1);
+  }
+  
+  if (!fs.existsSync(configPath)) {
+    console.error(`❌ Config file not found: ${configPath}`);
+    process.exit(1);
+  }
+  
+  try {
+    const configDir = path.dirname(path.resolve(configPath));
+    const configContent = fs.readFileSync(configPath, 'utf-8');
+    
+    // Parse config (YAML or JSON)
+    let config: any;
+    if (configPath.endsWith('.yaml') || configPath.endsWith('.yml')) {
+      config = yaml.parse(configContent);
+    } else {
+      config = JSON.parse(configContent);
+    }
+    
+    console.log('📦 Preparing habit dependencies...');
+    console.log(`   Config: ${configPath}`);
+    
+    // Collect all bits packages
+    const allPackages = new Set<string>();
+    
+    // Process workflows
+    const workflows = config.workflows || [];
+    for (const workflowRef of workflows) {
+      const workflowPath = path.join(configDir, workflowRef.path);
+      
+      if (!fs.existsSync(workflowPath)) {
+        console.warn(`⚠️  Workflow file not found: ${workflowPath}`);
+        continue;
+      }
+      
+      const workflowContent = fs.readFileSync(workflowPath, 'utf-8');
+      let workflow: any;
+      
+      if (workflowPath.endsWith('.yaml') || workflowPath.endsWith('.yml')) {
+        workflow = yaml.parse(workflowContent);
+      } else {
+        workflow = JSON.parse(workflowContent);
+      }
+      
+      const packages = extractBitsPackages(workflow);
+      packages.forEach(pkg => allPackages.add(pkg));
+      
+      console.log(`   📋 ${workflowRef.id}: ${packages.length} bit(s)`);
+    }
+    
+    if (allPackages.size === 0) {
+      console.log('\n✅ No bits packages to install');
+      return;
+    }
+    
+    console.log(`\n📥 Installing ${allPackages.size} package(s)...`);
+    
+    // Install packages
+    const { exec } = await import('@ha-bits/bindings/shell');
+    
+    for (const pkg of allPackages) {
+      console.log(`   📦 ${pkg}`);
+      
+      let command = `npm install ${pkg} --save-optional --engine-strict=false --ignore-scripts`;
+      if (registry) {
+        command += ` --registry ${registry}`;
+      }
+      
+      try {
+        const result = await exec(command, { cwd: configDir });
+        if (result.code !== 0) {
+          console.error(`   ❌ Failed to install ${pkg}: ${result.stderr}`);
+        }
+      } catch (err: any) {
+        console.error(`   ❌ Failed to install ${pkg}: ${err.message}`);
+      }
+    }
+    
+    console.log('\n✅ Preparation complete!');
+    
+  } catch (error: any) {
+    console.error(`❌ Prepare failed: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+/**
  * Run the full cortex CLI (standalone mode)
  */
 export async function runCLI(): Promise<void> {
@@ -507,6 +641,19 @@ export async function runCLI(): Promise<void> {
         default: true
       }
     })
+    .command('prepare', 'Install all bits dependencies for a habit', {
+      config: {
+        alias: 'c',
+        describe: 'Path to stack.yaml or config.json file',
+        type: 'string',
+        demandOption: true
+      },
+      registry: {
+        alias: 'r',
+        describe: 'Custom npm registry URL',
+        type: 'string'
+      }
+    })
     .demandCommand(1, 'You need to specify a command')
     .help()
     .argv;
@@ -524,5 +671,6 @@ export async function runCLI(): Promise<void> {
     output: argv.output as string | undefined,
     env: argv.env as boolean | undefined,
     pretty: argv.pretty as boolean | undefined,
-  });
+    registry: (argv as any).registry as string | undefined,
+  } as any);
 }

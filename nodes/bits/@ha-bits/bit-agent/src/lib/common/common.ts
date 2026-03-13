@@ -5,7 +5,7 @@
  * for the AI Agent bit module with LangChain and MCP integration.
  */
 
-import { BitAuth, Property } from '@ha-bits/cortex';
+import { BitAuth, Property } from '@ha-bits/cortex-core';
 
 /**
  * Supported LLM providers

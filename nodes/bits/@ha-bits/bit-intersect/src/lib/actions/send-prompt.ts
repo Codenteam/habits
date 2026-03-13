@@ -7,7 +7,7 @@ import {
   createAction,
   Property,
   StoreScope,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { intersectAuth } from '../common/common';
 import {
@@ -48,7 +48,8 @@ export const askOpenAI = createAction({
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
             baseURL: getIntersectBaseUrl(authValue.host),
-            logLevel: 'info'
+            logLevel: 'info',
+            dangerouslyAllowBrowser: true
           } as any);
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -147,6 +148,7 @@ export const askOpenAI = createAction({
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
       logLevel: 'debug' as const,
+      dangerouslyAllowBrowser: true
     };
     
     const openai = new OpenAI(conf as any);

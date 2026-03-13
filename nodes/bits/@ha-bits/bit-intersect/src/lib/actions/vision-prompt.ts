@@ -6,7 +6,7 @@
 import {
   createAction,
   Property,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { intersectAuth } from '../common/common';
 import { getIntersectBaseUrl, IntersectAuthValue, castMarkdownProperty, castMarkdownCodeBlocks } from '../common/common';
@@ -108,6 +108,7 @@ export const visionPrompt = createAction({
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
+      dangerouslyAllowBrowser: true
     });
     const { maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

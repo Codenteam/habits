@@ -1,13 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import * as fs from '@ha-bits/bindings/fs';
+import * as path from '@ha-bits/bindings/path';
+import { exec as execAsync } from '@ha-bits/bindings/shell';
 import { LoggerFactory } from '@ha-bits/core';
 
 const logger = LoggerFactory.getRoot();
-
-
-const execAsync = promisify(exec);
 
 // ============================================================================
 // npm Install Utilities
@@ -96,9 +92,20 @@ export async function npmInstall(packageSpec?: string, options: NpmInstallOption
     execOptions.timeout = options.timeout;
   }
 
-  // Log
-  logger.log(`Executing command: ${command}`);
+  // Check if package is already installed, skip if yes
+  if (packageSpec) {
+    // Parse package name (handle @scope/name@version format)
+    const packageName = packageSpec.replace(/@[\d.]+(-[\w.]+)?$/, ''); // Remove version suffix
+    const nodeModulesBase = options.prefix || options.cwd || process.cwd();
+    const packagePath = path.join(nodeModulesBase, 'node_modules', packageName);
+    
+    if (fs.existsSync(packagePath)) {
+      logger.log(`Package ${packageName} already installed at ${packagePath}, skipping install`);
+      return { stdout: `Skipped: ${packageName} already installed`, stderr: '' };
+    }
+  }
 
+  logger.log(`Executing npm install command: ${command}`);
   return execAsync(command, execOptions);
 }
 
