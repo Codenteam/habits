@@ -96,6 +96,7 @@ export interface WorkflowEdge {
 
 // Generate all export files
 export interface ExportBundle {
+  id: string; // Stack UUID for build caching
   stackYaml: string;
   habitFiles: Array<{ filename: string; content: string }>;
   envFile: string;

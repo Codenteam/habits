@@ -12,7 +12,7 @@ import {
   httpClient,
   BitAuth,
   Property,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 
 /**
  * Type for Intersect authentication

@@ -8,7 +8,7 @@ import {
   httpClient,
   createAction,
   Property,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import { intersectAuth } from '../common/common';
 import { getCanvasApiUrl, IntersectAuthValue } from '../common/common';
 

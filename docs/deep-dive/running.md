@@ -29,7 +29,7 @@ In the [Habit Loop](/extra-reading/neuroscience), the **Cue** is the trigger tha
 | **REST API** | Trigger workflows via HTTP endpoints | <Icon name="check-circle" /> Available |
 | **Bits Watchers**| Event-based triggers from Habits bits | <Icon name="check-circle" /> Available |
 | **ActivePieces Triggers** | Event-based triggers from ActivePieces Pieces | <Icon name="wrench" /> WIP |
-| **n8n Triggers** | Event-based triggers from n8n nodes | <Icon name="clock" /> Coming Soon |
+| **n8n Triggers** | Event-based triggers from n8n nodes | <Icon name="clock" /> Idea Abandoned, won't be in Habits |
 
 ### CLI Triggers
 
@@ -328,8 +328,8 @@ Pack your habits into portable formats for different deployment targets:
 | Format | Output | Use Case |
 |--------|--------|----------|
 | `single-executable` | Standalone binary | FullStack, Frontend + backend, Server/CLI, no Node.js needed |
-| `desktop` | Electron app | Desktop UI connecting to remote backend (or local execution: Coming soon) |
-| `mobile` | Cordova app | iOS/Android app connecting to remote backend (or local exeuction: Coming soon) |
+| `desktop` | Electron app | Desktop UI connecting to remote backend (or local execution: Early Access) |
+| `mobile` | Cordova app | iOS/Android app connecting to remote backend (or local exeuction: Early Access) |
 
 ```bash
 # Single executable binary (includes backend)

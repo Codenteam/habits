@@ -2,6 +2,7 @@ packages:
   - packages/*
   - packages/*/ui
   - packages/*/server
+  - packages/*/core
   - packages/*/app
   - packages/*/frontend-builder
 

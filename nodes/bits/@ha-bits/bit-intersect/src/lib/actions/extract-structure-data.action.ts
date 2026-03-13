@@ -3,7 +3,7 @@
  * Returns structured data from provided unstructured text.
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { intersectAuth, notLLMs, getIntersectBaseUrl, IntersectAuthValue } from '../common/common';
 
@@ -39,6 +39,7 @@ export const extractStructuredDataAction = createAction({
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
             baseURL: getIntersectBaseUrl(authValue.host),
+            dangerouslyAllowBrowser: true
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -122,6 +123,7 @@ export const extractStructuredDataAction = createAction({
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
+      dangerouslyAllowBrowser: true
     });
 
     const response = await openai.chat.completions.create({

@@ -8,7 +8,7 @@ import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
 import { LoggerFactory, ILogger } from '@ha-bits/core';
-import { IWebhookHandler } from './WebhookTriggerServer';
+import { IWebhookHandler } from './WebhookHandler';
 import {
   Workflow,
   WorkflowNode,
@@ -17,16 +17,13 @@ import {
   WorkflowExecution,
   NodeDependencies,
   NodeExecutionStatus,
-  Framework,
   WebhookTriggerInfo,
-  WebhookPayload,
   WorkflowConfig,
   WorkflowReference,
   LoadedWorkflow,
   StreamCallback,
   StreamEvent,
   FlowControlMetadata,
-  EdgeInfo,
 } from '@habits/shared/types';
 
 // ============================================================================

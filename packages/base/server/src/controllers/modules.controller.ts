@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express';
 import { createResponse, extractN8nSchema, extractActivepiecesSchema, extractBitsSchema } from '../helpers';
-import { listModules } from "@ha-bits/cortex/utils/moduleManager";
+import { listModules } from "@ha-bits/cortex-core/utils/moduleManager";
 import {
   installModule,
   getModuleByPath,
@@ -14,7 +14,7 @@ import {
   getModuleName,
   isModuleCloned,
   isModuleBuilt,
-} from "@ha-bits/cortex/utils/moduleLoader";
+} from "@ha-bits/cortex-core/utils/moduleLoader";
 import {
   ensureModuleReady,
   getModuleMainFile,

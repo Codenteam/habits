@@ -16,9 +16,9 @@ The Pack feature allows you to package your habits configuration into distributa
 |--------|-------------|---------|--------|
 | `single-executable` | Node.js Full-stack Binary | Embedded | <Icon name="check-circle" /> Available |
 | `desktop` | Electron app | Remote URL | <Icon name="check-circle" /> Available |
-| `desktop-full` | Electron with embedded backend | Embedded | <Icon name="wrench" /> Coming Soon |
+| `desktop-full` | Electron with embedded backend | Embedded | <Icon name="wrench" /> Early Access |
 | `mobile` | Cordova app | Remote URL | <Icon name="check-circle" /> Available |
-| `mobile-full` | Mobile with embedded backend | Embedded | <Icon name="wrench" /> Coming Soon |
+| `mobile-full` | Mobile with embedded backend | Embedded | <Icon name="wrench" /> Early Access |
 
 ---
 
@@ -190,14 +190,14 @@ npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.
 
 ---
 
-## Coming Soon
+## Early Access
 
 ### Desktop Full (`desktop-full`)
 
 Full Electron application with the backend embedded, enabling completely offline operation.
 
 ```bash
-# Coming soon
+# Early Access
 npx habits pack --config ./stack.yaml --format desktop-full --output ./my-offline-app
 ```
 
@@ -206,7 +206,7 @@ npx habits pack --config ./stack.yaml --format desktop-full --output ./my-offlin
 Full mobile application with the backend embedded, enabling completely offline operation.
 
 ```bash
-# Coming soon
+# Early Access
 npx habits pack --config ./stack.yaml --format mobile-full --mobile-target android --output ./my-offline-app
 ```
 

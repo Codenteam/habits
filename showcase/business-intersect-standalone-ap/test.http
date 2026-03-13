@@ -2,7 +2,7 @@
 @host = {{$dotenv HABITS_INTERSECT_HOST}}
 @port = 13000
 
-@intersect_api_key={{$dotenv INTERSECT_API_KEY}}
+@intersect_api_key={{$dotenv HABITS_INTERSECT_API_KEY}}
 
 
 ### Tunneled Through Intersect

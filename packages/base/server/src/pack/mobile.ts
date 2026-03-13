@@ -14,6 +14,7 @@ import { getApiProxyScript } from './templates/deprecated/api-proxy';
 import { getCordovaConfig } from './templates/deprecated/cordova-config';
 import { packTauri } from './tauri';
 import { checkCordovaCompatibility, parseJavaVersion, parseGradleVersion } from './gradle-java-compatibility';
+import { generateBundle } from './bundle-generator-wrapper';
 import JSZip from 'jszip';
 import { LoggerFactory } from '@ha-bits/core';
 import { sanitizeStackName, createTmpWorkDir, createCleanupHandler, addDirectoryToZip } from './utils';
@@ -405,10 +406,16 @@ export interface WebMobilePackOptions {
   backendUrl: string;
   mobileTarget: MobileTarget;
   buildBinary?: boolean;
+  debugBuild?: boolean;
   framework?: MobileFramework;
   stackName?: string;
+  stackId?: string; // Stack UUID for build caching
   appName?: string;
   appIcon?: string; // base64 encoded image
+  /** Execution mode: 'client' proxies to backend, 'full' embeds workflow execution */
+  executionMode?: 'client' | 'full';
+  /** Environment variables to embed (for 'full' mode) */
+  envVars?: Record<string, string>;
 }
 
 /**
@@ -433,7 +440,22 @@ export interface WebMobilePackResult {
  * Returns either a zip buffer (project files) or a binary file path (APK/IPA)
  */
 export async function packMobileForWeb(options: WebMobilePackOptions): Promise<WebMobilePackResult> {
-  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, stackName, appName, appIcon } = options;
+  const { framework = 'tauri', habits, serverConfig, frontendHtml, backendUrl, mobileTarget, buildBinary = false, debugBuild = false, stackName, stackId, appName, appIcon, executionMode = 'client', envVars } = options;
+  
+  // Generate bundle for 'full' mode using npx @ha-bits/bundle-generator
+  let cortexBundle: string | undefined;
+  if (executionMode === 'full') {
+    logger.info('Generating bundle for full execution mode via npx @ha-bits/bundle-generator');
+    const bundleResult = await generateBundle({
+      habits,
+      appName,
+      envVars,
+    });
+    if (!bundleResult.success) {
+      throw new Error(`Failed to generate bundle: ${bundleResult.error}`);
+    }
+    cortexBundle = bundleResult.code;
+  }
   
   // Route to the appropriate framework handler
   if (framework === 'capacitor') {
@@ -445,11 +467,15 @@ export async function packMobileForWeb(options: WebMobilePackOptions): Promise<W
       frontendHtml,
       backendUrl,
       buildBinary,
+      debugBuild,
       stackName,
+      stackId,
       platform: 'mobile',
       mobileTarget,
       appName,
       appIcon,
+      executionMode: executionMode === 'full' ? 'full' : 'api',
+      cortexBundle,
     });
   } else {
     return packCordovaForWeb(options);

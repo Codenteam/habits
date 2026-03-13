@@ -330,7 +330,8 @@ export function generateExportBundle(
   habits: Habit[],
   existingEnv: string = '',
   serverOptions: ServerOptions = {},
-  frontendHtml?: string
+  frontendHtml?: string,
+  stackId?: string
 ): ExportBundle {
   const hasFrontend = !!frontendHtml;
 
@@ -351,6 +352,7 @@ export function generateExportBundle(
   });
 
   return {
+    id: stackId || '',
     stackYaml,
     habitFiles,
     envFile,

@@ -1,0 +1,72 @@
+# Plan: Rewrite cortex-habits-bundle-generator.ts from Scratch
+
+## Overview
+
+The cortex-habits-bundle-generator creates standalone JavaScript bundles that can execute 
+workflows in environments without a server (e.g., Tauri desktop/mobile apps).
+
+1. It should use the existing WorkflowExecutor from @ha-bits/cortex
+
+3. **WorkflowExecutor already supports browser**: The `initFromData()` method was 
+   specifically designed to work without filesystem access - it takes in-memory 
+   config, workflows map, and env variables
+
+2.Should execute all kinds of bits, both declarative and imperative
+   
+3. Should look on a stack habit, extract all bits, and include the bits in the esbuild. 
+
+## Correct Architecture
+
+### Step 1: Understand What We're Bundling
+
+The bundle needs to include:
+1. **WorkflowExecutor** from @ha-bits/cortex (the execution engine)
+2. **Bits modules** (@ha-bits/*) used in workflows
+3. **Framework executors**: bitsDoer, declarativeExecutor, scriptExecutor
+4. **Embedded data**: workflows JSON, config, env vars
+5. **HTTP polyfills** if needed (for declarative node execution)
+
+### Step 2: Entry Point Strategy
+
+Instead of manually reimplementing execution, the entry point should:
+
+```typescript
+// Entry point code that bundles into IIFE
+import { WorkflowExecutor } from '@ha-bits/cortex';
+
+// Pre-register all bit modules at bundle time
+const bitsRegistry = {
+  '@ha-bits/openai': () => import('@ha-bits/openai'),
+  '@ha-bits/slack': () => import('@ha-bits/slack'),
+  // ... dynamically generated based on workflow analysis
+};
+
+// Embedded config and workflows
+const embeddedConfig = { /* from stack.yaml */ };
+const embeddedWorkflows = new Map([/* id -> workflow */]);
+const embeddedEnv = { /* from .env */ };
+
+// Initialize executor with in-memory data
+const executor = new WorkflowExecutor();
+await executor.initFromData({
+  config: embeddedConfig,
+  workflows: embeddedWorkflows,
+  env: embeddedEnv,
+});
+
+// Export public API
+export const HabitsBundle = {
+  executeWorkflow: (workflowId, input) => executor.executeWorkflow(workflowId, { input }),
+  executeWorkflowStreaming: (workflowId, input, callback) => 
+    executor.executeWorkflow(workflowId, { input, streaming: true, streamCallback: callback }),
+  getWorkflows: () => executor.getLoadedWorkflows(),
+};
+```
+
+
+###  Key Files to Study
+
+1. `/packages/cortex/server/src/WorkflowExecutor.ts`
+   - `initFromData()` method - already browser-ready
+   - `executeWorkflow()` - main execution logic
+   - `executeNode()` - per-node execution

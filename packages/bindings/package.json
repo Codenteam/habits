@@ -1,0 +1,100 @@
+{
+  "name": "@ha-bits/bindings",
+  "version": "1.0.0",
+  "description": "Platform bindings - abstracts Node.js native modules for cross-platform support (Node.js & Tauri)",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./fs": {
+      "types": "./dist/fs.d.ts",
+      "import": "./dist/fs.mjs",
+      "require": "./dist/fs.js"
+    },
+    "./path": {
+      "types": "./dist/path.d.ts",
+      "import": "./dist/path.mjs",
+      "require": "./dist/path.js"
+    },
+    "./shell": {
+      "types": "./dist/shell.d.ts",
+      "import": "./dist/shell.mjs",
+      "require": "./dist/shell.js"
+    },
+    "./process": {
+      "types": "./dist/process.d.ts",
+      "import": "./dist/process.mjs",
+      "require": "./dist/process.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.mjs",
+      "require": "./dist/runtime.js"
+    },
+    "./fetch": {
+      "types": "./dist/fetch.d.ts",
+      "import": "./dist/fetch.mjs",
+      "require": "./dist/fetch.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "habits",
+    "bindings",
+    "tauri",
+    "cross-platform",
+    "abstraction"
+  ],
+  "author": "Codenteam",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenteam/habits.git",
+    "directory": "packages/bindings"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0",
+    "@tauri-apps/plugin-process": "^2.0.0",
+    "@tauri-apps/plugin-http": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0",
+    "@tauri-apps/plugin-process": "^2.0.0",
+    "@tauri-apps/plugin-http": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tauri-apps/api": {
+      "optional": true
+    },
+    "@tauri-apps/plugin-fs": {
+      "optional": true
+    },
+    "@tauri-apps/plugin-shell": {
+      "optional": true
+    },
+    "@tauri-apps/plugin-process": {
+      "optional": true
+    },
+    "@tauri-apps/plugin-http": {
+      "optional": true
+    }
+  }
+}

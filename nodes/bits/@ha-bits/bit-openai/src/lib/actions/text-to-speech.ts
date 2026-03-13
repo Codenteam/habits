@@ -3,7 +3,7 @@
  * Generate an audio recording from text
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { streamToBuffer, openaiAuthValue } from '../common/common';

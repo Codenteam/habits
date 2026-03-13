@@ -38,7 +38,28 @@
  * ```
  */
 
-import axios, { AxiosRequestConfig, Method } from 'axios';
+import { fetch } from '@ha-bits/bindings';
+
+// ============================================================================
+// Types for HTTP Request Configuration
+// ============================================================================
+
+/**
+ * HTTP Method type for routing
+ */
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+
+/**
+ * Request configuration (replaces AxiosRequestConfig)
+ */
+interface RequestConfig {
+  method?: Method;
+  url?: string;
+  baseURL?: string;
+  headers?: Record<string, string>;
+  params?: Record<string, any>;
+  data?: any;
+}
 
 // ============================================================================
 // Types for Declarative Node Definition
@@ -400,7 +421,7 @@ function resolvePropertyAccess(path: string, obj: Record<string, any>): any {
 export function buildRequest(
   description: DeclarativeNodeDescription,
   context: DeclarativeExecutionContext
-): AxiosRequestConfig {
+): RequestConfig {
   const expressionContext: ExpressionContext = {
     $parameter: context.parameters,
     $credentials: context.credentials || {},
@@ -410,7 +431,7 @@ export function buildRequest(
   // Start with request defaults
   const defaults = description.requestDefaults || {};
   
-  let config: AxiosRequestConfig = {
+  let config: RequestConfig = {
     baseURL: resolveExpression(defaults.baseURL, expressionContext),
     url: resolveExpression(defaults.url, expressionContext) || '',
     method: (defaults.method || 'GET') as Method,
@@ -577,13 +598,13 @@ function getPropertyRouting(
 }
 
 /**
- * Merge a routing config into the axios config
+ * Merge a routing config into the request config
  */
 function mergeRoutingIntoConfig(
-  config: AxiosRequestConfig,
+  config: RequestConfig,
   routing: RoutingConfig,
   expressionContext: ExpressionContext
-): AxiosRequestConfig {
+): RequestConfig {
   const request = routing.request;
   
   if (!request) {
@@ -789,39 +810,94 @@ export async function executeDeclarativeNode(
   }
 
   try {
+    // Build full URL
+    let fullUrl = requestConfig.url || '';
+    if (requestConfig.baseURL && !fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+      fullUrl = requestConfig.baseURL.replace(/\/$/, '') + '/' + fullUrl.replace(/^\//, '');
+    }
+    
+    // Add query params to URL
+    if (requestConfig.params && Object.keys(requestConfig.params).length > 0) {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(requestConfig.params)) {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      }
+      fullUrl += (fullUrl.includes('?') ? '&' : '?') + params.toString();
+    }
+    
+    // Prepare headers
+    const headers: Record<string, string> = { ...requestConfig.headers };
+    
+    // Prepare body
+    let body: string | undefined;
+    if (requestConfig.data) {
+      if (!headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+      body = typeof requestConfig.data === 'string' ? requestConfig.data : JSON.stringify(requestConfig.data);
+    }
+    
     // Make the request
-    const response = await axios(requestConfig);
+    const response = await fetch(fullUrl, {
+      method: requestConfig.method || 'GET',
+      headers,
+      body,
+    });
+    
+    // Parse response
+    let responseData: any;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        responseData = JSON.parse(text);
+      } catch {
+        responseData = text;
+      }
+    }
+    
+    // Convert headers to object
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
 
     // Find the operation routing for response processing
     const operationRouting = findOperationRouting(description.properties, context.parameters);
+    
+    // Check for HTTP errors
+    if (!response.ok) {
+      if (operationRouting?.request?.ignoreHttpStatusErrors) {
+        return {
+          success: true,
+          data: responseData,
+          status: response.status,
+          headers: responseHeaders,
+        };
+      }
+      throw new Error(`HTTP Error (${response.status}): ${JSON.stringify(responseData)}`);
+    }
     
     // Process the response
     const expressionContext: ExpressionContext = {
       $parameter: context.parameters,
       $credentials: context.credentials || {},
-      $response: response.data,
+      $response: responseData,
     };
     
-    const processedData = processResponse(response.data, operationRouting, expressionContext);
+    const processedData = processResponse(responseData, operationRouting, expressionContext);
 
     return {
       success: true,
       data: processedData,
       status: response.status,
-      headers: response.headers as Record<string, string>,
+      headers: responseHeaders,
     };
   } catch (error: any) {
-    // Check if we should ignore HTTP errors
-    const operationRouting = findOperationRouting(description.properties, context.parameters);
-    if (operationRouting?.request?.ignoreHttpStatusErrors && error.response) {
-      return {
-        success: true,
-        data: error.response.data,
-        status: error.response.status,
-        headers: error.response.headers,
-      };
-    }
-
     throw new Error(`Request failed: ${error.message}`);
   }
 }
@@ -851,7 +927,7 @@ function findOperationRouting(
  * Apply credentials to the request configuration
  */
 function applyCredentials(
-  config: AxiosRequestConfig,
+  config: RequestConfig,
   credentials: Record<string, any>,
   description: DeclarativeNodeDescription
 ): void {
