@@ -34,8 +34,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@ha-bits/cortex-core": "latest",
     "@ha-bits/bit-intersect": "latest",
+    "@ha-bits/bit-openai": "file:../nodes/bits/@ha-bits/bit-openai/ha-bits-bit-openai-0.1.10.tgz",
+    "@ha-bits/bit-pouch": "file:../nodes/bits/@ha-bits/bit-pouch/ha-bits-bit-pouch-1.0.0.tgz",
+    "@ha-bits/cortex-core": "file:../packages/cortex/core",
     "esbuild": "^0.20.0",
     "js-yaml": "^4.1.0",
     "quickjs-emscripten": "^0.29.0"

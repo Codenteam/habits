@@ -1,14 +1,32 @@
 #!/usr/bin/env tsx
-// Test pack bundle command on marketing-campaign and run in browser via Puppeteer
+// Test pack bundle command and run in browser via Puppeteer
+// Usage: tsx scripts/test-bundle-pack.ts [--example <name>] [--habit <name>] [--input <json>]
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import puppeteer from 'puppeteer-core';
 
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const result = { example: 'marketing-campaign', habit: 'marketing-campaign', input: '{ "prompt": "Test prompt" }' };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--example' && args[i + 1]) result.example = args[++i];
+    else if (args[i] === '--habit' && args[i + 1]) result.habit = args[++i];
+    else if (args[i] === '--input' && args[i + 1]) result.input = args[++i];
+  }
+  return result;
+}
+
+const { example, habit, input } = parseArgs();
+const habitInput = input.startsWith('{') ? JSON.parse(input) : { prompt: input };
+
 const ROOT = path.resolve(__dirname, '..');
-const CONFIG = path.join(ROOT, 'showcase/marketing-campaign/stack.yaml');
+const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
 const OUTPUT = '/tmp/test-bundle.js';
+
+console.log(`📋 Config: example=${example}, habit=${habit}, input=${JSON.stringify(habitInput)}`);
 
 // Find system Chrome
 const CHROME_PATHS = [
@@ -40,11 +58,11 @@ async function runTest() {
 
   try {
     await page.evaluate(bundleCode);
-    const result = await page.evaluate(async () => {
+    const result = await page.evaluate(async (habitName: string, habitInput: any) => {
       const bundle = (window as any).HabitsBundle;
       console.log('Workflows:', JSON.stringify(bundle.getWorkflows()));
-      return await bundle.executeWorkflow('marketing-campaign', { prompt: 'Test prompt' });
-    });
+      return await bundle.executeWorkflow(habitName, habitInput);
+    }, habit, habitInput);
     
     // Check workflow result status
     if (result.status === 'failed') {

@@ -1,12 +1,12 @@
 id: analyze-resume
 name: Analyze Resume
-description: Analyze resume against job description and provide improvement suggestions
+description: Analyze resume image against job description and provide improvement suggestions
 
 input:
-  - id: resumeText
+  - id: resumeImage
     type: string
     required: true
-    description: Resume content (pasted text)
+    description: Resume image content (base64 encoded PNG/JPG/WebP)
   - id: jobDescription
     type: string
     required: false
@@ -17,19 +17,38 @@ input:
     description: Target job title/role
 
 nodes:
+  # Extract text from image using OpenAI Vision
+  - id: extract-text
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: vision_prompt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        image: "{{habits.input.resumeImage}}"
+        temperature: 0.1
+        maxTokens: 4000
+        prompt: |
+          Extract all text content from this resume image.
+          
+          Return ONLY the extracted text content, preserving the structure and formatting as plain text.
+          Include all sections: contact info, summary, experience, education, skills, certifications.
+
   # Parse and structure resume
   - id: parse-resume
     type: bits
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.3
@@ -37,7 +56,7 @@ nodes:
         prompt: |
           Parse this resume and extract structured information:
           
-          {{habits.input.resumeText}}
+          {{extract-text}}
           
           Return JSON:
           {
@@ -59,13 +78,11 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.4
@@ -73,7 +90,7 @@ nodes:
         prompt: |
           Analyze this resume for ATS (Applicant Tracking System) compatibility:
           
-          Resume: {{habits.input.resumeText}}
+          Resume: {{extract-text}}
           Target Job: {{habits.input.jobDescription}}
           
           Evaluate:
@@ -100,13 +117,11 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.5
@@ -114,7 +129,7 @@ nodes:
         prompt: |
           Analyze the work experience section of this resume:
           
-          {{habits.input.resumeText}}
+          {{extract-text}}
           
           For each position, evaluate:
           1. Action verbs usage
@@ -134,13 +149,11 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.4
@@ -148,7 +161,7 @@ nodes:
         prompt: |
           Compare this resume to the job requirements:
           
-          Resume: {{habits.input.resumeText}}
+          Resume: {{extract-text}}
           
           Job Description: {{habits.input.jobDescription}}
           
@@ -171,22 +184,22 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.7
         maxTokens: 300
-        systemMessage: You are an expert resume writer who crafts compelling professional summaries.
+        roles:
+          - role: system
+            content: You are an expert resume writer who crafts compelling professional summaries.
         prompt: |
           Write an improved professional summary for this resume:
           
-          Current Resume: {{habits.input.resumeText}}
+          Current Resume: {{extract-text}}
           
           Target Role: {{habits.input.targetRole}}
           
@@ -202,13 +215,11 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
+      module: "@ha-bits/bit-openai"
       operation: ask_chatgpt
       credentials:
-        intersect:
-          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
-          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
       params:
         model: gpt-4o
         temperature: 0.6
@@ -216,7 +227,7 @@ nodes:
         prompt: |
           Based on this resume and job, generate interview preparation:
           
-          Resume: {{habits.input.resumeText}}
+          Resume: {{extract-text}}
           Job: {{habits.input.jobDescription}}
           Role: {{habits.input.targetRole}}
           
@@ -227,19 +238,19 @@ nodes:
           4. Suggested talking points for strengths
           5. How to address any weaknesses/gaps
 
-  # Save analysis
+  # Save analysis document using PouchDB
   - id: save-analysis
     type: bits
     data:
       framework: bits
-      source: npm
-      module: "@ha-bits/bit-database"
-      resource: insert
+      source: local
+      module: "@ha-bits/bit-pouch"
       operation: insert
       params:
         collection: "resume_analyses"
         document:
           targetRole: "{{habits.input.targetRole}}"
+          extractedText: "{{extract-text}}"
           parsed: "{{parse-resume}}"
           atsScore: "{{ats-score}}"
           experienceAnalysis: "{{experience-analysis}}"
@@ -248,7 +259,24 @@ nodes:
           interviewPrep: "{{interview-prep}}"
           createdAt: "{{habits.now}}"
 
+  # Save image as attachment to the analysis document
+  - id: save-attachment
+    type: bits
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-pouch"
+      operation: putAttachment
+      params:
+        collection: "resume_analyses"
+        documentId: "{{save-analysis.id}}"
+        attachmentName: "resume.webp"
+        attachmentData: "{{habits.input.resumeImage}}"
+        contentType: "image/webp"
+
 edges:
+  - source: extract-text
+    target: parse-resume
   - source: parse-resume
     target: ats-score
   - source: parse-resume
@@ -269,12 +297,16 @@ edges:
     target: save-analysis
   - source: interview-prep
     target: save-analysis
+  - source: save-analysis
+    target: save-attachment
 
 output:
   analysisId: "{{save-analysis.id}}"
+  extractedText: "{{extract-text}}"
   parsed: "{{parse-resume}}"
   atsScore: "{{ats-score}}"
   experienceAnalysis: "{{experience-analysis}}"
   jobMatch: "{{job-match}}"
   improvedSummary: "{{generate-summary}}"
   interviewPrep: "{{interview-prep}}"
+  attachmentSaved: "{{save-attachment.success}}"

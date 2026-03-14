@@ -1,0 +1,65 @@
+id: pouch-demo
+name: PouchDB Demo
+description: A simple demo showing insert, update, and query operations with PouchDB, the simplest NoSQL database that works in nodejs (for backends, dockers, full-stack), mobile (iOS, Android), and Desktop (Windows, MacOS, Linux)
+
+# This habit demonstrates the bit-pouch module:
+# - Insert a document
+# - Update the document
+# - Query to find the document
+
+nodes:
+  # Step 1: Insert a document
+  - id: insert-doc
+    type: bits
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-pouch"
+      operation: insert
+      params:
+        collection: "users"
+        document:
+          name: "{{habits.input.name}}"
+          email: "{{habits.input.email}}"
+          status: "pending"
+
+  # Step 2: Update the document status
+  - id: update-doc
+    type: bits
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-pouch"
+      operation: update
+      params:
+        collection: "users"
+        filter:
+          _id: "{{insert-doc.id}}"
+        update:
+          status: "active"
+          verified: true
+
+  # Step 3: Query to find the document
+  - id: find-doc
+    type: bits
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-pouch"
+      operation: query
+      params:
+        collection: "users"
+        filter:
+          _id: "{{insert-doc.id}}"
+        limit: 1
+
+edges:
+  - source: insert-doc
+    target: update-doc
+  - source: update-doc
+    target: find-doc
+
+output:
+  insertResult: "{{insert-doc}}"
+  updateResult: "{{update-doc}}"
+  queryResult: "{{find-doc}}"

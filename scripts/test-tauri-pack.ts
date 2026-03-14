@@ -1,13 +1,30 @@
 #!/usr/bin/env tsx
-// Test pack tauri command on marketing-campaign and run the app
+// Test pack tauri command and run the app
+// Usage: tsx scripts/test-tauri-pack.ts [--example <name>] [--habit <name>] [--input <text>]
 
 import { execSync, spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const result = { example: 'marketing-campaign', habit: 'marketing-campaign', input: 'Test campaign for AI productivity tools' };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--example' && args[i + 1]) result.example = args[++i];
+    else if (args[i] === '--habit' && args[i + 1]) result.habit = args[++i];
+    else if (args[i] === '--input' && args[i + 1]) result.input = args[++i];
+  }
+  return result;
+}
+
+const { example, habit, input } = parseArgs();
+
 const ROOT = path.resolve(__dirname, '..');
-const CONFIG = path.join(ROOT, 'showcase/marketing-campaign/stack.yaml');
+const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
 const OUTPUT_DIR = '/tmp/tauri-pack-test';
+
+console.log(`📋 Config: example=${example}, habit=${habit}, input=${input}`);
 
 // Clean output directory
 fs.rmSync(OUTPUT_DIR, { recursive: true, force: true });

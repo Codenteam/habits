@@ -2,9 +2,114 @@
 // Read template from template.js as string
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const filePath = path.join(__dirname, 'template.js'); 
 const template = fs.readFileSync(filePath, 'utf8');
+
+/**
+ * Discover stubs from bits' package.json files.
+ * Bits can declare stubs in their package.json under habits.stubs:
+ * 
+ * Simple format (no extra dependencies):
+ * {
+ *   "habits": {
+ *     "stubs": {
+ *       "dep": "./dist/stubs/dep.js"
+ *     }
+ *   }
+ * }
+ * 
+ * Format with dependencies (installed in bundle-generator only):
+ * {
+ *   "habits": {
+ *     "stubs": {
+ *       "dep": {
+ *         "path": "./dist/stubs/dep.js",
+ *         "dependencies": {
+ *           "dependency-of-dep": "^1.0.0"
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ * 
+ * This allows bits to provide browser-compatible replacements for Node.js packages.
+ * 
+ * @param {Array} bits - Array of bit objects with module property
+ * @returns {Object} - { aliases: { packageName: stubPath }, dependencies: { packageName: version } }
+ */
+function discoverBitStubs(bits) {
+    const aliases = {};
+    const dependencies = {};
+    
+    for (const bit of bits) {
+        try {
+            // Try to resolve the bit's package.json
+            const bitPackagePath = require.resolve(`${bit.module}/package.json`, {
+                paths: [path.join(__dirname, 'node_modules')]
+            });
+            const bitPackage = JSON.parse(fs.readFileSync(bitPackagePath, 'utf8'));
+            const bitDir = path.dirname(bitPackagePath);
+            
+            // Check for stubs declaration
+            if (bitPackage.habits?.stubs) {
+                for (const [packageName, stubConfig] of Object.entries(bitPackage.habits.stubs)) {
+                    // Support both string (simple) and object (with dependencies) formats
+                    const stubPath = typeof stubConfig === 'string' ? stubConfig : stubConfig.path;
+                    const stubDeps = typeof stubConfig === 'object' ? stubConfig.dependencies : null;
+                    
+                    const fullStubPath = path.resolve(bitDir, stubPath);
+                    if (fs.existsSync(fullStubPath)) {
+                        aliases[packageName] = fullStubPath;
+                        console.log(`🔀 Stub discovered: ${packageName} → ${fullStubPath}`);
+                        
+                        // Collect stub dependencies
+                        if (stubDeps) {
+                            Object.assign(dependencies, stubDeps);
+                        }
+                    } else {
+                        console.warn(`⚠️ Stub not found: ${fullStubPath} (declared in ${bit.module})`);
+                    }
+                }
+            }
+        } catch (err) {
+            // Bit package.json not found or not installed, skip
+            console.log(`ℹ️ Could not read stubs from ${bit.module}: ${err.message}`);
+        }
+    }
+    
+    return { aliases, dependencies };
+}
+
+/**
+ * Install stub dependencies into bundle-generator's node_modules.
+ * These are only needed during bundling, not at runtime.
+ * 
+ * @param {Object} dependencies - { packageName: version }
+ */
+function installStubDependencies(dependencies) {
+    if (!dependencies || Object.keys(dependencies).length === 0) {
+        return;
+    }
+    
+    const packagesToInstall = Object.entries(dependencies)
+        .map(([name, version]) => `${name}@${version}`)
+        .join(' ');
+    
+    console.log(`📦 Installing stub dependencies: ${packagesToInstall}`);
+    
+    try {
+        execSync(`npm install --no-save ${packagesToInstall}`, {
+            cwd: __dirname,
+            stdio: 'inherit'
+        });
+        console.log(`✅ Stub dependencies installed`);
+    } catch (err) {
+        console.error(`❌ Failed to install stub dependencies: ${err.message}`);
+        throw err;
+    }
+}
 
 
 function generate(stack, workflows, env){
@@ -49,6 +154,12 @@ function run(stack, workflows, env){
     fs.writeFileSync(tempPath, code, 'utf8');
     fs.writeFileSync(outputPath, code, 'utf8');
     console.log('Bundle generated at:', outputPath);
+
+    // Discover stubs from bits' package.json files
+    const { aliases: bitStubs, dependencies: stubDeps } = discoverBitStubs(stack.bits || []);
+    
+    // Install stub dependencies (browser packages needed only during bundling)
+    installStubDependencies(stubDeps);
 
     // Esbuild the generated code to bundle all dependencies into a single file
     const esbuild = require('esbuild');
@@ -169,13 +280,16 @@ if (typeof globalThis.process === 'undefined') {
         banner: { js: globalProcessShim },
         plugins: [nodePolyfillPlugin],
         // Alias @ha-bits packages to local node_modules
+        // Bit stubs are discovered from package.json habits.stubs field
         alias: {
             '@ha-bits/bit-intersect': path.join(__dirname, 'node_modules/@ha-bits/bit-intersect/dist/index.js'),
-            '@ha-bits/cortex-core': path.join(__dirname, 'node_modules/@ha-bits/cortex-core/index.cjs'),
+            '@ha-bits/cortex-core': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
             // @ha-bits/cortex (full package) should resolve to cortex-core for bundling
-            '@ha-bits/cortex': path.join(__dirname, 'node_modules/@ha-bits/cortex-core/index.cjs'),
+            '@ha-bits/cortex': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
             // Stub native packages that can't run in browser
             'tiktoken': path.join(__dirname, 'stubs/tiktoken.js'),
+            // Spread bit-declared stubs (e.g., dep → dep browser stub)
+            ...bitStubs,
         },
         // External packages that can't be bundled
         external: [
@@ -183,7 +297,6 @@ if (typeof globalThis.process === 'undefined') {
             '@ha-bits/bindings',
             '@ha-bits/core',
             '@habits/shared',
-            'inherits',
         ],
         logLevel: 'info',
     }).then((result) => {
@@ -213,4 +326,6 @@ if (typeof globalThis.process === 'undefined') {
 module.exports = {
     generate,
     run,
+    discoverBitStubs,
+    installStubDependencies,
 };
