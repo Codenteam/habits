@@ -35,7 +35,7 @@ Package your entire habits configuration into a single executable file that can 
 4. Click **Generate Standalone Binary**
 5. The binary will download automatically
 
-![Binary Export UI](/images/binary.png)
+![Binary Export UI](/images/export.webp)
 
 
 ### Using the CLI

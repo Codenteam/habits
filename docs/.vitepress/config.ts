@@ -73,6 +73,7 @@ export default defineConfig({
           { text: 'Build Habit using HaC', link: '/getting-started/first-habit' },
           { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
           { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
+          { text: 'Build Full App', link: '/getting-started/first-app-using-habits' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
         ]
@@ -96,6 +97,7 @@ export default defineConfig({
 
           { text: 'AI Cookbook', link: '/showcase/ai-cookbook' },
           { text: 'AI Journal', link: '/showcase/ai-journal' },
+          { text: 'Resume Analyzer', link: '/showcase/resume-analyzer' },
 
           { text: 'Agent MCP Demo', link: '/showcase/agent-mcp-demo' },
           { text: 'Email Classification', link: '/showcase/email-classification' },

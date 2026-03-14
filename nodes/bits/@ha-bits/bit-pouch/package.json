@@ -1,36 +1,38 @@
 {
-  "name": "@ha-bits/bit-hello-world",
+  "name": "@ha-bits/bit-pouch",
   "version": "1.0.0",
-  "description": "A simple hello world bit for demonstration and testing",
+  "description": "PouchDB database storage bit - replaces @ha-bits/bit-database with local persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "bits-test -f bit-hello-world",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "habits",
     "bits",
-    "hello-world",
-    "demo"
+    "database",
+    "storage",
+    "pouchdb",
+    "local"
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "@ha-bits/bit-database": "^1.0.0",
+    "pouchdb": "^9.0.0",
+    "pouchdb-browser": "^9.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/pouchdb": "^6.4.0",
     "typescript": "^5.0.0"
   },
   "files": [
     "dist"
   ],
-  "habits": {
-    "stubs": {
-      "to-constant-case": "./dist/stubs/to-constant-case.js"
-    }
-  },
   "nx": {
-    "sourceRoot": "@ha-bits/bit-hello-world/src",
+    "sourceRoot": "@ha-bits/bit-pouch/src",
     "projectType": "library",
     "tags": [
       "scope:bits",
@@ -47,7 +49,10 @@
       "publish-private": {}
     }
   },
-  "dependencies": {
-    "to-constant-case": "^1.0.0"
+  "habits": {
+    "catalog": true,
+    "stubs": {
+      "pouchdb": "./dist/stubs/pouchdb.js"
+    }
   }
 }

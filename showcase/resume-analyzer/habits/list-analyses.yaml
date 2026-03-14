@@ -12,14 +12,12 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: npm
-      module: "@ha-bits/bit-database"
-      resource: query
+      source: local
+      module: "@ha-bits/bit-pouch"
       operation: query
       params:
         collection: "resume_analyses"
         limit: "{{habits.input.limit}}"
-        sort: '{"createdAt": -1}'
 
 edges: []
 

@@ -1,62 +1,73 @@
 // Minimal Node.js polyfills for QuickJS compatibility
 // These provide stub implementations that allow the bundle to load
 
-// EventEmitter polyfill
-class EventEmitter {
-  constructor() {
+// EventEmitter polyfill - use function/prototype pattern for enumerable methods
+// Some libraries (like PouchDB) uses Object.keys(EE.prototype) which requires enumerable methods
+function EventEmitter() {
+  this._events = {};
+}
+
+EventEmitter.prototype.on = function(event, listener) {
+  if (!this._events[event]) this._events[event] = [];
+  this._events[event].push(listener);
+  return this;
+};
+
+EventEmitter.prototype.once = function(event, listener) {
+  const self = this;
+  const onceWrapper = function(...args) {
+    self.off(event, onceWrapper);
+    listener.apply(self, args);
+  };
+  return this.on(event, onceWrapper);
+};
+
+EventEmitter.prototype.off = function(event, listener) {
+  if (!this._events[event]) return this;
+  this._events[event] = this._events[event].filter(l => l !== listener);
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(event, listener) {
+  return this.off(event, listener);
+};
+
+EventEmitter.prototype.removeAllListeners = function(event) {
+  if (event) {
+    delete this._events[event];
+  } else {
     this._events = {};
   }
-  on(event, listener) {
-    if (!this._events[event]) this._events[event] = [];
-    this._events[event].push(listener);
-    return this;
-  }
-  once(event, listener) {
-    const onceWrapper = (...args) => {
-      this.off(event, onceWrapper);
-      listener.apply(this, args);
-    };
-    return this.on(event, onceWrapper);
-  }
-  off(event, listener) {
-    if (!this._events[event]) return this;
-    this._events[event] = this._events[event].filter(l => l !== listener);
-    return this;
-  }
-  removeListener(event, listener) {
-    return this.off(event, listener);
-  }
-  removeAllListeners(event) {
-    if (event) {
-      delete this._events[event];
-    } else {
-      this._events = {};
-    }
-    return this;
-  }
-  emit(event, ...args) {
-    if (!this._events[event]) return false;
-    this._events[event].forEach(listener => listener.apply(this, args));
-    return true;
-  }
-  listeners(event) {
-    return this._events[event] || [];
-  }
-  listenerCount(event) {
-    return this.listeners(event).length;
-  }
-  addListener(event, listener) {
-    return this.on(event, listener);
-  }
-  prependListener(event, listener) {
-    if (!this._events[event]) this._events[event] = [];
-    this._events[event].unshift(listener);
-    return this;
-  }
-  setMaxListeners() { return this; }
-  getMaxListeners() { return 10; }
-  eventNames() { return Object.keys(this._events); }
-}
+  return this;
+};
+
+EventEmitter.prototype.emit = function(event, ...args) {
+  if (!this._events[event]) return false;
+  this._events[event].forEach(listener => listener.apply(this, args));
+  return true;
+};
+
+EventEmitter.prototype.listeners = function(event) {
+  return this._events[event] || [];
+};
+
+EventEmitter.prototype.listenerCount = function(event) {
+  return this.listeners(event).length;
+};
+
+EventEmitter.prototype.addListener = function(event, listener) {
+  return this.on(event, listener);
+};
+
+EventEmitter.prototype.prependListener = function(event, listener) {
+  if (!this._events[event]) this._events[event] = [];
+  this._events[event].unshift(listener);
+  return this;
+};
+
+EventEmitter.prototype.setMaxListeners = function() { return this; };
+EventEmitter.prototype.getMaxListeners = function() { return 10; };
+EventEmitter.prototype.eventNames = function() { return Object.keys(this._events); };
 
 // Stream base class
 class Stream extends EventEmitter {

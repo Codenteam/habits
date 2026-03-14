@@ -5,6 +5,7 @@ import Layout from './Layout.vue'
 import HabitViewer from './components/HabitViewer.vue'
 import HabitViewerTabs from './components/HabitViewerTabs.vue'
 import ExampleRunner from './components/ExampleRunner.vue'
+import PackRunner from './components/PackRunner.vue'
 import DownloadExample from './components/DownloadExample.vue'
 import ScreenshotGallery from './components/ScreenshotGallery.vue'
 import Checklist from './components/Checklist.vue'
@@ -25,6 +26,7 @@ export default {
     app.component('HabitViewer', HabitViewer)
     app.component('HabitViewerTabs', HabitViewerTabs)
     app.component('ExampleRunner', ExampleRunner)
+    app.component('PackRunner', PackRunner)
     app.component('DownloadExample', DownloadExample)
     app.component('ScreenshotGallery', ScreenshotGallery)
     app.component('Checklist', Checklist)

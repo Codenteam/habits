@@ -107,6 +107,7 @@ export const visionPrompt = createAction({
     const authValue = auth as unknown as openaiAuthValue;
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     });
     const { maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

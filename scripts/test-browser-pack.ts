@@ -1,16 +1,41 @@
 #!/usr/bin/env tsx
 // Test pack bundle in browser with fetch proxy intercepting /api/* calls
+// Usage: tsx scripts/test-browser-pack.ts [--example <name>] [--habit <name>] [--input <text>]
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import puppeteer from 'puppeteer-core';
 import { getTauriFetchProxyScript } from '../packages/base/server/src/pack/templates/tauri/tauri-fetch-proxy';
 
+// Parse command line arguments
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const result = { example: 'marketing-campaign', habit: 'marketing-campaign', input: 'Test campaign for AI productivity tools' };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--example' && args[i + 1]) result.example = args[++i];
+    else if (args[i] === '--habit' && args[i + 1]) result.habit = args[++i];
+    else if (args[i] === '--input' && args[i + 1]) result.input = args[++i];
+  }
+  return result;
+}
+
+const { example, habit, input: rawInput } = parseArgs();
+
+// Parse JSON input if it looks like JSON, otherwise use as-is
+let testPrompt: any = rawInput;
+try {
+  if (rawInput.startsWith('{') || rawInput.startsWith('[')) {
+    testPrompt = JSON.parse(rawInput);
+  }
+} catch { /* keep as string */ }
+
 const ROOT = path.resolve(__dirname, '..');
-const CONFIG = path.join(ROOT, 'showcase/marketing-campaign/stack.yaml');
-const HTML_PATH = path.join(ROOT, 'showcase/marketing-campaign/frontend/index.html');
+const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
+const HTML_PATH = path.join(ROOT, `showcase/${example}/frontend/index.html`);
 const OUTPUT_DIR = '/tmp/browser-pack-test';
 const BUNDLE_PATH = path.join(OUTPUT_DIR, 'cortex-bundle.js');
+
+console.log(`📋 Config: example=${example}, habit=${habit}, input=${testPrompt}`);
 
 const CHROME_PATHS = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium-browser'];
 const chromePath = CHROME_PATHS.find(p => fs.existsSync(p));
@@ -32,11 +57,20 @@ const bundleCode = fs.readFileSync(BUNDLE_PATH, 'utf-8');
 const fetchProxy = getTauriFetchProxyScript({ mode: 'full' });
 const originalHtml = fs.readFileSync(HTML_PATH, 'utf-8');
 
-// Inject scripts before closing </head>
+// Write fetch proxy as separate file
+const fetchProxyPath = path.join(OUTPUT_DIR, 'fetch-proxy.js');
+fs.writeFileSync(fetchProxyPath, fetchProxy);
+
+// Inject global polyfills and scripts as external files before closing </head>
 const testHtml = originalHtml.replace(
   '</head>',
-  `<script>${bundleCode}</script>
-   <script>${fetchProxy}</script>
+  `<script>
+     // Browser polyfills
+     if (typeof global === 'undefined') { window.global = window; }
+     if (typeof globalThis === 'undefined') { window.globalThis = window; }
+   </script>
+   <script src="cortex-bundle.js"></script>
+   <script src="fetch-proxy.js"></script>
    </head>`
 );
 const testHtmlPath = path.join(OUTPUT_DIR, 'index.html');
@@ -48,30 +82,39 @@ async function runTest() {
   const page = await browser.newPage();
   const logs: string[] = [];
 
+  // Set timeout for page operations
+  page.setDefaultTimeout(60000); // 60 seconds
+
   page.on('console', msg => { const text = msg.text(); logs.push(text); console.log('  [browser]', text); });
-  page.on('pageerror', err => console.error('  [error]', err.message));
+  page.on('pageerror', err => { console.error('  [error]', err.message); console.error('  [stack]', err.stack); });
 
   try {
     await page.goto(`file://${testHtmlPath}`, { waitUntil: 'domcontentloaded' });
+    
+    // Check IndexedDB availability
+    const hasIndexedDB = await page.evaluate(() => typeof indexedDB !== 'undefined');
+    console.log(`📊 IndexedDB available: ${hasIndexedDB}`);
+    
     const hasBundle = await page.evaluate(() => !!(window as any).HabitsBundle);
     if (!hasBundle) throw new Error('HabitsBundle not loaded');
     console.log('✅ HabitsBundle loaded');
 
-    const testPrompt = 'Test campaign for AI productivity tools';
-    await page.type('#prompt', testPrompt);
-    console.log('✅ Text entered in textbox');
-
-    console.log('⏳ Clicking button and waiting 10s for workflow...');
-    await page.click('#sendBtn');
-    await new Promise(r => setTimeout(r, 10000));
-
-    // Capture results from the page
-    const resultsHtml = await page.$eval('#resultsContainer', el => el.innerHTML).catch(() => '');
-    const bodyText = await page.$eval('body', el => el.innerText.slice(0, 2000)).catch(() => '');
+    console.log(`⏳ Executing workflow: ${habit}...`);
+    
+    // Execute with manual timeout
+    const executionPromise = page.evaluate(async (habitName, habitInput) => {
+      const bundle = (window as any).HabitsBundle;
+      return await bundle.executeWorkflow(habitName, habitInput);
+    }, habit, testPrompt);
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Workflow execution timeout after 45s')), 45000)
+    );
+    
+    const result = await Promise.race([executionPromise, timeoutPromise]);
 
     console.log('\n📋 Console Logs:\n' + logs.join('\n'));
-    console.log('\n📄 Results HTML:\n' + (resultsHtml || '(empty)').slice(0, 1500));
-    console.log('\n📝 Page Text Preview:\n' + bodyText.slice(0, 800));
+    console.log('\n📄 Workflow Result:\n' + JSON.stringify(result, null, 2));
 
     await browser.close();
     console.log('\n✅ Browser test passed!');
