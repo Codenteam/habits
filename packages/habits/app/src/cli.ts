@@ -199,6 +199,19 @@ export async function runCLI(): Promise<void> {
         default: 'both',
         choices: getSupportedMobileTargets(),
       },
+      'app-name': {
+        describe: 'Custom app name (overrides stack.yaml name)',
+        type: 'string',
+      },
+      'app-icon': {
+        describe: 'Path to app icon (PNG file)',
+        type: 'string',
+      },
+      'debug': {
+        describe: 'Build in debug mode',
+        type: 'boolean',
+        default: false,
+      },
     })
     .demandCommand(1, 'You need to specify a command')
     .help()
@@ -476,6 +489,9 @@ async function runPackCommand(argv: any): Promise<void> {
     backendUrl: argv['backend-url'],
     desktopPlatform: argv['desktop-platform'],
     mobileTarget: argv['mobile-target'],
+    appName: argv['app-name'],
+    appIcon: argv['app-icon'],
+    debug: argv.debug,
   });
 
   if (!result.success) {
