@@ -9,13 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@ha-bits/core": ["../core/src/index.ts"],
+      "@ha-bits/core/*": ["../core/src/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }

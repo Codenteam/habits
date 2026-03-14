@@ -12,6 +12,11 @@ export default defineConfig({
       insertTypesEntry: true,
     }),
   ],
+  resolve: {
+    alias: {
+      '@ha-bits/core': resolve(__dirname, '../core/src/index.ts'),
+    },
+  },
   build: {
     outDir: '../../dist/packages/workflow-canvas',
     emptyOutDir: true,
@@ -22,7 +27,7 @@ export default defineConfig({
       fileName: () => 'index.mjs',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: ['react', 'react-dom', 'react/jsx-runtime', '@ha-bits/core'],
       output: {
         globals: {
           react: 'React',

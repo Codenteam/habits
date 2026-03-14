@@ -1,8 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Code, Trash2, X } from 'lucide-react';
-import { TokenType } from './VariableToken';
 import VariablePicker, { VariableCategory } from './VariablePicker';
+import { 
+  parseVariableSegments, 
+  VARIABLE_TOKEN_STYLES, 
+  type VariableSegment,
+} from '@ha-bits/core';
 
 export interface RichTextAreaProps {
   /** Controlled value (takes precedence over defaultValue) */
@@ -26,91 +30,11 @@ export interface RichTextAreaProps {
   showVariablePicker?: boolean;
 }
 
-type Segment = TextSegment | TokenSegment;
+// Use VariableSegment as Segment for internal use
+type Segment = VariableSegment;
 
-interface TextSegment {
-  type: 'text';
-  content: string;
-}
-
-interface TokenSegment {
-  type: 'token';
-  tokenType: TokenType;
-  category: string;
-  name: string;
-  fullValue: string;
-}
-
-// Regex to match variable patterns
-// Matches: {{habits.category.name}}, {{nodeName.property}}, {{simple-variable}}
-const VARIABLE_REGEX = /\{\{habits\.(input|headers|request|env|context|function|cookies)\.([^}]+)\}\}|\{\{([a-zA-Z0-9_-]+)\.([^}]+)\}\}|\{\{([a-zA-Z0-9_-]+)\}\}/g;
-
-// Parse raw text into segments
-function parseTextToSegments(text: string): Segment[] {
-  // Ensure text is a string, handle edge cases
-  if (!text || typeof text !== 'string') return [];
-  
-  const segments: Segment[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  
-  // Reset regex state
-  VARIABLE_REGEX.lastIndex = 0;
-  
-  while ((match = VARIABLE_REGEX.exec(text)) !== null) {
-    // Add text before match
-    if (match.index > lastIndex) {
-      segments.push({
-        type: 'text',
-        content: text.slice(lastIndex, match.index),
-      });
-    }
-    
-    // Determine token type and parse
-    if (match[1]) {
-      // habits.* pattern (e.g., {{habits.input.name}})
-      const category = match[1];
-      const name = match[2];
-      segments.push({
-        type: 'token',
-        tokenType: category as TokenType,
-        category,
-        name,
-        fullValue: match[0],
-      });
-    } else if (match[3] && match[4]) {
-      // Node reference pattern with property (e.g., {{nodeName.output}})
-      segments.push({
-        type: 'token',
-        tokenType: 'node',
-        category: match[3],
-        name: match[4],
-        fullValue: match[0],
-      });
-    } else if (match[5]) {
-      // Simple variable pattern (e.g., {{old-node}})
-      segments.push({
-        type: 'token',
-        tokenType: 'node',
-        category: match[5],
-        name: 'output',
-        fullValue: match[0],
-      });
-    }
-    
-    lastIndex = match.index + match[0].length;
-  }
-  
-  // Add remaining text
-  if (lastIndex < text.length) {
-    segments.push({
-      type: 'text',
-      content: text.slice(lastIndex),
-    });
-  }
-  
-  return segments;
-}
+// Use shared parser from core (aliased for backwards compatibility)
+const parseTextToSegments = parseVariableSegments;
 
 // Extract raw text from contentEditable element
 function extractRawText(element: HTMLElement): string {
@@ -440,18 +364,8 @@ export default function RichTextArea({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [editingToken]);
 
-  // Token color/style config
-  const TOKEN_STYLES: Record<string, { colorClass: string; bgClass: string; borderClass: string }> = {
-    input: { colorClass: 'text-blue-400', bgClass: 'bg-blue-900/30', borderClass: 'border-blue-700/50' },
-    headers: { colorClass: 'text-purple-400', bgClass: 'bg-purple-900/30', borderClass: 'border-purple-700/50' },
-    request: { colorClass: 'text-blue-400', bgClass: 'bg-blue-900/30', borderClass: 'border-blue-700/50' },
-    env: { colorClass: 'text-amber-400', bgClass: 'bg-amber-900/30', borderClass: 'border-amber-700/50' },
-    context: { colorClass: 'text-cyan-400', bgClass: 'bg-cyan-900/30', borderClass: 'border-cyan-700/50' },
-    function: { colorClass: 'text-cyan-400', bgClass: 'bg-cyan-900/30', borderClass: 'border-cyan-700/50' },
-    cookies: { colorClass: 'text-orange-400', bgClass: 'bg-orange-900/30', borderClass: 'border-orange-700/50' },
-    node: { colorClass: 'text-green-400', bgClass: 'bg-green-900/30', borderClass: 'border-green-700/50' },
-    unknown: { colorClass: 'text-gray-400', bgClass: 'bg-gray-800/30', borderClass: 'border-gray-700/50' },
-  };
+  // Use shared token styles from core (aliased for local use)
+  const TOKEN_STYLES = VARIABLE_TOKEN_STYLES;
 
   // Convert segments to HTML string (avoids React reconciliation issues with contentEditable)
   const segmentsToHtml = useCallback(() => {

@@ -55,8 +55,27 @@ const findLongValuesFromFields = (fields: Record<string, { value?: any }> | unde
   return longValues;
 };
 
+/**
+ * CustomNode - Full-featured editable node component for the Workflow Editor
+ * 
+ * WHERE USED:
+ * - packages/base/ui - The main Workflow Editor application (WorkflowEditor.tsx)
+ * 
+ * WHY:
+ * - Provides full editing capabilities: inline text editing, script editing, node ID renaming
+ * - Integrates with Redux store for state management (requires Redux Provider)
+ * - Uses RichTextArea for variable token editing with syntax highlighting
+ * - Uses Monaco editor (via ScriptNodeEditor) for script editing
+ * 
+ * WHEN TO USE:
+ * - When you need an interactive, editable workflow canvas
+ * - When the component is inside a Redux Provider (always the case in base-ui)
+ * 
+ * For read-only viewing, use BaseNode from @ha-bits/workflow-canvas instead.
+ */
 export default memo(({ data, selected, id }: NodeProps) => {
   const dispatch = useAppDispatch();
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditingId, setIsEditingId] = useState(false);
   const [editedId, setEditedId] = useState(id);
