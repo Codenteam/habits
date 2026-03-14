@@ -19,7 +19,9 @@
     "baseUrl": ".",
     "paths": {
       "@ha-bits/workflow-canvas": ["../workflow-canvas/src/index.ts"],
-      "@ha-bits/workflow-canvas/*": ["../workflow-canvas/src/*"]
+      "@ha-bits/workflow-canvas/*": ["../workflow-canvas/src/*"],
+      "@ha-bits/core": ["../core/src/index.ts"],
+      "@ha-bits/core/*": ["../core/src/*"]
     }
   },
   "include": ["src"],

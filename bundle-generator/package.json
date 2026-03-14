@@ -1,0 +1,45 @@
+{
+  "name": "@ha-bits/bundle-generator",
+  "version": "1.0.0",
+  "description": "Bundle generator for habits workflows",
+  "license": "Apache-2.0",
+  "author": "Codenteam",
+  "type": "commonjs",
+  "main": "generator.js",
+  "bin": {
+    "bundle-generator": "./cli.js"
+  },
+  "files": [
+    "generator.js",
+    "template.js",
+    "node-polyfills.js",
+    "cli.js"
+  ],
+  "scripts": {
+    "test:build": "node test-build.js",
+    "test:run": "node test-run.js"
+  },
+  "keywords": [
+    "habits",
+    "workflow",
+    "bundle",
+    "generator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenteam/habits.git",
+    "directory": "bundle-generator"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ha-bits/bit-intersect": "latest",
+    "@ha-bits/bit-openai": "file:../nodes/bits/@ha-bits/bit-openai/ha-bits-bit-openai-0.1.10.tgz",
+    "@ha-bits/bit-pouch": "file:../nodes/bits/@ha-bits/bit-pouch/ha-bits-bit-pouch-1.0.0.tgz",
+    "@ha-bits/cortex-core": "file:../packages/cortex/core",
+    "esbuild": "^0.20.0",
+    "js-yaml": "^4.1.0",
+    "quickjs-emscripten": "^0.29.0"
+  }
+}

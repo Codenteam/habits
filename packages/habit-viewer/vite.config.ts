@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@ha-bits/workflow-canvas': path.resolve(__dirname, '../workflow-canvas/src/index.ts'),
+      '@ha-bits/core': path.resolve(__dirname, '../core/src/index.ts'),
     },
   },
   server: {

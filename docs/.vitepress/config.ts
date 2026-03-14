@@ -19,8 +19,8 @@ export default defineConfig({
     /^http:\/\/localhost/
   ],
 
-  // Default to dark mode
-  appearance: 'dark',
+  // Match browser/system preference
+  appearance: true,
 
   // Configure markdown to escape Vue template syntax in code
   markdown: {
@@ -70,9 +70,10 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
-          { text: 'Build Your First Habit using HaC', link: '/getting-started/first-habit' },
-          { text: 'Build Your First Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
-          { text: 'Build Your First Habit using AI', link: '/getting-started/first-habit-using-ai' },
+          { text: 'Build Habit using HaC', link: '/getting-started/first-habit' },
+          { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
+          { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
+          { text: 'Build Full App', link: '/getting-started/first-app-using-habits' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
         ]
@@ -96,6 +97,7 @@ export default defineConfig({
 
           { text: 'AI Cookbook', link: '/showcase/ai-cookbook' },
           { text: 'AI Journal', link: '/showcase/ai-journal' },
+          { text: 'Resume Analyzer', link: '/showcase/resume-analyzer' },
 
           { text: 'Agent MCP Demo', link: '/showcase/agent-mcp-demo' },
           { text: 'Email Classification', link: '/showcase/email-classification' },

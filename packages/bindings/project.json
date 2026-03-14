@@ -1,0 +1,29 @@
+{
+  "name": "@ha-bits/bindings",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/bindings/src",
+  "projectType": "library",
+  "tags": [
+    "scope:shared"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/bindings",
+        "main": "packages/bindings/src/index.ts",
+        "tsConfig": "packages/bindings/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/bindings/tsconfig.lib.json --noEmit"
+      }
+    }
+  }
+}

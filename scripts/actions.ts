@@ -105,6 +105,23 @@ export function runExample(name: string) {
   if (cfg) run(`pnpm nx cortex habits --config ${path.relative(PROJECT_ROOT, cfg)}`);
 }
 
+// Link packages for local development
+const CORTEX_CORE_DIST = path.join(PROJECT_ROOT, 'dist/packages/cortex/core');
+
+export function linkCortexCore() {
+  logInfo('Creating global link for @ha-bits/cortex-core');
+  if (!fs.existsSync(CORTEX_CORE_DIST)) {
+    logError(`Dist not found: ${CORTEX_CORE_DIST}. Run 'Build Cortex' first.`);
+    return false;
+  }
+  return run('npm link', { cwd: CORTEX_CORE_DIST });
+}
+
+export function unlinkCortexCore() {
+  logInfo('Removing global link for @ha-bits/cortex-core');
+  return run('npm unlink -g @ha-bits/cortex-core', { silent: true });
+}
+
 // List
 export function listExamples() {
   discoverExamples().forEach(e => console.log(`  ${c.green}•${c.reset} ${e}`));

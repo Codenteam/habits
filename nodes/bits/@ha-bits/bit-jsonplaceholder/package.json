@@ -14,7 +14,7 @@
     "@types/node": "^20.0.0"
   },
   "peerDependencies": {
-    "@ha-bits/cortex": "*"
+    "@ha-bits/cortex-core": "*"
   },
   "nx": {
     "sourceRoot": "@ha-bits/bit-jsonplaceholder/src",

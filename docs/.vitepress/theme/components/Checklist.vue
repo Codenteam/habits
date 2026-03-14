@@ -43,6 +43,14 @@ const displayTitle = computed(() => {
     .join(' ')
 })
 
+// Generate slug ID for anchor linking (used by VitePress outline)
+const slugId = computed(() => {
+  return displayTitle.value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+})
+
 const IconComponent = computed(() => {
   const iconName = props.icon ?? 'clipboard'
   return iconMap[iconName] ?? ClipboardList
@@ -97,7 +105,7 @@ watch(isOpen, (open) => {
       <span class="checklist-icon">
         <component :is="IconComponent" :size="18" />
       </span>
-      <span class="checklist-title">{{ displayTitle }}</span>
+      <h2 :id="slugId" class="checklist-title">{{ displayTitle }}</h2>
     </summary>
     <div ref="contentRef" class="checklist-content">
       <slot></slot>
@@ -147,6 +155,12 @@ watch(isOpen, (open) => {
 
 .checklist-title {
   flex: 1;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .checklist-chevron {

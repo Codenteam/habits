@@ -3,7 +3,7 @@
  * Generate an audio recording from text
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { streamToBuffer, openaiAuthValue } from '../common/common';
@@ -90,7 +90,8 @@ export const textToSpeech = createAction({
   async run({ auth, propsValue, files }) {
     const authValue = auth as unknown as openaiAuthValue;
     const openai = new OpenAI({
-      apiKey: authValue.apiKey
+      apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     });
 
     const { voice, format, model, text, speed, fileName } = propsValue;

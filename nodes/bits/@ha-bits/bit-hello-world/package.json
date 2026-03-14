@@ -18,12 +18,17 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "files": [
     "dist"
   ],
+  "habits": {
+    "stubs": {
+      "to-constant-case": "./dist/stubs/to-constant-case.js"
+    }
+  },
   "nx": {
     "sourceRoot": "@ha-bits/bit-hello-world/src",
     "projectType": "library",
@@ -38,7 +43,11 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
+  },
+  "dependencies": {
+    "to-constant-case": "^1.0.0"
   }
 }

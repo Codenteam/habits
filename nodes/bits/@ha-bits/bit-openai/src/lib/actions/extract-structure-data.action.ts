@@ -3,7 +3,7 @@
  * Returns structured data from provided unstructured text.
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth, notLLMs, openaiAuthValue } from '../common/common';
 
@@ -37,7 +37,8 @@ export const extractStructuredDataAction = createAction({
         try {
           const authValue = auth as unknown as openaiAuthValue;
           const openai = new OpenAI({
-            apiKey: authValue.apiKey
+            apiKey: authValue.apiKey,
+            dangerouslyAllowBrowser: true,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -119,7 +120,8 @@ export const extractStructuredDataAction = createAction({
     const prompt = 'Extract the following data from the provided text';
     const authValue = context.auth as unknown as openaiAuthValue;
     const openai = new OpenAI({
-      apiKey: authValue.apiKey
+      apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     });
 
     const response = await openai.chat.completions.create({

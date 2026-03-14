@@ -8,7 +8,7 @@ import {
   httpClient,
   Property,
   createAction,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import { intersectAuth } from '../common/common';
 import FormData from 'form-data';
 import mime from 'mime-types';

@@ -13,8 +13,10 @@ import {
   X
 } from 'lucide-react';
 import VariablePicker, { VariableCategory } from './VariablePicker';
+import { VariableTokenType } from '@ha-bits/core';
 
-export type TokenType = 'input' | 'headers' | 'request' | 'env' | 'context' | 'function' | 'cookies' | 'node' | 'unknown';
+// Re-export for backwards compatibility
+export type TokenType = VariableTokenType;
 
 export interface VariableTokenProps {
   type: TokenType;

@@ -6,7 +6,7 @@
  * and use their tools to complete complex tasks.
  */
 
-import { createBit, BitCategory } from '@ha-bits/cortex';
+import { createBit, BitCategory } from '@ha-bits/cortex-core';
 
 import { agentAuth } from './lib/common/common';
 import { runAgent } from './lib/actions';

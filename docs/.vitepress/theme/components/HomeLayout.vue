@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { withBase } from 'vitepress'
+import { withBase, useData } from 'vitepress'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
@@ -9,7 +9,33 @@ import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
 import bitsData from '../data/bits-data.json'
 
+const { isDark } = useData()
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+}
+
+// Parse CSS gradient string to extract colors
+function parseGradient(gradientStr) {
+  const matches = gradientStr.match(/#[a-fA-F0-9]{6}/g)
+  return matches || ['#667eea', '#764ba2']
+}
+
+// Generate icon SVG with embedded gradient for stroke
+function gradientIcon(iconName, gradientStr, gradientId) {
+  const colors = parseGradient(gradientStr)
+  const baseSvg = feather.icons[iconName].toSvg({ class: 'feather-icon' })
+  
+  const gradientDef = `<defs><linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="${colors[0]}"/>
+    <stop offset="100%" stop-color="${colors[1] || colors[0]}"/>
+  </linearGradient></defs>`
+  
+  return baseSvg
+    .replace('>', `>${gradientDef}`)
+    .replace(/stroke="[^"]*"/, `stroke="url(#${gradientId})"`)
+}
 
 const activeTab = ref(0)
 const highlightedCode = ref({})
@@ -29,6 +55,7 @@ npx habits@latest`
   {
     label: 'Create',
     code: `# Start Habits Base (visual builder)
+habits init
 habits base`
   },
   {
@@ -142,6 +169,35 @@ const hoveredUseCase = ref(null)
 
 <template>
   <div class="home-layout">
+    <!-- Header with theme toggle and GitHub -->
+    <header class="home-header">
+      <div class="header-content">
+        <a :href="withBase('/')" class="header-logo">
+          <img :src="withBase('/logo.png')" alt="Habits" />
+          <span>Habits</span>
+        </a>
+        <div class="header-actions">
+          <button 
+            class="theme-toggle" 
+            @click="toggleTheme" 
+            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <span v-if="isDark" v-html="icon('sun')"></span>
+            <span v-else v-html="icon('moon')"></span>
+          </button>
+          <a 
+            href="https://github.com/codenteam/habits" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="github-link"
+            aria-label="GitHub"
+          >
+            <span v-html="icon('github')"></span>
+          </a>
+        </div>
+      </div>
+    </header>
+
     <!-- Hero Section with Quick Start -->
     <section class="hero">
       <div class="hero-bg"></div>
@@ -154,9 +210,11 @@ const hoveredUseCase = ref(null)
           <p class="hero-tagline">AI Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Code your first habit</a>
-            <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Use UI</a>
-            <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Use AI</a>
-            <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Introduction</a>
+            <div class="hero-secondary-actions">
+              <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Use UI</a>
+              <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Use AI</a>
+              <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Introduction</a>
+            </div>
           </div>
         </div>
         
@@ -219,7 +277,7 @@ const hoveredUseCase = ref(null)
           <div class="demo-edge"></div>
           <div class="demo-node process">
             <span class="node-dot"></span>
-            <span>Action/API/Automation/Full-Stack</span>
+            <span>Action/API/Automation</span>
           </div>
           <div class="demo-edge"></div>
           <div class="demo-node action">
@@ -245,8 +303,8 @@ const hoveredUseCase = ref(null)
           @mouseenter="hoveredUseCase = useCase.id"
           @mouseleave="hoveredUseCase = null"
         >
-          <div class="use-case-icon" :style="{ background: useCase.gradient }">
-            <span v-html="icon(useCase.icon)"></span>
+          <div class="use-case-icon">
+            <span v-html="gradientIcon(useCase.icon, useCase.gradient, `gradient-${useCase.id}`)"></span>
           </div>
           <div class="use-case-content">
             <div class="use-case-need">{{ useCase.need }}</div>
@@ -466,6 +524,113 @@ const hoveredUseCase = ref(null)
       </div>
     </section>
 
+    <!-- Parody Testimonials Section -->
+    <section class="testimonials-section">
+      <div class="testimonials-header">
+        <h2>What People Are <span class="complaining">Complaining</span> About</h2>
+        <p class="testimonials-subtitle">The hate is unreal!</p>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"47 tabs reduced to ONE. What do I do now, touch grass??"</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Overworked Dev</span>
+            <span class="author-title">Chief Tab Opener, Former</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"Built a full-stack app in 2 hours. Now I have MORE meetings."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Anonymous</span>
+            <span class="author-title">Meeting Survivor</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"So intuitive my manager builds workflows now. Send help."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Sarah K.</span>
+            <span class="author-title">Actual Developer, Threatened</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"No vendor lock-in? Can't threaten to leave anymore."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Chad McMoney</span>
+            <span class="author-title">Professional Complainer</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"3-week deploy sprint now takes 3 minutes. I look like a wizard."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— DevOps Dan</span>
+            <span class="author-title">Accidentally Efficient</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"AI made my frontend look good. Can't blame the framework now."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Backend Bob</span>
+            <span class="author-title">CSS Avoider</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"Worst tool, worst documentation, how can I bill my client for only 30 minutes to build their automations!"</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Consultant Carl</span>
+            <span class="author-title">Hourly Rate Defender</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"Runs on my $5 VPS. AWS sales guy stopped calling me."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Frugal Fred</span>
+            <span class="author-title">Cloud Cost Cutter</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"The intern shipped to production on day one. Day. One."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Tech Lead Tina</span>
+            <span class="author-title">Gatekeeper, Unemployed</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"Made an AI agent in 10 minutes. Existential crisis in 11."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Philosophical Phil</span>
+            <span class="author-title">Job Security Analyst</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★☆☆☆☆</div>
+          <p class="testimonial-text">"Swagger docs auto-generate. My API doc sprint is obsolete."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Documentation Diane</span>
+            <span class="author-title">README Writer, Retired</span>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-stars">★★☆☆☆</div>
+          <p class="testimonial-text">"A bunch of liars telling us to use the same logic for Automations, Agents, Apps and runs in Linux, Windows, Mac, Docker, Android, iOS, Web."</p>
+          <div class="testimonial-author">
+            <span class="author-name">— Vendor Viktor</span>
+            <span class="author-title">Ecosystem Purist</span>
+          </div>
+        </div>
+      </div>
+      <p class="testimonials-disclaimer">Habits is actually great AND free.</p>
+    </section>
+
     <!-- Footer -->
     <footer class="home-footer">
       <p>
@@ -482,6 +647,73 @@ const hoveredUseCase = ref(null)
 .home-layout {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Header */
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-divider);
+  backdrop-filter: blur(8px);
+}
+
+.header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.header-logo img {
+  height: 32px;
+  width: 32px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle,
+.github-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--vp-c-text-2);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.theme-toggle:hover,
+.github-link:hover {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-default-soft);
+}
+
+.theme-toggle :deep(.feather-icon),
+.github-link :deep(.feather-icon) {
+  width: 20px;
+  height: 20px;
 }
 
 /* Hero */
@@ -554,6 +786,24 @@ const hoveredUseCase = ref(null)
   flex-wrap: wrap;
 }
 
+.hero-secondary-actions {
+  display: contents;
+}
+
+@media (max-width: 640px) {
+  .hero-secondary-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .hero-secondary-actions .action-btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+}
+
 .action-btn {
   padding: 12px 24px;
   border-radius: 8px;
@@ -588,12 +838,16 @@ const hoveredUseCase = ref(null)
 .hero-right {
   display: flex;
   justify-content: flex-end;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .quick-start-card {
   width: 100%;
+  max-width: 100%;
   background: var(--vp-c-bg);
   border-radius: 16px;
+  box-sizing: border-box;
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -2px rgba(0, 0, 0, 0.1),
@@ -646,6 +900,7 @@ const hoveredUseCase = ref(null)
 
 .tab-content {
   padding: 0;
+  overflow: hidden;
 }
 
 .tab-content pre {
@@ -662,7 +917,9 @@ const hoveredUseCase = ref(null)
   line-height: 1.7;
   color: var(--vp-c-text-1);
   white-space: pre;
+  word-break: break-all;
 }
+
 
 .highlighted-code :deep(pre) {
   margin: 0;
@@ -670,6 +927,7 @@ const hoveredUseCase = ref(null)
   background: var(--vp-c-bg-alt) !important;
   overflow-x: auto;
   min-height: 140px;
+  white-space: pre-line;
 }
 
 .highlighted-code :deep(code) {
@@ -1095,13 +1353,12 @@ const hoveredUseCase = ref(null)
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  background: var(--vp-c-bg-soft);
 }
 
 .use-case-icon :deep(svg) {
-  width: 18px;
-  height: 18px;
-  color: white;
-  stroke: white;
+  width: 20px;
+  height: 20px;
 }
 
 .use-case-card:hover .use-case-icon {
@@ -1158,18 +1415,53 @@ const hoveredUseCase = ref(null)
   }
   
   .node-love-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
+  }
+  
+  .node-love-text {
+    font-size: 1rem;
+  }
+  
+  .node-demo {
+    flex-direction: column;
+    gap: 0;
   }
   
   .demo-edge {
-    width: 30px;
+    width: 3px;
+    height: 30px;
+    background: #5865F2;
+    position: relative;
+  }
+  
+  .demo-edge::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    top: auto;
+    transform: translateX(-50%) translateY(7px);
+    border: 6px solid transparent;
+    border-top-color: #5865F2;
+    border-left-color: transparent;
+    border-right-color: transparent;
   }
   
   .demo-node {
     padding: 10px 16px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
   }
-
+  
+  .floating-node {
+    display: none;
+  }
+  
+  .connection-line {
+    display: none;
+  }
 }
 
 /* Content Section */
@@ -1226,6 +1518,19 @@ const hoveredUseCase = ref(null)
   .quick-start-card {
     max-width: 600px;
   }
+  
+  .node-demo {
+    padding: 0 10px;
+  }
+  
+  .demo-node {
+    padding: 12px 18px;
+    font-size: 0.85rem;
+  }
+  
+  .demo-edge {
+    width: 4px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1239,8 +1544,12 @@ const hoveredUseCase = ref(null)
   }
   
   .hero-text {
-    font-size: 1.4rem;
-    line-height: 1.4rem;
+    font-size: 1.3rem;
+    line-height: 1.5;
+  }
+  
+  .hero-tagline {
+    font-size: 1rem;
   }
   
   .hero-logo {
@@ -1257,6 +1566,20 @@ const hoveredUseCase = ref(null)
   .tab-btn {
     padding: 8px 12px;
     font-size: 0.75rem;
+  }
+  
+  .quick-start-card h3 {
+    font-size: 0.9rem;
+    padding: 12px 16px 0;
+  }
+  
+  .node-love-section {
+    padding: 50px 16px;
+  }
+  
+  .node-love-badge {
+    font-size: 0.8rem;
+    padding: 6px 14px;
   }
 }
 
@@ -1276,6 +1599,25 @@ const hoveredUseCase = ref(null)
   .tab-btn.active {
     border-left-color: #5865F2;
     background: var(--vp-c-bg-soft);
+  }
+  
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  
+  .hero-actions .action-btn.brand {
+    grid-column: 1;
+  }
+  
+  .action-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .quick-start-card {
+    max-width: 100%;
   }
 }
 
@@ -1551,13 +1893,13 @@ const hoveredUseCase = ref(null)
 
 @media (max-width: 768px) {
   .feature-mini {
-    grid-column: span 6;
+    grid-column: span 4;
   }
 }
 
 @media (max-width: 640px) {
   .feature-mini {
-    grid-column: span 12;
+    grid-column: span 4;
   }
   
   .platform-header h2 {
@@ -1570,6 +1912,12 @@ const hoveredUseCase = ref(null)
   
   .flow-item {
     padding: 12px 8px;
+  }
+}
+
+@media (max-width: 540px) {
+  .feature-mini {
+    grid-column: span 12;
   }
 }
 
@@ -1612,13 +1960,85 @@ const hoveredUseCase = ref(null)
 }
 
 .pricing-table {
-  overflow-x: auto;
+  overflow-x: visible;
 }
 
 .pricing-table table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .pricing-table table,
+  .pricing-table thead,
+  .pricing-table tbody,
+  .pricing-table th,
+  .pricing-table td,
+  .pricing-table tr {
+    display: block;
+  }
+  
+  .pricing-table thead tr {
+    display: none;
+  }
+  
+  .pricing-table tbody tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--vp-c-bg);
+  }
+  
+  .pricing-table tbody tr:hover {
+    background: var(--vp-c-bg);
+  }
+  
+  .pricing-table td {
+    border: none;
+    border-bottom: 1px solid var(--vp-c-divider);
+    padding: 12px 16px;
+    text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .pricing-table td:last-child {
+    border-bottom: none;
+  }
+  
+  .pricing-table td:first-child {
+    background: var(--vp-c-bg-soft);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .pricing-table td:nth-child(2)::before {
+    content: 'Free: ';
+    font-weight: 500;
+    color: var(--vp-c-text-2);
+    margin-right: 8px;
+  }
+  
+  .pricing-table td:nth-child(3)::before {
+    content: 'Enterprise: ';
+    font-weight: 500;
+    color: var(--vp-c-text-2);
+    margin-right: 8px;
+  }
+  
+  .pricing-table td:nth-child(2),
+  .pricing-table td:nth-child(3) {
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  
+  .pricing-table .check,
+  .pricing-table .x-mark {
+    order: 1;
+    margin-left: auto;
+  }
 }
 
 .pricing-table th,
@@ -1728,6 +2148,149 @@ const hoveredUseCase = ref(null)
   border: 2px solid #5865F2;
 }
 
+/* Testimonials Section */
+.testimonials-section {
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--vp-c-bg-soft);
+  border-radius: 24px;
+  margin-top: 40px;
+}
+
+.testimonials-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.testimonials-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--vp-c-text-1);
+}
+
+.complaining {
+  background: linear-gradient(135deg, #f43f5e, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-decoration: line-through;
+  text-decoration-color: var(--vp-c-text-3);
+}
+
+.testimonials-subtitle {
+  font-size: 1rem;
+  color: var(--vp-c-text-3);
+  margin: 0;
+  font-style: italic;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.testimonial-card {
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.testimonial-card::before {
+  content: '"';
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  font-size: 60px;
+  font-family: Georgia, serif;
+  color: var(--vp-c-divider);
+  opacity: 0.4;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px) rotate(-1deg);
+  box-shadow: 0 12px 30px rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.testimonial-stars {
+  color: #f59e0b;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.testimonial-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--vp-c-text-1);
+  margin: 0 0 12px;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.author-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--vp-c-text-1);
+}
+
+.author-title {
+  font-size: 0.7rem;
+  color: var(--vp-c-text-3);
+}
+
+.testimonials-disclaimer {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 0.85rem;
+  color: var(--vp-c-text-3);
+  font-style: italic;
+}
+
+@media (max-width: 1100px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .testimonials-header h2 {
+    font-size: 1.6rem;
+  }
+  
+  .testimonial-card {
+    padding: 16px;
+  }
+}
+
 /* Footer */
 .home-footer {
   text-align: center;
@@ -1764,6 +2327,92 @@ const hoveredUseCase = ref(null)
   .pricing-table th,
   .pricing-table td {
     padding: 0.5rem;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 10px 16px;
+  }
+  
+  .header-logo span {
+    font-size: 16px;
+  }
+  
+  .header-logo img {
+    height: 28px;
+    width: 28px;
+  }
+  
+  .hero-name {
+    font-size: 2rem;
+  }
+  
+  .hero-text {
+    font-size: 1.1rem;
+  }
+  
+  .hero-tagline {
+    font-size: 0.9rem;
+  }
+  
+  .action-btn {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+  
+  .tab-content pre,
+  .highlighted-code :deep(pre) {
+    padding: 12px 14px;
+    min-height: 120px;
+  }
+  
+  .tab-content code,
+  .highlighted-code :deep(code) {
+    font-size: 0.7rem;
+  }
+  
+  .node-love-title {
+    font-size: 1.5rem;
+  }
+  
+  .use-case-card {
+    padding: 12px 14px;
+  }
+  
+  .use-case-need {
+    font-size: 0.85rem;
+  }
+  
+  .use-case-solution {
+    font-size: 0.7rem;
+  }
+  
+  .platform-section,
+  .showcase-section,
+  .bits-section,
+  .screenshots-section,
+  .pricing-section,
+  .testimonials-section {
+    padding: 40px 16px;
+  }
+  
+  .fullstack-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .grid-plus {
+    display: none;
+  }
+  
+  .feature-mini {
+    padding: 14px;
+  }
+  
+  .feature-emoji {
+    font-size: 1.5rem;
   }
 }
 </style>

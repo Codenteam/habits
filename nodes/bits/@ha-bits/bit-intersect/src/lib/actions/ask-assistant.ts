@@ -7,7 +7,7 @@ import {
   createAction,
   Property,
   StoreScope,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { intersectAuth } from '../common/common';
 import { sleep, getIntersectBaseUrl, IntersectAuthValue, castMarkdownProperty, castMarkdownCodeBlocks } from '../common/common';
@@ -37,6 +37,7 @@ export const askAssistant = createAction({
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
             baseURL: getIntersectBaseUrl(authValue.host),
+            dangerouslyAllowBrowser: true
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -83,6 +84,7 @@ export const askAssistant = createAction({
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
+      dangerouslyAllowBrowser: true
     });
     const { assistant, prompt } = propsValue;
     const runCheckDelay = 1000;

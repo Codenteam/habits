@@ -3,6 +3,11 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { Activity, Zap, Play, Code, Box, ChevronDown, ChevronRight } from 'lucide-react';
 import type { BaseNodeData, WorkflowFramework } from '../types';
 import { isTriggerNode, getNodeColors, getNodeDefinition } from '../nodeDefinitions';
+import { 
+  parseVariableSegments, 
+  VARIABLE_TOKEN_STYLES, 
+  type VariableTokenType 
+} from '@ha-bits/core';
 
 const LONG_VALUE_THRESHOLD = 10;
 
@@ -27,6 +32,33 @@ const findLongValues = (obj: Record<string, any> | undefined): Array<{ key: stri
   longValues.sort((a, b) => b.value.length - a.value.length);
   return longValues;
 };
+
+// Render value with styled variable tokens
+function renderValueWithTokens(value: string): React.ReactNode {
+  const segments = parseVariableSegments(value);
+  
+  if (segments.length === 0 || !segments.some(s => s.type === 'token')) {
+    return value;
+  }
+  
+  return segments.map((segment, index) => {
+    if (segment.type === 'text') {
+      return <span key={index}>{segment.content}</span>;
+    }
+    
+    const style = VARIABLE_TOKEN_STYLES[segment.tokenType as VariableTokenType] || VARIABLE_TOKEN_STYLES.unknown;
+    return (
+      <span
+        key={index}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 rounded border ${style.bgClass} ${style.borderClass} text-xs font-mono select-none`}
+        title={segment.fullValue}
+      >
+        <span className={style.colorClass}>{segment.category}:</span>
+        <span className="text-white font-medium">{segment.name}</span>
+      </span>
+    );
+  });
+}
 
 /**
  * Get icon component based on framework and node type
@@ -63,9 +95,25 @@ function getHandleStyle(index: number, total: number, isTop: boolean = true) {
 }
 
 /**
- * BaseNode - Read-only node component for workflow visualization
- * This is the foundation component used by both the editor (with editing extensions)
- * and the viewer (read-only mode)
+ * BaseNode - Lightweight read-only node component for workflow visualization
+ * 
+ * WHERE USED:
+ * - packages/workflow-canvas - Default node type in WorkflowCanvas component
+ * - packages/habit-viewer - Standalone viewer for embedding habits
+ * - packages/base/ui - WorkflowPreview component (read-only preview mode)
+ * 
+ * WHY:
+ * - Provides a minimal, dependency-free node renderer (~5KB vs ~500KB+ for CustomNode)
+ * - No Redux, Monaco editor, or other heavy dependencies
+ * - Renders variable tokens ({{habits.input.name}}) with syntax highlighting
+ * - Perfect for embedding in docs, previews, and external viewers
+ * 
+ * WHEN TO USE:
+ * - When you need read-only workflow visualization
+ * - When bundle size matters (habit-viewer, embeds)
+ * - When there's no Redux Provider available
+ * 
+ * For full editing capabilities, use CustomNode from @ha-bits/base instead.
  */
 function BaseNodeComponent({ data, selected, id }: NodeProps<BaseNodeData>) {
   const isScript = data.framework === 'script';
@@ -183,7 +231,7 @@ function BaseNodeComponent({ data, selected, id }: NodeProps<BaseNodeData>) {
                     {key}
                   </label>
                   <div className="w-full min-h-[60px] max-h-[150px] p-2 text-sm font-mono bg-gray-800 text-gray-100 border border-gray-600 rounded overflow-auto whitespace-pre-wrap break-words">
-                    {value}
+                    {renderValueWithTokens(value)}
                   </div>
                 </div>
               ))}

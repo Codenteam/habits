@@ -7,7 +7,7 @@ import {
   createAction,
   Property,
   StoreScope,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import {
@@ -46,7 +46,8 @@ export const askOpenAI = createAction({
           const authValue = auth as unknown as openaiAuthValue;
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
-            logLevel: 'info'
+            logLevel: 'info',
+            dangerouslyAllowBrowser: true,
           } as any);
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -142,7 +143,8 @@ export const askOpenAI = createAction({
     const authValue = auth as unknown as openaiAuthValue;
 
     const conf = {
-      apiKey: authValue.apiKey
+      apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     };
     
     const openai = new OpenAI(conf);

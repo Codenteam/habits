@@ -19,6 +19,8 @@ export interface ScriptNodeEditorProps {
   showLabel?: boolean;
   /** Additional class names */
   className?: string;
+  /** Readonly mode - disables editing */
+  readonly?: boolean;
 }
 
 // Available languages with display names
@@ -32,8 +34,20 @@ const LANGUAGES = [
 ] as const;
 
 /**
- * Combined script language selector and editor component.
- * Used in both NodeConfigPanel (for configuration) and CustomNode (for inline editing).
+ * ScriptNodeEditor - Combined language selector and code editor for script nodes
+ * 
+ * WHERE USED:
+ * - packages/base/ui - CustomNode (inline script editing on canvas)
+ * - packages/base/ui - NodeConfigPanel (script configuration in side panel)
+ * 
+ * WHY:
+ * - Provides a unified interface for editing script content with language selection
+ * - Wraps ScriptEditor (Monaco) with language dropdown and optional labels
+ * - Supports readonly mode for preview contexts
+ * 
+ * WHEN TO USE:
+ * - When editing script-type workflow nodes
+ * - When you need both language selection and code editing together
  */
 const ScriptNodeEditor = memo(({
   script,
@@ -44,6 +58,7 @@ const ScriptNodeEditor = memo(({
   showLanguageSelector = true,
   showLabel = true,
   className = '',
+  readonly = false,
 }: ScriptNodeEditorProps) => {
   const handleLanguageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     onLanguageChange(e.target.value);
@@ -60,7 +75,8 @@ const ScriptNodeEditor = memo(({
             onChange={handleLanguageChange}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            className="w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-900 text-white focus:border-blue-500 focus:outline-none nodrag"
+            disabled={readonly}
+            className={`w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-900 text-white focus:border-blue-500 focus:outline-none nodrag ${readonly ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             {LANGUAGES.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
@@ -82,6 +98,7 @@ const ScriptNodeEditor = memo(({
           onChange={onScriptChange}
           language={language}
           height={height}
+          readOnly={readonly}
         />
       </div>
     </div>

@@ -11,7 +11,7 @@
 import type { 
   IDeclarativeNodeType, 
   DeclarativeNodeDescription 
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 
 /**
  * JSONPlaceholder - Declarative API bit

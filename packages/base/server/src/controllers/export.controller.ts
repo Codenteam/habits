@@ -273,10 +273,14 @@ export class ExportController {
         backendUrl, 
         desktopPlatform = 'all', 
         framework = 'tauri',
-        buildBinary = false, 
+        buildBinary = false,
+        debugBuild = false,
         stackName,
+        stackId,
         appName,
-        appIcon
+        appIcon,
+        executionMode = 'client',
+        envVars,
       } = req.body;
 
       // Validate required fields
@@ -285,9 +289,10 @@ export class ExportController {
         return;
       }
 
-      if (!backendUrl) {
+      // backendUrl is only required for 'client' mode
+      if (executionMode !== 'full' && !backendUrl) {
         res.status(400).json(
-          createResponse(false, undefined, 'backendUrl is required for desktop apps'),
+          createResponse(false, undefined, 'backendUrl is required for client mode desktop apps'),
         );
         return;
       }
@@ -321,9 +326,13 @@ export class ExportController {
         desktopPlatform,
         framework: framework as 'electron' | 'tauri',
         buildBinary,
+        debugBuild,
         stackName,
+        stackId,
         appName,
         appIcon,
+        executionMode,
+        envVars,
       });
 
       if (!result.success) {
@@ -376,10 +385,14 @@ export class ExportController {
         backendUrl,
         mobileTarget = 'both',
         buildBinary = false,
+        debugBuild = false,
         framework = 'tauri',
         stackName,
+        stackId,
         appName,
         appIcon,
+        executionMode = 'client',
+        envVars,
       } = req.body;
 
       // Validate required fields
@@ -388,9 +401,10 @@ export class ExportController {
         return;
       }
 
-      if (!backendUrl) {
+      // backendUrl is only required for 'client' mode
+      if (executionMode !== 'full' && !backendUrl) {
         res.status(400).json(
-          createResponse(false, undefined, 'backendUrl is required for mobile apps'),
+          createResponse(false, undefined, 'backendUrl is required for client mode mobile apps'),
         );
         return;
       }
@@ -434,10 +448,14 @@ export class ExportController {
         backendUrl,
         mobileTarget: mobileTarget as 'ios' | 'android' | 'both',
         buildBinary,
+        debugBuild,
         framework: framework as 'capacitor' | 'cordova' | 'tauri',
         stackName,
+        stackId,
         appName,
         appIcon,
+        executionMode,
+        envVars,
       });
 
       if (!result.success) {

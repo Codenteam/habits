@@ -4,8 +4,8 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '@ha-bits/bindings/fs';
+import * as path from '@ha-bits/bindings/path';
 import * as yaml from 'yaml';
 import {
   Workflow,
@@ -26,8 +26,8 @@ import {
   generateEnvContent,
   getWorkflowTypeName,
 } from '@ha-bits/core';
-import { WorkflowExecutor } from './WorkflowExecutor';
-import { IWebhookHandler, WebhookTriggerServer } from './WebhookTriggerServer';
+import { WorkflowExecutor, IWebhookHandler } from '@ha-bits/cortex-core';
+import { WebhookTriggerServer } from './WebhookTriggerServer';
 import { setupOpenAPIRoutes } from './openapi';
 import { setupManageRoutes, ManageModule } from './manage';
 

@@ -59,11 +59,11 @@ jobs:
           
 
 
-      - name: Copy all example YAML files for HabitViewer
+      - name: Copy all showcase YAML files for HabitViewer
         run: |
           # Copy all YAML files from showcase/ to docs/public/showcase/ maintaining directory structure
-          mkdir -p docs/public/examples
-          cd examples
+          mkdir -p docs/public/showcase
+          cd showcase
           find . -name "*.yaml" -o -name "*.yml" | while read file; do
             dir=$(dirname "$file")
             mkdir -p "../docs/public/showcase/$dir"
@@ -75,7 +75,7 @@ jobs:
         run: |
           cp scripts/install.sh docs/public/install.sh
 
-      - name: Copy example demo folders (screenshots)
+      - name: Copy showcase demo folders (screenshots)
         run: |
           # Copy demo folders with screenshots for documentation
           if [ -d "showcase/ai-cookbook/demo" ]; then

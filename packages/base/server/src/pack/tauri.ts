@@ -12,13 +12,15 @@ import { getTauriConfig } from './templates/tauri/tauri-config';
 import { getTauriMain, getTauriLib } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriBuildScript } from './templates/tauri/tauri-build';
-import { getTauriFetchProxyScript } from './templates/tauri/tauri-fetch-proxy';
+import { getTauriFetchProxyScript, TauriFetchProxyMode } from './templates/tauri/tauri-fetch-proxy';
 import { getTauriGradleProperties, getTauriProguardRules } from './templates/tauri/tauri-gradle';
 import { getTauriReadme } from './templates/tauri/tauri-readme';
 import JSZip from 'jszip';
 import {
   sanitizeStackName,
   createTmpWorkDir,
+  getOrCreateWorkDir,
+  syncWorkDir,
   createCleanupHandler,
   getMimeTypeForExtension,
   addDirectoryToZip,
@@ -32,9 +34,12 @@ export interface TauriPackOptions {
   habits: any[];
   serverConfig: any;
   frontendHtml: string;
+  frontendPath?: string; // Path to frontend directory with all assets
   backendUrl: string;
   buildBinary?: boolean;
+  debugBuild?: boolean;
   stackName?: string;
+  stackId?: string; // Stack UUID for build caching
   platform: 'desktop' | 'mobile';
   // Desktop-specific options
   desktopPlatform?: string;
@@ -43,6 +48,10 @@ export interface TauriPackOptions {
   // App customization
   appName?: string;
   appIcon?: string; // base64 encoded image
+  // Execution mode: 'full' for direct function calls (no server), 'api' for backend proxy
+  executionMode?: TauriFetchProxyMode;
+  // Embedded cortex bundle for 'full' mode (generated JS that includes workflows + bit execution)
+  cortexBundle?: string;
 }
 
 export interface TauriPackResult {
@@ -66,7 +75,9 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     frontendHtml,
     backendUrl,
     buildBinary = false,
+    debugBuild = false,
     stackName,
+    stackId,
     platform,
     desktopPlatform,
     mobileTarget,
@@ -76,7 +87,10 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
 
   const sanitizedStackName = sanitizeStackName(stackName);
   const isMobile = platform === 'mobile';
-  const workDir = createTmpWorkDir(`tauri-${platform}`);
+  
+  // Use stackId for build caching if provided
+  const { workDir, existed: isCachedBuild } = getOrCreateWorkDir(`tauri-${platform}`, stackId);
+  
   const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
 
@@ -100,8 +114,10 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
             ...(platform === 'mobile' && {
               android: 'tauri android init && tauri android dev',
               ios: 'tauri ios init && tauri ios dev',
-              'build:android': 'tauri android build --split-per-abi -t aarch64 --apk --debug',
+              'build:android': 'tauri android build --split-per-abi -t aarch64 --apk',
+              'build:android:debug': 'tauri android build --split-per-abi -t aarch64 --apk --debug',
               'build:ios': 'tauri ios build',
+              'build:ios:debug': 'tauri ios build --debug',
             }),
           },
           devDependencies: {
@@ -163,11 +179,10 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     // Create src-tauri directory structure
     const srcTauriDir = path.join(workDir, 'src-tauri');
     const srcDir = path.join(srcTauriDir, 'src');
-    const iconsDir = path.join(srcTauriDir, 'icons');
 
     fs.mkdirSync(srcTauriDir, { recursive: true });
     fs.mkdirSync(srcDir, { recursive: true });
-    fs.mkdirSync(iconsDir, { recursive: true });
+    // Don't create icons directory - let tauri icon command create and populate it
 
     // Write project files
     fs.writeFileSync(path.join(workDir, 'package.json'), JSON.stringify(packageJson, null, 2));
@@ -202,22 +217,66 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     }
     fs.writeFileSync(path.join(workDir, 'app-icon.png'), iconBuffer);
     
+    // Don't write icons manually - let tauri icon command generate all sizes from app-icon.png
 
     // Create www directory with frontend
     const wwwDir = path.join(workDir, 'www');
     fs.mkdirSync(wwwDir);
 
+    // Copy all frontend files if frontendPath is provided
+    if (options.frontendPath && fs.existsSync(options.frontendPath)) {
+      logger.info(`Copying frontend files from ${options.frontendPath}`);
+      const copyRecursive = (src: string, dest: string) => {
+        const entries = fs.readdirSync(src, { withFileTypes: true });
+        for (const entry of entries) {
+          const srcPath = path.join(src, entry.name);
+          const destPath = path.join(dest, entry.name);
+          if (entry.isDirectory()) {
+            fs.mkdirSync(destPath, { recursive: true });
+            copyRecursive(srcPath, destPath);
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        }
+      };
+      copyRecursive(options.frontendPath, wwwDir);
+    }
+
+    // Determine execution mode
+    const executionMode = options.executionMode || 'api';
+    
+    // If 'full' mode and cortex bundle provided, write it first
+    if (executionMode === 'full' && options.cortexBundle) {
+      fs.writeFileSync(path.join(wwwDir, 'cortex-bundle.js'), options.cortexBundle);
+      logger.info('Written cortex-bundle.js for direct execution mode');
+    }
+
     // Create script.js with fetch proxy
-    const fetchProxyScript = getTauriFetchProxyScript(backendUrl);
+    const fetchProxyScript = getTauriFetchProxyScript({
+      mode: executionMode,
+      backendUrl: executionMode === 'api' ? backendUrl : undefined,
+    });
     fs.writeFileSync(path.join(wwwDir, 'script.js'), fetchProxyScript);
 
-    // Inject script tag for fetch proxy
-    const scriptTag = '<script src="script.js"></script>';
-    const modifiedHtml = frontendHtml.includes('</head>')
-      ? frontendHtml.replace('</head>', scriptTag + '\n</head>')
-      : frontendHtml.includes('<body>')
-        ? frontendHtml.replace('<body>', '<body>\n' + scriptTag)
-        : scriptTag + '\n' + frontendHtml;
+    // Inject script tag for fetch proxy (and cortex-bundle for full mode)
+    // Order matters: cortex-bundle must load first so HabitsBundle is available when script.js runs
+    let scriptTags = '';
+    if (executionMode === 'full' && options.cortexBundle) {
+      scriptTags += '<script src="cortex-bundle.js"></script>\n';
+    }
+    scriptTags += '<script src="script.js"></script>';
+
+    // Read current index.html if it exists (from copied frontend), otherwise use provided frontendHtml
+    const indexHtmlPath = path.join(wwwDir, 'index.html');
+    const currentHtml = fs.existsSync(indexHtmlPath) 
+      ? fs.readFileSync(indexHtmlPath, 'utf8')
+      : frontendHtml;
+
+    const modifiedHtml = currentHtml.includes('</head>')
+      ? currentHtml.replace('</head>', scriptTags + '\n</head>')
+      : currentHtml.includes('<body>')
+        ? currentHtml.replace('<body>', '<body>\n' + scriptTags)
+        : scriptTags + '\n' + currentHtml;
 
     fs.writeFileSync(path.join(wwwDir, 'index.html'), modifiedHtml);
 
@@ -232,7 +291,9 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
         mobileTarget,
         desktopPlatform,
         sanitizedStackName,
+        debugBuild,
         cleanup,
+        isCachedBuild,
       });
     } else {
       // Return project files as zip
@@ -256,11 +317,13 @@ async function buildTauriBinary(options: {
   mobileTarget?: 'ios' | 'android' | 'both';
   desktopPlatform?: string;
   sanitizedStackName: string;
+  debugBuild?: boolean;
   cleanup: () => void;
+  isCachedBuild?: boolean;
 }): Promise<TauriPackResult> {
-  const { workDir, platform, mobileTarget, sanitizedStackName, cleanup } = options;
+  const { workDir, platform, mobileTarget, sanitizedStackName, debugBuild = false, cleanup, isCachedBuild = false } = options;
 
-  logger.info(`Building Tauri ${platform} binary...`);
+  logger.info(`Building Tauri ${platform} binary...`, { isCachedBuild });
 
   try {
     // Check Rust installation
@@ -276,21 +339,29 @@ async function buildTauriBinary(options: {
       throw new Error('Cargo not found. Install from https://rustup.rs/');
     }
 
-    // Install npm dependencies
-    logger.info('Installing Tauri CLI...');
-    execSync('npm install', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
-    execSync('npm run tauri icon', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
+    // Install npm dependencies (skip if cached build with existing node_modules)
+    const nodeModulesPath = path.join(workDir, 'node_modules');
+    if (isCachedBuild && fs.existsSync(nodeModulesPath)) {
+      logger.info('Using cached node_modules, skipping npm install');
+    } else {
+      logger.info('Installing Tauri CLI...');
+      execSync('npm install', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
+    }
+    logger.info('Generating app icons from app-icon.png...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     if (platform === 'mobile') {
       return await buildMobileBinary({
         workDir,
         mobileTarget: mobileTarget!,
         sanitizedStackName,
+        debugBuild,
         cleanup,
       });
     } else {
       return await buildDesktopBinary({
         workDir,
         sanitizedStackName,
+        debugBuild,
         cleanup,
       });
     }
@@ -322,15 +393,17 @@ async function buildTauriBinary(options: {
 async function buildDesktopBinary(options: {
   workDir: string;
   sanitizedStackName: string;
+  debugBuild?: boolean;
   cleanup: () => void;
 }): Promise<TauriPackResult> {
-  const { workDir, sanitizedStackName, cleanup } = options;
+  const { workDir, sanitizedStackName, debugBuild = false, cleanup } = options;
 
-  logger.info('Building Tauri desktop (this may take several minutes on first build)...');
-  execSync('npm run build', { cwd: workDir, stdio: 'inherit', timeout: 600000 });
+  const buildCmd = debugBuild ? 'npm run build:debug' : 'npm run build';
+  logger.info(`Building Tauri desktop ${debugBuild ? '(debug mode) ' : ''}(this may take several minutes on first build)...`);
+  execSync(buildCmd, { cwd: workDir, stdio: 'inherit', timeout: 600000 });
 
-  // Find the built binary
-  const bundleDir = path.join(workDir, 'target', 'release', 'bundle');
+  // Find the built binary - debug builds go to target/debug/bundle
+  const bundleDir = path.join(workDir, 'target', debugBuild ? 'debug' : 'release', 'bundle');
   if (!fs.existsSync(bundleDir)) {
     throw new Error('Build completed but bundle directory not found');
   }
@@ -374,9 +447,10 @@ async function buildMobileBinary(options: {
   workDir: string;
   mobileTarget: 'ios' | 'android' | 'both';
   sanitizedStackName: string;
+  debugBuild?: boolean;
   cleanup: () => void;
 }): Promise<TauriPackResult> {
-  const { workDir, mobileTarget, sanitizedStackName, cleanup } = options;
+  const { workDir, mobileTarget, sanitizedStackName, debugBuild = false, cleanup } = options;
 
   if (mobileTarget === 'android' || mobileTarget === 'both') {
     logger.info('Initializing Tauri for Android...');
@@ -455,8 +529,11 @@ async function buildMobileBinary(options: {
       logger.warn('Failed to apply some Android optimizations:', { error: optimError.message });
       // Continue with build even if optimizations fail
     }
+    // Regenerate icons to ensure they are included in the Android project
+    logger.info('Regenerating app icons for Android...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
 
-    logger.info('Building Android APK (optimized for aarch64 only)...');
+    logger.info(`Building Android APK ${debugBuild ? '(debug mode) ' : ''}(optimized for aarch64 only)...`);
     try {
       // Build with explicit target - use Gradle properties to ensure aarch64 only
       const buildEnv = {
@@ -465,7 +542,8 @@ async function buildMobileBinary(options: {
         TAURI_ANDROID_TARGETS: 'aarch64',
       };
       
-      execSync('npm run build:android', { 
+      const buildCmd = debugBuild ? 'npm run build:android:debug' : 'npm run build:android';
+      execSync(buildCmd, { 
         ...androidExecOpts, 
         env: buildEnv,
         timeout: 600000 
@@ -476,18 +554,16 @@ async function buildMobileBinary(options: {
     }
 
     // Find the APK file - With optimizations, look for aarch64 specific build first
-    const arm64ApkPath = path.join(
-      workDir,
-      'src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release-unsigned.apk'
-    );
-    const universalApkPath = path.join(
-      workDir,
-      'src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk'
-    );
-    const releaseApkPath = path.join(
-      workDir,
-      'src-tauri/gen/android/app/build/outputs/apk/release/app-release-unsigned.apk'
-    );
+    // Debug builds go to different paths
+    const arm64ApkPath = debugBuild
+      ? path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/arm64/debug/app-arm64-debug.apk')
+      : path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release-unsigned.apk');
+    const universalApkPath = debugBuild
+      ? path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk')
+      : path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk');
+    const releaseApkPath = debugBuild
+      ? path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk')
+      : path.join(workDir, 'src-tauri/gen/android/app/build/outputs/apk/release/app-release-unsigned.apk');
     const debugApkPath = path.join(
       workDir,
       'src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk'
@@ -545,9 +621,12 @@ async function buildMobileBinary(options: {
       throw new Error('iOS project was not created. Make sure Xcode is installed (macOS only).');
     }
 
-    logger.info('Building iOS app...');
+    logger.info('Regenerating app icons for Android...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
+    logger.info(`Building iOS app${debugBuild ? ' (debug mode)' : ''}...`);
     try {
-      execSync('npx tauri ios build', { cwd: workDir, stdio: 'inherit', timeout: 600000 });
+      const buildCmd = debugBuild ? 'npm run build:ios:debug' : 'npm run build:ios';
+      execSync(buildCmd, { cwd: workDir, stdio: 'inherit', timeout: 600000 });
     } catch (error: any) {
       throw new Error(buildErrorMessage(error, 'iOS build failed'));
     }

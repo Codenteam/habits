@@ -1,0 +1,69 @@
+{
+  "name": "@ha-bits/cortex-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/cortex/core/src",
+  "projectType": "library",
+  "tags": [
+    "scope:executor",
+    "type:core"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{workspaceRoot}/dist/packages/cortex/core"
+      ],
+      "options": {
+        "outputPath": "dist/packages/cortex/core",
+        "main": "packages/cortex/core/src/index.ts",
+        "outputFileName": "index",
+        "tsConfig": "packages/cortex/core/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs", "esm"],
+        "bundle": true,
+        "sourcemap": true,
+        "declaration": true,
+        "assets": [
+          {
+            "input": "packages/cortex/core",
+            "glob": "package.json",
+            "output": "."
+          },
+          {
+            "input": "packages/cortex/core",
+            "glob": "README.md",
+            "output": "."
+          }
+        ],
+        "esbuildOptions": {
+          "external": [
+            "@activepieces/*"
+          ],
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/cortex/core/tsconfig.lib.json --watch --preserveWatchOutput",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/cortex/core/tsconfig.lib.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["packages/cortex/core/**/*.ts"]
+      }
+    }
+  }
+}

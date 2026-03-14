@@ -7,18 +7,6 @@
     "scope:shared"
   ],
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/packages/core",
-        "main": "packages/core/src/index.ts",
-        "tsConfig": "packages/core/tsconfig.lib.json",
-        "assets": []
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

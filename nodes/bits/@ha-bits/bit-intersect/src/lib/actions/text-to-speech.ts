@@ -3,7 +3,7 @@
  * Generate an audio recording from text
  */
 
-import { createAction, Property } from '@ha-bits/cortex';
+import { createAction, Property } from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { intersectAuth } from '../common/common';
 import { streamToBuffer, getIntersectBaseUrl, IntersectAuthValue } from '../common/common';
@@ -92,6 +92,7 @@ export const textToSpeech = createAction({
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
+      dangerouslyAllowBrowser: true
     });
 
     const { voice, format, model, text, speed, fileName } = propsValue;

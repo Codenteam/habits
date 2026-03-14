@@ -6,7 +6,7 @@
 ### If exporting Server-Side or Full-Stack (Recommended: Docker)
 - [ ] Stack tested locally and working
 - [ ] Export via Base UI: Export → Docker
-- [ ] Download `{stackName}-docker.zip`
+- [ ] Download `{name}-docker.zip`
 - [ ] Unzip and run: `docker-compose up -d`
 
 ### If exporting Server-Side (Alternative: Single Executable)

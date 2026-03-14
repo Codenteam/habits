@@ -115,6 +115,9 @@ interface Habit {
 }
 
 interface WorkflowState {
+  // Stack ID - unique identifier for this stack (used for build caching)
+  id: string;
+  
   // Stack of habits (multiple workflows)
   habits: Habit[];
   activeHabitId: string | null;
@@ -181,6 +184,9 @@ const defaultWorkflow: Workflow = {
 const initialHabit = createDefaultHabit();
 
 const initialState: WorkflowState = {
+  // Stack ID for build caching
+  id: generateUUID(),
+  
   // New habits stack
   habits: [initialHabit],
   activeHabitId: initialHabit.id,
@@ -387,6 +393,9 @@ export const workflowSlice = createSlice({
       const newHabit = createDefaultHabit();
       state.habits = [newHabit];
       state.activeHabitId = newHabit.id;
+      
+      // Generate new stack ID
+      state.id = generateUUID();
       
       // Reset shared state
       state.workflow = { ...defaultWorkflow, id: generateUUID() };
@@ -897,6 +906,7 @@ export const workflowSlice = createSlice({
     // Restore entire workflow state from localStorage
     restoreWorkflowState: (state, action: PayloadAction<Partial<WorkflowState>>) => {
       const savedState = action.payload;
+      if (savedState.id) state.id = savedState.id;
       if (savedState.habits) state.habits = savedState.habits;
       if (savedState.activeHabitId) state.activeHabitId = savedState.activeHabitId;
       if (savedState.workflow) state.workflow = savedState.workflow;
@@ -904,6 +914,11 @@ export const workflowSlice = createSlice({
       if (savedState.moduleSchemas) state.moduleSchemas = savedState.moduleSchemas;
       if (savedState.moduleAvailability) state.moduleAvailability = savedState.moduleAvailability;
       if (savedState.serverConfig) state.serverConfig = savedState.serverConfig;
+    },
+    
+    // Set stack ID (for manual override if needed)
+    setStackId: (state, action: PayloadAction<string>) => {
+      state.id = action.payload;
     },
   },
 });
@@ -966,6 +981,8 @@ export const {
   syncActiveHabit,
   // Server config
   setServerConfig,
+  // Stack ID
+  setStackId,
 } = workflowSlice.actions;
 
 // ===== SELECTORS =====
@@ -1001,6 +1018,11 @@ export const selectHabits = (state: { workflow: WorkflowState }): Habit[] => {
 
 export const selectActiveHabitId = (state: { workflow: WorkflowState }): string | null => {
   return state.workflow.activeHabitId;
+};
+
+// Get the stack ID (for build caching)
+export const selectStackId = (state: { workflow: WorkflowState }): string => {
+  return state.workflow.id;
 };
 
 // Get environment connections from active habit
@@ -1138,6 +1160,7 @@ export const selectHasValidationWarnings = (state: { workflow: WorkflowState }):
  * This selector generates all files needed for export/deploy/serve
  */
 export const selectExportBundle = (state: { workflow: WorkflowState; ui: { frontendHtml: string | null; envContent: string } }): ExportBundle => {
+  const stackId = state.workflow.id;
   const habits = state.workflow.habits;
   const serverConfig = state.workflow.serverConfig;
   const frontendHtml = state.ui.frontendHtml;
@@ -1168,7 +1191,8 @@ export const selectExportBundle = (state: { workflow: WorkflowState; ui: { front
     habits as any,
     envContent,
     serverOptions,
-    frontendHtml || undefined
+    frontendHtml || undefined,
+    stackId
   );
 };
 

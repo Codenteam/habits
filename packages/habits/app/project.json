@@ -109,13 +109,13 @@
         "commands": [
           "mkdir -p dist/packages/habits/base-server",
           "cp dist/packages/base/server/main.cjs dist/packages/habits/base-server/main.cjs",
-          "rm -rf dist/packages/habits/cortex-ui dist/packages/habits/base-ui dist/packages/habits/examples",
+          "rm -rf dist/packages/habits/cortex-ui dist/packages/habits/base-ui dist/packages/habits/showcase",
           "cp -r dist/packages/cortex/ui dist/packages/habits/cortex-ui",
           "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
-          "mkdir -p dist/packages/habits/examples",
+          "mkdir -p dist/packages/habits/showcase",
           "cp -r showcase/mixed dist/packages/habits/showcase/mixed",
           "cp -r showcase/marketing-campaign dist/packages/habits/showcase/marketing-campaign",
-          "find dist/packages/habits/examples -name '.env' -type f -delete",
+          "find dist/packages/habits/showcase -name '.env' -type f -delete",
           "cp packages/habits/app/.npmignore dist/packages/habits/.npmignore",
           "chmod +x dist/packages/habits/app/main.cjs dist/packages/habits/base-server/main.cjs"
         ],

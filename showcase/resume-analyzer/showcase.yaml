@@ -1,0 +1,49 @@
+# Marketplace metadata for Resume Analyzer
+# This file provides metadata for the marketplace showcase page
+
+name: Resume Analyzer
+description: AI-powered resume analysis tool that evaluates ATS compatibility, provides job match scores, generates improved summaries, and prepares interview questions.
+
+longDescription: |
+  Transform your job application process with an AI-powered resume analyzer that goes beyond
+  basic keyword matching. This full-stack application demonstrates building a complete mobile-ready
+  app using Habits — from AI workflows to a polished frontend UI.
+
+  ## What It Does
+
+  - **ATS Scoring**: Evaluates your resume against Applicant Tracking System standards
+  - **Job Match Analysis**: Compares your skills and experience to target job requirements
+  - **Improved Summary**: AI-generates a better professional summary based on your experience
+  - **Interview Prep**: Generates likely interview questions based on your resume and target role
+  - **Cover Letter Generation**: Creates customized cover letters for specific job applications
+  - **History Tracking**: Stores all analyses locally for future reference
+
+  ## Why This Example
+
+  This showcase demonstrates:
+  - **Multi-habit workflows** — Multiple habits working together (analyze, generate cover letter, list, get)
+  - **Vision AI integration** — Uses OpenAI Vision to extract text from resume images
+  - **Local database** — PouchDB for storing analyses without external dependencies
+  - **Mobile-first UI** — Responsive design ready for packaging as mobile/desktop app
+  - **Complete app packaging** — Can be exported as standalone binary, desktop app, or mobile app
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - database
+  - vision
+
+difficulty: intermediate
+
+featured: true
+
+requirements:
+  - OpenAI API key (for GPT-4o and Vision API)
+
+habits:
+  - habits/analyze-resume.yaml
+  - habits/generate-cover-letter.yaml
+  - habits/list-analyses.yaml
+  - habits/get-analysis.yaml

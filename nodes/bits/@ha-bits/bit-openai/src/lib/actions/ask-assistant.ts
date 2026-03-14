@@ -7,7 +7,7 @@ import {
   createAction,
   Property,
   StoreScope,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { sleep, openaiAuthValue, castMarkdownProperty, castMarkdownCodeBlocks } from '../common/common';
@@ -35,7 +35,8 @@ export const askAssistant = createAction({
         try {
           const authValue = auth as unknown as openaiAuthValue;
           const openai = new OpenAI({
-            apiKey: authValue.apiKey
+            apiKey: authValue.apiKey,
+            dangerouslyAllowBrowser: true,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -80,7 +81,8 @@ export const askAssistant = createAction({
 
     const authValue = auth as unknown as openaiAuthValue;
     const openai = new OpenAI({
-      apiKey: authValue.apiKey
+      apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     });
     const { assistant, prompt } = propsValue;
     const runCheckDelay = 1000;

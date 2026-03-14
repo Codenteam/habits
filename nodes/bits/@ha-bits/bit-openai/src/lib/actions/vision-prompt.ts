@@ -6,7 +6,7 @@
 import {
   createAction,
   Property,
-} from '@ha-bits/cortex';
+} from '@ha-bits/cortex-core';
 import OpenAI from 'openai';
 import { openaiAuth } from '../common/common';
 import { openaiAuthValue, castMarkdownProperty, castMarkdownCodeBlocks } from '../common/common';
@@ -107,6 +107,7 @@ export const visionPrompt = createAction({
     const authValue = auth as unknown as openaiAuthValue;
     const openai = new OpenAI({
       apiKey: authValue.apiKey,
+      dangerouslyAllowBrowser: true,
     });
     const { maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

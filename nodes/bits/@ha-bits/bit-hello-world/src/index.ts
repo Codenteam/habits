@@ -3,7 +3,12 @@
  * 
  * A simple hello world bit for demonstration and testing.
  * Returns "hello there" if param1="hello" and param2="world", otherwise "Nah!"
+ * 
+ * Demonstrates stub usage: Uses `to-constant-case` for text transformation.
+ * In browser bundles, the stub appends "stub" instead of converting.
  */
+
+import toConstantCase = require('to-constant-case');
 
 interface HelloWorldContext {
   propsValue: {
@@ -41,9 +46,10 @@ const helloWorldBit = {
       },
       async run(context: HelloWorldContext) {
         const { param1, param2 } = context.propsValue;
+        const greeting = toConstantCase('hello there');
         
         if (param1 === 'hello' && param2 === 'world') {
-          return 'hello there';
+          return greeting;
         }
         
         return 'Nah!';
