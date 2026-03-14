@@ -615,6 +615,9 @@ importers:
 
   packages/workflow-canvas:
     dependencies:
+      '@ha-bits/core':
+        specifier: workspace:*
+        version: link:../core
       dagre:
         specifier: ^0.8.5
         version: 0.8.5

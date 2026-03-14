@@ -7,6 +7,7 @@ interface ScriptEditorProps {
   language?: string;
   height?: string;
   placeholder?: string;
+  readOnly?: boolean;
 }
 
 // Map habit language names to Monaco language identifiers
@@ -19,11 +20,29 @@ const languageMap: Record<string, string> = {
   sql: 'sql',
 };
 
+/**
+ * ScriptEditor - Monaco-based code editor for script content
+ * 
+ * WHERE USED:
+ * - packages/base/ui - ScriptNodeEditor (wrapped with language selector)
+ * - packages/base/ui - Any component needing syntax-highlighted code editing
+ * 
+ * WHY:
+ * - Provides professional code editing with Monaco editor (~500KB)
+ * - Syntax highlighting for TypeScript, Python, Bash, Go, SQL
+ * - Custom dark theme matching the app's design
+ * - Supports readonly mode for preview contexts
+ * 
+ * WHEN TO USE:
+ * - When you need code editing with syntax highlighting
+ * - Usually accessed via ScriptNodeEditor rather than directly
+ */
 const ScriptEditor = memo(({ 
   value, 
   onChange, 
   language = 'typescript',
   height = '200px',
+  readOnly = false,
 }: ScriptEditorProps) => {
   const monacoLanguage = useMemo(() => languageMap[language] || 'typescript', [language]);
 
@@ -112,6 +131,7 @@ const ScriptEditor = memo(({
           insertSpaces: true,
           formatOnPaste: true,
           renderValidationDecorations: 'off',
+          readOnly,
         }}
         beforeMount={handleBeforeMount}
         onMount={handleMount}
