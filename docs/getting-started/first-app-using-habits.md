@@ -1,6 +1,6 @@
 # Build Your First Full App with Habits
 
-This guide walks you through building a complete AI-powered application — the **Resume Analyzer** — from understanding the workflows to packaging for distribution across all platforms: Android, iOS, macOS, Windows, and Linux.
+This guide walks you through building a complete AI-powered application, the **Resume Analyzer**, from understanding the workflows to packaging for distribution across all platforms: Android, iOS, macOS, Windows, and Linux.
 
 ::: tip <Icon name="package" /> Complete Example
 This tutorial uses the [Resume Analyzer](/showcase/resume-analyzer) showcase, a production-ready app with multiple AI workflows, a mobile-first frontend, and local database storage.
@@ -121,10 +121,10 @@ Explore the 4 habits that power the Resume Analyzer:
 
 For detailed explanations of how habits work, see:
 
-- **[Creating Habits](/deep-dive/creating)** — Learn Habit-as-Code (HaC), visual editing with Base, and importing workflows
-- **[Your First Habit (Code-First)](/getting-started/first-habit)** — Step-by-step guide to writing habits in YAML
-- **[Your First Habit (GUI-First)](/getting-started/first-habit-using-base)** — Build habits visually with the Base UI
-- **[Variables & Expressions](/deep-dive/variables)** — Pass data between nodes using template expressions
+- **[Creating Habits](/deep-dive/creating)**: Learn Habit-as-Code (HaC), visual editing with Base, and importing workflows
+- **[Your First Habit (Code-First)](/getting-started/first-habit)**: Step-by-step guide to writing habits in YAML
+- **[Your First Habit (GUI-First)](/getting-started/first-habit-using-base)**: Build habits visually with the Base UI
+- **[Variables & Expressions](/deep-dive/variables)**: Pass data between nodes using template expressions
 
 ---
 
@@ -134,7 +134,7 @@ Once your app is working locally, you can package it for distribution. See the [
 
 ### Full App vs Client App
 
-Before packaging, decide your deployment architecture:
+Before packaging, decide on your deployment architecture:
 
 | Approach | Best For | Pros | Cons |
 |----------|----------|------|------|
@@ -145,8 +145,8 @@ Before packaging, decide your deployment architecture:
 When you package with `--execution-mode full`, your `.env` file (including API keys) is **bundled inside the app**. Anyone with the app can extract these keys.
 
 **For distributable apps with sensitive keys:**
-1. **Use a remote backend** — Deploy your habits server and have the app connect via API
-2. **Use `@codenteam/intersect` security solutions** — Enterprise vault and secrets management for standalone deployments
+1. **Use a remote backend**: Deploy your habits server and have the app connect via API
+2. **Use `@codenteam/intersect`**: Secrets vault and management for standalone deployments
 
 Only use full app builds for:
 - Development and testing
@@ -163,7 +163,7 @@ Package your entire stack as a standalone native app. Doesn't require a separate
 
 **After packaging:**
 ```bash
-# The app runs standalone - no server needed
+# The app runs standalone: no server needed
 # To override bundled environment variables, place a .env file beside the app
 ```
 
@@ -209,7 +209,6 @@ You can also export from the Base UI:
 
 ## Next Steps
 
-- **[Resume Analyzer Showcase](/showcase/resume-analyzer)** — Full showcase page with images and details
-- **[Binary Export](/deep-dive/pack-distribute)** — Complete export documentation with all options
-- **[Security Best Practices](/security/)** — Secure your habits and deployments
-- **[Browse All Examples](/showcase/)** — Explore more production-ready showcases
+- **[Resume Analyzer Showcase](/showcase/resume-analyzer)**: Full showcase page with images and details
+- **[Binary Export](/deep-dive/pack-distribute)**: Complete export documentation with all options
+- **[Browse All Examples](/showcase/)**: Explore more production-ready showcases
