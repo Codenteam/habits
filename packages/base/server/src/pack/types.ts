@@ -55,6 +55,12 @@ export interface PackCommandOptions {
   mobileTarget?: MobileTarget;
   /** Mobile framework (capacitor, cordova, or tauri) */
   mobileFramework?: MobileFramework;
+  /** Custom app name (overrides stack.yaml name) */
+  appName?: string;
+  /** Path to app icon (PNG file) */
+  appIcon?: string;
+  /** Build in debug mode */
+  debug?: boolean;
 }
 
 export interface HabitData {

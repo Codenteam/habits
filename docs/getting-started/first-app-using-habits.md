@@ -16,27 +16,27 @@ const fullAppCommands = [
     {
         label: 'macOS (.dmg)',
         description: 'Creates a standalone macOS app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --execution-mode full --desktop-platform dmg --output ./ResumeAnalyzer.dmg'
+        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform dmg --output ./ResumeAnalyzer.dmg'
     },
     {
         label: 'Windows (.exe)',
         description: 'Creates a standalone Windows app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --execution-mode full --desktop-platform exe --output ./ResumeAnalyzer-Setup.exe'
+        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform exe --output ./ResumeAnalyzer-Setup.exe'
     },
     {
         label: 'Linux (AppImage)',
         description: 'Creates a standalone Linux app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --execution-mode full --desktop-platform appimage --output ./ResumeAnalyzer.AppImage'
+        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform appimage --output ./ResumeAnalyzer.AppImage'
     },
     {
         label: 'Android',
         description: 'Creates a standalone Android APK. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile --execution-mode full --mobile-target android --output ./resume-analyzer.apk'
+        cmd: 'npx habits pack --config ./stack.yaml --format mobile-full --mobile-target android --output ./resume-analyzer.apk'
     },
     {
         label: 'iOS',
         description: 'Creates a standalone iOS IPA. Doesn\'t require a backend. Requires macOS with Xcode.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile --execution-mode full --mobile-target ios --output ./ResumeAnalyzer.ipa'
+        cmd: 'npx habits pack --config ./stack.yaml --format mobile-full --mobile-target ios --output ./ResumeAnalyzer.ipa'
     }
 ]
 

@@ -51,8 +51,8 @@ export function getTauriConfig(options: TauriConfigOptions): string {
       resources: [],
       copyright: '',
       category: 'DeveloperTool',
-      shortDescription: `${appName} - Habits Desktop App`,
-      longDescription: `${appName} - Habits Desktop App powered by Tauri`,
+      shortDescription: `${appName} - powered by Habits`,
+      longDescription: `${appName} - powered by Habits`,
       targets: 'all',
       macOS: {
         frameworks: [],

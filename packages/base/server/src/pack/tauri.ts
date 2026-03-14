@@ -34,6 +34,7 @@ export interface TauriPackOptions {
   habits: any[];
   serverConfig: any;
   frontendHtml: string;
+  frontendPath?: string; // Path to frontend directory with all assets
   backendUrl: string;
   buildBinary?: boolean;
   debugBuild?: boolean;
@@ -178,11 +179,10 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     // Create src-tauri directory structure
     const srcTauriDir = path.join(workDir, 'src-tauri');
     const srcDir = path.join(srcTauriDir, 'src');
-    const iconsDir = path.join(srcTauriDir, 'icons');
 
     fs.mkdirSync(srcTauriDir, { recursive: true });
     fs.mkdirSync(srcDir, { recursive: true });
-    fs.mkdirSync(iconsDir, { recursive: true });
+    // Don't create icons directory - let tauri icon command create and populate it
 
     // Write project files
     fs.writeFileSync(path.join(workDir, 'package.json'), JSON.stringify(packageJson, null, 2));
@@ -217,18 +217,30 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     }
     fs.writeFileSync(path.join(workDir, 'app-icon.png'), iconBuffer);
     
-    // Write icon files to icons directory (Tauri requires these)
-    fs.writeFileSync(path.join(iconsDir, 'icon.png'), iconBuffer);
-    fs.writeFileSync(path.join(iconsDir, '32x32.png'), iconBuffer);
-    fs.writeFileSync(path.join(iconsDir, '128x128.png'), iconBuffer);
-    fs.writeFileSync(path.join(iconsDir, '128x128@2x.png'), iconBuffer);
-    // For .icns and .ico, just use the PNG (Tauri handles conversion or ignores if invalid)
-    fs.writeFileSync(path.join(iconsDir, 'icon.icns'), iconBuffer);
-    fs.writeFileSync(path.join(iconsDir, 'icon.ico'), iconBuffer);
+    // Don't write icons manually - let tauri icon command generate all sizes from app-icon.png
 
     // Create www directory with frontend
     const wwwDir = path.join(workDir, 'www');
     fs.mkdirSync(wwwDir);
+
+    // Copy all frontend files if frontendPath is provided
+    if (options.frontendPath && fs.existsSync(options.frontendPath)) {
+      logger.info(`Copying frontend files from ${options.frontendPath}`);
+      const copyRecursive = (src: string, dest: string) => {
+        const entries = fs.readdirSync(src, { withFileTypes: true });
+        for (const entry of entries) {
+          const srcPath = path.join(src, entry.name);
+          const destPath = path.join(dest, entry.name);
+          if (entry.isDirectory()) {
+            fs.mkdirSync(destPath, { recursive: true });
+            copyRecursive(srcPath, destPath);
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        }
+      };
+      copyRecursive(options.frontendPath, wwwDir);
+    }
 
     // Determine execution mode
     const executionMode = options.executionMode || 'api';
@@ -254,11 +266,17 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     }
     scriptTags += '<script src="script.js"></script>';
 
-    const modifiedHtml = frontendHtml.includes('</head>')
-      ? frontendHtml.replace('</head>', scriptTags + '\n</head>')
-      : frontendHtml.includes('<body>')
-        ? frontendHtml.replace('<body>', '<body>\n' + scriptTags)
-        : scriptTags + '\n' + frontendHtml;
+    // Read current index.html if it exists (from copied frontend), otherwise use provided frontendHtml
+    const indexHtmlPath = path.join(wwwDir, 'index.html');
+    const currentHtml = fs.existsSync(indexHtmlPath) 
+      ? fs.readFileSync(indexHtmlPath, 'utf8')
+      : frontendHtml;
+
+    const modifiedHtml = currentHtml.includes('</head>')
+      ? currentHtml.replace('</head>', scriptTags + '\n</head>')
+      : currentHtml.includes('<body>')
+        ? currentHtml.replace('<body>', '<body>\n' + scriptTags)
+        : scriptTags + '\n' + currentHtml;
 
     fs.writeFileSync(path.join(wwwDir, 'index.html'), modifiedHtml);
 
@@ -329,7 +347,8 @@ async function buildTauriBinary(options: {
       logger.info('Installing Tauri CLI...');
       execSync('npm install', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     }
-    execSync('npm run tauri icon', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
+    logger.info('Generating app icons from app-icon.png...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     if (platform === 'mobile') {
       return await buildMobileBinary({
         workDir,
@@ -510,6 +529,9 @@ async function buildMobileBinary(options: {
       logger.warn('Failed to apply some Android optimizations:', { error: optimError.message });
       // Continue with build even if optimizations fail
     }
+    // Regenerate icons to ensure they are included in the Android project
+    logger.info('Regenerating app icons for Android...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
 
     logger.info(`Building Android APK ${debugBuild ? '(debug mode) ' : ''}(optimized for aarch64 only)...`);
     try {
@@ -599,6 +621,8 @@ async function buildMobileBinary(options: {
       throw new Error('iOS project was not created. Make sure Xcode is installed (macOS only).');
     }
 
+    logger.info('Regenerating app icons for Android...');
+    execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     logger.info(`Building iOS app${debugBuild ? ' (debug mode)' : ''}...`);
     try {
       const buildCmd = debugBuild ? 'npm run build:ios:debug' : 'npm run build:ios';

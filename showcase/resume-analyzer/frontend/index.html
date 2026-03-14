@@ -6,14 +6,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a1a">
-    <link rel="icon" type="image/png" href="/Icon.png">
     <title>Resume Analyzer</title>
     <style>
         :root {
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
-            --primary: #f97316;
-            --primary-dark: #ea580c;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
@@ -196,7 +195,7 @@
         
         .upload-zone.active {
             border-color: var(--primary);
-            background: rgba(249, 115, 22, 0.1);
+            background: rgba(59, 130, 246, 0.1);
         }
         
         .upload-zone.has-file {
@@ -562,7 +561,7 @@
                         <div class="form-group">
                             <div class="upload-zone" id="uploadZone">
                                 <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
-                                <div class="upload-icon"><img src="Icon.png" width="50" alt="Upload Icon"></div>
+                                <div class="upload-icon">📄</div>
                                 <div class="upload-text">Tap to upload resume image (PNG, JPG, WebP)</div>
                                 <div class="upload-filename" id="fileName"></div>
                             </div>
@@ -579,7 +578,7 @@
                         </div>
                         
                         <button type="submit" class="btn-primary" id="analyzeBtn">
-                            🔍 Analyze Resume
+                            Analyze Resume
                         </button>
                     </form>
                 </div>

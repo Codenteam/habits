@@ -403,6 +403,7 @@ export interface WebMobilePackOptions {
   habits: any[];
   serverConfig: any;
   frontendHtml: string;
+  frontendPath?: string; // Path to frontend directory with all assets
   backendUrl: string;
   mobileTarget: MobileTarget;
   buildBinary?: boolean;
@@ -465,6 +466,7 @@ export async function packMobileForWeb(options: WebMobilePackOptions): Promise<W
       habits,
       serverConfig,
       frontendHtml,
+      frontendPath: options.frontendPath,
       backendUrl,
       buildBinary,
       debugBuild,

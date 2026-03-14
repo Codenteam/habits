@@ -22,7 +22,7 @@ import {
 } from './types';
 import { packSingleExecutable } from './single-executable';
 import { packDesktop, getSupportedDesktopPlatforms } from './desktop';
-import { packMobile, getSupportedMobileTargets } from './mobile';
+import { packMobile, packMobileForWeb, getSupportedMobileTargets, WebMobilePackResult } from './mobile';
 import { generateBundle, BundleGeneratorOptions, BundleGeneratorResult } from './bundle-generator-wrapper';
 import { getTauriFetchProxyScript } from './templates/tauri/tauri-fetch-proxy';
 
@@ -166,18 +166,18 @@ export async function runPackCommand(options: PackCommandOptions): Promise<PackR
       });
 
     case 'mobile-full':
-      console.log('\n🚧 Mobile Full Mode - Early Access!\n');
-      console.log('   This mode will create a complete mobile app with the');
-      console.log('   backend embedded, so it can run entirely offline.\n');
-      console.log('   For now, use --format mobile with --backend-url to create');
-      console.log('   a frontend-only app that connects to your backend.\n');
-      console.log('   Example:');
-      console.log('   npx habits pack --config stack.yaml --format mobile --backend-url https://api.example.com --target android\n');
-      return {
-        success: false,
-        error: 'Mobile-full format is Early Access',
-        format,
-      };
+      return packMobileFull({
+        configPath,
+        configDir,
+        config,
+        habits,
+        envContent,
+        mobileTarget: options.mobileTarget || 'both',
+        output: options.output,
+        appName: options.appName,
+        appIcon: options.appIcon,
+        debug: options.debug,
+      });
 
     default:
       return {
@@ -268,6 +268,187 @@ async function packBundle(options: PackBundleOptions): Promise<PackResult> {
     outputPath,
     format: 'bundle',
     size: bundleResult.size,
+  };
+}
+
+// ============================================================================
+// Mobile Full Pack Handler
+// ============================================================================
+
+interface PackMobileFullOptions {
+  configPath: string;
+  configDir: string;
+  config: ParsedConfig;
+  habits: HabitData[];
+  envContent: string;
+  mobileTarget: 'ios' | 'android' | 'both';
+  output?: string;
+  appName?: string;
+  appIcon?: string;
+  debug?: boolean;
+}
+
+/**
+ * Pack habits into a full mobile app with embedded backend (Tauri-based)
+ */
+async function packMobileFull(options: PackMobileFullOptions): Promise<PackResult> {
+  const { config, habits, envContent, mobileTarget, output, configDir, appName: customAppName, appIcon: customAppIcon } = options;
+
+  console.log('\n📱 Generating full mobile app with embedded backend...\n');
+
+  // Parse env content
+  const envVars = parseEnvContent(envContent);
+
+  // Read frontend HTML
+  const frontendPath = config.server?.frontend
+    ? path.isAbsolute(config.server.frontend)
+      ? config.server.frontend
+      : path.resolve(configDir, config.server.frontend)
+    : path.join(configDir, 'frontend');
+
+  if (!fs.existsSync(frontendPath)) {
+    return {
+      success: false,
+      error: `Frontend directory not found: ${frontendPath}. Mobile pack requires a frontend folder.`,
+      format: 'mobile-full',
+    };
+  }
+
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return {
+      success: false,
+      error: `index.html not found in frontend directory: ${frontendPath}`,
+      format: 'mobile-full',
+    };
+  }
+
+  const frontendHtml = fs.readFileSync(indexPath, 'utf8');
+
+  // Read app icon - prefer CLI option, then look in standard locations
+  let appIcon: string | undefined;
+  if (customAppIcon) {
+    // Resolve from CWD first (CLI passes paths relative to CWD), then from configDir
+    const iconPathFromCwd = path.resolve(process.cwd(), customAppIcon);
+    const iconPathFromConfig = path.resolve(configDir, customAppIcon);
+    const iconPath = fs.existsSync(iconPathFromCwd) ? iconPathFromCwd 
+      : fs.existsSync(iconPathFromConfig) ? iconPathFromConfig 
+      : null;
+    if (iconPath) {
+      appIcon = fs.readFileSync(iconPath).toString('base64');
+      console.log(`   🎨 Using app icon: ${iconPath}`);
+    } else {
+      console.log(`   ⚠️  Icon not found: ${customAppIcon}`);
+    }
+  } else {
+    const iconPaths = [
+      path.join(frontendPath, 'Icon.png'),
+      path.join(frontendPath, 'icon.png'),
+      path.join(configDir, 'Icon.png'),
+      path.join(configDir, 'icon.png'),
+    ];
+    for (const iconPath of iconPaths) {
+      if (fs.existsSync(iconPath)) {
+        appIcon = fs.readFileSync(iconPath).toString('base64');
+        console.log(`   🎨 Using app icon: ${iconPath}`);
+        break;
+      }
+    }
+  }
+
+  // Determine app name - prefer CLI option, then stack.yaml name
+  const appName = customAppName || config.name || 'Habits App';
+  console.log(`   📱 App name: ${appName}`);
+
+  // Convert habits to the format expected by packMobileForWeb
+  const workflowsForPack = habits.map(h => ({
+    id: h.slug,
+    name: h.name,
+    nodes: h.nodes,
+    edges: h.edges,
+  }));
+
+  // Call packMobileForWeb with full execution mode
+  const result: WebMobilePackResult = await packMobileForWeb({
+    habits: workflowsForPack,
+    serverConfig: config.server || {},
+    frontendHtml,
+    frontendPath,
+    backendUrl: '', // Not needed for full mode
+    mobileTarget,
+    buildBinary: true,
+    debugBuild: options.debug || false,
+    framework: 'tauri',
+    stackName: appName,
+    appName,
+    appIcon,
+    executionMode: 'full',
+    envVars,
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error || 'Mobile full pack failed',
+      format: 'mobile-full',
+    };
+  }
+
+  // Handle binary output
+  if (result.binaryPath) {
+    const outputPath = output || path.join(configDir, 'dist', result.binaryFilename || 'app.apk');
+    const outputDir = path.dirname(outputPath);
+    fs.mkdirSync(outputDir, { recursive: true });
+    
+    fs.copyFileSync(result.binaryPath, outputPath);
+    const stat = fs.statSync(outputPath);
+    
+    console.log(`\n✅ Mobile app created successfully!`);
+    console.log(`   📱 Output: ${outputPath}`);
+    console.log(`   📦 Size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`);
+    console.log(`   🔌 Mode: Standalone (no backend required)`);
+
+    // Cleanup temp files
+    if (result.cleanup) {
+      result.cleanup();
+    }
+
+    return {
+      success: true,
+      outputPath,
+      format: 'mobile-full',
+      size: stat.size,
+    };
+  }
+
+  // Handle zip output (project files)
+  if (result.zipBuffer) {
+    const outputPath = output || path.join(configDir, 'dist', result.zipFilename || 'mobile-project.zip');
+    const outputDir = path.dirname(outputPath);
+    fs.mkdirSync(outputDir, { recursive: true });
+    
+    fs.writeFileSync(outputPath, result.zipBuffer);
+    
+    console.log(`\n✅ Mobile project created successfully!`);
+    console.log(`   📦 Output: ${outputPath}`);
+    console.log(`   📋 Extract and follow the README to build`);
+
+    if (result.cleanup) {
+      result.cleanup();
+    }
+
+    return {
+      success: true,
+      outputPath,
+      format: 'mobile-full',
+      size: result.zipBuffer.length,
+    };
+  }
+
+  return {
+    success: false,
+    error: 'Unexpected result from mobile pack',
+    format: 'mobile-full',
   };
 }
 
