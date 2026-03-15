@@ -751,10 +751,18 @@
                 });
                 
                 const data = await response.json();
-                displayResults(data);
+                
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'Analysis failed');
+                }
+                
+                // Handle wrapped output or direct data
+                const output = data.output || data;
+                displayResults(output);
                 showScreen('results');
                 loadHistory();
             } catch (error) {
+                console.error('Analysis error:', error);
                 showToast('Error: ' + error.message);
             } finally {
                 loadingOverlay.classList.remove('active');
@@ -810,6 +818,11 @@
         
         // Display Results
         function displayResults(data) {
+            if (!data) {
+                showToast('No data to display');
+                return;
+            }
+            
             const ats = parseJSON(data.atsScore);
             const match = parseJSON(data.jobMatch);
             
@@ -839,10 +852,14 @@
                 atsText += `Format Issues:\n${(ats.formatIssues || []).join(', ') || 'None detected'}\n\n`;
                 atsText += `Suggestions:\n${(ats.suggestions || []).map(s => '• ' + s).join('\n')}`;
             }
-            document.getElementById('atsContent').textContent = atsText || data.atsScore || '';
+            document.getElementById('atsContent').textContent = atsText || '';
             
-            // Experience Tab
-            document.getElementById('expContent').textContent = data.experienceAnalysis || '';
+            // Experience Tab - use HTML if available
+            if (data.experienceAnalysisHtml) {
+                document.getElementById('expContent').innerHTML = data.experienceAnalysisHtml;
+            } else {
+                document.getElementById('expContent').textContent = data.experienceAnalysis || '';
+            }
             
             // Match Tab
             if (match) {
@@ -859,13 +876,25 @@
                 matchText += `Gaps:\n${(match.experienceGaps || []).map(s => '• ' + s).join('\n')}\n\n`;
                 matchText += `Recommendations:\n${(match.recommendations || []).map(s => '• ' + s).join('\n')}`;
                 document.getElementById('matchContent').textContent = matchText;
+            } else {
+                document.getElementById('matchingSkills').innerHTML = '<span style="color: var(--text-muted)">-</span>';
+                document.getElementById('missingSkills').innerHTML = '<span style="color: var(--text-muted)">-</span>';
+                document.getElementById('matchContent').textContent = data.jobMatch || '';
             }
             
-            // Summary Tab
-            document.getElementById('summaryContent').textContent = data.improvedSummary || '';
+            // Summary Tab - use HTML if available
+            if (data.improvedSummaryHtml) {
+                document.getElementById('summaryContent').innerHTML = data.improvedSummaryHtml;
+            } else {
+                document.getElementById('summaryContent').textContent = data.improvedSummary || '';
+            }
             
-            // Interview Tab
-            document.getElementById('interviewContent').textContent = data.interviewPrep || '';
+            // Interview Tab - use HTML if available
+            if (data.interviewPrepHtml) {
+                document.getElementById('interviewContent').innerHTML = data.interviewPrepHtml;
+            } else {
+                document.getElementById('interviewContent').textContent = data.interviewPrep || '';
+            }
         }
         
         // History
@@ -875,12 +904,18 @@
             try {
                 const response = await fetch('/api/list-analyses?limit=10');
                 const data = await response.json();
+                console.log('History response:', data);
                 
-                if (data.analyses?.length > 0) {
-                    list.innerHTML = data.analyses.map(a => {
+                // Handle both direct response and wrapped workflow output
+                const output = data.output || data;
+                const analyses = output.analyses || [];
+                
+                if (analyses.length > 0) {
+                    list.innerHTML = analyses.map(a => {
                         const ats = parseJSON(a.atsScore);
+                        const docId = a._id || a.id;
                         return `
-                            <div class="history-item" onclick="viewAnalysis('${a.customId || a._id}')">
+                            <div class="history-item" onclick="viewAnalysis('${docId}')">
                                 <div class="history-icon">📄</div>
                                 <div class="history-info">
                                     <div class="history-title">${a.targetRole || 'Resume Analysis'}</div>
@@ -914,13 +949,21 @@
             try {
                 const response = await fetch(`/api/get-analysis?id=${id}&includeAttachment=true`);
                 const data = await response.json();
+                console.log('View analysis response:', data);
                 
-                if (data.analysis) {
-                    displayResults(data.analysis);
-                    currentPdfData = data.attachment?.data || null;
+                // Handle wrapped output or direct data
+                const output = data.output || data;
+                const analysis = output.analysis || output;
+                
+                if (analysis) {
+                    displayResults(analysis);
+                    currentPdfData = output.attachment?.data || null;
                     showScreen('results');
+                } else {
+                    showToast('Analysis not found');
                 }
             } catch (error) {
+                console.error('Load analysis error:', error);
                 showToast('Error loading analysis');
             } finally {
                 loadingOverlay.classList.remove('active');
@@ -929,10 +972,14 @@
         
         // Utils
         function parseJSON(data) {
+            if (!data) return null;
             if (typeof data === 'object') return data;
+            if (typeof data !== 'string') return null;
             try {
-                return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
-            } catch { return null; }
+                return JSON.parse(data);
+            } catch {
+                return null;
+            }
         }
         
         function copyText(elementId) {
@@ -952,7 +999,7 @@
             if (currentPdfData) {
                 const link = document.createElement('a');
                 link.href = 'data:image/webp;base64,' + currentPdfData;
-                link.download = 'resume.webp';
+                link.download = 'resume';
                 link.click();
             } else {
                 showToast('No image attached');

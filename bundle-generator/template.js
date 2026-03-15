@@ -33,6 +33,43 @@ if (typeof process !== 'undefined' && process.env && envVars) {
   });
 }
 
+// Forward console messages to Tauri log plugin (for native stdout logging)
+if (typeof window !== 'undefined' && window.__TAURI__) {
+  (function() {
+    // Log levels for Tauri log plugin: trace=1, debug=2, info=3, warn=4, error=5
+    var LOG_LEVELS = { trace: 1, debug: 2, info: 3, warn: 4, error: 5 };
+    
+    function getInvoke() {
+      if (window.__TAURI__?.core?.invoke) return window.__TAURI__.core.invoke;
+      if (window.__TAURI__?.invoke) return window.__TAURI__.invoke;
+      if (window.__TAURI_INTERNALS__?.invoke) return window.__TAURI_INTERNALS__.invoke;
+      return null;
+    }
+
+    function forwardConsole(fnName, level) {
+      var original = console[fnName];
+      console[fnName] = function() {
+        // Call original console method
+        original.apply(console, arguments);
+        // Forward to Tauri log plugin
+        var invoke = getInvoke();
+        if (invoke) {
+          var message = Array.prototype.slice.call(arguments).map(function(arg) {
+            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+          }).join(' ');
+          invoke('plugin:log|log', { level: LOG_LEVELS[level], message: message }).catch(function() {});
+        }
+      };
+    }
+
+    forwardConsole('log', 'trace');
+    forwardConsole('debug', 'debug');
+    forwardConsole('info', 'info');
+    forwardConsole('warn', 'warn');
+    forwardConsole('error', 'error');
+  })();
+}
+
 
 // Global executor instance
 let executor = null;

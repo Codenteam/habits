@@ -528,7 +528,7 @@ const hoveredUseCase = ref(null)
     <section class="testimonials-section">
       <div class="testimonials-header">
         <h2>What People Are <span class="complaining">Complaining</span> About</h2>
-        <p class="testimonials-subtitle">The hate is unreal!</p>
+        <p class="testimonials-subtitle">The hate is unreal! literally!</p>
       </div>
       <div class="testimonials-grid">
         <div class="testimonial-card">

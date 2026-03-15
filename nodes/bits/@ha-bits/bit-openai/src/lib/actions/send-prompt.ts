@@ -156,7 +156,6 @@ export const askOpenAI = createAction({
       presencePenalty,
       prompt,
     } = propsValue;
-    console.log(conf, propsValue);
     let messageHistory: any[] | null = [];
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {
@@ -223,7 +222,7 @@ export const askOpenAI = createAction({
     
     // Cast markdown code blocks if enabled
     if (propsValue.cast) {
-      return castMarkdownCodeBlocks(responseContent);
+      return castMarkdownCodeBlocks(responseContent, propsValue.cast);
     }
 
     return responseContent;

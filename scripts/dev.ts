@@ -6,10 +6,9 @@
 
 import * as readline from 'readline';
 import * as actions from './actions.js';
+import type { MenuItem } from './actions.js';
 
-const { c, logHeader, logSuccess, discoverExamples } = actions;
-
-type MenuItem = { id: string; label: string; desc?: string };
+const { c, logHeader, logSuccess, discoverExamples, discoverBits, buildShowcaseInteractive } = actions;
 
 let rl: readline.Interface;
 const prompt = (msg: string): Promise<string> => new Promise(r => rl.question(msg, a => r(a.trim())));
@@ -28,6 +27,8 @@ const MENU: MenuItem[] = [
   { id: 'build-habits', label: 'Build Habits' },
   { id: 'build-cortex', label: 'Build Cortex' },
   { id: 'build-base', label: 'Build Base' },
+  
+  { id: 'build-showcase', label: 'Build Showcase App', desc: 'interactive pack' },
   { id: 'pack-all', label: 'Pack All', desc: 'habits + cortex + base' },
   { id: 'pack-habits', label: 'Pack Habits' },
   { id: 'pack-sea', label: 'Pack SEA Binary', desc: 'single executable' },
@@ -53,6 +54,17 @@ const MENU: MenuItem[] = [
   { id: 'list-examples', label: 'List Examples' },
   { id: 'link-cortex-core', label: 'Link Cortex Core', desc: 'npm link from dist' },
   { id: 'unlink-cortex-core', label: 'Unlink Cortex Core' },
+  // Bits Creator
+  { id: 'bits-build-all', label: 'Build All Bits' },
+  { id: 'bits-build-one', label: 'Build One Bit' },
+  { id: 'bits-publish-verdaccio', label: 'Publish Bits to Verdaccio', desc: 'local registry' },
+  { id: 'bits-publish-npm', label: 'Publish Bits to npm' },
+  { id: 'bits-link-all', label: 'Link All Bits' },
+  { id: 'bits-unlink-all', label: 'Unlink All Bits' },
+  { id: 'bits-list', label: 'List Bits' },
+  { id: 'bits-converter', label: 'Bits Converter CLI' },
+  { id: 'bits-server', label: 'Bits Creator Server', desc: 'AI mode' },
+  { id: 'bits-server-mock', label: 'Bits Creator Server (Mock)' },
   { id: 'exit', label: 'Exit' },
 ];
 
@@ -67,6 +79,18 @@ async function menu(): Promise<boolean> {
     case 'build-habits': logHeader('Building Habits'); actions.buildHabits(); break;
     case 'build-cortex': logHeader('Building Cortex'); actions.buildCortex(); break;
     case 'build-base': logHeader('Building Base'); actions.buildBase(); break;
+    case 'build-showcase': {
+      logHeader('Build Showcase App');
+      const cmd = await buildShowcaseInteractive({ select, prompt });
+      if (cmd) {
+        console.log(`\n${c.cyan}Command:${c.reset}\n${c.gray}${cmd}${c.reset}\n`);
+        const confirm = await prompt(`${c.green}Run this command? (Y/n): ${c.reset}`);
+        if (confirm.toLowerCase() !== 'n') {
+          actions.run(cmd);
+        }
+      }
+      break;
+    }
     case 'pack-all': logHeader('Packing All'); actions.packAll(); break;
     case 'pack-habits': logHeader('Packing Habits'); actions.packHabits(); break;
     case 'pack-sea': logHeader('Packing SEA Binary'); actions.packSea(); break;
@@ -98,6 +122,23 @@ async function menu(): Promise<boolean> {
     case 'list-examples': logHeader('Examples'); actions.listExamples(); break;
     case 'link-cortex-core': logHeader('Linking Cortex Core'); actions.linkCortexCore(); logSuccess('Linked'); break;
     case 'unlink-cortex-core': logHeader('Unlinking Cortex Core'); actions.unlinkCortexCore(); logSuccess('Unlinked'); break;
+    // Bits Creator
+    case 'bits-build-all': logHeader('Building All Bits'); actions.buildAllBits(); logSuccess(`Built ${discoverBits().length} bits`); break;
+    case 'bits-build-one': {
+      const bits = discoverBits();
+      const items: MenuItem[] = bits.map(b => ({ id: b, label: b }));
+      const bit = await select(`Select bit (${bits.length}):`, items);
+      if (bit) { logHeader(`Building ${bit}`); actions.buildBit(bit); }
+      break;
+    }
+    case 'bits-publish-verdaccio': logHeader('Publishing Bits to Verdaccio'); actions.publishAllBitsVerdaccio(); logSuccess('Published'); break;
+    case 'bits-publish-npm': logHeader('Publishing Bits to npm'); actions.publishAllBitsNpm(); logSuccess('Published'); break;
+    case 'bits-link-all': logHeader('Linking All Bits'); actions.linkAllBits(); logSuccess('Linked'); break;
+    case 'bits-unlink-all': logHeader('Unlinking All Bits'); actions.unlinkAllBits(); logSuccess('Unlinked'); break;
+    case 'bits-list': logHeader('Bits'); actions.listBits(); break;
+    case 'bits-converter': logHeader('Bits Converter'); actions.runBitsConverter(); break;
+    case 'bits-server': actions.startBitsServer(); break;
+    case 'bits-server-mock': actions.startBitsServerMock(); break;
     case 'exit': case null: return false;
   }
 

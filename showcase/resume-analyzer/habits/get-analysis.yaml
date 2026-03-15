@@ -16,7 +16,7 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: query
       params:
@@ -29,19 +29,18 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: getAttachment
       params:
         collection: "resume_analyses"
         documentId: "{{habits.input.id}}"
-        attachmentName: "resume.pdf"
+        attachmentName: "resume"
 
 edges:
   - source: fetch-analysis
     target: fetch-attachment
 
 output:
-  analysis: "{{fetch-analysis.results[0]}}"
-  found: "{{fetch-analysis.count > 0}}"
+  analysis: "{{fetch-analysis.results.0}}"
   attachment: "{{fetch-attachment}}"

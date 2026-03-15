@@ -8,7 +8,8 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "d": "tsx scripts/dev.ts",
+    "d-old": "tsx scripts/dev.ts",
+    "d": "tsx scripts/tui.tsx",
     "docs:dev": "pnpm nx dev @ha-bits/habit-viewer & cd docs && pnpm dev",
     "prepare": "husky",
     "validate:affected": "bash scripts/validate-affected.sh"

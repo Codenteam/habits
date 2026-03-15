@@ -48,7 +48,6 @@ export const askOpenAI = createAction({
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
             baseURL: getIntersectBaseUrl(authValue.host),
-            logLevel: 'info',
             dangerouslyAllowBrowser: true
           } as any);
           const response = await openai.models.list();
@@ -56,7 +55,6 @@ export const askOpenAI = createAction({
           const models = response.data.filter(
             (model) => !notLLMs.includes(model.id)
           );
-          console.log(models);
           return {
             disabled: false,
             options: models.map((model) => {
@@ -147,7 +145,6 @@ export const askOpenAI = createAction({
     const conf = {
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
-      logLevel: 'debug' as const,
       dangerouslyAllowBrowser: true
     };
     
@@ -160,7 +157,6 @@ export const askOpenAI = createAction({
       presencePenalty,
       prompt,
     } = propsValue;
-    console.log(conf, propsValue);
     let messageHistory: any[] | null = [];
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {
@@ -199,8 +195,6 @@ export const askOpenAI = createAction({
       presence_penalty: presencePenalty ?? undefined,
       max_completion_tokens: maxTokens,
     };
-    console.log(messages);
-    console.log(req);
     // Send prompt
     const completion = await openai.chat.completions.create(req as any);
 
@@ -227,7 +221,7 @@ export const askOpenAI = createAction({
     
     // Cast markdown code blocks if enabled
     if (propsValue.cast) {
-      return castMarkdownCodeBlocks(responseContent);
+      return castMarkdownCodeBlocks(responseContent, propsValue.cast);
     }
 
     return responseContent;

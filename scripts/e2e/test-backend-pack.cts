@@ -27,7 +27,7 @@ try {
   }
 } catch { /* keep as string */ }
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../..');
 const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
 const PORT = 13001; // Use a different port to avoid conflicts
 
@@ -115,7 +115,37 @@ async function runTest() {
     }
     
     const result = await response.json();
-    console.log('\n📄 Workflow Result:\n' + JSON.stringify(result, null, 2));
+    
+    // Show summary box
+    const boxWidth = 80;
+    const border = '═'.repeat(boxWidth);
+    const innerWidth = boxWidth - 4;
+    
+    console.log('\n');
+    console.log(`╔${border}╗`);
+    console.log(`║  📥 INPUT${' '.repeat(innerWidth - 9)}║`);
+    console.log(`╟${'─'.repeat(boxWidth)}╢`);
+    const inputStr = JSON.stringify(testPrompt, null, 2);
+    inputStr.split('\n').forEach((line: string) => {
+      const padded = line.substring(0, innerWidth).padEnd(innerWidth);
+      console.log(`║  ${padded}  ║`);
+    });
+    console.log(`╟${'─'.repeat(boxWidth)}╢`);
+    console.log(`║  📤 OUTPUT${' '.repeat(innerWidth - 10)}║`);
+    console.log(`╟${'─'.repeat(boxWidth)}╢`);
+    
+    // Extract output from the workflow result
+    const output = result.output || result;
+    const outputStr = JSON.stringify(output, null, 2);
+    outputStr.split('\n').slice(0, 20).forEach((line: string) => {
+      const padded = line.substring(0, innerWidth).padEnd(innerWidth);
+      console.log(`║  ${padded}  ║`);
+    });
+    if (outputStr.split('\n').length > 20) {
+      console.log(`║  ${'... (truncated)'.padEnd(innerWidth)}  ║`);
+    }
+    console.log(`╚${border}╝`);
+    
     console.log('\n✅ Backend test passed!');
     
   } catch (error: any) {

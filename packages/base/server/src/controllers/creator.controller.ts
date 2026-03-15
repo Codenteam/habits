@@ -391,7 +391,7 @@ export class CreatorController {
         `  bit-filesystem     : Read/write files`,
         `  bit-database       : SQLite database operations`,
         `  bit-database-mongodb : MongoDB operations`,
-        `  bit-database-mysql : MySQL operations`,
+        `  bit-database-sql : SQL operations`,
         `  bit-intersect      : Intersect AI API (OpenAI-compatible)`,
         ``,
         `IMPORTANT: Before using a bit, READ its src/index.ts to see exact action names and props.`,

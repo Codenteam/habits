@@ -305,6 +305,36 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
   } else {
     console.log('[Habits] Fetch proxy initialized (API mode). Backend:', BACKEND_URL);
   }
+
+  // Test mode: check for CLI args from Tauri and auto-execute
+  if (window.__TAURI__ && MODE === 'full') {
+    window.addEventListener('DOMContentLoaded', async function() {
+      try {
+        var invoke = window.__TAURI__.core ? window.__TAURI__.core.invoke : window.__TAURI__.invoke;
+        if (!invoke) return;
+        
+        var testArgs = await invoke('get_test_args');
+        if (!testArgs) return;
+        
+        var habit = testArgs[0];
+        var input = testArgs[1];
+        console.log('[Habits] Test mode - executing:', habit);
+        
+        // Wait for bundle to be ready
+        await new Promise(function(r) { setTimeout(r, 500); });
+        if (!window.HabitsBundle) throw new Error('HabitsBundle not loaded');
+        
+        var parsedInput = input;
+        try { parsedInput = JSON.parse(input); } catch(e) {}
+        
+        var result = await window.HabitsBundle.executeWorkflow(habit, parsedInput);
+        await invoke('test_complete', { result: JSON.stringify({ success: true, result: result }) });
+      } catch (e) {
+        var invoke = window.__TAURI__.core ? window.__TAURI__.core.invoke : window.__TAURI__.invoke;
+        if (invoke) await invoke('test_complete', { result: JSON.stringify({ success: false, error: e.message }) });
+      }
+    });
+  }
 })();
 `;
 }

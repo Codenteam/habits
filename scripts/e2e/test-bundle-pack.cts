@@ -22,7 +22,7 @@ function parseArgs() {
 const { example, habit, input } = parseArgs();
 const habitInput = input.startsWith('{') ? JSON.parse(input) : { prompt: input };
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../..');
 const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
 const OUTPUT = '/tmp/test-bundle.js';
 

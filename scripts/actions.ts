@@ -59,6 +59,128 @@ export const packSea = (config = DEFAULT_CONFIG) => run(`node dist/packages/habi
 export const packDesktop = (config = DEFAULT_CONFIG, backendUrl = DEFAULT_BACKEND) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format desktop --backend-url ${backendUrl} --desktop-platform dmg -o /tmp/habits-desktop`);
 export const packMobile = (config = DEFAULT_CONFIG, backendUrl = DEFAULT_BACKEND) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format mobile --backend-url ${backendUrl} --mobile-target android -o /tmp/habits-mobile`);
 
+// Pack showcase app
+export interface PackShowcaseOptions {
+  showcase: string;
+  format: 'mobile-full' | 'desktop-full' | 'mobile' | 'desktop';
+  target: 'android' | 'ios' | 'mac' | 'windows' | 'linux';
+  appName: string;
+  appIcon?: string;
+  output: string;
+}
+
+export function buildPackShowcaseCommand(opts: PackShowcaseOptions): string {
+  const configPath = `showcase/${opts.showcase}/stack.yaml`;
+  const targetFlag = opts.format.includes('mobile') ? '--mobile-target' : '--desktop-platform';
+  
+  let cmd = `pnpm tsx packages/habits/app/src/main.ts pack`;
+  cmd += ` --config ${configPath}`;
+  cmd += ` --format ${opts.format}`;
+  cmd += ` ${targetFlag} ${opts.target}`;
+  cmd += ` --app-name "${opts.appName}"`;
+  if (opts.appIcon) cmd += ` --app-icon ${opts.appIcon}`;
+  cmd += ` --output ${opts.output}`;
+  
+  return cmd;
+}
+
+export function packShowcase(opts: PackShowcaseOptions): boolean {
+  const cmd = buildPackShowcaseCommand(opts);
+  logInfo(`Command: ${c.gray}${cmd}${c.reset}`);
+  return run(cmd);
+}
+
+export function getShowcaseDefaults(showcase: string) {
+  const showcasePath = `showcase/${showcase}`;
+  const defaultIcon = `${showcasePath}/frontend/Icon.png`;
+  const hasIcon = fs.existsSync(path.join(PROJECT_ROOT, defaultIcon));
+  const defaultAppName = showcase.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  
+  return {
+    appName: defaultAppName,
+    appIcon: hasIcon ? defaultIcon : undefined,
+  };
+}
+
+export function getOutputExtension(format: string, target: string): string {
+  if (format.includes('mobile')) {
+    return target === 'android' ? '.apk' : '.ipa';
+  }
+  return target === 'mac' ? '.dmg' : target === 'windows' ? '.exe' : '.AppImage';
+}
+
+// Interactive showcase builder types and helpers
+export type MenuItem = { id: string; label: string; desc?: string };
+
+export const SHOWCASE_FORMATS: MenuItem[] = [
+  { id: 'mobile-full', label: 'Mobile Full', desc: 'standalone mobile app with embedded server' },
+  { id: 'desktop-full', label: 'Desktop Full', desc: 'standalone desktop app with embedded server' },
+  { id: 'mobile', label: 'Mobile', desc: 'mobile app (needs backend)' },
+  { id: 'desktop', label: 'Desktop', desc: 'desktop app (needs backend)' },
+];
+
+export const MOBILE_TARGETS: MenuItem[] = [
+  { id: 'android', label: 'Android', desc: '.apk' },
+  { id: 'ios', label: 'iOS', desc: '.ipa (requires Xcode)' },
+];
+
+export const DESKTOP_TARGETS: MenuItem[] = [
+  { id: 'mac', label: 'macOS', desc: '.dmg' },
+  { id: 'windows', label: 'Windows', desc: '.exe' },
+  { id: 'linux', label: 'Linux', desc: '.AppImage' },
+];
+
+export function getTargetsForFormat(format: string): MenuItem[] {
+  return format.includes('mobile') ? MOBILE_TARGETS : DESKTOP_TARGETS;
+}
+
+export interface ShowcaseBuilderCallbacks {
+  select: (title: string, items: MenuItem[]) => Promise<string | null>;
+  prompt: (msg: string) => Promise<string>;
+}
+
+export async function buildShowcaseInteractive(callbacks: ShowcaseBuilderCallbacks): Promise<string | null> {
+  const { select, prompt } = callbacks;
+  
+  // 1. Select showcase
+  const examples = discoverExamples();
+  const exampleItems: MenuItem[] = examples.map(e => ({ id: e, label: e }));
+  const showcase = await select('Select showcase:', exampleItems);
+  if (!showcase) return null;
+  
+  // 2. Select format
+  const format = await select('Select format:', SHOWCASE_FORMATS) as PackShowcaseOptions['format'] | null;
+  if (!format) return null;
+  
+  // 3. Select target
+  const targetItems = getTargetsForFormat(format);
+  const target = await select('Select target:', targetItems) as PackShowcaseOptions['target'] | null;
+  if (!target) return null;
+  
+  // Get defaults
+  const defaults = getShowcaseDefaults(showcase);
+  
+  // 4. App name
+  const appNameInput = await prompt(`${c.green}App name [${defaults.appName}]: ${c.reset}`);
+  const appName = appNameInput || defaults.appName;
+  
+  // 5. App icon
+  const iconPrompt = defaults.appIcon 
+    ? `${c.green}App icon [${defaults.appIcon}]: ${c.reset}` 
+    : `${c.green}App icon (optional): ${c.reset}`;
+  const appIconInput = await prompt(iconPrompt);
+  const appIcon = appIconInput || defaults.appIcon;
+  
+  // 6. Output path
+  const ext = getOutputExtension(format, target);
+  const defaultOutput = `/tmp/${showcase}${ext}`;
+  const outputInput = await prompt(`${c.green}Output path [${defaultOutput}]: ${c.reset}`);
+  const output = outputInput || defaultOutput;
+  
+  // Build command
+  return buildPackShowcaseCommand({ showcase, format, target, appName, appIcon, output });
+}
+
 // Version bump
 export const bumpHabits = () => run('npm version patch --no-git-tag-version', { cwd: path.join(PROJECT_ROOT, 'packages/habits') });
 export const bumpCortex = () => {
@@ -125,4 +247,78 @@ export function unlinkCortexCore() {
 // List
 export function listExamples() {
   discoverExamples().forEach(e => console.log(`  ${c.green}•${c.reset} ${e}`));
+}
+
+// ============================================================================
+// Bits Creator Actions (merged from bits-creator/scripts/actions.ts)
+// ============================================================================
+
+const BITS_DIR = path.join(PROJECT_ROOT, 'nodes', 'bits', '@ha-bits');
+const BITS_NODES_ROOT = path.join(PROJECT_ROOT, 'nodes', 'bits');
+const BITS_CREATOR_ROOT = path.join(PROJECT_ROOT, 'bits-creator');
+const BITS_CREATOR_SERVER = path.join(BITS_CREATOR_ROOT, 'server');
+
+// Discovery
+export function discoverBits(): string[] {
+  if (!fs.existsSync(BITS_DIR)) return [];
+  return fs.readdirSync(BITS_DIR, { withFileTypes: true })
+    .filter(e => e.isDirectory() && e.name.startsWith('bit-'))
+    .map(e => e.name).sort();
+}
+
+export const getBitPath = (name: string) => path.join(BITS_DIR, name);
+export const getBitPkg = (name: string) => `@ha-bits/${name}`;
+
+// Build bits
+export const buildBit = (name: string) => run(`pnpm nx build ${getBitPkg(name)}`, { cwd: BITS_NODES_ROOT });
+export const buildAllBits = () => discoverBits().forEach(b => buildBit(b));
+
+// Publish Verdaccio
+export const publishBitVerdaccio = (name: string) => run(`pnpm nx publish-verdaccio ${getBitPkg(name)}`, { cwd: BITS_NODES_ROOT });
+export const publishAllBitsVerdaccio = () => discoverBits().forEach(b => publishBitVerdaccio(b));
+
+// Version bump bit
+export const bumpBit = (name: string) => run('npm version patch --no-git-tag-version', { cwd: getBitPath(name) });
+
+// Publish npm (bumps version first)
+export const publishBitNpm = (name: string) => {
+  bumpBit(name);
+  buildBit(name);
+  run('npm publish --access public --registry https://registry.npmjs.org/', { cwd: getBitPath(name) });
+};
+export const publishAllBitsNpm = () => discoverBits().forEach(b => publishBitNpm(b));
+
+// Link bits
+export const linkBit = (name: string) => run('npm link', { cwd: getBitPath(name), silent: true });
+export const unlinkBit = (name: string) => run('npm unlink', { cwd: getBitPath(name), silent: true });
+export const linkAllBits = () => discoverBits().forEach(b => linkBit(b));
+export const unlinkAllBits = () => discoverBits().forEach(b => unlinkBit(b));
+
+// Bits creator utils
+export const runBitsConverter = () => run('npx tsx src/cli.ts', { cwd: BITS_CREATOR_ROOT });
+export const cleanBits = () => { run('rm -rf dist', { cwd: BITS_CREATOR_ROOT }); run('rm -rf dist', { cwd: BITS_NODES_ROOT, silent: true }); };
+export const installBits = () => { run('pnpm install', { cwd: BITS_CREATOR_ROOT }); run('pnpm install', { cwd: BITS_NODES_ROOT }); };
+
+// List bits
+export function listBits() {
+  const bits = discoverBits();
+  bits.forEach(b => {
+    const pkg = path.join(getBitPath(b), 'package.json');
+    const ver = fs.existsSync(pkg) ? JSON.parse(fs.readFileSync(pkg, 'utf-8')).version || '' : '';
+    console.log(`  ${c.green}•${c.reset} ${b} ${c.gray}${ver}${c.reset}`);
+  });
+  console.log(`\n  ${c.gray}Total: ${bits.length}${c.reset}`);
+}
+
+// Bits creator server
+export function startBitsServerMock() {
+  logHeader('Starting Bits Creator Server (Mock Mode)');
+  logInfo('Returns hello-world example for create-habit endpoint');
+  run('MOCK_MODE=true npx tsx ./src/main.ts', { cwd: BITS_CREATOR_SERVER });
+}
+
+export function startBitsServer() {
+  logHeader('Starting Bits Creator Server');
+  logInfo('Non-mock mode - AI integration placeholder');
+  run('npx tsx ./src/main.ts', { cwd: BITS_CREATOR_SERVER });
 }

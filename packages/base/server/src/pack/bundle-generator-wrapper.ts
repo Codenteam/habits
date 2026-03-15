@@ -48,6 +48,20 @@ export interface BundleGeneratorOptions {
 }
 
 /**
+ * Tauri plugin configuration discovered from bits
+ */
+export interface TauriPlugin {
+  /** Plugin identifier (e.g., 'sql') */
+  name: string;
+  /** Cargo dependency line */
+  cargo: string;
+  /** Rust init code for tauri::Builder */
+  init: string;
+  /** Tauri permissions/capabilities */
+  permissions: string[];
+}
+
+/**
  * Result of bundle generation
  */
 export interface BundleGeneratorResult {
@@ -56,6 +70,8 @@ export interface BundleGeneratorResult {
   code?: string;
   /** List of bits modules that were bundled */
   bundledBits?: string[];
+  /** Tauri plugins required by bundled bits */
+  tauriPlugins?: TauriPlugin[];
   /** Any errors that occurred */
   error?: string;
   /** Bundle size in bytes */
@@ -89,6 +105,58 @@ function extractBitsFromWorkflows(workflows: any[]): Array<{ id: string; module:
     
     return { id, module: moduleName };
   });
+}
+
+/**
+ * Discover Tauri plugins required by bits.
+ * Bits can declare plugins in their package.json under habits.tauriPlugins.
+ */
+function discoverTauriPlugins(bits: Array<{ id: string; module: string }>): TauriPlugin[] {
+  const plugins: Map<string, TauriPlugin> = new Map();
+  
+  // Find bundle-generator's node_modules where bits are installed
+  const localBundleGenerator = findLocalBundleGenerator();
+  const bundleGenDir = localBundleGenerator ? path.dirname(localBundleGenerator) : null;
+  
+  // Build search paths - include bundle-generator's node_modules
+  const searchPaths = [
+    process.cwd(),
+    path.join(process.cwd(), 'node_modules'),
+    ...(bundleGenDir ? [bundleGenDir, path.join(bundleGenDir, 'node_modules')] : []),
+  ];
+  
+  logger.debug(`Searching for bit packages in: ${searchPaths.join(', ')}`);
+  
+  for (const bit of bits) {
+    try {
+      // Try to resolve the bit's package.json
+      const bitPackagePath = require.resolve(`${bit.module}/package.json`, {
+        paths: searchPaths
+      });
+      const bitPackage = JSON.parse(fs.readFileSync(bitPackagePath, 'utf8'));
+      
+      // Check for tauriPlugins declaration
+      if (bitPackage.habits?.tauriPlugins) {
+        for (const [pluginName, pluginConfig] of Object.entries(bitPackage.habits.tauriPlugins)) {
+          const config = pluginConfig as { cargo: string; init: string; permissions: string[] };
+          if (config.cargo && config.init && !plugins.has(pluginName)) {
+            plugins.set(pluginName, {
+              name: pluginName,
+              cargo: config.cargo,
+              init: config.init,
+              permissions: config.permissions || [],
+            });
+            logger.info(`🔌 Tauri plugin discovered: ${pluginName} (from ${bit.module})`);
+          }
+        }
+      }
+    } catch (err) {
+      // Bit package.json not found, skip
+      logger.debug(`Could not read tauriPlugins from ${bit.module}: ${(err as Error).message}`);
+    }
+  }
+  
+  return Array.from(plugins.values());
 }
 
 /**
@@ -189,6 +257,12 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
     const code = fs.readFileSync(outputPath, 'utf8');
     logger.info(`Bundle generated: ${(code.length / 1024).toFixed(2)} KB`);
 
+    // Discover Tauri plugins from bits
+    const tauriPlugins = discoverTauriPlugins(bits);
+    if (tauriPlugins.length > 0) {
+      logger.info(`Found ${tauriPlugins.length} Tauri plugin(s): ${tauriPlugins.map(p => p.name).join(', ')}`);
+    }
+
     // Cleanup
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -200,6 +274,7 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
       success: true,
       code,
       bundledBits: bits.map(b => b.module),
+      tauriPlugins,
       size: code.length,
     };
   } catch (error: any) {

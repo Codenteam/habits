@@ -53,6 +53,7 @@ nodes:
         model: gpt-4o
         temperature: 0.3
         maxTokens: 1000
+        cast: true
         prompt: |
           Parse this resume and extract structured information:
           
@@ -87,6 +88,7 @@ nodes:
         model: gpt-4o
         temperature: 0.4
         maxTokens: 600
+        cast: 'force'
         prompt: |
           Analyze this resume for ATS (Applicant Tracking System) compatibility:
           
@@ -158,6 +160,7 @@ nodes:
         model: gpt-4o
         temperature: 0.4
         maxTokens: 700
+        cast: true
         prompt: |
           Compare this resume to the job requirements:
           
@@ -238,12 +241,48 @@ nodes:
           4. Suggested talking points for strengths
           5. How to address any weaknesses/gaps
 
+  # Convert experience analysis markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML - use with caution for user-generated content
+  - id: experience-analysis-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{experience-analysis}}"
+
+  # Convert improved summary markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
+  - id: generate-summary-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{generate-summary}}"
+
+  # Convert interview prep markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
+  - id: interview-prep-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{interview-prep}}"
+
   # Save analysis document using PouchDB
   - id: save-analysis
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: insert
       params:
@@ -254,23 +293,25 @@ nodes:
           parsed: "{{parse-resume}}"
           atsScore: "{{ats-score}}"
           experienceAnalysis: "{{experience-analysis}}"
+          experienceAnalysisHtml: "{{experience-analysis-html}}"
           jobMatch: "{{job-match}}"
           improvedSummary: "{{generate-summary}}"
+          improvedSummaryHtml: "{{generate-summary-html}}"
           interviewPrep: "{{interview-prep}}"
-          createdAt: "{{habits.now}}"
+          interviewPrepHtml: "{{interview-prep-html}}"
 
   # Save image as attachment to the analysis document
   - id: save-attachment
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: putAttachment
       params:
         collection: "resume_analyses"
         documentId: "{{save-analysis.id}}"
-        attachmentName: "resume.webp"
+        attachmentName: "resume"
         attachmentData: "{{habits.input.resumeImage}}"
         contentType: "image/webp"
 
@@ -287,26 +328,34 @@ edges:
     target: generate-summary
   - source: job-match
     target: interview-prep
+  # Connect markdown nodes to HTML converters
+  - source: experience-analysis
+    target: experience-analysis-html
+  - source: generate-summary
+    target: generate-summary-html
+  - source: interview-prep
+    target: interview-prep-html
+  # Connect all analysis nodes to save-analysis
   - source: ats-score
     target: save-analysis
-  - source: experience-analysis
+  - source: experience-analysis-html
     target: save-analysis
-  - source: job-match
+  - source: generate-summary-html
     target: save-analysis
-  - source: generate-summary
+  - source: interview-prep-html
     target: save-analysis
-  - source: interview-prep
-    target: save-analysis
+  # save-attachment depends on save-analysis
   - source: save-analysis
     target: save-attachment
 
 output:
-  analysisId: "{{save-analysis.id}}"
   extractedText: "{{extract-text}}"
   parsed: "{{parse-resume}}"
   atsScore: "{{ats-score}}"
   experienceAnalysis: "{{experience-analysis}}"
+  experienceAnalysisHtml: "{{experience-analysis-html}}"
   jobMatch: "{{job-match}}"
   improvedSummary: "{{generate-summary}}"
+  improvedSummaryHtml: "{{generate-summary-html}}"
   interviewPrep: "{{interview-prep}}"
-  attachmentSaved: "{{save-attachment.success}}"
+  interviewPrepHtml: "{{interview-prep-html}}"

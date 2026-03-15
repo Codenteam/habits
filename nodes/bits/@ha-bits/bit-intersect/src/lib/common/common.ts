@@ -50,7 +50,6 @@ const getBaseUrl = (host: string) => {
 export const getCanvasApiUrl = (host: string, path: string): string => {
   const normalizedHost = getBaseUrl(host);
   const uri = `${normalizedHost}/canvas/${path}`;
-  console.log(uri);
   return uri;
 };
 
@@ -65,7 +64,6 @@ export const getCanvasApiUrl = (host: string, path: string): string => {
 export const getIntersectBaseUrl = (host: string): string => {
   const normalizedHost = getBaseUrl(host);
   const uri = `${normalizedHost}/api/v1`;
-  console.log(uri);
   return uri;
 };
 
@@ -203,12 +201,15 @@ export const streamToBuffer = (stream: any) => {
 
 /**
  * Cast property for parsing markdown code blocks
+ * - true: Only parses if entire response is a code block
+ * - false: Disabled
+ * - 'force': Extracts and parses first ```json``` or ```xml``` block found in response
  */
 export const castMarkdownProperty = Property.StaticDropdown({
   displayName: 'Cast Markdown Code Blocks',
   required: false,
   description:
-    'If enabled, values starting with ```json``` or ```xml``` in markdown will be cast to appropriate objects.',
+    'If enabled, parses markdown code blocks. "True" parses if entire response is a code block. "Force" extracts first parsable ```json``` or ```xml``` block from anywhere in the response.',
   defaultValue: false,
   options: {
     options: [
@@ -219,6 +220,10 @@ export const castMarkdownProperty = Property.StaticDropdown({
       {
         label: 'False',
         value: false,
+      },
+      {
+        label: 'Force',
+        value: 'force',
       },
     ],
   },
@@ -250,11 +255,43 @@ function parseXml(xmlString: string): Record<string, any> {
 /**
  * Cast markdown code blocks to appropriate objects
  * Supports ```json``` and ```xml``` code blocks
+ * @param content - The content to parse
+ * @param mode - true for strict mode (entire response must be code block), 'force' to extract first block
  */
-export const castMarkdownCodeBlocks = (content: string | null | undefined): any => {
+export const castMarkdownCodeBlocks = (content: string | null | undefined, mode: boolean | 'force' = true): any => {
   if (!content) return content;
   
   const trimmed = content.trim();
+  
+  if (mode === 'force') {
+    // Force mode: Extract first parsable code block from anywhere in the response
+    
+    // Try to find JSON code block anywhere
+    const jsonForceMatch = trimmed.match(/```json\s*\n?([\s\S]*?)```/i);
+    if (jsonForceMatch) {
+      try {
+        return JSON.parse(jsonForceMatch[1].trim());
+      } catch (e) {
+        // Continue to try XML
+      }
+    }
+    
+    // Try to find XML code block anywhere
+    const xmlForceMatch = trimmed.match(/```xml\s*\n?([\s\S]*?)```/i);
+    if (xmlForceMatch) {
+      try {
+        return parseXml(xmlForceMatch[1].trim());
+      } catch (e) {
+        // Return original content if parsing fails
+        return content;
+      }
+    }
+    
+    // No code block found, return original content
+    return content;
+  }
+  
+  // Strict mode (true): Only parse if entire response is a code block
   
   // Check for JSON code block
   const jsonMatch = trimmed.match(/^```json\s*\n([\s\S]*?)\n```$/i) ||

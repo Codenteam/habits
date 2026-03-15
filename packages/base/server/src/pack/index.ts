@@ -21,10 +21,13 @@ import {
   PackResult,
 } from './types';
 import { packSingleExecutable } from './single-executable';
-import { packDesktop, getSupportedDesktopPlatforms } from './desktop';
+import { packDesktop, packDesktopForWeb, getSupportedDesktopPlatforms, WebDesktopPackResult } from './desktop';
 import { packMobile, packMobileForWeb, getSupportedMobileTargets, WebMobilePackResult } from './mobile';
 import { generateBundle, BundleGeneratorOptions, BundleGeneratorResult } from './bundle-generator-wrapper';
 import { getTauriFetchProxyScript } from './templates/tauri/tauri-fetch-proxy';
+import { getTauriLib, getTauriMain } from './templates/tauri/tauri-main';
+import { getTauriCargo } from './templates/tauri/tauri-cargo';
+import { getTauriCapabilities } from './templates/tauri/tauri-config';
 
 // Re-export types and utilities
 export * from './types';
@@ -134,18 +137,18 @@ export async function runPackCommand(options: PackCommandOptions): Promise<PackR
       });
 
     case 'desktop-full':
-      console.log('\n🚧 Desktop Full Mode - Early Access!\n');
-      console.log('   This mode will create a complete Electron app with the');
-      console.log('   backend embedded, so it can run entirely offline.\n');
-      console.log('   For now, use --format desktop with --backend-url to create');
-      console.log('   a frontend-only app that connects to your backend.\n');
-      console.log('   Example:');
-      console.log('   npx habits pack --config stack.yaml --format desktop --backend-url https://api.example.com\n');
-      return {
-        success: false,
-        error: 'Desktop-full format is Early Access',
-        format,
-      };
+      return packDesktopFull({
+        configPath,
+        configDir,
+        config,
+        habits,
+        envContent,
+        desktopPlatform: options.desktopPlatform || 'all',
+        output: options.output,
+        appName: options.appName,
+        appIcon: options.appIcon,
+        debug: options.debug,
+      });
 
     case 'mobile':
       if (!options.backendUrl) {
@@ -268,6 +271,172 @@ async function packBundle(options: PackBundleOptions): Promise<PackResult> {
     outputPath,
     format: 'bundle',
     size: bundleResult.size,
+  };
+}
+
+// ============================================================================
+// Desktop Full Pack Handler
+// ============================================================================
+
+interface PackDesktopFullOptions {
+  configPath: string;
+  configDir: string;
+  config: ParsedConfig;
+  habits: HabitData[];
+  envContent: string;
+  desktopPlatform: 'dmg' | 'exe' | 'appimage' | 'deb' | 'rpm' | 'msi' | 'all';
+  output?: string;
+  appName?: string;
+  appIcon?: string;
+  debug?: boolean;
+}
+
+/**
+ * Pack habits into a full desktop app with embedded backend (Tauri-based)
+ */
+async function packDesktopFull(options: PackDesktopFullOptions): Promise<PackResult> {
+  const { config, habits, envContent, desktopPlatform, output, configDir, appName: customAppName, appIcon: customAppIcon } = options;
+
+  console.log('\n🖥️  Generating full desktop app with embedded backend...\n');
+
+  // Parse env content
+  const envVars = parseEnvContent(envContent);
+
+  // Read frontend HTML
+  const frontendPath = config.server?.frontend
+    ? path.isAbsolute(config.server.frontend)
+      ? config.server.frontend
+      : path.resolve(configDir, config.server.frontend)
+    : path.join(configDir, 'frontend');
+
+  if (!fs.existsSync(frontendPath)) {
+    return {
+      success: false,
+      error: `Frontend directory not found: ${frontendPath}. Desktop pack requires a frontend folder.`,
+      format: 'desktop-full',
+    };
+  }
+
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return {
+      success: false,
+      error: `index.html not found in frontend directory: ${frontendPath}`,
+      format: 'desktop-full',
+    };
+  }
+
+  const frontendHtml = fs.readFileSync(indexPath, 'utf8');
+
+  // Read app icon - prefer CLI option, then look in standard locations
+  let appIcon: string | undefined;
+  if (customAppIcon) {
+    // Resolve from CWD first (CLI passes paths relative to CWD), then from configDir
+    const iconPathFromCwd = path.resolve(process.cwd(), customAppIcon);
+    const iconPathFromConfig = path.resolve(configDir, customAppIcon);
+    const iconPath = fs.existsSync(iconPathFromCwd) ? iconPathFromCwd 
+      : fs.existsSync(iconPathFromConfig) ? iconPathFromConfig 
+      : null;
+    if (iconPath) {
+      appIcon = fs.readFileSync(iconPath).toString('base64');
+      console.log(`   🎨 Using app icon: ${iconPath}`);
+    } else {
+      console.log(`   ⚠️  Icon not found: ${customAppIcon}`);
+    }
+  }
+
+  // Determine app name - prefer CLI option, then stack.yaml name
+  const appName = customAppName || config.name || 'Habits App';
+  console.log(`   🖥️  App name: ${appName}`);
+
+  // Convert habits to the format expected by packDesktopForWeb
+  const workflowsForPack = habits.map(h => ({
+    id: h.slug,
+    name: h.name,
+    nodes: h.nodes,
+    edges: h.edges,
+  }));
+
+  // Call packDesktopForWeb with full execution mode
+  const result: WebDesktopPackResult = await packDesktopForWeb({
+    habits: workflowsForPack,
+    serverConfig: config.server || {},
+    frontendHtml,
+    backendUrl: '', // Not needed for full mode
+    desktopPlatform,
+    buildBinary: true,
+    debugBuild: options.debug || false,
+    framework: 'tauri',
+    stackName: appName,
+    appName,
+    appIcon,
+    executionMode: 'full',
+    envVars,
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error || 'Desktop full pack failed',
+      format: 'desktop-full',
+    };
+  }
+
+  // Handle binary output
+  if (result.binaryPath) {
+    const outputPath = output || path.join(configDir, 'dist', result.binaryFilename || 'app.dmg');
+    const outputDir = path.dirname(outputPath);
+    fs.mkdirSync(outputDir, { recursive: true });
+    
+    fs.copyFileSync(result.binaryPath, outputPath);
+    const stat = fs.statSync(outputPath);
+    
+    console.log(`\n✅ Desktop app created successfully!`);
+    console.log(`   🖥️  Output: ${outputPath}`);
+    console.log(`   📦 Size: ${(stat.size / (1024 * 1024)).toFixed(2)} MB`);
+    console.log(`   🔌 Mode: Standalone (no backend required)`);
+
+    // Cleanup temp files
+    if (result.cleanup) {
+      result.cleanup();
+    }
+
+    return {
+      success: true,
+      outputPath,
+      format: 'desktop-full',
+      size: stat.size,
+    };
+  }
+
+  // Handle zip output (project files)
+  if (result.zipBuffer) {
+    const outputPath = output || path.join(configDir, 'dist', result.zipFilename || 'desktop-project.zip');
+    const outputDir = path.dirname(outputPath);
+    fs.mkdirSync(outputDir, { recursive: true });
+    
+    fs.writeFileSync(outputPath, result.zipBuffer);
+    
+    console.log(`\n✅ Desktop project created successfully!`);
+    console.log(`   📦 Output: ${outputPath}`);
+    console.log(`   📋 Extract and follow the README to build`);
+
+    if (result.cleanup) {
+      result.cleanup();
+    }
+
+    return {
+      success: true,
+      outputPath,
+      format: 'desktop-full',
+      size: result.zipBuffer.length,
+    };
+  }
+
+  return {
+    success: false,
+    error: 'Unexpected result from desktop pack',
+    format: 'desktop-full',
   };
 }
 
@@ -620,47 +789,39 @@ async function packTauri(options: PackTauriOptions): Promise<PackResult> {
     JSON.stringify(tauriConfig, null, 2)
   );
 
-  // Cargo.toml
+  // Get Tauri plugins from bundle result
+  const tauriPlugins = bundleResult.tauriPlugins || [];
+  if (tauriPlugins.length > 0) {
+    console.log(`   🔌 Found ${tauriPlugins.length} Tauri plugin(s): ${tauriPlugins.map(p => p.name).join(', ')}`);
+  }
+
+  // Cargo.toml with plugins
   const safeAppName = appName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-  const cargoToml = `[package]
-name = "${safeAppName}"
-version = "0.1.0"
-edition = "2021"
-
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
-
-[dependencies]
-tauri = { version = "2", features = [] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-[lib]
-name = "${safeAppName}_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-`;
+  const cargoToml = getTauriCargo({
+    appName: safeAppName,
+    plugins: tauriPlugins.map(p => ({ name: p.name, cargo: p.cargo })),
+  });
   fs.writeFileSync(path.join(srcTauriDir, 'Cargo.toml'), cargoToml);
 
   // build.rs
   fs.writeFileSync(path.join(srcTauriDir, 'build.rs'), 'fn main() { tauri_build::build() }');
 
   // main.rs
-  fs.writeFileSync(
-    path.join(srcTauriDir, 'src', 'main.rs'),
-    `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-fn main() { ${safeAppName}_lib::run(); }`
-  );
+  const mainRs = getTauriMain(safeAppName);
+  fs.writeFileSync(path.join(srcTauriDir, 'src', 'main.rs'), mainRs);
 
-  // lib.rs
-  fs.writeFileSync(
-    path.join(srcTauriDir, 'src', 'lib.rs'),
-    `#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .run(tauri::generate_context!())
-        .expect("error running tauri app");
-}`
-  );
+  // lib.rs with plugins initialized
+  const libRs = getTauriLib(tauriPlugins.map(p => ({ name: p.name, init: p.init })));
+  fs.writeFileSync(path.join(srcTauriDir, 'src', 'lib.rs'), libRs);
+
+  // Create capabilities/default.json for plugin permissions
+  const pluginPermissions = tauriPlugins.flatMap(p => p.permissions || []);
+  if (pluginPermissions.length > 0) {
+    const capabilitiesDir = path.join(srcTauriDir, 'capabilities');
+    fs.mkdirSync(capabilitiesDir, { recursive: true });
+    const capabilities = getTauriCapabilities(`com.habits.${safeAppName}`, pluginPermissions);
+    fs.writeFileSync(path.join(capabilitiesDir, 'default.json'), capabilities);
+  }
 
   console.log(`   ✅ Tauri project created: ${tauriDir}`);
   console.log(`\n   To run the Tauri app:`);

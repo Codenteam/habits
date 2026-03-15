@@ -50,8 +50,19 @@ function getDatabase(collection: string): PouchDB.Database<PouchDocument> {
     // In browser: use simple name (IndexedDB)
     // In Node.js: use path (LevelDB)
     const dbName = isBrowser ? `habits_${collection}` : `/tmp/habits-pouchdb/${collection}`;
-    databases.set(collection, new PouchDB<PouchDocument>(dbName));
+    console.log(`💾 PouchDB creating: ${dbName} (browser: ${isBrowser})`);
+    const db = new PouchDB<PouchDocument>(dbName);
+    databases.set(collection, db);
     console.log(`💾 PouchDB initialized: ${dbName}`);
+    
+    // In browser, add a test to verify IndexedDB is working
+    if (isBrowser) {
+      db.info().then(info => {
+        console.log(`💾 PouchDB ready: ${dbName}`, info);
+      }).catch(err => {
+        console.error(`💾 PouchDB error checking info: ${dbName}`, err);
+      });
+    }
   }
   return databases.get(collection)!;
 }
@@ -379,7 +390,9 @@ const pouchBit = {
       async run(context: DatabaseContext): Promise<InsertResult> {
         const { collection, document } = context.propsValue;
         
+        console.log(`💾 PouchDB Insert: Starting for ${collection}`);
         const db = getDatabase(String(collection));
+        console.log(`💾 PouchDB Insert: Got database instance`);
         const id = generateId();
         const docId = `doc:${id}`;
         
@@ -398,9 +411,14 @@ const pouchBit = {
           expiresAt: null,
         };
         
-        await db.put(doc);
-        
-        console.log(`💾 PouchDB Insert: ${collection}/${id}`);
+        console.log(`💾 PouchDB Insert: Calling db.put for ${collection}/${id}`);
+        try {
+          await db.put(doc);
+          console.log(`💾 PouchDB Insert: Success ${collection}/${id}`);
+        } catch (err) {
+          console.error(`💾 PouchDB Insert: Error ${collection}/${id}`, err);
+          throw err;
+        }
         
         return {
           success: true,
@@ -722,22 +740,31 @@ const pouchBit = {
           // Get the document to get its _rev
           const doc = await db.get(docId);
           
-          // Convert base64 to blob if needed
-          let blob: Blob;
+          // Convert base64 to Buffer (Node.js) or Blob (browser)
+          let data: Buffer | Blob;
           if (typeof attachmentData === 'string') {
             // Assume base64 encoded string
             const base64Data = attachmentData.replace(/^data:[^;]+;base64,/, '');
-            const binaryString = atob(base64Data);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
+            
+            if (isBrowser) {
+              // Browser: use Blob
+              const binaryString = atob(base64Data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              data = new Blob([bytes], { type: String(contentType) });
+            } else {
+              // Node.js: use Buffer
+              data = Buffer.from(base64Data, 'base64');
             }
-            blob = new Blob([bytes], { type: String(contentType) });
+          } else if (attachmentData instanceof Buffer) {
+            data = attachmentData;
           } else {
-            blob = attachmentData as Blob;
+            data = attachmentData as Blob;
           }
           
-          await db.putAttachment(docId, String(attachmentName), doc._rev!, blob, String(contentType));
+          await db.putAttachment(docId, String(attachmentName), doc._rev!, data, String(contentType));
           
           console.log(`💾 PouchDB Attachment Added: ${collection}/${documentId}/${attachmentName}`);
           

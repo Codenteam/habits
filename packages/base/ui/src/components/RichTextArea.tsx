@@ -341,7 +341,6 @@ export default function RichTextArea({
 
   // For debugging purposes
   useEffect(()=>{
-    // debugger;
   }, [renderKey])
   // Auto-focus
   useEffect(() => { 

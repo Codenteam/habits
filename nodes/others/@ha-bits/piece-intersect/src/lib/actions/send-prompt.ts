@@ -138,7 +138,6 @@ export const askOpenAI = createAction({
     const conf = {
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
-      logLevel: 'debug' as const,
     };
     
     const openai = new OpenAI(conf);
@@ -150,7 +149,6 @@ export const askOpenAI = createAction({
       presencePenalty,
       prompt,
     } = propsValue;
-console.log(conf, propsValue);
     let messageHistory: any[] | null = [];
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {

@@ -13,7 +13,7 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: insert
       params:
@@ -28,7 +28,7 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: update
       params:
@@ -44,7 +44,7 @@ nodes:
     type: bits
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-pouch"
       operation: query
       params:

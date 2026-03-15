@@ -14,14 +14,14 @@ const commands = computed(() => {
   const path = props.examplePath
   return [
     {
-      label: 'npx @ha-bits/cortex',
-      description: 'Run directly using Cortex package, recommended for production runs, does not inlcude base or extra depdencies. ',
-      cmd: `# First, download the example files\nnpx @ha-bits/cortex@latest server --config ./${path}/stack.yaml`
-    },
-    {
       label: 'npx habits',
       description: 'Run using the Habits CLI wrapper, recommended if you develop local Habits',
       cmd: `# First, download the example files\nnpx habits@latest cortex --config ./${path}/stack.yaml`
+    },
+    {
+      label: 'npx @ha-bits/cortex',
+      description: 'Run directly using Cortex package, recommended for production runs, does not inlcude base or extra depdencies. ',
+      cmd: `# First, download the example files\nnpx @ha-bits/cortex@latest server --config ./${path}/stack.yaml`
     },
     {
       label: 'Local Dev',

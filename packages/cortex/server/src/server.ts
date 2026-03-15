@@ -437,8 +437,9 @@ class WorkflowExecutorServer {
     });
 
     // Execute a specific workflow by ID
+    // Supports GET (params from query) and POST (params from body)
     // Supports streaming mode via ?stream=true query param or Accept: application/x-ndjson header
-    this.app.post('/api/:workflowId', async (req: Request, res: Response) => {
+    this.app.all('/api/:workflowId', async (req: Request, res: Response) => {
       try {
         const { workflowId } = req.params;
         const loadedWorkflow = this.executor.getWorkflow(workflowId);
@@ -461,10 +462,17 @@ class WorkflowExecutorServer {
         // Parse cookies from Cookie header
         const parsedCookies = this.parseCookies(req.headers.cookie || '');
         
+        // Get input data: from body for POST/PUT/PATCH, from query params for GET
+        // Exclude 'stream' from query params as it's a control parameter
+        const { stream, ...queryParams } = req.query as Record<string, any>;
+        const inputData = ['POST', 'PUT', 'PATCH'].includes(req.method)
+          ? (req.body || {})
+          : queryParams;
+        
         // Build habits context with request details
         const habitsContext = {
           habits: {
-            input: req.body || {},
+            input: inputData,
             headers: req.headers || {},
             cookies: parsedCookies,
           }
@@ -767,7 +775,7 @@ class WorkflowExecutorServer {
           console.log(`📋 Available endpoints:`);
           console.log(`   GET  /misc/workflows - List all loaded workflows`);
           console.log(`   GET  /misc/workflow/:id - Get workflow details`);
-          console.log(`   POST /api/:id - Execute a specific workflow`);
+          console.log(`   GET|POST /api/:id - Execute a workflow (GET: query params, POST: body)`);
           console.log(`        (supports streaming via ?stream=true or Accept: application/x-ndjson)`);
           console.log(`   GET  /misc/execution/:id - Get execution status`);
           console.log(`   GET  /misc/executions - List all executions`);
@@ -1200,11 +1208,6 @@ async function runCLI() {
           (execution.endTime.getTime() - execution.startTime.getTime()) : 'N/A'}ms`);
         console.log(`Steps: ${execution.results.length}`);
         
-        if (execution.output !== undefined) {
-          console.log(`\n📤 Workflow Output:`);
-          console.log(JSON.stringify(execution.output, null, 2));
-        }
-        
         if (execution.status === 'failed') {
           process.exit(1);
         }
@@ -1253,7 +1256,6 @@ async function runCLI() {
           fs.writeFileSync(outputPath, inputContent);
           console.log(`📄 Copied to: ${outputPath}`);
         } else {
-          console.log(inputContent);
         }
         process.exit(0);
       }
@@ -1276,8 +1278,6 @@ async function runCLI() {
         console.log(`   Nodes: ${workflow.nodes.length}`);
         console.log(`   Edges: ${workflow.edges.length}`);
       } else {
-        // Output to stdout
-        console.log(outputJson);
       }
       
       // Generate .env file if requested and there are connections

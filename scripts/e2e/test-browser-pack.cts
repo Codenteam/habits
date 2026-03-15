@@ -1,25 +1,29 @@
 #!/usr/bin/env tsx
 // Test pack bundle in browser with fetch proxy intercepting /api/* calls
-// Usage: tsx scripts/test-browser-pack.ts [--example <name>] [--habit <name>] [--input <text>]
-import { execSync } from 'child_process';
+// Usage: tsx scripts/test-browser-pack.ts [--example <name>] [--habit <name>] [--input <text>] [--headful] [--chrome]
+// --chrome: Opens in Chrome directly (no puppeteer), starts local server
+import { execSync, spawn } from 'child_process';
 import * as fs from 'fs';
+import * as http from 'http';
 import * as path from 'path';
 import puppeteer from 'puppeteer-core';
-import { getTauriFetchProxyScript } from '../packages/base/server/src/pack/templates/tauri/tauri-fetch-proxy';
+import { getTauriFetchProxyScript } from '../../packages/base/server/src/pack/templates/tauri/tauri-fetch-proxy';
 
 // Parse command line arguments
 function parseArgs() {
   const args = process.argv.slice(2);
-  const result = { example: 'marketing-campaign', habit: 'marketing-campaign', input: 'Test campaign for AI productivity tools' };
+  const result = { example: 'marketing-campaign', habit: 'marketing-campaign', input: 'Test campaign for AI productivity tools', headless: true, chrome: false };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--example' && args[i + 1]) result.example = args[++i];
     else if (args[i] === '--habit' && args[i + 1]) result.habit = args[++i];
     else if (args[i] === '--input' && args[i + 1]) result.input = args[++i];
+    else if (args[i] === '--headful') result.headless = false;
+    else if (args[i] === '--chrome') result.chrome = true;
   }
   return result;
 }
 
-const { example, habit, input: rawInput } = parseArgs();
+const { example, habit, input: rawInput, headless, chrome } = parseArgs();
 
 // Parse JSON input if it looks like JSON, otherwise use as-is
 let testPrompt: any = rawInput;
@@ -29,7 +33,7 @@ try {
   }
 } catch { /* keep as string */ }
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '../..');
 const CONFIG = path.join(ROOT, `showcase/${example}/stack.yaml`);
 const HTML_PATH = path.join(ROOT, `showcase/${example}/frontend/index.html`);
 const OUTPUT_DIR = '/tmp/browser-pack-test';
@@ -76,9 +80,66 @@ const testHtml = originalHtml.replace(
 const testHtmlPath = path.join(OUTPUT_DIR, 'index.html');
 fs.writeFileSync(testHtmlPath, testHtml);
 
+// Start a simple HTTP server for Chrome direct mode
+function startServer(port: number): Promise<http.Server> {
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const url = req.url || '/';
+      let filePath = path.join(OUTPUT_DIR, url === '/' ? 'index.html' : url);
+      
+      const ext = path.extname(filePath);
+      const contentTypes: Record<string, string> = {
+        '.html': 'text/html',
+        '.js': 'application/javascript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+      };
+      
+      if (fs.existsSync(filePath)) {
+        res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'text/plain' });
+        res.end(fs.readFileSync(filePath));
+      } else {
+        res.writeHead(404);
+        res.end('Not found');
+      }
+    });
+    server.listen(port, () => resolve(server));
+  });
+}
+
+// Run in Chrome directly (opens browser, serves files via HTTP)
+async function runChrome() {
+  const port = 8765;
+  const server = await startServer(port);
+  const url = `http://localhost:${port}`;
+  
+  console.log(`\n🌐 Starting local server at ${url}`);
+  console.log(`📋 Test workflow: ${habit}`);
+  console.log(`📝 Input: ${JSON.stringify(testPrompt)}`);
+  console.log(`\n💡 Open browser console and run:`);
+  console.log(`   await HabitsBundle.executeWorkflow('${habit}', ${JSON.stringify(testPrompt)})`);
+  console.log(`\n⏳ Press Ctrl+C to stop server...\n`);
+  
+  // Open Chrome
+  const chromeProcess = spawn(chromePath!, [url], { detached: true, stdio: 'ignore' });
+  chromeProcess.unref();
+  
+  // Keep server running until Ctrl+C
+  process.on('SIGINT', () => {
+    console.log('\n🛑 Stopping server...');
+    server.close();
+    process.exit(0);
+  });
+}
+
 async function runTest() {
-  console.log('\n🚀 Running in headless browser...');
-  const browser = await puppeteer.launch({ executablePath: chromePath, headless: true });
+  // If --chrome mode, open in Chrome directly
+  if (chrome) {
+    return runChrome();
+  }
+  
+  console.log(`\n🚀 Running in ${headless ? 'headless' : 'headful'} browser...`);
+  const browser = await puppeteer.launch({ executablePath: chromePath, headless });
   const page = await browser.newPage();
   const logs: string[] = [];
 
@@ -86,7 +147,7 @@ async function runTest() {
   page.setDefaultTimeout(60000); // 60 seconds
 
   page.on('console', msg => { const text = msg.text(); logs.push(text); console.log('  [browser]', text); });
-  page.on('pageerror', err => { console.error('  [error]', err.message); console.error('  [stack]', err.stack); });
+  page.on('pageerror', (err: Error) => { console.error('  [error]', err.message); console.error('  [stack]', err.stack); });
 
   try {
     await page.goto(`file://${testHtmlPath}`, { waitUntil: 'domcontentloaded' });
@@ -107,8 +168,9 @@ async function runTest() {
       return await bundle.executeWorkflow(habitName, habitInput);
     }, habit, testPrompt);
     
+    const waitFor = 120;
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Workflow execution timeout after 45s')), 45000)
+      setTimeout(() => reject(new Error(`Workflow execution timeout after ${waitFor} seconds`)), waitFor * 1000)
     );
     
     const result = await Promise.race([executionPromise, timeoutPromise]);

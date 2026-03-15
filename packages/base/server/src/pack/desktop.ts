@@ -364,6 +364,7 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
   
   // Generate bundle for 'full' mode using npx @ha-bits/bundle-generator
   let cortexBundle: string | undefined;
+  let tauriPlugins: import('./bundle-generator-wrapper').TauriPlugin[] | undefined;
   if (executionMode === 'full') {
     logger.info('Generating bundle for full execution mode via npx @ha-bits/bundle-generator');
     const bundleResult = await generateBundle({
@@ -375,6 +376,7 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
       throw new Error(`Failed to generate bundle: ${bundleResult.error}`);
     }
     cortexBundle = bundleResult.code;
+    tauriPlugins = bundleResult.tauriPlugins;
   }
   
   // Route to the appropriate framework handler
@@ -394,6 +396,7 @@ export async function packDesktopForWeb(options: WebDesktopPackOptions): Promise
       appIcon,
       executionMode: executionMode === 'full' ? 'full' : 'api',
       cortexBundle,
+      tauriPlugins,
     });
   } else {
     return packElectronDesktopForWeb(options);
