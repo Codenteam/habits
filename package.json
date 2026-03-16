@@ -37,6 +37,7 @@
     "tailwindcss": "^4.0.0",
     "uuid": "^9.0.1",
     "winston": "^3.19.0",
+    "yaml": "^2.3.4",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
