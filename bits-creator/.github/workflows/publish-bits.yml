@@ -31,7 +31,7 @@ jobs:
         id: set-matrix
         run: |
           # Packages to skip (require external dependencies not in this repo)
-          SKIP_PACKAGES="bit-intersect"
+          SKIP_PACKAGES=""
           
           if [ -n "${{ github.event.inputs.package }}" ]; then
             # Manual trigger with specific package
@@ -148,7 +148,7 @@ jobs:
           cd nodes/bits/@ha-bits
           
           # Packages to skip (require external dependencies not in this repo)
-          SKIP_PACKAGES="bit-intersect"
+          SKIP_PACKAGES=""
           
           # Get list of all bit directories
           for dir in */; do
