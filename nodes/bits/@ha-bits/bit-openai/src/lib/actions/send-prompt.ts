@@ -194,8 +194,6 @@ export const askOpenAI = createAction({
       presence_penalty: presencePenalty ?? undefined,
       max_completion_tokens: maxTokens,
     };
-    console.log(messages);
-    console.log(req);
     // Send prompt
     const completion = await openai.chat.completions.create(req as any);
 

@@ -27,8 +27,8 @@ const MENU: MenuItem[] = [
   { id: 'build-habits', label: 'Build Habits' },
   { id: 'build-cortex', label: 'Build Cortex' },
   { id: 'build-base', label: 'Build Base' },
-  
-  { id: 'build-showcase', label: 'Build Showcase App', desc: 'interactive pack' },
+
+  { id: 'pack-showcase', label: 'Pack Showcase App', desc: 'interactive pack' },
   { id: 'pack-all', label: 'Pack All', desc: 'habits + cortex + base' },
   { id: 'pack-habits', label: 'Pack Habits' },
   { id: 'pack-sea', label: 'Pack SEA Binary', desc: 'single executable' },

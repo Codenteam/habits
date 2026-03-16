@@ -176,6 +176,37 @@ function run(stack, workflows, env){
         'process', 'string_decoder', 'tty', 'http2', 'worker_threads',
         'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster'
     ];
+
+    // Create plugin to redirect relative driver imports to stubs
+    const createStubRedirectPlugin = (stubAliases) => ({
+        name: 'stub-redirect',
+        setup(build) {
+            // Match relative imports like ./driver
+            build.onResolve({ filter: /^\.\/driver$/ }, (args) => {
+                // Find which package this import is coming from
+                const importer = args.importer;
+                if (!importer) return null;
+                
+                // Check if the importer is within a @ha-bits package
+                // Handle both node_modules and local repo paths:
+                // - node_modules/@ha-bits/bit-foo/...
+                // - nodes/bits/@ha-bits/bit-foo/...
+                const haBitsMatch = importer.match(/(?:node_modules|nodes\/bits)\/(@ha-bits\/[^/]+)/);
+                if (!haBitsMatch) return null;
+                
+                const packageName = haBitsMatch[1];
+                const stubKey = `${packageName}/driver`;
+                
+                // Check if we have a stub for this package's driver
+                if (stubAliases[stubKey]) {
+                    console.log(`🔀 Redirecting ${args.path} from ${packageName} → ${stubAliases[stubKey]}`);
+                    return { path: stubAliases[stubKey] };
+                }
+                
+                return null; // Let esbuild resolve normally
+            });
+        }
+    });
     
     // Plugin to redirect Node.js imports to polyfills
     const nodePolyfillPlugin = {
@@ -278,7 +309,7 @@ if (typeof globalThis.process === 'undefined') {
         sourcemap: false,
         metafile: true,
         banner: { js: globalProcessShim },
-        plugins: [nodePolyfillPlugin],
+        plugins: [createStubRedirectPlugin(bitStubs), nodePolyfillPlugin],
         // Alias @ha-bits packages to local node_modules
         // Bit stubs are discovered from package.json habits.stubs field
         alias: {

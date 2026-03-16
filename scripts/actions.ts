@@ -67,6 +67,7 @@ export interface PackShowcaseOptions {
   appName: string;
   appIcon?: string;
   output: string;
+  debug?: boolean;
 }
 
 export function buildPackShowcaseCommand(opts: PackShowcaseOptions): string {
@@ -80,6 +81,7 @@ export function buildPackShowcaseCommand(opts: PackShowcaseOptions): string {
   cmd += ` --app-name "${opts.appName}"`;
   if (opts.appIcon) cmd += ` --app-icon ${opts.appIcon}`;
   cmd += ` --output ${opts.output}`;
+  if (opts.debug) cmd += ` --debug`;
   
   return cmd;
 }

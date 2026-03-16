@@ -5,8 +5,8 @@
  * This bit replaces @ha-bits/bit-database with SQL persistence using SQLite.
  * 
  * Environments:
- * - Node.js: Uses better-sqlite3 via ./driver.ts
- * - Browser/Tauri: Uses ./stubs/tauri-driver.js (via bundle stubs)
+ * - Node.js: Uses better-sqlite3 via driver.ts
+ * - Browser/Tauri: Uses stubs/tauri-driver.js (via bundle alias substitution)
  */
 
 // TODO: Some typings aren't working, try to fix that later. For now we can use 'as any' in driver calls. Maybe we can match to bit-database for both nosql/sql.
@@ -22,6 +22,7 @@ import type {
   IncrementResult,
 } from '@ha-bits/bit-database';
 
+// Relative import - bundle generator's plugin will intercept and stub for Tauri
 import * as driver from './driver';
 
 interface DatabaseContext {

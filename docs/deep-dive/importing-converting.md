@@ -262,7 +262,7 @@ After importing a workflow:
 
 ```bash
 # Start the server
-habits server --config ./config.json
+habits server --config ./stack.yaml
 
 # Or execute directly
 habits execute ./habits-workflow.json

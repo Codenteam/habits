@@ -7,6 +7,15 @@ applyTo: '**'
 ---
 Provide project context and coding guidelines that AI should follow when generating code, answering questions, or reviewing changes.
 
+## Commands
+
+If I ask you to run a command, or to build/pack something, check how it's done in scripts/dev.ts and do something similar.
+
+To test a showcase habit, run the scripts/e2e/e2e-test.cts with showcase name passed as --example param and capture all logs and analyze it to make sure there is no issue. If the habit has a tests directly, it can give you idea how to form the testing command.
+
+If I ask to test tauri only, use scripts/e2e/test-tauri-pack.cts, if I ask to test backend only, use scripts/e2e/test-backend-pack.cts.
+
+
 ## Server Management
 
 - When running Cortex server and sending requests in the same script/session, always use `nohup` with `&` to run the server in the background: nohup npx nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml &
@@ -156,3 +165,5 @@ For any change in documentation, make sure any example in json or yaml matches t
 ### Logging
 
 Use core/logger for any logging in the codebase, do not use console.log or any other logging method. Always use structured logging with context objects. For example:
+
+

@@ -2,38 +2,14 @@
  * @ha-bits/bit-filesystem
  * 
  * Filesystem operations bit for reading, writing, and managing files.
- * Provides secure file access with configurable base directory.
+ * Uses driver.ts for actual filesystem operations (stubbed for Tauri).
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+// Relative import - bundle generator's plugin will intercept and stub for Tauri
+import * as driver from './driver';
 
 interface FilesystemContext {
   propsValue: Record<string, any>;
-}
-
-interface FileInfo {
-  name: string;
-  path: string;
-  isDirectory: boolean;
-  size: number;
-  created: Date;
-  modified: Date;
-}
-
-/**
- * Resolve and validate path within allowed base directory
- */
-function resolvePath(filePath: string, baseDir?: string): string {
-  const base = baseDir || process.cwd();
-  const resolved = path.resolve(base, filePath);
-  
-  // Security: ensure resolved path is within base directory
-  if (!resolved.startsWith(path.resolve(base))) {
-    throw new Error('Path traversal not allowed');
-  }
-  
-  return resolved;
 }
 
 const filesystemBit = {
@@ -46,9 +22,6 @@ const filesystemBit = {
   },
 
   actions: {
-    /**
-     * Read a file's contents
-     */
     readFile: {
       name: 'readFile',
       displayName: 'Read File',
@@ -82,31 +55,11 @@ const filesystemBit = {
           },
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { filePath, baseDir, encoding = 'utf-8' } = context.propsValue;
-        const resolved = resolvePath(filePath, baseDir);
-        
-        if (encoding === 'binary' || encoding === 'base64') {
-          const buffer = await fs.readFile(resolved);
-          return {
-            content: encoding === 'base64' ? buffer.toString('base64') : buffer,
-            path: resolved,
-            size: buffer.length,
-          };
-        }
-        
-        const content = await fs.readFile(resolved, encoding as BufferEncoding);
-        return {
-          content,
-          path: resolved,
-          size: content.length,
-        };
+      async run(context: FilesystemContext) {
+        return driver.readFile(context.propsValue as any);
       },
     },
 
-    /**
-     * Write content to a file
-     */
     writeFile: {
       name: 'writeFile',
       displayName: 'Write File',
@@ -152,28 +105,11 @@ const filesystemBit = {
           },
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { filePath, content, baseDir, createDirs = true, encoding = 'utf-8' } = context.propsValue;
-        const resolved = resolvePath(filePath, baseDir);
-        
-        if (createDirs) {
-          await fs.mkdir(path.dirname(resolved), { recursive: true });
-        }
-        
-        if (encoding === 'base64') {
-          const buffer = Buffer.from(content, 'base64');
-          await fs.writeFile(resolved, buffer);
-          return { success: true, path: resolved, size: buffer.length };
-        }
-        
-        await fs.writeFile(resolved, content, encoding as BufferEncoding);
-        return { success: true, path: resolved, size: content.length };
+      async run(context: FilesystemContext) {
+        return driver.writeFile(context.propsValue as any);
       },
     },
 
-    /**
-     * Append content to a file
-     */
     appendFile: {
       name: 'appendFile',
       displayName: 'Append to File',
@@ -198,18 +134,11 @@ const filesystemBit = {
           required: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { filePath, content, baseDir } = context.propsValue;
-        const resolved = resolvePath(filePath, baseDir);
-        
-        await fs.appendFile(resolved, content);
-        return { success: true, path: resolved };
+      async run(context: FilesystemContext) {
+        return driver.appendFile(context.propsValue as any);
       },
     },
 
-    /**
-     * Delete a file
-     */
     deleteFile: {
       name: 'deleteFile',
       displayName: 'Delete File',
@@ -228,18 +157,11 @@ const filesystemBit = {
           required: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { filePath, baseDir } = context.propsValue;
-        const resolved = resolvePath(filePath, baseDir);
-        
-        await fs.unlink(resolved);
-        return { success: true, deletedPath: resolved };
+      async run(context: FilesystemContext) {
+        return driver.deleteFile(context.propsValue as any);
       },
     },
 
-    /**
-     * List directory contents
-     */
     listDirectory: {
       name: 'listDirectory',
       displayName: 'List Directory',
@@ -265,42 +187,11 @@ const filesystemBit = {
           defaultValue: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { dirPath, baseDir, recursive = false } = context.propsValue;
-        const resolved = resolvePath(dirPath, baseDir);
-        
-        const entries = await fs.readdir(resolved, { withFileTypes: true });
-        const files: FileInfo[] = [];
-        
-        for (const entry of entries) {
-          const entryPath = path.join(resolved, entry.name);
-          const stats = await fs.stat(entryPath);
-          
-          files.push({
-            name: entry.name,
-            path: entryPath,
-            isDirectory: entry.isDirectory(),
-            size: stats.size,
-            created: stats.birthtime,
-            modified: stats.mtime,
-          });
-          
-          if (recursive && entry.isDirectory()) {
-            const subContext = {
-              propsValue: { dirPath: entryPath, recursive: true }
-            };
-            const subResult = await filesystemBit.actions.listDirectory.run(subContext);
-            files.push(...subResult.files);
-          }
-        }
-        
-        return { files, count: files.length, path: resolved };
+      async run(context: FilesystemContext) {
+        return driver.listDirectory(context.propsValue as any);
       },
     },
 
-    /**
-     * Create a directory
-     */
     createDirectory: {
       name: 'createDirectory',
       displayName: 'Create Directory',
@@ -326,18 +217,11 @@ const filesystemBit = {
           defaultValue: true,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { dirPath, baseDir, recursive = true } = context.propsValue;
-        const resolved = resolvePath(dirPath, baseDir);
-        
-        await fs.mkdir(resolved, { recursive });
-        return { success: true, path: resolved };
+      async run(context: FilesystemContext) {
+        return driver.createDirectory(context.propsValue as any);
       },
     },
 
-    /**
-     * Check if a file or directory exists
-     */
     exists: {
       name: 'exists',
       displayName: 'Check Exists',
@@ -356,28 +240,11 @@ const filesystemBit = {
           required: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { filePath, baseDir } = context.propsValue;
-        const resolved = resolvePath(filePath, baseDir);
-        
-        try {
-          const stats = await fs.stat(resolved);
-          return {
-            exists: true,
-            isFile: stats.isFile(),
-            isDirectory: stats.isDirectory(),
-            size: stats.size,
-            path: resolved,
-          };
-        } catch {
-          return { exists: false, path: resolved };
-        }
+      async run(context: FilesystemContext) {
+        return driver.exists(context.propsValue as any);
       },
     },
 
-    /**
-     * Copy a file
-     */
     copyFile: {
       name: 'copyFile',
       displayName: 'Copy File',
@@ -402,20 +269,11 @@ const filesystemBit = {
           required: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { sourcePath, destPath, baseDir } = context.propsValue;
-        const src = resolvePath(sourcePath, baseDir);
-        const dest = resolvePath(destPath, baseDir);
-        
-        await fs.mkdir(path.dirname(dest), { recursive: true });
-        await fs.copyFile(src, dest);
-        return { success: true, source: src, destination: dest };
+      async run(context: FilesystemContext) {
+        return driver.copyFile(context.propsValue as any);
       },
     },
 
-    /**
-     * Move/rename a file
-     */
     moveFile: {
       name: 'moveFile',
       displayName: 'Move/Rename File',
@@ -440,14 +298,8 @@ const filesystemBit = {
           required: false,
         },
       },
-      async run(context: FilesystemContext): Promise<any> {
-        const { sourcePath, destPath, baseDir } = context.propsValue;
-        const src = resolvePath(sourcePath, baseDir);
-        const dest = resolvePath(destPath, baseDir);
-        
-        await fs.mkdir(path.dirname(dest), { recursive: true });
-        await fs.rename(src, dest);
-        return { success: true, source: src, destination: dest };
+      async run(context: FilesystemContext) {
+        return driver.moveFile(context.propsValue as any);
       },
     },
   },

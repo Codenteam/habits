@@ -1,6 +1,6 @@
 id: analyze-resume
 name: Analyze Resume
-description: Analyze resume image against job description and provide improvement suggestions using SQL storage
+description: Analyze resume image against job description and provide improvement suggestions
 
 input:
   - id: resumeImage
@@ -242,6 +242,7 @@ nodes:
           5. How to address any weaknesses/gaps
 
   # Convert experience analysis markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML - use with caution for user-generated content
   - id: experience-analysis-html
     type: bits
     data:
@@ -253,6 +254,7 @@ nodes:
         markdown: "{{experience-analysis}}"
 
   # Convert improved summary markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
   - id: generate-summary-html
     type: bits
     data:
@@ -264,6 +266,7 @@ nodes:
         markdown: "{{generate-summary}}"
 
   # Convert interview prep markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
   - id: interview-prep-html
     type: bits
     data:
@@ -274,13 +277,13 @@ nodes:
       params:
         markdown: "{{interview-prep}}"
 
-  # Save analysis document using SQL database
+  # Save analysis document using PouchDB
   - id: save-analysis
     type: bits
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-database-sql"
+      module: "@ha-bits/bit-pouch"
       operation: insert
       params:
         collection: "resume_analyses"
@@ -296,8 +299,21 @@ nodes:
           improvedSummaryHtml: "{{generate-summary-html}}"
           interviewPrep: "{{interview-prep}}"
           interviewPrepHtml: "{{interview-prep-html}}"
-          hasAttachment: true
 
+  # Save image as attachment to the analysis document
+  - id: save-attachment
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pouch"
+      operation: putAttachment
+      params:
+        collection: "resume_analyses"
+        documentId: "{{save-analysis.id}}"
+        attachmentName: "resume"
+        attachmentData: "{{habits.input.resumeImage}}"
+        contentType: "image/webp"
 
 edges:
   - source: extract-text
@@ -328,9 +344,11 @@ edges:
     target: save-analysis
   - source: interview-prep-html
     target: save-analysis
+  # save-attachment depends on save-analysis
+  - source: save-analysis
+    target: save-attachment
 
 output:
-  id: "{{save-analysis.id}}"
   extractedText: "{{extract-text}}"
   parsed: "{{parse-resume}}"
   atsScore: "{{ats-score}}"

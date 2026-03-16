@@ -67,13 +67,13 @@
     "catalog": false,
     "featured": false,
     "stubs": {
-      "@ha-bits/bit-database-sql": "./src/stubs/tauri-bit.js"
+      "@ha-bits/bit-database-sql/driver": "./src/stubs/tauri-driver.js"
     },
     "tauriPlugins": {
       "sql": {
         "cargo": "tauri-plugin-sql = { version = \"2\", features = [\"sqlite\"] }",
         "init": "tauri_plugin_sql::Builder::default().build()",
-        "permissions": ["sql:default", "sql:allow-execute"]
+        "permissions": ["sql:default", "sql:allow-load", "sql:allow-execute", "sql:allow-select"]
       }
     }
   }

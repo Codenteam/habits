@@ -68,6 +68,11 @@ export interface HabitData {
   slug: string;
   nodes: any[];
   edges?: any[];
+  input?: any[];
+  output?: Record<string, any>;
+  description?: string;
+  id?: string;
+  [key: string]: any; // Allow additional habit properties
 }
 
 export interface ParsedConfig {

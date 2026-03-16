@@ -289,25 +289,6 @@ if (typeof module !== 'undefined' && module.exports) {
       posix: null,
       win32: null
     },
-    fs: (function() {
-      const realpathSync = (p) => p;
-      realpathSync.native = (p) => p;
-      return {
-        readFileSync: () => { throw new Error('fs not available in QuickJS'); },
-        writeFileSync: () => { throw new Error('fs not available in QuickJS'); },
-        existsSync: () => false,
-        mkdirSync: () => {},
-        readdirSync: () => [],
-        statSync: () => ({ isFile: () => false, isDirectory: () => false }),
-        realpathSync,
-        realpath: (p, cb) => cb ? cb(null, p) : Promise.resolve(p),
-        promises: {
-          readFile: () => Promise.reject(new Error('fs not available')),
-          writeFile: () => Promise.reject(new Error('fs not available')),
-          realpath: (p) => Promise.resolve(p),
-        }
-      };
-    })(),
     http: (function() {
       // IncomingMessage class (for HTTP requests)
       class IncomingMessage extends Stream {

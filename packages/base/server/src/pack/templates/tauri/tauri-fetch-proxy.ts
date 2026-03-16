@@ -94,31 +94,77 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
   }
 
   /**
+   * Parse query string into object
+   */
+  function parseQueryParams(url) {
+    var params = {};
+    var queryStart = url.indexOf('?');
+    if (queryStart === -1) return params;
+    
+    var queryString = url.substring(queryStart + 1);
+    var pairs = queryString.split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var pair = pairs[i].split('=');
+      if (pair[0]) {
+        var key = decodeURIComponent(pair[0]);
+        var value = pair.length > 1 ? decodeURIComponent(pair[1]) : '';
+        // Try to parse numbers
+        if (/^\\d+$/.test(value)) {
+          params[key] = parseInt(value, 10);
+        } else if (/^\\d+\\.\\d+$/.test(value)) {
+          params[key] = parseFloat(value);
+        } else if (value === 'true') {
+          params[key] = true;
+        } else if (value === 'false') {
+          params[key] = false;
+        } else {
+          params[key] = value;
+        }
+      }
+    }
+    return params;
+  }
+
+  /**
    * Execute workflow directly via HabitsBundle (FULL mode)
    */
-  async function executeWorkflowDirect(workflowId, method, body, isStream) {
+  async function executeWorkflowDirect(workflowId, method, body, isStream, fullUrl) {
     if (!window.HabitsBundle) {
       throw new Error('HabitsBundle not loaded. Include cortex-bundle.js before this script.');
     }
 
-    // GET requests - return workflow info
+    // GET requests - execute workflow with query params as input
     if (method === 'GET') {
-      var workflows = window.HabitsBundle.getWorkflows();
-      var workflow = workflows.find(function(w) { 
-        return w.id === workflowId || w.name === workflowId; 
-      });
+      var queryInput = parseQueryParams(fullUrl || '');
+      console.log('[Habits] GET workflow execution:', workflowId, 'input:', queryInput);
       
-      if (!workflow) {
-        return new Response(JSON.stringify({ error: 'Workflow not found: ' + workflowId }), {
-          status: 404,
+      try {
+        // HabitsBundle.executeWorkflow wraps input internally as habits.input
+        var execution = await window.HabitsBundle.executeWorkflow(workflowId, queryInput);
+        
+        console.log('[Habits] Execution result:', execution);
+        console.log('[Habits] Execution output:', execution.output);
+        
+        // Return the workflow output directly (matches server API format)
+        return new Response(JSON.stringify({ 
+          success: true,
+          workflowId: workflowId,
+          output: execution.output || {}
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+      } catch (error) {
+        console.error('[Habits] Workflow execution error:', error);
+        return new Response(JSON.stringify({ 
+          error: error.message || 'Workflow execution failed',
+          workflowId: workflowId
+        }), {
+          status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
-      
-      return new Response(JSON.stringify(workflow), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
     }
 
     // POST requests - execute workflow
@@ -190,12 +236,13 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
 
       // Non-streaming mode
       try {
-        var results = await window.HabitsBundle.executeWorkflow(workflowId, input);
+        // HabitsBundle.executeWorkflow wraps input internally as habits.input
+        var execution = await window.HabitsBundle.executeWorkflow(workflowId, input);
         
         return new Response(JSON.stringify({ 
           success: true,
           workflowId: workflowId,
-          results: results 
+          output: execution.output || {} 
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
@@ -251,7 +298,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
       // FULL mode: Execute workflow directly as function
       if (MODE === 'full') {
         console.log('[Habits] Direct execution:', method, url, apiInfo.isStream ? '(streaming)' : '');
-        return executeWorkflowDirect(apiInfo.workflowId, method.toUpperCase(), body, apiInfo.isStream);
+        return executeWorkflowDirect(apiInfo.workflowId, method.toUpperCase(), body, apiInfo.isStream, url);
       }
       
       // API mode: Proxy to backend

@@ -8,7 +8,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "d-old": "tsx scripts/dev.ts",
+    "r": "tsx scripts/dev.ts",
     "d": "tsx scripts/tui.tsx",
     "docs:dev": "pnpm nx dev @ha-bits/habit-viewer & cd docs && pnpm dev",
     "prepare": "husky",

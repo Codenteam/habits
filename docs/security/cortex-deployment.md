@@ -33,7 +33,7 @@ pnpm add @ha-bits/cortex
 ### Binary
 
 ```bash
-npx @ha-bits/cortex server --config ./config.json
+npx @ha-bits/cortex server --config ./stack.yaml
 ```
 
 ## Docker Deployment
@@ -54,7 +54,7 @@ COPY security/ ./security/
 COPY workflows/ ./workflows/
 
 # Run Cortex
-CMD ["npx", "@ha-bits/cortex", "server", "--config", "./config.json"]
+CMD ["npx", "@ha-bits/cortex", "server", "--config", "./stack.yaml"]
 ```
 
 ### Multi-Stage Build

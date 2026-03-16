@@ -84,6 +84,20 @@ export function parseFilter(filter: any): Record<string, any> {
   return filter;
 }
 
+/**
+ * Safely convert a value to a number with a default fallback.
+ * Handles strings that might be unresolved expressions.
+ */
+export function safeNumber(value: any, defaultValue: number): number {
+  if (value === undefined || value === null) return defaultValue;
+  const num = Number(value);
+  // If the result is NaN or the original was a non-numeric string, use default
+  if (isNaN(num) || (typeof value === 'string' && !/^-?\d+(\.\d+)?$/.test(value.trim()))) {
+    return defaultValue;
+  }
+  return num;
+}
+
 // ============ Operations ============
 
 export async function store(params: {
@@ -162,7 +176,7 @@ export async function list(params: {
   const query = prefix
     ? 'SELECT key FROM kv_store WHERE collection = ? AND key LIKE ? AND (expires_at IS NULL OR expires_at > datetime(\'now\')) LIMIT ?'
     : 'SELECT key FROM kv_store WHERE collection = ? AND (expires_at IS NULL OR expires_at > datetime(\'now\')) LIMIT ?';
-  const args = prefix ? [String(collection), `${prefix}%`, Number(limit)] : [String(collection), Number(limit)];
+  const args = prefix ? [String(collection), `${prefix}%`, safeNumber(limit, 0)] : [String(collection), safeNumber(limit, 0)];
 
   const rows = sqlite.prepare(query).all(...args) as { key: string }[];
   const keys = rows.map(r => r.key);
@@ -236,7 +250,7 @@ export async function query(params: {
 
   const rows = sqlite.prepare(
     'SELECT custom_id, data, created_at FROM documents WHERE collection = ? AND (expires_at IS NULL OR expires_at > datetime(\'now\')) LIMIT ?'
-  ).all(String(collection), Number(limit) * 10) as any[];
+  ).all(String(collection), safeNumber(limit, 0) * 10) as any[];
 
   const results: any[] = [];
   for (const row of rows) {
@@ -247,7 +261,7 @@ export async function query(params: {
     }
     if (matches) {
       results.push({ ...data, _id: row.custom_id, _createdAt: row.created_at });
-      if (results.length >= Number(limit)) break;
+      if (results.length >= safeNumber(limit, 0)) break;
     }
   }
 

@@ -230,11 +230,10 @@ async function packBundle(options: PackBundleOptions): Promise<PackResult> {
   const envVars = parseEnvContent(envContent);
 
   // Convert HabitData[] to workflow format expected by generateBundle
+  // Spread all habit properties to preserve output, input, description, etc.
   const workflows = habits.map(h => ({
+    ...h,
     id: h.slug,
-    name: h.name,
-    nodes: h.nodes,
-    edges: h.edges,
   }));
 
   // Generate bundle via npx @ha-bits/bundle-generator
@@ -350,11 +349,10 @@ async function packDesktopFull(options: PackDesktopFullOptions): Promise<PackRes
   console.log(`   🖥️  App name: ${appName}`);
 
   // Convert habits to the format expected by packDesktopForWeb
+  // Spread all habit properties to preserve output, input, description, etc.
   const workflowsForPack = habits.map(h => ({
+    ...h,
     id: h.slug,
-    name: h.name,
-    nodes: h.nodes,
-    edges: h.edges,
   }));
 
   // Call packDesktopForWeb with full execution mode
@@ -530,11 +528,10 @@ async function packMobileFull(options: PackMobileFullOptions): Promise<PackResul
   console.log(`   📱 App name: ${appName}`);
 
   // Convert habits to the format expected by packMobileForWeb
+  // Spread all habit properties to preserve output, input, description, etc.
   const workflowsForPack = habits.map(h => ({
+    ...h,
     id: h.slug,
-    name: h.name,
-    nodes: h.nodes,
-    edges: h.edges,
   }));
 
   // Call packMobileForWeb with full execution mode
@@ -644,11 +641,10 @@ async function packTauri(options: PackTauriOptions): Promise<PackResult> {
 
   // First generate the bundle via npx @ha-bits/bundle-generator
   const envVars = parseEnvContent(envContent);
+  // Spread all habit properties to preserve output, input, description, etc.
   const workflows = habits.map(h => ({
+    ...h,
     id: h.slug,
-    name: h.name,
-    nodes: h.nodes,
-    edges: h.edges,
   }));
 
   const bundleResult = await generateBundle({
@@ -910,18 +906,14 @@ export function loadHabits(config: ParsedConfig, configDir: string): HabitData[]
 
     try {
       const habitContent = fs.readFileSync(habitPath, 'utf8');
-      const habit = yaml.parse(habitContent) as {
-        id?: string;
-        name?: string;
-        slug?: string;
-        nodes?: any[];
-        edges?: any[];
-      };
+      const habit = yaml.parse(habitContent) as Record<string, any>;
 
       const habitName = habit.name || habit.id || ref.id || path.basename(habitPath, '.yaml');
       console.log(`   📄 Loading: ${habitName}`);
 
+      // Preserve all habit properties, ensuring required fields have defaults
       habits.push({
+        ...habit,
         name: habitName,
         slug: habit.slug || habit.id || habitName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         nodes: habit.nodes || [],
