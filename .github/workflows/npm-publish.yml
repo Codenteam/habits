@@ -11,7 +11,7 @@ on:
       - 'release/**'
 permissions:
   contents: read
-  id-token: writ
+  id-token: write
 jobs:
   publish-to-npm:
     runs-on: ubuntu-latest
