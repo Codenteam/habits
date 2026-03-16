@@ -26,6 +26,12 @@ interface DiscordEmbed {
   fields?: Array<{ name: string; value: string; inline?: boolean }>;
 }
 
+interface DiscordChannel {
+  id: string;
+  type?: number;
+  [key: string]: any;
+}
+
 interface DiscordWebhookPayload {
   content?: string;
   username?: string;
@@ -264,7 +270,7 @@ const discordBit = {
           throw new Error(`Failed to create DM channel: ${JSON.stringify(error)}`);
         }
 
-        const channel = await channelResponse.json();
+        const channel = await channelResponse.json() as DiscordChannel;
         return sendBotMessage(channel.id, content, botToken);
       },
     },

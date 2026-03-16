@@ -8,18 +8,16 @@ on:
       - 'release/**'
     tags:
       - 'v*'
-      - 'release/**'
-
-permissions:
+      - 'release/**'permissions:
   contents: read
-  id-token: write
-
-jobs:
+  id-token: writejobs:
   publish-to-npm:
     runs-on: ubuntu-latest
     environment: npm
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -31,15 +29,11 @@ jobs:
           cache: true
           version: 10
 
-      - name: Install & Build
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm nx pack habits --skip-nx-cache
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: dist/packages/habits
+      - name: Determine version and tag
+        id: version
         run: |
           REF="${{ github.ref_name }}"
           
@@ -51,18 +45,19 @@ jobs:
             # Tag or release branch → @latest with version from ref
             VERSION="${REF#v}"
             VERSION="${VERSION#release/}"
-            # Add .${{ github.run_number }} to version
             VERSION="${VERSION}.${{ github.run_number }}"
             TAG="latest"
           fi
           
-          npm version $VERSION --no-git-tag-version --allow-same-version
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-          # For public habits repo
-          # npm publish --tag $TAG --access public --provenance
-
-          # For private habits repo
-          npm publish --tag $TAG --access public
-          
-          echo "📦 Published habits@$VERSION with tag @$TAG" >> $GITHUB_STEP_SUMMARY
+      - name: Publish affected packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_VERSION: ${{ steps.version.outputs.version }}
+          NPM_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          pnpm nx affected --target=publish --base=origin/main~1 --head=HEAD
+          echo "📦 Published affected packages with version $NPM_VERSION and tag @$NPM_TAG" >> $GITHUB_STEP_SUMMARY
 

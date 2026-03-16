@@ -55,14 +55,14 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "chmod +x dist/packages/cortex/pack/index.cjs",
-          "cd dist/packages/cortex && npm version patch --no-git-tag-version",
-          "cd dist/packages/cortex && npm publish"
+          "npm version ${NPM_VERSION:-patch} --no-git-tag-version --allow-same-version",
+          "npm publish --tag ${NPM_TAG:-latest} --access public"
         ],
+        "cwd": "dist/packages/cortex/server",
         "parallel": false
       },
       "dependsOn": [
-        "pack"
+        "build"
       ]
     },
 

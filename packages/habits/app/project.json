@@ -130,13 +130,13 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "chmod +x dist/packages/habits/app/main.cjs",
-          "cd packages/habits && npm version patch --no-git-tag-version",
-          "nx pack habits",
-          "cd dist/packages/habits && npm publish --access public"
+          "npm version ${NPM_VERSION:-patch} --no-git-tag-version --allow-same-version",
+          "npm publish --tag ${NPM_TAG:-latest} --access public"
         ],
+        "cwd": "dist/packages/habits",
         "parallel": false
-      }
+      },
+      "dependsOn": ["pack"]
     }
   }
 }
