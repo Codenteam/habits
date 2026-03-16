@@ -34,6 +34,8 @@ const MENU: MenuItem[] = [
   { id: 'pack-sea', label: 'Pack SEA Binary', desc: 'single executable' },
   { id: 'pack-desktop', label: 'Pack Desktop App', desc: 'Electron dmg' },
   { id: 'pack-mobile', label: 'Pack Mobile App', desc: 'Cordova android' },
+  { id: 'pack-mobile-signed', label: 'Pack Mobile + Sign', desc: 'release APK with debug sign' },
+  { id: 'sign-apk', label: 'Sign APK', desc: 'with debug keystore' },
   { id: 'publish-all', label: 'Publish All', desc: 'habits + cortex + base' },
   { id: 'publish-all-next', label: 'Publish All @next', desc: 'pre-release' },
   { id: 'publish-habits', label: 'Publish Habits', desc: 'latest' },
@@ -96,6 +98,24 @@ async function menu(): Promise<boolean> {
     case 'pack-sea': logHeader('Packing SEA Binary'); actions.packSea(); break;
     case 'pack-desktop': logHeader('Packing Desktop App'); actions.packDesktop(); break;
     case 'pack-mobile': logHeader('Packing Mobile App'); actions.packMobile(); break;
+    case 'pack-mobile-signed': {
+      const examples = discoverExamples();
+      const items: MenuItem[] = examples.map(e => ({ id: e, label: e }));
+      const exId = await select('Select showcase:', items);
+      if (exId) {
+        const config = `showcase/${exId}/stack.yaml`;
+        actions.packMobileFullSigned(config, 'android');
+      }
+      break;
+    }
+    case 'sign-apk': {
+      const apkPath = await prompt(`${c.green}APK path: ${c.reset}`);
+      if (apkPath) {
+        logHeader('Signing APK');
+        actions.signApkDebug(apkPath);
+      }
+      break;
+    }
     case 'publish-all': logHeader('Publishing All'); actions.publishAll(); logSuccess('All published!'); break;
     case 'publish-all-next': logHeader('Publishing All @next'); actions.publishAll('next'); logSuccess('All published @next!'); break;
     case 'publish-habits': logHeader('Publishing Habits'); actions.publishHabits(); break;

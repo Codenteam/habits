@@ -1,3 +1,9 @@
 TODO:
 Move bits and showcase templates into standalone Vue file to make the generator TS code cleaner. 
 Decide on yaml or js-yaml for generators and docs stuff specifically.
+
+Define the 3 Ls levels for bits with key differentiators:
+
+L1: No auth, stateless, single-purpose, environment-agnostic
+L2: Service-specific auth, CRUD operations, webhook/trigger support
+L3: Composes L1/L2, business-focused, sensible defaults, built-in error handling

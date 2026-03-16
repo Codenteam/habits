@@ -92,8 +92,8 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
   const sanitizedStackName = sanitizeStackName(stackName);
   const isMobile = platform === 'mobile';
   
-  // Use stackId for build caching if provided
-  const { workDir, existed: isCachedBuild } = getOrCreateWorkDir(`tauri-${platform}`, stackId);
+  // Use stackId for build caching - defaults to 'main' for consistent directory (habits-tauri-main)
+  const { workDir, existed: isCachedBuild } = getOrCreateWorkDir('tauri', stackId || 'main');
   
   const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;

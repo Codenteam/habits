@@ -324,3 +324,68 @@ export function startBitsServer() {
   logInfo('Non-mock mode - AI integration placeholder');
   run('npx tsx ./src/main.ts', { cwd: BITS_CREATOR_SERVER });
 }
+
+// ============================================================================
+// APK Signing
+// ============================================================================
+
+/**
+ * Sign an APK with the Android debug keystore
+ * @param apkPath Path to the unsigned APK
+ * @returns true if signing succeeded
+ */
+export function signApkDebug(apkPath: string): boolean {
+  const keystorePath = path.join(process.env.HOME || '~', '.android', 'debug.keystore');
+  
+  if (!fs.existsSync(keystorePath)) {
+    logError(`Debug keystore not found: ${keystorePath}`);
+    logInfo('Run Android Studio or create one with: keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000');
+    return false;
+  }
+  
+  if (!fs.existsSync(apkPath)) {
+    logError(`APK not found: ${apkPath}`);
+    return false;
+  }
+  
+  logInfo(`Signing APK: ${apkPath}`);
+  return run(`jarsigner -verbose -keystore "${keystorePath}" -storepass android -keypass android "${apkPath}" androiddebugkey`);
+}
+
+/**
+ * Pack mobile APK (release mode) and sign with debug key
+ * @param config Path to stack.yaml config
+ * @param target Mobile target (android/ios)
+ * @returns true if pack and sign succeeded
+ */
+export function packMobileFullSigned(config: string, target: 'android' | 'ios' = 'android'): boolean {
+  logHeader('Packing Mobile App (Release + Sign)');
+  
+  // Pack without --debug flag (release mode)
+  const packCmd = `pnpm tsx packages/habits/app/src/main.ts pack --config ${config} --format mobile-full --mobile-target ${target}`;
+  logInfo(`Running: ${c.gray}${packCmd}${c.reset}`);
+  
+  const packResult = run(packCmd);
+  if (!packResult) {
+    logError('Pack failed');
+    return false;
+  }
+  
+  // Find the output APK in the showcase dist folder
+  const showcaseName = path.basename(path.dirname(config));
+  const apkPath = path.join(PROJECT_ROOT, 'showcase', showcaseName, 'dist', 'habits-app.tauri.apk');
+  
+  if (!fs.existsSync(apkPath)) {
+    logError(`APK not found at expected path: ${apkPath}`);
+    return false;
+  }
+  
+  logSuccess(`APK built: ${apkPath}`);
+  
+  // Sign with debug key
+  if (target === 'android') {
+    return signApkDebug(apkPath);
+  }
+  
+  return true;
+}
