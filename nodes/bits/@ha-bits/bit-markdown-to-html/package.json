@@ -1,0 +1,43 @@
+{
+  "name": "@ha-bits/bit-markdown-to-html",
+  "version": "1.0.0",
+  "description": "Convert Markdown to HTML. Note: Does not sanitize output HTML - use with caution for user-generated content.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "markdown",
+    "html",
+    "convert"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "marked": "^12.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-markdown-to-html/src",
+    "projectType": "library",
+    "targets": {
+      "build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "tsc",
+          "cwd": "nodes/bits/@ha-bits/bit-markdown-to-html"
+        }
+      }
+    }
+  }
+}

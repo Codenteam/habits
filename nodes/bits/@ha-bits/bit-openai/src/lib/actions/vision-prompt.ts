@@ -166,7 +166,7 @@ export const visionPrompt = createAction({
     
     // Cast markdown code blocks if enabled
     if (propsValue.cast) {
-      return castMarkdownCodeBlocks(responseContent);
+      return castMarkdownCodeBlocks(responseContent, propsValue.cast);
     }
 
     return responseContent;

@@ -1,0 +1,46 @@
+id: get-analysis
+name: Get Analysis
+description: Get a specific resume analysis with optional PDF attachment
+
+input:
+  - id: id
+    type: string
+    required: true
+  - id: includeAttachment
+    type: boolean
+    required: false
+    description: Whether to include the PDF attachment
+
+nodes:
+  - id: fetch-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pouch"
+      operation: query
+      params:
+        collection: "resume_analyses"
+        filter:
+          _id: "{{habits.input.id}}"
+        limit: 1
+
+  - id: fetch-attachment
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pouch"
+      operation: getAttachment
+      params:
+        collection: "resume_analyses"
+        documentId: "{{habits.input.id}}"
+        attachmentName: "resume"
+
+edges:
+  - source: fetch-analysis
+    target: fetch-attachment
+
+output:
+  analysis: "{{fetch-analysis.results.0}}"
+  attachment: "{{fetch-attachment}}"

@@ -11,6 +11,8 @@ export interface TauriConfigOptions {
   windowTitle?: string;
   windowWidth?: number;
   windowHeight?: number;
+  /** Additional permissions for plugins */
+  permissions?: string[];
 }
 
 export function getTauriConfig(options: TauriConfigOptions): string {
@@ -99,4 +101,26 @@ export function getTauriConfig(options: TauriConfigOptions): string {
   };
 
   return JSON.stringify(config, null, 2);
+}
+
+/**
+ * Generate Tauri capabilities JSON
+ * This is required for Tauri v2 plugin permissions
+ */
+export function getTauriCapabilities(appId: string, additionalPermissions: string[] = []): string {
+  const capabilities = {
+    $schema: '../gen/schemas/desktop-schema.json',
+    identifier: 'default',
+    description: 'Capability for the main window',
+    windows: ['main'],
+    permissions: [
+      'core:default',
+      'shell:allow-open',
+      'http:default',
+      'log:default',
+      ...additionalPermissions,
+    ],
+  };
+  
+  return JSON.stringify(capabilities, null, 2);
 }

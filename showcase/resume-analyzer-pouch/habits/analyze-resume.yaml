@@ -1,0 +1,361 @@
+id: analyze-resume
+name: Analyze Resume
+description: Analyze resume image against job description and provide improvement suggestions
+
+input:
+  - id: resumeImage
+    type: string
+    required: true
+    description: Resume image content (base64 encoded PNG/JPG/WebP)
+  - id: jobDescription
+    type: string
+    required: false
+    description: Target job description
+  - id: targetRole
+    type: string
+    required: false
+    description: Target job title/role
+
+nodes:
+  # Extract text from image using OpenAI Vision
+  - id: extract-text
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: vision_prompt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        image: "{{habits.input.resumeImage}}"
+        temperature: 0.1
+        maxTokens: 4000
+        prompt: |
+          Extract all text content from this resume image.
+          
+          Return ONLY the extracted text content, preserving the structure and formatting as plain text.
+          Include all sections: contact info, summary, experience, education, skills, certifications.
+
+  # Parse and structure resume
+  - id: parse-resume
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.3
+        maxTokens: 1000
+        cast: true
+        prompt: |
+          Parse this resume and extract structured information:
+          
+          {{extract-text}}
+          
+          Return JSON:
+          {
+            "name": "Full name",
+            "email": "Email",
+            "phone": "Phone",
+            "location": "Location",
+            "summary": "Professional summary",
+            "experience": [{"title": "", "company": "", "dates": "", "bullets": []}],
+            "education": [{"degree": "", "school": "", "year": ""}],
+            "skills": ["skill1", "skill2"],
+            "certifications": [],
+            "yearsExperience": number
+          }
+
+  # Score ATS compatibility
+  - id: ats-score
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 600
+        cast: 'force'
+        prompt: |
+          Analyze this resume for ATS (Applicant Tracking System) compatibility:
+          
+          Resume: {{extract-text}}
+          Target Job: {{habits.input.jobDescription}}
+          
+          Evaluate:
+          1. Keyword optimization (does it include relevant keywords?)
+          2. Format compatibility (is it ATS-friendly?)
+          3. Contact info completeness
+          4. Section structure
+          5. Quantifiable achievements
+          
+          Return JSON:
+          {
+            "overallScore": number (0-100),
+            "keywordScore": number (0-100),
+            "formatScore": number (0-100),
+            "contentScore": number (0-100),
+            "missingKeywords": ["keyword1", "keyword2"],
+            "formatIssues": ["issue1", "issue2"],
+            "suggestions": ["suggestion1", "suggestion2"]
+          }
+
+  # Analyze experience quality
+  - id: experience-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.5
+        maxTokens: 800
+        prompt: |
+          Analyze the work experience section of this resume:
+          
+          {{extract-text}}
+          
+          For each position, evaluate:
+          1. Action verbs usage
+          2. Quantifiable results (numbers, percentages)
+          3. Achievement vs. responsibility focus
+          4. Relevance to target role: {{habits.input.targetRole}}
+          
+          Provide:
+          - Strengths of each position description
+          - Weaknesses and areas to improve
+          - Specific rewrite suggestions for 2-3 weak bullets
+          - Example of how to add metrics where missing
+
+  # Job match analysis
+  - id: job-match
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 700
+        cast: true
+        prompt: |
+          Compare this resume to the job requirements:
+          
+          Resume: {{extract-text}}
+          
+          Job Description: {{habits.input.jobDescription}}
+          
+          Target Role: {{habits.input.targetRole}}
+          
+          Return JSON:
+          {
+            "matchScore": number (0-100),
+            "matchingSkills": ["skill1", "skill2"],
+            "missingSkills": ["skill1", "skill2"],
+            "experienceGaps": ["gap1", "gap2"],
+            "strengthsForRole": ["strength1", "strength2"],
+            "recommendations": ["rec1", "rec2"],
+            "likelyOutcome": "Strong match / Moderate match / Weak match"
+          }
+
+  # Generate improved summary
+  - id: generate-summary
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 300
+        roles:
+          - role: system
+            content: You are an expert resume writer who crafts compelling professional summaries.
+        prompt: |
+          Write an improved professional summary for this resume:
+          
+          Current Resume: {{extract-text}}
+          
+          Target Role: {{habits.input.targetRole}}
+          
+          Create a 3-4 sentence summary that:
+          - Opens with years of experience and specialty
+          - Highlights 2-3 key achievements
+          - Includes relevant skills for the target role
+          - Shows unique value proposition
+
+  # Interview questions to prepare
+  - id: interview-prep
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.6
+        maxTokens: 600
+        prompt: |
+          Based on this resume and job, generate interview preparation:
+          
+          Resume: {{extract-text}}
+          Job: {{habits.input.jobDescription}}
+          Role: {{habits.input.targetRole}}
+          
+          Provide:
+          1. 5 likely interview questions based on resume gaps
+          2. 3 behavioral questions (STAR format prep)
+          3. 3 technical questions based on listed skills
+          4. Suggested talking points for strengths
+          5. How to address any weaknesses/gaps
+
+  # Convert experience analysis markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML - use with caution for user-generated content
+  - id: experience-analysis-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{experience-analysis}}"
+
+  # Convert improved summary markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
+  - id: generate-summary-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{generate-summary}}"
+
+  # Convert interview prep markdown to HTML
+  # Note: bit-markdown-to-html does NOT sanitize output HTML
+  - id: interview-prep-html
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-markdown-to-html"
+      operation: toHtml
+      params:
+        markdown: "{{interview-prep}}"
+
+  # Save analysis document using PouchDB
+  - id: save-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pouch"
+      operation: insert
+      params:
+        collection: "resume_analyses"
+        document:
+          targetRole: "{{habits.input.targetRole}}"
+          extractedText: "{{extract-text}}"
+          parsed: "{{parse-resume}}"
+          atsScore: "{{ats-score}}"
+          experienceAnalysis: "{{experience-analysis}}"
+          experienceAnalysisHtml: "{{experience-analysis-html}}"
+          jobMatch: "{{job-match}}"
+          improvedSummary: "{{generate-summary}}"
+          improvedSummaryHtml: "{{generate-summary-html}}"
+          interviewPrep: "{{interview-prep}}"
+          interviewPrepHtml: "{{interview-prep-html}}"
+
+  # Save image as attachment to the analysis document
+  - id: save-attachment
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pouch"
+      operation: putAttachment
+      params:
+        collection: "resume_analyses"
+        documentId: "{{save-analysis.id}}"
+        attachmentName: "resume"
+        attachmentData: "{{habits.input.resumeImage}}"
+        contentType: "image/webp"
+
+edges:
+  - source: extract-text
+    target: parse-resume
+  - source: parse-resume
+    target: ats-score
+  - source: parse-resume
+    target: experience-analysis
+  - source: parse-resume
+    target: job-match
+  - source: parse-resume
+    target: generate-summary
+  - source: job-match
+    target: interview-prep
+  # Connect markdown nodes to HTML converters
+  - source: experience-analysis
+    target: experience-analysis-html
+  - source: generate-summary
+    target: generate-summary-html
+  - source: interview-prep
+    target: interview-prep-html
+  # Connect all analysis nodes to save-analysis
+  - source: ats-score
+    target: save-analysis
+  - source: experience-analysis-html
+    target: save-analysis
+  - source: generate-summary-html
+    target: save-analysis
+  - source: interview-prep-html
+    target: save-analysis
+  # save-attachment depends on save-analysis
+  - source: save-analysis
+    target: save-attachment
+
+output:
+  extractedText: "{{extract-text}}"
+  parsed: "{{parse-resume}}"
+  atsScore: "{{ats-score}}"
+  experienceAnalysis: "{{experience-analysis}}"
+  experienceAnalysisHtml: "{{experience-analysis-html}}"
+  jobMatch: "{{job-match}}"
+  improvedSummary: "{{generate-summary}}"
+  improvedSummaryHtml: "{{generate-summary-html}}"
+  interviewPrep: "{{interview-prep}}"
+  interviewPrepHtml: "{{interview-prep-html}}"

@@ -1,0 +1,158 @@
+id: sql-demo
+name: SQLite/Drizzle Demo
+description: A demo showcasing CRUD operations (Create, Read, Update, Delete) with SQLite using Drizzle ORM - the simplest SQL database that works in Node.js and Tauri desktop apps
+
+# This habit demonstrates the bit-database-sql module:
+# - Insert a document (Create)
+# - Query to find the document (Read)
+# - Update the document (Update)
+# - Delete the document (Delete)
+# - Also demonstrates key-value store operations
+
+nodes:
+  # Step 1: Insert a document (CREATE)
+  - id: insert-doc
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: "users"
+        document:
+          name: "{{habits.input.name}}"
+          email: "{{habits.input.email}}"
+          status: "pending"
+          createdBy: "sql-demo"
+
+  # Step 2: Query to verify insertion (READ)
+  - id: verify-insert
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: "users"
+        filter:
+          _id: "{{insert-doc.id}}"
+        limit: 1
+
+  # Step 3: Update the document status (UPDATE)
+  - id: update-doc
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: "users"
+        filter:
+          _id: "{{insert-doc.id}}"
+        update:
+          status: "active"
+          verified: true
+          verifiedAt: "{{habits.timestamp}}"
+
+  # Step 4: Query to verify update
+  - id: verify-update
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: "users"
+        filter:
+          _id: "{{insert-doc.id}}"
+        limit: 1
+
+  # Step 5: Store a key-value pair
+  - id: store-kv
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: "settings"
+        key: "last-user-{{insert-doc.id}}"
+        value:
+          userId: "{{insert-doc.id}}"
+          processedAt: "{{habits.timestamp}}"
+
+  # Step 6: Retrieve the key-value pair
+  - id: get-kv
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: "settings"
+        key: "last-user-{{insert-doc.id}}"
+
+  # Step 7: Delete the key-value pair (DELETE key-value)
+  - id: delete-kv
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: delete
+      params:
+        collection: "settings"
+        key: "last-user-{{insert-doc.id}}"
+
+  # Step 8: Increment a counter
+  - id: increment-counter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: increment
+      params:
+        collection: "counters"
+        key: "user-operations"
+        amount: 1
+
+edges:
+  - source: insert-doc
+    target: verify-insert
+  - source: verify-insert
+    target: update-doc
+  - source: update-doc
+    target: verify-update
+  - source: verify-update
+    target: store-kv
+  - source: store-kv
+    target: get-kv
+  - source: get-kv
+    target: delete-kv
+  - source: delete-kv
+    target: increment-counter
+
+output:
+  operations:
+    create:
+      result: "{{insert-doc}}"
+      verification: "{{verify-insert}}"
+    update:
+      result: "{{update-doc}}"
+      verification: "{{verify-update}}"
+    keyValue:
+      store: "{{store-kv}}"
+      get: "{{get-kv}}"
+      delete: "{{delete-kv}}"
+    counter: "{{increment-counter}}"
+  summary:
+    userId: "{{insert-doc.id}}"
+    finalStatus: "{{verify-update.results[0].status}}"
+    operationsCount: "{{increment-counter.newValue}}"

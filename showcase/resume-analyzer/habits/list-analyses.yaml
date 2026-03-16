@@ -1,19 +1,20 @@
 id: list-analyses
 name: List Analyses
-description: Get all resume analyses
+description: Get all resume analyses from SQL database
 
 input:
   - id: limit
     type: number
     required: false
+    default: 100
 
 nodes:
   - id: query-analyses
     type: bits
     data:
       framework: bits
-      source: local
-      module: "@ha-bits/bit-pouch"
+      source: npm
+      module: "@ha-bits/bit-database-sql"
       operation: query
       params:
         collection: "resume_analyses"
@@ -23,4 +24,3 @@ edges: []
 
 output:
   analyses: "{{query-analyses.results}}"
-  count: "{{query-analyses.count}}"

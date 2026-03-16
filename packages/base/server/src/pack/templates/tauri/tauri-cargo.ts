@@ -3,14 +3,25 @@
  * Generates Cargo.toml for Tauri applications
  */
 
+export interface TauriCargoPlugin {
+  name: string;
+  cargo: string;
+}
+
 export interface TauriCargoOptions {
   appName: string;
   version?: string;
+  /** Additional Tauri plugins required by bits */
+  plugins?: TauriCargoPlugin[];
 }
 
 export function getTauriCargo(options: TauriCargoOptions): string {
-  const { appName, version = '1.0.0' } = options;
+  const { appName, version = '1.0.0', plugins = [] } = options;
   const packageName = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  // Build plugin dependencies
+  const pluginDeps = plugins.map(p => p.cargo).join('\n');
+  const pluginSection = pluginDeps ? `\n${pluginDeps}` : '';
 
   return `[package]
 name = "${packageName}"
@@ -38,8 +49,10 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-http = "2"
+tauri-plugin-log = "2"
+log = "0.4"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = "1"${pluginSection}
 
 [features]
 # This feature is used for production builds or when a different method of serving the content is used

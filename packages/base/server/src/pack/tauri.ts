@@ -8,13 +8,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import { LoggerFactory } from '@ha-bits/core';
-import { getTauriConfig } from './templates/tauri/tauri-config';
+import { getTauriConfig, getTauriCapabilities } from './templates/tauri/tauri-config';
 import { getTauriMain, getTauriLib } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriBuildScript } from './templates/tauri/tauri-build';
 import { getTauriFetchProxyScript, TauriFetchProxyMode } from './templates/tauri/tauri-fetch-proxy';
 import { getTauriGradleProperties, getTauriProguardRules } from './templates/tauri/tauri-gradle';
 import { getTauriReadme } from './templates/tauri/tauri-readme';
+import { TauriPlugin } from './bundle-generator-wrapper';
 import JSZip from 'jszip';
 import {
   sanitizeStackName,
@@ -52,6 +53,8 @@ export interface TauriPackOptions {
   executionMode?: TauriFetchProxyMode;
   // Embedded cortex bundle for 'full' mode (generated JS that includes workflows + bit execution)
   cortexBundle?: string;
+  // Tauri plugins required by bits
+  tauriPlugins?: TauriPlugin[];
 }
 
 export interface TauriPackResult {
@@ -83,13 +86,14 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     mobileTarget,
     appName: customAppName,
     appIcon,
+    tauriPlugins = [],
   } = options;
 
   const sanitizedStackName = sanitizeStackName(stackName);
   const isMobile = platform === 'mobile';
   
-  // Use stackId for build caching if provided
-  const { workDir, existed: isCachedBuild } = getOrCreateWorkDir(`tauri-${platform}`, stackId);
+  // Use stackId for build caching - defaults to 'main' for consistent directory (habits-tauri-main)
+  const { workDir, existed: isCachedBuild } = getOrCreateWorkDir('tauri', stackId || 'main');
   
   const appName = customAppName || 'Habits App';
   const appId = `com.habits.${appName.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
@@ -154,17 +158,23 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     // Calculate package name (same logic as in getTauriCargo)
     const packageName = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    // Create Cargo.toml
-    const cargoToml = getTauriCargo({ appName });
+    // Create Cargo.toml with plugin dependencies
+    const cargoToml = getTauriCargo({ 
+      appName,
+      plugins: tauriPlugins.map(p => ({ name: p.name, cargo: p.cargo })),
+    });
 
     // Create main.rs (calls lib::run())
     const mainRs = getTauriMain(packageName);
 
-    // Create lib.rs (required for mobile)
-    const libRs = getTauriLib();
+    // Create lib.rs with plugin initialization
+    const libRs = getTauriLib(tauriPlugins.map(p => ({ name: p.name, init: p.init })));
 
     // Create build.rs
     const buildRs = getTauriBuildScript();
+
+    // Collect all plugin permissions
+    const pluginPermissions = tauriPlugins.flatMap(p => p.permissions || []);
 
     // Create config.json
     const configJson = {
@@ -194,6 +204,15 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     fs.writeFileSync(path.join(srcDir, 'main.rs'), mainRs);
     fs.writeFileSync(path.join(srcDir, 'lib.rs'), libRs);
 
+    // Create capabilities directory and file for plugin permissions
+    const capabilitiesDir = path.join(srcTauriDir, 'capabilities');
+    fs.mkdirSync(capabilitiesDir, { recursive: true });
+    const capabilitiesJson = getTauriCapabilities(appId, pluginPermissions);
+    fs.writeFileSync(path.join(capabilitiesDir, 'default.json'), capabilitiesJson);
+    if (tauriPlugins.length > 0) {
+      logger.info(`Added ${tauriPlugins.length} Tauri plugin(s) with permissions: ${pluginPermissions.join(', ')}`);
+    }
+
     // Create placeholder icon files or use custom icon
     let iconBuffer: Buffer;
     
@@ -204,15 +223,31 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
       iconBuffer = Buffer.from(base64Data, 'base64');
       logger.info('Using custom app icon');
     } else {
-      // Try to use default habits logo from the assets folder, near the js file in dest
-      const defaultLogoPath = path.join(__dirname, 'assets', 'logo.png');
-      if (fs.existsSync(defaultLogoPath)) {
-        iconBuffer = fs.readFileSync(defaultLogoPath);
-        logger.info('Using default Habits logo');
+      // Try to find default habits logo in multiple possible locations
+      const possibleLogoPaths = [
+        // When running from compiled dist
+        path.join(__dirname, 'assets', 'logo.png'),
+        // When running from source via tsx - relative to pack folder
+        path.resolve(__dirname, '../../../../assets/logo.png'),
+        // Relative to workspace root (process.cwd())
+        path.join(process.cwd(), 'assets', 'logo.png'),
+      ];
+      
+      let foundLogoPath: string | null = null;
+      for (const logoPath of possibleLogoPaths) {
+        if (fs.existsSync(logoPath)) {
+          foundLogoPath = logoPath;
+          break;
+        }
+      }
+      
+      if (foundLogoPath) {
+        iconBuffer = fs.readFileSync(foundLogoPath);
+        logger.info('Using default Habits logo', { path: foundLogoPath });
       } else {
         // Fallback to a placeholder 1x1 transparent PNG
         iconBuffer = Buffer.from(PLACEHOLDER_ICON_BASE64, 'base64');
-        logger.info('Using placeholder icon (default logo not found)');
+        logger.info('Using placeholder icon (default logo not found)', { searched: possibleLogoPaths });
       }
     }
     fs.writeFileSync(path.join(workDir, 'app-icon.png'), iconBuffer);
@@ -398,12 +433,16 @@ async function buildDesktopBinary(options: {
 }): Promise<TauriPackResult> {
   const { workDir, sanitizedStackName, debugBuild = false, cleanup } = options;
 
+  // Regenerate icons just before build to ensure they are up to date
+  logger.info('Regenerating app icons for desktop...');
+  execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
+
   const buildCmd = debugBuild ? 'npm run build:debug' : 'npm run build';
   logger.info(`Building Tauri desktop ${debugBuild ? '(debug mode) ' : ''}(this may take several minutes on first build)...`);
   execSync(buildCmd, { cwd: workDir, stdio: 'inherit', timeout: 600000 });
 
-  // Find the built binary - debug builds go to target/debug/bundle
-  const bundleDir = path.join(workDir, 'target', debugBuild ? 'debug' : 'release', 'bundle');
+  // Find the built binary - debug builds go to src-tauri/target/debug/bundle
+  const bundleDir = path.join(workDir, 'src-tauri', 'target', debugBuild ? 'debug' : 'release', 'bundle');
   if (!fs.existsSync(bundleDir)) {
     throw new Error('Build completed but bundle directory not found');
   }
@@ -621,7 +660,7 @@ async function buildMobileBinary(options: {
       throw new Error('iOS project was not created. Make sure Xcode is installed (macOS only).');
     }
 
-    logger.info('Regenerating app icons for Android...');
+    logger.info('Regenerating app icons for iOS...');
     execSync('npm run tauri icon app-icon.png', { cwd: workDir, stdio: 'inherit', timeout: 120000 });
     logger.info(`Building iOS app${debugBuild ? ' (debug mode)' : ''}...`);
     try {

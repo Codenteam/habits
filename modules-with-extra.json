@@ -73,7 +73,7 @@
     {
       "framework": "bits",
       "source": "link",
-      "repository": "@ha-bits/bit-database-mysql"
+      "repository": "@ha-bits/bit-database-sql"
     },
     {
       "framework": "bits",

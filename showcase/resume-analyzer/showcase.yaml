@@ -23,7 +23,7 @@ longDescription: |
   This showcase demonstrates:
   - **Multi-habit workflows** — Multiple habits working together (analyze, generate cover letter, list, get)
   - **Vision AI integration** — Uses OpenAI Vision to extract text from resume images
-  - **Local database** — PouchDB for storing analyses without external dependencies
+  - **Local database** — SQLite for storing analyses without external dependencies
   - **Mobile-first UI** — Responsive design ready for packaging as mobile/desktop app
   - **Complete app packaging** — Can be exported as standalone binary, desktop app, or mobile app
 

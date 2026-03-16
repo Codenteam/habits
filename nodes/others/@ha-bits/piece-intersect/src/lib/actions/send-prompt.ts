@@ -138,7 +138,6 @@ export const askOpenAI = createAction({
     const conf = {
       apiKey: authValue.apiKey,
       baseURL: getIntersectBaseUrl(authValue.host),
-      logLevel: 'debug' as const,
     };
     
     const openai = new OpenAI(conf);
@@ -150,7 +149,6 @@ export const askOpenAI = createAction({
       presencePenalty,
       prompt,
     } = propsValue;
-console.log(conf, propsValue);
     let messageHistory: any[] | null = [];
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {
@@ -189,8 +187,6 @@ console.log(conf, propsValue);
       presence_penalty: presencePenalty ?? undefined,
       max_completion_tokens: maxTokens,
     };
-      console.log(messages);
-      console.log(req);
     // Send prompt
     const completion = await openai.chat.completions.create(req);
 

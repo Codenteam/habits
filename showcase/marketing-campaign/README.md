@@ -16,7 +16,7 @@ This example demonstrates a marketing campaign workflow that is designed to be s
 
 2. Run the server:
    ```bash
-   npx @ha-bits/cortex server --config ./config.json
+   npx @ha-bits/cortex server --config ./stack.yaml
    ```
 
 3. Open the frontend at `http://localhost:13000`

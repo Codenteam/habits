@@ -20,7 +20,7 @@ workflows:
 server:
   port: 13000
   host: "0.0.0.0"
-  frontend: ./frontend
+  frontend: frontend
   openapi: true
 
 logging:

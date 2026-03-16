@@ -36,7 +36,7 @@ In the [Habit Loop](/extra-reading/neuroscience), the **Cue** is the trigger tha
 The CLI is ideal for manual execution, cron jobs, CI/CD pipelines, and local testing:
 
 ```bash
-npx @ha-bits/cortex@latest execute ./showcase/marketing-campaign/config.json
+npx @ha-bits/cortex@latest execute ./showcase/marketing-campaign/stack.yaml
 ```
 
 ### REST API Triggers
@@ -44,7 +44,7 @@ npx @ha-bits/cortex@latest execute ./showcase/marketing-campaign/config.json
 The REST API is the primary method for integrating with external systems and services. See the [Swagger OpenAPI](#swagger) section below for complete details about the generated endpoints. To run in server mode, use this command:å
 
 ```bash
-npx @ha-bits/cortex@latest server --config ./showcase/marketing-campaign/config.json
+npx @ha-bits/cortex@latest server --config ./showcase/marketing-campaign/stack.yaml
 ```
 
 ---
@@ -72,11 +72,11 @@ This is the recommended approach when:
 For quickly testing habits within Docker and an example configurations, use the playground script:
 
 ```bash
-bash packages/cortex/server/playground/run.bash --config=./showcase/marketing-campaign/config.json
+bash packages/cortex/server/playground/run.bash --config=./showcase/marketing-campaign/stack.yaml
 ```
 
 Available options:
-- `--config=<path>`: Specify the example to run (e.g., `--config ./showcase/marketing-campaign/config.json`)
+- `--config=<path>`: Specify the example to run (e.g., `--config ./showcase/marketing-campaign/stack.yaml`)
 - The playground provides a preconfigured environment for testing
 
 This is ideal for:
@@ -99,7 +99,7 @@ With additional options:
 npx @ha-bits/cortex --habit ./path/to/habit.json
 
 # Run with custom configuration
-npx @ha-bits/cortex --config ./config.json
+npx @ha-bits/cortex --config ./stack.yaml
 
 # Run on a specific port
 npx @ha-bits/cortex --port 3000

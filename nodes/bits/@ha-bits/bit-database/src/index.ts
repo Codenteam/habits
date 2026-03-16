@@ -6,7 +6,7 @@
  * 
  * This is the base in-memory implementation. It can be replaced by:
  * - @ha-bits/bit-database-mongodb: MongoDB storage
- * - @ha-bits/bit-database-mysql: MySQL storage
+ * - @ha-bits/bit-database-sql: sql storage
  */
 
 // Export types for child bits to implement
@@ -150,7 +150,7 @@ const databaseBit = {
    */
   replaceableBy: [
     '@ha-bits/bit-database-mongodb',
-    '@ha-bits/bit-database-mysql',
+    '@ha-bits/bit-database-sql',
   ],
   
   actions: {

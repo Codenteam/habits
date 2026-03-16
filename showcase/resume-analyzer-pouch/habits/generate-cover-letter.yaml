@@ -1,0 +1,92 @@
+id: generate-cover-letter
+name: Generate Cover Letter
+description: Generate a customized cover letter for a specific job
+
+input:
+  - id: resumeImage
+    type: string
+    required: true
+    description: Resume image content (base64 encoded PNG/JPG/WebP)
+  - id: jobDescription
+    type: string
+    required: true
+    description: Target job description
+  - id: companyName
+    type: string
+    required: true
+    description: Company name
+  - id: hiringManager
+    type: string
+    required: false
+    description: Hiring manager name if known
+  - id: tone
+    type: string
+    required: false
+    description: formal, friendly, enthusiastic
+
+nodes:
+  # Extract text from image using OpenAI Vision
+  - id: extract-text
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: vision_prompt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        image: "{{habits.input.resumeImage}}"
+        temperature: 0.1
+        maxTokens: 4000
+        prompt: |
+          Extract all text content from this resume image.
+          
+          Return ONLY the extracted text content, preserving the structure and formatting as plain text.
+
+  - id: generate-letter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        roles:
+          - role: system
+            content: You are an expert cover letter writer who crafts compelling, personalized letters that get interviews.
+        prompt: |
+          Write a cover letter for this application:
+          
+          Resume:
+          {{extract-text}}
+          
+          Job Description:
+          {{habits.input.jobDescription}}
+          
+          Company: {{habits.input.companyName}}
+          Hiring Manager: {{habits.input.hiringManager}}
+          Tone: {{habits.input.tone}}
+          
+          Structure:
+          1. Opening hook that shows enthusiasm and mentions the specific role
+          2. Paragraph connecting your experience to their needs (use specific examples)
+          3. Paragraph showing knowledge of the company and cultural fit
+          4. Strong closing with call to action
+          
+          Keep it to about 300-350 words. Be specific, not generic.
+
+edges:
+  - source: extract-text
+    target: generate-letter
+
+output:
+  coverLetter: "{{generate-letter}}"
+  extractedText: "{{extract-text}}"

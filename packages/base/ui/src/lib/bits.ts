@@ -141,9 +141,9 @@ export const BITS: BitDefinition[] = [
     category: 'Data',
   },
   {
-    name: '@ha-bits/bit-database-mysql',
-    displayName: 'MySQL',
-    description: 'MySQL database operations',
+    name: '@ha-bits/bit-database-sql',
+    displayName: 'SQL',
+    description: 'SQL database operations',
     icon: Database,
     category: 'Data',
   },

@@ -14,7 +14,7 @@ nodes:
       framework: bits
       module: '@ha-bits/bit-agent'
       operation: run_agent
-      source: local
+      source: npm
       credentials:
         agentAuth:
           llmProvider: openai
