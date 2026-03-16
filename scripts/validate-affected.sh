@@ -43,7 +43,7 @@ else
 
     echo "🔨 Building affected packages..."
     echo ""
-    if pnpm nx affected:build --base=$BASE_REF --skip-nx-cache; then
+    if pnpm nx affected:build --base=$BASE_REF; then
         echo ""
         echo -e "${GREEN}✅ All affected builds passed!${NC}"
     else

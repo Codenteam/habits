@@ -8,9 +8,11 @@ on:
       - 'release/**'
     tags:
       - 'v*'
-      - 'release/**'permissions:
+      - 'release/**'
+permissions:
   contents: read
-  id-token: writejobs:
+  id-token: writ
+jobs:
   publish-to-npm:
     runs-on: ubuntu-latest
     environment: npm
