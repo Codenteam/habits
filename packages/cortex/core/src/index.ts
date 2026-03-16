@@ -74,5 +74,11 @@ export {
   createCustomApiCallAction,
 } from './bits/framework';
 
+// Declarative node types - for creating declarative/routing-based bits
+export type {
+  IDeclarativeNodeType,
+  DeclarativeNodeDescription,
+} from './bits/declarativeExecutor';
+
 // Re-export types from core
 export * from '@habits/shared/types';
