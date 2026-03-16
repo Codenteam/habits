@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-tasks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Task management bit for Jira, Asana, and generic ticket systems",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,8 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
   }
 }

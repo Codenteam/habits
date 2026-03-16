@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-database-sql",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SQL database storage bit using Drizzle ORM with SQLite support - replaces @ha-bits/bit-database with SQL persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    
     "drizzle-orm": "^0.35.0",
     "better-sqlite3": "^11.0.0"
   },
@@ -73,7 +72,12 @@
       "sql": {
         "cargo": "tauri-plugin-sql = { version = \"2\", features = [\"sqlite\"] }",
         "init": "tauri_plugin_sql::Builder::default().build()",
-        "permissions": ["sql:default", "sql:allow-load", "sql:allow-execute", "sql:allow-select"]
+        "permissions": [
+          "sql:default",
+          "sql:allow-load",
+          "sql:allow-execute",
+          "sql:allow-select"
+        ]
       }
     }
   }

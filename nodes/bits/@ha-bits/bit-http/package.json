@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-http",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "HTTP request bit for making web API calls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

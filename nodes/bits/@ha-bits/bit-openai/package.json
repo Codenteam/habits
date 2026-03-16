@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-openai",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "openai AI integration bit module - imports from @ha-bits/cortex instead of activepieces",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -37,7 +37,7 @@ async function telegramRequest(
     body: JSON.stringify(body),
   });
   
-  const result: TelegramResponse = await response.json();
+  const result = await response.json() as TelegramResponse;
   
   if (!result.ok) {
     throw new Error(`Telegram API Error: ${result.description || 'Unknown error'} (${result.error_code})`);

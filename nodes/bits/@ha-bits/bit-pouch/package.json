@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-pouch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PouchDB database storage bit - replaces @ha-bits/bit-database with local persistence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

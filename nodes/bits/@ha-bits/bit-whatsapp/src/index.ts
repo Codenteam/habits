@@ -55,7 +55,7 @@ async function whatsappRequest(
     body: JSON.stringify(body),
   });
   
-  const result: WhatsAppResponse = await response.json();
+  const result = await response.json() as WhatsAppResponse;
   
   if (result.error) {
     throw new Error(`WhatsApp API Error: ${result.error.message} (${result.error.code})`);

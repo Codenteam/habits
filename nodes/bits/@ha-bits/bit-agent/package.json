@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-agent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "AI Agent bit with LangChain and MCP (Model Context Protocol) integration for multi-tool AI workflows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

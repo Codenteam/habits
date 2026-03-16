@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-telegram",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Telegram Bot integration bit for sending messages and notifications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

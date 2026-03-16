@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-any-of",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Any-of flow control bit - continues when any one incoming edge completes without waiting for others",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

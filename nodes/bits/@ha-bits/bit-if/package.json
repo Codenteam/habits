@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-if",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Conditional logic bit for branching workflows with if/else and switch statements",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

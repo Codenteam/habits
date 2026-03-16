@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-filesystem",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Filesystem operations bit for reading, writing, and managing files",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -65,8 +65,21 @@
       "fs": {
         "cargo": "tauri-plugin-fs = { version = \"2\" }",
         "init": "tauri_plugin_fs::init()",
-        "permissions": ["fs:default", "fs:allow-exists", "fs:allow-read-file", "fs:allow-write-file", "fs:allow-mkdir", "fs:allow-remove", "fs:allow-rename", "fs:allow-copy-file", "fs:allow-read-dir"],
-        "scope": ["$APPDATA", "$APPDATA/**"]
+        "permissions": [
+          "fs:default",
+          "fs:allow-exists",
+          "fs:allow-read-file",
+          "fs:allow-write-file",
+          "fs:allow-mkdir",
+          "fs:allow-remove",
+          "fs:allow-rename",
+          "fs:allow-copy-file",
+          "fs:allow-read-dir"
+        ],
+        "scope": [
+          "$APPDATA",
+          "$APPDATA/**"
+        ]
       }
     }
   }

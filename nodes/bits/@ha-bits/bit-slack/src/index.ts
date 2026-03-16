@@ -20,6 +20,12 @@ interface SlackMessage {
   thread_ts?: string;
 }
 
+interface SlackResponse {
+  ok: boolean;
+  error?: string;
+  [key: string]: any;
+}
+
 /**
  * Make a request to Slack API
  */
@@ -39,7 +45,7 @@ async function slackRequest(
     body: JSON.stringify(body),
   });
   
-  const result = await response.json();
+  const result = await response.json() as SlackResponse;
   
   if (!result.ok) {
     throw new Error(`Slack API Error: ${result.error}`);

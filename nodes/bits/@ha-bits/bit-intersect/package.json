@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-intersect",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Intersect AI integration bit module - imports from @ha-bits/cortex instead of activepieces",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

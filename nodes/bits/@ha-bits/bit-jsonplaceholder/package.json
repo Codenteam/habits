@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-jsonplaceholder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JSONPlaceholder API declarative bit for testing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,6 @@
     "build": "tsc",
     "dev": "tsc --watch"
   },
-
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/node": "^20.0.0"
@@ -30,7 +29,8 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
   }
 }

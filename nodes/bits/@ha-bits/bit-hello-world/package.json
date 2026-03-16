@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-hello-world",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple hello world bit for demonstration and testing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

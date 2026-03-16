@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-markdown-to-html",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert Markdown to HTML. Note: Does not sanitize output HTML - use with caution for user-generated content.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

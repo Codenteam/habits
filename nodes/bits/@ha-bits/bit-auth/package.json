@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-auth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Authentication bit with JWT sign, verify, and decode operations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,7 +42,8 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-github",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GitHub integration bit for managing pull requests, issues, and repositories",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,8 @@
         ]
       },
       "publish-verdaccio": {},
-      "publish-npm": {},"publish-private": {}
+      "publish-npm": {},
+      "publish-private": {}
     }
   }
 }

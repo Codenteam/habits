@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-email",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Email integration bit for IMAP fetching and SMTP sending",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
