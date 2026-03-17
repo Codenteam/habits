@@ -1,0 +1,24 @@
+# Delete QR Code workflow
+# Deletes a QR code from the database by ID
+
+id: delete-qr
+name: Delete QR Code
+
+nodes:
+  # Delete from database
+  - id: delete-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-database-sql"
+      operation: deleteDoc
+      source: npm
+      params:
+        collection: qr_codes
+        id: "{{habits.input.id}}"
+
+edges: []
+
+output:
+  success: "{{delete-qr.success}}"
+  deleted: "{{delete-qr.deleted}}"

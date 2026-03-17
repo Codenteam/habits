@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Database</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a24;
+      --border-color: #2a2a3a;
+      --border-glow: rgba(0, 255, 200, 0.15);
+      --accent-primary: #00ffc8;
+      --accent-secondary: #00d4aa;
+      --accent-danger: #ff4757;
+      --text-primary: #ffffff;
+      --text-secondary: #8888aa;
+      --text-muted: #555566;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      color: var(--text-primary);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    
+    /* Grid background pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(var(--border-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-family: 'JetBrains Mono', monospace;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--accent-primary);
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-bottom: 40px;
+      background: var(--bg-secondary);
+      padding: 4px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .tab {
+      padding: 14px 32px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+    
+    .tab.active {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+    }
+    
+    /* Panels */
+    .panel {
+      display: none;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 40px;
+      position: relative;
+    }
+    
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 30px;
+      right: 30px;
+      height: 1px;
+      background: var(--accent-primary);
+      opacity: 0.5;
+    }
+    
+    .panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Forms */
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 1px var(--accent-primary), 0 0 20px var(--border-glow);
+    }
+    
+    input::placeholder, textarea::placeholder {
+      color: var(--text-muted);
+    }
+    
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2388888a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      cursor: pointer;
+    }
+    
+    select option {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+    
+    /* Conditional fields */
+    .type-fields {
+      display: none;
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--bg-tertiary);
+      border-left: 2px solid var(--accent-primary);
+    }
+    
+    .type-fields.active {
+      display: block;
+    }
+    
+    .type-fields h3 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      color: var(--accent-primary);
+    }
+    
+    /* Buttons */
+    button {
+      padding: 14px 28px;
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      border: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: left 0.3s ease;
+    }
+    
+    button:hover:not(:disabled)::after {
+      left: 100%;
+    }
+    
+    button:hover:not(:disabled) {
+      box-shadow: 0 0 30px rgba(0, 255, 200, 0.3);
+    }
+    
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 20px var(--border-glow);
+    }
+    
+    .btn-danger {
+      background: var(--accent-danger);
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      box-shadow: 0 0 30px rgba(255, 71, 87, 0.3);
+    }
+    
+    /* File upload */
+    .file-upload {
+      border: 1px dashed var(--border-color);
+      padding: 50px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-primary);
+    }
+    
+    .file-upload:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+    }
+    
+    .file-upload.dragover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+      box-shadow: inset 0 0 30px var(--border-glow);
+    }
+    
+    .file-upload input {
+      display: none;
+    }
+    
+    .file-upload-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+    
+    .file-upload-text {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .file-preview {
+      max-width: 180px;
+      margin: 20px auto 0;
+      display: none;
+    }
+    
+    .file-preview img {
+      max-width: 100%;
+      border: 1px solid var(--border-color);
+    }
+    
+    /* QR Result */
+    .qr-result {
+      text-align: center;
+      margin-top: 30px;
+      padding: 30px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+    
+    .qr-result.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .qr-result img {
+      max-width: 200px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .qr-result .data {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: var(--bg-primary);
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      word-break: break-all;
+      margin-top: 16px;
+      text-align: left;
+      color: var(--accent-primary);
+    }
+    
+    /* Gallery */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    
+    .gallery-item {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .gallery-item:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 20px var(--border-glow);
+    }
+    
+    .gallery-item img {
+      width: 100%;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .gallery-item .label {
+      font-weight: 500;
+      font-size: 14px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .gallery-item .type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .gallery-item .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--accent-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      color: var(--accent-primary);
+    }
+    
+    .gallery-item .badge.scanned {
+      border-color: var(--accent-secondary);
+      color: var(--accent-secondary);
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 20px;
+      right: 20px;
+      height: 1px;
+      background: var(--accent-primary);
+      opacity: 0.5;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .modal-header h2 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .modal-close {
+      background: none;
+      padding: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border: none;
+    }
+    
+    .modal-close:hover {
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+    
+    .modal-body img {
+      max-width: 160px;
+      display: block;
+      margin: 0 auto 24px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .modal-detail {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .modal-detail:last-of-type {
+      border-bottom: none;
+    }
+    
+    .modal-detail-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    
+    .modal-detail-value {
+      word-break: break-all;
+      font-size: 14px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .modal-actions button {
+      flex: 1;
+    }
+    
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 50px;
+    }
+    
+    .loading.active {
+      display: block;
+    }
+    
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent-primary);
+      margin: 0 auto 16px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading p {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    
+    /* Status messages */
+    .status {
+      padding: 16px;
+      margin-top: 20px;
+      display: none;
+      font-size: 13px;
+    }
+    
+    .status.active {
+      display: block;
+    }
+    
+    .status.success {
+      background: var(--bg-tertiary);
+      border-left: 2px solid var(--accent-primary);
+      color: var(--accent-primary);
+    }
+    
+    .status.error {
+      background: var(--bg-tertiary);
+      border-left: 2px solid var(--accent-danger);
+      color: var(--accent-danger);
+    }
+    
+    /* Two-column layout for fields */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    @media (max-width: 600px) {
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .panel {
+        padding: 24px;
+      }
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Database</h1>
+    <p class="subtitle">Create / Scan / Manage</p>
+    
+    <div class="tabs">
+      <button class="tab active" data-tab="scan">Scan</button>
+      <button class="tab" data-tab="create">Generate</button>
+      <button class="tab" data-tab="gallery">Archive</button>
+    </div>
+    
+    <!-- Create Panel -->
+    <div class="panel" id="panel-create">
+      <form id="create-form">
+        <div class="form-group">
+          <label for="data-type">Data Type</label>
+          <select id="data-type" name="dataType">
+            <option value="text">Plain Text</option>
+            <option value="url">URL</option>
+            <option value="vcard">Contact (vCard)</option>
+            <option value="wifi">WiFi Credentials</option>
+            <option value="calendar">Calendar Event</option>
+          </select>
+        </div>
+        
+        <!-- Text/URL fields -->
+        <div class="type-fields active" id="fields-text">
+          <div class="form-group">
+            <label for="data-text">Content</label>
+            <textarea id="data-text" name="data" placeholder="Enter text or URL..."></textarea>
+          </div>
+        </div>
+        
+        <!-- vCard fields -->
+        <div class="type-fields" id="fields-vcard">
+          <h3>Contact Information</h3>
+          <div class="field-row">
+            <div class="form-group">
+              <label for="vcard-firstname">First Name *</label>
+              <input type="text" id="vcard-firstname" name="firstName" placeholder="John">
+            </div>
+            <div class="form-group">
+              <label for="vcard-lastname">Last Name</label>
+              <input type="text" id="vcard-lastname" name="lastName" placeholder="Doe">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="form-group">
+              <label for="vcard-phone">Phone</label>
+              <input type="tel" id="vcard-phone" name="phone" placeholder="+1 555 123 4567">
+            </div>
+            <div class="form-group">
+              <label for="vcard-email">Email</label>
+              <input type="email" id="vcard-email" name="email" placeholder="john@example.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="vcard-org">Organization</label>
+            <input type="text" id="vcard-org" name="organization" placeholder="Acme Inc.">
+          </div>
+        </div>
+        
+        <!-- WiFi fields -->
+        <div class="type-fields" id="fields-wifi">
+          <h3>WiFi Network</h3>
+          <div class="form-group">
+            <label for="wifi-ssid">Network Name (SSID) *</label>
+            <input type="text" id="wifi-ssid" name="ssid" placeholder="MyWiFiNetwork">
+          </div>
+          <div class="field-row">
+            <div class="form-group">
+              <label for="wifi-password">Password</label>
+              <input type="text" id="wifi-password" name="password" placeholder="secret123">
+            </div>
+            <div class="form-group">
+              <label for="wifi-encryption">Encryption</label>
+              <select id="wifi-encryption" name="encryption">
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None (Open)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Calendar fields -->
+        <div class="type-fields" id="fields-calendar">
+          <h3>Calendar Event</h3>
+          <div class="form-group">
+            <label for="cal-title">Event Title *</label>
+            <input type="text" id="cal-title" name="title" placeholder="Team Meeting">
+          </div>
+          <div class="field-row">
+            <div class="form-group">
+              <label for="cal-start">Start Date/Time *</label>
+              <input type="datetime-local" id="cal-start" name="startDate">
+            </div>
+            <div class="form-group">
+              <label for="cal-end">End Date/Time</label>
+              <input type="datetime-local" id="cal-end" name="endDate">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cal-location">Location</label>
+            <input type="text" id="cal-location" name="location" placeholder="Conference Room A">
+          </div>
+          <div class="form-group">
+            <label for="cal-description">Description</label>
+            <textarea id="cal-description" name="description" placeholder="Event details..."></textarea>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="qr-label">Label (optional)</label>
+          <input type="text" id="qr-label" name="label" placeholder="Give your QR code a name">
+        </div>
+        
+        <button type="submit" id="create-btn">Generate QR Code</button>
+      </form>
+      
+      <div class="loading" id="create-loading">
+        <div class="spinner"></div>
+        <p>Generating QR code...</p>
+      </div>
+      
+      <div class="status" id="create-status"></div>
+      
+      <div class="qr-result" id="create-result">
+        <img id="result-image" src="" alt="Generated QR Code">
+        <p><strong id="result-label"></strong></p>
+        <p class="type" id="result-type"></p>
+        <div class="data" id="result-content"></div>
+      </div>
+    </div>
+    
+    <!-- Scan Panel -->
+    <div class="panel active" id="panel-scan">
+      <div class="file-upload" id="scan-upload">
+        <input type="file" id="scan-file" accept="image/*">
+        <div class="file-upload-icon">⬡</div>
+        <p class="file-upload-text">Drop image or click to upload</p>
+        <p style="margin-top: 12px; font-size: 11px; color: var(--text-muted); letter-spacing: 1px;">
+          PNG / JPEG / GIF
+        </p>
+        <div class="file-preview" id="scan-preview">
+          <img id="scan-preview-img" src="" alt="Preview">
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-top: 24px">
+        <label for="scan-label">Label</label>
+        <input type="text" id="scan-label" placeholder="Optional identifier">
+      </div>
+      
+      <button id="scan-btn" disabled>Decode QR</button>
+      
+      <div class="loading" id="scan-loading">
+        <div class="spinner"></div>
+        <p>Scanning image...</p>
+      </div>
+      
+      <div class="status" id="scan-status"></div>
+      
+      <div class="qr-result" id="scan-result">
+        <h3>Scan Result</h3>
+        <p class="type" id="scan-result-type" style="margin: 10px 0"></p>
+        <div class="data" id="scan-result-data"></div>
+      </div>
+    </div>
+    
+    <!-- Gallery Panel -->
+    <div class="panel" id="panel-gallery">
+      <div class="loading" id="gallery-loading">
+        <div class="spinner"></div>
+        <p>Loading QR codes...</p>
+      </div>
+      
+      <div class="empty-state" id="gallery-empty" style="display: none">
+        <div class="empty-state-icon">📱</div>
+        <p>No QR codes yet</p>
+        <p style="margin-top: 10px; font-size: 14px">Create or scan a QR code to get started</p>
+      </div>
+      
+      <div class="gallery" id="gallery-grid"></div>
+    </div>
+  </div>
+  
+  <!-- Detail Modal -->
+  <div class="modal" id="detail-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">QR Code Details</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="QR Code">
+        <div class="modal-detail">
+          <div class="modal-detail-label">Label</div>
+          <div class="modal-detail-value" id="modal-label"></div>
+        </div>
+        <div class="modal-detail">
+          <div class="modal-detail-label">Type</div>
+          <div class="modal-detail-value" id="modal-type"></div>
+        </div>
+        <div class="modal-detail">
+          <div class="modal-detail-label">Content</div>
+          <div class="modal-detail-value" id="modal-content" style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="deleteQR()">Delete</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // State
+    let currentTab = 'create';
+    let galleryItems = [];
+    let selectedItem = null;
+    let scanImageData = null;
+    
+    // Elements
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+    const dataTypeSelect = document.getElementById('data-type');
+    const typeFields = document.querySelectorAll('.type-fields');
+    const createForm = document.getElementById('create-form');
+    const scanUpload = document.getElementById('scan-upload');
+    const scanFile = document.getElementById('scan-file');
+    const scanBtn = document.getElementById('scan-btn');
+    
+    // Tab switching
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        tabs.forEach(t => t.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${tabName}`).classList.add('active');
+        currentTab = tabName;
+        
+        if (tabName === 'gallery') {
+          loadGallery();
+        }
+      });
+    });
+    
+    // Data type switching
+    dataTypeSelect.addEventListener('change', () => {
+      const type = dataTypeSelect.value;
+      typeFields.forEach(f => f.classList.remove('active'));
+      
+      if (type === 'text' || type === 'url') {
+        document.getElementById('fields-text').classList.add('active');
+      } else if (type === 'vcard') {
+        document.getElementById('fields-vcard').classList.add('active');
+      } else if (type === 'wifi') {
+        document.getElementById('fields-wifi').classList.add('active');
+      } else if (type === 'calendar') {
+        document.getElementById('fields-calendar').classList.add('active');
+      }
+    });
+    
+    // Create form submission
+    createForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(createForm);
+      const data = Object.fromEntries(formData.entries());
+      
+      showLoading('create');
+      hideStatus('create');
+      hideResult('create');
+      
+      try {
+        const response = await fetch('/api/create-qr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        const result = await response.json();
+        
+        if (result.output) {
+          showResult('create', result);
+          showStatus('create', 'success', 'QR code created successfully!');
+        } else {
+          showStatus('create', 'error', result.error || 'Failed to create QR code');
+        }
+      } catch (err) {
+        showStatus('create', 'error', 'Network error: ' + err.message);
+      }
+      
+      hideLoading('create');
+    });
+    
+    // File upload handling
+    scanUpload.addEventListener('click', () => scanFile.click());
+    scanUpload.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      scanUpload.classList.add('dragover');
+    });
+    scanUpload.addEventListener('dragleave', () => {
+      scanUpload.classList.remove('dragover');
+    });
+    scanUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      scanUpload.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleScanFile(e.dataTransfer.files[0]);
+      }
+    });
+    scanFile.addEventListener('change', () => {
+      if (scanFile.files.length) {
+        handleScanFile(scanFile.files[0]);
+      }
+    });
+    
+    function handleScanFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        scanImageData = e.target.result;
+        document.getElementById('scan-preview-img').src = scanImageData;
+        document.getElementById('scan-preview').style.display = 'block';
+        scanBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    // Scan button
+    scanBtn.addEventListener('click', async () => {
+      if (!scanImageData) return;
+      
+      showLoading('scan');
+      hideStatus('scan');
+      hideResult('scan');
+      
+      try {
+        const response = await fetch('/api/scan-qr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: scanImageData,
+            label: document.getElementById('scan-label').value,
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (result?.output?.content) {
+          document.getElementById('scan-result-type').textContent = result.output.content.toUpperCase() || 'TEXT';
+          document.getElementById('scan-result').classList.add('active');
+          showStatus('scan', 'success', 'QR code scanned and saved!');
+        } else {
+          showStatus('scan', 'error', result.error || 'No QR code found in image');
+        }
+      } catch (err) {
+        showStatus('scan', 'error', 'Network error: ' + err.message);
+      }
+      
+      hideLoading('scan');
+    });
+    
+    // Gallery loading
+    async function loadGallery() {
+      const loading = document.getElementById('gallery-loading');
+      const empty = document.getElementById('gallery-empty');
+      const grid = document.getElementById('gallery-grid');
+      
+      loading.classList.add('active');
+      empty.style.display = 'none';
+      grid.innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/list-qrs');
+        const result = await response.json();
+        
+        galleryItems = result.output.items || [];
+        
+        if (galleryItems.length === 0) {
+          empty.style.display = 'block';
+        } else {
+          galleryItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'gallery-item';
+            el.innerHTML = `
+              <img src="${item.image}" alt="${item.label}">
+              <div class="label">${item.label || 'Untitled'}</div>
+              <div class="type">${item.dataType || 'text'}</div>
+              ${item.isScanned ? '<span class="badge scanned">Scanned</span>' : '<span class="badge">Created</span>'}
+            `;
+            el.addEventListener('click', () => openModal(item));
+            grid.appendChild(el);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load gallery:', err);
+      }
+      
+      loading.classList.remove('active');
+    }
+    
+    // Modal functions
+    function openModal(item) {
+      selectedItem = item;
+      document.getElementById('modal-image').src = item.image;
+      document.getElementById('modal-label').textContent = item.label || 'Untitled';
+      document.getElementById('modal-type').textContent = item.dataType?.toUpperCase() || 'TEXT';
+      document.getElementById('modal-content').textContent = item.content;
+      document.getElementById('detail-modal').classList.add('active');
+    }
+    
+    function closeModal() {
+      document.getElementById('detail-modal').classList.remove('active');
+      selectedItem = null;
+    }
+    
+    async function deleteQR() {
+      if (!selectedItem) return;
+    
+      
+      try {
+        debugger;
+        await fetch('/api/delete-qr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedItem._id }),
+        });
+        
+        closeModal();
+        loadGallery();
+      } catch (err) {
+        alert('Failed to delete: ' + err.message);
+      }
+    }
+    
+    function downloadQR() {
+      const img = document.getElementById('result-image');
+      downloadImage(img.src, 'qr-code.png');
+    }
+    
+    function downloadModalQR() {
+      if (!selectedItem) return;
+      downloadImage(selectedItem.image, `qr-${selectedItem.label || 'code'}.png`);
+    }
+    
+    function downloadImage(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      a.click();
+    }
+    
+    // Helper functions
+    function showLoading(section) {
+      document.getElementById(`${section}-loading`).classList.add('active');
+    }
+    
+    function hideLoading(section) {
+      document.getElementById(`${section}-loading`).classList.remove('active');
+    }
+    
+    function showStatus(section, type, message) {
+      const status = document.getElementById(`${section}-status`);
+      status.className = `status active ${type}`;
+      status.textContent = message;
+    }
+    
+    function hideStatus(section) {
+      document.getElementById(`${section}-status`).classList.remove('active');
+    }
+    
+    function showResult(section, result) {
+      if (section === 'create') {
+        document.getElementById('result-image').src = result.output.image;
+        document.getElementById('result-label').textContent = result.output.label || 'Untitled';
+        document.getElementById('result-content').textContent = result.output.content;
+      }
+      document.getElementById(`${section}-result`).classList.add('active');
+    }
+    
+    function hideResult(section) {
+      document.getElementById(`${section}-result`).classList.remove('active');
+    }
+    
+    // Close modal on outside click
+    document.getElementById('detail-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>

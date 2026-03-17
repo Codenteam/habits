@@ -302,7 +302,7 @@ if (typeof globalThis.process === 'undefined') {
         entryPoints: [tempPath],  // Use temp file in root directory
         bundle: true,
         outfile: bundledOutputPath,
-        platform: 'neutral',
+        platform: 'browser',
         format: 'iife',
         mainFields: ['main', 'module'],
         minify: false,

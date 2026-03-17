@@ -44,12 +44,20 @@ interface ShowcaseMetadata {
   disabled?: boolean; // If true, example is skipped from generation
 }
 
+interface DownloadFile {
+  filename: string;
+  platform: 'mac' | 'windows' | 'linux' | 'android' | 'ios' | 'universal';
+  size: number; // bytes
+  displaySize: string; // human-readable
+}
+
 interface ExampleData extends ShowcaseMetadata {
   slug: string;
   images: string[];
   path: string;
   keyFiles: string[];
   habitFiles: string[];
+  downloads: DownloadFile[];
   useDefaultImage?: boolean;
 }
 
@@ -146,6 +154,59 @@ function getKeyFiles(examplePath: string): string[] {
   return found;
 }
 
+// Platform detection from file extensions
+const PLATFORM_EXTENSIONS: Record<string, DownloadFile['platform']> = {
+  '.dmg': 'mac',
+  '.pkg': 'mac',
+  '.app': 'mac',
+  '.exe': 'windows',
+  '.msi': 'windows',
+  '.msix': 'windows',
+  '.apk': 'android',
+  '.aab': 'android',
+  '.ipa': 'ios',
+  '.deb': 'linux',
+  '.rpm': 'linux',
+  '.AppImage': 'linux',
+  '.snap': 'linux',
+};
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function getDownloadFiles(downloadsDir: string): DownloadFile[] {
+  if (!existsSync(downloadsDir)) return [];
+  
+  const supportedExtensions = Object.keys(PLATFORM_EXTENSIONS);
+  const files = readdirSync(downloadsDir).filter(file => {
+    const ext = extname(file);
+    // Check exact extension match or AppImage (special case)
+    return supportedExtensions.includes(ext) || file.endsWith('.AppImage');
+  });
+  
+  return files.map(file => {
+    const ext = file.endsWith('.AppImage') ? '.AppImage' : extname(file);
+    const platform = PLATFORM_EXTENSIONS[ext] || 'universal';
+    const filePath = join(downloadsDir, file);
+    const stats = statSync(filePath);
+    
+    return {
+      filename: file,
+      platform,
+      size: stats.size,
+      displaySize: formatFileSize(stats.size),
+    };
+  }).sort((a, b) => {
+    // Sort by platform priority: mac, windows, linux, android, ios, universal
+    const platformOrder = ['mac', 'windows', 'linux', 'android', 'ios', 'universal'];
+    return platformOrder.indexOf(a.platform) - platformOrder.indexOf(b.platform);
+  });
+}
+
 function scanExamples(): ExampleData[] {
   const examples: ExampleData[] = [];
   
@@ -222,6 +283,10 @@ function scanExamples(): ExampleData[] {
         }
       }
       
+      // Get download files from downloads/ folder
+      const downloadsDir = join(examplePath, 'downloads');
+      const downloads = getDownloadFiles(downloadsDir);
+      
       examples.push({
         ...metadata,
         slug: dir,
@@ -229,10 +294,12 @@ function scanExamples(): ExampleData[] {
         path: examplePath,
         keyFiles: getKeyFiles(examplePath),
         habitFiles,
+        downloads,
         useDefaultImage,
       });
       
-      console.log(`✅ Found: ${metadata.name} (${images.length} images, ${habitFiles.length} habits)${useDefaultImage ? ' [default image]' : ''}`);
+      const downloadInfo = downloads.length > 0 ? `, ${downloads.length} downloads` : '';
+      console.log(`✅ Found: ${metadata.name} (${images.length} images, ${habitFiles.length} habits${downloadInfo})${useDefaultImage ? ' [default image]' : ''}`);
     } catch (err) {
       console.error(`❌ Error parsing ${dir}/showcase.yaml:`, (err as Error).message);
     }
@@ -286,8 +353,21 @@ function copyShowcaseAssets(examples: ExampleData[]): void {
       }
     }
     
-    const assetCount = example.images.length + example.habitFiles.length + (existsSync(stackFile) ? 1 : 0);
-    console.log(`  📁 ${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}`);
+    // Copy download files
+    if (example.downloads.length > 0) {
+      const downloadsDestDir = join(destDir, 'downloads');
+      mkdirSync(downloadsDestDir, { recursive: true });
+      
+      for (const download of example.downloads) {
+        const srcPath = join(example.path, 'downloads', download.filename);
+        const destPath = join(downloadsDestDir, download.filename);
+        copyFileSync(srcPath, destPath);
+      }
+    }
+    
+    const assetCount = example.images.length + example.habitFiles.length + example.downloads.length + (existsSync(stackFile) ? 1 : 0);
+    const downloadNote = example.downloads.length > 0 ? ` [${example.downloads.length} downloads]` : '';
+    console.log(`  📁 ${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}${downloadNote}`);
   }
 }
 
@@ -356,11 +436,25 @@ ${example.keyFiles.map(file => {
     ? `import { ${tagIconsNeeded.join(', ')} } from 'lucide-vue-next'`
     : '';
 
+  // Generate downloads data for the component
+  const downloadsData = example.downloads.map(d => 
+    `{ filename: '${d.filename}', platform: '${d.platform}', size: ${d.size}, displaySize: '${d.displaySize}' }`
+  ).join(',\n    ');
+  
+  const appDownloadsSection = example.downloads.length > 0
+    ? `
+## App Downloads
+
+<DownloadBuilds :downloads="downloads" basePath="/showcase/${example.slug}/downloads" />
+`
+    : '';
+
   // Build script setup content
   const scriptSetupContent = [
     iconImport,
     `const images = [\n    ${imagesList}\n]`,
     habitFiles.length > 0 ? `const habitTabs = [\n    ${habitTabsArray}\n]` : '',
+    example.downloads.length > 0 ? `const downloads = [\n    ${downloadsData}\n]` : '',
   ].filter(Boolean).join('\n\n');
 
   return `---
@@ -387,7 +481,7 @@ ${scriptSetupContent}
 >${example.description}
 
 ${example.longDescription || ''}
-${habitViewerSection}${requirements}${keyFilesSection}
+${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
 ## Quick Start
 
 <ExampleRunner examplePath="${example.slug}" />

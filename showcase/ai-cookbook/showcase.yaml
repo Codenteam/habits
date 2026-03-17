@@ -28,7 +28,7 @@ tags:
 
 difficulty: intermediate
 
-featured: true
+featured: false
 
 requirements:
   - OpenAI API key (for GPT-4o and DALL-E 3)

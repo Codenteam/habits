@@ -11,62 +11,6 @@ const habitTabs = [
     { label: 'analyze-resume', url: '/showcase/resume-analyzer/analyze-resume.yaml' },
     { label: 'generate-cover-letter', url: '/showcase/resume-analyzer/generate-cover-letter.yaml' },
 ]
-
-const fullAppCommands = [
-    {
-        label: 'macOS (.dmg)',
-        description: 'Creates a standalone macOS app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform dmg --output ./ResumeAnalyzer.dmg'
-    },
-    {
-        label: 'Windows (.exe)',
-        description: 'Creates a standalone Windows app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform exe --output ./ResumeAnalyzer-Setup.exe'
-    },
-    {
-        label: 'Linux (AppImage)',
-        description: 'Creates a standalone Linux app. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop-full --desktop-platform appimage --output ./ResumeAnalyzer.AppImage'
-    },
-    {
-        label: 'Android',
-        description: 'Creates a standalone Android APK. Doesn\'t require a backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile-full --mobile-target android --output ./resume-analyzer.apk'
-    },
-    {
-        label: 'iOS',
-        description: 'Creates a standalone iOS IPA. Doesn\'t require a backend. Requires macOS with Xcode.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile-full --mobile-target ios --output ./ResumeAnalyzer.ipa'
-    }
-]
-
-const clientAppCommands = [
-    {
-        label: 'macOS (.dmg)',
-        description: 'Creates a macOS app that connects to your deployed backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --backend-url https://your-api.example.com --desktop-platform dmg --output ./ResumeAnalyzer.dmg'
-    },
-    {
-        label: 'Windows (.exe)',
-        description: 'Creates a Windows app that connects to your deployed backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --backend-url https://your-api.example.com --desktop-platform exe --output ./ResumeAnalyzer-Setup.exe'
-    },
-    {
-        label: 'Linux (AppImage)',
-        description: 'Creates a Linux app that connects to your deployed backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format desktop --backend-url https://your-api.example.com --desktop-platform appimage --output ./ResumeAnalyzer.AppImage'
-    },
-    {
-        label: 'Android',
-        description: 'Creates an Android APK that connects to your deployed backend.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile --backend-url https://your-api.example.com --mobile-target android --output ./resume-analyzer.apk'
-    },
-    {
-        label: 'iOS',
-        description: 'Creates an iOS IPA that connects to your deployed backend. Requires macOS with Xcode.',
-        cmd: 'npx habits pack --config ./stack.yaml --format mobile --backend-url https://your-api.example.com --mobile-target ios --output ./ResumeAnalyzer.ipa'
-    }
-]
 </script>
 
 <Checklist name="environment-setup" title="Environment Setup Checklist" icon="wrench">
@@ -159,7 +103,7 @@ Only use full app builds for:
 
 Package your entire stack as a standalone native app. Doesn't require a separate backend deployment.
 
-<PackRunner :commands="fullAppCommands" />
+<PackCommandsAll appName="ResumeAnalyzer" modes="full" />
 
 **After packaging:**
 ```bash
@@ -171,7 +115,7 @@ Package your entire stack as a standalone native app. Doesn't require a separate
 
 Package the frontend as a native app that connects to your deployed backend. This keeps API keys secure on your server.
 
-<PackRunner :commands="clientAppCommands" />
+<PackCommandsAll appName="ResumeAnalyzer" modes="client" />
 
 **Requirements:**
 - Node.js 24+

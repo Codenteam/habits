@@ -55,7 +55,6 @@ nodes:
         update:
           status: "active"
           verified: true
-          verifiedAt: "{{habits.timestamp}}"
 
   # Step 4: Query to verify update
   - id: verify-update
@@ -84,7 +83,6 @@ nodes:
         key: "last-user-{{insert-doc.id}}"
         value:
           userId: "{{insert-doc.id}}"
-          processedAt: "{{habits.timestamp}}"
 
   # Step 6: Retrieve the key-value pair
   - id: get-kv

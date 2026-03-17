@@ -1,0 +1,42 @@
+# Scan QR Code workflow
+# Reads a QR code from an uploaded image and stores the decoded data
+
+id: scan-qr
+name: Scan QR Code
+
+nodes:
+  # Read the QR code from the image
+  - id: read-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-qr"
+      operation: read
+      source: npm
+      params:
+        image: "{{habits.input.image}}"
+
+  # Store in database (only if QR was found)
+  - id: store-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      source: npm
+      params:
+        collection: qr_codes
+        document:
+          label: "{{habits.input.label}}"
+          content: "{{read-qr}}"
+          image: "{{habits.input.image}}"
+          isScanned: true
+
+edges:
+  - source: read-qr
+    target: store-qr
+
+output:
+  label: "{{habits.input.label}}"
+  content: "{{read-qr.data}}"
+  

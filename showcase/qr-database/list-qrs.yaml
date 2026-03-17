@@ -1,0 +1,26 @@
+# List QR Codes workflow
+# Returns all stored QR codes from the database
+
+id: list-qrs
+name: List QR Codes
+
+nodes:
+  # Query all QR codes
+  - id: query-qrs
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      source: npm
+      params:
+        collection: qr_codes
+        filter: "{}"
+        limit: 100
+
+edges: []
+
+output:
+  success: true
+  count: "{{query-qrs.count}}"
+  items: "{{query-qrs.results}}"

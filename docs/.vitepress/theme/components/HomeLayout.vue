@@ -358,7 +358,7 @@ const hoveredUseCase = ref(null)
             </div>
             <div class="flow-item">
               <span class="flow-icon" v-html="icon('clipboard')"></span>
-              <span>Tasks</span>
+              <span>Manager</span>
             </div>
 
             <span class="grid-plus top">+</span>

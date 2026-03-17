@@ -293,3 +293,16 @@ export async function increment(params: {
 
   return { collection: String(collection), key: String(key), previousValue: currentValue, newValue, amount: Number(amount) };
 }
+
+export async function deleteDoc(params: {
+  collection: string;
+  id: string;
+  database?: string;
+}) {
+  const { collection, id, database = 'habits.db' } = params;
+  const sqlite = getSqlite(String(database));
+  const docId = `${collection}:${id}`;
+
+  const result = sqlite.prepare('DELETE FROM documents WHERE id = ? OR custom_id = ?').run(docId, String(id));
+  return { success: true, deleted: result.changes > 0, collection: String(collection), id: String(id) };
+}

@@ -1,0 +1,57 @@
+id: fs-demo
+name: Filesystem Demo
+description: A demo showcasing file operations with the filesystem bit - works in Node.js and Tauri desktop apps
+
+# This habit demonstrates the bit-filesystem module
+# Simplified to write a file and verify it exists
+
+nodes:
+  # Step 1: Write a file (with createDirs to auto-create parent directory)
+  - id: write-file
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-filesystem"
+      operation: writeFile
+      params:
+        filePath: "fs-demo-data/user-note.txt"
+        content: |
+          File created by fs-demo
+          Name: {{habits.input.name}}
+          Message: {{habits.input.message}}
+        createDirs: true
+
+  # Step 2: Read the file back to verify content
+  - id: read-file
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-filesystem"
+      operation: readFile
+      params:
+        filePath: "{{write-file.path}}"
+
+  # Step 3: Verify file exists
+  - id: verify-file-exists
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-filesystem"
+      operation: exists
+      params:
+        filePath: "{{write-file.path}}"
+
+edges:
+  - source: write-file
+    target: read-file
+  - source: read-file
+    target: verify-file-exists
+
+output:
+  writeResult: "{{write-file}}"
+  readContent: "{{read-file.content}}"
+  fileExists: "{{verify-file-exists.exists}}"
+  filePath: "{{write-file.path}}"

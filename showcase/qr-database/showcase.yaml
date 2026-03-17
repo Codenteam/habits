@@ -1,0 +1,47 @@
+# Showcase metadata for QR Database example
+# A full-stack app for generating, scanning, and managing QR codes
+
+name: QR Code Manager
+description: Full-stack QR code application with generation, scanning, and persistent database storage. Includes a futuristic mobile-friendly frontend for managing your QR code library.
+
+longDescription: |
+  A complete QR code management application demonstrating full-stack Habits capabilities
+  with a polished frontend and SQLite persistence.
+
+  ## What It Does
+
+  - **Generate QR Codes**: Create QR codes from text, URLs, WiFi credentials, vCards, and more
+  - **Scan QR Codes**: Upload images to decode and extract QR code data
+  - **Database Storage**: Persist all QR codes in SQLite for future reference
+  - **CRUD Operations**: Full create, read, update, delete functionality
+  - **Frontend**: Modern UI for browsing and managing your QR code library
+
+  ## Why It's Included
+
+  Demonstrates how to build a complete full-stack application with Habits including:
+  - Custom frontend integration
+  - Database persistence with SQL
+  - Multiple workflows working together
+  - Tauri desktop app packaging support
+
+type: app
+
+tags:
+  - database
+  - frontend
+  - utility
+  - full-stack
+
+difficulty: beginner
+
+featured: false
+
+requirements:
+  - No external API keys required (uses local SQLite)
+
+habits:
+  - create-qr.yaml
+  - scan-qr.yaml
+  - list-qrs.yaml
+  - get-qr.yaml
+  - delete-qr.yaml

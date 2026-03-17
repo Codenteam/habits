@@ -1,0 +1,49 @@
+# Create QR Code workflow
+# Generates a QR code from user input and stores it in the database
+
+id: create-qr
+name: Create QR Code
+
+nodes:
+  # Generate the QR code directly
+  - id: generate-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-qr"
+      operation: generate
+      source: npm
+      params:
+        data: "{{habits.input.data}}"
+        dataType: "{{habits.input.dataType}}"
+        format: dataUrl
+        size: 256
+        errorCorrection: M
+
+  # Store in database
+  - id: store-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      source: npm
+      params:
+        collection: qr_codes
+        document:
+          label: "{{habits.input.label}}"
+          dataType: "{{habits.input.dataType}}"
+          content: "{{habits.input.data}}"
+          image: "{{generate-qr.data}}"
+
+edges:
+  - source: generate-qr
+    target: store-qr
+
+output:
+  success: true
+  id: "{{store-qr.id}}"
+  label: "{{habits.input.label}}"
+  dataType: "{{habits.input.dataType}}"
+  content: "{{habits.input.data}}"
+  image: "{{generate-qr.data}}"

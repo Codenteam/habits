@@ -331,16 +331,13 @@ Pack your habits into portable formats for different deployment targets:
 | `desktop` | Electron app | Desktop UI connecting to remote backend (or local execution: Early Access) |
 | `mobile` | Cordova app | iOS/Android app connecting to remote backend (or local exeuction: Early Access) |
 
-```bash
-# Single executable binary (includes backend)
-npx habits pack --config ./stack.yaml --format single-executable -o ./my-app
+### Single Executable (Server Binary)
 
-# Desktop app (frontend-only, connects to your backend)
-npx habits pack --config ./stack.yaml --format desktop --backend-url https://api.example.com -o ./output
+<PackCommandsAll appName="my-app" targets="node" />
 
-# Mobile app (frontend-only)
-npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.example.com --mobile-target android -o ./output
-```
+### Desktop & Mobile Apps (Client Mode)
+
+<PackCommandsAll appName="my-app" targets="dmg,exe,android" modes="client" />
 
 **Desktop platforms:** `dmg`, `exe`, `appimage`, `deb`, `rpm`, `msi`  
 **Mobile targets:** `android`, `ios`
