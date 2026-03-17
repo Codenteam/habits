@@ -33,7 +33,7 @@ The QR Code Manager demonstrates building a **multi-habit application** entirely
 - **5 local workflows** — Generate QR codes, scan images, full CRUD operations
 - **SQLite database** — Persistent local storage using `@ha-bits/bit-database-sql`
 - **QR processing** — Generate and decode using `@ha-bits/bit-qr`
-- **Custom frontend** — Mobile-friendly React UI
+- **Custom frontend** — Mobile-friendly UI
 - **Cross-platform packaging** — Build for macOS, Windows, Linux, and Android
 
 ## Workflow Visualization
