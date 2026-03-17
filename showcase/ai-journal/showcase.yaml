@@ -29,7 +29,7 @@ tags:
 
 difficulty: beginner
 
-featured: false
+featured: true
 
 requirements:
   - OpenAI API key (for GPT-4o)

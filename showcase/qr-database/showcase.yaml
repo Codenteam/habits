@@ -34,7 +34,7 @@ tags:
 
 difficulty: beginner
 
-featured: false
+featured: true
 
 requirements:
   - No external API keys required (uses local SQLite)
