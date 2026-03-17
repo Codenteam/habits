@@ -40,13 +40,7 @@ Package your entire habits configuration into a single executable file that can 
 
 ### Using the CLI
 
-```bash
-# Generate binary for current platform
-npx habits pack --config ./stack.yaml --format single-executable --output ./my-app
-
-# Generate binary for a specific platform
-npx habits pack --config ./stack.yaml --format single-executable --output ./my-app --platform linux-x64
-```
+<PackCommandsAll appName="my-app" targets="node" />
 
 **CLI Options:**
 
@@ -95,13 +89,7 @@ Package your habits frontend as a desktop application that connects to a remote 
 
 ### Using the CLI
 
-```bash
-# Generate desktop app for all platforms
-npx habits pack --config ./stack.yaml --format desktop --backend-url https://api.example.com --output ./my-desktop-app
-
-# Generate for a specific platform
-npx habits pack --config ./stack.yaml --format desktop --backend-url https://api.example.com --desktop-platform dmg --output ./my-app.dmg
-```
+<PackCommandsAll appName="my-app" targets="dmg,exe,appimage" modes="client" />
 
 **CLI Options:**
 
@@ -145,16 +133,7 @@ Package your habits frontend as a mobile application for iOS and Android.
 
 ### Using the CLI
 
-```bash
-# Generate mobile app for both iOS and Android
-npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.example.com --output ./my-mobile-app
-
-# Generate for iOS only
-npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.example.com --mobile-target ios --output ./my-ios-app
-
-# Generate for Android only
-npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.example.com --mobile-target android --output ./my-android-app
-```
+<PackCommandsAll appName="my-app" targets="android,ios" modes="client" />
 
 **CLI Options:**
 
@@ -196,19 +175,13 @@ npx habits pack --config ./stack.yaml --format mobile --backend-url https://api.
 
 Full Electron application with the backend embedded, enabling completely offline operation.
 
-```bash
-# Early Access
-npx habits pack --config ./stack.yaml --format desktop-full --output ./my-offline-app
-```
+<PackCommandsAll appName="my-app" targets="dmg,exe,appimage" modes="full" />
 
 ### Mobile Full (`mobile-full`)
 
 Full mobile application with the backend embedded, enabling completely offline operation.
 
-```bash
-# Early Access
-npx habits pack --config ./stack.yaml --format mobile-full --mobile-target android --output ./my-offline-app
-```
+<PackCommandsAll appName="my-app" targets="android,ios" modes="full" />
 
 ---
 

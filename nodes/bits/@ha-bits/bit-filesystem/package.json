@@ -67,6 +67,10 @@
         "init": "tauri_plugin_fs::init()",
         "permissions": [
           "fs:default",
+          "fs:scope-appdata-recursive",
+          "fs:allow-appdata-read-recursive",
+          "fs:allow-appdata-write-recursive",
+          "fs:allow-appdata-meta-recursive",
           "fs:allow-exists",
           "fs:allow-read-file",
           "fs:allow-write-file",

@@ -64,8 +64,8 @@
     }
   },
   "habits": {
-    "catalog": false,
-    "featured": false,
+    "catalog": true,
+    "featured": true,
     "stubs": {
       "@ha-bits/bit-database-sql/driver": "./src/stubs/tauri-driver.js"
     },

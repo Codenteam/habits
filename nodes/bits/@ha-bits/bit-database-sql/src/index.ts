@@ -154,6 +154,20 @@ const sqlBit = {
         return driver.increment(context.propsValue as any);
       },
     },
+    
+    deleteDoc: {
+      name: 'deleteDoc',
+      displayName: 'Delete Document',
+      description: 'Delete a document by ID from SQLite',
+      props: {
+        collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true },
+        id: { type: 'SHORT_TEXT', displayName: 'Document ID', required: true },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+      },
+      async run(context: DatabaseContext): Promise<DeleteResult> {
+        return driver.deleteDoc(context.propsValue as any);
+      },
+    },
   },
   
   triggers: {},

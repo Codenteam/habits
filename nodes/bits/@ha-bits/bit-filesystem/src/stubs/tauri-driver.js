@@ -3,11 +3,16 @@
  * 
  * Replaces driver.ts in Tauri environments.
  * Uses Tauri plugin-fs for filesystem operations.
- * Files are scoped to the app data directory ($APPDATA).
+ * Files are scoped to the AppData directory for persistence.
  */
 
 var fsAvailable = false;
 var appDataPath = null;
+
+// BaseDirectory enum values from Tauri v2 API (@tauri-apps/api)
+// These values are from the TypeScript enum, NOT the Rust enum
+var BASE_DIR_TEMP = 12;      // Temp directory
+var BASE_DIR_APPDATA = 14;   // AppData directory - used for persistent storage
 
 function tauriLog(level, message) {
   var fullMsg = '[FS Driver] ' + message;
@@ -34,10 +39,8 @@ async function ensureFs() {
   
   tauriLog('info', 'Initializing Tauri filesystem plugin');
   
-  // In Tauri v2, we use baseDir option directly in fs operations
-  // baseDir: 22 = AppData, no need to resolve the path manually
+  // Use AppData directory for persistent storage
   fsAvailable = true;
-  appDataPath = '$APPDATA'; // Placeholder, actual path resolved by Tauri
   tauriLog('info', 'Tauri FS ready (using AppData base directory)');
 }
 
@@ -78,7 +81,7 @@ async function readFile(params) {
   
   var contents = await invoke('plugin:fs|read_file', {
     path: resolved,
-    options: { baseDir: 22 } // 22 = AppData
+    options: { baseDir: BASE_DIR_APPDATA }
   });
   
   if (encoding === 'binary') {
@@ -112,7 +115,7 @@ async function writeFile(params) {
         try {
           await invoke('plugin:fs|mkdir', {
             path: parentDir,
-            options: { baseDir: 22, recursive: true }
+            options: { baseDir: BASE_DIR_APPDATA, recursive: true }
           });
           tauriLog('info', 'Created directory: ' + parentDir);
         } catch (e) {
@@ -132,10 +135,13 @@ async function writeFile(params) {
     
     tauriLog('info', 'Writing ' + bytes.length + ' bytes to: ' + resolved);
     
-    await invoke('plugin:fs|write_file', {
-      path: resolved,
-      contents: Array.from(bytes),
-      options: { baseDir: 22 }
+    // Tauri v2 FS plugin uses a special invocation format for write operations
+    // The data is passed as second argument, and path/options go in headers
+    await invoke('plugin:fs|write_file', bytes, {
+      headers: {
+        path: encodeURIComponent(resolved),
+        options: JSON.stringify({ baseDir: BASE_DIR_APPDATA })
+      }
     });
     
     tauriLog('info', 'Successfully wrote file: ' + resolved);
@@ -176,7 +182,7 @@ async function deleteFile(params) {
   
   await invoke('plugin:fs|remove', {
     path: resolved,
-    options: { baseDir: 22 }
+    options: { baseDir: BASE_DIR_APPDATA }
   });
   
   return { success: true, deletedPath: resolved };
@@ -192,7 +198,7 @@ async function listDirectory(params) {
   try {
     var entries = await invoke('plugin:fs|read_dir', {
       path: resolved,
-      options: { baseDir: 22 }
+      options: { baseDir: BASE_DIR_APPDATA }
     });
     
     var files = (entries || []).map(function(entry) {
@@ -224,7 +230,7 @@ async function createDirectory(params) {
   try {
     await invoke('plugin:fs|mkdir', {
       path: resolved,
-      options: { baseDir: 22, recursive: recursive }
+      options: { baseDir: BASE_DIR_APPDATA, recursive: recursive }
     });
     return { success: true, path: resolved };
   } catch (e) {
@@ -243,7 +249,7 @@ async function exists(params) {
   try {
     var fileExists = await invoke('plugin:fs|exists', {
       path: resolved,
-      options: { baseDir: 22 }
+      options: { baseDir: BASE_DIR_APPDATA }
     });
     return { exists: !!fileExists, path: resolved };
   } catch (e) {
@@ -262,7 +268,7 @@ async function copyFile(params) {
   await invoke('plugin:fs|copy_file', {
     fromPath: src,
     toPath: dest,
-    options: { baseDir: 22 }
+    options: { baseDir: BASE_DIR_APPDATA }
   });
   
   return { success: true, source: src, destination: dest };
@@ -279,7 +285,7 @@ async function moveFile(params) {
   await invoke('plugin:fs|rename', {
     oldPath: src,
     newPath: dest,
-    options: { baseDir: 22 }
+    options: { baseDir: BASE_DIR_APPDATA }
   });
   
   return { success: true, source: src, destination: dest };

@@ -4,6 +4,7 @@ Decide on yaml or js-yaml for generators and docs stuff specifically.
 
 Define the 3 Ls levels for bits with key differentiators:
 
-L1: No auth, stateless, single-purpose, environment-agnostic
-L2: Service-specific auth, CRUD operations, webhook/trigger support
-L3: Composes L1/L2, business-focused, sensible defaults, built-in error handling
+L0: Created to be inherited without actual real world usage (bit-database)
+L1: Stateless, single-dependency/limited-dependencies, environment-agnostic, inherits L0, L1
+L2: Service-specific auth, CRUD operations, webhook/trigger support, inherits L0,L1,L2, uses L0,L1
+L3: Composes L0/L1/L2, business-focused, sensible defaults, built-in error handling

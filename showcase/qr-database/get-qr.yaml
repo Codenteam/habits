@@ -1,0 +1,25 @@
+# Get single QR Code workflow
+# Returns a specific QR code by ID
+
+id: get-qr
+name: Get QR Code
+
+nodes:
+  # Query the specific QR code
+  - id: query-qr
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      source: npm
+      params:
+        collection: qr_codes
+        filter: '{"_customId": "{{habits.input.id}}"}'
+        limit: 1
+
+
+edges: []
+
+output:
+  data: "{{query-qr}}"

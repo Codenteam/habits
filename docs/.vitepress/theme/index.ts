@@ -6,7 +6,9 @@ import HabitViewer from './components/HabitViewer.vue'
 import HabitViewerTabs from './components/HabitViewerTabs.vue'
 import ExampleRunner from './components/ExampleRunner.vue'
 import PackRunner from './components/PackRunner.vue'
+import PackCommandsAll from './components/PackCommandsAll.vue'
 import DownloadExample from './components/DownloadExample.vue'
+import DownloadBuilds from './components/DownloadBuilds.vue'
 import ScreenshotGallery from './components/ScreenshotGallery.vue'
 import Checklist from './components/Checklist.vue'
 import ShowcaseGrid from './components/ShowcaseGrid.vue'
@@ -27,7 +29,9 @@ export default {
     app.component('HabitViewerTabs', HabitViewerTabs)
     app.component('ExampleRunner', ExampleRunner)
     app.component('PackRunner', PackRunner)
+    app.component('PackCommandsAll', PackCommandsAll)
     app.component('DownloadExample', DownloadExample)
+    app.component('DownloadBuilds', DownloadBuilds)
     app.component('ScreenshotGallery', ScreenshotGallery)
     app.component('Checklist', Checklist)
     app.component('ShowcaseGrid', ShowcaseGrid)
