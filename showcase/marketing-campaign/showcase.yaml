@@ -34,7 +34,7 @@ tags:
 
 difficulty: intermediate
 
-featured: false
+featured: true
 
 requirements:
   - Intersect API key (for AI gateway access)

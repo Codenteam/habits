@@ -99,7 +99,7 @@ const screenshots = [
 ]
 
 // Featured showcase items to display on homepage (slugs only)
-const featuredSlugs = ['ai-cookbook', 'ai-journal', 'mixed']
+const featuredSlugs = ['resume-analyzer', 'mixed', 'qr-database', 'ai-cookbook', 'ai-journal', 'marketing-campaign']
 const showcaseItems = computed(() => 
   featuredSlugs
     .map(slug => showcaseData.find(item => item.slug === slug))
