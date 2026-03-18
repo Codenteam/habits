@@ -70,11 +70,11 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
-          { text: 'Build Habit using HaC', link: '/getting-started/first-habit' },
-          { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit-using-base' },
+          { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit' },
           { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'Build Full AI Powered App', link: '/getting-started/first-app-using-habits' },
           { text: 'Build Standalone App (No APIs)', link: '/getting-started/standalone-app' },
+          { text: 'Code Habit using HaC (Mix n8n/ActivePieces)', link: '/getting-started/first-habit-mixed' },
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
         ]

@@ -209,10 +209,10 @@ const hoveredUseCase = ref(null)
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
           <p class="hero-tagline">AI Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
           <div class="hero-actions">
-            <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Code your first habit</a>
+            <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <div class="hero-secondary-actions">
-              <a :href="withBase('/getting-started/first-habit-using-base')" class="action-btn alt">Use UI</a>
               <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Use AI</a>
+              <a :href="withBase('/getting-started/first-habit-mixed')" class="action-btn alt">Use Code</a>
               <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Introduction</a>
             </div>
           </div>

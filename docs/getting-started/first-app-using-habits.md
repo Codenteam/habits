@@ -67,7 +67,7 @@ For detailed explanations of how habits work, see:
 
 - **[Creating Habits](/deep-dive/creating)**: Learn Habit-as-Code (HaC), visual editing with Base, and importing workflows
 - **[Your First Habit (Code-First)](/getting-started/first-habit)**: Step-by-step guide to writing habits in YAML
-- **[Your First Habit (GUI-First)](/getting-started/first-habit-using-base)**: Build habits visually with the Base UI
+- **[Your First Habit (GUI-First)](/getting-started/first-habit)**: Build habits visually with the Base UI
 - **[Variables & Expressions](/deep-dive/variables)**: Pass data between nodes using template expressions
 
 ---

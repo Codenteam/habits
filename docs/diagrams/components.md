@@ -57,14 +57,14 @@ definition: Create Automation/Logic/Workflow {
   }
 
   m1: Habits as Code {
-    link: /intersect/habits/getting-started/first-habit
+    link: /intersect/habits/getting-started/first-habit-mixed
     shape: hexagon
     style.fill: "#975a16"
     style.stroke: "#fbd38d"
     style.font-color: "#fefcbf"
   }
   m2: Base UI {
-    link: /intersect/habits/getting-started/first-habit-using-base
+    link: /intersect/habits/getting-started/first-habit
     shape: hexagon
     style.fill: "#975a16"
     style.stroke: "#fbd38d"
