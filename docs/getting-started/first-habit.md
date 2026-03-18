@@ -49,6 +49,25 @@ cd path/to/habit
 npx @ha-bits/cortex@latest server --config ./stack.yaml
 ```
 
+::: warning n8n License Warning
+When running habits that use n8n nodes, you will see this warning in the terminal:
+
+```
+================================================================================
+⚠️  LICENSE WARNING: n8n is NOT open source!
+================================================================================
+n8n packages are licensed under the Sustainable Use License (SUL).
+You CANNOT redistribute or use n8n commercially without a license.
+If you don't have a valid n8n license, you can't use this habit for non-personal usage.
+Use Apache 2.0/MIT licensed alternatives: ActivePieces pieces or Habits bits.
+================================================================================
+```
+:::
+
+::: danger Deprecation Notice
+**n8n and ActivePieces nodes are being deprecated.** We are removing support for n8n and ActivePieces nodes in favor of native Habits bits, which are fully Apache 2.0 licensed with no commercial restrictions. Migrate your workflows to use Habits bits for long-term compatibility.
+:::
+
 ## Enabling Features
 
 - **Swagger API**: Set Env var `HABITS_OPENAPI_ENABLED=true` → access at `http://localhost:3000/api/docs`
