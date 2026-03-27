@@ -21,7 +21,7 @@ import { PollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, Pollin
 export { PollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions };
 import { oauthTokenStore } from './oauthTokenStore';
 import { OAuth2TokenSet } from './oauth2Types';
-import { ILogger, LoggerFactory } from '@ha-bits/core';
+import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

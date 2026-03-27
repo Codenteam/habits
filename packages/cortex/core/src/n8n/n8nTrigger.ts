@@ -5,7 +5,7 @@ import { INodeType, ITriggerFunctions, ITriggerResponse, IPollFunctions, IWebhoo
 import * as path from 'path';
 import * as fs from 'fs';
 import { fetch } from '@ha-bits/bindings';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

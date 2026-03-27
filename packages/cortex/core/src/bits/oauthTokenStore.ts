@@ -6,7 +6,7 @@
  */
 
 import { OAuth2TokenSet, OAuth2Config, TokenStoreEntry } from './oauth2Types';
-import { ILogger, LoggerFactory } from '@ha-bits/core';
+import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 
 /**
  * In-memory OAuth2 token store

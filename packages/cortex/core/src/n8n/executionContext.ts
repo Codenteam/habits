@@ -16,7 +16,7 @@ import {
 import { ModuleDefinition } from '../utils/moduleCloner';
 import { httpRequest } from './httpRequest';
 import { loadCredentialType, applyCredentialAuthentication, applyFallbackAuthentication } from './credentialLoader';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

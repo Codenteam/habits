@@ -11,7 +11,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn, execSync } from 'child_process';
-import { LoggerFactory, getTmpDir } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
+import { getTmpDir } from '@ha-bits/core/pathUtils';
 import * as yaml from 'yaml';
 const logger = LoggerFactory.getRoot();
 

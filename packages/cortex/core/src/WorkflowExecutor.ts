@@ -8,7 +8,7 @@ import { bitsTriggerHelper, TriggerHookType as BitsTriggerHookType } from './bit
 import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
-import { LoggerFactory, ILogger } from '@ha-bits/core';
+import { LoggerFactory, ILogger } from '@ha-bits/core/logger';
 import { IWebhookHandler } from './WebhookHandler';
 import {
   Workflow,

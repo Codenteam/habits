@@ -7,7 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import { getTauriConfig, getTauriCapabilities } from './templates/tauri/tauri-config';
 import { getTauriMain, getTauriLib } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';

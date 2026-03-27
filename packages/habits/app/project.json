@@ -47,7 +47,11 @@
             "js": "#!/usr/bin/env node"
           },
           "external": [
-            "@activepieces/*"
+            "@activepieces/*",
+            "@tailwindcss/postcss",
+            "@tailwindcss/oxide",
+            "@tailwindcss/oxide-*",
+            "lightningcss"
           ],
           "packages": "bundle"
         }

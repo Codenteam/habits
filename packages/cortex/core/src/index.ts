@@ -102,5 +102,5 @@ export {
 // Re-export types from core
 export * from '@habits/shared/types';
 
-// Re-export core
-export { LoggerFactory } from '@ha-bits/core';
+// Re-export logger from core/logger
+export { LoggerFactory } from '@ha-bits/core/logger';

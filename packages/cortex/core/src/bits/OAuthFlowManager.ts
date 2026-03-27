@@ -17,7 +17,7 @@
 
 import { OAuth2Config, OAuth2State, OAuth2TokenSet } from './oauth2Types';
 import { oauthTokenStore } from './oauthTokenStore';
-import { ILogger, LoggerFactory } from '@ha-bits/core';
+import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 
 /**
  * Result of parsing an OAuth callback URL

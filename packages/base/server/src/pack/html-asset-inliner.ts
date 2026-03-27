@@ -11,8 +11,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import postcss from 'postcss';
+// @ts-ignore - moduleResolution mismatch with @tailwindcss/postcss types
 import tailwindcss from '@tailwindcss/postcss';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Inliner = require('inliner');

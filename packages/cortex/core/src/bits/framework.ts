@@ -7,7 +7,7 @@
  */
 
 import { fetch } from '@ha-bits/bindings';
-import { ILogger } from '@ha-bits/core';
+import { ILogger } from '@ha-bits/core/logger';
 // ============================================================================
 // HTTP Client Types and Implementation
 // ============================================================================

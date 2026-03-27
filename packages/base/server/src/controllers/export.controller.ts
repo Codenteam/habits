@@ -10,7 +10,6 @@ import * as path from 'path';
 import { exec, execSync } from 'child_process';
 import { promisify } from 'util';
 import { createResponse } from '../helpers';
-import { getTmpDir } from '@ha-bits/core';
 import {
   generateSeaBinary,
   checkSeaSupport,

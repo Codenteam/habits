@@ -18,7 +18,7 @@ import {
   type ExchangeResult,
   oauthTokenStore,
 } from '@ha-bits/cortex-core';
-import { ILogger, LoggerFactory } from '@ha-bits/core';
+import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 
 /**
  * OAuth2 Callback Server for handling HTTP-based OAuth flows

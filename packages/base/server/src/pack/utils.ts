@@ -4,7 +4,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { getTmpDir, LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
+import { getTmpDir } from '@ha-bits/core/pathUtils';
 import JSZip from 'jszip';
 
 const logger = LoggerFactory.getRoot();

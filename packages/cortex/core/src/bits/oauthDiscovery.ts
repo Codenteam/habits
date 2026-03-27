@@ -12,7 +12,7 @@ import { pieceFromModule, extractBitsPieceFromModule } from './bitsDoer';
 import { getModuleName, getBundledModule, isBundledModule } from '../utils/moduleLoader';
 import { getModuleMainFile, ModuleDefinition } from '../utils/moduleCloner';
 import { simpleRequire } from '../utils/customRequire';
-import { ILogger, LoggerFactory } from '@ha-bits/core';
+import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 import * as path from '@ha-bits/bindings/path';
 
 const logger = LoggerFactory.create(undefined, undefined, { bitName: 'OAuthDiscovery' });

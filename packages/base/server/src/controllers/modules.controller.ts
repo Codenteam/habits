@@ -21,7 +21,7 @@ import {
   getModulePath,
   ModuleDefinition,
 } from "@ha-bits/cortex/utils/moduleCloner";
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 
