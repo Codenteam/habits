@@ -118,6 +118,17 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
   </div>
 </div>
 
+<!-- Application Types Section -->
+<div class="app-types-box">
+  <h4><component :is="Layers" :size="18" /> From Automation to MicroApp</h4>
+  <p>The <code>.habit</code> format enables different application types depending on what you include:</p>
+  <ul class="app-types-list">
+    <li><strong>Automation</strong>: Logic without UI: pure workflow execution</li>
+    <li><strong>Backend</strong>: Logic without UI but with auto-generated OpenAPI: instant API</li>
+    <li><strong>SaaS</strong>: Backend with a frontend: full-stack web application</li>
+    <li><strong>MicroApp</strong>: Backend and frontend bundled to binary: portable, self-contained apps</li>
+  </ul>
+</div>
 
 <!-- Why Open Section -->
 <div class="why-open-box">
@@ -698,9 +709,9 @@ output:
   <h3>Template Syntax</h3>
   <p>Workflows use double-brace templates to reference values:</p>
   <ul class="template-list">
-    <li><code v-pre>{{habits.input.paramName}}</code> — Reference workflow input parameters</li>
-    <li><code v-pre>{{habits.env.ENV_VAR}}</code> — Reference environment variables or secrets</li>
-    <li><code v-pre>{{nodeId.fieldName}}</code> — Reference output from a previous node</li>
+    <li><code v-pre>{{habits.input.paramName}}</code>: Reference workflow input parameters</li>
+    <li><code v-pre>{{habits.env.ENV_VAR}}</code>: Reference environment variables or secrets</li>
+    <li><code v-pre>{{nodeId.fieldName}}</code>: Reference output from a previous node</li>
   </ul>
 
   <h3>Node Types</h3>
@@ -1678,6 +1689,54 @@ $ npx habits pack --format habit --config ./stack.yaml
   font-size: 0.85rem;
   font-style: italic;
   color: #10b981;
+}
+
+/* App Types Box */
+.app-types-box {
+  background: linear-gradient(135deg, #8b5cf610 0%, #6366f110 100%);
+  border: 1px solid #8b5cf640;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+}
+
+.app-types-box h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--vp-c-text-1);
+}
+
+.app-types-box h4 svg {
+  color: #8b5cf6;
+}
+
+.app-types-box > p {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--vp-c-text-2);
+}
+
+.app-types-list {
+  margin: 0;
+  padding: 0 0 0 20px;
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.8;
+}
+
+.app-types-list li {
+  margin-bottom: 6px;
+}
+
+.app-types-list li:last-child {
+  margin-bottom: 0;
+}
+
+.app-types-list strong {
+  color: var(--vp-c-text-1);
 }
 
 /* Capability Banner */
