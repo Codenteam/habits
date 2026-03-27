@@ -514,14 +514,46 @@ export const BitAuth = {
     };
   },
 
-  OAuth2(config: any): PropertyDefinition<any> {
+  OAuth2(config: {
+    displayName: string;
+    description?: string;
+    required: boolean;
+    authorizationUrl: string;
+    tokenUrl: string;
+    clientId?: string;
+    clientSecret?: string;
+    scopes: string[];
+    pkce?: boolean;
+    extraAuthParams?: Record<string, string>;
+  }): PropertyDefinition<{ accessToken: string; refreshToken?: string; tokenType: string; expiresAt?: number }> {
     return {
-      type: 'CUSTOM_AUTH',
-      displayName: 'OAuth2',
+      type: 'OAUTH2',
+      displayName: config.displayName,
       description: config.description,
       required: config.required,
-      ...config,
-    };
+      authorizationUrl: config.authorizationUrl,
+      tokenUrl: config.tokenUrl,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      scopes: config.scopes,
+      pkce: config.pkce ?? true, // PKCE enabled by default
+      extraAuthParams: config.extraAuthParams,
+    } as any;
+  },
+
+  /** @deprecated Use OAuth2() instead */
+  OAuth2PKCE(config: {
+    displayName: string;
+    description?: string;
+    required: boolean;
+    authorizationUrl: string;
+    tokenUrl: string;
+    clientId?: string;
+    clientSecret?: string;
+    scopes: string[];
+    extraAuthParams?: Record<string, string>;
+  }): PropertyDefinition<{ accessToken: string; refreshToken?: string; tokenType: string; expiresAt?: number }> {
+    return BitAuth.OAuth2({ ...config, pkce: true });
   },
 
   BasicAuth(config: any): PropertyDefinition<{ username: string; password: string }> {
@@ -620,6 +652,20 @@ export enum TriggerStrategy {
 }
 
 /**
+ * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
+ */
+export interface WebhookFilterPayload {
+  /** Raw request body */
+  body: any;
+  /** HTTP headers */
+  headers: Record<string, string>;
+  /** Query string parameters */
+  query: Record<string, string>;
+  /** HTTP method */
+  method: string;
+}
+
+/**
  * Trigger context
  */
 export interface BitTriggerContext<AuthType = any, PropsType = any> {
@@ -636,6 +682,8 @@ export interface BitTriggerContext<AuthType = any, PropsType = any> {
     createListeners: (listener: { events: string[]; identifierValue: string; identifierKey: string }) => void;
   };
   setSchedule: (options: { cronExpression: string; timezone?: string }) => void;
+  /** Webhook payload data (for webhook triggers) */
+  webhookPayload?: WebhookFilterPayload;
 }
 
 /**
@@ -653,6 +701,13 @@ export interface BitTrigger<AuthType = any, PropsType = Record<string, any>> {
   run?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
   test?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
   onHandshake?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any>;
+  /**
+   * Filter function for webhook triggers.
+   * Called when a webhook is received for this bit's module.
+   * Return true if this trigger should handle the event, false to skip.
+   * If not defined, the trigger accepts all webhook events.
+   */
+  filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
   sampleData?: any;
 }
 
@@ -671,6 +726,7 @@ interface TriggerConfig<AuthType = any, PropsType = Record<string, any>> {
   run?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
   test?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
   onHandshake?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any>;
+  filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
   sampleData?: any;
 }
 
@@ -692,6 +748,7 @@ export function createTrigger<AuthType = any, PropsType = Record<string, any>>(
     run: config.run,
     test: config.test,
     onHandshake: config.onHandshake,
+    filter: config.filter,
     sampleData: config.sampleData,
   };
 }
@@ -740,6 +797,12 @@ export enum PieceCategory {
  * Bit/Piece definition
  */
 export interface Bit<AuthType = any> {
+  /**
+   * Unique identifier for this bit module.
+   * Used for webhook routing: /webhook/:id
+   * Example: 'gohighlevel', 'hubspot', 'salesforce'
+   */
+  id?: string;
   displayName: string;
   description?: string;
   logoUrl: string;
@@ -756,6 +819,7 @@ export interface Bit<AuthType = any> {
  * Bit configuration for createBit/createPiece
  */
 interface BitConfig<AuthType = any> {
+  id?: string;
   displayName: string;
   description?: string;
   logoUrl: string;
@@ -786,6 +850,7 @@ export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<Auth
   }
 
   return {
+    id: config.id,
     displayName: config.displayName,
     description: config.description,
     logoUrl: config.logoUrl,

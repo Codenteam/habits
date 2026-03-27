@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #fff;
+      font-size: 28px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .card h2 {
+      color: #fff;
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #4f46e5;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button {
+      padding: 12px 24px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: #374151;
+    }
+    button.secondary:hover {
+      background: #4b5563;
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    button.danger:hover {
+      background: #b91c1c;
+    }
+    .status {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .result {
+      color: rgba(255, 255, 255, 0.8);
+      padding: 12px;
+      background: rgba(0, 255, 0, 0.1);
+      border-radius: 8px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .result.error {
+      background: rgba(255, 0, 0, 0.1);
+    }
+    .email-list {
+      margin-top: 12px;
+    }
+    .email-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 3px solid #4f46e5;
+    }
+    .email-item .subject {
+      color: #fff;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .email-item .meta {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 12px;
+    }
+    .polling-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📧 Email Demo</h1>
+    
+    <!-- Send Email Card -->
+    <div class="card">
+      <h2>✉️ Send Email</h2>
+      <div class="form-group">
+        <label>To</label>
+        <input type="email" id="sendTo" placeholder="recipient@example.com">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" id="sendSubject" placeholder="Email subject" value="Message from Habits">
+      </div>
+      <div class="form-group">
+        <label>Body</label>
+        <textarea id="sendBody" placeholder="Write your message here..."></textarea>
+      </div>
+      <button onclick="sendEmail()">Send Email</button>
+      <div id="sendStatus" class="status" style="display: none;"></div>
+    </div>
+
+    <!-- Poll Emails Card -->
+    <div class="card">
+      <h2>📥 Poll Inbox</h2>
+      <p style="color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 14px;">
+        Fetch emails from INBOX. Enable auto-poll to check every 5 seconds.
+      </p>
+      <div class="btn-group">
+        <button onclick="pollEmails()">Fetch Now</button>
+        <button id="autoPollBtn" class="secondary" onclick="toggleAutoPoll()">Start Auto-Poll</button>
+      </div>
+      <div id="pollStatus" class="status" style="display: none;"></div>
+      <div id="emailList" class="email-list"></div>
+    </div>
+
+    <!-- Test Round-Trip Card -->
+    <div class="card">
+      <h2>🔄 Test Round-Trip</h2>
+      <p style="color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 14px;">
+        Send an email to yourself and verify it arrives via IMAP.
+      </p>
+      <button onclick="runRoundTrip()">Run Test</button>
+      <div id="roundTripStatus" class="status" style="display: none;"></div>
+      <div id="roundTripResult" class="result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    let autoPollInterval = null;
+
+    async function sendEmail() {
+      const to = document.getElementById('sendTo').value;
+      const subject = document.getElementById('sendSubject').value;
+      const body = document.getElementById('sendBody').value;
+      const status = document.getElementById('sendStatus');
+
+      if (!to || !body) {
+        status.style.display = 'block';
+        status.textContent = '❌ Please fill in recipient and body';
+        return;
+      }
+
+      status.style.display = 'block';
+      status.textContent = '📤 Sending...';
+
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to, subject, body })
+        });
+        const data = await response.json();
+        
+        if (data?.success) {
+          status.textContent = '✅ Email sent successfully!';
+          document.getElementById('sendBody').value = '';
+        } else {
+          throw new Error(data.error || 'Failed to send');
+        }
+      } catch (err) {
+        status.textContent = '❌ Error: ' + err.message;
+      }
+    }
+
+    async function pollEmails() {
+      const status = document.getElementById('pollStatus');
+      const emailList = document.getElementById('emailList');
+
+      status.style.display = 'block';
+      status.textContent = '📥 Fetching emails...';
+
+      try {
+        const response = await fetch('/api/poll-emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        
+        if (data?.output?.emails?.emails) {
+          const emails = data.output?.emails?.emails || [];
+          status.textContent = `✅ Found ${emails.length} email(s) at ${new Date().toLocaleTimeString()}`;
+          
+          if (emails.length > 0) {
+            emailList.innerHTML = emails.map(e => `
+              <div class="email-item">
+                <div class="subject">${escapeHtml(e.subject || '(No subject)')}</div>
+                <div class="meta">From: ${escapeHtml(e.from || 'Unknown')} • ${escapeHtml(e.date || '')}</div>
+              </div>
+            `).join('');
+          } else {
+            emailList.innerHTML = '<div style="color: rgba(255,255,255,0.5); padding: 12px;">No emails found</div>';
+          }
+        } else {
+          throw new Error(data.error || 'Failed to fetch');
+        }
+      } catch (err) {
+        status.textContent = '❌ Error: ' + err.message;
+      }
+    }
+
+    function toggleAutoPoll() {
+      const btn = document.getElementById('autoPollBtn');
+      
+      if (autoPollInterval) {
+        clearInterval(autoPollInterval);
+        autoPollInterval = null;
+        btn.textContent = 'Start Auto-Poll';
+        btn.className = 'secondary';
+      } else {
+        pollEmails();
+        autoPollInterval = setInterval(pollEmails, 5000);
+        btn.innerHTML = '<span class="polling-indicator"></span>Stop Auto-Poll';
+        btn.className = 'danger';
+      }
+    }
+
+    async function runRoundTrip() {
+      const status = document.getElementById('roundTripStatus');
+      const result = document.getElementById('roundTripResult');
+
+      status.style.display = 'block';
+      status.textContent = '🔄 Running round-trip test...';
+      result.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/email-forward-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        
+        if (data?.status) {
+          status.textContent = '✅ Round-trip test completed!';
+          result.className = 'result';
+          result.style.display = 'block';
+          result.textContent = JSON.stringify({
+            sent: data.output.sent,
+            inbox: {
+              count: data.output.inbox?.count,
+              emails: data.output.inbox?.emails?.slice(0, 3).map(e => ({
+                subject: e.subject,
+                from: e.from,
+                date: e.date
+              }))
+            }
+          }, null, 2);
+        } else {
+          throw new Error(data.error || 'Test failed');
+        }
+      } catch (err) {
+        status.textContent = '❌ Error: ' + err.message;
+        result.className = 'result error';
+        result.style.display = 'block';
+        result.textContent = err.stack || err.message;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

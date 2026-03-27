@@ -1,0 +1,68 @@
+id: post-instagram
+name: Post to Instagram
+description: Post content to Instagram using the generated snippets
+
+input:
+  - id: instagramAccountId
+    type: string
+    required: true
+    description: Instagram Business Account ID
+  - id: imageUrl
+    type: string
+    required: true
+    description: Public URL of the image to post
+  - id: caption
+    type: string
+    required: true
+    description: Caption for the post
+  - id: carouselUrls
+    type: string
+    required: false
+    description: JSON array of image URLs for carousel (2-10 images)
+
+nodes:
+  # Single image post
+  - id: image-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-instagram"
+      resource: createPost
+      operation: createPost
+      # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
+      credentials:
+        instagram:
+          accessToken: "{{habits.env.INSTAGRAM_ACCESS_TOKEN}}"
+      params:
+        instagramAccountId: "{{habits.input.instagramAccountId}}"
+        imageUrl: "{{habits.input.imageUrl}}"
+        caption: "{{habits.input.caption}}"
+      stopAfterIf:
+        expr: "habits.input.carouselUrls"
+        skipIfStopped: true
+
+  # Carousel post
+  - id: carousel-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-instagram"
+      resource: createCarousel
+      operation: createCarousel
+      credentials:
+        instagram:
+          accessToken: "{{habits.env.INSTAGRAM_ACCESS_TOKEN}}"
+      params:
+        instagramAccountId: "{{habits.input.instagramAccountId}}"
+        mediaUrls: "{{habits.input.carouselUrls}}"
+        caption: "{{habits.input.caption}}"
+      stopAfterIf:
+        expr: "!habits.input.carouselUrls"
+        skipIfStopped: true
+
+output:
+  success: "true"
+  mediaId: "{{habits.nodes.image-post.mediaId}}"
+  platform: "instagram"

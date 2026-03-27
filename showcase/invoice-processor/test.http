@@ -1,0 +1,53 @@
+# Invoice Processor API Tests
+# Test the PDF extraction, OCR, and invoice generation capabilities
+
+@host = http://localhost:13000
+
+###
+# @name createInvoice
+# Test invoice PDF generation
+POST {{host}}/api/create-invoice
+Content-Type: application/json
+
+< ./test-invoice.json
+
+###
+# @name pdfExtractFromPath
+# Test PDF text extraction from file path
+# Requires downloading a test PDF first:
+#   curl -sL -o /tmp/test.pdf "https://css4.pub/2015/textbook/somatosensory.pdf"
+POST {{host}}/api/extract-pdf
+Content-Type: application/json
+
+{
+  "source": "/tmp/test3.pdf",
+  "sourceType": "path",
+  "maxPages": 1
+}
+
+###
+# @name ocrFromPath
+# Test OCR from file path
+# Requires creating a test image first:
+#   convert -size 400x100 xc:white -font Helvetica -pointsize 36 -fill black -gravity center -annotate +0+0 "Invoice #12345" /tmp/invoice-test.png
+POST {{host}}/api/process-ocr
+Content-Type: application/json
+
+{
+  "source": "/tmp/invoice-test.png",
+  "sourceType": "path",
+  "language": "eng"
+}
+
+###
+# @name ocrFromBase64
+# Test OCR from base64 encoded image
+# This is a 400x100 grayscale PNG with "Invoice #12345" text
+POST {{host}}/api/process-ocr
+Content-Type: application/json
+
+{
+  "source": "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",
+  "sourceType": "base64",
+  "language": "eng"
+}

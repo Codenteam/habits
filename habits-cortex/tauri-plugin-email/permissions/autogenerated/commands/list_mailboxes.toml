@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-list-mailboxes"
+description = "Enables the list_mailboxes command without any pre-configured scope."
+commands.allow = ["list_mailboxes"]
+
+[[permission]]
+identifier = "deny-list-mailboxes"
+description = "Denies the list_mailboxes command without any pre-configured scope."
+commands.deny = ["list_mailboxes"]

@@ -3,11 +3,11 @@
  * 
  * Replaces driver.ts in Tauri environments.
  * Uses Tauri SQL plugin for database operations.
- * Database is stored in {appDataDir}/habits.db
+ * Database is stored in {appDataDir}/habits-cortex.db
  */
 
 var dbInitialized = false;
-var dbPath = 'sqlite:habits.db';
+var dbPath = 'sqlite:habits-cortex.db';
 
 function tauriLog(level, message) {
   var fullMsg = '[SQL Driver] ' + message;

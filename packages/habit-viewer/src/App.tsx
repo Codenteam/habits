@@ -149,6 +149,8 @@ function getUrlParams() {
     filename: params.get('filename') || 'habit-workflow',
     // Hide controls
     hideControls: params.get('hideControls') === 'true',
+    // Hide minimap
+    hideMinimap: params.get('hideMinimap') === 'true',
     // Background color
     bgColor: params.get('bgColor') || '#0f172a',
     // Fit view
@@ -420,7 +422,7 @@ function App() {
         nodes={state.nodes}
         edges={state.edges}
         showControls={!params.hideControls}
-        showMinimap={!params.hideControls}
+        showMinimap={!params.hideControls && !params.hideMinimap}
         fitView={params.fitView}
         backgroundColor={params.bgColor}
         interactive={true}

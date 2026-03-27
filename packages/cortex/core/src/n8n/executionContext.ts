@@ -51,7 +51,7 @@ export function createExecutionContext(
     credentials: {},
   };
 
-  // Build the execution context with real implementations
+  // Build the execution context
   const context: IExecuteFunctions = {
     // Get input data from previous nodes
     getInputData: (inputIndex: number = 0): INodeExecutionData[] => {
@@ -134,7 +134,7 @@ export function createExecutionContext(
 
     // Helpers object with HTTP request and other utilities
     helpers: {
-      // HTTP request function (real implementation)
+      // HTTP request function
       httpRequest: async (opts: IHttpRequestOptions): Promise<any> => {
         return await httpRequest(opts);
       },

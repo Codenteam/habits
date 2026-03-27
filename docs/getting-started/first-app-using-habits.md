@@ -3,7 +3,7 @@
 This guide walks you through building a complete AI-powered application, the **Resume Analyzer**, from understanding the workflows to packaging for distribution across all platforms: Android, iOS, macOS, Windows, and Linux.
 
 ::: tip <Icon name="package" /> Complete Example
-This tutorial uses the [Resume Analyzer](/showcase/resume-analyzer) showcase, a production-ready app with multiple AI workflows, a mobile-first frontend, and local database storage.
+This tutorial uses the [Resume Analyzer](/showcase/resume-analyzer) showcase, a ready-to-use app with multiple AI workflows, a mobile-first frontend, and local database storage.
 :::
 
 <script setup>
@@ -155,4 +155,4 @@ You can also export from the Base UI:
 
 - **[Resume Analyzer Showcase](/showcase/resume-analyzer)**: Full showcase page with images and details
 - **[Binary Export](/deep-dive/pack-distribute)**: Complete export documentation with all options
-- **[Browse All Examples](/showcase/)**: Explore more production-ready showcases
+- **[Browse All Examples](/showcase/)**: Explore more ready-to-use showcases

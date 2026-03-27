@@ -1,0 +1,1 @@
+A fork of tauri-plugin-keyring that uses [OSC](https://github.com/open-source-cooperative) packages instead of [keyring](https://crates.io/crates/keyring) package.

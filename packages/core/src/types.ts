@@ -61,6 +61,8 @@ export interface WorkflowNode {
     operation?: string;
     params?: Record<string, any>;
     credentials?: Record<string, any>;
+    /** OAuth credentials config - clientId/clientSecret can reference env vars via {{habits.env.VAR}} */
+    auth?: Record<string, any>;
     inputs?: string[];
     outputs?: string[];
     // Script-specific properties
@@ -398,6 +400,17 @@ export interface WorkflowConfig {
   };
   defaults?: {
     webhookTimeout?: number;
+  };
+  /**
+   * Application configuration for desktop/mobile builds
+   */
+  application?: {
+    /** Custom URL scheme for OAuth deep links (e.g., "myapp" for myapp://oauth/callback) */
+    scheme?: string;
+    /** Application display name (used in Tauri builds) */
+    name?: string;
+    /** Application identifier (e.g., "com.mycompany.myapp") */
+    identifier?: string;
   };
   /**
    * Logging configuration

@@ -1,0 +1,140 @@
+id: manual-invoice
+name: Manual Invoice Entry
+description: API endpoint to manually add invoices to the Google Sheet
+
+# This habit exposes a POST /api/invoices endpoint
+# It accepts invoice data and appends it to the same Google Sheet
+
+input:
+  - id: invoiceNumber
+    type: string
+    required: true
+    description: Invoice number (e.g., INV-2026-001)
+  - id: date
+    type: string
+    required: true
+    description: Invoice date (e.g., 2026-03-20)
+  - id: customerName
+    type: string
+    required: true
+    description: Customer name
+  - id: customerAddress
+    type: string
+    required: false
+    description: Customer address
+  - id: description
+    type: string
+    required: true
+    description: Description of goods/services
+  - id: notes
+    type: string
+    required: false
+    description: Additional notes
+  - id: amount
+    type: number
+    required: true
+    description: Net amount (before VAT)
+  - id: vat
+    type: number
+    required: false
+    description: VAT amount
+  - id: total
+    type: number
+    required: true
+    description: Total amount (including VAT)
+  - id: currency
+    type: string
+    required: true
+    description: Currency code (e.g., GBP, USD, EUR)
+
+nodes:
+  # Transform input to sheet row format
+  - id: transform-input
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Transform Invoice Input
+      params:
+        invoiceNumber: "{{habits.input.invoiceNumber}}"
+        date: "{{habits.input.date}}"
+        customerName: "{{habits.input.customerName}}"
+        customerAddress: "{{habits.input.customerAddress}}"
+        description: "{{habits.input.description}}"
+        notes: "{{habits.input.notes}}"
+        amount: "{{habits.input.amount}}"
+        vat: "{{habits.input.vat}}"
+        total: "{{habits.input.total}}"
+        currency: "{{habits.input.currency}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            invoiceNumber: string,
+            date: string,
+            customerName: string,
+            customerAddress: string,
+            description: string,
+            notes: string,
+            amount: number,
+            vat: number,
+            total: number,
+            currency: string
+          ) {
+            // Format date if needed
+            let formattedDate = date;
+            try {
+              const d = new Date(date);
+              if (!isNaN(d.getTime())) {
+                formattedDate = d.toLocaleDateString('en-GB');
+              }
+            } catch {
+              // Keep original date if parsing fails
+            }
+            
+            // Calculate VAT if not provided
+            const vatAmount = vat || (total - amount);
+            
+            // Build row for Google Sheets
+            const row = [
+              invoiceNumber,                           // Invoice Number
+              formattedDate,                           // Date
+              customerName,                            // Customer Name
+              customerAddress || '',                   // Customer Address
+              description,                             // Description
+              notes || '',                             // Notes
+              amount.toFixed(2),                       // Amount
+              vatAmount.toFixed(2),                    // VAT
+              total.toFixed(2),                        // Total
+              currency.toUpperCase(),                  // Currency
+            ];
+            
+            return {
+              row,
+              invoiceNumber,
+              source: 'manual',
+            };
+          }
+
+  # Append to Google Sheets
+  - id: append-to-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: appendRow
+      params:
+        accessToken: "{{habits.env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        sheetName: "Invoices"
+        values: "{{transform-input.row}}"
+
+edges:
+  - source: transform-input
+    target: append-to-sheet
+
+output:
+  success: true
+  invoiceNumber: "{{transform-input.invoiceNumber}}"
+  row: "{{append-to-sheet.updatedRows}}"

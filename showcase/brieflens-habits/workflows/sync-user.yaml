@@ -1,0 +1,164 @@
+id: sync-user
+name: Sync Single User Events (Sub-habit)
+description: >-
+  Syncs calendar events for a single user.
+  Called by sync-events orchestrator via bit-loop.
+version: "1.0"
+
+nodes:
+  # Get user data from database
+  - id: get-user
+    type: bits
+    data:
+      label: Get User Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: users
+        key: "{{habits.input.userEmail}}"
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Refresh the access token
+  - id: refresh-token
+    type: bits
+    data:
+      label: Refresh Access Token
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-calendar"
+      operation: refreshToken
+      params:
+        refreshToken: "{{get-user.value.refreshToken}}"
+      credentials:
+        auth:
+          clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+          redirectUri: "{{habits.env.GOOGLE_REDIRECT_URI}}"
+
+  # Fetch calendar events for next 7 days
+  - id: fetch-events
+    type: bits
+    data:
+      label: Fetch Calendar Events
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-calendar"
+      operation: listEvents
+      params:
+        accessToken: "{{refresh-token.accessToken}}"
+        refreshToken: "{{get-user.value.refreshToken}}"
+        calendarId: primary
+        maxResults: 100
+        singleEvents: true
+        orderBy: startTime
+      credentials:
+        auth:
+          clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+          redirectUri: "{{habits.env.GOOGLE_REDIRECT_URI}}"
+
+  # Process events - store and extract participants
+  - id: process-events
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Process Events
+      params:
+        events: "{{fetch-events.events}}"
+        userEmail: "{{habits.input.userEmail}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(events: any[], userEmail: string) {
+            const processedEvents = [];
+            const allParticipants = [];
+            
+            for (const event of events) {
+              // Process event
+              processedEvents.push({
+                eventId: event.id,
+                userEmail,
+                title: event.summary || "No Title",
+                description: event.description || "",
+                startTime: event.start,
+                endTime: event.end,
+                location: event.location || "",
+                attendees: JSON.stringify(event.attendees || [])
+              });
+              
+              // Extract participants (excluding self)
+              for (const attendee of event.attendees || []) {
+                if (attendee.email && !attendee.self && attendee.email !== userEmail) {
+                  allParticipants.push({
+                    eventId: event.id,
+                    email: attendee.email,
+                    name: attendee.displayName || attendee.email.split("@")[0]
+                  });
+                }
+              }
+            }
+            
+            return {
+              events: processedEvents,
+              participants: allParticipants,
+              eventCount: processedEvents.length,
+              participantCount: allParticipants.length
+            };
+          }
+
+  # Store events in database
+  - id: store-events
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Store Events
+      params:
+        processed: "{{process-events}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(processed: any) {
+            // Events will be stored via database bit in production
+            // For now, just return the processed data
+            console.log(`📅 Processed ${processed.eventCount} events with ${processed.participantCount} participants`);
+            return processed;
+          }
+
+  # Update user's last sync time
+  - id: update-sync-time
+    type: bits
+    data:
+      label: Update Last Sync
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: user_sync
+        key: "{{habits.input.userEmail}}"
+        value: |
+          {
+            "lastSynced": "{{habits.now}}",
+            "eventCount": "{{process-events.eventCount}}",
+            "accessToken": "{{refresh-token.accessToken}}"
+          }
+        database: "{{habits.env.DATABASE_FILE}}"
+
+edges:
+  - source: get-user
+    target: refresh-token
+  - source: refresh-token
+    target: fetch-events
+  - source: fetch-events
+    target: process-events
+  - source: process-events
+    target: store-events
+  - source: store-events
+    target: update-sync-time
+
+output:
+  - update-sync-time

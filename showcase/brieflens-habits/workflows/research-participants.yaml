@@ -1,0 +1,117 @@
+id: research-participants
+name: Research Participants (Orchestrator)
+description: >-
+  Scheduled workflow that finds unresearched participants
+  and invokes research-single for each one.
+version: "1.0"
+
+nodes:
+  # Schedule trigger - runs daily at 1 AM
+  - id: schedule-trigger
+    type: activepieces
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-schedule"
+      operation: cron_expression
+      triggerType: polling
+      params:
+        cronExpression: "0 1 * * *"
+        timezone: "UTC"
+
+  # Check research quota for this month
+  - id: check-quota
+    type: bits
+    data:
+      label: Check Monthly Quota
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: research_usage
+        key: "{{habits.now | date:'YYYY-MM'}}"
+        defaultValue: '{"count": 0}'
+        database: "{{habits.env.DATABASE_FILE}}"
+
+
+  # Get unresearched participants
+  - id: get-participants
+    type: bits
+    data:
+      label: Get Unresearched Participants
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: participants
+        filter: '{"researched": false}'
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Research each participant
+  - id: research-all
+    type: bits
+    data:
+      label: Research Each Participant
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-participants.documents}}"
+        habitId: research-single
+        inputKey: spread
+        delayMs: 2000
+        continueOnError: true
+        collectResults: true
+
+  # Update monthly usage counter
+  - id: update-usage
+    type: bits
+    data:
+      label: Update Usage Counter
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: increment
+      params:
+        collection: research_usage
+        key: "{{habits.now | date:'YYYY-MM'}}"
+        amount: "{{research-all.successCount}}"
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Log results
+  - id: log-results
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log Research Results
+      params:
+        results: "{{research-all}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(results: any) {
+            console.log("🔍 Participant research completed:");
+            console.log(`   Total: ${results.totalItems}`);
+            console.log(`   Successful: ${results.successCount}`);
+            console.log(`   Failed: ${results.errorCount}`);
+            return results;
+          }
+
+edges:
+  - source: schedule-trigger
+    target: check-quota
+  - source: check-quota
+    target: get-participants
+  - source: get-participants
+    target: research-all
+  - source: research-all
+    target: update-usage
+  - source: update-usage
+    target: log-results
+
+output:
+  - log-results

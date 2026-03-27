@@ -1,0 +1,147 @@
+id: capture-lead
+name: Capture Lead
+description: >-
+  Captures incoming leads from form webhooks, validates the data,
+  creates a lead record, and stores it in the local database.
+version: "1.0"
+nodes:
+  - id: http-trigger
+    type: trigger
+    position:
+      x: 0
+      y: 0
+    data:
+      label: HTTP Trigger
+      framework: bits
+      module: "@ha-bits/bit-http"
+      operation: webhookTrigger
+      isTrigger: true
+      params:
+        method: POST
+        path: /capture-lead
+        responseMode: lastNode
+
+  - id: validate-lead
+    type: bits
+    position:
+      x: 200
+      y: 0
+    data:
+      label: Validate Lead Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        condition: "{{habits.input.email}}"
+        trueValue:
+          valid: true
+          email: "{{habits.input.email}}"
+          firstName: "{{habits.input.firstName}}"
+          lastName: "{{habits.input.lastName}}"
+          company: "{{habits.input.company}}"
+          phone: "{{habits.input.phone}}"
+          source: "{{habits.input.source}}"
+        falseValue:
+          valid: false
+          error: "Email is required"
+
+  - id: check-validation
+    type: bits
+    position:
+      x: 400
+      y: 0
+    data:
+      label: Check Validation Result
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        condition: "{{validate-lead.valid}}"
+        trueValue: "continue"
+        falseValue: "{{validate-lead}}"
+      stopAfterIf:
+        expr: "!{{validate-lead.valid}}"
+        skipIfStopped: false
+
+  - id: create-lead
+    type: bits
+    position:
+      x: 600
+      y: 0
+    data:
+      label: Create Lead in CRM
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: createLead
+      params:
+        email: "{{validate-lead.email}}"
+        firstName: "{{validate-lead.firstName}}"
+        lastName: "{{validate-lead.lastName}}"
+        company: "{{validate-lead.company}}"
+        phone: "{{validate-lead.phone}}"
+        source: "{{validate-lead.source}}"
+        status: new
+
+  - id: store-lead
+    type: bits
+    position:
+      x: 800
+      y: 0
+    data:
+      label: Store Lead in Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: leads
+        document:
+          id: "{{create-lead.lead.id}}"
+          email: "{{create-lead.lead.email}}"
+          firstName: "{{create-lead.lead.firstName}}"
+          lastName: "{{create-lead.lead.lastName}}"
+          company: "{{create-lead.lead.company}}"
+          phone: "{{create-lead.lead.phone}}"
+          source: "{{create-lead.lead.source}}"
+          status: "new"
+          createdAt: "{{create-lead.lead.createdAt}}"
+
+  - id: return-result
+    type: bits
+    position:
+      x: 1000
+      y: 0
+    data:
+      label: Return Result
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: format
+      params:
+        template: |
+          {
+            "success": true,
+            "leadId": "{{create-lead.lead.id}}",
+            "email": "{{create-lead.lead.email}}",
+            "message": "Lead captured successfully"
+          }
+
+edges:
+  - id: e1
+    source: http-trigger
+    target: validate-lead
+  - id: e2
+    source: validate-lead
+    target: check-validation
+  - id: e3
+    source: check-validation
+    target: create-lead
+  - id: e4
+    source: create-lead
+    target: store-lead
+  - id: e5
+    source: store-lead
+    target: return-result

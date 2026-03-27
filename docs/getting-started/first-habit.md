@@ -320,5 +320,5 @@ If changes aren't reflected:
 ---
 
 ::: tip <Icon name="lightbulb" /> Pro Tip
-You can switch between GUI (Base) and code editing at any time. Changes made in Base are immediately reflected in the underlying YAML files, and vice versa!
+You can switch between GUI (Base) and code editing at any time. Changes made in Base are immediately reflected in the underlying YAML files, and vice versa! Just export from Base and that's it. 
 :::

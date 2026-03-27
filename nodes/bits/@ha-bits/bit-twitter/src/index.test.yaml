@@ -1,0 +1,175 @@
+# bit-twitter tests - Twitter/X API v2
+bit: ./index.ts
+tests:
+  - name: "tweet - post basic tweet"
+    action: tweet
+    input:
+      bearerToken: "test-bearer-token"
+      text: "Hello Twitter! This is a test tweet."
+    mocks:
+      fetch:
+        - url: "*/tweets"
+          response:
+            data:
+              id: "1234567890123456789"
+              text: "Hello Twitter! This is a test tweet."
+    expect:
+      success: true
+      tweetId: "1234567890123456789"
+      text: "Hello Twitter! This is a test tweet."
+
+  - name: "tweet - reply to tweet"
+    action: tweet
+    input:
+      bearerToken: "test-bearer-token"
+      text: "This is a reply!"
+      replyToTweetId: "9876543210987654321"
+    mocks:
+      fetch:
+        - url: "*/tweets"
+          response:
+            data:
+              id: "1111111111111111111"
+              text: "This is a reply!"
+    expect:
+      success: true
+      tweetId: "1111111111111111111"
+
+  - name: "reply - reply action"
+    action: reply
+    input:
+      bearerToken: "test-bearer-token"
+      tweetId: "9876543210987654321"
+      text: "Great tweet! Thanks for sharing."
+    mocks:
+      fetch:
+        - url: "*/tweets"
+          response:
+            data:
+              id: "2222222222222222222"
+              text: "Great tweet! Thanks for sharing."
+    expect:
+      success: true
+      replyId: "2222222222222222222"
+      inReplyTo: "9876543210987654321"
+
+  - name: "retweet - retweet a tweet"
+    action: retweet
+    input:
+      bearerToken: "test-bearer-token"
+      userId: "123456789"
+      tweetId: "9876543210987654321"
+    mocks:
+      fetch:
+        - url: "*/users/*/retweets"
+          response:
+            data:
+              retweeted: true
+    expect:
+      success: true
+      retweeted: true
+      tweetId: "9876543210987654321"
+
+  - name: "like - like a tweet"
+    action: like
+    input:
+      bearerToken: "test-bearer-token"
+      userId: "123456789"
+      tweetId: "9876543210987654321"
+    mocks:
+      fetch:
+        - url: "*/users/*/likes"
+          response:
+            data:
+              liked: true
+    expect:
+      success: true
+      liked: true
+      tweetId: "9876543210987654321"
+
+  - name: "deleteTweet - delete a tweet"
+    action: deleteTweet
+    input:
+      bearerToken: "test-bearer-token"
+      tweetId: "1234567890123456789"
+    mocks:
+      fetch:
+        - url: "*/tweets/*"
+          response:
+            data:
+              deleted: true
+    expect:
+      success: true
+      deleted: true
+      tweetId: "1234567890123456789"
+
+  - name: "getUser - get user by username"
+    action: getUser
+    input:
+      bearerToken: "test-bearer-token"
+      username: "testuser"
+    mocks:
+      fetch:
+        - url: "*/users/by/username/*"
+          response:
+            data:
+              id: "123456789"
+              name: "Test User"
+              username: "testuser"
+              profile_image_url: "https://example.com/avatar.jpg"
+              description: "A test user"
+              public_metrics:
+                followers_count: 1000
+                following_count: 500
+                tweet_count: 5000
+    expect:
+      success: true
+      id: "123456789"
+      name: "Test User"
+      username: "testuser"
+      followers: 1000
+
+  - name: "getMe - get authenticated user"
+    action: getMe
+    input:
+      bearerToken: "test-bearer-token"
+    mocks:
+      fetch:
+        - url: "*/users/me*"
+          response:
+            data:
+              id: "123456789"
+              name: "My Account"
+              username: "myaccount"
+              profile_image_url: "https://example.com/me.jpg"
+    expect:
+      success: true
+      id: "123456789"
+      name: "My Account"
+      username: "myaccount"
+
+  - name: "createThread - create tweet thread"
+    action: createThread
+    input:
+      bearerToken: "test-bearer-token"
+      tweets: '["First tweet of thread", "Second tweet continues the story", "Final tweet wraps it up"]'
+    mocks:
+      fetch:
+        - url: "*/tweets"
+          response:
+            data:
+              id: "1111111111111111111"
+              text: "First tweet of thread"
+        - url: "*/tweets"
+          response:
+            data:
+              id: "2222222222222222222"
+              text: "Second tweet continues the story"
+        - url: "*/tweets"
+          response:
+            data:
+              id: "3333333333333333333"
+              text: "Final tweet wraps it up"
+    expect:
+      success: true
+      threadLength: 3

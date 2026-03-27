@@ -66,22 +66,29 @@ export default defineConfig({
     
     sidebar: [
       {
-        text: 'Getting Started',
+        text: 'About',
         items: [
           { text: 'Introduction', link: '/getting-started/introduction' },
           { text: 'Motivation', link: '/getting-started/motivation' },
+          { text: 'Downloads', link: '/downloads' },          
+          { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
+          { text: 'Concepts', link: '/getting-started/concepts' },
+          { text: '.habit File Format Specification', link: '/dot-habit' },
+        ]
+      },  
+      {
+        text: 'Getting Started',
+        items: [
           { text: 'Build Habit using UI (Base)', link: '/getting-started/first-habit' },
           { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'Build Full AI Powered App', link: '/getting-started/first-app-using-habits' },
           { text: 'Build Standalone App (No APIs)', link: '/getting-started/standalone-app' },
           { text: 'Code Habit using HaC (Mix n8n/ActivePieces)', link: '/getting-started/first-habit-mixed' },
-          { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
-          { text: 'Concepts', link: '/getting-started/concepts' },
         ]
-      },      {
+      },      
+      {
         text: 'Deep Dive',
         items: [
-          // { text: 'Habits Schema: Understanding Habits', link: '/deep-dive/habit-schema' },
           { text: 'Creating Habits (Base)', link: '/deep-dive/creating' },
           { text: 'Running Habits (Cortex)', link: '/deep-dive/running' },
           { text: 'Packing and Distributing Habits', link: '/deep-dive/pack-distribute' },

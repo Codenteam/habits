@@ -1,0 +1,26 @@
+[package]
+name = "tauri-plugin-email"
+version = "0.1.0"
+description = "A Tauri plugin for sending emails via SMTP and fetching emails via IMAP"
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+exclude = ["/examples", "/webview-dist", "/webview-src", "/node_modules"]
+links = "tauri-plugin-email"
+
+[dependencies]
+tauri = { version = "2.1.0" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+
+# SMTP support
+lettre = { version = "0.11", features = ["tokio1-native-tls", "builder", "smtp-transport"] }
+
+# IMAP support  
+imap = "2.4"
+native-tls = "0.2"
+
+[build-dependencies]
+tauri-plugin = { version = "2.0.3", features = ["build"] }

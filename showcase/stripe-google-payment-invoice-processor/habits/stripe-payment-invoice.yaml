@@ -1,0 +1,128 @@
+id: stripe-payment-invoice
+name: Stripe Payment to Invoice PDF on Google Drive
+description: Polls Stripe for new successful payments, generates PDF invoices and uploads to Google Drive
+
+# Uses polling trigger - no webhooks needed
+
+nodes:
+  # Trigger: Poll Stripe for new successful payments
+  - id: stripe-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-stripe"
+      operation: paymentSucceededPolling
+      triggerType: POLLING
+      params:
+        secretKey: "{{habits.env.STRIPE_API_KEY}}"
+        cronExpression: "*/5 * * * * *"
+        timezone: "UTC"
+        lastNDays: 1000
+        limit: 100
+
+  # Generate PDF Invoice directly from Stripe data
+  - id: generate-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-invoice"
+      operation: createInvoice
+      params:
+        invoiceId: "{{stripe-trigger.paymentId}}"
+        invoiceDate: "{{stripe-trigger.created}}"
+        header:
+          lines:
+            - "Your Company Name"
+            - "Payment Receipt"
+        footer:
+          lines:
+            - "Thank you for your payment!"
+            - "This invoice was auto-generated from Stripe"
+        seller:
+          lines:
+            - "Your Company Name"
+            - "123 Business Ave"
+            - "City, State 12345"
+            - "billing@yourcompany.com"
+        customer:
+          lines:
+            - "{{stripe-trigger.customer.name}}"
+            - "{{stripe-trigger.customer.email}}"
+            - "{{stripe-trigger.customer.address}}"
+        items:
+          - Description: "{{stripe-trigger.description || 'Stripe Payment'}}"
+            Qty: 1
+            "Unit Price": "{{stripe-trigger.amount}}"
+            Tax: 0
+            Price: "{{stripe-trigger.amount}}"
+        itemColumns:
+          - "Description"
+          - "Qty"
+          - "Unit Price"
+          - "Tax"
+          - "Price"
+        taxColumn: "Tax"
+        priceColumn: "Price"
+        currency: "$"
+        primaryColor: "#635bff"
+        notes:
+          - "Payment processed via Stripe"
+          - "Payment ID: {{stripe-trigger.paymentId}}"
+
+  # Upload PDF to Google Drive
+  - id: upload-to-drive
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: uploadFile
+      auth: 
+        clientId: "{{habits.env.GOOGLE_DRIVE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: "Invoice-{{stripe-trigger.paymentId}}.pdf"
+        content: "{{generate-invoice.base64}}"
+        mimeType: "application/pdf"
+        folderId: "{{habits.env.GOOGLE_DRIVE_FOLDER_ID}}"
+
+  # Store invoice in database
+  - id: store-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: "invoices"
+        document:
+          invoiceNumber: "{{stripe-trigger.paymentId}}"
+          date: "{{stripe-trigger.created}}"
+          customerName: "{{stripe-trigger.customer.name}}"
+          customerEmail: "{{stripe-trigger.customer.email}}"
+          customerAddress: "{{stripe-trigger.customer.address}}"
+          description: "{{stripe-trigger.description || 'Stripe Payment'}}"
+          amount: "{{stripe-trigger.amount}}"
+          vat: 0
+          total: "{{stripe-trigger.amount}}"
+          currency: "{{stripe-trigger.currency}}"
+          pdfBase64: "{{generate-invoice.base64}}"
+          driveFileId: "{{upload-to-drive.fileId}}"
+          source: "stripe"
+          stripePaymentId: "{{stripe-trigger.paymentId}}"
+
+edges:
+  - source: stripe-trigger
+    target: generate-invoice
+  - source: generate-invoice
+    target: upload-to-drive
+  - source: generate-invoice
+    target: store-invoice
+
+output:
+  invoice: "{{generate-invoice}}"
+  driveFile: "{{upload-to-drive}}"
+  stored: "{{store-invoice}}"

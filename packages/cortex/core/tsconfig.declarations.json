@@ -1,0 +1,1 @@
+{"extends": "./tsconfig.lib.json", "compilerOptions": {"noEmit": false, "declaration": true, "emitDeclarationOnly": true, "outDir": "../../../dist/packages/cortex/core"}}

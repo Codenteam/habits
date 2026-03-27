@@ -15,9 +15,13 @@ export { IWebhookHandler } from './WebhookHandler';
 export { executeN8nModule } from './n8n/n8nExecutor';
 export { executeActivepiecesModule } from './activepieces/activepiecesExecutor';
 export { triggerHelper, TriggerHookType } from './activepieces/activepiecesTrigger';
-export { executeBitsModule } from './bits/bitsDoer';
+export { executeBitsModule, extractBitsPieceFromModule, pieceFromModule, BitsPiece } from './bits/bitsDoer';
 export { bitsTriggerHelper } from './bits/bitsWatcher';
 export { executeScriptModule } from './script/scriptExecutor';
+
+// Polling store for trigger deduplication
+export { PollingStore, createPollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions } from './store';
+export { BitsPollingStore } from './bits/bitsDoer';
 
 // Module management utilities
 export { ensureModuleInstalled, registerBundledModule, getBundledModule, isBundledModule } from './utils/moduleLoader';
@@ -62,6 +66,7 @@ export {
   BitTrigger,
   BitTriggerContext,
   TriggerStrategy,
+  WebhookFilterPayload,
   
   // Piece/Bit builders
   createBit,
@@ -80,5 +85,22 @@ export type {
   DeclarativeNodeDescription,
 } from './bits/declarativeExecutor';
 
+// OAuth2 PKCE support
+export * from './bits/oauth2Types';
+export { oauthTokenStore } from './bits/oauthTokenStore';
+export { discoverOAuthRequirements, printOAuthRequirements, type OAuthRequirement } from './bits/oauthDiscovery';
+export { 
+  OAuthFlowManager,
+  type OAuthFlowManagerOptions,
+  type OAuthCallbackParams,
+  type InitiateFlowResult,
+  type ExchangeResult,
+  type IOAuthHandler,
+  type WorkflowOAuthRequirement,
+} from './bits/OAuthFlowManager';
+
 // Re-export types from core
 export * from '@habits/shared/types';
+
+// Re-export core
+export { LoggerFactory } from '@ha-bits/core';

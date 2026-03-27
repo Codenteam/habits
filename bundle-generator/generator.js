@@ -127,13 +127,14 @@ envVars = ${JSON.stringify(env, null, 2)};
     let bitsImports = '';
     let bitsRegistration = '';
     stack.bits.forEach(bit => {
-        const bitImport = `const ${bit.id} = require('${bit.module}');`;
+        const bitVar = `bit_${bit.id}`;
+        const bitImport = `const ${bitVar} = require('${bit.module}');`;
         bitsImports += bitImport + '\n';
         
         // Add to local registry for getBitsRegistry()
-        bitsRegistration += `bitsRegistry['${bit.module}'] = ${bit.id};\n`;
+        bitsRegistration += `bitsRegistry['${bit.module}'] = ${bitVar};\n`;
         // Register with cortex-core so ensureModuleInstalled knows it's bundled
-        bitsRegistration += `registerBundledModule('${bit.module}', ${bit.id});\n`;
+        bitsRegistration += `registerBundledModule('${bit.module}', ${bitVar});\n`;
     });
     generatedCode = generatedCode.replace('////<bits_imports/>', bitsImports);
     generatedCode = generatedCode.replace('////<bits_registration/>', bitsRegistration);
@@ -317,8 +318,13 @@ if (typeof globalThis.process === 'undefined') {
             '@ha-bits/cortex-core': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
             // @ha-bits/cortex (full package) should resolve to cortex-core for bundling
             '@ha-bits/cortex': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
+            // Include @ha-bits/core for LoggerFactory etc. used by cortex-core
+            '@ha-bits/core': path.join(__dirname, '../dist/packages/core/src/index.js'),
             // Stub native packages that can't run in browser
             'tiktoken': path.join(__dirname, 'stubs/tiktoken.js'),
+            // Always include bit-database-sql driver stub for polling store deduplication
+            // This is required by cortex-core's store.ts for polling triggers
+            '@ha-bits/bit-database-sql/driver': path.join(__dirname, 'node_modules/@ha-bits/bit-database-sql/src/stubs/tauri-driver.js'),
             // Spread bit-declared stubs (e.g., dep → dep browser stub)
             ...bitStubs,
         },
@@ -326,7 +332,6 @@ if (typeof globalThis.process === 'undefined') {
         external: [
             '@activepieces/*',
             '@ha-bits/bindings',
-            '@ha-bits/core',
             '@habits/shared',
         ],
         logLevel: 'info',

@@ -41,7 +41,6 @@ export const askOpenAI = createAction({
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
             baseURL: getIntersectBaseUrl(authValue.host),
-            logLevel: 'info'
           });
           const response = await openai.models.list();
           // We need to get only LLM models

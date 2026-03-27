@@ -5,6 +5,17 @@
  * In Tauri/browser environments, this is replaced by stubs/tauri-driver.js
  */
 
+import type {
+  StoreResult,
+  GetResult,
+  DeleteResult,
+  ListResult,
+  InsertResult,
+  UpdateResult,
+  QueryResult,
+  IncrementResult,
+} from '@ha-bits/bit-database';
+
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import BetterSqlite3 from 'better-sqlite3';
 
@@ -12,7 +23,7 @@ import BetterSqlite3 from 'better-sqlite3';
 const databases: Map<string, BetterSQLite3Database> = new Map();
 const sqliteInstances: Map<string, BetterSqlite3.Database> = new Map();
 
-function getDatabase(dbPath: string = 'habits.db'): BetterSQLite3Database {
+function getDatabase(dbPath: string = 'habits-cortex.db'): BetterSQLite3Database {
   if (!databases.has(dbPath)) {
     const dbFile = `/tmp/habits-sql/${dbPath}`;
     
@@ -60,7 +71,7 @@ function getDatabase(dbPath: string = 'habits.db'): BetterSQLite3Database {
   return databases.get(dbPath)!;
 }
 
-function getSqlite(dbPath: string = 'habits.db'): BetterSqlite3.Database {
+function getSqlite(dbPath: string = 'habits-cortex.db'): BetterSqlite3.Database {
   getDatabase(dbPath);
   return sqliteInstances.get(dbPath)!;
 }
@@ -107,7 +118,7 @@ export async function store(params: {
   ttl?: number;
   database?: string;
 }) {
-  const { collection = 'default', key, value, ttl, database = 'habits.db' } = params;
+  const { collection = 'default', key, value, ttl, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const docId = `${collection}:${key}`;
   const valueStr = JSON.stringify(parseValue(value));
@@ -133,7 +144,7 @@ export async function get(params: {
   defaultValue?: any;
   database?: string;
 }) {
-  const { collection = 'default', key, defaultValue, database = 'habits.db' } = params;
+  const { collection = 'default', key, defaultValue, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const docId = `${collection}:${key}`;
 
@@ -156,7 +167,7 @@ export async function del(params: {
   key: string;
   database?: string;
 }) {
-  const { collection = 'default', key, database = 'habits.db' } = params;
+  const { collection = 'default', key, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const docId = `${collection}:${key}`;
 
@@ -170,7 +181,7 @@ export async function list(params: {
   limit?: number;
   database?: string;
 }) {
-  const { collection = 'default', prefix, limit = 100, database = 'habits.db' } = params;
+  const { collection = 'default', prefix, limit = 100, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
 
   const query = prefix
@@ -188,7 +199,7 @@ export async function insert(params: {
   document: any;
   database?: string;
 }) {
-  const { collection, document, database = 'habits.db' } = params;
+  const { collection, document, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const customId = generateId();
   const docId = `${collection}:${customId}`;
@@ -210,7 +221,7 @@ export async function update(params: {
   update: any;
   database?: string;
 }) {
-  const { collection, filter, update: updateData, database = 'habits.db' } = params;
+  const { collection, filter, update: updateData, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const filterObj = parseFilter(filter);
   const updateObj = parseFilter(updateData);
@@ -244,7 +255,7 @@ export async function query(params: {
   limit?: number;
   database?: string;
 }) {
-  const { collection, filter, limit = 100, database = 'habits.db' } = params;
+  const { collection, filter, limit = 100, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const filterObj = parseFilter(filter);
 
@@ -274,7 +285,7 @@ export async function increment(params: {
   amount?: number;
   database?: string;
 }) {
-  const { collection = 'counters', key, amount = 1, database = 'habits.db' } = params;
+  const { collection = 'counters', key, amount = 1, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const docId = `${collection}:${key}`;
 
@@ -298,11 +309,11 @@ export async function deleteDoc(params: {
   collection: string;
   id: string;
   database?: string;
-}) {
-  const { collection, id, database = 'habits.db' } = params;
+}): Promise<DeleteResult> {
+  const { collection, id, database = 'habits-cortex.db' } = params;
   const sqlite = getSqlite(String(database));
   const docId = `${collection}:${id}`;
 
   const result = sqlite.prepare('DELETE FROM documents WHERE id = ? OR custom_id = ?').run(docId, String(id));
-  return { success: true, deleted: result.changes > 0, collection: String(collection), id: String(id) };
+  return { success: true, deleted: result.changes > 0, collection: String(collection), key: String(id) };
 }

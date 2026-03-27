@@ -50,6 +50,8 @@ tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-http = "2"
 tauri-plugin-log = "2"
+tauri-plugin-keyring = "0.1"
+tauri-plugin-dialog = "2"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"${pluginSection}

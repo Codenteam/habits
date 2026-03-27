@@ -1,0 +1,95 @@
+### Email Demo API Tests
+### Run with: httpyac test.http --all
+
+@baseUrl = http://localhost:13000
+
+### List workflows
+# @name listWorkflows
+GET {{baseUrl}}/misc/workflows
+Accept: application/json
+
+### Run email forward workflow
+# @name runEmailForward  
+POST {{baseUrl}}/api/workflows/email-forward-demo/run
+Content-Type: application/json
+
+{}
+
+### Get workflow result (replace with actual run ID)
+# @name getWorkflowResult
+GET {{baseUrl}}/api/workflows/email-forward-demo/runs/latest
+Accept: application/json
+
+### Manual test: Fetch emails only
+# This tests the IMAP fetch action directly
+# @name testFetchEmails
+POST {{baseUrl}}/api/workflows/email-forward-demo/run
+Content-Type: application/json
+
+{
+  "nodeId": "check-inbox",
+  "test": true
+}
+
+### Manual test: Send test email
+# This tests the SMTP send action directly
+# @name testSendEmail
+POST {{baseUrl}}/api/workflows/email-forward-demo/run
+Content-Type: application/json
+
+{
+  "nodeId": "forward-email",
+  "test": true,
+  "params": {
+    "originalEmail": {
+      "from": "test@example.com",
+      "to": "recipient@example.com", 
+      "subject": "Test Email",
+      "body": "This is a test email body.",
+      "date": "2024-01-01T00:00:00Z"
+    },
+    "to": "recipient@example.com",
+    "from": "sender@example.com"
+  }
+}
+
+###
+### Send Email Workflow Tests
+###
+
+### Send email with custom body and recipient
+# @name sendEmail
+POST {{baseUrl}}/api/workflows/send-email/run
+Content-Type: application/json
+
+{
+  "input": {
+    "to": "recipient@example.com",
+    "subject": "Test from Habits",
+    "body": "Hello! This is a test email sent from the Habits email demo."
+  }
+}
+
+###
+### Poll Emails Workflow Tests
+###
+
+### Start polling emails (runs once manually, or enable schedule trigger)
+# @name pollEmails
+POST {{baseUrl}}/api/workflows/poll-emails/run
+Content-Type: application/json
+
+{
+  "input": {
+    "folder": "INBOX",
+    "limit": 5,
+    "unreadOnly": true
+  }
+}
+
+### Poll emails with defaults
+# @name pollEmailsDefaults
+POST {{baseUrl}}/api/workflows/poll-emails/run
+Content-Type: application/json
+
+{}

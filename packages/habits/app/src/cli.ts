@@ -8,7 +8,9 @@
  *   npx habits convert --input ./workflow.json --output ./habits.json
  *   npx habits edit [--port 3000]
  *   npx habits base [--port 3000]  (alias for edit)
+ *   npx habits bundle [--config ./stack.yaml]
  *   npx habits pack --config ./stack.yaml --format bundle
+ *   npx habits pack --config ./stack.yaml --format habit
  *   npx habits pack --config ./stack.yaml --format tauri
  *   npx habits pack --config ./stack.yaml --format single-executable
  * 
@@ -18,7 +20,11 @@
  *   execute  Execute a workflow from file or config
  *   convert  Convert a workflow from n8n/Activepieces to Habits format
  *   edit|base     Start the Base server for editing modules and workflows
- *   pack     Generate standalone bundle, Tauri app, binary (SEA), or mobile app
+ *   bundle   Generate cortex-bundle.js for browser/Tauri (shortcut for pack --format bundle)
+ *   pack     Generate standalone bundle, Tauri app, binary (SEA), .habit file, or mobile app
+ * 
+ * Pack formats:
+ *   habit    Self-contained .habit file (zip with index.html + cortex-bundle.js) for Cortex app
  */
 
 import * as fs from 'fs';
@@ -158,7 +164,20 @@ export async function runCLI(): Promise<void> {
         default: false,
       },
     })
-    .command('pack', 'Package habits into executable, bundle, Tauri app, desktop app, or mobile app', {
+    .command('bundle', 'Generate a cortex-bundle.js for browser/Tauri execution (shortcut for pack --format bundle)', {
+      config: {
+        alias: 'c',
+        describe: 'Path to stack.yaml config file (defaults to ./stack.yaml)',
+        type: 'string',
+        default: './stack.yaml',
+      },
+      output: {
+        alias: 'o',
+        describe: 'Output path for the bundle (defaults to ./dist/cortex-bundle.js)',
+        type: 'string',
+      },
+    })
+    .command(['pack', 'bundle'], 'Package habits into executable, bundle, Tauri app, desktop app, or mobile app', {
       config: {
         alias: 'c',
         describe: 'Path to stack.yaml config file',
@@ -172,7 +191,7 @@ export async function runCLI(): Promise<void> {
       },
       format: {
         alias: 'f',
-        describe: 'Output format: single-executable, bundle, tauri, desktop, desktop-full, mobile, mobile-full',
+        describe: 'Output format: single-executable, bundle, habit, tauri, desktop, desktop-full, mobile, mobile-full',
         type: 'string',
         default: 'single-executable',
         choices: getSupportedPackFormats(),
@@ -212,6 +231,11 @@ export async function runCLI(): Promise<void> {
         type: 'boolean',
         default: false,
       },
+      'include-env': {
+        describe: 'Include .env values in bundle (default: false for security)',
+        type: 'boolean',
+        default: false,
+      },
     })
     .demandCommand(1, 'You need to specify a command')
     .help()
@@ -237,6 +261,9 @@ export async function runCLI(): Promise<void> {
         break;
       case 'init':
         await runInitCommand(argv);
+        break;
+      case 'bundle':
+        await runPackCommand(argv);
         break;
       case 'pack':
         await runPackCommand(argv);
@@ -492,9 +519,11 @@ async function runPackCommand(argv: any): Promise<void> {
     appName: argv['app-name'],
     appIcon: argv['app-icon'],
     debug: argv.debug,
+    includeEnv: argv['include-env'],
   });
 
   if (!result.success) {
     throw new Error(result.error || 'Pack command failed');
   }
 }
+

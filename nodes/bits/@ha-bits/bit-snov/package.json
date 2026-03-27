@@ -1,0 +1,32 @@
+{
+  "name": "@ha-bits/bit-snov",
+  "version": "1.0.0",
+  "description": "Snov.io API integration for email enrichment and lead data",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "snov",
+    "email",
+    "enrichment",
+    "leads"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

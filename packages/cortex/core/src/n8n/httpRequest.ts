@@ -71,7 +71,7 @@ function prepareBody(body: any, headers: Record<string, string>): BodyInit | und
 }
 
 /**
- * Execute HTTP request (real implementation)
+ * Execute HTTP request
  */
 export async function httpRequest(
   requestOptions: IHttpRequestOptions

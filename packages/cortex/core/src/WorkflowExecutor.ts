@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
+import { Cron } from 'croner';
 import { executeN8nModule } from './n8n/n8nExecutor';
 import { executeActivepiecesModule } from './activepieces/activepiecesExecutor';
 import { triggerHelper, TriggerHookType } from './activepieces/activepiecesTrigger';
-import { executeBitsModule } from './bits/bitsDoer';
-import { bitsTriggerHelper } from './bits/bitsWatcher';
+import { executeBitsModule, pieceFromModule } from './bits/bitsDoer';
+import { bitsTriggerHelper, TriggerHookType as BitsTriggerHookType } from './bits/bitsWatcher';
 import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
@@ -48,6 +49,9 @@ export class WorkflowExecutor {
   private config: WorkflowConfig | null = null;
   private logger: ILogger = LoggerFactory.getRoot();
   private env: Record<string, string | undefined> = {};
+  
+  /** Active polling cron jobs - keyed by workflowId:nodeId */
+  private pollingCronJobs: Map<string, Cron> = new Map();
 
   /**
    * Initialize from in-memory data (no file system access needed)
@@ -129,7 +133,7 @@ export class WorkflowExecutor {
         this.logger.log(`   🔑 Environment variables:`);
         for (const key of Object.keys(this.env)) {
           if (key.startsWith('HABITS_')) {
-            this.logger.log(`      - ${key}: ${this.env[key]}`);
+            this.logger.log(`      - ${key}: ${this.env[key] !== undefined ? '(Set but a secret you know)' : '(not set)'}`);
           }
         }
 
@@ -141,7 +145,7 @@ export class WorkflowExecutor {
             if (param.startsWith('habits.env.')) {
               const envVar = param.slice('habits.env.'.length);
               const value = this.env[envVar];
-              this.logger.log(`      - {{${param}}} → ${value !== undefined ? value : '(not set)'}`);
+              this.logger.log(`      - {{${param}}} → ${value !== undefined ? '(Set but a secret you know)' : '(not set)'}`);
             } else {
               this.logger.log(`      - {{${param}}} → (resolved at runtime)`);
             }
@@ -220,6 +224,9 @@ export class WorkflowExecutor {
 
     // Hook polling triggers for activepieces modules
     await this.hookPollingTriggers();
+    
+    // Register bits polling triggers with cron scheduling
+    await this.registerBitsPollingTriggers();
   }
 
   /**
@@ -293,6 +300,185 @@ export class WorkflowExecutor {
         }
       }
     }
+  }
+
+  /**
+   * Register bits polling triggers with cron scheduling.
+   * Scans workflows for polling trigger nodes, calls their onEnable() to get schedule,
+   * then creates cron jobs using croner to periodically call run().
+   */
+  async registerBitsPollingTriggers(): Promise<void> {
+    const workflows = this.getAllWorkflows();
+    this.logger.log(`\n⏰ Scanning ${workflows.length} workflow(s) for polling triggers...`);
+    
+    let registeredCount = 0;
+    
+    for (const { reference, workflow } of workflows) {
+      if (reference.enabled === false) continue;
+      
+      const workflowId = reference.id || workflow.id;
+      
+      for (const node of workflow.nodes || []) {
+        // Check if this is a polling trigger node (bits framework)
+        const nodeData = node.data as any;
+        const isTrigger = nodeData?.isTrigger === true || node.type === 'trigger';
+        const isBits = nodeData?.framework === 'bits';
+        const hasModule = !!nodeData?.module;
+        
+        if (!isTrigger || !isBits || !hasModule) continue;
+        
+        const moduleName = nodeData.module;
+        const triggerName = nodeData.operation || 'default';
+        
+        try {
+          // Load the bit module to check trigger type
+          let bitPiece: any = null;
+          const moduleDefinition = { 
+            source: (nodeData.source || 'npm') as 'npm' | 'local' | 'github' | 'link', 
+            module: moduleName,
+            framework: 'bits' as const,
+            repository: moduleName,
+          };
+          
+          try {
+            bitPiece = await pieceFromModule(moduleDefinition);
+          } catch (loadError) {
+            this.logger.warn(`   ⚠️ Could not load module ${moduleName}: ${loadError}`);
+            continue;
+          }
+          
+          // Get the trigger definition
+          const triggers = typeof bitPiece.triggers === 'function' ? bitPiece.triggers() : bitPiece.triggers;
+          const trigger = triggers?.[triggerName];
+          
+          if (!trigger) {
+            this.logger.warn(`   ⚠️ Trigger ${triggerName} not found in module ${moduleName}`);
+            continue;
+          }
+          
+          // Check if it's a polling trigger type
+          const triggerType = trigger.type?.toUpperCase?.() || trigger.type;
+          if (triggerType !== 'POLLING') {
+            continue; // Not a polling trigger
+          }
+          
+          // Extract trigger props from node params and resolve env expressions
+          const rawProps = nodeData.params || {};
+          const triggerProps = this.resolveParameters(rawProps, {});
+          
+          this.logger.log(`   ⏰ Enabling polling trigger: ${workflowId}/${node.id} (${moduleName}:${triggerName})`);
+          
+          // Call onEnable to get the schedule options
+          const result = await bitsTriggerHelper.executeTrigger({
+            moduleDefinition,
+            triggerName,
+            input: triggerProps,
+            hookType: BitsTriggerHookType.ON_ENABLE,
+            trigger,
+            workflowId,
+            nodeId: node.id,
+          });
+          
+          if (!result.success) {
+            this.logger.warn(`   ⚠️ Failed to enable ${workflowId}/${node.id}: ${result.message}`);
+            continue;
+          }
+          
+          // Get schedule options from the result
+          const scheduleOptions = result.scheduleOptions;
+          if (!scheduleOptions?.cronExpression) {
+            this.logger.warn(`   ⚠️ No schedule returned from onEnable for ${workflowId}/${node.id}`);
+            continue;
+          }
+          
+          const cronKey = `${workflowId}:${node.id}`;
+          const { cronExpression, timezone = 'UTC' } = scheduleOptions;
+          
+          this.logger.log(`   📅 Creating cron job: ${cronExpression} (${timezone}) for ${cronKey}`);
+          
+          // Create the cron job
+          const cronJob = new Cron(cronExpression, { timezone, name: cronKey }, async () => {
+            const triggeredAt = new Date().toISOString();
+            this.logger.log(`   ⏰ Cron fired: ${cronKey} at ${triggeredAt}`);
+            
+            try {
+              // Call trigger.run() to get the polling results
+              const runResult = await bitsTriggerHelper.executeTrigger({
+                moduleDefinition,
+                triggerName,
+                input: triggerProps,
+                hookType: BitsTriggerHookType.RUN,
+                trigger,
+                workflowId,
+                nodeId: node.id,
+              });
+              
+              // If run() returned data, execute the workflow for EACH item
+              if (runResult.success && runResult.output && runResult.output.length > 0) {
+                this.logger.log(`   📦 Trigger returned ${runResult.output.length} item(s), executing workflow for each...`);
+                
+                // Get the workflow
+                const loadedWorkflow = this.getWorkflow(workflowId);
+                if (!loadedWorkflow) {
+                  this.logger.error(`   ❌ Workflow ${workflowId} not found`);
+                  return;
+                }
+                
+                // Execute workflow for EACH item (like Activepieces does for polling triggers)
+                for (let i = 0; i < runResult.output.length; i++) {
+                  const item = runResult.output[i];
+                  this.logger.log(`   🔄 Processing item ${i + 1}/${runResult.output.length}`);
+                  
+                  try {
+                    const execution = await this.executeWorkflow(loadedWorkflow.workflow, {
+                      initialContext: {
+                        'habits.input': item,  // Single item, not array
+                        __pollingTrigger: true,
+                        __pollingNodeId: node.id,
+                        __triggeredAt: triggeredAt,
+                        __pollingItemIndex: i,
+                      },
+                      skipTriggerWait: true,
+                      triggerNodeId: node.id,
+                    });
+                    
+                    this.logger.log(`   ✅ Item ${i + 1} processed: ${execution.status}`);
+                  } catch (itemErr: any) {
+                    this.logger.error(`   ❌ Item ${i + 1} failed: ${itemErr.message}`);
+                  }
+                }
+                
+                this.logger.log(`   ✅ Workflow ${workflowId} completed processing ${runResult.output.length} item(s)`);
+              } else {
+                this.logger.log(`   ⏳ No new items from trigger, skipping workflow execution`);
+              }
+            } catch (err: any) {
+              this.logger.error(`   ❌ Error in polling trigger: ${err.message}`);
+            }
+          });
+          
+          // Store the cron job
+          this.pollingCronJobs.set(cronKey, cronJob);
+          registeredCount++;
+          this.logger.log(`   ✅ Registered: ${workflowId}/${node.id} (${triggerName}) -> ${cronExpression}`);
+        } catch (error: any) {
+          this.logger.error(`   ❌ Error enabling polling trigger for ${workflowId}/${node.id}: ${error}`);
+        }
+      }
+    }
+    
+    this.logger.log(`⏰ Enabled ${registeredCount} polling trigger(s)\n`);
+  }
+
+  /**
+   * Stop all polling cron jobs
+   */
+  stopPollingTriggers(): void {
+    for (const [key, cron] of this.pollingCronJobs) {
+      cron.stop();
+      this.logger.log(`   ⏹️ Stopped polling trigger: ${key}`);
+    }
+    this.pollingCronJobs.clear();
   }
 
   /**
@@ -377,6 +563,10 @@ export class WorkflowExecutor {
     onStream?: StreamCallback;
     triggerData?: Record<string, any>;  // Pre-populate trigger node outputs
     startFromNode?: string;             // Start execution from a specific node
+    skipTriggerWait?: boolean;          // Skip waiting for webhook trigger (payload provided via initialContext)
+    triggerNodeId?: string;             // The trigger node ID when skipping trigger wait
+    /** Per-user OAuth tokens from request cookies (for multi-user server mode) */
+    oauthTokens?: Record<string, { accessToken: string; refreshToken?: string; tokenType: string; expiresAt?: number }>;
   }): Promise<WorkflowExecution> {
     // Resolve workflow from ID if string provided
     let workflow: Workflow;
@@ -432,8 +622,8 @@ export class WorkflowExecutor {
       // Scan for webhook triggers
       const webhookTriggers = this.findWebhookTriggers(workflow.nodes);
 
-      // If there are webhook triggers, ensure a webhook handler is provided
-      if (webhookTriggers.length > 0) {
+      // If there are webhook triggers, ensure a webhook handler is provided (unless skipping trigger wait)
+      if (webhookTriggers.length > 0 && !options?.skipTriggerWait) {
         if (!options?.webhookHandler) {
           throw new Error(
             `Workflow "${workflow.name}" contains ${webhookTriggers.length} webhook trigger(s) but no webhookHandler was provided. ` +
@@ -447,6 +637,8 @@ export class WorkflowExecutor {
           this.logger.log(`   - Node: ${trigger.nodeId}`);
         }
         this.logger.log('\n⏳ Waiting for webhook(s) to be triggered...\n');
+      } else if (webhookTriggers.length > 0 && options?.skipTriggerWait) {
+        this.logger.log(`\n📋 Detected ${webhookTriggers.length} webhook trigger(s) - using pre-provided payload`);
       }
 
       // Build dependency arrays
@@ -461,6 +653,12 @@ export class WorkflowExecutor {
       // Execution context to share data between nodes
       // Initialize with any provided initial context (e.g., habits.input, habits.headers, habits.cookies)
       let context: Record<string, any> = options?.initialContext ? { ...options.initialContext } : {};
+
+      // Store per-user OAuth tokens in context for multi-user server mode
+      // These are passed through to bits execution and take precedence over the global token store
+      if (options?.oauthTokens) {
+        context._oauthTokens = options.oauthTokens;
+      }
 
       // Initialize habits namespace if not present
       if (!context.habits) {
@@ -556,41 +754,108 @@ export class WorkflowExecutor {
           });
 
           try {
-            // Check if this is a webhook trigger node
-            if (this.isWebhookTriggerNode(node)) {
-              // webhookHandler is guaranteed to exist here - we validated at the start of executeWorkflow
-              const webhookResult = await this.handleWebhookTrigger(node, context, execution, options!.webhookHandler!, options?.webhookTimeout);
-
-              // Security scanning on webhook trigger output data
-              const scannedResult = await scanInputForSecurity(webhookResult.result, securityConfig, this.logger);
-
-              // Update context with scanned webhook result
+            // Check if this is a polling trigger node being executed from cron
+            const isPollingTriggerNode = context.__pollingTrigger && 
+                                         context.__pollingNodeId === nodeId &&
+                                         (node.type === 'trigger' || (node.data as any)?.isTrigger);
+            
+            if (isPollingTriggerNode) {
+              // Use the pre-fetched polling data from habits.input
+              this.logger.log(`⏰ Using pre-fetched polling data for trigger node: ${nodeId}`);
+              const pollingData = context['habits.input'];
+              
+              const scannedResult = await scanInputForSecurity(pollingData, securityConfig, this.logger);
+              
+              // Update context with polling result
               context[`${nodeId}`] = scannedResult;
               context[nodeId] = scannedResult;
               context.previous_result = scannedResult;
-              context.webhookPayload = scannedResult; // Also store as webhookPayload for easy access
-
-              this.updateNodeStatus(execution, nodeId, webhookResult.success ? 'completed' : 'failed', {
+              
+              this.updateNodeStatus(execution, nodeId, 'completed', {
                 result: scannedResult,
-                error: webhookResult.error,
-                startTime: new Date(webhookResult.timestamp.getTime() - webhookResult.duration),
-                endTime: webhookResult.timestamp,
-                duration: webhookResult.duration
+                startTime: new Date(),
+                endTime: new Date(),
+                duration: 0
               });
 
-              // Emit node completed/failed event
+              // Emit node completed event
               emitStreamEvent({
-                type: webhookResult.success ? 'node_completed' : 'node_failed',
+                type: 'node_completed',
                 nodeId,
                 nodeName: node.data.label,
-                status: webhookResult.success ? 'completed' : 'failed',
+                status: 'completed',
                 result: scannedResult,
-                error: webhookResult.error,
-                duration: webhookResult.duration
+                duration: 0
               });
+            }
+            // Check if this is a webhook trigger node
+            else if (this.isWebhookTriggerNode(node)) {
+              // Check if we should skip waiting for webhook (payload provided directly)
+              const skipWait = options?.skipTriggerWait && 
+                               (options?.triggerNodeId === nodeId || !options?.triggerNodeId);
+              
+              if (skipWait && context.webhookPayload) {
+                // Use the provided webhook payload from initialContext
+                this.logger.log(`🔔 Using pre-provided webhook payload for trigger node: ${nodeId}`);
+                
+                const scannedResult = await scanInputForSecurity(context.webhookPayload, securityConfig, this.logger);
+                
+                // Update context with webhook result
+                context[`${nodeId}`] = scannedResult;
+                context[nodeId] = scannedResult;
+                context.previous_result = scannedResult;
+                
+                this.updateNodeStatus(execution, nodeId, 'completed', {
+                  result: scannedResult,
+                  startTime: new Date(),
+                  endTime: new Date(),
+                  duration: 0
+                });
 
-              if (!webhookResult.success) {
-                this.logger.error(`❌ Webhook trigger ${nodeId} failed: ${webhookResult.error}`);
+                // Emit node completed event
+                emitStreamEvent({
+                  type: 'node_completed',
+                  nodeId,
+                  nodeName: node.data.label,
+                  status: 'completed',
+                  result: scannedResult,
+                  duration: 0
+                });
+              } else {
+                // webhookHandler is guaranteed to exist here - we validated at the start of executeWorkflow
+                const webhookResult = await this.handleWebhookTrigger(node, context, execution, options!.webhookHandler!, options?.webhookTimeout);
+
+                // Security scanning on webhook trigger output data
+                const scannedResult = await scanInputForSecurity(webhookResult.result, securityConfig, this.logger);
+
+                // Update context with scanned webhook result
+                context[`${nodeId}`] = scannedResult;
+                context[nodeId] = scannedResult;
+                context.previous_result = scannedResult;
+                context.webhookPayload = scannedResult; // Also store as webhookPayload for easy access
+
+                this.updateNodeStatus(execution, nodeId, webhookResult.success ? 'completed' : 'failed', {
+                  result: scannedResult,
+                  error: webhookResult.error,
+                  startTime: new Date(webhookResult.timestamp.getTime() - webhookResult.duration),
+                  endTime: webhookResult.timestamp,
+                  duration: webhookResult.duration
+                });
+
+                // Emit node completed/failed event
+                emitStreamEvent({
+                  type: webhookResult.success ? 'node_completed' : 'node_failed',
+                  nodeId,
+                  nodeName: node.data.label,
+                  status: webhookResult.success ? 'completed' : 'failed',
+                  result: scannedResult,
+                  error: webhookResult.error,
+                  duration: webhookResult.duration
+                });
+
+                if (!webhookResult.success) {
+                  this.logger.error(`❌ Webhook trigger ${nodeId} failed: ${webhookResult.error}`);
+                }
               }
             } else {
               const nodeResult = await this.executeNode(node, context, execution);
@@ -1088,6 +1353,9 @@ export class WorkflowExecutor {
               input: fullParams,
               payload: context.triggerPayload || context.webhookPayload || {},
               webhookUrl: context.webhookUrl,
+              executor: this,
+              workflowId: execution.workflowId,
+              nodeId: node.id,
             });
 
             if (!triggerResult.success) {
@@ -1105,6 +1373,9 @@ export class WorkflowExecutor {
               workflowId: execution.workflowId,
               nodeId: node.id,
               executionId: execution.id,
+              executor: this,
+              // Pass per-user OAuth tokens from context (for multi-user server mode)
+              oauthTokens: context._oauthTokens,
             });
             nodeResult = output.result;
           }
@@ -1198,9 +1469,40 @@ export class WorkflowExecutor {
 
   /**
    * Evaluate a JavaScript expression in the given context
+   * Supports default values with || operator: {{habits.input.value || 'default'}}
    */
   private evaluateExpression(expression: string, context: Record<string, any>): any {
     try {
+      // Handle default value syntax: expression || 'default' or expression || "default"
+      // Match || followed by a quoted string or number
+      const defaultMatch = expression.match(/^(.+?)\s*\|\|\s*(['"`])(.*)(\2)$/);
+      if (defaultMatch) {
+        const [, mainExpr, , defaultValue] = defaultMatch;
+        const result = this.evaluateExpression(mainExpr.trim(), context);
+        // Return default if result is undefined, null, empty string, or the original expression (failed evaluation)
+        if (result === undefined || result === null || result === '' || result === mainExpr.trim()) {
+          return defaultValue;
+        }
+        return result;
+      }
+
+      // Handle default value with unquoted fallback (e.g., number or boolean)
+      const defaultUnquotedMatch = expression.match(/^(.+?)\s*\|\|\s*([^'"`].*)$/);
+      if (defaultUnquotedMatch) {
+        const [, mainExpr, defaultValue] = defaultUnquotedMatch;
+        const result = this.evaluateExpression(mainExpr.trim(), context);
+        if (result === undefined || result === null || result === '' || result === mainExpr.trim()) {
+          // Try to parse the default as number/boolean
+          const trimmedDefault = defaultValue.trim();
+          if (trimmedDefault === 'true') return true;
+          if (trimmedDefault === 'false') return false;
+          if (trimmedDefault === 'null') return null;
+          const num = Number(trimmedDefault);
+          if (!isNaN(num)) return num;
+          return trimmedDefault;
+        }
+        return result;
+      }
 
       // Handle habits.env. variables (special case for environment variables)
       // Allow access to any environment variable via habits.env.VAR_NAME

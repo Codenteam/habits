@@ -1,0 +1,31 @@
+id: poll-emails
+name: Poll Emails
+description: Continuously fetch emails every 5 seconds and stream them back
+
+triggers:
+  - type: schedule
+    config:
+      interval: 5s
+
+nodes:
+  - id: fetch
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-email"
+      operation: fetchEmails
+      params:
+        folder: "INBOX"
+        unreadOnly: false
+        limit: 10
+      credentials:
+        auth:
+          host: "imap.gmail.com"
+          port: 993
+          user: "{{habits.env.EMAIL_USER}}"
+          password: "{{habits.env.EMAIL_PASSWORD}}"
+
+output:
+  timestamp: "{{habits.timestamp}}"
+  emails: "{{fetch}}"

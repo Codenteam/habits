@@ -1,0 +1,58 @@
+version: "1.0"
+
+workflows:
+  # Wise SCA Authentication (manual - use for UK/EEA accounts)
+  - id: wise-sca
+    path: ./habits/wise-sca.yaml
+    enabled: true
+
+  # Wise incoming payment → Google Drive + PDF Invoice (polling - disabled, use wise-sca for UK/EEA)
+  - id: wise-payment-invoice
+    path: ./habits/wise-payment-invoice.yaml
+    enabled: false
+
+  # Manual invoice entry (no scripts)
+  - id: manual-invoice
+    path: ./habits/manual-invoice.yaml
+    enabled: true
+
+  # List invoices from database
+  - id: list-invoices
+    path: ./habits/list-invoices.yaml
+    enabled: true
+
+  # PDF extraction
+  - id: extract-pdf
+    path: ./habits/extract-pdf.yaml
+    enabled: true
+
+  # OCR processing
+  - id: process-ocr
+    path: ./habits/process-ocr.yaml
+    enabled: true
+
+  # Create invoice PDF standalone
+  - id: create-invoice
+    path: ./habits/create-invoice.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  openapi: true
+  frontend: ./frontend
+
+# Environment variables required:
+# --- Wise Business ---
+# WISE_API_TOKEN - Wise API Token (Full Access, from Business account Settings > API tokens)
+# WISE_PROFILE_ID - Wise Business Profile ID (find in URL when logged into Wise Business)
+# WISE_CURRENCY - Currency to monitor for incoming payments (e.g., GBP, USD, EUR)
+
+# --- Google Drive ---
+# GOOGLE_DRIVE_CLIENT_ID - Google OAuth Client ID
+# GOOGLE_DRIVE_CLIENT_SECRET - Google OAuth Client Secret
+# GOOGLE_DRIVE_FOLDER_ID - Google Drive folder ID for PDF uploads (optional, uses root if not set)
+
+logging:
+  level: info
+  outputs: [console]

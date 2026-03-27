@@ -15,9 +15,36 @@ import {
   declarativeNodeToBitsAction,
   type IDeclarativeNodeType 
 } from './declarativeExecutor';
+import { PollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions } from '../store';
+
+// Re-export polling store types for consumers
+export { PollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions };
+import { oauthTokenStore } from './oauthTokenStore';
+import { OAuth2TokenSet } from './oauth2Types';
 import { ILogger, LoggerFactory } from '@ha-bits/core';
 
 const logger = LoggerFactory.getRoot();
+
+// ============================================================================
+// Workflow Executor Interface (minimal for bits to invoke sub-workflows)
+// ============================================================================
+
+/**
+ * Minimal interface for workflow executor that bits can use to invoke sub-workflows.
+ * Avoids circular dependency with WorkflowExecutor.
+ */
+export interface IWorkflowExecutor {
+  /** Execute a workflow by ID with optional initial context */
+  executeWorkflow(workflowId: string, options?: {
+    initialContext?: Record<string, any>;
+  }): Promise<{
+    id: string;
+    workflowId: string;
+    status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    results: Array<{ success: boolean; result?: any; error?: string }>;
+    output?: any;
+  }>;
+}
 
 // ============================================================================
 // Types 
@@ -44,6 +71,22 @@ export interface BitsActionContext {
   files?: any;
   /** Logger instance for structured logging */
   logger?: ILogger;
+  /** Workflow executor for invoking sub-workflows directly */
+  executor?: IWorkflowExecutor;
+}
+
+/**
+ * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
+ */
+export interface WebhookFilterPayload {
+  /** Raw request body */
+  body: any;
+  /** HTTP headers */
+  headers: Record<string, string>;
+  /** Query string parameters */
+  query: Record<string, string>;
+  /** HTTP method */
+  method: string;
 }
 
 /**
@@ -60,6 +103,13 @@ export interface BitsTrigger {
   run?: (context: BitsTriggerContext) => Promise<any[]>;
   test?: (context: BitsTriggerContext) => Promise<any[]>;
   onHandshake?: (context: BitsTriggerContext) => Promise<any>;
+  /**
+   * Filter function for webhook triggers.
+   * Called when a webhook is received for this bit's module.
+   * Return true if this trigger should handle the event, false to skip.
+   * If not defined, the trigger accepts all webhook events.
+   */
+  filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
 }
 
 /**
@@ -84,6 +134,16 @@ export interface BitsTriggerContext {
     createListeners: (listener: BitsListener) => void;
   };
   setSchedule: (options: BitsScheduleOptions) => void;
+  /** Workflow executor for invoking workflows (including self) */
+  executor?: IWorkflowExecutor;
+  /** ID of the workflow this trigger belongs to */
+  workflowId?: string;
+  /** ID of this trigger node */
+  nodeId?: string;
+  /** Webhook payload data (for webhook triggers) */
+  webhookPayload?: WebhookFilterPayload;
+  /** Polling store for deduplication (for polling triggers) */
+  pollingStore?: BitsPollingStore;
 }
 
 /**
@@ -113,9 +173,33 @@ export interface BitsStore {
 }
 
 /**
+ * Extended store interface with polling deduplication support
+ */
+export interface BitsPollingStore extends BitsStore {
+  /** Check if an item has been seen before (for deduplication) */
+  hasSeenItem: (itemId: string, itemDate?: string) => Promise<boolean>;
+  /** Mark an item as seen */
+  markItemSeen: (itemId: string, sourceDate: string, data?: any) => Promise<void>;
+  /** Get the last polled timestamp */
+  getLastPolledDate: () => Promise<string | null>;
+  /** Set the last polled timestamp */
+  setLastPolledDate: (date: string) => Promise<void>;
+  /** Get count of seen items */
+  getSeenCount: () => Promise<number>;
+  /** Clear all seen items for this trigger */
+  clearTrigger: () => Promise<number>;
+}
+
+/**
  * Represents a loaded Bits piece/module
  */
 export interface BitsPiece {
+  /**
+   * Unique identifier for this bit module.
+   * Used for webhook routing: /webhook/:id
+   * Example: 'gohighlevel', 'hubspot', 'salesforce'
+   */
+  id?: string;
   displayName: string;
   description?: string;
   logoUrl?: string;
@@ -140,6 +224,14 @@ export interface BitsExecutionParams {
   nodeId?: string;
   /** Execution ID for tracing */
   executionId?: string;
+  /** Workflow executor for invoking sub-workflows directly */
+  executor?: IWorkflowExecutor;
+  /** 
+   * OAuth tokens from request cookies (per-user tokens).
+   * These take precedence over the global token store.
+   * Key is bitId (e.g., "bit-google-drive"), value is the token set.
+   */
+  oauthTokens?: Record<string, OAuth2TokenSet>;
 }
 
 /**
@@ -168,7 +260,7 @@ export interface BitsExecutionResult {
  * Bits modules export a piece object with 'actions' and 'triggers' properties.
  * Also supports declarative nodes (n8n-style) that have a description with routing.
  */
-function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
+export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
   // First, check if this is a declarative node (n8n-style with routing)
   const declarativeNode = extractDeclarativeNode(loadedModule);
   if (declarativeNode) {
@@ -203,6 +295,7 @@ function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
 
   // Normalize the piece to our interface
   return {
+    id: piece.id, // Webhook routing ID (e.g., 'gohighlevel', 'hubspot')
     displayName: piece.displayName || 'Unknown Piece',
     description: piece.description,
     logoUrl: piece.logoUrl,
@@ -374,7 +467,7 @@ function createDeclarativeActionRunner(
 /**
  * Load a bits piece from module definition
  */
-async function pieceFromModule(moduleDefinition: ModuleDefinition): Promise<BitsPiece> {
+export async function pieceFromModule(moduleDefinition: ModuleDefinition): Promise<BitsPiece> {
   const moduleName = getModuleName(moduleDefinition);
 
   // Check if module is pre-bundled (for browser/IIFE bundles)
@@ -456,7 +549,92 @@ async function executeGenericBitsPiece(
     // Extract auth from credentials if present
     let auth: any = undefined;
     const { credentials, ...actionProps } = params.params;
-    if (credentials) {
+    
+    // Check if this piece uses OAuth2 authentication
+    if (piece.auth && ((piece.auth as any).type === 'OAUTH2' || (piece.auth as any).type === 'OAUTH2_PKCE')) {
+      // Extract bit ID from module name (e.g., "@ha-bits/bit-oauth-mock" -> "bit-oauth-mock")
+      const parts = moduleDefinition.repository.split('/');
+      const bitId = parts[parts.length - 1];
+      
+      // Priority 1: Check if credentials contain OAuth tokens directly (bypasses OAuth callback flow)
+      // This allows users to provide tokens obtained externally (e.g., from dev console)
+      const oauthCredKey = Object.keys(credentials || {}).find(key => {
+        const cred = credentials[key];
+        return cred && (cred.accessToken || cred.access_token);
+      });
+      
+      if (oauthCredKey && credentials[oauthCredKey]) {
+        const directTokens = credentials[oauthCredKey];
+        auth = {
+          accessToken: directTokens.accessToken || directTokens.access_token,
+          refreshToken: directTokens.refreshToken || directTokens.refresh_token,
+          tokenType: directTokens.tokenType || directTokens.token_type || 'Bearer',
+          expiresAt: directTokens.expiresAt || directTokens.expires_at,
+        };
+        logger.log(`🔐 Using OAuth2 tokens from credentials for: ${bitId}`);
+        
+        // Optionally store in token store for future refresh capability
+        if (auth.refreshToken) {
+          const pieceAuth = piece.auth as any;
+          oauthTokenStore.setToken(bitId, auth, {
+            displayName: pieceAuth.displayName || bitId,
+            required: pieceAuth.required || false,
+            authorizationUrl: pieceAuth.authorizationUrl || '',
+            tokenUrl: pieceAuth.tokenUrl || '',
+            clientId: pieceAuth.clientId || '',
+            clientSecret: pieceAuth.clientSecret,
+            scopes: pieceAuth.scopes || [],
+          });
+        }
+      } else if (params.oauthTokens && params.oauthTokens[bitId]) {
+        // Priority 2: Check for per-user OAuth tokens from request cookies (server mode with multi-user)
+        const userToken = params.oauthTokens[bitId];
+        auth = {
+          accessToken: userToken.accessToken,
+          refreshToken: userToken.refreshToken,
+          tokenType: userToken.tokenType,
+          expiresAt: userToken.expiresAt,
+        };
+        logger.log(`🔐 Using per-user OAuth2 token from cookies for: ${bitId}`);
+        
+        // Token refresh for per-user tokens would need to be handled differently
+        // (e.g., trigger re-auth flow if expired)
+        if (userToken.expiresAt && userToken.expiresAt < Date.now()) {
+          logger.warn(`⚠️ Per-user OAuth token expired for ${bitId}. User needs to re-authenticate.`);
+        }
+      } else {
+        // Priority 3: Try to get OAuth token from global store (single-user mode or Tauri)
+        const oauthToken = oauthTokenStore.getToken(bitId);
+        if (oauthToken) {
+          auth = {
+            accessToken: oauthToken.accessToken,
+            refreshToken: oauthToken.refreshToken,
+            tokenType: oauthToken.tokenType,
+            expiresAt: oauthToken.expiresAt,
+          };
+          logger.log(`🔐 Using OAuth2 PKCE token for: ${bitId}`);
+          
+          // Check if token is expired and try to refresh
+          if (oauthTokenStore.isExpired(bitId)) {
+            logger.log(`⚠️ OAuth token expired for ${bitId}, attempting refresh...`);
+            const refreshedToken = await oauthTokenStore.refreshToken(bitId);
+            if (refreshedToken) {
+              auth = {
+                accessToken: refreshedToken.accessToken,
+                refreshToken: refreshedToken.refreshToken,
+                tokenType: refreshedToken.tokenType,
+                expiresAt: refreshedToken.expiresAt,
+              };
+              logger.log(`✅ OAuth token refreshed for ${bitId}`);
+            } else {
+              logger.warn(`❌ Failed to refresh OAuth token for ${bitId}`);
+            }
+          }
+        } else {
+          logger.warn(`⚠️ No OAuth token found for ${bitId}. Provide tokens via credentials or complete the OAuth flow.`);
+        }
+      }
+    } else if (credentials) {
       const credentialKeys = Object.keys(credentials);
       if (credentialKeys.length > 0) {
         // Pass auth data directly - pieces access auth properties directly (e.g., auth.host, auth.apiKey)
@@ -484,6 +662,7 @@ async function executeGenericBitsPiece(
         ...actionProps,
       },
       logger: bitLogger,
+      executor: params.executor,
     } as BitsActionContext);
 
     logger.log(`✅ Successfully executed Bits piece action: ${actionName}`, result);
@@ -576,6 +755,3 @@ export async function getBitsModuleTriggers(params: {
   const piece = await pieceFromModule(moduleDefinition);
   return Object.keys(piece.triggers());
 }
-
-// Export the piece loader for use in bitsWatcher
-export { pieceFromModule, extractBitsPieceFromModule };

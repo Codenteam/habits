@@ -11,11 +11,13 @@ import {
   BitsPiece, 
   BitsTrigger, 
   BitsTriggerType, 
-  BitsStore, 
+  BitsStore,
+  BitsPollingStore,
   BitsTriggerContext,
   BitsListener,
   BitsScheduleOptions,
 } from './bitsDoer';
+import { PollingStore, createPollingStore, DedupStrategy } from '../store';
 import { LoggerFactory } from '@ha-bits/core';
 
 const logger = LoggerFactory.getRoot();
@@ -42,6 +44,12 @@ export interface TriggerExecutionParams {
   webhookUrl?: string;
   isTest?: boolean;
   store?: BitsStore;
+  /** Workflow executor for invoking workflows */
+  executor?: any;
+  /** ID of the workflow this trigger belongs to */
+  workflowId?: string;
+  /** ID of this trigger node */
+  nodeId?: string;
 }
 
 export interface TriggerExecutionResult {
@@ -72,6 +80,55 @@ function createSimpleStore(prefix: string = ''): BitsStore {
     async delete(key: string): Promise<void> {
       const fullKey = `${prefix}:${key}`;
       storage.delete(fullKey);
+    },
+  };
+}
+
+// ============================================================================
+// Polling Store Factory
+// ============================================================================
+
+/**
+ * Create a polling store bound to a specific trigger context.
+ * Returns a BitsPollingStore that wraps PollingStore with pre-bound context.
+ */
+function createBoundPollingStore(
+  workflowId: string,
+  triggerId: string,
+  dedupStrategy: DedupStrategy = 'id'
+): BitsPollingStore {
+  const store = createPollingStore({
+    collection: 'polling_seen_items',
+    dedupStrategy,
+  });
+
+  const ctx = { workflowId, triggerId };
+  const baseStore = createSimpleStore(`polling:${workflowId}:${triggerId}`);
+
+  return {
+    // Base store methods
+    get: baseStore.get,
+    put: baseStore.put,
+    delete: baseStore.delete,
+
+    // Polling-specific methods
+    async hasSeenItem(itemId: string, itemDate?: string): Promise<boolean> {
+      return store.hasSeenItem(ctx, itemId, itemDate);
+    },
+    async markItemSeen(itemId: string, sourceDate: string, data?: any): Promise<void> {
+      return store.markItemSeen(ctx, itemId, sourceDate, data);
+    },
+    async getLastPolledDate(): Promise<string | null> {
+      return store.getLastPolledDate(ctx);
+    },
+    async setLastPolledDate(date: string): Promise<void> {
+      return store.setLastPolledDate(ctx, date);
+    },
+    async getSeenCount(): Promise<number> {
+      return store.getSeenCount(ctx);
+    },
+    async clearTrigger(): Promise<number> {
+      return store.clearTrigger(ctx);
     },
   };
 }
@@ -142,7 +199,7 @@ export const bitsTriggerHelper = {
    * Execute a trigger based on hook type
    */
   async executeTrigger(params: TriggerExecutionParams): Promise<TriggerExecutionResult> {
-    const { moduleDefinition, triggerName, input, hookType, trigger, payload, webhookUrl, isTest, store } = params;
+    const { moduleDefinition, triggerName, input, hookType, trigger, payload, webhookUrl, isTest, store, executor, workflowId, nodeId } = params;
 
     if (isNil(triggerName)) {
       throw new Error('Trigger name is not set');
@@ -164,6 +221,19 @@ export const bitsTriggerHelper = {
 
     // Use provided store or create a new one
     const triggerStore = store || createSimpleStore(storePrefix);
+
+    // Determine trigger type to decide if we need a polling store
+    const triggerType = mapTriggerType((bitsTrigger as any).type);
+    
+    // Create polling store for POLLING triggers
+    let pollingStore: BitsPollingStore | undefined;
+    if (triggerType === BitsTriggerType.POLLING && workflowId) {
+      // Get dedup strategy from trigger props if specified
+      const dedupStrategy = (input.dedupBy as DedupStrategy) || 'id';
+      const triggerId = `${moduleDefinition.repository}:${triggerName}`;
+      pollingStore = createBoundPollingStore(workflowId, triggerId, dedupStrategy);
+      logger.log(`📊 Created polling store for ${triggerId} (dedup: ${dedupStrategy})`);
+    }
 
     // Extract auth from credentials if present
     let auth: any = undefined;
@@ -199,6 +269,10 @@ export const bitsTriggerHelper = {
           timezone: options.timezone ?? 'UTC',
         };
       },
+      executor,
+      workflowId,
+      nodeId,
+      pollingStore,
     };
 
     try {
@@ -207,11 +281,11 @@ export const bitsTriggerHelper = {
           if (bitsTrigger.onEnable) {
             await bitsTrigger.onEnable(context);
           }
-          const triggerType = mapTriggerType((bitsTrigger as any).type);
+          const triggerTypeForResult = mapTriggerType((bitsTrigger as any).type);
           return {
             success: true,
             listeners: appListeners,
-            scheduleOptions: triggerType === BitsTriggerType.POLLING ? scheduleOptions : undefined,
+            scheduleOptions: triggerTypeForResult === BitsTriggerType.POLLING ? scheduleOptions : undefined,
           };
         }
 
@@ -318,8 +392,11 @@ export const bitsTriggerHelper = {
     payload?: unknown;
     webhookUrl?: string;
     store?: BitsStore;
+    executor?: any;
+    workflowId?: string;
+    nodeId?: string;
   }): Promise<TriggerExecutionResult> {
-    const { moduleDefinition, triggerName, input, payload, webhookUrl, store } = params;
+    const { moduleDefinition, triggerName, input, payload, webhookUrl, store, executor, workflowId, nodeId } = params;
 
     // Get the trigger to determine its type
     const { piece, trigger } = await this.getTrigger(moduleDefinition, triggerName);
@@ -341,6 +418,9 @@ export const bitsTriggerHelper = {
           webhookUrl,
           isTest: false,
           store: triggerStore,
+          executor,
+          workflowId,
+          nodeId,
         });
 
         if (!onEnableResult.success) {
@@ -366,6 +446,9 @@ export const bitsTriggerHelper = {
           webhookUrl,
           isTest: false,
           store: triggerStore,
+          executor,
+          workflowId,
+          nodeId,
         });
 
         if (!runResult.success) {
@@ -388,6 +471,9 @@ export const bitsTriggerHelper = {
           payload,
           webhookUrl,
           isTest: false,
+          executor,
+          workflowId,
+          nodeId,
         });
       }
 

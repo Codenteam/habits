@@ -1,0 +1,123 @@
+id: send-urgent-alert
+name: Send Urgent Alert (Sub-habit)
+description: >-
+  Sends an urgent meeting alert email for upcoming meetings.
+  Called by send-urgent orchestrator.
+version: "1.0"
+
+nodes:
+  # Get participant research for the events
+  - id: get-research
+    type: bits
+    data:
+      label: Get Participant Research
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: participants
+        filter: '{"userEmail": "{{habits.input.userEmail}}", "researched": true}'
+        limit: 50
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Generate urgent briefing with AI
+  - id: generate-briefing
+    type: bits
+    data:
+      label: Generate Urgent Briefing
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chat
+      params:
+        model: gpt-4o-mini
+        messages: |
+          [
+            {
+              "role": "system",
+              "content": "You are an executive assistant sending an urgent meeting reminder. Be concise and actionable. Format as a brief HTML email."
+            },
+            {
+              "role": "user",
+              "content": "Create an URGENT meeting reminder email:\n\nUpcoming meetings (starting in next 30 minutes):\n{{habits.input.events | json}}\n\nParticipant research:\n{{get-research.documents | json}}\n\nInclude:\n1. ⏰ Urgent header with meeting time\n2. Quick participant summary (1-2 lines each)\n3. Key talking points or prep notes\n\nKeep it SHORT - this is a quick reminder!"
+            }
+          ]
+        temperature: 0.7
+        maxTokens: 500
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Send urgent email
+  - id: send-email
+    type: bits
+    data:
+      label: Send Urgent Alert Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "{{habits.env.EMAIL_FROM}}"
+        to: "{{habits.input.userEmail}}"
+        subject: "⏰ URGENT: Meeting starting in {{habits.input.eventCount}} minutes!"
+        html: "{{generate-briefing.content}}"
+      credentials:
+        smtp:
+          host: "{{habits.env.SMTP_HOST}}"
+          port: "{{habits.env.SMTP_PORT}}"
+          user: "{{habits.env.SMTP_USER}}"
+          password: "{{habits.env.SMTP_PASSWORD}}"
+
+  # Log the alert
+  - id: log-alert
+    type: bits
+    data:
+      label: Log Alert Sent
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: emails
+        document: |
+          {
+            "userEmail": "{{habits.input.userEmail}}",
+            "type": "urgent",
+            "subject": "Urgent Meeting Alert",
+            "eventCount": "{{habits.input.eventCount}}",
+            "sentAt": "{{habits.now}}"
+          }
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Return result
+  - id: return-result
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Return Result
+      params:
+        email: "{{habits.input.userEmail}}"
+        eventCount: "{{habits.input.eventCount}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(email: string, eventCount: number) {
+            console.log(`⏰ Sent urgent alert to ${email} for ${eventCount} meeting(s)`);
+            return { success: true, email, eventCount };
+          }
+
+edges:
+  - source: get-research
+    target: generate-briefing
+  - source: generate-briefing
+    target: send-email
+  - source: send-email
+    target: log-alert
+  - source: log-alert
+    target: return-result
+
+output:
+  - return-result

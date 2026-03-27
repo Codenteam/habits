@@ -1,0 +1,52 @@
+version: "1.0"
+
+workflows:
+  # Stripe payment → Google Drive + PDF Invoice
+  - id: stripe-payment-invoice
+    path: ./habits/stripe-payment-invoice.yaml
+    enabled: true
+
+  # Manual invoice entry (no scripts)
+  - id: manual-invoice
+    path: ./habits/manual-invoice.yaml
+    enabled: true
+
+  # List invoices from database
+  - id: list-invoices
+    path: ./habits/list-invoices.yaml
+    enabled: true
+
+  # PDF extraction
+  - id: extract-pdf
+    path: ./habits/extract-pdf.yaml
+    enabled: true
+
+  # OCR processing
+  - id: process-ocr
+    path: ./habits/process-ocr.yaml
+    enabled: true
+
+  # Create invoice PDF standalone
+  - id: create-invoice
+    path: ./habits/create-invoice.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  openapi: true
+  frontend: ./frontend
+
+# Environment variables required:
+# --- Stripe ---
+# STRIPE_SECRET_KEY - Stripe API secret key
+# STRIPE_WEBHOOK_SECRET - Stripe webhook signing secret
+
+# --- Google Drive ---
+# GOOGLE_DRIVE_CLIENT_ID - Google OAuth Client ID
+# GOOGLE_DRIVE_CLIENT_SECRET - Google OAuth Client Secret
+# GOOGLE_DRIVE_FOLDER_ID - Google Drive folder ID for PDF uploads (optional, uses root if not set)
+
+logging:
+  level: info
+  outputs: [console]

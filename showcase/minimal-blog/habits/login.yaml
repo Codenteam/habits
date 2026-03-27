@@ -92,6 +92,6 @@ edges:
     target: set-auth-cookie
 
 output:
-  success: "{{set-auth-cookie.success || false}}"
+  success: "{{set-auth-cookie.success}}"
   message: "{{validate-user.output.valid == true && check-password.output == true ? 'Login successful' : 'Invalid credentials'}}"
   user: "{{validate-user.output.valid == true && check-password.output == true ? habits.input.username : null}}"

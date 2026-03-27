@@ -1,0 +1,50 @@
+{
+  "name": "@ha-bits/bit-google-sheets",
+  "version": "1.0.0",
+  "description": "Google Sheets integration for Habits workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "bits-test -f bit-google-sheets",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "google-sheets",
+    "spreadsheet",
+    "google"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "habits": {
+    "catalog": true,
+    "mobile": false
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-google-sheets/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {}
+    }
+  }
+}

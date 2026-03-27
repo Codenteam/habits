@@ -14,7 +14,7 @@
       "data": {
         "label": "If/Else If/Else Branch",
         "framework": "bits",
-        "source": "local",
+        "source": "npm",
         "module": "bit-if",
         "resource": "branch",
         "operation": "branch",

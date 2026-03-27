@@ -1,0 +1,113 @@
+id: log-stripe-payment
+name: Log Stripe Payment to Google Sheets
+description: When a Stripe payment succeeds, log the invoice data to Google Sheets
+
+# This habit is triggered by Stripe webhook when a payment succeeds
+# It extracts payment details and appends them to a Google Sheet
+
+# Sheet columns: Invoice Number | Date | Customer Name | Customer Address | Description | Notes | Amount | VAT | Total | Currency
+
+nodes:
+  # Trigger: Stripe payment succeeded webhook
+  - id: stripe-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-stripe"
+      operation: paymentSucceeded
+      triggerType: webhook
+      params:
+        secretKey: "{{habits.env.STRIPE_SECRET_KEY}}"
+        webhookSecret: "{{habits.env.STRIPE_WEBHOOK_SECRET}}"
+
+  # Transform payment data to sheet row format
+  - id: transform-data
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Transform Payment Data
+      params:
+        payment: "{{stripe-trigger}}"
+        type: script
+        language: deno
+        script: |
+          interface PaymentData {
+            payment: {
+              id: string;
+              amount: number;
+              currency: string;
+              description: string;
+              invoice: string | null;
+              customer: {
+                name: string;
+                email: string;
+                address: string;
+              };
+              metadata: Record<string, string>;
+            };
+            timestamp: string;
+          }
+          
+          export async function main(payment: PaymentData) {
+            const p = payment.payment;
+            const timestamp = payment.timestamp || new Date().toISOString();
+            
+            // Generate invoice number if not present
+            const invoiceNumber = p.invoice || `STRIPE-${p.id.slice(-8).toUpperCase()}`;
+            
+            // Format date
+            const date = new Date(timestamp).toLocaleDateString('en-GB');
+            
+            // Calculate VAT (assume 20% if not specified)
+            const vatRate = p.metadata?.vatRate ? parseFloat(p.metadata.vatRate) : 0.20;
+            const totalAmount = p.amount;
+            const vatAmount = totalAmount * (vatRate / (1 + vatRate));
+            const netAmount = totalAmount - vatAmount;
+            
+            // Build row for Google Sheets
+            const row = [
+              invoiceNumber,                           // Invoice Number
+              date,                                    // Date
+              p.customer.name || '',                   // Customer Name
+              p.customer.address || '',               // Customer Address
+              p.description || 'Stripe Payment',      // Description
+              p.metadata?.notes || '',                // Notes
+              netAmount.toFixed(2),                   // Amount (before VAT)
+              vatAmount.toFixed(2),                   // VAT
+              totalAmount.toFixed(2),                 // Total
+              p.currency.toUpperCase(),               // Currency
+            ];
+            
+            return {
+              row,
+              invoiceNumber,
+              source: 'stripe',
+            };
+          }
+
+  # Append to Google Sheets
+  - id: append-to-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: appendRow
+      params:
+        accessToken: "{{habits.env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        sheetName: "Invoices"
+        values: "{{transform-data.row}}"
+
+edges:
+  - source: stripe-trigger
+    target: transform-data
+  - source: transform-data
+    target: append-to-sheet
+
+output:
+  success: true
+  invoiceNumber: "{{transform-data.invoiceNumber}}"
+  sheetResult: "{{append-to-sheet}}"

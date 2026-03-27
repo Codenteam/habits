@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-send-email"
+description = "Enables the send_email command without any pre-configured scope."
+commands.allow = ["send_email"]
+
+[[permission]]
+identifier = "deny-send-email"
+description = "Denies the send_email command without any pre-configured scope."
+commands.deny = ["send_email"]

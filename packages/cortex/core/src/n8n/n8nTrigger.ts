@@ -105,7 +105,7 @@ function buildUrl(url: string, baseURL?: string, qs?: Record<string, any>): stri
 }
 
 /**
- * Execute HTTP request (real implementation for triggers)
+ * Execute HTTP request 
  */
 async function httpRequest(
   requestOptions: IHttpRequestOptions

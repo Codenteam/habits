@@ -15,7 +15,7 @@ import { existsSync, mkdirSync, readdirSync, statSync, readFileSync, writeFileSy
 import { join, relative, extname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
@@ -379,11 +379,9 @@ function generateLandingPage(example: ExampleData): string {
   const tagBadges = example.tags
     .map(tag => {
       const iconName = TAG_ICONS[tag.toLowerCase()] || DEFAULT_TAG_ICON;
-      return `<span class="showcase-tag tag-${tag}"><component :is="${iconName}" :size="14" /> ${tag}</span>`;
+      return `<span class="showcase-tag tag-${tag}"><component :is="${iconName}" :size="12" /> ${tag}</span>`;
     })
     .join(' ');
-  
-  const difficultyBadge = `<span class="showcase-difficulty difficulty-${example.difficulty}">${example.difficulty.charAt(0).toUpperCase() + example.difficulty.slice(1)}</span>`;
   
   const requirements = example.requirements?.length
     ? `\n## Requirements\n\n${example.requirements.map(r => `- ${r}`).join('\n')}\n`
@@ -424,6 +422,33 @@ ${example.keyFiles.map(file => {
   
   const habitViewerSection = habitFiles.length > 0
     ? `
+
+## Run Your .habit File
+
+<Checklist name="dot-habit/mobile" title="Run on Mobile" icon="smartphone">
+
+<!--@include: ../getting-started/checklists/dot-habit/mobile.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/desktop" title="Run on Desktop" icon="monitor">
+
+<!--@include: ../getting-started/checklists/dot-habit/desktop.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/server" title="Run on Server" icon="server">
+
+<!--@include: ../getting-started/checklists/dot-habit/server.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/serverless" title="Run Serverless" icon="cloud">
+
+<!--@include: ../getting-started/checklists/dot-habit/serverless.md{3,}-->
+
+</Checklist>
+
 ## Workflow Visualization
 
 <HabitViewerTabs :tabs="habitTabs" :height="450" />
@@ -468,17 +493,28 @@ ${scriptSetupContent}
 </script>
 
 # ${example.name}
-<div class="showcase-meta">
-  <span class="difficulty-badge difficulty-${example.difficulty}">${difficultyBadge}</span>
-  <span class="tags">${tagBadges}</span>
-  <DownloadExample examplePath="${example.slug}" />
+
+<div class="showcase-header">
+  <div class="showcase-meta">
+    <div class="meta-left">
+      <span class="difficulty-pill difficulty-${example.difficulty}">
+        <span class="difficulty-dot"></span>
+        ${example.difficulty.charAt(0).toUpperCase() + example.difficulty.slice(1)}
+      </span>
+      <span class="meta-divider"></span>
+      <div class="tags">${tagBadges}</div>
+    </div>
+    <div class="meta-right">
+      <DownloadExample examplePath="${example.slug}" />
+    </div>
+  </div>
 </div>
 
-<div class="gallery-container" >
-<ShowcaseHero :images="images" />
+<div class="gallery-container">
+  <ShowcaseHero :images="images" />
 </div>
 
->${example.description}
+<p class="showcase-description">${example.description}</p>
 
 ${example.longDescription || ''}
 ${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
@@ -486,64 +522,138 @@ ${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
 
 <ExampleRunner examplePath="${example.slug}" />
 
-<DownloadExample examplePath="${example.slug}" />
-${linksSection}
+<DownloadExample examplePath="${example.slug}" />${linksSection}
 <style>
+.showcase-header {
+  margin: 20px 0 28px;
+}
+
 .showcase-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
   align-items: center;
-  margin: 16px 0 24px;
-  padding: 16px;
-  background: var(--vp-c-bg-soft);
-  border-radius: 12px;
   justify-content: space-between;
-}
-.showcase-tag {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-  }
-.difficulty-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85em;
-}
-  .gallery-container {
-  float: right;
-  width: 400px;
-  }
-
-.difficulty-beginner {
-  color: #22c55e;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
 }
 
-.difficulty-intermediate {
-  color: #eab308;
+.meta-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.difficulty-advanced {
-  color: #ef4444;
+.meta-right {
+  flex-shrink: 0;
+}
+
+.meta-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--vp-c-divider);
+}
+
+.difficulty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  background: var(--vp-c-bg-alt);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.difficulty-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.difficulty-beginner .difficulty-dot {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+
+.difficulty-intermediate .difficulty-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.difficulty-advanced .difficulty-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.tags code {
+.showcase-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.75em;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg-alt);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.showcase-tag:hover {
+  color: var(--vp-c-text-1);
+  border-color: var(--vp-c-brand-1);
   background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8em;
+}
+
+.showcase-tag svg {
+  opacity: 0.7;
+}
+
+.showcase-description {
+  font-size: 1.1em;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.gallery-container {
+  float: right;
+  width: 400px;
+  margin-left: 24px;
+  margin-bottom: 16px;
 }
 
 .vp-doc h2 {
-    border-top-width:0px;
+  border-top-width: 0;
+}
+
+@media (max-width: 768px) {
+  .showcase-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .meta-divider {
+    display: none;
+  }
+  
+  .gallery-container {
+    float: none;
+    width: 100%;
+    margin: 0 0 20px;
+  }
 }
 </style>
 `;
@@ -578,19 +688,45 @@ aside: false
 const examples = ${examplesJson}
 </script>
 
-# Habits Showcase
-
-Discover production-ready examples showcasing what you can build with Habits.
-Each example includes source code, demo images, and one-click deployment.
+<div class="showcase-index-header">
+  <h1>Showcase</h1>
+  <p class="showcase-subtitle">Ready-to-use examples showcasing what you can build with Habits</p>
+  <p class="showcase-note">Each example includes source code, demo images, and one-click deployment.</p>
+</div>
 
 <ShowcaseGrid :showcases="examples" />
 
 <style>
-.vp-doc h1 {
-  background: linear-gradient(135deg, var(--vp-c-brand-1), var(--vp-c-brand-2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.showcase-index-header {
+  text-align: center;
+  padding: 32px 0 40px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.showcase-index-header h1 {
+  font-size: 2.5em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+  color: var(--vp-c-text-1);
+}
+
+.showcase-subtitle {
+  font-size: 1.2em;
+  color: var(--vp-c-text-2);
+  margin: 0 0 8px;
+  font-weight: 400;
+}
+
+.showcase-note {
+  font-size: 0.9em;
+  color: var(--vp-c-text-3);
+  margin: 0;
+}
+
+.vp-doc > h1:first-of-type {
+  display: none;
 }
 </style>
 `;
@@ -645,6 +781,68 @@ function generateZipFiles(examples: ExampleData[]): void {
   }
 }
 
+/**
+ * Generate .habit files for each showcase example (without env).
+ * Uses the pack command to create self-contained portable habit files.
+ * Runs sequentially to avoid tsx/npx concurrency conflicts.
+ */
+async function generateHabitFiles(examples: ExampleData[]): Promise<void> {
+  console.log('\n📦 Generating .habit files...');
+  
+  const tasks = examples.map(example => async () => {
+    const stackPath = join(example.path, 'stack.yaml');
+    
+    // Skip if no stack.yaml exists
+    if (!existsSync(stackPath)) {
+      console.log(`  ⚠️  Skipping ${example.slug}: no stack.yaml found`);
+      return;
+    }
+    
+    const habitName = `${example.slug}.habit`;
+    const destDir = join(publicShowcaseDir, example.slug);
+    const habitPath = join(destDir, habitName);
+    
+    // Ensure destination directory exists
+    mkdirSync(destDir, { recursive: true });
+    
+    // Remove existing .habit if present
+    if (existsSync(habitPath)) {
+      rmSync(habitPath);
+    }
+    
+    const relativeStackPath = `showcase/${example.slug}/stack.yaml`;
+    
+    console.log(`  ⏳ Creating .habit for ${example.slug}...`);
+    
+    try {
+      // Use execSync for reliable synchronous execution
+      const command = `npx tsx packages/habits/app/src/main.ts pack --format habit --config "${relativeStackPath}" -o "${habitPath}"`;
+      execSync(command, { 
+        cwd: rootDir, 
+        stdio: 'pipe',
+        timeout: 120000 // 2 minute timeout per file
+      });
+      
+      // Verify file was actually created
+      if (existsSync(habitPath)) {
+        console.log(`  📦 ${example.slug}/${habitName}`);
+      } else {
+        console.error(`  ⚠️  Pack completed but file not created: ${habitName}`);
+      }
+    } catch (err: unknown) {
+      const error = err as { status?: number; stderr?: Buffer; stdout?: Buffer };
+      console.error(`  ⚠️  Failed to create ${habitName} (exit ${error.status || 'unknown'})`);
+      if (error.stderr) console.error(`     stderr: ${error.stderr.toString().slice(0, 300)}`);
+      if (error.stdout) console.error(`     stdout: ${error.stdout.toString().slice(0, 300)}`);
+    }
+  });
+  
+  // Run sequentially (execSync is blocking anyway)
+  for (const task of tasks) {
+    await task();
+  }
+}
+
 function generateDataFile(examples: ExampleData[]): void {
   console.log('\n💾 Generating data files...');
   
@@ -683,7 +881,51 @@ function generateDataFile(examples: ExampleData[]): void {
   ];
 }
 
-function main(): void {
+/**
+ * Generate public/showcase/index.json with all .habit files info
+ * for the Cortex app to fetch and display as a browsable list.
+ */
+function generateHabitsIndexJson(examples: ExampleData[]): void {
+  console.log('\n📋 Generating habits index JSON...');
+  
+  const habitsIndex: Array<{
+    slug: string;
+    name: string;
+    description: string;
+    habitUrl: string;
+    thumbnail: string;
+    tags: string[];
+    difficulty: string;
+  }> = [];
+  
+  for (const example of examples) {
+    const habitFilename = `${example.slug}.habit`;
+    const habitPath = join(publicShowcaseDir, example.slug, habitFilename);
+    
+    // Only include if .habit file exists
+    if (existsSync(habitPath)) {
+      habitsIndex.push({
+        slug: example.slug,
+        name: example.name,
+        description: example.description,
+        habitUrl: `/showcase/${example.slug}/${habitFilename}`,
+        thumbnail: `/showcase/${example.slug}/${example.images[0]}`,
+        tags: example.tags,
+        difficulty: example.difficulty,
+      });
+    }
+  }
+  
+  // Sort by name
+  habitsIndex.sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Write to public/showcase/index.json
+  const indexPath = join(publicShowcaseDir, 'index.json');
+  writeFileSync(indexPath, JSON.stringify(habitsIndex, null, 2));
+  console.log(`  📄 public/showcase/index.json (${habitsIndex.length} habits)`);
+}
+
+async function main(): Promise<void> {
   console.log('🛒 Generating Habits Showcase...\n');
   
   // Scan for eligible examples
@@ -700,6 +942,9 @@ function main(): void {
   // Copy showcase assets (images, habits, stack files) to public folder
   copyShowcaseAssets(examples);
   
+  // Generate .habit files (portable self-contained packages)
+  await generateHabitFiles(examples);
+  
   // Generate zip files for download
   generateZipFiles(examples);
   
@@ -709,9 +954,12 @@ function main(): void {
   // Generate JSON data for components
   generateDataFile(examples);
   
+  // Generate habits index for Cortex app
+  generateHabitsIndexJson(examples);
+  
   console.log('\n✨ Showcase generation complete!');
   console.log(`   ${examples.length} examples processed`);
   console.log(`   Output: docs/showcase/`);
 }
 
-main();
+main().catch(console.error);
