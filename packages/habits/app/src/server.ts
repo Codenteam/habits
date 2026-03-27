@@ -11,7 +11,7 @@ import express, { Application, Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { startServer as startCortexServer, WorkflowExecutorServer, customRequire } from '@ha-bits/cortex';
-import {findBaseServerPath, findUiPath} from "@ha-bits/core";
+import { findBaseServerPath, findUiPath } from "@ha-bits/core/pathUtils";
 export interface HabitsServerOptions {
   /** Path to config file for workflows */
   configPath: string;

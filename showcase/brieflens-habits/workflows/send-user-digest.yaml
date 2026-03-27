@@ -1,0 +1,177 @@
+id: send-user-digest
+name: Send User Digest (Sub-habit)
+description: >-
+  Sends a daily meeting digest email to a single user.
+  Called by send-digest orchestrator.
+version: "1.0"
+
+nodes:
+  # Get user data
+  - id: get-user
+    type: bits
+    data:
+      label: Get User Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: users
+        key: "{{habits.input.userEmail}}"
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Get today's events for user
+  - id: get-events
+    type: bits
+    data:
+      label: Get Today's Events
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: events
+        filter: '{"userEmail": "{{habits.input.userEmail}}", "date": "{{habits.now | date:''YYYY-MM-DD''}}"}'
+        limit: 50
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Check if user has events
+  - id: check-events
+    type: bits
+    data:
+      label: Check If Has Events
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: condition
+      params:
+        condition: "{{get-events.count}} > 0"
+        trueValue: "has_events"
+        falseValue: "no_events"
+
+  # Get participant research for events
+  - id: get-research
+    type: bits
+    data:
+      label: Get Participant Research
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: participants
+        filter: '{"userEmail": "{{habits.input.userEmail}}", "researched": true}'
+        limit: 200
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Generate digest with AI
+  - id: generate-digest
+    type: bits
+    data:
+      label: Generate Digest HTML
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chat
+      params:
+        model: gpt-4o-mini
+        messages: |
+          [
+            {
+              "role": "system",
+              "content": "You are a professional executive assistant. Generate a concise, well-formatted HTML email digest for today's meetings. Include meeting times, titles, and brief participant insights. Use a clean, professional style with proper HTML formatting."
+            },
+            {
+              "role": "user",
+              "content": "Create a meeting digest email for today:\n\nUser: {{get-user.value.name}} ({{habits.input.userEmail}})\n\nToday's events:\n{{get-events.documents | json}}\n\nParticipant research:\n{{get-research.documents | json}}\n\nFormat as HTML email body with:\n1. Brief greeting\n2. Summary of today's meetings (time, title, location)\n3. Key participants and their brief professional background\n4. Any prep tips\n\nKeep it concise and actionable."
+            }
+          ]
+        temperature: 0.7
+        maxTokens: 1000
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Send email
+  - id: send-email
+    type: bits
+    data:
+      label: Send Digest Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "{{habits.env.EMAIL_FROM}}"
+        to: "{{habits.input.userEmail}}"
+        subject: "📅 Your Meeting Digest for {{habits.now | date:'MMMM D, YYYY'}}"
+        html: "{{generate-digest.content}}"
+      credentials:
+        smtp:
+          host: "{{habits.env.SMTP_HOST}}"
+          port: "{{habits.env.SMTP_PORT}}"
+          user: "{{habits.env.SMTP_USER}}"
+          password: "{{habits.env.SMTP_PASSWORD}}"
+
+  # Log email in database
+  - id: log-email
+    type: bits
+    data:
+      label: Log Email Sent
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: emails
+        document: |
+          {
+            "userEmail": "{{habits.input.userEmail}}",
+            "type": "digest",
+            "subject": "Meeting Digest for {{habits.now | date:'YYYY-MM-DD'}}",
+            "eventCount": "{{get-events.count}}",
+            "sentAt": "{{habits.now}}"
+          }
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Return result
+  - id: return-result
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Return Result
+      params:
+        email: "{{habits.input.userEmail}}"
+        eventCount: "{{get-events.count}}"
+        hasEvents: "{{check-events}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(email: string, eventCount: number, hasEvents: string) {
+            if (hasEvents === "no_events") {
+              console.log(`📧 No events for ${email}, skipping digest`);
+              return { success: true, email, sent: false, reason: "no_events" };
+            }
+            console.log(`📧 Sent digest to ${email} with ${eventCount} events`);
+            return { success: true, email, sent: true, eventCount };
+          }
+
+edges:
+  - source: get-user
+    target: get-events
+  - source: get-events
+    target: check-events
+  - source: check-events
+    target: get-research
+  - source: get-research
+    target: generate-digest
+  - source: generate-digest
+    target: send-email
+  - source: send-email
+    target: log-email
+  - source: log-email
+    target: return-result
+
+output:
+  - return-result

@@ -2,7 +2,7 @@ import * as fs from '@ha-bits/bindings/fs';
 import * as path from '@ha-bits/bindings/path';
 import { ensureModuleReady, getModuleMainFile, getModulePath } from './moduleCloner';
 import { npmInstall, getLocalModulePath } from './utils';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

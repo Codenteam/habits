@@ -1,0 +1,26 @@
+id: process-ocr
+name: Process Image OCR
+description: Extract text from an image using OCR (Tesseract.js)
+
+nodes:
+  - id: ocr
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-ocr"
+      operation: processImage
+      params:
+        source: "{{habits.input.source}}"
+        sourceType: "{{habits.input.sourceType}}"
+        language: "{{habits.input.language}}"
+
+edges: []
+
+input:
+  source: ""
+  sourceType: "base64"
+  language: "eng"
+
+output:
+  result: "{{ocr}}"

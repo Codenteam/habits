@@ -1,0 +1,27 @@
+id: cloud-file-upload
+name: Cloud File Upload
+description: Upload files to cloud storage services (Google Drive, Dropbox, OneDrive)
+
+nodes:
+  # Upload to Google Drive
+  - id: google-drive-upload
+    type: action
+    data:
+      framework: bits
+      module: '@ha-bits/bit-google-drive'
+      operation: uploadFile
+      source: npm
+      auth: 
+        clientId: "{{habits.env.GOOGLE_DRIVE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: '{{habits.input.fileName}}'
+        content: '{{habits.input.content}}'
+        mimeType: '{{habits.input.mimeType}}'
+
+
+
+edges: []
+
+output:
+  result: '{{google-drive-upload}}'

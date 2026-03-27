@@ -1,0 +1,128 @@
+id: wise-payment-invoice
+name: Wise Incoming Payment to Invoice PDF
+description: Poll Wise Business account for incoming payments, generate PDF invoices, and upload to Google Drive
+
+# Polls Wise every 5 minutes for new incoming payments using API key
+# When a new payment is detected, generates invoice and saves to Drive + database
+
+nodes:
+  # Trigger: Poll Wise for incoming payments
+  - id: wise-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wise"
+      operation: incomingPaymentPolling
+      triggerType: polling
+      params:
+        apiToken: "{{habits.env.WISE_API_TOKEN}}"
+        profileId: "{{habits.env.WISE_PROFILE_ID}}"
+        currency: "{{habits.env.WISE_CURRENCY}}"
+        cronExpression: "*/5 * * * * *"
+
+  # Generate PDF Invoice from Wise payment data
+  - id: generate-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-invoice"
+      operation: createInvoice
+      params:
+        invoiceId: "WISE-{{wise-trigger.payment.reference}}"
+        invoiceDate: "{{wise-trigger.timestamp}}"
+        header:
+          lines:
+            - "Your Company Name"
+            - "Payment Receipt"
+        footer:
+          lines:
+            - "Thank you for your payment!"
+            - "This invoice was auto-generated from Wise"
+        seller:
+          lines:
+            - "Your Company Name"
+            - "123 Business Ave"
+            - "City, State 12345"
+            - "billing@yourcompany.com"
+        customer:
+          lines:
+            - "{{wise-trigger.payment.senderName}}"
+            - "{{wise-trigger.payment.senderAccount}}"
+        items:
+          - Description: "{{wise-trigger.payment.description}}"
+            Qty: 1
+            "Unit Price": "{{wise-trigger.payment.amount}}"
+            Tax: 0
+            Price: "{{wise-trigger.payment.amount}}"
+        itemColumns:
+          - "Description"
+          - "Qty"
+          - "Unit Price"
+          - "Tax"
+          - "Price"
+        taxColumn: "Tax"
+        priceColumn: "Price"
+        currency: "{{wise-trigger.payment.currency}}"
+        primaryColor: "#9fe870"
+        notes:
+          - "Payment received via Wise Business"
+          - "Reference: {{wise-trigger.payment.reference}}"
+          - "Transaction Type: {{wise-trigger.payment.transactionType}}"
+
+  # Upload PDF to Google Drive
+  - id: upload-to-drive
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: uploadFile
+      auth: 
+        clientId: "{{habits.env.GOOGLE_DRIVE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: "Invoice-WISE-{{wise-trigger.payment.reference}}.pdf"
+        content: "{{generate-invoice.base64}}"
+        mimeType: "application/pdf"
+        folderId: "{{habits.env.GOOGLE_DRIVE_FOLDER_ID}}"
+
+  # Store invoice in database
+  - id: store-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: "invoices"
+        document:
+          invoiceNumber: "WISE-{{wise-trigger.payment.reference}}"
+          date: "{{wise-trigger.timestamp}}"
+          customerName: "{{wise-trigger.payment.senderName}}"
+          customerEmail: ""
+          customerAddress: "{{wise-trigger.payment.senderAccount}}"
+          description: "{{wise-trigger.payment.description}}"
+          notes: "Wise Transaction: {{wise-trigger.payment.transactionType}}"
+          amount: "{{wise-trigger.payment.amount}}"
+          vat: 0
+          total: "{{wise-trigger.payment.amount}}"
+          currency: "{{wise-trigger.payment.currency}}"
+          source: "wise"
+          driveFileId: "{{upload-to-drive.id}}"
+          createdAt: "{{wise-trigger.timestamp}}"
+
+edges:
+  - source: wise-trigger
+    target: generate-invoice
+  - source: generate-invoice
+    target: upload-to-drive
+  - source: upload-to-drive
+    target: store-invoice
+
+output:
+  invoice: "{{generate-invoice}}"
+  driveFile: "{{upload-to-drive}}"
+  dbRecord: "{{store-invoice}}"

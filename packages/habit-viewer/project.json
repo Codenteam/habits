@@ -21,6 +21,16 @@
         "^build"
       ]
     },
+    "build-runner": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm vite build --config packages/habit-viewer/vite.config.runner.ts packages/habit-viewer",
+        "cwd": "{workspaceRoot}"
+      },
+      "dependsOn": [
+        "@ha-bits/workflow-canvas:build"
+      ]
+    },
     "dev": {
       "executor": "nx:run-commands",
       "options": {

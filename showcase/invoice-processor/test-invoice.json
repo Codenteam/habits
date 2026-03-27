@@ -1,0 +1,29 @@
+{
+  "invoiceId": "INV-2024-001",
+  "invoiceDate": "March 20, 2024",
+  "dueDate": "April 20, 2024",
+  "header": {
+    "lines": ["TechCorp Solutions", "Leading Software Company"]
+  },
+  "footer": {
+    "lines": ["Thank you for choosing TechCorp!", "Questions? Contact billing@techcorp.com"]
+  },
+  "seller": {
+    "lines": ["TechCorp Solutions", "100 Silicon Valley Blvd", "Palo Alto, CA 94301", "billing@techcorp.com", "+1 (650) 555-0100"]
+  },
+  "customer": {
+    "lines": ["Jane Doe", "Startup Ventures LLC", "200 Innovation Drive", "Austin, TX 78701", "jane@startupventures.com"]
+  },
+  "items": [
+    {"Service": "Cloud Platform Subscription", "Period": "Q1 2024", "Quantity": 3, "Unit Rate": 299, "Tax": 26.91, "Amount": 897},
+    {"Service": "API Integration Setup", "Period": "One-time", "Quantity": 1, "Unit Rate": 1500, "Tax": 135, "Amount": 1500},
+    {"Service": "Premium Support (6 months)", "Period": "Mar-Aug 2024", "Quantity": 6, "Unit Rate": 150, "Tax": 81, "Amount": 900}
+  ],
+  "itemColumns": ["Service", "Period", "Quantity", "Unit Rate", "Tax", "Amount"],
+  "taxColumn": "Tax",
+  "priceColumn": "Amount",
+  "currency": "$",
+  "primaryColor": "#059669",
+  "secondaryColor": "#ecfdf5",
+  "notes": ["Wire transfer preferred for amounts over $1000", "Credit card payments accepted with 2.5% processing fee", "All prices in USD"]
+}

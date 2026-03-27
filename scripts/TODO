@@ -8,3 +8,28 @@ L0: Created to be inherited without actual real world usage (bit-database)
 L1: Stateless, single-dependency/limited-dependencies, environment-agnostic, inherits L0, L1
 L2: Service-specific auth, CRUD operations, webhook/trigger support, inherits L0,L1,L2, uses L0,L1
 L3: Composes L0/L1/L2, business-focused, sensible defaults, built-in error handling
+
+
+
+- Bit database-sql only works for sqlite. To make it work with mysql and postgresql:
+-- Either introduce new bits for that. (Cleaner for me), but make sure to allow dynamically loading the correct bit. 
+-- OR: 
+1. Make another driver that deals with mysql, with mysql2 as a dpendency. 
+2. The cargo should add features dynamically: cargo add tauri-plugin-sql --features mysql, cargo add tauri-plugin-sql --features postgres
+3. SQLite related deps, mysql related deps should be peerdependencies hooked through some build time flag/logic.
+4. Preferably allow using a mix if needed, some bits mysql, some postgresql, etc.  
+
+
+
+
+
+
+
+
+- OAuth need to be created from scratch again: 
+1. PKCE: If you are on mobile and don't have a server. 
+2. PKCE: If you are on automation as backend and don't have a frontend. 
+3. Access token: If you are on automation and want it to act as a single user. 
+4. Access token: If you are on mobile and want it to work for a single user always (how to bundle?)
+5. Device Authorization Flow: If you are running as automation in CLI that is meant for multiple people. 
+6. Client Credentials Flow: If you are running the automation for your organization directly using service account, unfortunately separate account. 

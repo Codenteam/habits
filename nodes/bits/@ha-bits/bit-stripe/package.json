@@ -1,0 +1,53 @@
+{
+  "name": "@ha-bits/bit-stripe",
+  "version": "1.0.0",
+  "description": "Stripe payment integration for Habits workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "bits-test -f bit-stripe",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "stripe",
+    "payments",
+    "trigger",
+    "webhook"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "habits": {
+    "catalog": true,
+    "mobile": false
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-stripe/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {}
+    }
+  }
+}

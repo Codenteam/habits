@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Cloud Upload</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #4285f4;
+      --secondary: #34a853;
+      --accent: #ea4335;
+      --bg: #0a0a0f;
+      --surface: #16161f;
+      --surface-elevated: #1e1e2a;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
+      --text-secondary: #8e8e93;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* App Shell */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .navbar-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .navbar-action {
+      position: absolute;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    /* Main Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px;
+    }
+
+    /* Status Card */
+    .status-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-icon.google {
+      background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+    }
+
+    .status-icon svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .status-info {
+      flex: 1;
+    }
+
+    .status-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .status-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .status-subtitle.connected {
+      color: var(--secondary);
+    }
+
+    .status-subtitle.disconnected {
+      color: var(--accent);
+    }
+
+    .status-toggle {
+      width: 51px;
+      height: 31px;
+      border-radius: 16px;
+      background: #39393d;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .status-toggle.active {
+      background: var(--secondary);
+    }
+
+    .status-toggle::after {
+      content: '';
+      position: absolute;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: white;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .status-toggle.active::after {
+      transform: translateX(20px);
+    }
+
+    /* Upload Area */
+    .upload-section {
+      margin-top: 8px;
+    }
+
+    .section-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    .upload-card {
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .drop-zone {
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .drop-zone:active {
+      background: var(--surface-elevated);
+    }
+
+    .drop-zone.dragover {
+      background: rgba(66, 133, 244, 0.1);
+    }
+
+    .drop-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: var(--surface-elevated);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drop-icon svg {
+      width: 28px;
+      height: 28px;
+      color: var(--primary);
+    }
+
+    .drop-text {
+      font-size: 17px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .drop-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    /* File Preview */
+    .file-item {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .file-item.show {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--surface-elevated);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .file-icon svg {
+      width: 22px;
+      height: 22px;
+      color: var(--primary);
+    }
+
+    .file-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .file-name {
+      font-size: 15px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .file-remove {
+      width: 32px;
+      height: 32px;
+      background: rgba(234, 67, 53, 0.15);
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .file-remove svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    /* Progress */
+    .progress-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .progress-overlay.show {
+      display: flex;
+    }
+
+    .progress-card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    .progress-spinner {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .progress-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Result Modal */
+    .result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .result-overlay.show {
+      display: flex;
+    }
+
+    .result-sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 80vh;
+      padding: 24px 24px calc(24px + var(--safe-bottom));
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .result-handle {
+      width: 36px;
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      margin: 0 auto 24px;
+    }
+
+    .result-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-icon.success {
+      background: rgba(52, 168, 83, 0.15);
+    }
+
+    .result-icon.error {
+      background: rgba(234, 67, 53, 0.15);
+    }
+
+    .result-icon svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .result-message {
+      font-size: 15px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 24px;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.1s, opacity 0.2s;
+      width: 100%;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      padding: 12px 20px calc(12px + var(--safe-bottom));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Navigation -->
+    <nav class="navbar">
+      <span class="navbar-title">Cloud Upload</span>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- Google Drive Status -->
+      <div class="status-card">
+        <div class="status-row">
+          <div class="status-icon google">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4.433 22l2.544-4.429h13.379L17.81 22H4.433zM22 17.014H9.428l-2.545-4.425h13.072L22 17.014zM4.51 6.996l6.563 11.418L8.53 22 1.98 10.57l2.53-3.574zM15.09 2L8.478 13.44l-2.545-4.435L12.539 2h2.551zm-.096 5.715h5.124l-7.607 13.216-2.555-4.444 5.038-8.772z"/>
+            </svg>
+          </div>
+          <div class="status-info">
+            <div class="status-title">Google Drive</div>
+            <div id="statusText" class="status-subtitle disconnected">Tap to connect</div>
+          </div>
+          <button id="statusToggle" class="status-toggle" onclick="handleAuth()"></button>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <div class="section-header">Upload File</div>
+        <div class="upload-card">
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 16V4M12 4l4 4M12 4l-4 4"/>
+                <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
+              </svg>
+            </div>
+            <div class="drop-text">Tap to select file</div>
+            <div class="drop-hint">or drag and drop</div>
+          </div>
+          
+          <input type="file" id="fileInput" class="hidden-input" onchange="handleFileSelect(event)">
+          
+          <div class="file-item" id="filePreview">
+            <div class="file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <path d="M14 2v6h6"/>
+              </svg>
+            </div>
+            <div class="file-details">
+              <div class="file-name" id="fileName"></div>
+              <div class="file-size" id="fileSize"></div>
+            </div>
+            <button class="file-remove" onclick="removeFile()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Upload Button -->
+    <div class="bottom-bar">
+      <button id="uploadBtn" class="btn btn-primary" onclick="uploadFile()" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 16V4M12 4l4 4M12 4l-4 4"/>
+          <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
+        </svg>
+        Upload to Drive
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress Overlay -->
+  <div class="progress-overlay" id="progressOverlay">
+    <div class="progress-card">
+      <div class="progress-spinner"></div>
+      <div class="progress-title">Uploading</div>
+      <div class="progress-subtitle" id="progressText">Please wait...</div>
+    </div>
+  </div>
+
+  <!-- Result Sheet -->
+  <div class="result-overlay" id="resultOverlay" onclick="closeResult(event)">
+    <div class="result-sheet" id="resultSheet">
+      <div class="result-handle"></div>
+      <div id="resultContent"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedFile = null;
+    let isAuthenticated = false;
+
+    // Check auth status on load
+    document.addEventListener('DOMContentLoaded', checkAuthStatus);
+
+    async function checkAuthStatus() {
+      try {
+        const response = await fetch('/oauth/status');
+        const data = await response.json();
+        
+        const googleDriveToken = data.tokens?.find(t => t.bitId === 'bit-google-drive');
+        
+        if (googleDriveToken && googleDriveToken.hasValidToken && !googleDriveToken.isExpired) {
+          setAuthStatus(true);
+        } else {
+          setAuthStatus(false);
+        }
+      } catch (error) {
+        setAuthStatus(false);
+      }
+    }
+
+    function setAuthStatus(authenticated) {
+      isAuthenticated = authenticated;
+      const statusText = document.getElementById('statusText');
+      const statusToggle = document.getElementById('statusToggle');
+      const uploadBtn = document.getElementById('uploadBtn');
+      
+      if (authenticated) {
+        statusText.textContent = 'Connected';
+        statusText.className = 'status-subtitle connected';
+        statusToggle.classList.add('active');
+        uploadBtn.disabled = !selectedFile;
+      } else {
+        statusText.textContent = 'Tap to connect';
+        statusText.className = 'status-subtitle disconnected';
+        statusToggle.classList.remove('active');
+        uploadBtn.disabled = true;
+      }
+    }
+
+    function handleAuth() {
+      if (isAuthenticated) {
+        alert('To disconnect, clear your browser cookies.');
+      } else {
+        // Redirect to OAuth init endpoint
+        window.location.href = '/oauth/bit-google-drive/init';
+      }
+    }
+
+    // Drag and drop
+    const dropZone = document.getElementById('dropZone');
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        selectFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function handleFileSelect(event) {
+      if (event.target.files.length > 0) {
+        selectFile(event.target.files[0]);
+      }
+    }
+
+    function selectFile(file) {
+      selectedFile = file;
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = formatFileSize(file.size);
+      document.getElementById('filePreview').classList.add('show');
+      document.getElementById('dropZone').style.display = 'none';
+      
+      if (isAuthenticated) {
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('filePreview').classList.remove('show');
+      document.getElementById('dropZone').style.display = 'block';
+      document.getElementById('uploadBtn').disabled = true;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    async function uploadFile() {
+      if (!selectedFile) return;
+      
+      const uploadBtn = document.getElementById('uploadBtn');
+      const progressOverlay = document.getElementById('progressOverlay');
+      const progressText = document.getElementById('progressText');
+      
+      uploadBtn.disabled = true;
+      progressOverlay.classList.add('show');
+      progressText.textContent = 'Reading file...';
+      
+      try {
+        const base64Content = await readFileAsBase64(selectedFile);
+        progressText.textContent = 'Uploading...';
+        
+        const response = await fetch('/api/cloud-file-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: selectedFile.name,
+            content: base64Content,
+            mimeType: selectedFile.type || 'application/octet-stream',
+          }),
+        });
+        
+        const result = await response.json();
+        progressOverlay.classList.remove('show');
+        
+        if (result.status === 'completed' && result.output?.result?.success) {
+          const file = result.output.result.file;
+          showResult('success', 'Upload Complete', `${file.name} uploaded to Google Drive`, file.webViewLink);
+        } else {
+          const errorMsg = result.nodeResults?.[0]?.error || result.error || 'Upload failed';
+          showResult('error', 'Upload Failed', errorMsg);
+        }
+        
+      } catch (error) {
+        progressOverlay.classList.remove('show');
+        showResult('error', 'Error', error.message);
+      }
+      
+      uploadBtn.disabled = false;
+    }
+
+    function showResult(type, title, message, link) {
+      const resultContent = document.getElementById('resultContent');
+      const resultOverlay = document.getElementById('resultOverlay');
+      
+      const iconSvg = type === 'success' 
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="#ea4335" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+      
+      resultContent.innerHTML = `
+        <div class="result-icon ${type}">${iconSvg}</div>
+        <div class="result-title">${title}</div>
+        <div class="result-message">${message}</div>
+        <div class="result-actions">
+          ${link ? `<a href="${link}" target="_blank" class="btn btn-success">Open in Google Drive</a>` : ''}
+          <button class="btn btn-ghost" onclick="closeResult()">Done</button>
+        </div>
+      `;
+      
+      resultOverlay.classList.add('show');
+    }
+
+    function closeResult(event) {
+      if (!event || event.target === event.currentTarget) {
+        document.getElementById('resultOverlay').classList.remove('show');
+      }
+    }
+
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>

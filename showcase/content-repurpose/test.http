@@ -1,0 +1,43 @@
+# Content Repurposing Tests
+# Tests for the content repurposing workflow
+#
+# Prerequisites:
+# Set the following environment variable before running the server:
+#   OPENAI_API_KEY=<your-openai-api-key>
+#
+# For posting to social media, each platform needs its own credentials:
+#   - LinkedIn: OAuth 2.0 Access Token with w_member_social scope
+#   - Twitter: Twitter API v2 Bearer Token
+#   - Instagram: Meta Graph API Access Token + Instagram Business Account ID
+
+@baseUrl = http://localhost:13000
+
+### Test repurpose-blog workflow with raw content
+# @name repurposeBlogContent
+POST {{baseUrl}}/api/repurpose-blog
+Content-Type: application/json
+
+{
+  "blogContent": "# The Future of AI in Marketing\n\nArtificial intelligence is revolutionizing how businesses approach marketing. From personalized customer experiences to predictive analytics, AI tools are becoming essential.\n\n## Key Benefits\n\n1. **Personalization at Scale** - AI enables hyper-personalized content for millions of users simultaneously.\n\n2. **Predictive Analytics** - Machine learning models can forecast customer behavior and optimize campaigns.\n\n3. **Automation** - Routine tasks like A/B testing and content scheduling can be fully automated.\n\n## Getting Started\n\nStart small with AI-powered tools like chatbots or email personalization. Measure results and scale what works.\n\n## Conclusion\n\nThe future of marketing is intelligent, automated, and deeply personalized. Companies that embrace AI will have a significant competitive advantage.",
+  "brand": "TechInsights",
+  "tone": "professional"
+}
+
+### Test repurpose-blog workflow - verify LinkedIn content generated
+# @name verifyLinkedInContent
+POST {{baseUrl}}/api/repurpose-blog
+Content-Type: application/json
+
+{
+  "blogContent": "Remote work has transformed how teams collaborate. The key to success is establishing clear communication channels, setting expectations, and using the right tools. Teams that master async communication report 40% higher productivity.",
+  "brand": "WorkWise",
+  "tone": "casual"
+}
+
+### Health check
+# @name healthCheck
+GET {{baseUrl}}/misc/health
+
+### List available workflows
+# @name listWorkflows
+GET {{baseUrl}}/misc/workflows

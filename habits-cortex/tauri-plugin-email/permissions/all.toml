@@ -1,0 +1,12 @@
+[default]
+description = "Default permissions for the email plugin"
+permissions = [
+    "allow-send-email",
+    "allow-connect-imap",
+    "allow-disconnect-imap",
+    "allow-list-mailboxes",
+    "allow-select-mailbox",
+    "allow-fetch-emails",
+    "allow-fetch-email-by-uid",
+    "allow-search-emails",
+]

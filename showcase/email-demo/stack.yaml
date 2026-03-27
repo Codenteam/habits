@@ -1,0 +1,22 @@
+version: "1.0"
+workflows:
+  - id: email-forward-demo
+    path: ./habit.yaml
+    enabled: true
+  - id: send-email
+    path: ./send-email.yaml
+    enabled: true
+  - id: poll-emails
+    path: ./poll-emails.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+
+logging:
+  level: debug
+  outputs: [console]
+  format: text
+  colorize: true

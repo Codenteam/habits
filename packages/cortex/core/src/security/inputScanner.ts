@@ -5,7 +5,7 @@
  * Uses @codenteam/intersect package from private registry.
  */
 
-import type { ILogger } from '@ha-bits/core';
+import type { ILogger } from '@ha-bits/core/logger';
 
 // ============================================================================
 // Types

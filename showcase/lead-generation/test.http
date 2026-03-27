@@ -1,0 +1,154 @@
+### Lead Generation Workflow Tests
+### Base URL
+@baseUrl = http://localhost:13000
+
+### ====================
+### Capture Lead Tests
+### ====================
+
+# @name captureNewLead
+POST {{baseUrl}}/misc/flows/capture-lead/trigger
+Content-Type: application/json
+
+{
+  "email": "john.doe@acme.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "company": "Acme Inc",
+  "phone": "+1-555-123-4567",
+  "source": "website",
+  "notes": "Interested in enterprise plan"
+}
+
+###
+
+# @name captureMinimalLead
+POST {{baseUrl}}/misc/flows/capture-lead/trigger
+Content-Type: application/json
+
+{
+  "email": "minimal@example.com"
+}
+
+###
+
+# @name captureBadLead
+POST {{baseUrl}}/misc/flows/capture-lead/trigger
+Content-Type: application/json
+
+{
+  "firstName": "No Email"
+}
+
+### ====================
+### Enrich Lead Tests
+### ====================
+
+# @name enrichLeadByEmail
+POST {{baseUrl}}/misc/flows/enrich-lead/trigger
+Content-Type: application/json
+
+{
+  "email": "john.doe@acme.com"
+}
+
+###
+
+# @name enrichLeadByDomain
+POST {{baseUrl}}/misc/flows/enrich-lead/trigger
+Content-Type: application/json
+
+{
+  "email": "info@hubspot.com",
+  "enrichDomain": true
+}
+
+### ====================
+### Sync CRM Tests
+### ====================
+
+# @name syncToHubSpot
+POST {{baseUrl}}/misc/flows/sync-crm/trigger
+Content-Type: application/json
+
+{
+  "email": "john.doe@acme.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "company": "Acme Inc",
+  "targetCrm": "hubspot"
+}
+
+###
+
+# @name syncToSalesforce
+POST {{baseUrl}}/misc/flows/sync-crm/trigger
+Content-Type: application/json
+
+{
+  "email": "jane.smith@bigcorp.com",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "company": "BigCorp",
+  "targetCrm": "salesforce"
+}
+
+###
+
+# @name syncToGoHighLevel
+POST {{baseUrl}}/misc/flows/sync-crm/trigger
+Content-Type: application/json
+
+{
+  "email": "bob@startup.io",
+  "firstName": "Bob",
+  "lastName": "Builder",
+  "company": "Startup Inc",
+  "phone": "+1-555-999-8888",
+  "targetCrm": "gohighlevel"
+}
+
+###
+
+# @name syncToAllCRMs
+POST {{baseUrl}}/misc/flows/sync-crm/trigger
+Content-Type: application/json
+
+{
+  "email": "enterprise@largeco.com",
+  "firstName": "Enterprise",
+  "lastName": "Lead",
+  "company": "LargeCo",
+  "targetCrm": "all"
+}
+
+### ====================
+### Full Pipeline Test
+### ====================
+
+# @name fullPipeline
+# Step 1: Capture Lead
+POST {{baseUrl}}/misc/flows/capture-lead/trigger
+Content-Type: application/json
+
+{
+  "email": "pipeline.test@newcompany.com",
+  "firstName": "Pipeline",
+  "lastName": "Test",
+  "company": "New Company LLC",
+  "source": "landing_page"
+}
+
+### ====================
+### List Workflows
+### ====================
+
+# @name listWorkflows
+GET {{baseUrl}}/misc/workflows
+
+### ====================
+### Health Check
+### ====================
+
+# @name healthCheck
+GET {{baseUrl}}/habits/cortex/api

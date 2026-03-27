@@ -20,10 +20,10 @@
     "react-dom": "^18.2.0",
     "react-redux": "^9.2.0",
     "reactflow": "^11.10.1",
-    "tailwind-merge": "^2.2.0",
-    "tailwindcss": "^4.0.0"
+    "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
@@ -34,7 +34,7 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "@tailwindcss/vite": "^4.0.0",
+
     "typescript": "^5.2.2",
     "vite": "^6.0.0"
   }

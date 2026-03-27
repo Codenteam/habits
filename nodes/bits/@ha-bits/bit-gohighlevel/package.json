@@ -1,0 +1,57 @@
+{
+  "name": "@ha-bits/bit-gohighlevel",
+  "version": "1.0.0",
+  "description": "GoHighLevel CRM integration bit for contacts, opportunities, and workflow automation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "gohighlevel",
+    "highlevel",
+    "crm",
+    "contacts",
+    "opportunities",
+    "leads",
+    "marketing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@ha-bits/bit-crm": "file:../bit-crm"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-gohighlevel/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L1"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": false
+  }
+}

@@ -1,8 +1,12 @@
 {
   "extends": "../../../tsconfig.base.json",
+  
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "baseUrl": ".",
+    "moduleResolution": "node16", 
+    "module": "node16",
+
   },
   "files": [],
   "include": [],

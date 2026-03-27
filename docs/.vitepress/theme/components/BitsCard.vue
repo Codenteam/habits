@@ -229,8 +229,7 @@ const navigateToBit = () => {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: linear-gradient(135deg, #f59e0b, #f97316);
-  color: white;
+  color: gold;
   padding: 4px 8px;
   border-radius: 8px;
   display: flex;
@@ -239,7 +238,6 @@ const navigateToBit = () => {
   font-size: 0.7rem;
   font-weight: 600;
   z-index: 2;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 /* Header */

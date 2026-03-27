@@ -5,7 +5,7 @@
  * using node:24-alpine with npx @ha-bits/cortex server
  */
 
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import JSZip from 'jszip';
 import { sanitizeStackName, createTmpWorkDir, createCleanupHandler, addDirectoryToZip } from './utils';
 

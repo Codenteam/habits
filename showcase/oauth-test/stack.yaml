@@ -1,0 +1,13 @@
+# OAuth2 Test Stack Configuration
+
+name: OAuth2 PKCE Test  
+description: Test OAuth2 PKCE authentication with mock server
+
+server:
+  port: 3000
+  host: '0.0.0.0'
+
+workflows:
+  - id: oauth-test
+    path: ./habit.yaml
+    enabled: true

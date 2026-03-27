@@ -1,0 +1,109 @@
+id: research-single
+name: Research Single Participant (Sub-habit)
+description: >-
+  Researches a single participant using Snov.io and OpenAI.
+  Called by research-participants orchestrator.
+version: "1.0"
+
+nodes:
+  # Get enrichment from Snov.io
+  - id: snov-enrichment
+    type: bits
+    data:
+      label: Snov.io Enrichment
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-snov"
+      operation: getProspectByEmail
+      params:
+        email: "{{habits.input.email}}"
+      credentials:
+        auth:
+          clientId: "{{habits.env.SNOV_CLIENT_ID}}"
+          clientSecret: "{{habits.env.SNOV_CLIENT_SECRET}}"
+
+  # Generate AI research summary
+  - id: ai-research
+    type: bits
+    data:
+      label: AI Research Summary
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: chat
+      params:
+        model: gpt-4o-mini
+        messages: |
+          [
+            {
+              "role": "system",
+              "content": "You are a professional research assistant. Given information about a meeting participant, provide a concise briefing (2-3 sentences) about their professional background, company, and any relevant context for a business meeting. Be factual and helpful."
+            },
+            {
+              "role": "user",
+              "content": "Research this meeting participant:\n\nName: {{habits.input.name}}\nEmail: {{habits.input.email}}\n\nEnrichment data:\n- Company: {{snov-enrichment.data.company}}\n- Position: {{snov-enrichment.data.position}}\n- Industry: {{snov-enrichment.data.industry}}\n- Location: {{snov-enrichment.data.country}}\n- LinkedIn: {{snov-enrichment.data.social.linkedin}}\n\nProvide a brief professional summary for this person."
+            }
+          ]
+        temperature: 0.7
+        maxTokens: 200
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+
+  # Combine and store research
+  - id: store-research
+    type: bits
+    data:
+      label: Store Research Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: participants
+        filter: '{"email": "{{habits.input.email}}", "eventId": "{{habits.input.eventId}}"}'
+        update: |
+          {
+            "researched": true,
+            "researchData": {
+              "snovData": {{snov-enrichment.data | json}},
+              "aiSummary": "{{ai-research.content}}",
+              "researchedAt": "{{habits.now}}"
+            }
+          }
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Return result
+  - id: return-result
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Return Result
+      params:
+        email: "{{habits.input.email}}"
+        name: "{{habits.input.name}}"
+        summary: "{{ai-research.content}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(email: string, name: string, summary: string) {
+            console.log(`🔍 Researched: ${name} (${email})`);
+            return {
+              success: true,
+              email,
+              name,
+              summary
+            };
+          }
+
+edges:
+  - source: snov-enrichment
+    target: ai-research
+  - source: ai-research
+    target: store-research
+  - source: store-research
+    target: return-result
+
+output:
+  - return-result

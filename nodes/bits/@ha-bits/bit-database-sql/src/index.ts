@@ -45,7 +45,7 @@ const sqlBit = {
         key: { type: 'SHORT_TEXT', displayName: 'Key', required: true },
         value: { type: 'JSON', displayName: 'Value', required: true },
         ttl: { type: 'NUMBER', displayName: 'TTL (seconds)', required: false, defaultValue: 0 },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<StoreResult> {
         return driver.store(context.propsValue as any);
@@ -60,7 +60,7 @@ const sqlBit = {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true, defaultValue: 'default' },
         key: { type: 'SHORT_TEXT', displayName: 'Key', required: true },
         defaultValue: { type: 'JSON', displayName: 'Default Value', required: false },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<GetResult> {
         return driver.get(context.propsValue as any);
@@ -74,7 +74,7 @@ const sqlBit = {
       props: {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true, defaultValue: 'default' },
         key: { type: 'SHORT_TEXT', displayName: 'Key', required: true },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<DeleteResult> {
         return driver.del(context.propsValue as any);
@@ -89,7 +89,7 @@ const sqlBit = {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true, defaultValue: 'default' },
         prefix: { type: 'SHORT_TEXT', displayName: 'Key Prefix', required: false },
         limit: { type: 'NUMBER', displayName: 'Limit', required: false, defaultValue: 100 },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<ListResult> {
         return driver.list(context.propsValue as any);
@@ -103,7 +103,7 @@ const sqlBit = {
       props: {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true },
         document: { type: 'JSON', displayName: 'Document', required: true },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<InsertResult> {
         return driver.insert(context.propsValue as any);
@@ -118,7 +118,7 @@ const sqlBit = {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true },
         filter: { type: 'JSON', displayName: 'Filter', required: true },
         update: { type: 'JSON', displayName: 'Update', required: true },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<UpdateResult> {
         return driver.update(context.propsValue as any);
@@ -133,7 +133,7 @@ const sqlBit = {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true },
         filter: { type: 'JSON', displayName: 'Filter', required: false, defaultValue: '{}' },
         limit: { type: 'NUMBER', displayName: 'Limit', required: false, defaultValue: 100 },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<QueryResult> {
         return driver.query(context.propsValue as any);
@@ -148,7 +148,7 @@ const sqlBit = {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true, defaultValue: 'counters' },
         key: { type: 'SHORT_TEXT', displayName: 'Key', required: true },
         amount: { type: 'NUMBER', displayName: 'Amount', required: false, defaultValue: 1 },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<IncrementResult> {
         return driver.increment(context.propsValue as any);
@@ -162,7 +162,7 @@ const sqlBit = {
       props: {
         collection: { type: 'SHORT_TEXT', displayName: 'Collection/Table', required: true },
         id: { type: 'SHORT_TEXT', displayName: 'Document ID', required: true },
-        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits.db' },
+        database: { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
       },
       async run(context: DatabaseContext): Promise<DeleteResult> {
         return driver.deleteDoc(context.propsValue as any);

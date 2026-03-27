@@ -5,7 +5,7 @@ import { INodeType, ITriggerFunctions, ITriggerResponse, IPollFunctions, IWebhoo
 import * as path from 'path';
 import * as fs from 'fs';
 import { fetch } from '@ha-bits/bindings';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 
@@ -105,7 +105,7 @@ function buildUrl(url: string, baseURL?: string, qs?: Record<string, any>): stri
 }
 
 /**
- * Execute HTTP request (real implementation for triggers)
+ * Execute HTTP request 
  */
 async function httpRequest(
   requestOptions: IHttpRequestOptions

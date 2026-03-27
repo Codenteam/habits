@@ -1,170 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hello World Demo</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {}
+      }
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    h1 {
-      color: #fff;
-      font-size: 28px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    .subtitle {
-      color: rgba(255, 255, 255, 0.6);
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    .hint {
-      background: rgba(102, 126, 234, 0.2);
-      border: 1px solid rgba(102, 126, 234, 0.3);
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 25px;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 13px;
-      text-align: center;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-    input {
-      width: 100%;
-      padding: 12px 16px;
-      font-size: 16px;
-      color: #fff;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-    input:focus {
-      border-color: #667eea;
-      background: rgba(255, 255, 255, 0.15);
-    }
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-    .btn {
-      width: 100%;
-      padding: 15px 30px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-    }
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .status {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 14px;
-      display: none;
-      text-align: center;
-    }
-    .status.show {
-      display: block;
-    }
-    .status.success {
-      background: rgba(34, 197, 94, 0.2);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-    .status.error {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .result {
-      margin-top: 20px;
-      padding: 25px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      display: none;
-      text-align: center;
-    }
-    .result.show {
-      display: block;
-    }
-    .result-message {
-      color: #fff;
-      font-size: 24px;
-      font-weight: 600;
-    }
-  </style>
+  </script>
 </head>
-<body>
-  <div class="container">
-    <h1>👋 Hello World</h1>
-    <p class="subtitle">A simple greeting demo using @ha-bits/bit-hello-world</p>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4 font-sans">
+  <div class="bg-gray-800 rounded-lg p-8 max-w-md w-full shadow-lg border border-gray-700">
+    <h1 class="text-white text-2xl font-bold text-center mb-2">Hello World</h1>
+    <p class="text-gray-400 text-center mb-6 text-sm">A simple greeting demo using @ha-bits/bit-hello-world</p>
     
-    <div class="hint">
-      💡 Try entering "hello" and "world" to get a special greeting!
+    <div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-6">
+      <p class="text-gray-300 text-sm text-center">💡 Try entering "hello" and "world" to get a special greeting!</p>
     </div>
     
-    <div class="form-group">
-      <label for="param1">Parameter 1</label>
-      <input type="text" id="param1" placeholder="Enter first parameter" value="hello">
+    <div class="mb-4">
+      <label for="param1" class="block text-gray-300 text-sm mb-2">Parameter 1</label>
+      <input type="text" id="param1" placeholder="Enter first parameter" value="hello" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors">
     </div>
     
-    <div class="form-group">
-      <label for="param2">Parameter 2</label>
-      <input type="text" id="param2" placeholder="Enter second parameter" value="world">
+    <div class="mb-6">
+      <label for="param2" class="block text-gray-300 text-sm mb-2">Parameter 2</label>
+      <input type="text" id="param2" placeholder="Enter second parameter" value="world" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors">
     </div>
     
-    <button class="btn" id="runBtn" onclick="runWorkflow()">
+    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800" id="runBtn" onclick="runWorkflow()">
       Say Hello
     </button>
     
-    <div class="status" id="status"></div>
+    <div class="mt-4 p-4 rounded-lg bg-gray-700/50 text-gray-300 text-sm text-center hidden" id="status"></div>
     
-    <div class="result" id="result">
-      <div class="result-message" id="resultMessage"></div>
+    <div class="mt-4 p-6 rounded-lg bg-gray-700/50 hidden" id="result">
+      <div class="text-white text-xl font-semibold text-center" id="resultMessage"></div>
     </div>
   </div>
 
@@ -180,9 +56,9 @@
       
       btn.disabled = true;
       btn.textContent = 'Running...';
-      status.className = 'status show';
+      status.className = 'mt-4 p-4 rounded-lg bg-gray-700/50 text-gray-300 text-sm text-center block';
       status.textContent = 'Sending greeting...';
-      result.className = 'result';
+      result.className = 'mt-4 p-6 rounded-lg bg-gray-700/50 hidden';
       
       try {
         const response = await fetch('/api/hello-world', {
@@ -196,10 +72,10 @@
         const data = await response.json();
         
         if (response.ok) {
-          status.className = 'status show success';
+          status.className = 'mt-4 p-4 rounded-lg bg-green-900/20 border border-green-500/30 text-green-300 text-sm text-center block';
           status.textContent = '✓ Request completed successfully!';
           
-          result.className = 'result show';
+          result.className = 'mt-4 p-6 rounded-lg bg-gray-700/50 block';
           // Extract the message from the response
           const message = data.output?.message || data.message || data.output || JSON.stringify(data);
           // IF array get [0]
@@ -209,7 +85,7 @@
           throw new Error(data.message || 'Request failed');
         }
       } catch (error) {
-        status.className = 'status show error';
+        status.className = 'mt-4 p-4 rounded-lg bg-red-900/20 border border-red-500/30 text-red-300 text-sm text-center block';
         status.textContent = '✗ Error: ' + error.message;
       } finally {
         btn.disabled = false;

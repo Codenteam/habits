@@ -388,6 +388,13 @@
             }
         });
 
+        ingredientField.addEventListener('blur', () => {
+            if (ingredientField.value.trim()) {
+                addIngredient(ingredientField.value.trim());
+                ingredientField.value = '';
+            }
+        });
+
         function addIngredient(value) {
             if (!value || ingredients.includes(value.toLowerCase())) return;
             ingredients.push(value.toLowerCase());
@@ -410,6 +417,12 @@
             newField.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ',') {
                     e.preventDefault();
+                    addIngredient(newField.value.trim());
+                    newField.value = '';
+                }
+            });
+            newField.addEventListener('blur', () => {
+                if (newField.value.trim()) {
                     addIngredient(newField.value.trim());
                     newField.value = '';
                 }

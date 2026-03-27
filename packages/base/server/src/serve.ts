@@ -2,7 +2,8 @@ import { Request, Response, Express } from "express";
 import * as fs from "fs";
 import * as path from "path";
 import { spawn, ChildProcess } from "child_process";
-import { ExportBundle, getTmpDir } from "@ha-bits/core";
+import { ExportBundle } from "@ha-bits/core";
+import { getTmpDir } from "@ha-bits/core/pathUtils";
 import { WorkflowExecutor, generateOpenAPISpec } from "@ha-bits/cortex";
 import { execSync } from 'child_process';
 // ============================================================================

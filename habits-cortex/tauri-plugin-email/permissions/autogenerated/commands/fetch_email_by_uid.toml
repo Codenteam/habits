@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-fetch-email-by-uid"
+description = "Enables the fetch_email_by_uid command without any pre-configured scope."
+commands.allow = ["fetch_email_by_uid"]
+
+[[permission]]
+identifier = "deny-fetch-email-by-uid"
+description = "Denies the fetch_email_by_uid command without any pre-configured scope."
+commands.deny = ["fetch_email_by_uid"]

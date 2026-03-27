@@ -28,6 +28,9 @@ import { getTauriFetchProxyScript } from './templates/tauri/tauri-fetch-proxy';
 import { getTauriLib, getTauriMain } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriCapabilities } from './templates/tauri/tauri-config';
+import JSZip from 'jszip';
+import { addDirectoryToZip } from './utils';
+import { processHtmlFile, InjectScript } from './html-asset-inliner';
 
 // Re-export types and utilities
 export * from './types';
@@ -42,7 +45,7 @@ export { generateBundle, BundleGeneratorOptions, BundleGeneratorResult } from '.
  * Get supported pack formats
  */
 export function getSupportedPackFormats(): PackFormat[] {
-  return ['single-executable', 'bundle', 'tauri', 'desktop', 'desktop-full', 'mobile', 'mobile-full'];
+  return ['single-executable', 'bundle', 'habit', 'tauri', 'desktop', 'desktop-full', 'mobile', 'mobile-full'];
 }
 
 /**
@@ -78,11 +81,14 @@ export async function runPackCommand(options: PackCommandOptions): Promise<PackR
     };
   }
 
-  // Load .env content
+  // Load .env content only if includeEnv is true
   let envContent = '';
   const envPath = path.join(configDir, '.env');
-  if (fs.existsSync(envPath)) {
+  if (options.includeEnv && fs.existsSync(envPath)) {
     envContent = fs.readFileSync(envPath, 'utf8');
+    console.log('   📋 Including .env values in bundle');
+  } else if (fs.existsSync(envPath) && !options.includeEnv) {
+    console.log('   🔒 Skipping .env (use --include-env to include)');
   }
 
   // Route to appropriate handler
@@ -182,6 +188,16 @@ export async function runPackCommand(options: PackCommandOptions): Promise<PackR
         debug: options.debug,
       });
 
+    case 'habit':
+      return packHabitFile({
+        configPath,
+        configDir,
+        config,
+        habits,
+        envContent,
+        output: options.output,
+      });
+
     default:
       return {
         success: false,
@@ -271,6 +287,345 @@ async function packBundle(options: PackBundleOptions): Promise<PackResult> {
     format: 'bundle',
     size: bundleResult.size,
   };
+}
+
+// ============================================================================
+// Habit File Pack Handler (.habit zip archive)
+// ============================================================================
+
+interface PackHabitFileOptions {
+  configPath: string;
+  configDir: string;
+  config: ParsedConfig;
+  habits: HabitData[];
+  envContent: string;
+  output?: string;
+}
+
+/**
+ * Pack habits into a .habit file (zip archive containing index.html, cortex-bundle.js, and frontend assets)
+ * 
+ * The .habit file is a self-contained package that can be opened by the Cortex app.
+ * It requires a frontend path to be specified in the stack.yaml (server.frontend).
+ * 
+ * HTML files are processed to:
+ * - Remove Tailwind CDN and generate CSS via Tailwind CLI
+ * - Inline all external CSS/JS files
+ * - Inline all images as base64 data URLs
+ */
+async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult> {
+  const { config, habits, envContent, output, configDir, configPath } = options;
+
+  console.log('\n📦 Generating .habit file...\n');
+
+  // Validate that frontend is specified
+  if (!config.server?.frontend) {
+    return {
+      success: false,
+      error: 'Habit format requires server.frontend to be specified in stack.yaml',
+      format: 'habit',
+    };
+  }
+
+  // Resolve frontend path
+  const frontendPath = path.isAbsolute(config.server.frontend)
+    ? config.server.frontend
+    : path.resolve(configDir, config.server.frontend);
+
+  if (!fs.existsSync(frontendPath)) {
+    return {
+      success: false,
+      error: `Frontend directory not found: ${frontendPath}`,
+      format: 'habit',
+    };
+  }
+
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return {
+      success: false,
+      error: `index.html not found in frontend directory: ${frontendPath}`,
+      format: 'habit',
+    };
+  }
+
+  // Parse env content
+  const envVars = parseEnvContent(envContent);
+
+  // Convert HabitData[] to workflow format expected by generateBundle
+  const workflows = habits.map(h => ({
+    ...h,
+    id: h.slug,
+  }));
+
+  // Generate bundle via @ha-bits/bundle-generator
+  const bundleResult = await generateBundle({
+    habits: workflows,
+    appName: config.name || 'HabitsApp',
+    envVars,
+  });
+
+  if (!bundleResult.success) {
+    return {
+      success: false,
+      error: bundleResult.error || 'Bundle generation failed',
+      format: 'habit',
+    };
+  }
+
+  // Note: We do NOT inject cortex-bundle.js into HTML for .habit format
+  // When running via cortex server (Node.js), the server handles workflow execution
+  // via normal /api/* endpoints. The cortex-bundle.js is only used by Tauri apps
+  // which inject it at runtime.
+
+  // Create zip archive
+  const zip = new JSZip();
+
+  // Track which files are inlined (so we don't add them separately)
+  const inlinedFiles = new Set<string>();
+
+  // Compute frontend directory name from config (e.g., "frontend" from "./frontend")
+  const frontendDirName = config.server!.frontend!.replace(/^\.[\/\\]/, '');
+
+  // Generate fetch proxy script for intercepting /api/* calls (executes via HabitsBundle)
+  const fetchProxyScript = getTauriFetchProxyScript({ mode: 'full' });
+
+  // Scripts to inject into HTML files (only fetch-proxy, NOT cortex-bundle)
+  // cortex-bundle.js is kept as a separate file and injected at runtime by Tauri apps
+  // Node.js server handles /api/* natively without needing the bundle
+  const injectScripts: InjectScript[] = [
+    { id: 'habits-fetch-proxy', content: fetchProxyScript },
+  ];
+
+  // Process all HTML files in the frontend directory
+  console.log('   🔧 Processing HTML files for offline use...');
+  const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
+
+  // Process each HTML file (inline CSS/JS/images but don't inject bundle scripts)
+  for (const [relativePath, processedResult] of processedHtmlFiles) {
+    const processedHtml = processedResult.html;
+
+    // Log processing results
+    if (processedResult.tailwindProcessed) {
+      console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+    }
+    if (processedResult.cssFilesInlined > 0) {
+      console.log(`   📝 ${relativePath}: ${processedResult.cssFilesInlined} CSS file(s) inlined`);
+    }
+    if (processedResult.jsFilesInlined > 0) {
+      console.log(`   📝 ${relativePath}: ${processedResult.jsFilesInlined} JS file(s) inlined`);
+    }
+    if (processedResult.imagesInlined > 0) {
+      console.log(`   🖼️  ${relativePath}: ${processedResult.imagesInlined} image(s) inlined`);
+    }
+
+    // Add processed (inlined) HTML files under the frontend directory for offline use
+    // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
+    const htmlZipPath = path.join(frontendDirName, relativePath);
+    zip.file(htmlZipPath, processedHtml);
+
+    // Also add original HTML files under frontend-src/ for base server to use if needed
+    const originalHtmlPath = path.join(frontendPath, relativePath);
+    const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
+    const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
+    zip.file(srcHtmlZipPath, originalHtml);
+  }
+
+  // Add remaining frontend files (excluding already processed HTML and inlined assets)
+  // Store under the original frontend directory name to preserve structure
+  addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
+  
+  // Also add original frontend files under frontend-src/ (including CSS, JS that were inlined)
+  addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
+
+  // Add cortex-bundle.js as a separate file (Tauri apps inject it at runtime)
+  zip.file('cortex-bundle.js', bundleResult.code!);
+
+  // Add habit YAML files using their relative paths to preserve directory structure
+  // (e.g., "habits/generate-recipe.yaml" instead of just "generate-recipe.yaml")
+  for (const habit of habits) {
+    const habitPath = habit.relativePath || habit.filename;
+    zip.file(habitPath, habit.content);
+  }
+
+  // Add stack.yaml to preserve the original configuration
+  const stackYamlContent = fs.readFileSync(configPath, 'utf8');
+  zip.file('stack.yaml', stackYamlContent);
+
+  // Generate zip buffer
+  const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+  // Determine output path
+  const stackName = config.name || path.basename(configDir);
+  const sanitizedName = stackName.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+  const outputPath = output || path.join(configDir, 'dist', `${sanitizedName}.habit`);
+  const outputDir = path.dirname(outputPath);
+
+  // Ensure output directory exists
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  // Write .habit file
+  fs.writeFileSync(outputPath, zipBuffer);
+
+  const habitSize = zipBuffer.length;
+  console.log(`   ✅ Habit file created: ${outputPath}`);
+  console.log(`   📦 Size: ${(habitSize / 1024).toFixed(2)} KB`);
+  console.log(`   🧩 Bundled bits: ${bundleResult.bundledBits?.join(', ') || 'none'}`);
+  console.log(`   📄 Frontend: ${frontendPath}`);
+  console.log(`   🌐 Offline ready: All assets inlined`);
+
+  return {
+    success: true,
+    outputPath,
+    format: 'habit',
+    size: habitSize,
+  };
+}
+
+/**
+ * Process all HTML files in a directory to inline assets
+ */
+async function processHtmlFilesInDirectory(
+  dir: string,
+  inlinedFiles: Set<string>,
+  injectScripts?: InjectScript[]
+): Promise<Map<string, { html: string; tailwindProcessed: boolean; cssFilesInlined: number; jsFilesInlined: number; imagesInlined: number }>> {
+  const results = new Map<string, { html: string; tailwindProcessed: boolean; cssFilesInlined: number; jsFilesInlined: number; imagesInlined: number }>();
+
+  const processDir = async (currentDir: string) => {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        await processDir(fullPath);
+      } else if (entry.name.endsWith('.html') || entry.name.endsWith('.htm')) {
+        const htmlContent = fs.readFileSync(fullPath, 'utf8');
+        const relativePath = path.relative(dir, fullPath);
+        const htmlDir = path.dirname(fullPath);
+
+        // Track files that get inlined
+        const beforeInline = (callback: (relativePath: string) => void) => {
+          // Track CSS files
+          const cssMatches = htmlContent.matchAll(/<link[^>]*href=["']([^"']+\.css)["'][^>]*>/gi);
+          for (const match of cssMatches) {
+            const href = match[1];
+            if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('//')) {
+              const cssRelative = path.relative(dir, path.resolve(htmlDir, href));
+              inlinedFiles.add(cssRelative);
+            }
+          }
+
+          // Track JS files
+          const jsMatches = htmlContent.matchAll(/<script[^>]*src=["']([^"']+\.js)["'][^>]*>/gi);
+          for (const match of jsMatches) {
+            const src = match[1];
+            if (!src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//') && !src.includes('cortex-bundle')) {
+              const jsRelative = path.relative(dir, path.resolve(htmlDir, src));
+              inlinedFiles.add(jsRelative);
+            }
+          }
+
+          // Track image files
+          const imgMatches = htmlContent.matchAll(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi);
+          for (const match of imgMatches) {
+            const src = match[1];
+            if (!src.startsWith('data:') && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//')) {
+              const imgRelative = path.relative(dir, path.resolve(htmlDir, src));
+              inlinedFiles.add(imgRelative);
+            }
+          }
+        };
+
+        beforeInline(() => {});
+
+        // Process the HTML file
+        const processed = await processHtmlFile(htmlContent, {
+          baseDir: htmlDir,
+          injectScripts,
+        });
+
+        results.set(relativePath, processed);
+      }
+    }
+  };
+
+  await processDir(dir);
+  return results;
+}
+
+/**
+ * Add frontend files to zip, excluding already processed HTML and inlined files
+ * @param prefix - Optional prefix to prepend to all paths (e.g., "frontend" to store as "frontend/file.js")
+ */
+function addFrontendFilesToZip(
+  dir: string,
+  zip: JSZip,
+  inlinedFiles: Set<string>,
+  processedHtmlFiles: Map<string, any>,
+  baseDir?: string,
+  prefix?: string
+): void {
+  const base = baseDir || dir;
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    const relativePath = path.relative(base, filePath);
+
+    if (stat.isDirectory()) {
+      addFrontendFilesToZip(filePath, zip, inlinedFiles, processedHtmlFiles, base, prefix);
+    } else {
+      // Skip HTML files (already processed)
+      if (file.endsWith('.html') || file.endsWith('.htm')) {
+        continue;
+      }
+
+      // Skip files that were inlined into HTML
+      if (inlinedFiles.has(relativePath)) {
+        continue;
+      }
+
+      // Add other files, with optional prefix to preserve directory structure
+      const zipPath = prefix ? path.join(prefix, relativePath) : relativePath;
+      zip.file(zipPath, fs.readFileSync(filePath));
+    }
+  }
+}
+
+/**
+ * Add all original frontend files to zip (including HTML, CSS, JS - nothing inlined/processed)
+ * Used to preserve original source files for base server to serve with external assets
+ */
+function addOriginalFrontendFilesToZip(
+  dir: string,
+  zip: JSZip,
+  prefix: string,
+  baseDir?: string
+): void {
+  const base = baseDir || dir;
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    const relativePath = path.relative(base, filePath);
+
+    if (stat.isDirectory()) {
+      addOriginalFrontendFilesToZip(filePath, zip, prefix, base);
+    } else {
+      // Skip HTML files (already added separately with original content)
+      if (file.endsWith('.html') || file.endsWith('.htm')) {
+        continue;
+      }
+
+      // Add all other files (CSS, JS, images, etc.) without any processing
+      const zipPath = path.join(prefix, relativePath);
+      zip.file(zipPath, fs.readFileSync(filePath));
+    }
+  }
 }
 
 // ============================================================================
@@ -857,8 +1212,6 @@ function generateDefaultHtml(appName: string): string {
 <head>
   <meta charset="UTF-8">
   <title>${appName}</title>
-  <script src="cortex-bundle.js"></script>
-  <script src="habits-fetch-proxy.js"></script>
 </head>
 <body>
   <h1>${appName}</h1>
@@ -909,6 +1262,9 @@ export function loadHabits(config: ParsedConfig, configDir: string): HabitData[]
       const habit = yaml.parse(habitContent) as Record<string, any>;
 
       const habitName = habit.name || habit.id || ref.id || path.basename(habitPath, '.yaml');
+      const habitFilename = path.basename(habitPath);
+      // Compute relative path from config directory (preserves directory structure like "habits/generate-recipe.yaml")
+      const habitRelativePath = path.relative(configDir, habitPath);
       console.log(`   📄 Loading: ${habitName}`);
 
       // Preserve all habit properties, ensuring required fields have defaults
@@ -918,6 +1274,10 @@ export function loadHabits(config: ParsedConfig, configDir: string): HabitData[]
         slug: habit.slug || habit.id || habitName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         nodes: habit.nodes || [],
         edges: habit.edges || [],
+        // Add filename, relativePath, and content for .habit file packaging
+        filename: habitFilename,
+        relativePath: habitRelativePath,
+        content: habitContent,
       });
     } catch (error: any) {
       console.error(`   ❌ Failed to parse habit file ${habitPath}: ${error.message}`);

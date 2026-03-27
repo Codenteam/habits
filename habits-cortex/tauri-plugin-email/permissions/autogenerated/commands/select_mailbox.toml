@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-select-mailbox"
+description = "Enables the select_mailbox command without any pre-configured scope."
+commands.allow = ["select_mailbox"]
+
+[[permission]]
+identifier = "deny-select-mailbox"
+description = "Denies the select_mailbox command without any pre-configured scope."
+commands.deny = ["select_mailbox"]

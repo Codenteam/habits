@@ -1,8 +1,8 @@
 # Showcase metadata for Mixed Frameworks example
 # This example demonstrates combining multiple AI frameworks
 
-name: Mixed Frameworks
-description: Multi-framework demo showcasing OpenAI to ElevenLabs pipelines with local storage for voice synthesis and AI-generated content.
+name: Mixing Activepieces and n8n
+description: Multi-framework demo showcasing OpenAI (Activepieces) to ElevenLabs (n8n) pipelines with local storage (Script) for voice synthesis and AI-generated content.
 
 longDescription: |
   The Mixed Frameworks example demonstrates how Habits can seamlessly orchestrate

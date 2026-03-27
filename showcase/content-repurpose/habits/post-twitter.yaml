@@ -1,0 +1,82 @@
+id: post-twitter
+name: Post to Twitter/X
+description: Post content to Twitter using the generated snippets
+
+input:
+  - id: content
+    type: string
+    required: true
+    description: The tweet content (under 280 chars)
+  - id: thread
+    type: string
+    required: false
+    description: JSON array of tweets for a thread
+  - id: mediaUrl
+    type: string
+    required: false
+    description: Optional media URL to attach
+
+nodes:
+  # Simple tweet
+  - id: simple-tweet
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      resource: tweet
+      operation: tweet
+      # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
+      credentials:
+        twitter:
+          accessToken: "{{habits.env.TWITTER_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.TWITTER_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.input.content}}"
+      stopAfterIf:
+        expr: "habits.input.thread"
+        skipIfStopped: true
+
+  # Thread of tweets
+  - id: tweet-thread
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      resource: createThread
+      operation: createThread
+      credentials:
+        twitter:
+          accessToken: "{{habits.env.TWITTER_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.TWITTER_REFRESH_TOKEN}}"
+      params:
+        tweets: "{{habits.input.thread}}"
+      stopAfterIf:
+        expr: "!habits.input.thread"
+        skipIfStopped: true
+
+  # Tweet with media
+  - id: tweet-media
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      resource: tweetWithMedia
+      operation: tweetWithMedia
+      credentials:
+        twitter:
+          accessToken: "{{habits.env.TWITTER_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.TWITTER_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.input.content}}"
+        mediaUrl: "{{habits.input.mediaUrl}}"
+      stopAfterIf:
+        expr: "!habits.input.mediaUrl || habits.input.thread"
+        skipIfStopped: true
+
+output:
+  success: "true"
+  tweetId: "{{habits.nodes.simple-tweet.tweetId}}"
+  platform: "twitter"

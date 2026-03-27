@@ -17,7 +17,7 @@ import {
 } from "@ha-bits/cortex/utils/moduleCloner";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
 import { extractPiece } from '../helpers/activepieces-loader';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 // Type imports (compile-time only, not bundled)
 import type { Action, Piece } from "@activepieces/pieces-framework";

@@ -94,6 +94,8 @@ async function githubRequest(
 }
 
 const githubBit = {
+  // Unique identifier for webhook routing: /webhook/v/github
+  id: 'github',
   displayName: 'GitHub',
   description: 'Manage pull requests, issues, and repositories via the GitHub API',
   logoUrl: 'lucide:Github',
@@ -806,6 +808,20 @@ const githubBit = {
       },
 
       /**
+       * Filter incoming webhooks to only handle pull_request events.
+       * GitHub sends X-GitHub-Event header with the event type.
+       */
+      filter(payload: { body: any; headers: Record<string, string>; query: Record<string, string>; method: string }): boolean {
+        // Check GitHub event header
+        const githubEvent = payload.headers['x-github-event'] || payload.headers['X-GitHub-Event'] || '';
+        if (githubEvent.toLowerCase() === 'pull_request') {
+          return true;
+        }
+        // Fallback: check if body has pull_request
+        return !!payload.body?.pull_request;
+      },
+
+      /**
        * onEnable — nothing to register server-side; the user points
        * the GitHub webhook at the generated URL manually.
        */
@@ -822,7 +838,8 @@ const githubBit = {
        * `context.payload` is the raw GitHub webhook JSON body.
        */
       async run(context: GitHubTriggerContext): Promise<any[]> {
-        const payload = context.payload as any;
+        // Use webhookPayload from context if available (vendor webhook flow)
+        const payload = (context as any).webhookPayload?.body || context.payload as any;
         if (!payload || !payload.pull_request) {
           return [];
         }

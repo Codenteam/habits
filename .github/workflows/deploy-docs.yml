@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install root dependencies
@@ -40,6 +40,12 @@ jobs:
 
       - name: Build habit-viewer
         run: pnpm nx build @ha-bits/habit-viewer
+
+      - name: Build cortex (required for .habit file generation)
+        run: pnpm nx build @ha-bits/cortex
+
+      - name: Link local bits for .habit bundle generation
+        run: npx tsx scripts/link-local.cts
 
       - name: Copy habit-viewer to docs/public/viewer
         run: |

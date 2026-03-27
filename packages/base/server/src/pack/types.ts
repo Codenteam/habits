@@ -12,7 +12,8 @@ export type PackFormat =
   | 'mobile-full'
   | 'docker'
   | 'bundle'
-  | 'tauri';
+  | 'tauri'
+  | 'habit';
 
 export type DesktopPlatform = 
   | 'dmg'
@@ -61,6 +62,8 @@ export interface PackCommandOptions {
   appIcon?: string;
   /** Build in debug mode */
   debug?: boolean;
+  /** Include .env values in bundle (default: false for security) */
+  includeEnv?: boolean;
 }
 
 export interface HabitData {
@@ -72,6 +75,8 @@ export interface HabitData {
   output?: Record<string, any>;
   description?: string;
   id?: string;
+  /** The relative path from config directory (e.g., "habits/generate-recipe.yaml") */
+  relativePath?: string;
   [key: string]: any; // Allow additional habit properties
 }
 

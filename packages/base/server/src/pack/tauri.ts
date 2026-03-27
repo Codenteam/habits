@@ -7,7 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import { getTauriConfig, getTauriCapabilities } from './templates/tauri/tauri-config';
 import { getTauriMain, getTauriLib } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
@@ -15,7 +15,10 @@ import { getTauriBuildScript } from './templates/tauri/tauri-build';
 import { getTauriFetchProxyScript, TauriFetchProxyMode } from './templates/tauri/tauri-fetch-proxy';
 import { getTauriGradleProperties, getTauriProguardRules } from './templates/tauri/tauri-gradle';
 import { getTauriReadme } from './templates/tauri/tauri-readme';
+import { getTauriOAuthHandlerScript } from './templates/tauri/tauri-oauth-handler';
 import { TauriPlugin } from './bundle-generator-wrapper';
+import { addOAuthPlugins, TAURI_OAUTH_PLUGINS } from './tauri-oauth-plugins';
+import { processHtmlFile, InjectScript } from './html-asset-inliner';
 import JSZip from 'jszip';
 import {
   sanitizeStackName,
@@ -55,6 +58,10 @@ export interface TauriPackOptions {
   cortexBundle?: string;
   // Tauri plugins required by bits
   tauriPlugins?: TauriPlugin[];
+  // Custom URL scheme for OAuth deep links (e.g., "myapp" for myapp://oauth/callback)
+  deepLinkScheme?: string;
+  // Whether any workflow has OAuth bits (auto-detected if not provided)
+  hasOAuthBits?: boolean;
 }
 
 export interface TauriPackResult {
@@ -86,8 +93,18 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     mobileTarget,
     appName: customAppName,
     appIcon,
-    tauriPlugins = [],
+    tauriPlugins: inputPlugins = [],
+    deepLinkScheme,
+    hasOAuthBits,
   } = options;
+
+  // Auto-add OAuth plugins if OAuth bits are present or deepLinkScheme is provided
+  const needsOAuthPlugins = hasOAuthBits || !!deepLinkScheme;
+  const tauriPlugins = needsOAuthPlugins ? addOAuthPlugins(inputPlugins) : inputPlugins;
+  
+  if (needsOAuthPlugins && tauriPlugins.length > inputPlugins.length) {
+    logger.info(`🔐 OAuth detected - added opener and deep-link plugins${deepLinkScheme ? ` (scheme: ${deepLinkScheme})` : ''}`);
+  }
 
   const sanitizedStackName = sanitizeStackName(stackName);
   const isMobile = platform === 'mobile';
@@ -145,12 +162,13 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
           },
         };
 
-    // Create Tauri config
+    // Create Tauri config (with deep-link scheme if provided)
     const tauriConfigJson = getTauriConfig({
       appId,
       appName,
       backendUrl,
       windowTitle: appName,
+      deepLinkScheme,
     });
 
     const tauriConfig = JSON.parse(tauriConfigJson);
@@ -280,40 +298,52 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
     // Determine execution mode
     const executionMode = options.executionMode || 'api';
     
-    // If 'full' mode and cortex bundle provided, write it first
+    // Build scripts to inject into index.html
+    const injectScripts: InjectScript[] = [];
+    
+    // Cortex bundle must come first for 'full' mode (provides HabitsBundle)
     if (executionMode === 'full' && options.cortexBundle) {
-      fs.writeFileSync(path.join(wwwDir, 'cortex-bundle.js'), options.cortexBundle);
-      logger.info('Written cortex-bundle.js for direct execution mode');
+      injectScripts.push({
+        id: 'cortex-bundle',
+        content: options.cortexBundle,
+      });
+      logger.info('Will inline cortex-bundle.js for direct execution mode');
     }
 
-    // Create script.js with fetch proxy
+    // Fetch proxy script (uses HabitsBundle for 'full' mode, or proxies to backend for 'api' mode)
     const fetchProxyScript = getTauriFetchProxyScript({
       mode: executionMode,
       backendUrl: executionMode === 'api' ? backendUrl : undefined,
     });
-    fs.writeFileSync(path.join(wwwDir, 'script.js'), fetchProxyScript);
+    injectScripts.push({
+      id: 'habits-fetch-proxy',
+      content: fetchProxyScript,
+    });
 
-    // Inject script tag for fetch proxy (and cortex-bundle for full mode)
-    // Order matters: cortex-bundle must load first so HabitsBundle is available when script.js runs
-    let scriptTags = '';
-    if (executionMode === 'full' && options.cortexBundle) {
-      scriptTags += '<script src="cortex-bundle.js"></script>\n';
+    // OAuth handler if configured
+    if (deepLinkScheme) {
+      const oauthHandlerScript = getTauriOAuthHandlerScript({
+        scheme: deepLinkScheme,
+        timeout: 300000, // 5 minutes
+      });
+      injectScripts.push({
+        id: 'oauth-handler',
+        content: oauthHandlerScript,
+      });
+      logger.info('Will inline oauth-handler.js for OAuth deep link support');
     }
-    scriptTags += '<script src="script.js"></script>';
 
-    // Read current index.html if it exists (from copied frontend), otherwise use provided frontendHtml
+    // Process index.html to inline scripts
     const indexHtmlPath = path.join(wwwDir, 'index.html');
-    const currentHtml = fs.existsSync(indexHtmlPath) 
-      ? fs.readFileSync(indexHtmlPath, 'utf8')
-      : frontendHtml;
-
-    const modifiedHtml = currentHtml.includes('</head>')
-      ? currentHtml.replace('</head>', scriptTags + '\n</head>')
-      : currentHtml.includes('<body>')
-        ? currentHtml.replace('<body>', '<body>\n' + scriptTags)
-        : scriptTags + '\n' + currentHtml;
-
-    fs.writeFileSync(path.join(wwwDir, 'index.html'), modifiedHtml);
+    if (fs.existsSync(indexHtmlPath)) {
+      const htmlContent = fs.readFileSync(indexHtmlPath, 'utf8');
+      const processed = await processHtmlFile(htmlContent, {
+        baseDir: wwwDir,
+        injectScripts,
+      });
+      fs.writeFileSync(indexHtmlPath, processed.html);
+      logger.info('Inlined scripts into index.html', { scripts: injectScripts.length });
+    }
 
     // Create README
     const readme = getTauriReadme({ platform, appName, backendUrl, desktopPlatform, mobileTarget });

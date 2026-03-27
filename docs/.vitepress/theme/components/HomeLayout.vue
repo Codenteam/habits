@@ -5,6 +5,7 @@ import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
 import BitsCard from './BitsCard.vue'
+import HabitFlowSection1 from './HabitFlowSection1.vue'
 import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
 import bitsData from '../data/bits-data.json'
@@ -207,7 +208,7 @@ const hoveredUseCase = ref(null)
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">AI Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
+          <p class="hero-tagline">Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <div class="hero-secondary-actions">
@@ -248,71 +249,11 @@ const hoveredUseCase = ref(null)
     </section>
 
 
-    <!-- Node Love Section -->
-    <section class="node-love-section">
-      <div class="node-love-bg">
-        <div class="floating-node n1"></div>
-        <div class="floating-node n2"></div>
-        <div class="floating-node n3"></div>
-        <div class="floating-node n4"></div>
-        <div class="connection-line l1"></div>
-        <div class="connection-line l2"></div>
-        <div class="connection-line l3"></div>
-      </div>
-      <div class="node-love-content">
-        <span class="node-love-badge">Node-First Philosophy</span>
-        <h2 class="node-love-title">
-          People <span class="love-word">love</span> building with nodes
-        </h2>
-        <p class="node-love-text">
-          Visual, intuitive, powerful. Connect ideas like building blocks.
-          <br />
-          Automations, agents, APIs, full applications: all from a canvas.
-        </p>
-        <div class="node-demo">
-          <div class="demo-node trigger">
-            <span class="node-dot"></span>
-            <span>Trigger/Request/Cue</span>
-          </div>
-          <div class="demo-edge"></div>
-          <div class="demo-node process">
-            <span class="node-dot"></span>
-            <span>Action/API/Automation</span>
-          </div>
-          <div class="demo-edge"></div>
-          <div class="demo-node action">
-            <span class="node-dot"></span>
-            <span>Result</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- What Will You Build Section -->
-    <section class="build-section">
-      <div class="build-header">
-        <h2>What will <span class="you-text">you</span> build?</h2>
-      </div>
-      
-      <div class="use-cases-grid">
-        <div 
-          v-for="useCase in useCases" 
-          :key="useCase.id"
-          class="use-case-card"
-          :class="{ active: hoveredUseCase === useCase.id }"
-          @mouseenter="hoveredUseCase = useCase.id"
-          @mouseleave="hoveredUseCase = null"
-        >
-          <div class="use-case-icon">
-            <span v-html="gradientIcon(useCase.icon, useCase.gradient, `gradient-${useCase.id}`)"></span>
-          </div>
-          <div class="use-case-content">
-            <div class="use-case-need">{{ useCase.need }}</div>
-            <div class="use-case-solution">{{ useCase.solution }}</div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- Habit Flow Section -->
+    <div class="node-love-text-banner">
+      <span>Because people</span> <span class="love">love</span> <span>building with nodes</span>
+    </div>
+    <HabitFlowSection1 />
 
     <!-- Platform Overview - Combined Section -->
     <section class="platform-section">
@@ -719,7 +660,7 @@ const hoveredUseCase = ref(null)
 /* Hero */
 .hero {
   position: relative;
-  padding: 60px 24px 80px;
+  padding: 60px 24px 0px;
   min-height: 600px;
   display: flex;
   align-items: center;
@@ -948,6 +889,42 @@ const hoveredUseCase = ref(null)
 .dark .highlighted-code :deep(.shiki span) {
   color: var(--shiki-dark);
   filter: brightness(1.35) saturate(1.1);
+}
+
+/* Node Love Text Banner */
+.node-love-text-banner {
+  text-align: center;
+  padding: 40px 24px 40px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--vp-c-text-1);
+  letter-spacing: -0.02em;
+}
+
+.node-love-text-banner .love {
+  background: linear-gradient(135deg, #f43f5e, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse-love 2s ease-in-out infinite;
+}
+
+@keyframes pulse-love {
+  0%, 100% { transform: scale(1); display: inline-block; }
+  50% { transform: scale(1.05); }
+}
+
+@media (max-width: 768px) {
+  .node-love-text-banner {
+    font-size: 1.6rem;
+    padding: 30px 16px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .node-love-text-banner {
+    font-size: 1.3rem;
+  }
 }
 
 /* Showcase Section */

@@ -1,0 +1,32 @@
+# habit: oauth-test
+#
+# OAuth2 PKCE Authentication Test Workflow
+# 
+# This workflow tests the OAuth2 PKCE flow with the mock OAuth server.
+# Before running:
+#   1. Start the mock OAuth server: cd playgrounds/oauth2 && npx ts-node mock-oauth-server.ts
+#   2. Start Cortex with this workflow: npx nx dev @ha-bits/cortex --config showcase/oauth-test/stack.yaml
+#   3. Visit the OAuth URL printed in the terminal
+#   4. Click "Allow" on the consent page
+#   5. Call POST /api/oauth-test to execute the workflow
+
+id: oauth-test
+name: OAuth2 PKCE Test
+description: Test OAuth2 PKCE authentication flow with mock server
+version: "1.0"
+
+nodes:
+  - id: get-profile
+    type: bit
+    data:
+      framework: bits
+      module: "@ha-bits/bit-oauth-mock"
+      operation: getProfile
+      source: npm
+      label: Get User Profile
+      params: {}
+
+edges: []
+
+output:
+  profile: "{{get-profile}}"
