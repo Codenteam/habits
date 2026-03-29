@@ -16,7 +16,18 @@ import { hideBin } from 'yargs/helpers';
 // CONSTANTS & TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname);
+// Get the directory of the current script, handling both Unix and Windows paths
+function getScriptDir(): string {
+  const url = new URL(import.meta.url);
+  let dir = path.dirname(url.pathname);
+  // On Windows, pathname may be like "/C:/path" - remove leading slash
+  if (process.platform === 'win32' && dir.startsWith('/') && dir[2] === ':') {
+    dir = dir.slice(1);
+  }
+  return dir;
+}
+
+const SCRIPT_DIR = getScriptDir();
 export const TAURI_DIR = path.join(SCRIPT_DIR, 'src-tauri');
 export const TEMP_DIR = path.join(os.tmpdir(), 'build-release-' + crypto.randomBytes(4).toString('hex'));
 
@@ -264,13 +275,6 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     required: false,
     platforms: ['macos'],
     example: 'xxxx-xxxx-xxxx-xxxx',
-  },
-  {
-    name: 'KEYCHAIN_PASSWORD',
-    description: 'Password for temporary keychain (auto-generated if not set)',
-    required: false,
-    platforms: ['macos'],
-    example: 'random-secure-password',
   },
 
   // ─── iOS specific (uses automatic signing via App Store Connect API) ───
@@ -677,12 +681,13 @@ export function cleanupTempDir(): void {
 
 export function decodeBase64ToFile(envVarName: string, filename: string): string {
   const base64Content = process.env[envVarName];
-  if (!base64Content) {
-    throw new Error(`Environment variable ${envVarName} is not set`);
+  // Check for empty, whitespace-only, or undefined values (common in CI when secrets aren't configured)
+  if (!base64Content || base64Content.trim() === '') {
+    throw new Error(`Environment variable ${envVarName} is not set or is empty`);
   }
 
   const outputPath = path.join(TEMP_DIR, filename);
-  const buffer = Buffer.from(base64Content, 'base64');
+  const buffer = Buffer.from(base64Content.trim(), 'base64');
   
   fs.writeFileSync(outputPath, buffer);
   fs.chmodSync(outputPath, 0o600); // Restrict permissions
@@ -694,13 +699,28 @@ export function decodeBase64ToFile(envVarName: string, filename: string): string
 }
 
 /**
+ * Helper to check if a base64 env var has actual content (not empty/whitespace)
+ */
+export function hasBase64EnvVar(envVarName: string): boolean {
+  const value = process.env[envVarName];
+  return !!value && value.trim().length > 0;
+}
+
+/**
  * Serialize Base64, any env var ending with _BASE64, decode and write to a temp file 
- * and add the path to the same env name replacing _BASE64 with _PATH
+ * and add the path to the same env name replacing _BASE64 with _PATH.
+ * Skips env vars that are empty or not set (common in CI when secrets are not configured).
  */
 export function setupBase64EnvVars(): void {
   const base64EnvVars = Object.keys(process.env).filter(key => key.endsWith('_BASE64'));
   
   for (const envVar of base64EnvVars) {
+    const value = process.env[envVar];
+    // Skip empty values - common in CI when secrets are not configured
+    if (!value || value.trim() === '') {
+      console.log('debug', `Skipping ${envVar} (not set or empty)`);
+      continue;
+    }
     const fileName = envVar.replace('_BASE64', '.p12');
     const filePath = decodeBase64ToFile(envVar, fileName);
     const pathEnvVar = envVar.replace('_BASE64', '_PATH');
@@ -749,18 +769,24 @@ export function execCapture(command: string, options: ExecOptions = {}): string 
   const cwd = options.cwd || SCRIPT_DIR;
   const env = { ...process.env, ...options.env } as NodeJS.ProcessEnv;
   
-  const result = spawnSync('sh', ['-c', command], {
-    cwd,
-    env,
-    maxBuffer: 50 * 1024 * 1024,
-  });
-  
-  return result.stdout?.toString() || '';
+  try {
+    const result = execSync(command, {
+      cwd,
+      env,
+      stdio: 'pipe',
+      maxBuffer: 50 * 1024 * 1024,
+    });
+    return result?.toString() || '';
+  } catch (error: any) {
+    return error.stdout?.toString() || '';
+  }
 }
 
 export function commandExists(command: string): boolean {
+  const isWindows = process.platform === 'win32';
+  const checkCmd = isWindows ? `where ${command}` : `which ${command}`;
   try {
-    execSync(`which ${command}`, { stdio: 'pipe' });
+    execSync(checkCmd, { stdio: 'pipe' });
     return true;
   } catch {
     return false;
