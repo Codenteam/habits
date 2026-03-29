@@ -488,6 +488,53 @@ function cleanupMacOS(ctx: MacOSContext): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Setup iOS keychain with Apple Distribution certificate.
+ * Needed for code signing even with automatic signing (API key handles profile management).
+ */
+async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassword: string }> {
+  logSection('Setting up iOS Keychain');
+  
+  const keychainName = `ios-build-${crypto.randomBytes(8).toString('hex')}.keychain-db`;
+  const keychainPath = path.join(TEMP_DIR, keychainName);
+  const keychainPassword = crypto.randomBytes(16).toString('hex');
+  
+  console.log('step', 'Creating temporary keychain...');
+  exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
+  exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
+  exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
+  
+  // Add to keychain search list (FIRST so it's preferred)
+  const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+  exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+  
+  // Set as default keychain for this session
+  exec(`security default-keychain -s "${keychainPath}"`);
+  
+  console.log('success', `Created keychain: ${keychainName}`);
+  
+  // Import Apple Distribution certificate
+  if (hasBase64EnvVar('APPLE_CERTIFICATE_BASE64')) {
+    console.log('step', 'Importing Apple Distribution certificate...');
+    const certPath = decodeBase64ToFile('APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
+    const certPassword = process.env.APPLE_CERTIFICATE_PASSWORD || '';
+    exec(`security import "${certPath}" -k "${keychainPath}" -P "${certPassword}" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild`);
+    
+    // Allow codesign to access the key without prompting
+    exec(`security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychainPassword}" "${keychainPath}"`, { silent: true, ignoreError: true });
+    
+    console.log('success', 'Apple Distribution certificate imported');
+    
+    // Show available identities
+    const identities = execCapture(`security find-identity -v -p codesigning "${keychainPath}"`);
+    console.log('info', 'Available signing identities:\n' + identities);
+  } else {
+    console.log('warn', 'No APPLE_CERTIFICATE_BASE64 found - relying on cloud-managed signing');
+  }
+  
+  return { keychainPath, keychainPassword };
+}
+
+/**
  * Build iOS with automatic signing using App Store Connect API.
  * Xcode handles certificate/profile selection automatically.
  * 
@@ -495,6 +542,8 @@ function cleanupMacOS(ctx: MacOSContext): void {
  * - APP_STORE_CONNECT_API_KEY_ID
  * - APP_STORE_CONNECT_API_ISSUER_ID
  * - APP_STORE_CONNECT_API_KEY_BASE64
+ * - APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
+ * - APPLE_CERTIFICATE_PASSWORD
  */
 async function buildIOS(): Promise<string[]> {
   logHeader('Building iOS Application');
@@ -509,6 +558,9 @@ async function buildIOS(): Promise<string[]> {
   if (!hasApiKey) {
     throw new Error('iOS build requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_BASE64');
   }
+  
+  // Setup keychain with Apple Distribution certificate
+  await setupIOSKeychain();
   
   // Decode API key to file
   logSection('Setting up App Store Connect API Key');
