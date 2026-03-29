@@ -133,6 +133,25 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  habits-cortex:
+    dependencies:
+      tauri-plugin-keyring-api:
+        specifier: ^0.1.1
+        version: 0.1.1
+    devDependencies:
+      '@tauri-apps/api':
+        specifier: ^2
+        version: 2.10.1
+      '@tauri-apps/cli':
+        specifier: ^2
+        version: 2.10.1
+      '@types/yargs':
+        specifier: ^17.0.32
+        version: 17.0.35
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
+
   packages/base/frontend-builder:
     dependencies:
       '@fortawesome/fontawesome-free':
@@ -7123,6 +7142,9 @@ packages:
 
   tar-stream@3.1.8:
     resolution: {integrity: sha512-U6QpVRyCGHva435KoNWy9PRoi2IFYCgtEhq9nmrPPpbRacPs9IH4aJ3gbrFC8dPcXvdSZ4XXfXT5Fshbp2MtlQ==}
+
+  tauri-plugin-keyring-api@0.1.1:
+    resolution: {integrity: sha512-vs1ztf6REJPfvUDBY3VgNHiW+xBHvBtMf3ZQIJKB8UCWdb2bLFoDS+BjUHe58deCPGTInCh+SEtd69pZvV/b4w==}
 
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
@@ -14928,6 +14950,10 @@ snapshots:
       - bare-abort-controller
       - bare-buffer
       - react-native-b4a
+
+  tauri-plugin-keyring-api@0.1.1:
+    dependencies:
+      '@tauri-apps/api': 2.10.1
 
   teex@1.0.1:
     dependencies:

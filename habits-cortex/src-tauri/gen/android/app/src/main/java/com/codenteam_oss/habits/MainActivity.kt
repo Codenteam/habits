@@ -1,4 +1,4 @@
-package com.habits.cortex
+package com.codenteam_oss.habits
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

@@ -429,7 +429,6 @@ async function runHabit(habitId) {
   // Check if all required secrets are set
   const { allSet, missing } = await checkRequiredSecrets(habit);
   if (!allSet) {
-    showError('Missing Secrets', `Please configure the following secrets before running:\n\n${missing.join(', ')}`);
     showSecretsModal(habit);
     return;
   }
@@ -993,8 +992,8 @@ function openHabitViewer(yamlContent) {
       }
       .viewer-close {
         position: fixed;
-        top: 12px;
-        right: 12px;
+        top: 32px;
+        left: 32px;
         z-index: 10000;
         width: 32px;
         height: 32px;

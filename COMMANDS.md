@@ -195,8 +195,27 @@ pnpm nx run habits pack --format habit --config showcase/email-demo/stack.yaml
 
 npm run dev -- -- -- --habit showcase/email-demo/dist/email-demo.habit
 
+## iOS Commands
+
+## Run iOS dev mode (requires booted simulator)
+cd habits-cortex && npm run tauri -- ios dev "iPhone 17 Pro"
+
+## Build iOS app for simulator (release, no code signing needed)
+cd habits-cortex && npm run tauri -- ios build --target aarch64-sim
+
+## Install and run built iOS app on simulator
+xcrun simctl boot "iPhone 17 Pro" || true
+open -a Simulator
+xcrun simctl install booted habits-cortex/src-tauri/gen/apple/build/arm64-sim/Cortex.app
+xcrun simctl launch booted com.habits.cortex
+
+## Build iOS app for device (requires Apple Developer signing)
+cd habits-cortex && npm run tauri -- ios build
 
 
+## Publish 
+cd habits-cortex
+npx env-cmd -f ../.secrets -- npx tsx build-release.ts --platform ios --upload-ios
 
 ## Run app
 cd habits-cortex

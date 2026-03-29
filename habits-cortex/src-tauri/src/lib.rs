@@ -4,14 +4,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::env;
 use std::path::Path;
 use serde::Serialize;
-#[cfg(not(mobile))]
 use std::sync::Mutex;
-#[cfg(not(mobile))]
 use tauri::{Manager, Emitter};
 
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
-// Store file opened via file association (for macOS Opened event - desktop only)
-#[cfg(not(mobile))]
+// Store file opened via file association (for Opened event)
 static OPENED_FILE: Mutex<Option<String>> = Mutex::new(None);
 
 /// CLI arguments for habits-cortex (parsed manually like standalone tauri pack)
@@ -51,8 +48,7 @@ fn parse_cli_args() -> CliArgs {
         }
     }
     
-    // Also check if a file was opened via macOS file association (desktop only)
-    #[cfg(not(mobile))]
+    // Also check if a file was opened via file association
     if habit.is_none() {
         if let Ok(guard) = OPENED_FILE.lock() {
             if let Some(ref file) = *guard {
@@ -114,8 +110,9 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, _event| {
-            // Handle file associations on desktop only (macOS sends Opened event when file is double-clicked)
-            #[cfg(not(mobile))]
+            // Handle file associations (Opened event when file is opened with app)
+            // Only available on desktop platforms
+            #[cfg(desktop)]
             if let tauri::RunEvent::Opened { urls } = &_event {
                 for url in urls {
                     // Convert file:// URL to path

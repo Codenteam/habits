@@ -15,8 +15,11 @@ serde = "1.0"
 thiserror = "2"
 keyring-core = "0.7"
 
-[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+[target.'cfg(target_os = "macos")'.dependencies]
 apple-native-keyring-store = { version = "0.2", features = ["keychain"] }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+apple-native-keyring-store = { version = "0.2", features = ["protected"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-native-keyring-store = "0.5"

@@ -1,0 +1,24 @@
+id: hello-world-env
+name: Hello World (Env)
+description: A hello world habit that reads param1 from environment variables
+
+# This habit demonstrates reading from environment variables:
+# - Reads param1 from PARAM1 env var
+# - Takes param2 from input
+# - Returns "hello there" when param1="hello" and param2="world"
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "{{habits.env.PARAM1}}"
+        param2: "{{habits.input.param2}}"
+
+edges: []
+output: 
+  greeting: "{{say-hello}}"
