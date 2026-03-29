@@ -115,6 +115,11 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Generate icons before building any platform
+    logSection('Generating icons');
+    exec('npm run tauri -- icon');
+    console.log('success', 'Icons generated');
+    
     // Build each platform
     for (const platform of options.platforms) {
       let artifacts: string[] = [];
