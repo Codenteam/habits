@@ -30,6 +30,8 @@ nohup*
 .secrets
 tmp
 staging
+certs
+
 
 # Docs related stuff
 docs/public/viewer/*
@@ -39,3 +41,12 @@ docs/.vitepress/theme/data/
 docs/public/showcase
 docs/showcase
 docs/bits
+planning
+
+
+# Tauri stuff
+target/
+habits-cortex/**/target/
+habits-cortex/build-release.md
+habits-cortex/private_keys
+habits-cortex/release/*

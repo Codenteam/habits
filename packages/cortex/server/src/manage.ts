@@ -41,7 +41,7 @@ import {
   LoadedWorkflow,
   NodeExecutionStatus,
 } from '@habits/shared/types';
-import { getCortexUiDistPath } from '@ha-bits/core';
+import { getCortexUiDistPath } from '@ha-bits/core/pathUtils';
 
 // ============================================================================
 // Types

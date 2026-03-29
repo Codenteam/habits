@@ -1,0 +1,32 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Hello World Habit
+description: Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.
+
+longDescription: |
+  This habit demonstrates a minimal "Hello World" automation using the habits framework. It shows how to:
+
+  - Access environment variables (e.g., `PARAM1`), which are kept in keyring on apps (iOS, Android, MacOS, Linux, Windows) and in .env on servers
+  - Read user input parameters
+  - Output results to both logs (Servers) and the UI (Apps)
+  - Structure a habit YAML according to the habits.schema.yaml
+
+  Use this as a starting point for building more complex automations that interact with both backend and frontend components. All code and configuration follow the project’s minimalistic, mobile-first, and dark mode UI guidelines.
+
+
+tags:
+  - frontend
+  - backend
+  - creative
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - PARAM1 environment key
+
+habits:
+  - habit.yaml
+  - habit-env.yaml

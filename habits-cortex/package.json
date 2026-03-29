@@ -1,0 +1,26 @@
+{
+  "name": "habits-cortex",
+  "version": "1.0.0",
+  "description": "Habits Cortex - Run habit workflows locally",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "ios:build": "tauri ios build",
+    "sign:debug": "apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android --out src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/cli": "^2",
+    "@types/yargs": "^17.0.32",
+    "yargs": "^17.7.2"
+  },
+  "dependencies": {
+    "tauri-plugin-keyring-api": "^0.1.1"
+  }
+}

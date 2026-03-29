@@ -1,0 +1,113 @@
+id: log-wise-payment
+name: Log Wise Payment to Google Sheets
+description: When a Wise transfer completes, log the invoice data to Google Sheets
+
+# This habit is triggered by Wise webhook when a transfer completes
+# It extracts transfer details and appends them to a Google Sheet
+
+# Sheet columns: Invoice Number | Date | Customer Name | Customer Address | Description | Notes | Amount | VAT | Total | Currency
+
+nodes:
+  # Trigger: Wise transfer completed webhook
+  - id: wise-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wise"
+      operation: transferCompleted
+      triggerType: webhook
+      params:
+        apiToken: "{{habits.env.WISE_API_TOKEN}}"
+        profileId: "{{habits.env.WISE_PROFILE_ID}}"
+
+  # Transform transfer data to sheet row format
+  - id: transform-data
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Transform Transfer Data
+      params:
+        transfer: "{{wise-trigger}}"
+        type: script
+        language: deno
+        script: |
+          interface TransferData {
+            transfer: {
+              id: number;
+              reference: string;
+              sourceValue: number;
+              sourceCurrency: string;
+              targetValue: number;
+              targetCurrency: string;
+              created: string;
+              sourceName: string;
+              details: {
+                description: string;
+                reference: string;
+              };
+            };
+            timestamp: string;
+          }
+          
+          export async function main(transfer: TransferData) {
+            const t = transfer.transfer;
+            const timestamp = transfer.timestamp || t.created || new Date().toISOString();
+            
+            // Generate invoice number from reference or ID
+            const invoiceNumber = t.reference || `WISE-${t.id}`;
+            
+            // Format date
+            const date = new Date(timestamp).toLocaleDateString('en-GB');
+            
+            // For Wise transfers, VAT is typically 0 (international transfers)
+            const totalAmount = t.sourceValue;
+            const vatAmount = 0;
+            const netAmount = totalAmount;
+            
+            // Build row for Google Sheets
+            const row = [
+              invoiceNumber,                           // Invoice Number
+              date,                                    // Date
+              t.sourceName || '',                      // Customer Name
+              '',                                      // Customer Address (not available from Wise)
+              t.details?.description || 'Wise Transfer', // Description
+              t.details?.reference || '',             // Notes
+              netAmount.toFixed(2),                   // Amount
+              vatAmount.toFixed(2),                   // VAT
+              totalAmount.toFixed(2),                 // Total
+              t.sourceCurrency || 'USD',              // Currency
+            ];
+            
+            return {
+              row,
+              invoiceNumber,
+              source: 'wise',
+            };
+          }
+
+  # Append to Google Sheets
+  - id: append-to-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: appendRow
+      params:
+        accessToken: "{{habits.env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        sheetName: "Invoices"
+        values: "{{transform-data.row}}"
+
+edges:
+  - source: wise-trigger
+    target: transform-data
+  - source: transform-data
+    target: append-to-sheet
+
+output:
+  success: true
+  invoiceNumber: "{{transform-data.invoiceNumber}}"
+  sheetResult: "{{append-to-sheet}}"

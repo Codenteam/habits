@@ -1,0 +1,13 @@
+### Scheduler Trigger Test
+
+### Test the scheduler trigger manually (test endpoint)
+# @name testSchedulerTrigger
+GET http://localhost:13000/misc/workflows/scheduler-test/test
+
+### List all workflows
+# @name listWorkflows
+GET http://localhost:13000/misc/workflows
+
+### Get workflow status
+# @name getWorkflowStatus
+GET http://localhost:13000/misc/workflows/scheduler-test

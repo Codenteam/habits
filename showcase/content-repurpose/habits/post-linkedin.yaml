@@ -1,0 +1,64 @@
+id: post-linkedin
+name: Post to LinkedIn
+description: Post content to LinkedIn using the generated snippets
+
+input:
+  - id: content
+    type: string
+    required: true
+    description: The content to post (from repurpose-blog workflow)
+  - id: articleUrl
+    type: string
+    required: false
+    description: Optional article URL to share
+  - id: authorUrn
+    type: string
+    required: false
+    description: Author URN (leave empty to post as yourself)
+
+nodes:
+  # Post to LinkedIn
+  - id: linkedin-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      resource: createPost
+      operation: createPost
+      # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
+      credentials:
+        linkedin:
+          accessToken: "{{habits.env.LINKEDIN_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.LINKEDIN_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.input.content}}"
+        visibility: "PUBLIC"
+        authorUrn: "{{habits.input.authorUrn}}"
+
+  # If article URL provided, create article post instead
+  - id: linkedin-article-post
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      resource: createArticlePost
+      operation: createArticlePost
+      credentials:
+        linkedin:
+          accessToken: "{{habits.env.LINKEDIN_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.LINKEDIN_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.input.content}}"
+        articleUrl: "{{habits.input.articleUrl}}"
+        visibility: "PUBLIC"
+        authorUrn: "{{habits.input.authorUrn}}"
+      stopAfterIf:
+        expr: "!habits.input.articleUrl"
+        skipIfStopped: true
+
+output:
+  success: "true"
+  postId: "{{habits.nodes.linkedin-post.postId}}"
+  platform: "linkedin"

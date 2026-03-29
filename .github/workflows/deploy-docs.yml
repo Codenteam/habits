@@ -8,9 +8,9 @@ on:
       - 'showcase/**'
       - 'packages/habit-viewer/**'
       - 'packages/workflow-canvas/**'
+      - 'scripts/deploy-docs.ts'
       - '.github/workflows/deploy-docs.yml'
 
-# Allow only one concurrent deployment
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -32,76 +32,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
-
-      - name: Install root dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build habit-viewer
-        run: pnpm nx build @ha-bits/habit-viewer
-
-      - name: Copy habit-viewer to docs/public/viewer
-        run: |
-          rm -rf docs/public/viewer
-          mkdir -p docs/public/viewer
-          cp -r dist/packages/habit-viewer/* docs/public/viewer/
-          rm -f docs/public/viewer/package.json
 
       - name: Install D2
         run: curl -fsSL https://d2lang.com/install.sh | sh -s --
 
-      - name: Install docs dependencies
-        run: |
-          cd docs
-          pnpm install
+      - name: Install expect
+        run: sudo apt-get install -y expect
 
-          
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
 
-
-      - name: Copy all showcase YAML files for HabitViewer
-        run: |
-          # Copy all YAML files from showcase/ to docs/public/showcase/ maintaining directory structure
-          mkdir -p docs/public/showcase
-          cd showcase
-          find . -name "*.yaml" -o -name "*.yml" | while read file; do
-            dir=$(dirname "$file")
-            mkdir -p "../docs/public/showcase/$dir"
-            cp "$file" "../docs/public/showcase/$file"
-          done
-          cd ..
-      
-      - name: Copy install.sh to public
-        run: |
-          cp scripts/install.sh docs/public/install.sh
-
-      - name: Copy showcase demo folders (screenshots)
-        run: |
-          # Copy demo folders with screenshots for documentation
-          if [ -d "showcase/ai-cookbook/demo" ]; then
-            mkdir -p docs/public/showcase/ai-cookbook
-            cp -r showcase/ai-cookbook/demo docs/public/showcase/ai-cookbook/
-          fi
-          
-          if [ -d "showcase/ai-journal/demo" ]; then
-            mkdir -p docs/public/showcase/ai-journal
-            cp -r showcase/ai-journal/demo docs/public/showcase/ai-journal/
-          fi
-
-      - name: Build documentation
-        run: |
-          npx -y tsx scripts/generate-showcase.ts
-          npx -y tsx scripts/generate-bits.ts
-          cd docs
-          npm run build
-      - name: Upload and extract files
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.SCP_HOST }}
-          username: ${{ secrets.SCP_USERNAME }}
-          key: ${{ secrets.SCP_KEY }}
-          passphrase: ${{secrets.SCP_PASSPHRASE}}
-          port: ${{ secrets.SCP_PORT }}
-          source: "./docs/.vitepress/dist/*"
-          target: ${{secrets.SCP_PATH}}
-          strip_components: 3
+      - name: Build and deploy documentation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCP_HOST: ${{ secrets.SCP_HOST }}
+          SCP_USERNAME: ${{ secrets.SCP_USERNAME }}
+          SCP_KEY: ${{ secrets.SCP_KEY }}
+          SCP_PASSPHRASE: ${{ secrets.SCP_PASSPHRASE }}
+          SCP_PORT: ${{ secrets.SCP_PORT }}
+          SCP_PATH: ${{ secrets.SCP_PATH }}
+        run: npx tsx scripts/deploy-docs.ts 2>&1 | npx tsx scripts/log-sanitizer.ts

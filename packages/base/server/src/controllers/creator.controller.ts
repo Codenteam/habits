@@ -22,7 +22,7 @@ import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import JSZip from 'jszip';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import { createResponse } from '../helpers';
 import {query } from '@anthropic-ai/claude-agent-sdk';
 

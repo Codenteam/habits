@@ -1,0 +1,56 @@
+{
+  "name": "@ha-bits/bit-salesforce",
+  "version": "1.0.0",
+  "description": "Salesforce CRM integration bit for contacts, opportunities, and lead management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "salesforce",
+    "crm",
+    "contacts",
+    "opportunities",
+    "leads",
+    "sales"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@ha-bits/bit-crm": "file:../bit-crm"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-salesforce/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L1"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": false
+  }
+}

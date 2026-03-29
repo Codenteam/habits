@@ -1,0 +1,42 @@
+id: send-email
+name: Send Email
+description: Send an email with custom body to a specified recipient
+
+input:
+  to:
+    type: string
+    description: Recipient email address
+    required: true
+  subject:
+    type: string
+    description: Email subject
+    default: "Message from Habits"
+  body:
+    type: string
+    description: Email body content
+    required: true
+
+nodes:
+  - id: send
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "{{habits.env.EMAIL_USER}}"
+        to: "{{habits.input.to}}"
+        subject: "{{habits.input.subject}}"
+        body: "{{habits.input.body}}"
+      credentials:
+        auth:
+          host: "smtp.gmail.com"
+          port: 587
+          user: "{{habits.env.EMAIL_USER}}"
+          password: "{{habits.env.EMAIL_PASSWORD}}"
+
+output:
+  success: true
+  message: "Email sent to {{habits.input.to}}"
+  result: "{{send}}"

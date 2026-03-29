@@ -1,0 +1,82 @@
+id: send-digest
+name: Send Daily Digest (Orchestrator)
+description: >-
+  Scheduled workflow that sends daily meeting digest emails
+  to all users with today's events.
+version: "1.0"
+
+nodes:
+  # Schedule trigger - runs daily at 7 AM
+  - id: schedule-trigger
+    type: activepieces
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-schedule"
+      operation: cron_expression
+      triggerType: polling
+      params:
+        cronExpression: "0 7 * * *"
+        timezone: "UTC"
+
+  # Get all users
+  - id: get-users
+    type: bits
+    data:
+      label: Get All Users
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: list
+      params:
+        collection: users
+        limit: 1000
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Send digest to each user
+  - id: send-all-digests
+    type: bits
+    data:
+      label: Send Digest to Each User
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-users.keys}}"
+        habitId: send-user-digest
+        inputKey: userEmail
+        delayMs: 500
+        continueOnError: true
+        collectResults: true
+
+  # Log completion
+  - id: log-completion
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log Digest Results
+      params:
+        results: "{{send-all-digests}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(results: any) {
+            console.log("📧 Daily digest completed:");
+            console.log(`   Total users: ${results.totalItems}`);
+            console.log(`   Sent: ${results.successCount}`);
+            console.log(`   Failed: ${results.errorCount}`);
+            return results;
+          }
+
+edges:
+  - source: schedule-trigger
+    target: get-users
+  - source: get-users
+    target: send-all-digests
+  - source: send-all-digests
+    target: log-completion
+
+output:
+  - log-completion

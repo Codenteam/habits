@@ -1,0 +1,57 @@
+id: scheduler-test
+name: Scheduler Trigger Test
+description: Test the bit-scheduler native cron trigger
+
+# This habit demonstrates the bit-scheduler module:
+# - Uses a cron expression to trigger on a schedule
+# - Passes execution info to the next node
+# - Shows timestamp, execution count, etc.
+
+nodes:
+  # First node: Schedule trigger (runs every minute for testing)
+  - id: schedule
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      params:
+        cronExpression: "*/1 * * * *"    # Run every minute for testing
+        timezone: "UTC"
+        enabled: true
+        description: "Test scheduler trigger"
+
+  # Second node: Log the execution
+  - id: log-execution
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log Schedule Execution
+      params:
+        scheduleData: "{{schedule}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(scheduleData: unknown) {
+            const timestamp = new Date().toISOString();
+            console.log("========================================");
+            console.log("🕐 Scheduler trigger fired!");
+            console.log("========================================");
+            console.log("Current time:", timestamp);
+            console.log("Schedule data:", JSON.stringify(scheduleData, null, 2));
+            return { 
+              success: true, 
+              processedAt: timestamp,
+              scheduleData 
+            };
+          }
+
+edges:
+  - source: schedule
+    target: log-execution
+
+output:
+  result: "{{log-execution}}"

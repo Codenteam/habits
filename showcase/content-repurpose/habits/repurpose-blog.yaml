@@ -1,0 +1,236 @@
+id: repurpose-blog
+name: Repurpose Blog Content
+description: Take blog content and generate platform-specific snippets for LinkedIn, Twitter, and Instagram
+
+input:
+  - id: blogContent
+    type: string
+    required: true
+    description: The blog content to repurpose
+  - id: brand
+    type: string
+    required: false
+    description: Brand name or company name
+  - id: tone
+    type: string
+    required: false
+    description: Content tone (professional, casual, humorous, inspirational)
+  - id: hashtags
+    type: string
+    required: false
+    description: Additional hashtags to include
+
+nodes:
+  # Clean and parse the content
+  - id: parse-content
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        cast: 'force'
+        model: gpt-4o-mini
+        temperature: 0.3
+        maxTokens: 2000
+        cast: 'force'
+        prompt: |
+          Extract and summarize the main content from this blog post:
+          
+          {{habits.input.blogContent}}
+          
+          Return a JSON object with:
+          {
+            "title": "The blog post title",
+            "summary": "A 2-3 sentence summary of the key points",
+            "mainPoints": ["Key point 1", "Key point 2", "Key point 3"],
+            "targetAudience": "Who this content is for",
+            "callToAction": "What action the author wants readers to take",
+            "keywords": ["keyword1", "keyword2", "keyword3"]
+          }
+          
+          Return only valid JSON.
+
+  # Generate LinkedIn content
+  - id: generate-linkedin
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        cast: 'force'
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        prompt: |
+          Create a LinkedIn post based on this blog content:
+          
+          {{parse-content}}
+          
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Additional hashtags: {{habits.input.hashtags}}
+          
+          Create a compelling LinkedIn post that:
+          1. Opens with a hook that grabs attention (first line is crucial)
+          2. Uses line breaks for readability
+          3. Includes 2-3 key insights or takeaways as bullet points
+          4. Ends with a thought-provoking question or call to action
+          5. Includes 3-5 relevant professional hashtags
+          
+          Format: Return plain text ready to post (max 3000 characters).
+          Use line breaks liberally for LinkedIn's mobile-first experience.
+
+  # Generate Twitter/X content  
+  - id: generate-twitter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        cast: 'force'
+        temperature: 0.8
+        maxTokens: 600
+        prompt: |
+          Create Twitter/X content based on this blog content:
+          
+          {{habits.nodes.parse-content.text}}
+          
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Additional hashtags: {{habits.input.hashtags}}
+          
+          Return a JSON object with:
+          {
+            "mainTweet": "Single tweet under 280 chars that captures the essence",
+            "thread": [
+              "Tweet 1 - Hook (under 280 chars)",
+              "Tweet 2 - Main point (under 280 chars)",
+              "Tweet 3 - Supporting details (under 280 chars)",
+              "Tweet 4 - Call to action (under 280 chars)"
+            ],
+            "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
+            "bestTimeToPost": "Suggested posting time"
+          }
+          
+          Make tweets punchy, engaging, and shareable.
+          Return only valid JSON.
+
+  # Generate Instagram content
+  - id: generate-instagram
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 1000
+        cast: 'force'
+        prompt: |
+          Create Instagram content based on this blog content:
+          
+          {{parse-content}}
+          
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Additional hashtags: {{habits.input.hashtags}}
+          
+          Return a JSON object with:
+          {
+            "feedCaption": "Instagram caption with emojis, line breaks, and engagement hooks (max 2200 chars)",
+            "carouselSlides": [
+              "Slide 1: Hook/Title text",
+              "Slide 2: Key point 1",
+              "Slide 3: Key point 2",
+              "Slide 4: Key point 3",
+              "Slide 5: Call to action"
+            ],
+            "storyContent": {
+              "frame1": "Hook question or statement",
+              "frame2": "Key insight with emoji",
+              "frame3": "Call to action with swipe up"
+            },
+            "reelScript": "30-second script outline for a Reel",
+            "hashtags": ["15-20 relevant hashtags mix of popular and niche"],
+            "imagePrompt": "DALL-E prompt for an engaging image for this post"
+          }
+          
+          Use emojis sparingly but effectively. Focus on visual descriptions.
+          Return only valid JSON.
+
+  # Compile all generated content
+  - id: compile-output
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.3
+        maxTokens: 200
+        prompt: |
+          Create a brief summary of the content repurposing results.
+          
+          Original blog: {{habits.nodes.parse-content.text}}
+          LinkedIn: {{habits.nodes.generate-linkedin.text}}
+          Twitter: {{generate-twitter.text}}
+          Instagram: {{habits.nodes.generate-instagram.text}}
+          
+          Return a JSON object:
+          {
+            "summary": "Brief summary of what was generated",
+            "platformsReady": ["linkedin", "twitter", "instagram"],
+            "estimatedEngagement": "Low/Medium/High based on content quality"
+          }
+
+edges:
+  - source: parse-content
+    target: generate-linkedin
+  - source: parse-content
+    target: generate-twitter
+  - source: parse-content
+    target: generate-instagram
+  - source: generate-linkedin
+    target: compile-output
+  - source: generate-twitter
+    target: compile-output
+  - source: generate-instagram
+    target: compile-output
+
+output:
+  originalContent: "{{habits.nodes.parse-content.text}}"
+  linkedin: "{{habits.nodes.generate-linkedin.text}}"
+  twitter: "{{habits.nodes.generate-twitter.text}}"
+  instagram: "{{habits.nodes.generate-instagram.text}}"
+  summary: "{{habits.nodes.compile-output.text}}"

@@ -1,0 +1,233 @@
+id: post-all
+name: Post to All Platforms
+description: Generate content from blog and post to all social media platforms
+
+input:
+  - id: blogUrl
+    type: string
+    required: false
+    description: URL of the blog post to repurpose
+  - id: blogContent
+    type: string
+    required: false
+    description: Raw blog content (if blogUrl not provided)
+  - id: brand
+    type: string
+    required: false
+    description: Brand name
+  - id: tone
+    type: string
+    required: false
+    description: Content tone
+  - id: postLinkedin
+    type: boolean
+    required: false
+    description: Enable posting to LinkedIn
+  - id: postTwitter
+    type: boolean
+    required: false
+    description: Enable posting to Twitter
+  - id: postInstagram
+    type: boolean
+    required: false
+    description: Enable posting to Instagram
+  - id: imageUrl
+    type: string
+    required: false
+    description: Image URL for Instagram post
+
+nodes:
+  # Fetch and parse blog content
+  - id: fetch-blog
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      resource: request
+      operation: request
+      params:
+        method: GET
+        url: "{{habits.input.blogUrl}}"
+        responseType: text
+      stopAfterIf:
+        expr: "!habits.input.blogUrl"
+        skipIfStopped: false
+
+  # Parse and summarize content
+  - id: parse-content
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.3
+        maxTokens: 1500
+        prompt: |
+          Extract key information from this blog content:
+          {{habits.nodes.fetch-blog.body}}
+          
+          Return JSON:
+          {
+            "title": "Blog title",
+            "summary": "2-3 sentence summary",
+            "keyPoints": ["point1", "point2", "point3"]
+          }
+
+  # Generate LinkedIn content
+  - id: generate-linkedin
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 600
+        prompt: |
+          Create a LinkedIn post from:
+          {{habits.nodes.parse-content.text}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          
+          Include hooks, insights, and hashtags. Max 3000 chars.
+
+  # Generate Twitter content
+  - id: generate-twitter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 400
+        prompt: |
+          Create a single tweet (max 280 chars) from:
+          {{habits.nodes.parse-content.text}}
+          Brand: {{habits.input.brand}}
+          Make it punchy and engaging with hashtags.
+
+  # Generate Instagram caption
+  - id: generate-instagram
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 500
+        prompt: |
+          Create an Instagram caption from:
+          {{habits.nodes.parse-content.text}}
+          Brand: {{habits.input.brand}}
+          Include emojis, line breaks, and 15-20 hashtags.
+
+  # Post to LinkedIn (if enabled)
+  - id: post-linkedin
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      resource: createPost
+      operation: createPost
+      credentials:
+        linkedin:
+          accessToken: "{{habits.env.LINKEDIN_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.LINKEDIN_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.nodes.generate-linkedin.text}}"
+        visibility: "PUBLIC"
+      stopAfterIf:
+        expr: "!habits.input.postLinkedin"
+        skipIfStopped: true
+
+  # Post to Twitter (if enabled)
+  - id: post-twitter
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      resource: tweet
+      operation: tweet
+      credentials:
+        twitter:
+          accessToken: "{{habits.env.TWITTER_ACCESS_TOKEN}}"
+          refreshToken: "{{habits.env.TWITTER_REFRESH_TOKEN}}"
+      params:
+        text: "{{habits.nodes.generate-twitter.text}}"
+      stopAfterIf:
+        expr: "!habits.input.postTwitter"
+        skipIfStopped: true
+
+  # Post to Instagram (if enabled and image provided)
+  - id: post-instagram
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-instagram"
+      resource: createPost
+      operation: createPost
+      credentials:
+        instagram:
+          accessToken: "{{habits.env.INSTAGRAM_ACCESS_TOKEN}}"
+      params:
+        imageUrl: "{{habits.input.imageUrl}}"
+        caption: "{{habits.nodes.generate-instagram.text}}"
+      stopAfterIf:
+        expr: "!habits.input.postInstagram || !habits.input.imageUrl"
+        skipIfStopped: true
+
+edges:
+  - source: fetch-blog
+    target: parse-content
+  - source: parse-content
+    target: generate-linkedin
+  - source: parse-content
+    target: generate-twitter
+  - source: parse-content
+    target: generate-instagram
+  - source: generate-linkedin
+    target: post-linkedin
+  - source: generate-twitter
+    target: post-twitter
+  - source: generate-instagram
+    target: post-instagram
+
+output:
+  parsedContent: "{{habits.nodes.parse-content.text}}"
+  linkedinContent: "{{habits.nodes.generate-linkedin.text}}"
+  twitterContent: "{{habits.nodes.generate-twitter.text}}"
+  instagramContent: "{{habits.nodes.generate-instagram.text}}"
+  linkedinPostId: "{{habits.nodes.post-linkedin.postId}}"
+  twitterTweetId: "{{habits.nodes.post-twitter.tweetId}}"
+  instagramMediaId: "{{habits.nodes.post-instagram.mediaId}}"

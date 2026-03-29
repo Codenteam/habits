@@ -17,7 +17,7 @@ import {
 } from './types';
 import { createExecutionContext, N8nNodeExecutionOptions } from './executionContext';
 import { loadCredentialType, applyCredentialAuthentication, applyFallbackAuthentication } from './credentialLoader';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

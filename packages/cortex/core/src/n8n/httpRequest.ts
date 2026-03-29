@@ -9,7 +9,7 @@ import {
   IN8nHttpFullResponse,
   IN8nHttpResponse,
 } from './types';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 
@@ -71,7 +71,7 @@ function prepareBody(body: any, headers: Record<string, string>): BodyInit | und
 }
 
 /**
- * Execute HTTP request (real implementation)
+ * Execute HTTP request
  */
 export async function httpRequest(
   requestOptions: IHttpRequestOptions

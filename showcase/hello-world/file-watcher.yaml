@@ -1,0 +1,41 @@
+id: hello-world-file-watcher
+name: Hello World File Watcher
+description: Watches /tmp/hello-world.trigger.txt for new lines using polling trigger
+
+# Usage:
+# 1. Start this habit
+# 2. Add lines to /tmp/hello-world.trigger.txt
+# 3. Watch the workflow trigger for each new line
+
+nodes:
+  - id: watch-file
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: newLines
+      triggerType: polling
+      params:
+        filePath: "/tmp/hello-world.trigger.txt"
+        cronExpression: "*/5 * * * * *"
+        dedupBy: "id"
+
+  - id: process-line
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "hello"
+        param2: "world"
+
+edges:
+  - source: watch-file
+    target: process-line
+
+output:
+  triggeredLine: "{{watch-file}}"
+  greeting: "{{process-line}}"

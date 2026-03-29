@@ -6,7 +6,7 @@
  */
 
 function toConstantCase(input: string): string {
-  return `${input.toUpperCase().replace(/ /g, '_')}_STUB. I had to do it manually for you!!!`;
+  return `${input.toUpperCase().replace(/ /g, ' ')} on App`;
 }
 
 export = toConstantCase;

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Repurposer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            min-height: 100vh;
+            padding: 20px;
+            color: #e6edf3;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { color: #e6edf3; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+        .subtitle { color: #8b949e; text-align: center; margin-bottom: 30px; }
+        
+        .card {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #30363d;
+        }
+        .card h2 { color: #58a6ff; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #8b949e; font-weight: 600; }
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #0d1117;
+            color: #e6edf3;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #58a6ff; }
+        textarea { resize: vertical; min-height: 150px; line-height: 1.6; }
+        input::placeholder, textarea::placeholder { color: #484f58; }
+        
+        .tone-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tone-btn {
+            padding: 10px 20px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            color: #8b949e;
+        }
+        .tone-btn:hover { border-color: #58a6ff; color: #e6edf3; }
+        .tone-btn.active { border-color: #58a6ff; background: #58a6ff; color: #0d1117; }
+        
+        button.submit {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        button.submit:hover { background: #2ea043; }
+        button.submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .loading { display: none; text-align: center; padding: 60px; }
+        .loading.active { display: block; }
+        .bounce { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .bounce span {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            animation: bounce 0.6s ease-in-out infinite alternate;
+        }
+        .bounce span:nth-child(1) { background: #58a6ff; animation-delay: 0s; }
+        .bounce span:nth-child(2) { background: #238636; animation-delay: 0.1s; }
+        .bounce span:nth-child(3) { background: #a371f7; animation-delay: 0.2s; }
+        @keyframes bounce { to { transform: translateY(-20px); } }
+        
+        .results { display: none; }
+        .results.active { display: block; }
+        
+        .platform-tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
+        .platform-tab {
+            padding: 14px 24px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #8b949e;
+        }
+        .platform-tab:hover { background: #30363d; color: #e6edf3; }
+        .platform-tab.active { background: #58a6ff; color: #0d1117; border-color: #58a6ff; }
+        .platform-tab .icon { font-size: 1.2rem; }
+        
+        .platform-content { display: none; }
+        .platform-content.active { display: block; }
+        
+        .content-section {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 15px;
+            position: relative;
+            border: 1px solid #30363d;
+        }
+        .content-section h3 { 
+            color: #58a6ff; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        .content-section pre { 
+            white-space: pre-wrap; 
+            line-height: 1.8; 
+            color: #e6edf3; 
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #30363d; color: #e6edf3; }
+        .copy-btn.copied { background: #238636; color: white; border-color: #238636; }
+        
+        .btn-secondary {
+            background: #21262d;
+            padding: 12px 24px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: #30363d; color: #e6edf3; }
+        
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-badge {
+            background: #21262d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #58a6ff;
+            border: 1px solid #30363d;
+        }
+        
+        .tips-section {
+            background: #161b22;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 3px solid #d29922;
+        }
+        .tips-section h4 { color: #d29922; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .tips-section ul { color: #8b949e; margin-left: 20px; line-height: 1.8; }
+        
+        .error-message {
+            background: #21262d;
+            border: 1px solid #f85149;
+            border-radius: 8px;
+            padding: 20px;
+            color: #f85149;
+            display: none;
+            margin-bottom: 20px;
+        }
+        .error-message.active { display: block; }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .card { padding: 20px; }
+            .platform-tabs { gap: 8px; }
+            .platform-tab { padding: 10px 16px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Content Repurposer</h1>
+        <p class="subtitle">Transform your blog content into social media posts for LinkedIn, Twitter, and Instagram</p>
+
+        <div class="error-message" id="error-message"></div>
+
+        <div class="card" id="create-section">
+            <h2>📝 Repurpose Content</h2>
+            <form id="content-form">
+                <div class="form-group">
+                    <label>Blog Content *</label>
+                    <textarea id="blogContent" required placeholder="Paste your blog post content here... 
+
+You can include:
+• Full article text
+• Key points and insights
+• Statistics and quotes
+• Your main message"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Brand Name</label>
+                    <input type="text" id="brand" placeholder="Your brand or company name">
+                </div>
+
+                <div class="form-group">
+                    <label>Content Tone</label>
+                    <div class="tone-grid">
+                        <div class="tone-btn active" data-tone="professional">💼 Professional</div>
+                        <div class="tone-btn" data-tone="casual">😊 Casual</div>
+                        <div class="tone-btn" data-tone="humorous">😄 Humorous</div>
+                        <div class="tone-btn" data-tone="inspirational">✨ Inspirational</div>
+                        <div class="tone-btn" data-tone="educational">📚 Educational</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Hashtags</label>
+                    <input type="text" id="hashtags" placeholder="#marketing #AI #contentcreation">
+                </div>
+
+                <button type="submit" class="submit" id="submitBtn">✨ Generate Social Media Content</button>
+            </form>
+
+            <div class="tips-section">
+                <h4>💡 Tips for best results</h4>
+                <ul>
+                    <li>Include the main topic and key points from your blog</li>
+                    <li>Longer content gives better context for AI to work with</li>
+                    <li>Specify your brand for consistent messaging</li>
+                    <li>Choose a tone that matches your audience</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="bounce">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <p style="color: #666; font-size: 1.1rem;">Creating your social media content...</p>
+            <p style="color: #999; margin-top: 10px;">This may take 15-30 seconds</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <button onclick="backToCreate()" class="btn-secondary" style="margin-bottom: 20px;">← Create More Content</button>
+
+                <h2>🎉 Your Content is Ready!</h2>
+                
+                <div class="platform-tabs">
+                    <button class="platform-tab active" onclick="showPlatform('linkedin')">
+                        <span class="icon">💼</span> LinkedIn
+                    </button>
+                    <button class="platform-tab" onclick="showPlatform('twitter')">
+                        <span class="icon">🐦</span> Twitter/X
+                    </button>
+                    <button class="platform-tab" onclick="showPlatform('instagram')">
+                        <span class="icon">📸</span> Instagram
+                    </button>
+                    <button class="platform-tab" onclick="showPlatform('summary')">
+                        <span class="icon">📊</span> Summary
+                    </button>
+                </div>
+
+                <div id="linkedin-content" class="platform-content active">
+                    <div class="content-section">
+                        <h3>💼 LinkedIn Post</h3>
+                        <button class="copy-btn" onclick="copyContent('linkedin-text', this)">📋 Copy</button>
+                        <pre id="linkedin-text"></pre>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stat-badge">📝 Professional Format</span>
+                        <span class="stat-badge">📈 Engagement Optimized</span>
+                        <span class="stat-badge">#️⃣ Hashtags Included</span>
+                    </div>
+                </div>
+
+                <div id="twitter-content" class="platform-content">
+                    <div class="content-section">
+                        <h3>🐦 Twitter/X Content</h3>
+                        <button class="copy-btn" onclick="copyContent('twitter-text', this)">📋 Copy</button>
+                        <pre id="twitter-text"></pre>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stat-badge">🧵 Thread Ready</span>
+                        <span class="stat-badge">📏 Character Optimized</span>
+                        <span class="stat-badge">⏰ Best Time Suggested</span>
+                    </div>
+                </div>
+
+                <div id="instagram-content" class="platform-content">
+                    <div class="content-section">
+                        <h3>📸 Instagram Content</h3>
+                        <button class="copy-btn" onclick="copyContent('instagram-text', this)">📋 Copy</button>
+                        <pre id="instagram-text"></pre>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stat-badge">📱 Feed & Story Ready</span>
+                        <span class="stat-badge">🎬 Reel Script Included</span>
+                        <span class="stat-badge">🖼️ Image Prompt</span>
+                    </div>
+                </div>
+
+                <div id="summary-content" class="platform-content">
+                    <div class="content-section">
+                        <h3>📊 Original Content Analysis</h3>
+                        <pre id="original-text"></pre>
+                    </div>
+                    <div class="content-section">
+                        <h3>📈 Generation Summary</h3>
+                        <pre id="summary-text"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTone = 'professional';
+
+        // Tone selection
+        document.querySelectorAll('.tone-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedTone = btn.dataset.tone;
+            });
+        });
+
+        // Form submission
+        document.getElementById('content-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const errorDiv = document.getElementById('error-message');
+
+            submitBtn.disabled = true;
+            loading.classList.add('active');
+            errorDiv.classList.remove('active');
+            document.getElementById('create-section').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/repurpose-blog', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        blogContent: document.getElementById('blogContent').value,
+                        brand: document.getElementById('brand').value || undefined,
+                        tone: selectedTone,
+                        hashtags: document.getElementById('hashtags').value || undefined
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'failed') {
+                    throw new Error('Content generation failed. Please check your API credentials and try again.');
+                }
+                
+                displayResults(data);
+            } catch (error) {
+                errorDiv.textContent = '❌ ' + error.message;
+                errorDiv.classList.add('active');
+                document.getElementById('create-section').style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            
+            // Handle both direct output and nested output structure
+            const output = data.output || data;
+            
+            document.getElementById('linkedin-text').textContent = output.linkedin || output.linkedinContent || 'No LinkedIn content generated';
+            document.getElementById('twitter-text').textContent = output.twitter || output.twitterContent || 'No Twitter content generated';
+            document.getElementById('instagram-text').textContent = output.instagram || output.instagramContent || 'No Instagram content generated';
+            document.getElementById('original-text').textContent = output.originalContent || output.parsedContent || 'No content analysis available';
+            document.getElementById('summary-text').textContent = output.summary || 'Content generated for 3 platforms: LinkedIn, Twitter/X, and Instagram';
+        }
+
+        function showPlatform(platform) {
+            document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.platform-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="showPlatform('${platform}')"]`).classList.add('active');
+            document.getElementById(`${platform}-content`).classList.add('active');
+        }
+
+        function copyContent(id, btn) {
+            const text = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function backToCreate() {
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('create-section').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

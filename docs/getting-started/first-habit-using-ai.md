@@ -68,7 +68,7 @@ On **Intersect Cloud** and **Intersect Self-hosted**, these variables are config
 
 ## Prerequisites
 
-- Habits Base UI running (see [Setup Base Locally](./first-habit-using-base.md#setup-base-locally))
+- Habits Base UI running (see [Setup Base Locally](./first-habit.md#setup-base-locally))
 - The environment variables above configured (at minimum `HABITS_AI_GEN=true` and `CLAUDE_API_KEY`)
 
 Then run the server from the cloned repository:
@@ -150,7 +150,7 @@ Click **Done** to close the modal. Your generated habit is now loaded in the Bas
 | **Specify integrations** | "use OpenAI for text analysis and store results in the database" |
 
 ::: info <Icon name="lightbulb" /> Iterate and Refine
-The AI-generated habit is a starting point. You can always modify the workflow, tweak the UI, or add more nodes manually after generation. Switch to the [Base UI guide](./first-habit-using-base.md) or [Habit-as-Code guide](./first-habit.md) for manual editing techniques.
+The AI-generated habit is a starting point. You can always modify the workflow, tweak the UI, or add more nodes manually after generation. Switch to the [Base UI guide](./first-habit.md) or [Habit-as-Code guide](./first-habit-mixed.md) for manual editing techniques.
 :::
 
 ## Generating a Bit (Node Module) (Beta)
@@ -197,7 +197,7 @@ The generated bit files will be created and ready for use in your workflows.
 
 ## Next Steps
 
-- **[First Habit (Base UI)](./first-habit-using-base.md)**, Learn the visual editor for manual habit building
-- **[First Habit (Habit-as-Code)](./first-habit.md)**, Build habits using YAML/JSON directly
+- **[First Habit (Base UI)](./first-habit.md)**, Learn the visual editor for manual habit building
+- **[First Habit (Habit-as-Code)](./first-habit-mixed.md)**, Build habits using YAML/JSON directly
 - **[Examples](/showcase/)**, Browse real-world habit examples
 - **[Variables & Expressions](../deep-dive/variables.md)**, Learn how to pass data between nodes

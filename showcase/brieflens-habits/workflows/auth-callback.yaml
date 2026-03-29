@@ -1,0 +1,96 @@
+id: auth-callback
+name: OAuth Callback Handler
+description: >-
+  Handles Google OAuth callback, exchanges code for tokens,
+  and stores user credentials in the database.
+version: "1.0"
+
+nodes:
+  # Exchange the authorization code for tokens
+  - id: exchange-tokens
+    type: bits
+    data:
+      label: Exchange Auth Code
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-calendar"
+      operation: exchangeCode
+      params:
+        code: "{{habits.input.code}}"
+      credentials:
+        auth:
+          clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+          redirectUri: "{{habits.env.GOOGLE_REDIRECT_URI}}"
+
+  # Get user info to extract email
+  - id: get-user-info
+    type: bits
+    data:
+      label: Get User Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-calendar"
+      operation: getUserInfo
+      params:
+        accessToken: "{{exchange-tokens.accessToken}}"
+      credentials:
+        auth:
+          clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+          redirectUri: "{{habits.env.GOOGLE_REDIRECT_URI}}"
+
+  # Store user credentials in database
+  - id: store-user
+    type: bits
+    data:
+      label: Store User Tokens
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: users
+        key: "{{get-user-info.email}}"
+        value: |
+          {
+            "email": "{{get-user-info.email}}",
+            "name": "{{get-user-info.name}}",
+            "accessToken": "{{exchange-tokens.accessToken}}",
+            "refreshToken": "{{exchange-tokens.refreshToken}}",
+            "expiryDate": "{{exchange-tokens.expiryDate}}",
+            "createdAt": "{{habits.now}}"
+          }
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Return success response
+  - id: success-response
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Return Success
+      params:
+        email: "{{get-user-info.email}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(email: string) {
+            return {
+              success: true,
+              message: `Successfully authenticated ${email}`,
+              email,
+              redirect: "/"
+            };
+          }
+
+edges:
+  - source: exchange-tokens
+    target: get-user-info
+  - source: get-user-info
+    target: store-user
+  - source: store-user
+    target: success-response
+
+output:
+  - success-response

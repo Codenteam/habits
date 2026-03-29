@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-fetch-emails"
+description = "Enables the fetch_emails command without any pre-configured scope."
+commands.allow = ["fetch_emails"]
+
+[[permission]]
+identifier = "deny-fetch-emails"
+description = "Denies the fetch_emails command without any pre-configured scope."
+commands.deny = ["fetch_emails"]

@@ -1,0 +1,26 @@
+version: "1.0"
+workflows:
+  # PDF extraction workflow
+  - id: extract-pdf
+    path: ./habits/extract-pdf.yaml
+    enabled: true
+  
+  # OCR processing workflow
+  - id: process-ocr
+    path: ./habits/process-ocr.yaml
+    enabled: true
+  
+  # Invoice generation workflow  
+  - id: create-invoice
+    path: ./habits/create-invoice.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+
+logging:
+  level: debug
+  outputs: [console]
+  format: text
+  colorize: true

@@ -1,7 +1,7 @@
 {
   "name": "@ha-bits/bit-loop",
-  "version": "1.0.1",
-  "description": "Loop and split bit for iterating, filtering, mapping, and aggregating data in workflows",
+  "version": "1.0.0",
+  "description": "Iterate over items and invoke a sub-habit for each one",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -12,37 +12,21 @@
     "habits",
     "bits",
     "loop",
-    "split",
-    "iterate",
-    "filter",
-    "map",
-    "aggregate"
+    "foreach",
+    "iteration",
+    "subworkflow"
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "files": [
     "dist"
   ],
-  "nx": {
-    "sourceRoot": "@ha-bits/bit-loop/src",
-    "projectType": "library",
-    "tags": [
-      "scope:bits",
-      "type:bit"
-    ],
-    "targets": {
-      "build": {
-        "outputs": [
-          "{projectRoot}/dist"
-        ]
-      },
-      "publish-verdaccio": {},
-      "publish-npm": {},
-      "publish-private": {}
-    }
+  "publishConfig": {
+    "access": "public"
   }
 }

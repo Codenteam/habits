@@ -13,6 +13,8 @@ export interface TauriConfigOptions {
   windowHeight?: number;
   /** Additional permissions for plugins */
   permissions?: string[];
+  /** Custom URL scheme for deep links (e.g., "myapp" for myapp://callback) */
+  deepLinkScheme?: string;
 }
 
 export function getTauriConfig(options: TauriConfigOptions): string {
@@ -24,10 +26,30 @@ export function getTauriConfig(options: TauriConfigOptions): string {
     windowTitle,
     windowWidth = 1200,
     windowHeight = 800,
+    deepLinkScheme,
   } = options;
 
   // Extract domain from backend URL for CSP
   const backendDomain = backendUrl.replace(/^https?:\/\//, '').split('/')[0];
+
+  // Build plugins configuration
+  const plugins: Record<string, any> = {
+    // http: {
+    //   scope: [`${backendUrl}/*`, `${backendUrl.replace(/\/$/, '')}/*`],
+    // },
+  };
+
+  // Add deep-link plugin configuration if scheme is provided
+  if (deepLinkScheme) {
+    plugins['deep-link'] = {
+      desktop: {
+        schemes: [deepLinkScheme],
+      },
+      mobile: {
+        schemes: [deepLinkScheme],
+      },
+    };
+  }
 
   // Tauri v2 configuration format
   const config = {
@@ -93,11 +115,7 @@ export function getTauriConfig(options: TauriConfigOptions): string {
         },
       },
     },
-    plugins: {
-      // http: {
-      //   scope: [`${backendUrl}/*`, `${backendUrl.replace(/\/$/, '')}/*`],
-      // },
-    },
+    plugins,
   };
 
   return JSON.stringify(config, null, 2);
@@ -118,6 +136,13 @@ export function getTauriCapabilities(appId: string, additionalPermissions: strin
       'shell:allow-open',
       'http:default',
       'log:default',
+      'keyring:default',
+      'keyring:allow-get-password',
+      'keyring:allow-set-password',
+      'keyring:allow-delete-password',
+      'dialog:default',
+      'dialog:allow-ask',
+      'dialog:allow-message',
       ...additionalPermissions,
     ],
   };

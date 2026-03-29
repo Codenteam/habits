@@ -431,6 +431,193 @@ function generateWebhookPaths(): Record<string, any> {
 }
 
 /**
+ * Generate OAuth paths for the OpenAPI specification
+ */
+function generateOAuthPaths(): Record<string, any> {
+  return {
+    '/oauth/{bitId}/init': {
+      get: {
+        tags: ['OAuth'],
+        summary: 'Initialize OAuth flow',
+        description: 'Initiates an OAuth2 authorization flow for a specific bit and redirects the user to the OAuth provider\'s authorization page.',
+        operationId: 'initOAuth',
+        parameters: [
+          {
+            name: 'bitId',
+            in: 'path',
+            required: true,
+            description: 'The unique identifier of the bit requiring OAuth (e.g., "bit-google-drive")',
+            schema: { type: 'string' },
+            example: 'bit-google-drive',
+          },
+        ],
+        responses: {
+          '302': {
+            description: 'Redirects to OAuth provider authorization URL',
+            headers: {
+              Location: {
+                description: 'OAuth provider authorization URL',
+                schema: { type: 'string', format: 'uri' },
+              },
+            },
+          },
+          '404': {
+            description: 'OAuth not configured for the specified bit',
+            content: {
+              'text/html': {
+                schema: { type: 'string' },
+                example: '<html><body><h1>OAuth Not Configured</h1></body></html>',
+              },
+            },
+          },
+          '500': {
+            description: 'Failed to initiate OAuth flow',
+            content: {
+              'text/html': {
+                schema: { type: 'string' },
+                example: '<html><body><h1>Failed to Initiate OAuth Flow</h1></body></html>',
+              },
+            },
+          },
+        },
+      },
+    },
+    '/oauth/{bitId}/callback': {
+      get: {
+        tags: ['OAuth'],
+        summary: 'OAuth callback',
+        description: 'Handles the OAuth2 callback from the authorization provider. Exchanges the authorization code for access tokens and stores them in a cookie.',
+        operationId: 'oauthCallback',
+        parameters: [
+          {
+            name: 'bitId',
+            in: 'path',
+            required: true,
+            description: 'The unique identifier of the bit (must match the bit used in /init)',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'code',
+            in: 'query',
+            required: false,
+            description: 'Authorization code from the OAuth provider',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'state',
+            in: 'query',
+            required: false,
+            description: 'State parameter for CSRF protection (must match the state from /init)',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'error',
+            in: 'query',
+            required: false,
+            description: 'Error code if authorization failed',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'error_description',
+            in: 'query',
+            required: false,
+            description: 'Human-readable error description',
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Authorization successful. Token stored in cookie.',
+            headers: {
+              'Set-Cookie': {
+                description: 'OAuth token cookie (oauth_{bitId})',
+                schema: { type: 'string' },
+              },
+            },
+            content: {
+              'text/html': {
+                schema: { type: 'string' },
+                example: '<html><body><h1>Authorization Successful!</h1></body></html>',
+              },
+            },
+          },
+          '400': {
+            description: 'OAuth error or missing authorization code',
+            content: {
+              'text/html': {
+                schema: { type: 'string' },
+                example: '<html><body><h1>OAuth Authorization Failed</h1></body></html>',
+              },
+            },
+          },
+          '500': {
+            description: 'Token exchange failed',
+            content: {
+              'text/html': {
+                schema: { type: 'string' },
+                example: '<html><body><h1>Token Exchange Failed</h1></body></html>',
+              },
+            },
+          },
+        },
+      },
+    },
+    '/oauth/status': {
+      get: {
+        tags: ['OAuth'],
+        summary: 'Get OAuth status',
+        description: 'Returns the current OAuth status for all bits, including which bits have valid tokens and which have pending authorization flows.',
+        operationId: 'getOAuthStatus',
+        responses: {
+          '200': {
+            description: 'OAuth status for all bits',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    tokens: {
+                      type: 'array',
+                      description: 'List of bits with stored tokens',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          bitId: { type: 'string', description: 'Bit identifier' },
+                          hasValidToken: { type: 'boolean', description: 'Whether the token is valid' },
+                          isExpired: { type: 'boolean', description: 'Whether the token has expired' },
+                        },
+                      },
+                    },
+                    pendingFlows: {
+                      type: 'array',
+                      description: 'List of pending OAuth flows',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          bitId: { type: 'string', description: 'Bit identifier' },
+                          authUrl: { type: 'string', description: 'Authorization URL' },
+                          createdAt: { type: 'number', description: 'Timestamp when flow was initiated' },
+                        },
+                      },
+                    },
+                  },
+                },
+                example: {
+                  tokens: [
+                    { bitId: 'bit-google-drive', hasValidToken: true, isExpired: false },
+                  ],
+                  pendingFlows: [],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+/**
  * Generate dynamic workflow execute path for a specific workflow
  */
 function generateWorkflowExecutePath(
@@ -594,11 +781,13 @@ ${workflows.length > 0
       { name: 'Workflows', description: 'Workflow management and execution endpoints' },
       { name: 'Executions', description: 'Execution monitoring and control endpoints' },
       { name: 'Webhooks', description: 'Webhook endpoints for workflow triggers' },
+      { name: 'OAuth', description: 'OAuth2 authorization flow endpoints' },
       { name: 'Health', description: 'Server health and status endpoints' },
     ],
     paths: {
       ...generateBasePaths(),
       ...generateWebhookPaths(),
+      ...generateOAuthPaths(),
     },
     components: {
       schemas: { ...componentSchemas },

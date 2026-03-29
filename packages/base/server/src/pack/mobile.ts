@@ -16,7 +16,7 @@ import { packTauri } from './tauri';
 import { checkCordovaCompatibility, parseJavaVersion, parseGradleVersion } from './gradle-java-compatibility';
 import { generateBundle } from './bundle-generator-wrapper';
 import JSZip from 'jszip';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 import { sanitizeStackName, createTmpWorkDir, createCleanupHandler, addDirectoryToZip } from './utils';
 const logger = LoggerFactory.getRoot();
 

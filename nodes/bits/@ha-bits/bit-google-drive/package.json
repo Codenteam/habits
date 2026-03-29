@@ -1,0 +1,56 @@
+{
+  "name": "@ha-bits/bit-google-drive",
+  "version": "1.0.0",
+  "description": "Google Drive integration bit for file hosting and cloud storage operations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "google-drive",
+    "cloud-storage",
+    "file-hosting",
+    "oauth2"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "googleapis": "^140.0.0",
+    "google-auth-library": "^9.0.0",
+    "@ha-bits/bit-file-hosting": "file:../bit-file-hosting"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-google-drive/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L2"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true
+  }
+}

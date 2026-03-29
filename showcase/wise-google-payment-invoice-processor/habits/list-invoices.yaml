@@ -1,0 +1,22 @@
+id: list-invoices
+name: List Invoices
+description: Retrieve all invoices from the database
+
+nodes:
+  - id: query-invoices
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: "invoices"
+        filter: {}
+        limit: 100
+
+edges: []
+
+output:
+  invoices: "{{query-invoices.results}}"
+  count: "{{query-invoices.count}}"

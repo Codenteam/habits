@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-disconnect-imap"
+description = "Enables the disconnect_imap command without any pre-configured scope."
+commands.allow = ["disconnect_imap"]
+
+[[permission]]
+identifier = "deny-disconnect-imap"
+description = "Denies the disconnect_imap command without any pre-configured scope."
+commands.deny = ["disconnect_imap"]

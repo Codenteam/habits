@@ -1,0 +1,160 @@
+id: manual-invoice
+name: Manual Invoice Entry
+description: API endpoint to manually add invoices to the Google Sheet and generate PDF
+
+# No script nodes - uses direct templating
+
+input:
+  - id: invoiceNumber
+    type: string
+    required: true
+    description: Invoice number (e.g., INV-2026-001)
+  - id: date
+    type: string
+    required: true
+    description: Invoice date (e.g., 2026-03-20)
+  - id: customerName
+    type: string
+    required: true
+    description: Customer name
+  - id: customerAddress
+    type: string
+    required: false
+    description: Customer address
+  - id: customerEmail
+    type: string
+    required: false
+    description: Customer email
+  - id: description
+    type: string
+    required: true
+    description: Description of goods/services
+  - id: notes
+    type: string
+    required: false
+    description: Additional notes
+  - id: amount
+    type: number
+    required: true
+    description: Net amount (before VAT)
+  - id: vat
+    type: number
+    required: false
+    description: VAT amount
+  - id: total
+    type: number
+    required: true
+    description: Total amount (including VAT)
+  - id: currency
+    type: string
+    required: true
+    description: Currency symbol (e.g., $, £, €)
+
+nodes:
+  # Generate PDF Invoice
+  - id: generate-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-invoice"
+      operation: createInvoice
+      params:
+        invoiceId: "{{habits.input.invoiceNumber}}"
+        invoiceDate: "{{habits.input.date}}"
+        header:
+          lines:
+            - "Your Company Name"
+            - "Invoice"
+        footer:
+          lines:
+            - "Thank you for your business!"
+            - "Payment terms: Net 30"
+        seller:
+          lines:
+            - "Your Company Name"
+            - "123 Business Ave"
+            - "City, State 12345"
+            - "billing@yourcompany.com"
+        customer:
+          lines:
+            - "{{habits.input.customerName}}"
+            - "{{habits.input.customerEmail}}"
+            - "{{habits.input.customerAddress}}"
+        items:
+          - Description: "{{habits.input.description}}"
+            Qty: 1
+            "Unit Price": "{{habits.input.amount}}"
+            Tax: "{{habits.input.vat}}"
+            Price: "{{habits.input.total}}"
+        itemColumns:
+          - "Description"
+          - "Qty"
+          - "Unit Price"
+          - "Tax"
+          - "Price"
+        taxColumn: "Tax"
+        priceColumn: "Price"
+        currency: "{{habits.input.currency}}"
+        primaryColor: "#2563eb"
+        notes:
+          - "{{habits.input.notes}}"
+
+  # Append to Google Sheets
+  - id: append-to-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: appendRow
+      params:
+        accessToken: "{{habits.env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        sheetName: "Invoices"
+        values:
+          - "{{habits.input.invoiceNumber}}"
+          - "{{habits.input.date}}"
+          - "{{habits.input.customerName}}"
+          - "{{habits.input.customerAddress}}"
+          - "{{habits.input.description}}"
+          - "{{habits.input.notes}}"
+          - "{{habits.input.amount}}"
+          - "{{habits.input.vat}}"
+          - "{{habits.input.total}}"
+          - "{{habits.input.currency}}"
+
+  # Store invoice in database
+  - id: store-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: "invoices"
+        document:
+          invoiceNumber: "{{habits.input.invoiceNumber}}"
+          date: "{{habits.input.date}}"
+          customerName: "{{habits.input.customerName}}"
+          customerEmail: "{{habits.input.customerEmail}}"
+          customerAddress: "{{habits.input.customerAddress}}"
+          description: "{{habits.input.description}}"
+          notes: "{{habits.input.notes}}"
+          amount: "{{habits.input.amount}}"
+          vat: "{{habits.input.vat}}"
+          total: "{{habits.input.total}}"
+          currency: "{{habits.input.currency}}"
+          pdfBase64: "{{generate-invoice.base64}}"
+          source: "manual"
+
+edges:
+  - source: generate-invoice
+    target: store-invoice
+
+output:
+  success: true
+  invoiceNumber: "{{habits.input.invoiceNumber}}"
+  invoice: "{{generate-invoice}}"
+  sheetRow: "{{append-to-sheet}}"

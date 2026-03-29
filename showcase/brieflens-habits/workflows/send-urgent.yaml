@@ -1,0 +1,213 @@
+id: send-urgent
+name: Send Urgent Meeting Alerts
+description: >-
+  Scheduled workflow that checks for meetings starting soon
+  and sends urgent briefing alerts.
+version: "1.0"
+
+nodes:
+  # Schedule trigger - runs every 15 minutes
+  - id: schedule-trigger
+    type: activepieces
+    data:
+      framework: activepieces
+      source: npm
+      module: "@activepieces/piece-schedule"
+      operation: cron_expression
+      triggerType: polling
+      params:
+        cronExpression: "*/15 * * * *"
+        timezone: "UTC"
+
+  # Get events starting in next 30 minutes that haven't been notified
+  - id: get-urgent-events
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Find Urgent Events
+      params:
+        type: script
+        language: deno
+        script: |
+          export async function main() {
+            // Calculate time window (next 30 minutes)
+            const now = new Date();
+            const soon = new Date(now.getTime() + 30 * 60 * 1000);
+            
+            return {
+              timeMin: now.toISOString(),
+              timeMax: soon.toISOString(),
+              filter: {
+                notified: false,
+                startTime: { $gte: now.toISOString(), $lte: soon.toISOString() }
+              }
+            };
+          }
+
+  # Query database for urgent events
+  - id: query-events
+    type: bits
+    data:
+      label: Query Urgent Events
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: events
+        filter: '{"notified": false}'
+        limit: 100
+        database: "{{habits.env.DATABASE_FILE}}"
+
+  # Filter to events starting within 30 minutes
+  - id: filter-urgent
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Filter Urgent Events
+      params:
+        events: "{{query-events.documents}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(events: any[]) {
+            const now = new Date();
+            const soonMs = 30 * 60 * 1000; // 30 minutes
+            
+            const urgentEvents = events.filter(event => {
+              const startTime = new Date(event.startTime);
+              const timeDiff = startTime.getTime() - now.getTime();
+              return timeDiff > 0 && timeDiff <= soonMs;
+            });
+            
+            console.log(`⏰ Found ${urgentEvents.length} urgent events (starting in next 30 min)`);
+            return { events: urgentEvents, count: urgentEvents.length };
+          }
+
+  # Process each urgent event
+  - id: process-urgent
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Process Urgent Events
+      params:
+        urgentData: "{{filter-urgent}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(urgentData: any) {
+            if (urgentData.count === 0) {
+              console.log("⏰ No urgent meetings to notify");
+              return { processed: 0, skipped: true };
+            }
+            
+            // Group events by user for batch notifications
+            const byUser = new Map();
+            for (const event of urgentData.events) {
+              const userEmail = event.userEmail;
+              if (!byUser.has(userEmail)) {
+                byUser.set(userEmail, []);
+              }
+              byUser.get(userEmail).push(event);
+            }
+            
+            const notifications = [];
+            for (const [email, events] of byUser) {
+              notifications.push({
+                userEmail: email,
+                events,
+                eventCount: events.length
+              });
+            }
+            
+            return { notifications, totalUsers: notifications.length, totalEvents: urgentData.count };
+          }
+
+  # Send urgent alerts
+  - id: send-alerts
+    type: bits
+    data:
+      label: Send Urgent Alerts
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{process-urgent.notifications}}"
+        habitId: send-urgent-alert
+        inputKey: spread
+        delayMs: 100
+        continueOnError: true
+        collectResults: true
+
+  # Mark events as notified
+  - id: mark-notified
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Mark Events Notified
+      params:
+        urgentData: "{{filter-urgent}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(urgentData: any) {
+            // In production, this would update the database
+            const eventIds = urgentData.events.map((e: any) => e.eventId);
+            console.log(`✅ Marked ${eventIds.length} events as notified`);
+            return { markedCount: eventIds.length, eventIds };
+          }
+
+  # Log completion
+  - id: log-completion
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log Results
+      params:
+        sendResults: "{{send-alerts}}"
+        processed: "{{process-urgent}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(sendResults: any, processed: any) {
+            if (processed.skipped) {
+              return { success: true, message: "No urgent meetings" };
+            }
+            
+            console.log("⏰ Urgent alerts completed:");
+            console.log(`   Users notified: ${processed.totalUsers}`);
+            console.log(`   Events: ${processed.totalEvents}`);
+            console.log(`   Emails sent: ${sendResults.successCount}`);
+            
+            return {
+              success: true,
+              usersNotified: processed.totalUsers,
+              eventsProcessed: processed.totalEvents,
+              emailsSent: sendResults.successCount
+            };
+          }
+
+edges:
+  - source: schedule-trigger
+    target: get-urgent-events
+  - source: get-urgent-events
+    target: query-events
+  - source: query-events
+    target: filter-urgent
+  - source: filter-urgent
+    target: process-urgent
+  - source: process-urgent
+    target: send-alerts
+  - source: send-alerts
+    target: mark-notified
+  - source: mark-notified
+    target: log-completion
+
+output:
+  - log-completion

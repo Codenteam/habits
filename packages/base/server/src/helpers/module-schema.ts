@@ -9,7 +9,7 @@ import { getModuleName } from "@ha-bits/cortex/utils/moduleLoader";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
 import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
 import { extractPiece } from './activepieces-loader';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 // Type imports (compile-time only, not bundled)
 import type { Piece } from "@activepieces/pieces-framework";

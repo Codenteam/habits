@@ -1,0 +1,51 @@
+{
+  "name": "@ha-bits/bit-file-hosting",
+  "version": "1.0.0",
+  "description": "L0 base bit for cloud file hosting/storage services - provides common interfaces and types",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "file-hosting",
+    "cloud-storage",
+    "base",
+    "L0"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-file-hosting/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L0"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": false
+  }
+}

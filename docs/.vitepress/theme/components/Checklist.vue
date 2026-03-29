@@ -7,6 +7,9 @@ import {
   Wrench,
   BookOpen,
   Monitor,
+  Smartphone,
+  Server,
+  Cloud,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -28,6 +31,9 @@ const iconMap: Record<string, LucideIcon> = {
   rocket: Rocket,
   wrench: Wrench,
   book: BookOpen,
+  smartphone: Smartphone,
+  server: Server,
+  cloud: Cloud,
   monitor: Monitor,
 }
 

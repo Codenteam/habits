@@ -1,0 +1,85 @@
+id: create-invoice
+name: Create Invoice PDF
+description: Generate a professional PDF invoice with dynamic content
+
+nodes:
+  - id: generate-invoice
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-invoice"
+      operation: createInvoice
+      params:
+        invoiceId: "{{habits.input.invoiceId}}"
+        invoiceDate: "{{habits.input.invoiceDate}}"
+        dueDate: "{{habits.input.dueDate}}"
+        header:
+          lines:
+            - "Acme Corporation"
+            - "Premium Business Solutions"
+        footer:
+          lines:
+            - "Thank you for your business!"
+            - "Payment terms: Net 30"
+        seller:
+          lines:
+            - "Acme Corporation"
+            - "123 Business Ave, Suite 100"
+            - "San Francisco, CA 94102"
+            - "billing@acme.com"
+            - "+1 (555) 123-4567"
+        customer: "{{habits.input.customer}}"
+        items: "{{habits.input.items}}"
+        itemColumns: "{{habits.input.itemColumns}}"
+        taxColumn: "{{habits.input.taxColumn}}"
+        priceColumn: "{{habits.input.priceColumn}}"
+        currency: "{{habits.input.currency}}"
+        primaryColor: "#2563eb"
+        secondaryColor: "#f8fafc"
+        notes:
+          - "Payment is due within 30 days of invoice date"
+          - "Please include invoice number in payment reference"
+          - "Late payments may incur a 1.5% monthly fee"
+
+edges: []
+
+input:
+  invoiceId: "INV-001"
+  invoiceDate: ""
+  dueDate: ""
+  customer:
+    lines:
+      - "John Smith"
+      - "Tech Innovations Inc"
+      - "456 Client Street"
+      - "New York, NY 10001"
+      - "john@techinnovations.com"
+  items:
+    - Description: "Website Development"
+      Qty: 1
+      "Unit Price": 2500
+      Tax: 200
+      Price: 2500
+    - Description: "Monthly Hosting (12 months)"
+      Qty: 12
+      "Unit Price": 50
+      Tax: 48
+      Price: 600
+    - Description: "SEO Optimization Package"
+      Qty: 1
+      "Unit Price": 800
+      Tax: 64
+      Price: 800
+  itemColumns:
+    - "Description"
+    - "Qty"
+    - "Unit Price"
+    - "Tax"
+    - "Price"
+  taxColumn: "Tax"
+  priceColumn: "Price"
+  currency: "$"
+
+output:
+  result: "{{generate-invoice}}"

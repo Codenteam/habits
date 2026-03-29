@@ -1,0 +1,52 @@
+id: email-forward-demo
+name: Email Send and Receive Test
+description: |
+  Test: Send email to self, then check IMAP to verify receipt
+
+nodes:
+  # Step 1: Send email to self
+  - id: send-to-self
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "{{habits.env.EMAIL_USER}}"
+        to: "{{habits.env.EMAIL_USER}}"
+        subject: "IMAP Test - {{habits.timestamp}}"
+        body: "This is a test email to verify IMAP works. Timestamp: {{habits.timestamp}}"
+      credentials:
+        auth:
+          host: "smtp.gmail.com"
+          port: 587
+          user: "{{habits.env.EMAIL_USER}}"
+          password: "{{habits.env.EMAIL_PASSWORD}}"
+
+  # Step 2: Check INBOX only
+  - id: check-inbox
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-email"
+      operation: fetchEmails
+      params:
+        folder: "INBOX"
+        unreadOnly: false
+        limit: 3
+      credentials:
+        auth:
+          host: "imap.gmail.com"
+          port: 993
+          user: "{{habits.env.EMAIL_USER}}"
+          password: "{{habits.env.EMAIL_PASSWORD}}"
+
+edges:
+  - source: send-to-self
+    target: check-inbox
+
+output:
+  sent: "{{send-to-self}}"
+  inbox: "{{check-inbox}}"

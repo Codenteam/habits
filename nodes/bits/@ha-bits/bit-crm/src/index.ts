@@ -1,19 +1,32 @@
 /**
  * @ha-bits/bit-crm
  * 
- * CRM integration bit for lead and contact management.
- * Generic CRM operations that work with various CRM systems via API.
+ * L0 (Level 0) base bit for CRM integrations.
+ * 
+ * This bit defines common interfaces, types, and in-memory stub implementations
+ * for CRM operations. It should be replaced by concrete implementations:
+ * - @ha-bits/bit-hubspot: HubSpot CRM
+ * - @ha-bits/bit-salesforce: Salesforce CRM
+ * - @ha-bits/bit-gohighlevel: GoHighLevel CRM
+ * 
+ * Level: L0 (Abstract base, provides in-memory demo implementation)
  */
 
-interface CRMContext {
+// ============================================================================
+// Common Types & Interfaces - exported for child bits to implement
+// ============================================================================
+
+export interface CRMContext {
   auth?: {
     apiKey?: string;
     baseUrl?: string;
+    accessToken?: string;
+    refreshToken?: string;
   };
   propsValue: Record<string, any>;
 }
 
-interface Lead {
+export interface Lead {
   id?: string;
   email: string;
   firstName?: string;
@@ -30,7 +43,7 @@ interface Lead {
   updatedAt?: string;
 }
 
-interface Contact {
+export interface Contact {
   id?: string;
   email: string;
   firstName?: string;
@@ -45,9 +58,115 @@ interface Contact {
   updatedAt?: string;
 }
 
+export interface Deal {
+  id?: string;
+  name: string;
+  amount?: number;
+  currency?: string;
+  stage?: string;
+  probability?: number;
+  closeDate?: string;
+  contactId?: string;
+  companyId?: string;
+  ownerId?: string;
+  customFields?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Opportunity {
+  id?: string;
+  name: string;
+  value?: number;
+  stage?: string;
+  status?: string;
+  contactId?: string;
+  pipelineId?: string;
+  assignedTo?: string;
+  customFields?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ---- Result Types ----
+export interface CreateLeadResult {
+  success: boolean;
+  lead: Lead;
+  message?: string;
+}
+
+export interface GetLeadResult {
+  found: boolean;
+  lead: Lead | null;
+}
+
+export interface UpdateLeadResult {
+  success: boolean;
+  lead: Lead;
+}
+
+export interface ListLeadsResult {
+  leads: Lead[];
+  count: number;
+  nextPage?: string;
+}
+
+export interface CreateContactResult {
+  success: boolean;
+  contact: Contact;
+  message?: string;
+}
+
+export interface GetContactResult {
+  found: boolean;
+  contact: Contact | null;
+}
+
+export interface UpdateContactResult {
+  success: boolean;
+  contact: Contact;
+}
+
+export interface ListContactsResult {
+  contacts: Contact[];
+  count: number;
+  nextPage?: string;
+}
+
+export interface CreateDealResult {
+  success: boolean;
+  deal: Deal;
+  message?: string;
+}
+
+export interface UpdateDealResult {
+  success: boolean;
+  deal: Deal;
+}
+
+export interface CreateOpportunityResult {
+  success: boolean;
+  opportunity: Opportunity;
+  message?: string;
+}
+
+export interface AddTagResult {
+  success: boolean;
+  tags: string[];
+  message?: string;
+}
+
+export interface CreateNoteResult {
+  success: boolean;
+  noteId: string;
+  message?: string;
+}
+
 // In-memory storage for demo (would connect to actual CRM in production)
 const leadStore = new Map<string, Lead>();
 const contactStore = new Map<string, Contact>();
+const dealStore = new Map<string, Deal>();
+const opportunityStore = new Map<string, Opportunity>();
 
 /**
  * Make a CRM API request (generic)
@@ -86,9 +205,19 @@ async function crmApiRequest(
 }
 
 const crmBit = {
-  displayName: 'CRM',
-  description: 'CRM integration for leads, contacts, and deals management',
+  displayName: 'CRM (Base)',
+  description: 'L0 CRM base bit - in-memory demo. Replace with HubSpot, Salesforce, or GoHighLevel.',
   logoUrl: 'lucide:Users',
+  
+  /**
+   * Declares which bits can replace this one.
+   * These bits implement the same interface but with actual CRM backends.
+   */
+  replaceableBy: [
+    '@ha-bits/bit-hubspot',
+    '@ha-bits/bit-salesforce',
+    '@ha-bits/bit-gohighlevel',
+  ],
   
   auth: {
     type: 'CUSTOM',
@@ -655,6 +784,427 @@ const crmBit = {
         return {
           leads,
           count: leads.length,
+        };
+      },
+    },
+
+    /**
+     * Create a deal/opportunity
+     */
+    createDeal: {
+      name: 'createDeal',
+      displayName: 'Create Deal',
+      description: 'Create a new deal in the CRM',
+      props: {
+        name: {
+          type: 'SHORT_TEXT',
+          displayName: 'Deal Name',
+          description: 'Name of the deal',
+          required: true,
+        },
+        amount: {
+          type: 'NUMBER',
+          displayName: 'Amount',
+          description: 'Deal value',
+          required: false,
+        },
+        currency: {
+          type: 'SHORT_TEXT',
+          displayName: 'Currency',
+          description: 'Currency code (e.g., USD)',
+          required: false,
+          defaultValue: 'USD',
+        },
+        stage: {
+          type: 'STATIC_DROPDOWN',
+          displayName: 'Stage',
+          description: 'Deal stage',
+          required: false,
+          defaultValue: 'new',
+          options: {
+            options: [
+              { label: 'New', value: 'new' },
+              { label: 'Qualified', value: 'qualified' },
+              { label: 'Proposal', value: 'proposal' },
+              { label: 'Negotiation', value: 'negotiation' },
+              { label: 'Won', value: 'won' },
+              { label: 'Lost', value: 'lost' },
+            ],
+          },
+        },
+        contactId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Contact ID',
+          description: 'Associated contact ID',
+          required: false,
+        },
+        closeDate: {
+          type: 'SHORT_TEXT',
+          displayName: 'Close Date',
+          description: 'Expected close date (ISO format)',
+          required: false,
+        },
+      },
+      async run(context: CRMContext): Promise<CreateDealResult> {
+        const { name, amount, currency = 'USD', stage = 'new', contactId, closeDate } = context.propsValue;
+        
+        const id = `deal_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        
+        const deal: Deal = {
+          id,
+          name,
+          amount: amount ? Number(amount) : undefined,
+          currency,
+          stage,
+          contactId,
+          closeDate,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        dealStore.set(id, deal);
+        
+        console.log(`📊 CRM: Created deal ${id} - ${name}`);
+        
+        return {
+          success: true,
+          deal,
+        };
+      },
+    },
+
+    /**
+     * Update a deal
+     */
+    updateDeal: {
+      name: 'updateDeal',
+      displayName: 'Update Deal',
+      description: 'Update an existing deal',
+      props: {
+        dealId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Deal ID',
+          description: 'Deal ID to update',
+          required: true,
+        },
+        updates: {
+          type: 'JSON',
+          displayName: 'Updates',
+          description: 'Fields to update as JSON',
+          required: true,
+        },
+      },
+      async run(context: CRMContext): Promise<UpdateDealResult> {
+        const { dealId, updates } = context.propsValue;
+        
+        const deal = dealStore.get(dealId);
+        if (!deal) {
+          throw new Error(`Deal ${dealId} not found`);
+        }
+        
+        let updateData = updates;
+        if (typeof updates === 'string') {
+          updateData = JSON.parse(updates);
+        }
+        
+        const updatedDeal = {
+          ...deal,
+          ...updateData,
+          id: deal.id,
+          updatedAt: new Date().toISOString(),
+        };
+        
+        dealStore.set(dealId, updatedDeal);
+        
+        console.log(`📊 CRM: Updated deal ${dealId}`);
+        
+        return {
+          success: true,
+          deal: updatedDeal,
+        };
+      },
+    },
+
+    /**
+     * List contacts
+     */
+    listContacts: {
+      name: 'listContacts',
+      displayName: 'List Contacts',
+      description: 'List contacts with optional filters',
+      props: {
+        query: {
+          type: 'SHORT_TEXT',
+          displayName: 'Search Query',
+          description: 'Search by name or email',
+          required: false,
+        },
+        limit: {
+          type: 'NUMBER',
+          displayName: 'Limit',
+          description: 'Maximum results',
+          required: false,
+          defaultValue: 50,
+        },
+      },
+      async run(context: CRMContext): Promise<ListContactsResult> {
+        const { query, limit = 50 } = context.propsValue;
+        
+        let contacts = Array.from(contactStore.values());
+        
+        if (query) {
+          const q = String(query).toLowerCase();
+          contacts = contacts.filter(c => 
+            c.email?.toLowerCase().includes(q) ||
+            c.firstName?.toLowerCase().includes(q) ||
+            c.lastName?.toLowerCase().includes(q) ||
+            c.company?.toLowerCase().includes(q)
+          );
+        }
+        
+        contacts = contacts.slice(0, Number(limit));
+        
+        console.log(`📊 CRM: Listed ${contacts.length} contacts`);
+        
+        return {
+          contacts,
+          count: contacts.length,
+        };
+      },
+    },
+
+    /**
+     * Get a contact by ID or email
+     */
+    getContact: {
+      name: 'getContact',
+      displayName: 'Get Contact',
+      description: 'Get a contact by ID or email',
+      props: {
+        contactId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Contact ID',
+          description: 'Contact ID (optional if email provided)',
+          required: false,
+        },
+        email: {
+          type: 'SHORT_TEXT',
+          displayName: 'Email',
+          description: 'Contact email (optional if ID provided)',
+          required: false,
+        },
+      },
+      async run(context: CRMContext): Promise<GetContactResult> {
+        const { contactId, email } = context.propsValue;
+        
+        let contact: Contact | undefined;
+        
+        if (contactId) {
+          contact = contactStore.get(contactId);
+        } else if (email) {
+          contact = Array.from(contactStore.values()).find(c => c.email === email);
+        }
+        
+        if (!contact) {
+          console.log(`📊 CRM: Contact not found`);
+          return { found: false, contact: null };
+        }
+        
+        console.log(`📊 CRM: Found contact ${contact.id}`);
+        
+        return {
+          found: true,
+          contact,
+        };
+      },
+    },
+
+    /**
+     * Update a contact
+     */
+    updateContact: {
+      name: 'updateContact',
+      displayName: 'Update Contact',
+      description: 'Update an existing contact',
+      props: {
+        contactId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Contact ID',
+          description: 'Contact ID to update',
+          required: true,
+        },
+        updates: {
+          type: 'JSON',
+          displayName: 'Updates',
+          description: 'Fields to update as JSON',
+          required: true,
+        },
+      },
+      async run(context: CRMContext): Promise<UpdateContactResult> {
+        const { contactId, updates } = context.propsValue;
+        
+        const contact = contactStore.get(contactId);
+        if (!contact) {
+          throw new Error(`Contact ${contactId} not found`);
+        }
+        
+        let updateData = updates;
+        if (typeof updates === 'string') {
+          updateData = JSON.parse(updates);
+        }
+        
+        const updatedContact = {
+          ...contact,
+          ...updateData,
+          id: contact.id,
+          updatedAt: new Date().toISOString(),
+        };
+        
+        contactStore.set(contactId, updatedContact);
+        
+        console.log(`📊 CRM: Updated contact ${contactId}`);
+        
+        return {
+          success: true,
+          contact: updatedContact,
+        };
+      },
+    },
+
+    /**
+     * Add tags to a contact or lead
+     */
+    addTag: {
+      name: 'addTag',
+      displayName: 'Add Tag',
+      description: 'Add tags to a contact or lead',
+      props: {
+        entityType: {
+          type: 'STATIC_DROPDOWN',
+          displayName: 'Entity Type',
+          description: 'Type of entity to tag',
+          required: true,
+          options: {
+            options: [
+              { label: 'Lead', value: 'lead' },
+              { label: 'Contact', value: 'contact' },
+            ],
+          },
+        },
+        entityId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Entity ID',
+          description: 'ID of the lead or contact',
+          required: true,
+        },
+        tags: {
+          type: 'JSON',
+          displayName: 'Tags',
+          description: 'Tags to add (array of strings)',
+          required: true,
+        },
+      },
+      async run(context: CRMContext): Promise<AddTagResult> {
+        const { entityType, entityId, tags } = context.propsValue;
+        
+        let parsedTags = tags;
+        if (typeof tags === 'string') {
+          parsedTags = JSON.parse(tags);
+        }
+        
+        if (entityType === 'lead') {
+          const lead = leadStore.get(entityId);
+          if (!lead) throw new Error(`Lead ${entityId} not found`);
+          
+          lead.tags = [...new Set([...(lead.tags || []), ...parsedTags])];
+          lead.updatedAt = new Date().toISOString();
+          leadStore.set(entityId, lead);
+          
+          console.log(`📊 CRM: Added tags to lead ${entityId}`);
+          return { success: true, tags: lead.tags };
+        } else {
+          const contact = contactStore.get(entityId);
+          if (!contact) throw new Error(`Contact ${entityId} not found`);
+          
+          contact.tags = [...new Set([...(contact.tags || []), ...parsedTags])];
+          contact.updatedAt = new Date().toISOString();
+          contactStore.set(entityId, contact);
+          
+          console.log(`📊 CRM: Added tags to contact ${entityId}`);
+          return { success: true, tags: contact.tags };
+        }
+      },
+    },
+
+    /**
+     * Create a note on a contact or deal
+     */
+    createNote: {
+      name: 'createNote',
+      displayName: 'Create Note',
+      description: 'Add a note to a contact or deal',
+      props: {
+        entityType: {
+          type: 'STATIC_DROPDOWN',
+          displayName: 'Entity Type',
+          description: 'Type of entity',
+          required: true,
+          options: {
+            options: [
+              { label: 'Contact', value: 'contact' },
+              { label: 'Deal', value: 'deal' },
+              { label: 'Lead', value: 'lead' },
+            ],
+          },
+        },
+        entityId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Entity ID',
+          description: 'ID of the entity',
+          required: true,
+        },
+        content: {
+          type: 'LONG_TEXT',
+          displayName: 'Note Content',
+          description: 'Content of the note',
+          required: true,
+        },
+      },
+      async run(context: CRMContext): Promise<CreateNoteResult> {
+        const { entityType, entityId, content } = context.propsValue;
+        
+        const noteId = `note_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        
+        // In production, this would save to the CRM's notes system
+        // For demo, we add to customFields
+        const note = {
+          id: noteId,
+          content,
+          createdAt: new Date().toISOString(),
+        };
+        
+        if (entityType === 'contact') {
+          const contact = contactStore.get(entityId);
+          if (!contact) throw new Error(`Contact ${entityId} not found`);
+          contact.customFields = { ...contact.customFields, notes: [...(contact.customFields?.notes || []), note] };
+          contactStore.set(entityId, contact);
+        } else if (entityType === 'lead') {
+          const lead = leadStore.get(entityId);
+          if (!lead) throw new Error(`Lead ${entityId} not found`);
+          lead.customFields = { ...lead.customFields, notes: [...(lead.customFields?.notes || []), note] };
+          leadStore.set(entityId, lead);
+        } else if (entityType === 'deal') {
+          const deal = dealStore.get(entityId);
+          if (!deal) throw new Error(`Deal ${entityId} not found`);
+          deal.customFields = { ...deal.customFields, notes: [...(deal.customFields?.notes || []), note] };
+          dealStore.set(entityId, deal);
+        }
+        
+        console.log(`📊 CRM: Created note ${noteId} on ${entityType} ${entityId}`);
+        
+        return {
+          success: true,
+          noteId,
         };
       },
     },

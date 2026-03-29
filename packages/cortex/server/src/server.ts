@@ -5,8 +5,11 @@ import dotenv from 'dotenv';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from '@ha-bits/bindings/fs';
+import * as nativeFs from 'fs';  // Native fs for binary file operations
 import * as path from '@ha-bits/bindings/path';
+import * as os from 'os';
 import * as yaml from 'yaml';
+import JSZip from 'jszip';
 import {
   Workflow,
   WorkflowExecution,
@@ -27,7 +30,10 @@ import {
   getWorkflowTypeName,
 } from '@ha-bits/core';
 import { WorkflowExecutor, IWebhookHandler } from '@ha-bits/cortex-core';
+import { discoverOAuthRequirements, printOAuthRequirements, OAuthRequirement } from '@ha-bits/cortex-core';
 import { WebhookTriggerServer } from './WebhookTriggerServer';
+import { WebhookRegistry, webhookRegistry } from './WebhookRegistry';
+import { OAuthCallbackServer, initOAuthCallbackServer } from './OAuthCallbackServer';
 import { setupOpenAPIRoutes } from './openapi';
 import { setupManageRoutes, ManageModule } from './manage';
 
@@ -94,6 +100,10 @@ class WorkflowExecutorServer {
   }> = new Map();
   private webhookServer: WebhookTriggerServer | null = null;
   private webhookServerUrl: string | null = null;
+  private oauthCallbackServer: OAuthCallbackServer | null = null;
+  
+  /** Webhook registry for vendor-based webhook routing */
+  public readonly webhookRegistry: WebhookRegistry = webhookRegistry;
 
   constructor() {
     this.app = express();
@@ -102,7 +112,7 @@ class WorkflowExecutorServer {
   }
 
   /**
-   * Load workflows from config file (YAML or JSON)
+   * Load workflows from config file (YAML, JSON, or .habit)
    * Parses config, loads workflow files, and initializes the executor
    */
   async loadConfig(configPath: string): Promise<void> {
@@ -114,6 +124,21 @@ class WorkflowExecutorServer {
       throw new Error(`Config file not found: ${absolutePath}`);
     }
 
+    // Check if it's a .habit file
+    if (configPath.endsWith('.habit')) {
+      console.log('\n📦 Loading from .habit file...');
+      const habitData = await loadFromHabitFile(configPath);
+      // Set configDir to the extracted temp directory so frontend path resolves correctly
+      this.configDir = habitData.configDir;
+      await this.executor.initFromData({ 
+        config: habitData.config, 
+        workflows: habitData.workflows, 
+        env: habitData.env 
+      });
+      await this.registerWebhookTriggers();
+      return;
+    }
+
     // Parse .env file if it exists
     let envVars: Record<string, string> | undefined;
     const envPath = path.join(this.configDir, '.env');
@@ -121,23 +146,7 @@ class WorkflowExecutorServer {
       console.log(`\n🔐 Loading environment variables from: ${envPath}`);
       // Parse .env file manually to get as Record
       const envContent = fs.readFileSync(envPath, 'utf8');
-      envVars = {};
-      for (const line of envContent.split('\n')) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#')) {
-          const eqIndex = trimmed.indexOf('=');
-          if (eqIndex > 0) {
-            const key = trimmed.slice(0, eqIndex).trim();
-            let value = trimmed.slice(eqIndex + 1).trim();
-            // Remove surrounding quotes if present
-            if ((value.startsWith('"') && value.endsWith('"')) || 
-                (value.startsWith("'") && value.endsWith("'"))) {
-              value = value.slice(1, -1);
-            }
-            envVars[key] = value;
-          }
-        }
-      }
+      envVars = parseEnvContent(envContent);
     }
 
     // Parse config file - support both JSON and YAML formats
@@ -170,6 +179,9 @@ class WorkflowExecutorServer {
 
     // Initialize the executor with loaded data
     await this.executor.initFromData({ config, workflows, env: envVars });
+    
+    // Register webhook triggers from loaded workflows
+    await this.registerWebhookTriggers();
   }
 
   /**
@@ -186,6 +198,9 @@ class WorkflowExecutorServer {
     this.configPath = null;
     this.configDir = null;
     await this.executor.initFromData(options);
+    
+    // Register webhook triggers from loaded workflows
+    await this.registerWebhookTriggers();
   }
 
   /**
@@ -230,6 +245,207 @@ class WorkflowExecutorServer {
   }
 
   /**
+   * Handle vendor-based webhook.
+   * Routes webhooks to all registered listeners for the module, filtering by each trigger's filter function.
+   * Starts new workflow executions for matching triggers.
+   */
+  private async handleVendorWebhook(
+    req: Request, 
+    res: Response, 
+    moduleId: string, 
+    webhookName: string | undefined
+  ): Promise<void> {
+    const webhookPath = webhookName ? `/webhook/v/${moduleId}/${webhookName}` : `/webhook/v/${moduleId}`;
+    console.log(`📥 Vendor webhook received: ${webhookPath}`);
+    console.log(`   Method: ${req.method}`);
+    console.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}...`);
+
+    // Build filter payload
+    const filterPayload = {
+      body: req.body,
+      headers: req.headers as Record<string, string>,
+      query: req.query as Record<string, string>,
+      method: req.method,
+    };
+
+    // Dispatch to all matching listeners
+    const results = await this.webhookRegistry.dispatch(moduleId, webhookName, filterPayload);
+
+    if (results.length === 0) {
+      console.warn(`⚠️ No listeners registered for: ${webhookPath}`);
+      res.status(404).json({
+        success: false,
+        message: `No listeners registered for module: ${moduleId}${webhookName ? ' / ' + webhookName : ''}`,
+        registeredModules: this.webhookRegistry.getModuleIds(),
+      });
+      return;
+    }
+
+    // Count matches
+    const matchedResults = results.filter(r => r.matched);
+    console.log(`🔌 ${matchedResults.length}/${results.length} listener(s) matched for ${webhookPath}`);
+
+    // Start workflow executions for matched listeners
+    const executions: { workflowId: string; nodeId: string; status: string; error?: string }[] = [];
+    
+    for (const result of matchedResults) {
+      const { listener } = result;
+      console.log(`🚀 Starting workflow ${listener.workflowId} for trigger ${listener.triggerName}`);
+      
+      try {
+        // Get the workflow
+        const loadedWorkflow = this.executor.getWorkflow(listener.workflowId);
+        if (!loadedWorkflow) {
+          console.error(`   ❌ Workflow not found: ${listener.workflowId}`);
+          executions.push({
+            workflowId: listener.workflowId,
+            nodeId: listener.nodeId,
+            status: 'error',
+            error: 'Workflow not found'
+          });
+          continue;
+        }
+
+        // Execute the workflow with the webhook payload as initial context
+        const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
+          webhookHandler: this.getWebhookHandler(),
+          initialContext: {
+            webhookPayload: filterPayload,
+            triggerPayload: req.body,
+            triggerHeaders: req.headers,
+            triggerQuery: req.query,
+            triggerMethod: req.method,
+          },
+          // Skip the trigger node itself since we're providing the payload directly
+          skipTriggerWait: true,
+          triggerNodeId: listener.nodeId,
+        });
+
+        console.log(`   ✅ Workflow ${listener.workflowId} started: ${execution.id}`);
+        executions.push({
+          workflowId: listener.workflowId,
+          nodeId: listener.nodeId,
+          status: execution.status,
+        });
+      } catch (error) {
+        console.error(`   ❌ Error starting workflow ${listener.workflowId}:`, error);
+        executions.push({
+          workflowId: listener.workflowId,
+          nodeId: listener.nodeId,
+          status: 'error',
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Webhook processed for ${moduleId}`,
+      moduleId,
+      webhookName: webhookName || 'default',
+      listenersEvaluated: results.length,
+      listenersMatched: matchedResults.length,
+      executionsStarted: executions.filter(e => e.status !== 'error').length,
+      executions,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Register webhook triggers from all loaded workflows.
+   * Scans workflows for webhook trigger nodes and registers them in the webhook registry.
+   */
+  private async registerWebhookTriggers(): Promise<void> {
+    const workflows = this.executor.getAllWorkflows();
+    console.log(`\n🔌 Scanning ${workflows.length} workflow(s) for webhook triggers...`);
+    
+    let registeredCount = 0;
+    
+    for (const { reference, workflow } of workflows) {
+      if (reference.enabled === false) continue;
+      
+      const workflowId = reference.id || workflow.id;
+      
+      for (const node of workflow.nodes || []) {
+        // Check if this is a webhook trigger node (bits framework)
+        const nodeData = node.data as any; // Use any to access optional trigger properties
+        const isWebhookTrigger = 
+          (nodeData?.isTrigger === true || node.type === 'trigger') &&
+          nodeData?.framework === 'bits' &&
+          nodeData?.module;
+        
+        if (!isWebhookTrigger) continue;
+        
+        const moduleName = nodeData.module;
+        const triggerName = nodeData.operation || 'default';
+        const webhookName = nodeData?.params?.webhookName;
+        
+        try {
+          // Load the bit module to get the id and filter function
+          const { pieceFromModule } = await import('@ha-bits/cortex-core');
+          
+          // Try to load the module
+          let bitPiece: any = null;
+          try {
+            const moduleDefinition = { 
+              source: (nodeData.source || 'npm') as 'npm' | 'local' | 'github' | 'link', 
+              module: moduleName,
+              framework: 'bits',
+              repository: moduleName, // npm package name
+            };
+            bitPiece = await pieceFromModule(moduleDefinition);
+          } catch (loadError) {
+            console.warn(`   ⚠️ Could not load module ${moduleName}: ${loadError}`);
+            continue;
+          }
+          
+          if (!bitPiece || !bitPiece.id) {
+            console.warn(`   ⚠️ Module ${moduleName} has no 'id' field - skipping webhook registration`);
+            continue;
+          }
+          
+          // Get the trigger definition
+          const triggers = typeof bitPiece.triggers === 'function' ? bitPiece.triggers() : bitPiece.triggers;
+          const trigger = triggers?.[triggerName];
+          
+          if (!trigger) {
+            console.warn(`   ⚠️ Trigger ${triggerName} not found in module ${moduleName}`);
+            continue;
+          }
+          
+          // Check if it's a webhook trigger type
+          const triggerType = trigger.type?.toUpperCase?.() || trigger.type;
+          if (triggerType !== 'WEBHOOK' && triggerType !== 'APP_WEBHOOK') {
+            continue; // Not a webhook trigger
+          }
+          
+          // Register the webhook listener
+          this.webhookRegistry.register({
+            workflowId,
+            nodeId: node.id,
+            moduleId: bitPiece.id,
+            triggerName,
+            webhookName,
+            filter: trigger.filter,
+            run: trigger.run,
+            npmModule: moduleName,
+          });
+          
+          registeredCount++;
+          const webhookPath = webhookName 
+            ? `/webhook/v/${bitPiece.id}/${webhookName}` 
+            : `/webhook/v/${bitPiece.id}`;
+          console.log(`   ✅ Registered: ${workflowId}/${node.id} -> ${webhookPath} (${triggerName})`);
+        } catch (error) {
+          console.error(`   ❌ Error registering webhook for ${workflowId}/${node.id}:`, error);
+        }
+      }
+    }
+    
+    console.log(`🔌 Registered ${registeredCount} webhook trigger(s)\n`);
+  }
+
+  /**
    * Parse cookies from Cookie header string
    */
   private parseCookies(cookieHeader: string): Record<string, string> {
@@ -251,6 +467,38 @@ class WorkflowExecutorServer {
     });
     
     return cookies;
+  }
+
+  /**
+   * Extract OAuth tokens from cookies (for multi-user server mode).
+   * Cookies are named like `oauth_bit-google-drive` and contain JSON-encoded token objects.
+   * @param cookies - Parsed cookies from request
+   * @returns Map of bitId to OAuth2TokenSet
+   */
+  private extractOAuthTokensFromCookies(cookies: Record<string, string>): Record<string, { accessToken: string; refreshToken?: string; tokenType: string; expiresAt?: number }> {
+    const tokens: Record<string, { accessToken: string; refreshToken?: string; tokenType: string; expiresAt?: number }> = {};
+    
+    for (const [name, value] of Object.entries(cookies)) {
+      // Look for cookies named oauth_<bitId>
+      if (name.startsWith('oauth_')) {
+        const bitId = name.slice(6); // Remove 'oauth_' prefix
+        try {
+          const tokenData = JSON.parse(value);
+          if (tokenData && tokenData.accessToken) {
+            tokens[bitId] = {
+              accessToken: tokenData.accessToken,
+              refreshToken: tokenData.refreshToken,
+              tokenType: tokenData.tokenType || 'Bearer',
+              expiresAt: tokenData.expiresAt,
+            };
+          }
+        } catch {
+          // Invalid JSON in cookie, skip
+        }
+      }
+    }
+    
+    return tokens;
   }
 
   /**
@@ -326,19 +574,53 @@ class WorkflowExecutorServer {
 
     // List registered webhooks
     this.app.get('/webhook/list', (req: Request, res: Response) => {
-      const webhooks = Array.from(this.pendingWebhooks.keys()).map(id => {
+      // Legacy pending webhooks (workflow-specific)
+      const legacyWebhooks = Array.from(this.pendingWebhooks.keys()).map(id => {
         const [workflowId, nodeId] = id.includes(':') ? id.split(':') : [undefined, id];
         return {
+          type: 'legacy',
           workflowId,
           nodeId,
           path: workflowId ? `/webhook/${workflowId}/${nodeId}` : `/webhook/${nodeId}`,
           status: 'waiting'
         };
       });
-      res.json({ webhooks });
+      
+      // Vendor-based webhooks from registry
+      const vendorWebhooks = this.webhookRegistry.getSummary().map(entry => ({
+        type: 'vendor',
+        moduleId: entry.moduleId,
+        webhookName: entry.webhookName,
+        path: entry.webhookName === 'default' 
+          ? `/webhook/v/${entry.moduleId}` 
+          : `/webhook/v/${entry.moduleId}/${entry.webhookName}`,
+        listenerCount: entry.count,
+        listeners: entry.listeners
+      }));
+      
+      res.json({ 
+        webhooks: legacyWebhooks,
+        vendorWebhooks,
+        moduleIds: this.webhookRegistry.getModuleIds()
+      });
     });
 
-    // Dynamic webhook endpoint handler with workflow ID
+    // ========================================================================
+    // Vendor-Based Webhook Routes (under /webhook/v/:moduleId)
+    // These route webhooks based on the bit module ID (e.g., 'gohighlevel')
+    // ========================================================================
+
+    // Vendor webhook - default (no webhook name)
+    this.app.all('/webhook/v/:moduleId', async (req: Request, res: Response) => {
+      await this.handleVendorWebhook(req, res, req.params.moduleId, undefined);
+    });
+
+    // Vendor webhook - with webhook name (for multi-account support)
+    this.app.all('/webhook/v/:moduleId/:webhookName', async (req: Request, res: Response) => {
+      await this.handleVendorWebhook(req, res, req.params.moduleId, req.params.webhookName);
+    });
+
+    // Dynamic webhook endpoint handler with workflow ID (legacy - backwards compatible)
     this.app.all('/webhook/:workflowId/:nodeId', async (req: Request, res: Response) => {
       const { workflowId, nodeId } = req.params;
       const webhookKey = `${workflowId}:${nodeId}`;
@@ -462,6 +744,9 @@ class WorkflowExecutorServer {
         // Parse cookies from Cookie header
         const parsedCookies = this.parseCookies(req.headers.cookie || '');
         
+        // Extract OAuth tokens from cookies for multi-user mode
+        const oauthTokensFromCookies = this.extractOAuthTokensFromCookies(parsedCookies);
+        
         // Get input data: from body for POST/PUT/PATCH, from query params for GET
         // Exclude 'stream' from query params as it's a control parameter
         const { stream, ...queryParams } = req.query as Record<string, any>;
@@ -550,6 +835,7 @@ class WorkflowExecutorServer {
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
             onStream: streamCallback,
+            oauthTokens: Object.keys(oauthTokensFromCookies).length > 0 ? oauthTokensFromCookies : undefined,
           });
 
           // Track execution input for management module
@@ -567,6 +853,7 @@ class WorkflowExecutorServer {
             webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
+            oauthTokens: Object.keys(oauthTokensFromCookies).length > 0 ? oauthTokensFromCookies : undefined,
           });
           
           // Track execution input for management module
@@ -763,7 +1050,52 @@ class WorkflowExecutorServer {
     }
   }
 
+  /**
+   * Discover OAuth2 requirements from loaded workflows and print authorization URLs
+   */
+  private async discoverAndPrintOAuth(loadedWorkflows: LoadedWorkflow[]): Promise<void> {
+    if (!this.oauthCallbackServer) {
+      return;
+    }
+
+    try {
+      // Convert loaded workflows to Map
+      const workflows = new Map<string, Workflow>();
+      for (const lw of loadedWorkflows) {
+        const workflowId = lw.reference.id || lw.workflow.id || 'unknown';
+        workflows.set(workflowId, lw.workflow);
+      }
+
+      // Discover OAuth requirements
+      const requirements = await discoverOAuthRequirements(workflows);
+      
+      if (requirements.length === 0) {
+        return;
+      }
+
+      // Register OAuth configs for each requirement (enables /init endpoint)
+      for (const req of requirements) {
+        this.oauthCallbackServer!.registerOAuthConfig(req.bitId, req.config);
+      }
+
+      // Print requirements with authorization URLs (async)
+      await printOAuthRequirements(requirements, async (req: OAuthRequirement) => {
+        return this.oauthCallbackServer!.initiateFlowAsync(req.bitId, req.config);
+      });
+    } catch (error) {
+      console.error('Failed to discover OAuth requirements:', error);
+    }
+  }
+
   async start(port: number = 3000, host: string = '0.0.0.0'): Promise<void> {
+    // Initialize OAuth callback server
+    // Allow HABITS_SERVER_URL env to override (useful when behind proxy)
+    const serverUrl = process.env.HABITS_SERVER_URL || `http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`;
+    this.oauthCallbackServer = initOAuthCallbackServer(serverUrl);
+    
+    // Mount OAuth routes
+    this.app.use('/oauth', this.oauthCallbackServer.createRouter());
+    
     // Setup routes after config is loaded
     this.setupRoutes();
     
@@ -805,7 +1137,16 @@ class WorkflowExecutorServer {
             }
           }
           
+          // Resolve immediately - server is ready to accept requests
           resolve();
+          
+          // Discover and print OAuth requirements asynchronously AFTER server is ready
+          // Use setImmediate to ensure this runs after the event loop tick
+          setImmediate(() => {
+            this.discoverAndPrintOAuth(workflows).catch((error) => {
+              console.error('OAuth discovery error:', error);
+            });
+          });
         });
         
         // Handle server errors (e.g., EADDRINUSE)
@@ -847,11 +1188,203 @@ class WorkflowExecutorServer {
 }
 
 // ============================================================================
+// Helper: Load from .habit file (zip archive)
+// ============================================================================
+
+/**
+ * Parse environment variables from .env content string
+ */
+function parseEnvContent(envContent: string): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex > 0) {
+        const key = trimmed.slice(0, eqIndex).trim();
+        let value = trimmed.slice(eqIndex + 1).trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || 
+            (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        env[key] = value;
+      }
+    }
+  }
+  return env;
+}
+
+/**
+ * Load workflow configuration from a .habit file (zip archive).
+ * A .habit file contains:
+ * - frontend/ directory (frontend files)
+ * - habits/ directory (workflow YAML files)
+ * - cortex-bundle.js (bundled executor)
+ * - stack.yaml (configuration)
+ * - Optionally: .env file (environment variables)
+ * 
+ * The .habit file is extracted to a temp directory for serving.
+ * 
+ * @param habitPath - Path to the .habit file
+ * @param externalEnvPath - Optional path to an external .env file that overrides internal one
+ * @returns Parsed config, workflows, and environment variables
+ */
+async function loadFromHabitFile(habitPath: string, externalEnvPath?: string): Promise<{
+  config: WorkflowConfig;
+  workflows: Map<string, Workflow>;
+  env?: Record<string, string>;
+  configDir: string;
+  frontendHtml?: string;
+}> {
+  const absolutePath = path.resolve(habitPath);
+  const originalConfigDir = path.dirname(absolutePath);
+  
+  if (!fs.existsSync(absolutePath)) {
+    throw new Error(`.habit file not found: ${absolutePath}`);
+  }
+  
+  console.log(`\n📦 Loading .habit file: ${absolutePath}`);
+  
+  // Read and parse the zip file - use native fs to read as binary buffer
+  const zipBuffer = nativeFs.readFileSync(absolutePath);
+  const zip = await JSZip.loadAsync(zipBuffer);
+  
+  // Create a temp directory for extraction
+  const habitName = path.basename(habitPath, '.habit');
+  const tempDir = path.join(os.tmpdir(), `habits-${habitName}-${Date.now()}`);
+  fs.mkdirSync(tempDir, { recursive: true });
+  console.log(`   📁 Extracting to: ${tempDir}`);
+  
+  // Extract all files to the temp directory - use nativeFs for binary file operations
+  const extractPromises: Promise<void>[] = [];
+  zip.forEach((relativePath, file) => {
+    if (!file.dir) {
+      const promise = (async () => {
+        const content = await file.async('nodebuffer');
+        const targetPath = path.join(tempDir, relativePath);
+        nativeFs.mkdirSync(path.dirname(targetPath), { recursive: true });
+        nativeFs.writeFileSync(targetPath, Buffer.from(content));
+      })();
+      extractPromises.push(promise);
+    }
+  });
+  await Promise.all(extractPromises);
+  console.log(`   ✅ Extracted ${extractPromises.length} file(s)`);
+  
+  // Use the temp directory as configDir for serving
+  const configDir = tempDir;
+  
+  // Find all YAML workflow files (excluding common non-workflow files)
+  const workflowFiles: string[] = [];
+  const excludePatterns = ['stack.yaml', 'config.yaml', '.env'];
+  
+  zip.forEach((relativePath, file) => {
+    if (!file.dir && (relativePath.endsWith('.yaml') || relativePath.endsWith('.yml'))) {
+      // Skip stack/config files - we'll synthesize the config
+      if (!excludePatterns.some(p => relativePath.toLowerCase().includes(p.toLowerCase()))) {
+        workflowFiles.push(relativePath);
+      }
+    }
+  });
+  
+  // Also try to load stack.yaml if it exists for additional config
+  let stackConfig: any = null;
+  const stackFile = zip.file('stack.yaml') || zip.file('config.yaml');
+  if (stackFile) {
+    try {
+      const stackContent = await stackFile.async('text');
+      stackConfig = yaml.parse(stackContent);
+      console.log(`   📋 Found stack config in .habit file`);
+    } catch (e) {
+      // Stack file optional
+    }
+  }
+  
+  // Load workflow YAML files
+  const workflows = new Map<string, Workflow>();
+  for (const workflowPath of workflowFiles) {
+    const file = zip.file(workflowPath);
+    if (!file) continue;
+    
+    try {
+      const content = await file.async('text');
+      const workflow = yaml.parse(content) as Workflow;
+      const workflowId = workflow.id || path.basename(workflowPath, path.extname(workflowPath));
+      workflows.set(workflowId, workflow);
+      console.log(`   ✅ Loaded workflow: ${workflowId}`);
+    } catch (error: any) {
+      console.error(`   ⚠️  Failed to parse workflow ${workflowPath}: ${error.message}`);
+    }
+  }
+  
+  // Load environment variables - first from .habit internal .env
+  let env: Record<string, string> = {};
+  const internalEnvFile = zip.file('.env');
+  if (internalEnvFile) {
+    try {
+      const envContent = await internalEnvFile.async('text');
+      env = parseEnvContent(envContent);
+      console.log(`   🔐 Loaded internal .env from .habit file`);
+    } catch (e) {
+      // .env is optional
+    }
+  }
+  
+  // Override with external .env if provided or if one exists beside the .habit file
+  const sideEnvPath = externalEnvPath || path.join(originalConfigDir, '.env');
+  if (fs.existsSync(sideEnvPath)) {
+    console.log(`   🔐 Loading external .env: ${sideEnvPath}`);
+    const externalEnvContent = fs.readFileSync(sideEnvPath, 'utf8');
+    const externalEnv = parseEnvContent(externalEnvContent);
+    // Merge with external taking precedence
+    env = { ...env, ...externalEnv };
+    console.log(`   🔄 External .env overrides applied (${Object.keys(externalEnv).length} vars)`);
+  }
+  
+  // Load frontend HTML if exists
+  // First try to load from the frontend path specified in stack config, then fall back to root
+  let frontendHtml: string | undefined;
+  const frontendDir = stackConfig?.server?.frontend?.replace(/^\.[\/\\]/, '') || '';
+  const indexFilePath = frontendDir ? `${frontendDir}/index.html` : 'index.html';
+  const indexFile = zip.file(indexFilePath) || zip.file('index.html');
+  if (indexFile) {
+    frontendHtml = await indexFile.async('text');
+  }
+  
+  // Load bundle JS if exists
+  
+  // Synthesize config from workflows found
+  const config: WorkflowConfig = stackConfig || {
+    name: path.basename(habitPath, '.habit'),
+    workflows: Array.from(workflows.keys()).map(id => ({
+      id,
+      path: `${id}.yaml`,
+      enabled: true,
+    })),
+  };
+  
+  // If we have a stack config, ensure workflows are properly configured
+  if (stackConfig?.workflows) {
+    config.workflows = stackConfig.workflows;
+  }
+  
+  console.log(`   📊 Loaded ${workflows.size} workflow(s) from .habit file`);
+  
+  return { 
+    config, 
+    workflows, 
+    env: Object.keys(env).length > 0 ? env : undefined, 
+    configDir,
+    frontendHtml,
+  };
+}
+
+// ============================================================================
 // Helper: Load config from file path for CLI use
 // ============================================================================
 
 /**
- * Load workflow configuration from a file path (YAML or JSON).
+ * Load workflow configuration from a file path (YAML, JSON, or .habit).
  * Returns the parsed config, loaded workflows, and environment variables.
  */
 async function loadConfigFromFile(configPath: string): Promise<{
@@ -860,6 +1393,11 @@ async function loadConfigFromFile(configPath: string): Promise<{
   env?: Record<string, string>;
   configDir: string;
 }> {
+  // Check if it's a .habit file
+  if (configPath.endsWith('.habit')) {
+    return loadFromHabitFile(configPath);
+  }
+  
   const absolutePath = path.resolve(configPath);
   const configDir = path.dirname(absolutePath);
 
@@ -873,22 +1411,7 @@ async function loadConfigFromFile(configPath: string): Promise<{
   if (fs.existsSync(envPath)) {
     console.log(`\n🔐 Loading environment variables from: ${envPath}`);
     const envContent = fs.readFileSync(envPath, 'utf8');
-    env = {};
-    for (const line of envContent.split('\n')) {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith('#')) {
-        const eqIndex = trimmed.indexOf('=');
-        if (eqIndex > 0) {
-          const key = trimmed.slice(0, eqIndex).trim();
-          let value = trimmed.slice(eqIndex + 1).trim();
-          if ((value.startsWith('"') && value.endsWith('"')) || 
-              (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-          }
-          env[key] = value;
-        }
-      }
-    }
+    env = parseEnvContent(envContent);
   }
 
   // Parse config file
@@ -938,7 +1461,7 @@ async function runCLI() {
       },
       config: {
         alias: 'c',
-        describe: 'Path to config.json file (default: looks for config.json in current directory)',
+        describe: 'Path to config file (.yaml, .json, or .habit)',
         type: 'string'
       }
     })
@@ -949,7 +1472,7 @@ async function runCLI() {
       },
       config: {
         alias: 'c',
-        describe: 'Path to config.json file',
+        describe: 'Path to config file (.yaml, .json, or .habit)',
         type: 'string'
       },
       id: {

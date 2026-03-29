@@ -59,7 +59,11 @@
             "js": "#!/usr/bin/env node"
           },
           "external": [
-            "@activepieces/*"
+            "@activepieces/*",
+            "@tailwindcss/postcss",
+            "@tailwindcss/oxide",
+            "@tailwindcss/oxide-*",
+            "lightningcss"
           ],
           "packages": "bundle"
         }
@@ -80,7 +84,7 @@
         "parallel": false
       },
       "dependsOn": [
-        "pack"
+        "build"
       ]
     },
     "dev": {
@@ -103,19 +107,6 @@
       "options": {
         "command": "pnpm tsc -p packages/base/server/tsconfig.lib.json --noEmit"
       }
-    },
-    "pack": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "pnpm esbuild dist/packages/base/server/main.cjs --bundle --platform=node --format=cjs --outfile=dist/packages/base/pack/index.cjs --external:@activepieces/* --minify "
-        ],
-        "cwd": "{workspaceRoot}",
-        "parallel": false
-      },
-      "dependsOn": [
-        "build"
-      ]
     }
   }
 }

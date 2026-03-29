@@ -1,0 +1,248 @@
+id: sync-crm
+name: Sync to CRM
+description: >-
+  Syncs lead data to configured CRM systems including HubSpot,
+  Salesforce, and GoHighLevel. Supports syncing to single or multiple CRMs.
+version: "1.0"
+nodes:
+  - id: http-trigger
+    type: trigger
+    position:
+      x: 0
+      y: 0
+    data:
+      label: HTTP Trigger
+      framework: bits
+      module: "@ha-bits/bit-http"
+      operation: webhookTrigger
+      isTrigger: true
+      params:
+        method: POST
+        path: /sync-crm
+        responseMode: lastNode
+
+  - id: prepare-lead-data
+    type: bits
+    position:
+      x: 200
+      y: 0
+    data:
+      label: Prepare Lead Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: format
+      params:
+        template: |
+          {
+            "email": "{{habits.input.email}}",
+            "firstName": "{{habits.input.firstName || ''}}",
+            "lastName": "{{habits.input.lastName || ''}}",
+            "company": "{{habits.input.company || ''}}",
+            "phone": "{{habits.input.phone || ''}}",
+            "source": "{{habits.input.source || 'habits'}}",
+            "targetCrm": "{{habits.input.targetCrm || 'hubspot'}}"
+          }
+
+  # HubSpot Branch
+  - id: sync-hubspot
+    type: bits
+    position:
+      x: 400
+      y: -200
+    data:
+      label: Sync to HubSpot
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createLead
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        company: "{{habits.input.company}}"
+        phone: "{{habits.input.phone}}"
+        source: "{{habits.input.source}}"
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HUBSPOT_ACCESS_TOKEN}}"
+      stopAfterIf:
+        expr: "{{habits.input.targetCrm !== 'hubspot' && habits.input.targetCrm !== 'all'}}"
+        skipIfStopped: true
+
+  - id: tag-hubspot
+    type: bits
+    position:
+      x: 600
+      y: -200
+    data:
+      label: Add HubSpot Tags
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: addTag
+      params:
+        contactId: "{{sync-hubspot.lead.id}}"
+        tags: '["habits-import", "{{habits.input.source}}"]'
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HUBSPOT_ACCESS_TOKEN}}"
+
+  # Salesforce Branch
+  - id: sync-salesforce
+    type: bits
+    position:
+      x: 400
+      y: 0
+    data:
+      label: Sync to Salesforce
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: createLead
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        company: "{{habits.input.company}}"
+        phone: "{{habits.input.phone}}"
+        source: "{{habits.input.source}}"
+        status: "Open - Not Contacted"
+      credentials:
+        salesforce:
+          accessToken: "{{habits.env.SALESFORCE_ACCESS_TOKEN}}"
+          instanceUrl: "{{habits.env.SALESFORCE_INSTANCE_URL}}"
+      stopAfterIf:
+        expr: "{{habits.input.targetCrm !== 'salesforce' && habits.input.targetCrm !== 'all'}}"
+        skipIfStopped: true
+
+  - id: tag-salesforce
+    type: bits
+    position:
+      x: 600
+      y: 0
+    data:
+      label: Add Salesforce Tags
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: addTag
+      params:
+        entityType: Lead
+        entityId: "{{sync-salesforce.lead.id}}"
+        tags: '["habits-import", "{{habits.input.source}}"]'
+      credentials:
+        salesforce:
+          accessToken: "{{habits.env.SALESFORCE_ACCESS_TOKEN}}"
+          instanceUrl: "{{habits.env.SALESFORCE_INSTANCE_URL}}"
+
+  # GoHighLevel Branch
+  - id: sync-gohighlevel
+    type: bits
+    position:
+      x: 400
+      y: 200
+    data:
+      label: Sync to GoHighLevel
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-gohighlevel"
+      operation: createLead
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        company: "{{habits.input.company}}"
+        phone: "{{habits.input.phone}}"
+        source: "{{habits.input.source}}"
+        tags: '["habits-import"]'
+      credentials:
+        gohighlevel:
+          accessToken: "{{habits.env.GHL_ACCESS_TOKEN}}"
+          locationId: "{{habits.env.GHL_LOCATION_ID}}"
+      stopAfterIf:
+        expr: "{{habits.input.targetCrm !== 'gohighlevel' && habits.input.targetCrm !== 'all'}}"
+        skipIfStopped: true
+
+  - id: tag-gohighlevel
+    type: bits
+    position:
+      x: 600
+      y: 200
+    data:
+      label: Add GoHighLevel Tags
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-gohighlevel"
+      operation: addTag
+      params:
+        contactId: "{{sync-gohighlevel.lead.id}}"
+        tags: '["habits-import", "{{habits.input.source}}"]'
+      credentials:
+        gohighlevel:
+          accessToken: "{{habits.env.GHL_ACCESS_TOKEN}}"
+          locationId: "{{habits.env.GHL_LOCATION_ID}}"
+
+  # Merge Results
+  - id: collect-results
+    type: bits
+    position:
+      x: 800
+      y: 0
+    data:
+      label: Collect Sync Results
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: format
+      params:
+        template: |
+          {
+            "success": true,
+            "email": "{{habits.input.email}}",
+            "targetCrm": "{{habits.input.targetCrm}}",
+            "synced": {
+              "hubspot": {{sync-hubspot.success ? JSON.stringify(sync-hubspot.lead) : 'null'}},
+              "salesforce": {{sync-salesforce.success ? JSON.stringify(sync-salesforce.lead) : 'null'}},
+              "gohighlevel": {{sync-gohighlevel.success ? JSON.stringify(sync-gohighlevel.lead) : 'null'}}
+            }
+          }
+
+edges:
+  # Main flow
+  - id: e1
+    source: http-trigger
+    target: prepare-lead-data
+    
+  # HubSpot branch
+  - id: e2a
+    source: prepare-lead-data
+    target: sync-hubspot
+  - id: e3a
+    source: sync-hubspot
+    target: tag-hubspot
+  - id: e4a
+    source: tag-hubspot
+    target: collect-results
+    
+  # Salesforce branch
+  - id: e2b
+    source: prepare-lead-data
+    target: sync-salesforce
+  - id: e3b
+    source: sync-salesforce
+    target: tag-salesforce
+  - id: e4b
+    source: tag-salesforce
+    target: collect-results
+    
+  # GoHighLevel branch
+  - id: e2c
+    source: prepare-lead-data
+    target: sync-gohighlevel
+  - id: e3c
+    source: sync-gohighlevel
+    target: tag-gohighlevel
+  - id: e4c
+    source: tag-gohighlevel
+    target: collect-results

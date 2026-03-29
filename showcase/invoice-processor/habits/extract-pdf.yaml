@@ -1,0 +1,26 @@
+id: extract-pdf
+name: Extract PDF Text
+description: Extract text and metadata from a PDF document
+
+nodes:
+  - id: extract-text
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-pdf"
+      operation: extractText
+      params:
+        source: "{{habits.input.source}}"
+        sourceType: "{{habits.input.sourceType}}"
+        maxPages: "{{habits.input.maxPages}}"
+
+edges: []
+
+input:
+  source: ""
+  sourceType: "base64"
+  maxPages: 0
+
+output:
+  result: "{{extract-text}}"

@@ -4,6 +4,28 @@ definitions:
   Record<string,any>:
     type: object
 
+  # Application configuration for desktop/mobile builds (used in stack.yaml)
+  ApplicationConfig:
+    type: object
+    description: |
+      Application configuration for desktop/mobile builds.
+      Used to configure Tauri apps with OAuth deep link support.
+    properties:
+      scheme:
+        type: string
+        description: |
+          Custom URL scheme for OAuth deep links.
+          Example: "myapp" creates URLs like myapp://oauth/callback
+          Required for OAuth authentication in Tauri desktop/mobile apps.
+      name:
+        type: string
+        description: Application display name (used in Tauri builds)
+      identifier:
+        type: string
+        description: |
+          Application identifier (e.g., "com.mycompany.myapp").
+          Used for bundle identifiers on iOS/macOS and package names on Android.
+
   # Logging configuration for workflow-level or stack-level logging
   LogLevel:
     type: string

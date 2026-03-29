@@ -1,7 +1,7 @@
 import * as fs from '@ha-bits/bindings/fs';
 import * as path from '@ha-bits/bindings/path';
 import { exec as execAsync } from '@ha-bits/bindings/shell';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

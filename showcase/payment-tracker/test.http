@@ -1,0 +1,158 @@
+### Payment Tracker - API Tests
+### Run with: httpyac http/payment-tracker-tests.http --all
+
+@baseUrl = http://localhost:13000
+
+### =============================================================================
+### Health Check
+### =============================================================================
+
+# @name healthCheck
+GET {{baseUrl}}/misc/health
+Accept: application/json
+
+### =============================================================================
+### List Workflows
+### =============================================================================
+
+# @name listWorkflows
+GET {{baseUrl}}/misc/workflows
+Accept: application/json
+
+### =============================================================================
+### Manual Invoice Entry (POST API)
+### =============================================================================
+
+# @name createManualInvoice
+POST {{baseUrl}}/misc/workflows/manual-invoice/execute
+Content-Type: application/json
+
+{
+  "invoiceNumber": "INV-2026-001",
+  "date": "2026-03-20",
+  "customerName": "Acme Corporation",
+  "customerAddress": "123 Main Street, London, UK",
+  "description": "Consulting services - March 2026",
+  "notes": "Monthly retainer fee",
+  "amount": 1000.00,
+  "vat": 200.00,
+  "total": 1200.00,
+  "currency": "GBP"
+}
+
+### =============================================================================
+### Manual Invoice Entry (Another Example)
+### =============================================================================
+
+# @name createManualInvoiceUSD
+POST {{baseUrl}}/misc/workflows/manual-invoice/execute
+Content-Type: application/json
+
+{
+  "invoiceNumber": "INV-2026-002",
+  "date": "2026-03-21",
+  "customerName": "Tech Startup Inc",
+  "customerAddress": "456 Innovation Drive, San Francisco, CA",
+  "description": "Software development - Q1 milestone",
+  "notes": "Phase 1 completion",
+  "amount": 5000.00,
+  "vat": 0,
+  "total": 5000.00,
+  "currency": "USD"
+}
+
+### =============================================================================
+### Simulate Stripe Webhook (Payment Succeeded)
+### =============================================================================
+
+# @name simulateStripePayment
+# Note: In production, this would come from Stripe's webhook
+POST {{baseUrl}}/misc/workflows/log-stripe-payment/execute
+Content-Type: application/json
+
+{
+  "id": "evt_1234567890",
+  "type": "payment_intent.succeeded",
+  "created": 1711008000,
+  "data": {
+    "object": {
+      "id": "pi_3OabcdefghijklmnO",
+      "amount": 15000,
+      "currency": "gbp",
+      "status": "succeeded",
+      "description": "Enterprise license - Annual subscription",
+      "invoice": "in_1Oxyz123456",
+      "billing_details": {
+        "name": "Global Tech Ltd",
+        "email": "billing@globaltech.com",
+        "address": {
+          "line1": "100 Tech Park",
+          "city": "Manchester",
+          "postal_code": "M1 1AA",
+          "country": "GB"
+        }
+      },
+      "metadata": {
+        "notes": "Enterprise tier - 50 seats",
+        "vatRate": "0.20"
+      }
+    }
+  }
+}
+
+### =============================================================================
+### Simulate Wise Webhook (Transfer Completed)
+### =============================================================================
+
+# @name simulateWiseTransfer
+# Note: In production, this would come from Wise's webhook
+POST {{baseUrl}}/misc/workflows/log-wise-payment/execute
+Content-Type: application/json
+
+{
+  "data": {
+    "resource": {
+      "id": 12345678,
+      "profile_id": 98765432,
+      "type": "transfer"
+    },
+    "current_state": "outgoing_payment_sent",
+    "previous_state": "processing",
+    "occurred_at": "2026-03-20T10:30:00Z"
+  },
+  "subscription_id": "sub_abc123",
+  "event_type": "transfers#state-change",
+  "schema_version": "2.0.0",
+  "sent_at": "2026-03-20T10:30:05Z"
+}
+
+### =============================================================================
+### Trigger Smart Conversion Check (Manual)
+### =============================================================================
+
+# @name triggerSmartConversion
+# Note: This normally runs on schedule, but can be triggered manually
+POST {{baseUrl}}/misc/workflows/smart-conversion/execute
+Content-Type: application/json
+
+{}
+
+### =============================================================================
+### Get Workflow Status
+### =============================================================================
+
+# @name getManualInvoiceStatus
+GET {{baseUrl}}/misc/workflows/manual-invoice
+Accept: application/json
+
+# @name getStripePaymentStatus
+GET {{baseUrl}}/misc/workflows/log-stripe-payment
+Accept: application/json
+
+# @name getWisePaymentStatus
+GET {{baseUrl}}/misc/workflows/log-wise-payment
+Accept: application/json
+
+# @name getSmartConversionStatus
+GET {{baseUrl}}/misc/workflows/smart-conversion
+Accept: application/json

@@ -7,6 +7,7 @@ applyTo: '**'
 ---
 Provide project context and coding guidelines that AI should follow when generating code, answering questions, or reviewing changes.
 
+
 ## Commands
 
 If I ask you to run a command, or to build/pack something, check how it's done in scripts/dev.ts and do something similar.
@@ -151,9 +152,14 @@ pkill -f habits
   3. For cortex, use example from the package: `~/.npm/_npx/*/node_modules/habits/showcase/mixed/stack.yaml`
 This can be done with latest or @next based on my request
 
+## UIs
+- Don't use any gradients in the UI, use solid colors only. If you need to use an image, make sure it's a simple icon with transparent background, not a complex image with gradients and shadows. The overall style should be minimalistic and clean.
+- Prefer dark mode. 
+- Use Tailwind. 
+- Make UI look like mobile apps. 
 
 ### Don't stop until tested
-- If you are instructed to do a task, don't stop until you have tested building it then if it has a dev/serve mode, test it as well, if it's backend, test the endpoints. If it's frontend, 
+- If you are instructed to do a task, don't stop until you have tested building it then if it has a dev/serve mode, test it as well, if it's backend, test the endpoints. If it's packed habit, use the scripts/e2e/e2e-test.cts to test it locally using the local dist path. If you are not sure how to test, ask for clarification but don't skip testing. 
 
 ### Match habits to schema
 If you need to write any habit, make sure it matches the habits.schema.yaml file. If you need to introduce something new to schema, do it but add a comment explaining it clearly in the schema. and make sure to update the description in habits.schema.md to reflect the changes in habits.schema.yaml.
@@ -167,3 +173,5 @@ For any change in documentation, make sure any example in json or yaml matches t
 Use core/logger for any logging in the codebase, do not use console.log or any other logging method. Always use structured logging with context objects. For example:
 
 
+### Commands
+Check the file COMMANDS.md for examples of how to run commands related to building, packing, and testing habits and cortex. Always follow the patterns in that file when running commands or writing scripts that involve these actions.

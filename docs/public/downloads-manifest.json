@@ -1,0 +1,102 @@
+{
+  "cortexApp": [
+    {
+      "platform": "Android",
+      "filename": "habits-cortex.apk",
+      "url": "",
+      "version": "1.0.0",
+      "size": "Coming Soon",
+      "description": "Android 8.0+ (ARM64)",
+      "available": false
+    },
+    {
+      "platform": "Ios",
+      "filename": "habits-cortex.ipa",
+      "url": "",
+      "version": "1.0.0",
+      "size": "Coming Soon",
+      "description": "iOS 14+ (Ad Hoc)",
+      "available": false
+    },
+    {
+      "platform": "Linux",
+      "filename": "habits-cortex.AppImage",
+      "url": "",
+      "version": "1.0.0",
+      "size": "Coming Soon",
+      "description": "Linux (x64)",
+      "available": false
+    },
+    {
+      "platform": "Macos",
+      "filename": "habits-cortex.dmg",
+      "url": "",
+      "version": "1.0.0",
+      "size": "Coming Soon",
+      "description": "macOS 11+ (Intel & Apple Silicon)",
+      "available": false
+    },
+    {
+      "platform": "Windows",
+      "filename": "habits-cortex.exe",
+      "url": "",
+      "version": "1.0.0",
+      "size": "Coming Soon",
+      "description": "Windows 10/11 (x64)",
+      "available": false
+    }
+  ],
+  "habitBundles": [
+    {
+      "name": "Agent Mcp Demo",
+      "filename": "agent-mcp-demo.zip",
+      "url": "/downloads/agent-mcp-demo.zip",
+      "size": "4.9 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Ai Cookbook",
+      "filename": "ai-cookbook.zip",
+      "url": "/downloads/ai-cookbook.zip",
+      "size": "340.8 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Ai Journal",
+      "filename": "ai-journal.zip",
+      "url": "/downloads/ai-journal.zip",
+      "size": "416.0 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Email Classification",
+      "filename": "email-classification.zip",
+      "url": "/downloads/email-classification.zip",
+      "size": "12.2 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Marketing Campaign",
+      "filename": "marketing-campaign.zip",
+      "url": "/downloads/marketing-campaign.zip",
+      "size": "12.3 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Minimal Blog",
+      "filename": "minimal-blog.zip",
+      "url": "/downloads/minimal-blog.zip",
+      "size": "84.6 KB",
+      "description": "Self-contained ZIP bundle"
+    },
+    {
+      "name": "Mixed",
+      "filename": "mixed.zip",
+      "url": "/downloads/mixed.zip",
+      "size": "51.0 KB",
+      "description": "Self-contained ZIP bundle"
+    }
+  ],
+  "latestRelease": null,
+  "lastUpdated": "2026-03-28T19:01:06.315Z"
+}

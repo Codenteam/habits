@@ -3,9 +3,14 @@
  * 
  * Email integration bit for IMAP fetching and SMTP sending.
  * Provides triggers for new emails and actions for sending emails.
+ * 
+ * Environments:
+ * - Node.js: Uses imapflow and nodemailer via driver.ts
+ * - Browser/Tauri: Uses stubs/tauri-driver.js (via bundle alias substitution)
  */
 
-import { ImapFlow } from 'imapflow';
+// Relative import - bundle generator's plugin will intercept and stub for Tauri
+import * as driver from './driver';
 
 interface EmailContext {
   auth?: {
@@ -23,6 +28,7 @@ interface EmailMessage {
   to: string;
   subject: string;
   body: string;
+  html?: string;
   date: string;
   attachments?: Array<{
     filename: string;
@@ -31,178 +37,8 @@ interface EmailMessage {
   }>;
 }
 
-/**
- * Fetch emails from IMAP server using imapflow
- */
-async function fetchImapEmails(
-  host: string,
-  port: number,
-  user: string,
-  password: string,
-  folder: string = 'INBOX',
-  limit: number = 10,
-  unreadOnly: boolean = true
-): Promise<EmailMessage[]> {
-  console.log(`📧 IMAP: Connecting to ${host}:${port} as ${user}...`);
-  console.log(`📧 IMAP: Fetching from ${folder}, limit: ${limit}, unreadOnly: ${unreadOnly}`);
-  
-  const client = new ImapFlow({
-    host,
-    port,
-    secure: port === 993,
-    auth: {
-      user,
-      pass: password,
-    },
-    logger: false,
-  });
-
-  const emails: EmailMessage[] = [];
-
-  try {
-    await client.connect();
-    console.log(`📧 IMAP: Connected successfully`);
-
-    const lock = await client.getMailboxLock(folder);
-    
-    try {
-      // Build search query
-      const searchQuery: any = unreadOnly ? { seen: false } : 'all';
-      
-      // Search for messages
-      const searchResult = await client.search(searchQuery, { uid: true });
-      const messages = Array.isArray(searchResult) ? searchResult : [];
-      
-      if (messages.length === 0) {
-        console.log(`📧 IMAP: No messages found matching criteria`);
-        return emails;
-      }
-
-      // Get the most recent messages up to limit
-      const messagesToFetch = messages.slice(-limit).reverse();
-      console.log(`📧 IMAP: Found ${messages.length} messages, fetching ${messagesToFetch.length}`);
-
-      // Fetch message details
-      for await (const message of client.fetch(messagesToFetch, {
-        uid: true,
-        envelope: true,
-        source: true,
-        bodyStructure: true,
-      })) {
-        const envelope = message.envelope;
-        if (!envelope) continue;
-        
-        // Parse from address
-        const fromAddr = envelope.from?.[0];
-        const from = fromAddr 
-          ? (fromAddr.name ? `${fromAddr.name} <${fromAddr.address}>` : fromAddr.address || '')
-          : '';
-        
-        // Parse to addresses
-        const toAddrs = envelope.to || [];
-        const to = toAddrs
-          .map((addr: any) => addr.name ? `${addr.name} <${addr.address}>` : addr.address || '')
-          .join(', ');
-
-        // Extract body from source
-        let body = '';
-        if (message.source) {
-          const sourceStr = message.source.toString();
-          // Simple extraction - find body after headers
-          const bodyMatch = sourceStr.split(/\r?\n\r?\n/);
-          if (bodyMatch.length > 1) {
-            body = bodyMatch.slice(1).join('\n\n');
-          }
-        }
-
-        // Extract attachments info from bodyStructure
-        const attachments: Array<{ filename: string; contentType: string; size: number }> = [];
-        if (message.bodyStructure) {
-          extractAttachments(message.bodyStructure, attachments);
-        }
-
-        emails.push({
-          id: String(message.uid),
-          from,
-          to,
-          subject: envelope.subject || '',
-          body,
-          date: envelope.date?.toISOString() || new Date().toISOString(),
-          attachments: attachments.length > 0 ? attachments : undefined,
-        });
-      }
-    } finally {
-      lock.release();
-    }
-  } finally {
-    await client.logout();
-    console.log(`📧 IMAP: Disconnected`);
-  }
-
-  console.log(`📧 IMAP: Fetched ${emails.length} email(s)`);
-  return emails;
-}
-
-/**
- * Recursively extract attachment info from bodyStructure
- */
-function extractAttachments(
-  structure: any,
-  attachments: Array<{ filename: string; contentType: string; size: number }>
-): void {
-  if (!structure) return;
-
-  // Check if this part is an attachment
-  if (structure.disposition === 'attachment' || 
-      (structure.disposition === 'inline' && structure.dispositionParameters?.filename)) {
-    const filename = structure.dispositionParameters?.filename || 
-                     structure.parameters?.name || 
-                     'attachment';
-    attachments.push({
-      filename,
-      contentType: `${structure.type}/${structure.subtype}`,
-      size: structure.size || 0,
-    });
-  }
-
-  // Recurse into child parts
-  if (structure.childNodes && Array.isArray(structure.childNodes)) {
-    for (const child of structure.childNodes) {
-      extractAttachments(child, attachments);
-    }
-  }
-}
-
-/**
- * Simulate SMTP send (in real implementation, use nodemailer or similar)
- */
-async function sendSmtpEmail(
-  host: string,
-  port: number,
-  user: string,
-  password: string,
-  from: string,
-  to: string,
-  subject: string,
-  body: string,
-  html?: string,
-  attachments?: Array<{ filename: string; content: string | Buffer }>
-): Promise<{ messageId: string; accepted: string[] }> {
-  console.log(`📤 SMTP: Connecting to ${host}:${port} as ${user}...`);
-  console.log(`📤 SMTP: Sending from ${from} to ${to}`);
-  console.log(`📤 SMTP: Subject: ${subject}`);
-  
-  // In production, this would use nodemailer
-  // For now, return mock response
-  const messageId = `<${Date.now()}.${Math.random().toString(36).substring(7)}@habits.local>`;
-  
-  return {
-    messageId,
-    accepted: [to]
-  };
-}
-
 const emailBit = {
+  name: '@ha-bits/bit-email',
   displayName: 'Email (IMAP/SMTP)',
   description: 'Email integration for fetching (IMAP) and sending (SMTP) emails',
   logoUrl: 'lucide:Mail',
@@ -210,11 +46,11 @@ const emailBit = {
   auth: {
     type: 'CUSTOM',
     displayName: 'Email Credentials',
-    description: 'Email server credentials',
+    description: 'Email server credentials for IMAP and SMTP',
     required: false,
     props: {
-      host: { type: 'SHORT_TEXT', displayName: 'Host', required: false },
-      port: { type: 'NUMBER', displayName: 'Port', required: false },
+      host: { type: 'SHORT_TEXT', displayName: 'Host', description: 'Mail server host', required: false },
+      port: { type: 'NUMBER', displayName: 'Port', description: 'Mail server port (993 for IMAP, 587 for SMTP)', required: false },
       user: { type: 'SHORT_TEXT', displayName: 'Username', required: false },
       password: { type: 'SECRET_TEXT', displayName: 'Password', required: false },
     }
@@ -255,15 +91,17 @@ const emailBit = {
       async run(context: EmailContext) {
         const { folder = 'INBOX', unreadOnly = true, limit = 10 } = context.propsValue;
         
-        const { host, port = 993, user, password } = context.auth || {};
+        const auth = context.auth || {};
+        const { host, user, password } = auth;
+        const port = auth.port || 993;
         
         if (!host || !user || !password) {
-          throw new Error('IMAP credentials are required in auth');
+          throw new Error('IMAP credentials are required in auth (host, user, password)');
         }
         
-        const emails = await fetchImapEmails(
-          host, Number(port), user, password,
-          String(folder), Number(limit), Boolean(unreadOnly)
+        const emails = await driver.fetchImapEmails(
+          { host, port: Number(port), user, password },
+          { folder: String(folder), limit: Number(limit), unreadOnly: Boolean(unreadOnly) }
         );
         
         console.log(`📧 IMAP Trigger: Fetched ${emails.length} email(s)`);
@@ -279,70 +117,6 @@ const emailBit = {
   },
   
   actions: {
-    /**
-     * New Email action (for workflow testing - simulates IMAP trigger as action)
-     */
-    newEmail: {
-      name: 'newEmail',
-      displayName: 'New Email (IMAP)',
-      description: 'Fetch new emails from IMAP mailbox (action version of trigger)',
-      props: {
-        folder: {
-          type: 'SHORT_TEXT',
-          displayName: 'Folder',
-          description: 'Mailbox folder',
-          required: false,
-          defaultValue: 'INBOX',
-        },
-        unreadOnly: {
-          type: 'CHECKBOX',
-          displayName: 'Unread Only',
-          description: 'Only fetch unread emails',
-          required: false,
-          defaultValue: true,
-        },
-        limit: {
-          type: 'NUMBER',
-          displayName: 'Limit',
-          description: 'Maximum number of emails',
-          required: false,
-          defaultValue: 10,
-        },
-      },
-      async run(context: EmailContext) {
-        const { folder = 'INBOX' } = context.propsValue;
-        
-        // Return mock test data for workflow testing
-        const mockEmails: EmailMessage[] = [
-          {
-            id: `email_${Date.now()}`,
-            from: 'customer@example.com',
-            to: 'support@company.com',
-            subject: 'Help with my order #12345',
-            body: 'Hi, I placed an order last week and haven\'t received any shipping confirmation. Can you help me track it? Order number is 12345. Thanks!',
-            date: new Date().toISOString(),
-          },
-          {
-            id: `email_${Date.now() + 1}`,
-            from: 'sales.inquiry@prospect.com',
-            to: 'sales@company.com',
-            subject: 'Pricing inquiry for enterprise plan',
-            body: 'We are interested in your enterprise pricing. Our company has 500+ employees. Please send us a quote.',
-            date: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ];
-        
-        console.log(`📧 New Email (Mock): Returning ${mockEmails.length} test emails from ${folder}`);
-        
-        return {
-          emails: mockEmails,
-          count: mockEmails.length,
-          folder,
-          timestamp: new Date().toISOString(),
-        };
-      },
-    },
-    
     /**
      * Fetch emails from IMAP server
      */
@@ -376,15 +150,17 @@ const emailBit = {
       async run(context: EmailContext) {
         const { folder = 'INBOX', unreadOnly = false, limit = 10 } = context.propsValue;
         
-        const { host, port = 993, user, password } = context.auth || {};
+        const auth = context.auth || {};
+        const { host, user, password } = auth;
+        const port = auth.port || 993;
         
         if (!host || !user || !password) {
-          throw new Error('IMAP credentials are required in auth');
+          throw new Error('IMAP credentials are required in auth (host, user, password)');
         }
         
-        const emails = await fetchImapEmails(
-          host, Number(port), user, password,
-          String(folder), Number(limit), Boolean(unreadOnly)
+        const emails = await driver.fetchImapEmails(
+          { host, port: Number(port), user, password },
+          { folder: String(folder), limit: Number(limit), unreadOnly: Boolean(unreadOnly) }
         );
         
         console.log(`📧 Fetch Emails: Retrieved ${emails.length} email(s) from ${folder}`);
@@ -393,6 +169,7 @@ const emailBit = {
           emails,
           count: emails.length,
           folder,
+          timestamp: new Date().toISOString(),
         };
       },
     },
@@ -457,19 +234,30 @@ const emailBit = {
       async run(context: EmailContext) {
         const { from, to, subject, body, html, cc, bcc, replyTo } = context.propsValue;
         
-        const { host, port = 587, user, password } = context.auth || {};
+        const auth = context.auth || {};
+        const { host, user, password } = auth;
+        const port = auth.port || 587;
         
         if (!host || !user || !password) {
-          throw new Error('SMTP credentials are required in auth');
+          throw new Error('SMTP credentials are required in auth (host, user, password)');
         }
         
         if (!from || !to || !subject || !body) {
           throw new Error('From, To, Subject, and Body are required');
         }
         
-        const result = await sendSmtpEmail(
-          host, Number(port), user, password,
-          String(from), String(to), String(subject), String(body), html
+        const result = await driver.sendSmtpEmail(
+          { host, port: Number(port), user, password },
+          {
+            from: String(from),
+            to: String(to),
+            subject: String(subject),
+            body: String(body),
+            html: html ? String(html) : undefined,
+            cc: cc ? String(cc) : undefined,
+            bcc: bcc ? String(bcc) : undefined,
+            replyTo: replyTo ? String(replyTo) : undefined,
+          }
         );
         
         console.log(`📤 Send Email: Message sent to ${to}`);
@@ -478,9 +266,98 @@ const emailBit = {
           success: true,
           messageId: result.messageId,
           accepted: result.accepted,
+          rejected: result.rejected,
           from,
           to,
           subject,
+          timestamp: new Date().toISOString(),
+        };
+      },
+    },
+    
+    /**
+     * Forward an email to another recipient
+     */
+    forwardEmail: {
+      name: 'forwardEmail',
+      displayName: 'Forward Email (SMTP)',
+      description: 'Forward an email to another recipient',
+      props: {
+        originalEmail: {
+          type: 'JSON',
+          displayName: 'Original Email',
+          description: 'The email object to forward (from fetchEmails or trigger)',
+          required: true,
+        },
+        to: {
+          type: 'SHORT_TEXT',
+          displayName: 'Forward To',
+          description: 'Recipient email address(es) to forward to',
+          required: true,
+        },
+        from: {
+          type: 'SHORT_TEXT',
+          displayName: 'From',
+          description: 'Sender email address (your address)',
+          required: true,
+        },
+        addComment: {
+          type: 'LONG_TEXT',
+          displayName: 'Additional Comment',
+          description: 'Optional comment to add before the forwarded email',
+          required: false,
+        },
+      },
+      async run(context: EmailContext) {
+        const { originalEmail, to, from, addComment } = context.propsValue;
+        
+        const auth = context.auth || {};
+        const { host, user, password } = auth;
+        const port = auth.port || 587;
+        
+        if (!host || !user || !password) {
+          throw new Error('SMTP credentials are required in auth (host, user, password)');
+        }
+        
+        // Parse original email if string
+        let email = originalEmail;
+        if (typeof originalEmail === 'string') {
+          try {
+            email = JSON.parse(originalEmail);
+          } catch {
+            throw new Error('Invalid originalEmail format - expected JSON object');
+          }
+        }
+        
+        // Build forwarded email body
+        const forwardedBody = `${addComment ? addComment + '\n\n' : ''}---------- Forwarded message ---------
+From: ${email.from || 'Unknown'}
+Date: ${email.date || 'Unknown'}
+Subject: ${email.subject || 'No subject'}
+To: ${email.to || 'Unknown'}
+
+${email.body || email.text || ''}`;
+
+        const result = await driver.sendSmtpEmail(
+          { host, port: Number(port), user, password },
+          {
+            from: String(from),
+            to: String(to),
+            subject: `Fwd: ${email.subject || 'No subject'}`,
+            body: forwardedBody,
+            html: email.html ? `${addComment ? `<p>${addComment}</p><hr>` : ''}<p>---------- Forwarded message ---------<br>From: ${email.from}<br>Date: ${email.date}<br>Subject: ${email.subject}<br>To: ${email.to}</p>${email.html}` : undefined,
+          }
+        );
+        
+        console.log(`📤 Forward Email: Forwarded to ${to}`);
+        
+        return {
+          success: true,
+          messageId: result.messageId,
+          accepted: result.accepted,
+          from,
+          to,
+          originalSubject: email.subject,
           timestamp: new Date().toISOString(),
         };
       },

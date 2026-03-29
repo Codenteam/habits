@@ -1,0 +1,180 @@
+id: smart-conversion
+name: Smart Currency Conversion
+description: Daily at noon, check if weekly average exchange rate is favorable and auto-convert
+
+# This habit runs daily at noon (12:00 UTC)
+# It compares the current Wise exchange rate to the 7-day average
+# If the weekly average is > 105% of current rate, it triggers a conversion
+
+nodes:
+  # Trigger: Daily at noon
+  - id: schedule
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      params:
+        cronExpression: "0 12 * * *"    # Daily at noon UTC
+        timezone: "UTC"
+        enabled: true
+        description: "Daily currency rate check"
+
+  # Get current exchange rate
+  - id: get-current-rate
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wise"
+      operation: getExchangeRate
+      params:
+        apiToken: "{{habits.env.WISE_API_TOKEN}}"
+        source: "{{habits.env.WISE_SOURCE_CURRENCY}}"
+        target: "{{habits.env.WISE_TARGET_CURRENCY}}"
+
+  # Get historical rates for the past 7 days
+  - id: get-historical-rates
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wise"
+      operation: getHistoricalRates
+      params:
+        apiToken: "{{habits.env.WISE_API_TOKEN}}"
+        source: "{{habits.env.WISE_SOURCE_CURRENCY}}"
+        target: "{{habits.env.WISE_TARGET_CURRENCY}}"
+        days: 7
+
+  # Analyze rates and decide if conversion should happen
+  - id: analyze-rates
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Analyze Exchange Rates
+      params:
+        currentRate: "{{get-current-rate}}"
+        historicalData: "{{get-historical-rates}}"
+        type: script
+        language: deno
+        script: |
+          interface RateData {
+            rate: number;
+            source: string;
+            target: string;
+            time: string;
+          }
+          
+          interface HistoricalData {
+            rates: RateData[];
+            average: number;
+            source: string;
+            target: string;
+            days: number;
+          }
+          
+          export async function main(currentRate: RateData, historicalData: HistoricalData) {
+            const current = currentRate.rate;
+            const weeklyAverage = historicalData.average;
+            
+            // Calculate the threshold (105% of current rate)
+            const threshold = current * 1.05;
+            
+            // Should convert if weekly average is higher than threshold
+            // This means the current rate is at least 5% worse than the weekly average
+            const shouldConvert = weeklyAverage > threshold;
+            
+            // Calculate the percentage difference
+            const percentageDiff = ((weeklyAverage - current) / current) * 100;
+            
+            console.log(`📊 Rate Analysis:`);
+            console.log(`   Current rate: ${current.toFixed(4)}`);
+            console.log(`   Weekly average: ${weeklyAverage.toFixed(4)}`);
+            console.log(`   Threshold (105% of current): ${threshold.toFixed(4)}`);
+            console.log(`   Difference: ${percentageDiff.toFixed(2)}%`);
+            console.log(`   Should convert: ${shouldConvert}`);
+            
+            return {
+              shouldConvert,
+              currentRate: current,
+              weeklyAverage,
+              threshold,
+              percentageDiff: percentageDiff.toFixed(2),
+              source: currentRate.source,
+              target: currentRate.target,
+              analysis: shouldConvert 
+                ? `Rate dropped ${percentageDiff.toFixed(2)}% below weekly average. Converting recommended.`
+                : `Rate is within acceptable range (${percentageDiff.toFixed(2)}% from average).`,
+            };
+          }
+
+  # Conditional: Only convert if rate is favorable
+  - id: check-should-convert
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: switch
+      params:
+        condition: "{{analyze-rates.shouldConvert}}"
+        branches:
+          - value: true
+            target: convert-currency
+          - value: false
+            target: skip-conversion
+
+  # Convert currency if conditions met
+  - id: convert-currency
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wise"
+      operation: convertCurrency
+      params:
+        apiToken: "{{habits.env.WISE_API_TOKEN}}"
+        profileId: "{{habits.env.WISE_PROFILE_ID}}"
+        sourceCurrency: "{{habits.env.WISE_SOURCE_CURRENCY}}"
+        targetCurrency: "{{habits.env.WISE_TARGET_CURRENCY}}"
+        amount: "{{habits.env.WISE_CONVERSION_AMOUNT}}"
+
+  # Skip conversion placeholder
+  - id: skip-conversion
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Skip Conversion
+      params:
+        analysis: "{{analyze-rates}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(analysis: any) {
+            return {
+              skipped: true,
+              reason: analysis.analysis,
+              currentRate: analysis.currentRate,
+              weeklyAverage: analysis.weeklyAverage,
+            };
+          }
+
+edges:
+  - source: schedule
+    target: get-current-rate
+  - source: get-current-rate
+    target: get-historical-rates
+  - source: get-historical-rates
+    target: analyze-rates
+  - source: analyze-rates
+    target: check-should-convert
+
+output:
+  analysis: "{{analyze-rates}}"
+  conversion: "{{convert-currency}}"
+  skipped: "{{skip-conversion}}"

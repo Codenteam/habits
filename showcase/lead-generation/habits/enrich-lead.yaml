@@ -1,0 +1,133 @@
+id: enrich-lead
+name: Enrich Lead
+description: >-
+  Enriches lead data using Snov.io to get prospect information
+  and company data. Updates the lead record with enriched information.
+version: "1.0"
+nodes:
+  - id: get-prospect
+    type: bits
+    position:
+      x: 200
+      y: 0
+    data:
+      label: Get Prospect Info from Snov.io
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-snov"
+      operation: getProspectByEmail
+      params:
+        email: "{{habits.input.email}}"
+      credentials:
+        snov:
+          clientId: "{{habits.env.SNOV_CLIENT_ID}}"
+          clientSecret: "{{habits.env.SNOV_CLIENT_SECRET}}"
+
+  - id: get-company
+    type: bits
+    position:
+      x: 400
+      y: 0
+    data:
+      label: Get Company Info from Snov.io
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-snov"
+      operation: getCompanyByDomain
+      params:
+        domain: "{{habits.input.email.split('@')[1]}}"
+      credentials:
+        snov:
+          clientId: "{{habits.env.SNOV_CLIENT_ID}}"
+          clientSecret: "{{habits.env.SNOV_CLIENT_SECRET}}"
+
+  - id: update-lead
+    type: bits
+    position:
+      x: 600
+      y: 0
+    data:
+      label: Update Lead with Enrichment
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: enrichLead
+      params:
+        leadId: "{{habits.input.leadId}}"
+        enrichmentData:
+          prospect: "{{get-prospect.data}}"
+          company: "{{get-company.data}}"
+          enrichedAt: "{{new Date().toISOString()}}"
+
+  - id: score-lead
+    type: bits
+    position:
+      x: 800
+      y: 0
+    data:
+      label: Score Lead
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-crm"
+      operation: scoreLead
+      params:
+        leadId: "{{habits.input.leadId}}"
+        criteria:
+          - field: company
+            hasValue: true
+            points: 15
+          - field: phone
+            hasValue: true
+            points: 10
+          - field: firstName
+            hasValue: true
+            points: 5
+          - field: lastName
+            hasValue: true
+            points: 5
+          - field: customFields.enrichment.prospect.position
+            hasValue: true
+            points: 20
+          - field: customFields.enrichment.prospect.linkedin
+            hasValue: true
+            points: 10
+
+  - id: return-result
+    type: bits
+    position:
+      x: 1000
+      y: 0
+    data:
+      label: Return Enriched Data
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: format
+      params:
+        template: |
+          {
+            "success": true,
+            "email": "{{habits.input.email}}",
+            "enrichment": {
+              "prospect": {{JSON.stringify(get-prospect.data)}},
+              "company": {{JSON.stringify(get-company.data)}}
+            },
+            "score": {{score-lead.score}}
+          }
+
+edges:
+  - id: e1
+    source: http-trigger
+    target: get-prospect
+  - id: e2
+    source: get-prospect
+    target: get-company
+  - id: e3
+    source: get-company
+    target: update-lead
+  - id: e4
+    source: update-lead
+    target: score-lead
+  - id: e5
+    source: score-lead
+    target: return-result

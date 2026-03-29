@@ -47,7 +47,10 @@
             "js": "#!/usr/bin/env node"
           },
           "external": [
-            "@activepieces/*"
+            "@activepieces/*",
+            "@tailwindcss/oxide",
+            "@tailwindcss/oxide-*",
+            "lightningcss"
           ],
           "packages": "bundle"
         }
@@ -63,7 +66,15 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm tsx watch packages/habits/app/src/main.ts cortex --config {args.config}",
+        "command": "pnpm tsx watch packages/habits/app/src/main.ts",
+        "cwd": "{workspaceRoot}",
+        "config": "config.json"
+      }
+    },
+    "run": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsx packages/habits/app/src/main.ts",
         "cwd": "{workspaceRoot}",
         "config": "config.json"
       }

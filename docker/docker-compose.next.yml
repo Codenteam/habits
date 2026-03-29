@@ -1,0 +1,23 @@
+# Usage:
+#   docker compose -f docker-compose.next.yml up -d
+
+services:
+  habits-base-1:
+    image: node:24-alpine
+    container_name: habits-base-1
+    restart: unless-stopped
+    working_dir: /app
+    command: npx habits@next base --port 3000
+    ports:
+      - "3000:3000"
+      - "13000:13000"
+      - "13001:13001"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/habits/base/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+

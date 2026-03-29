@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Habits</title>
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a24;
+      --bg-hover: #22222e;
+      --border: #2a2a38;
+      --text-primary: #ffffff;
+      --text-secondary: #8b8b9e;
+      --text-muted: #5c5c6e;
+      --accent: #6366f1;
+      --accent-hover: #5558e3;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Safe area for notched devices */
+    .safe-top { padding-top: env(safe-area-inset-top, 0); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+    
+    /* App Shell */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+
+    
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    #habits-list-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+    
+    .action-btn:active {
+      transform: translateY(0);
+    }
+    
+    .action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    
+    .action-btn.primary:hover {
+      background: var(--accent-hover);
+    }
+    
+    .action-icon {
+      width: 28px;
+      height: 28px;
+      opacity: 0.9;
+    }
+    
+    /* Section */
+    .section {
+      padding: 0 20px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 12px;
+    }
+    
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .section-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-tertiary);
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    
+    .clear-all-btn {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+    
+    .clear-all-btn:hover {
+      background: var(--error);
+      border-color: var(--error);
+      color: white;
+    }
+    
+    /* Habits List */
+    .habits-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+    
+    .habit-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .habit-card:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+    
+    .habit-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent),  var(--accent));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .habit-icon svg {
+      width: 22px;
+      height: 22px;
+      color: white;
+    }
+    
+    .habit-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .habit-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .habit-path {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    
+    /* 3-dot menu button */
+    .habit-menu-btn {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      margin-left: 8px;
+      position: relative;
+    }
+    
+    .habit-menu-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    
+    .habit-menu-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border);
+    }
+    
+    .habit-menu-btn:hover svg {
+      color: var(--text-primary);
+    }
+    
+    /* Dropdown menu */
+    .habit-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+    }
+    
+    .habit-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    
+    .dropdown-item:hover {
+      background: var(--bg-hover);
+    }
+    
+    .dropdown-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+    }
+    
+    .dropdown-item.danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+    
+    .dropdown-item.danger:hover svg {
+      color: var(--error);
+    }
+    
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      color: var(--text-muted);
+      opacity: 0.4;
+      margin-bottom: 20px;
+    }
+    
+    .empty-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .empty-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    
+    /* Habit View */
+    .habit-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+    }
+    
+    .habit-view.active {
+      display: flex;
+    }
+    
+    .back-btn {
+      position: fixed;
+      top: 32px;
+      left: 32px;
+      z-index: 300;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .back-btn:hover {
+      background: var(--bg-hover);
+      transform: scale(1.05);
+    }
+    
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-primary);
+    }
+    
+    .habit-content {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 500;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 50%;
+    }
+    
+    .modal-icon svg {
+      width: 24px;
+      height: 24px;
+      color: var(--error);
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    
+    .modal-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    
+    .modal-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    
+    .modal-btn:hover {
+      background: var(--accent-hover);
+    }
+    
+    /* Picker Modal (for habit/file selection) */
+    .picker-modal {
+      padding: 0;
+      max-width: 360px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .picker-modal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    
+    .picker-modal .modal-title {
+      flex: 1;
+      text-align: center;
+      margin: 0;
+    }
+    
+    .modal-close-btn, .modal-back-btn {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    
+    .modal-close-btn:hover, .modal-back-btn:hover {
+      background: var(--bg-hover);
+    }
+    
+    .modal-close-btn svg, .modal-back-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-secondary);
+    }
+    
+    .picker-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    
+    .picker-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .picker-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .picker-item:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+    
+    .picker-item-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .picker-item-icon svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+    
+    .picker-item-icon.file-icon {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+    }
+    
+    .picker-item-icon.file-icon svg {
+      color: var(--text-secondary);
+    }
+    
+    .picker-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .picker-item-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .picker-item-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    
+    .picker-item-arrow {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    
+    .picker-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      display: none;
+    }
+    
+    .picker-empty.active {
+      display: block;
+    }
+    
+    /* Showcase Browser Modal */
+    .showcase-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    
+    .showcase-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .showcase-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .showcase-item:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+    
+    .showcase-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+    
+    .showcase-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .showcase-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .showcase-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .showcase-tags {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .showcase-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+    
+    .showcase-loading, .showcase-error {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    .showcase-error {
+      color: var(--error);
+    }
+    
+    /* Secrets Modal */
+    .secrets-modal {
+      padding: 0;
+      max-width: 400px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .secrets-modal .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    
+    .secrets-modal .modal-title {
+      flex: 1;
+      text-align: center;
+      margin: 0;
+    }
+    
+    .secrets-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .secrets-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    
+    .secret-item {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .secret-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .secret-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .secret-item-actions {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .secret-item-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: monospace;
+    }
+    
+    .secret-item-status {
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    
+    .secret-item-status.set {
+      color: var(--success);
+    }
+    
+    .secret-item-status.missing {
+      color: var(--warning);
+    }
+    
+    .secret-item-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .secret-input-inline {
+      flex: 1;
+      padding: 10px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    
+    .secret-input-inline:focus {
+      border-color: var(--accent);
+    }
+    
+    .secret-input-inline::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .secret-save-btn, .secret-edit-btn, .secret-cancel-btn {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .secret-save-btn svg, .secret-edit-btn svg, .secret-cancel-btn svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    
+    .secret-save-btn:hover {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    .secret-save-btn:hover svg {
+      color: var(--success);
+    }
+    
+    .secret-edit-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+    
+    .secret-edit-btn:hover svg {
+      color: var(--accent);
+    }
+    
+    .secret-delete-btn, .secret-cancel-btn {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .secret-delete-btn:hover, .secret-cancel-btn:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    .secret-delete-btn svg, .secret-cancel-btn svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    
+    .secret-delete-btn:hover svg, .secret-cancel-btn:hover svg {
+      color: var(--error);
+    }
+    
+    .secrets-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0 12px;
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .secrets-divider::before,
+    .secrets-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    
+    .secrets-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    .secrets-save-all-container {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .secrets-save-all-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 8px;
+      color: var(--success);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .secrets-save-all-btn:hover {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    .secrets-save-all-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .secrets-save-all-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    /* Spinner */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      animation: spin 1s linear infinite;
+    }
+    
+    .spinner circle {
+      stroke: var(--accent);
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .secret-save-btn:disabled,
+    .secret-input-inline:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    /* Utilities */
+    .hidden { display: none !important; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="app-shell safe-top safe-bottom">
+    <!-- Main View -->
+    <div id="habits-list-view">
+      <header class="header">
+        <div>
+          <h1 class="header-title">Habits</h1>
+          <p class="header-subtitle">Run workflows locally</p>
+        </div>
+      </header>
+      
+      <div class="quick-actions">
+        <button id="btn-open-habit" class="action-btn primary">
+          <svg class="action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Open Habit
+        </button>
+        <button id="btn-visualize-yaml" class="action-btn">
+          <svg class="action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          View Single Habit (YAML)
+        </button>
+      </div>
+      
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">My Habits</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="habits-count" class="section-count hidden">0</span>
+            <button id="btn-clear-all-habits" class="clear-all-btn hidden" title="Remove all habits">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="habits-list" class="habits-list section">
+        <div id="empty-state" class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          <h3 class="empty-title">No habits yet</h3>
+          <p class="empty-desc">Open a .habit file to start running workflows on your device</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Habit Execution View -->
+    <div id="habit-view" class="habit-view">
+      <button id="btn-back" class="back-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div id="habit-content" class="habit-content"></div>
+    </div>
+    
+    <!-- Open Habit Options Modal -->
+    <div id="open-habit-modal" class="modal-overlay">
+      <div class="modal picker-modal">
+        <div class="modal-header">
+          <div style="width: 32px"></div>
+          <h3 class="modal-title">Open Habit</h3>
+          <button id="open-habit-close" class="modal-close-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="picker-list">
+          <div id="option-upload" class="picker-item">
+            <div class="picker-item-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+            </div>
+            <div class="picker-item-info">
+              <div class="picker-item-name">Add from Device</div>
+              <div class="picker-item-desc">Select a .habit file from your device</div>
+            </div>
+            <svg class="picker-item-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div id="option-browse" class="picker-item">
+            <div class="picker-item-icon" style="background: var(--success);">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </div>
+            <div class="picker-item-info">
+              <div class="picker-item-name">Browse Showcase</div>
+              <div class="picker-item-desc">Try example habits from the showcase</div>
+            </div>
+            <svg class="picker-item-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Showcase Browser Modal -->
+    <div id="showcase-modal" class="modal-overlay">
+      <div class="modal picker-modal" style="max-height: 85vh;">
+        <div class="modal-header">
+          <button id="showcase-back" class="modal-back-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h3 class="modal-title">Showcase</h3>
+          <button id="showcase-close" class="modal-close-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div id="showcase-list" class="showcase-list"></div>
+        <div id="showcase-loading" class="showcase-loading">Loading showcase...</div>
+        <div id="showcase-error" class="showcase-error hidden">Failed to load showcase</div>
+      </div>
+    </div>
+    
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 id="error-title" class="modal-title">Error</h3>
+        <p id="error-message" class="modal-message"></p>
+        <button id="error-ok" class="modal-btn">OK</button>
+      </div>
+    </div>
+
+    <!-- File Selection Modal -->
+    <div id="file-select-modal" class="modal-overlay">
+      <div class="modal picker-modal">
+        <div class="modal-header">
+          <div style="width: 32px"></div>
+          <h3 id="file-select-title" class="modal-title">Select File</h3>
+          <button id="file-select-close" class="modal-close-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div id="file-select-list" class="picker-list"></div>
+        <div id="file-select-empty" class="picker-empty">
+          <p>No viewable files found in this habit.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secrets Modal -->
+    <div id="secrets-modal" class="modal-overlay">
+      <div class="modal secrets-modal">
+        <div class="modal-header">
+          <div style="width: 32px"></div>
+          <h3 class="modal-title">Secrets</h3>
+          <button id="secrets-close" class="modal-close-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="secrets-content">
+          <p class="secrets-description">
+            Required secrets are automatically detected from the habit's workflows. Fill in the values below to store them securely on your device.
+          </p>
+          <div id="secrets-list"></div>
+          <div id="secrets-empty" class="secrets-empty hidden">
+            No secrets required.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="runner.js"></script>
+</body>
+</html>

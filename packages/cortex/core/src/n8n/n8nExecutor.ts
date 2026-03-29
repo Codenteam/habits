@@ -13,7 +13,7 @@ export { createExecutionContext, N8nNodeExecutionOptions } from './executionCont
 export { executeGenericN8nNode, executeRoutingBasedNode, loadNodeFromModule, hasRoutingInDescription } from './nodeExecution';
 export { httpRequest, convertN8nRequestToAxios } from './httpRequest';
 export { loadCredentialType, applyCredentialAuthentication, applyFallbackAuthentication, applyCredentialsToHeaders, resolveCredentialExpression } from './credentialLoader';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

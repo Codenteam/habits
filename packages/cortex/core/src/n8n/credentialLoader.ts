@@ -13,7 +13,7 @@ import {
   IAuthenticateGeneric,
   ICredentialDataDecryptedObject,
 } from './types';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 

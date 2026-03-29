@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
-import { LoggerFactory } from '@ha-bits/core';
+import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
 
@@ -176,7 +176,7 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
     };
   }
 
-  logger.info(`Generating bundle via npx for ${habits.length} workflow(s)`);
+  logger.info(`Generating bundle via for ${habits.length} workflow(s), which are : ${habits.map(h => h.name || h.id).join(', ')}`);
 
   // Extract bits modules from workflows
   const bits = extractBitsFromWorkflows(habits);

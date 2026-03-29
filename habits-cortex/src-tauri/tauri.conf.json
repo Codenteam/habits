@@ -1,0 +1,78 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "identifier": "com.codenteam-oss.habits",
+  "productName": "Cortex",
+  "version": "1.0.6",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "frontendDist": "../www"
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "Habits",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["habit"],
+        "name": "Habit Workflow",
+        "description": "Habits workflow bundle",
+        "role": "Editor",
+        "mimeType": "application/x-habit"
+      }
+    ],
+    "resources": [],
+    "copyright": "2024 Habits",
+    "category": "DeveloperTool",
+    "shortDescription": "Run habit workflows locally",
+    "longDescription": "Cortex - Import and run habit workflows on desktop and mobile",
+    "targets": "all",
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "entitlements": "./Entitlements.plist"
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "iOS": {
+      "minimumSystemVersion": "13.0",
+      "developmentTeam": "S54SCFZ347"
+    },
+    "android": {
+      "minSdkVersion": 24
+    }
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Cortex",
+        "width": 400,
+        "height": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      }
+    }
+  },
+  "plugins": {}
+}

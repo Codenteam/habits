@@ -46,7 +46,6 @@ export const askOpenAI = createAction({
           const authValue = auth as unknown as openaiAuthValue;
           const openai = new OpenAI({
             apiKey: authValue.apiKey,
-            logLevel: 'info',
             dangerouslyAllowBrowser: true,
           } as any);
           const response = await openai.models.list();

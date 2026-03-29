@@ -154,7 +154,7 @@ export function getNodeColors(framework: WorkflowFramework, isTrigger: boolean):
     case 'script':
       return { bg: 'bg-cyan-900', border: 'border-cyan-500', text: 'text-cyan-200' };
     case 'bits':
-      return { bg: 'bg-emerald-900', border: 'border-emerald-500', text: 'text-emerald-200' };
+      return { bg: 'bg-blue-900', border: 'border-blue-500', text: 'text-blue-200' };
     default:
       return { bg: 'bg-gray-800', border: 'border-gray-500', text: 'text-gray-200' };
   }
