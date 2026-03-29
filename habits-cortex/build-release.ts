@@ -37,6 +37,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as os from 'os';
 
 import {
   Platform,
@@ -586,12 +587,26 @@ async function uploadToAppStore(ipaOrPkgPath: string, platform: 'ios' | 'macos')
   // Decode API key
   logSection('Setting up App Store Connect API Key');
   
-  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', 'AuthKey.p8');
   const apiKeyId = process.env.APP_STORE_CONNECT_API_KEY_ID!;
   const issuerId = process.env.APP_STORE_CONNECT_API_ISSUER_ID!;
   
+  // altool expects the key file in ~/private_keys/AuthKey_<KEY_ID>.p8
+  const privateKeysDir = path.join(os.homedir(), 'private_keys');
+  if (!fs.existsSync(privateKeysDir)) {
+    fs.mkdirSync(privateKeysDir, { recursive: true });
+  }
+  
+  const apiKeyFileName = `AuthKey_${apiKeyId}.p8`;
+  const apiKeyPath = path.join(privateKeysDir, apiKeyFileName);
+  
+  // Decode the base64 key to the expected location
+  const keyBase64 = process.env.APP_STORE_CONNECT_API_KEY_BASE64!;
+  const keyBuffer = Buffer.from(keyBase64, 'base64');
+  fs.writeFileSync(apiKeyPath, keyBuffer);
+  
   console.log('success', `API Key ID: ${apiKeyId}`);
   console.log('success', `Issuer ID: ${issuerId}`);
+  console.log('debug', `API Key Path: ${apiKeyPath}`);
   
   // Check if xcrun is available (macOS only)
   if (!commandExists('xcrun')) {
@@ -678,6 +693,12 @@ async function uploadToAppStore(ipaOrPkgPath: string, platform: 'ios' | 'macos')
     console.log('info', '  - Ensure the app version/build is not already uploaded');
     console.log('info', '  - Check your internet connection');
     throw error;
+  } finally {
+    // Clean up the API key file
+    if (fs.existsSync(apiKeyPath)) {
+      fs.unlinkSync(apiKeyPath);
+      console.log('debug', `Removed API key file: ${apiKeyPath}`);
+    }
   }
 }
 
