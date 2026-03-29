@@ -3,8 +3,11 @@ use tauri::{AppHandle, Runtime};
 use std::sync::Once;
 
 // Platform-specific imports
-#[cfg(any(target_os = "macos", target_os = "ios"))]
+#[cfg(target_os = "macos")]
 use apple_native_keyring_store::keychain::Store as AppleStore;
+
+#[cfg(target_os = "ios")]
+use apple_native_keyring_store::protected::Store as AppleStore;
 
 #[cfg(target_os = "windows")]
 use windows_native_keyring_store::Store as WindowsStore;

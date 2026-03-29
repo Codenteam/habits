@@ -48,7 +48,6 @@
           },
           "external": [
             "@activepieces/*",
-            "@tailwindcss/postcss",
             "@tailwindcss/oxide",
             "@tailwindcss/oxide-*",
             "lightningcss"

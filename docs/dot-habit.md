@@ -61,50 +61,164 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
   </div>
 </div>
 
+<!-- Journey Navigation - Creative TOC -->
+<div class="journey-nav">
+  <div class="journey-title">
+    <span class="journey-icon">🗺️</span>
+    <h2>Explore the Specification</h2>
+  </div>
+  <div class="journey-path">
+    <a href="#conformance" class="journey-stop">
+      <div class="stop-marker"><component :is="CheckCircle" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Start Here</span>
+        <span class="stop-title">Conformance</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#file-structure" class="journey-stop">
+      <div class="stop-marker"><component :is="FileArchive" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Structure</span>
+        <span class="stop-title">Archive Layout</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#stack-schema" class="journey-stop">
+      <div class="stop-marker"><component :is="Settings" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Config</span>
+        <span class="stop-title">stack.yaml</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#workflow-schema" class="journey-stop">
+      <div class="stop-marker"><component :is="RefreshCw" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Logic</span>
+        <span class="stop-title">Workflows</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#security" class="journey-stop">
+      <div class="stop-marker"><component :is="Shield" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Trust</span>
+        <span class="stop-title">Signing</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#secrets" class="journey-stop">
+      <div class="stop-marker"><component :is="Key" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Secrets</span>
+        <span class="stop-title">Resolution</span>
+      </div>
+    </a>
+    <div class="journey-connector"></div>
+    <a href="#portability" class="journey-stop">
+      <div class="stop-marker"><component :is="Globe" :size="20" /></div>
+      <div class="stop-content">
+        <span class="stop-label">Deploy</span>
+        <span class="stop-title">Profiles</span>
+      </div>
+    </a>
+  </div>
+  <div class="journey-appendix">
+    <span class="appendix-label">Appendices</span>
+    <div class="appendix-links">
+      <a href="#running" class="appendix-chip"><component :is="Play" :size="14" /> Running</a>
+      <a href="#viewing" class="appendix-chip"><component :is="Eye" :size="14" /> Viewing</a>
+      <a href="#governance" class="appendix-chip"><component :is="BookOpen" :size="14" /> Governance</a>
+    </div>
+  </div>
+</div>
+
 <!-- Capability Banner -->
 <p class="capability-statement">
-  The <code>.habit</code> format is designed for portable execution across platforms and can be executed by runtimes that provide durability and scalability guarantees.
+  The <code>.habit</code> format delivers <strong>portability</strong>, <strong>cross-platform support</strong>, <strong>multi-use case flexibility</strong>, and <strong>auditability</strong>, while runtimes provide <strong>durability</strong>, <strong>scalability</strong>, <strong>consistency</strong>, and <strong>isolation</strong>.
 </p>
 
-<div class="capability-grid">
-  <div class="capability-card">
-    <div class="card-icon">
-      <component :is="Package" :size="32" />
+<div class="capability-section">
+  <h3 class="capability-section-title"><component :is="FileArchive" :size="20" /> Format Capabilities</h3>
+  <div class="capability-grid format-grid">
+    <div class="capability-card format">
+      <div class="card-icon">
+        <component :is="Package" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Portable</h3>
+        <p>Move the same <code>.habit</code> file between environments without rewriting it.</p>
+      </div>
     </div>
-    <div class="card-content">
-      <h3>Portable</h3>
-      <span class="capability-category">Format</span>
-      <p>Move the same <code>.habit</code> file between environments without rewriting it.</p>
+    <div class="capability-card format">
+      <div class="card-icon">
+        <component :is="Globe" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Cross-Platform</h3>
+        <p>Run the same package across mobile, desktop, server, and container runtimes.</p>
+      </div>
+    </div>
+    <div class="capability-card format">
+      <div class="card-icon">
+        <component :is="Layers" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Multi-Use Case</h3>
+        <p>Deploy as automation, backend API, full-stack SaaS, or standalone microapp: same format.</p>
+      </div>
+    </div>
+    <div class="capability-card format">
+      <div class="card-icon">
+        <component :is="Eye" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Auditable</h3>
+        <p>Standard ZIP with human-readable YAML. Inspect, audit, or modify with any text editor.</p>
+      </div>
     </div>
   </div>
-  <div class="capability-card">
-    <div class="card-icon">
-      <component :is="Globe" :size="32" />
+</div>
+
+<div class="capability-section">
+  <h3 class="capability-section-title"><component :is="Cpu" :size="20" /> Runtime Capabilities</h3>
+  <div class="capability-grid runtime-grid">
+    <div class="capability-card runtime">
+      <div class="card-icon">
+        <component :is="RefreshCw" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Durable</h3>
+        <p>Recover after crashes and continue from the last safe point instead of starting over.</p>
+      </div>
     </div>
-    <div class="card-content">
-      <h3>Cross-Platform</h3>
-      <span class="capability-category">Format</span>
-      <p>Run the same package across mobile, desktop, server, and container runtimes.</p>
+    <div class="capability-card runtime">
+      <div class="card-icon">
+        <component :is="Zap" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Scalable</h3>
+        <p>Run many executions safely and efficiently as demand grows.</p>
+      </div>
     </div>
-  </div>
-  <div class="capability-card">
-    <div class="card-icon">
-      <component :is="RefreshCw" :size="32" />
+    <div class="capability-card runtime">
+      <div class="card-icon">
+        <component :is="CheckCircle" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Consistent</h3>
+        <p>Same inputs produce identical outputs regardless of which runtime or platform executes it.</p>
+      </div>
     </div>
-    <div class="card-content">
-      <h3>Durable</h3>
-      <span class="capability-category">Runtime</span>
-      <p>Recover after crashes and continue from the last safe point instead of starting over.</p>
-    </div>
-  </div>
-  <div class="capability-card">
-    <div class="card-icon">
-      <component :is="Zap" :size="32" />
-    </div>
-    <div class="card-content">
-      <h3>Scalable</h3>
-      <span class="capability-category">Runtime</span>
-      <p>Run many executions safely and efficiently as demand grows.</p>
+    <div class="capability-card runtime">
+      <div class="card-icon">
+        <component :is="Shield" :size="32" />
+      </div>
+      <div class="card-content">
+        <h3>Isolated</h3>
+        <p>Each execution runs in its own context. No state leaks between runs or between habits.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1778,7 +1892,7 @@ $ npx habits pack --format habit --config ./stack.yaml
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  margin-bottom: 48px;
+  margin-bottom: 24px;
 }
 
 .capability-card {
@@ -1789,22 +1903,36 @@ $ npx habits pack --format habit --config ./stack.yaml
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.capability-card:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+}
+
+.capability-card.format {
+  border-left: 3px solid #3b82f6;
+}
+
+.capability-card.format .card-icon {
+  background: #3b82f620;
+  color: #3b82f6;
+}
+
+.capability-card.runtime {
+  border-left: 3px solid #10b981;
+}
+
+.capability-card.runtime .card-icon {
+  background: #10b98120;
+  color: #10b981;
 }
 
 .capability-card h3 {
-  margin: 0 0 4px;
+  margin: 0 0 8px;
   font-size: 1.1rem;
   font-weight: 600;
-}
-
-.capability-category {
-  display: block;
-  font-size: 0.65rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--vp-c-text-3);
-  margin-bottom: 8px;
 }
 
 .capability-card p {
@@ -1814,9 +1942,202 @@ $ npx habits pack --format habit --config ./stack.yaml
   line-height: 1.5;
 }
 
+.capability-section {
+  margin-bottom: 32px;
+}
+
+.capability-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--vp-c-text-2);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--vp-c-divider);
+}
+
+.capability-section-title svg {
+  color: var(--vp-c-brand-1);
+}
+
+/* Journey Navigation - Creative TOC */
+.journey-nav {
+  background: linear-gradient(135deg, var(--vp-c-bg-soft) 0%, var(--vp-c-bg-alt) 100%);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 48px;
+}
+
+.journey-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.journey-title h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  border: none;
+  padding: 0;
+}
+
+.journey-icon {
+  font-size: 1.4rem;
+}
+
+.journey-path {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 0;
+  margin-bottom: 20px;
+}
+
+.journey-stop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-width: 90px;
+}
+
+.journey-stop:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+.stop-marker {
+  width: 36px;
+  height: 36px;
+  background: var(--vp-c-brand-soft);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vp-c-brand-1);
+}
+
+.journey-stop:hover .stop-marker {
+  background: var(--vp-c-brand-1);
+  color: white;
+}
+
+.stop-content {
+  text-align: center;
+}
+
+.stop-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vp-c-text-3);
+  margin-bottom: 2px;
+}
+
+.stop-title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.journey-connector {
+  width: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--vp-c-divider), var(--vp-c-brand-soft));
+  flex-shrink: 0;
+}
+
+.journey-appendix {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--vp-c-divider);
+}
+
+.appendix-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--vp-c-text-3);
+  font-weight: 500;
+}
+
+.appendix-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.appendix-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  font-size: 0.75rem;
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.appendix-chip:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.appendix-chip svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 900px) {
+  .journey-path {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .journey-connector {
+    display: none;
+  }
+  
+  .journey-stop {
+    flex: 0 0 calc(33.33% - 8px);
+    margin-bottom: 8px;
+  }
+}
+
 @media (max-width: 600px) {
   .capability-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .journey-stop {
+    flex: 0 0 calc(50% - 8px);
+  }
+  
+  .journey-nav {
+    padding: 20px;
   }
 }
 

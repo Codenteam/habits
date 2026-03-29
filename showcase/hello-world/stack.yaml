@@ -3,6 +3,9 @@ workflows:
   - id: hello-world
     path: ./habit.yaml
     enabled: true
+  - id: hello-world-env
+    path: ./habit-env.yaml
+    enabled: true
   - id: hello-world-file-watcher
     path: ./file-watcher.yaml
     enabled: true

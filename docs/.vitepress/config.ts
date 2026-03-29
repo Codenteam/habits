@@ -103,6 +103,7 @@ export default defineConfig({
         items: [
           { text: 'Browse All', link: '/showcase/' },
 
+          { text: 'Hello World', link: '/showcase/hello-world' },
           { text: 'AI Cookbook', link: '/showcase/ai-cookbook' },
           { text: 'AI Journal', link: '/showcase/ai-journal' },
           { text: 'QR Code Manager', link: '/showcase/qr-database' },

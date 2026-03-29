@@ -423,6 +423,8 @@ ${example.keyFiles.map(file => {
   const habitViewerSection = habitFiles.length > 0
     ? `
 
+<hr style="clear:both;">
+
 ## Run Your .habit File
 
 <Checklist name="dot-habit/mobile" title="Run on Mobile" icon="smartphone">

@@ -9,6 +9,7 @@ edition = "2021"
 
 [lib]
 name = "cortex_app_lib"
+# staticlib required for iOS, cdylib for Android, rlib for macOS
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]

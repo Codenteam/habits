@@ -42,7 +42,10 @@ jobs:
           if [[ "$REF" == "main" ]]; then
             # Push to main → @next with commit-based version
             VERSION="0.1.0-next.${{ github.run_number }}"
-            TAG="next"
+
+            # For now, temporarily, we will tag main as latest, just like releases, just temporarily
+            # TAG="next"
+            TAG="latest"
           else
             # Tag or release branch → @latest with version from ref
             VERSION="${REF#v}"
