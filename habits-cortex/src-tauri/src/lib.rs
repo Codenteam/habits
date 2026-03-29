@@ -110,27 +110,6 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, _event| {
-            // Handle file associations (Opened event when file is opened with app)
-            // Only available on desktop platforms
-            #[cfg(desktop)]
-            if let tauri::RunEvent::Opened { urls } = &_event {
-                for url in urls {
-                    // Convert file:// URL to path
-                    if let Ok(path) = url.to_file_path() {
-                        if let Some(path_str) = path.to_str() {
-                            if path_str.ends_with(".habit") {
-                                // Store the opened file path
-                                if let Ok(mut guard) = OPENED_FILE.lock() {
-                                    *guard = Some(path_str.to_string());
-                                }
-                                // Emit event to frontend so it can reload
-                                if let Some(window) = _app_handle.get_webview_window("main") {
-                                    let _ = window.emit("habit-file-opened", path_str);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+
         });
 }
