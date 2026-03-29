@@ -217,6 +217,8 @@ cd habits-cortex && npm run tauri -- ios build
 cd habits-cortex
 npx env-cmd -f ../.secrets -- npx tsx build-release.ts --platform ios --upload-ios
 
+
+
 ## Run app
 cd habits-cortex
 npm run dev
