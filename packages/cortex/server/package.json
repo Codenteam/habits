@@ -2,19 +2,19 @@
   "name": "@ha-bits/cortex",
   "version": "1.1.14",
   "description": "Cortex - Habits Workflow Executor CLI",
-  "main": "./pack/index.cjs",
+  "main": "./server/main.cjs",
   "bin": {
-    "cortex": "./pack/index.cjs",
-    "ha-bits-cortex": "./pack/index.cjs"
+    "cortex": "./server/main.cjs",
+    "ha-bits-cortex": "./server/main.cjs"
   },
   "files": [
-    "pack",
+    "server",
     "ui",
     "package.json",
     "README.md"
   ],
   "scripts": {
-    "start": "node pack/index.cjs"
+    "start": "node server/main.cjs"
   },
   "keywords": [
     "habits",

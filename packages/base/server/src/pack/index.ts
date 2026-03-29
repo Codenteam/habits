@@ -409,15 +409,6 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
     if (processedResult.tailwindProcessed) {
       console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
     }
-    if (processedResult.cssFilesInlined > 0) {
-      console.log(`   📝 ${relativePath}: ${processedResult.cssFilesInlined} CSS file(s) inlined`);
-    }
-    if (processedResult.jsFilesInlined > 0) {
-      console.log(`   📝 ${relativePath}: ${processedResult.jsFilesInlined} JS file(s) inlined`);
-    }
-    if (processedResult.imagesInlined > 0) {
-      console.log(`   🖼️  ${relativePath}: ${processedResult.imagesInlined} image(s) inlined`);
-    }
 
     // Add processed (inlined) HTML files under the frontend directory for offline use
     // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
@@ -489,8 +480,8 @@ async function processHtmlFilesInDirectory(
   dir: string,
   inlinedFiles: Set<string>,
   injectScripts?: InjectScript[]
-): Promise<Map<string, { html: string; tailwindProcessed: boolean; cssFilesInlined: number; jsFilesInlined: number; imagesInlined: number }>> {
-  const results = new Map<string, { html: string; tailwindProcessed: boolean; cssFilesInlined: number; jsFilesInlined: number; imagesInlined: number }>();
+): Promise<Map<string, { html: string; tailwindProcessed: boolean }>> {
+  const results = new Map<string, { html: string; tailwindProcessed: boolean }>();
 
   const processDir = async (currentDir: string) => {
     const entries = fs.readdirSync(currentDir, { withFileTypes: true });

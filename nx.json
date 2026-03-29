@@ -73,18 +73,6 @@
         "build"
       ],
       "cache": true
-    },
-    "pack": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": ["echo 'Pack completed'"],
-        "cwd": "{workspaceRoot}",
-        "parallel": false
-      },
-      "dependsOn": [
-        "pack-esm"
-      ],
-      "cache": false
     }
   },
   "defaultBase": "main"

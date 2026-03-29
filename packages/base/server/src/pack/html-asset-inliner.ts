@@ -3,20 +3,16 @@
  * 
  * Processes HTML files to:
  * 1. Remove Tailwind CDN and generate CSS via Tailwind CLI
- * 2. Inline all assets using the 'inliner' npm package
+ * 2. Inject custom scripts
  * 
- * This creates fully self-contained HTML that works offline.
+ * This creates self-contained HTML that works offline.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { spawn } from 'child_process';
 import { LoggerFactory } from '@ha-bits/core/logger';
-import postcss from 'postcss';
-// @ts-ignore - moduleResolution mismatch with @tailwindcss/postcss types
-import tailwindcss from '@tailwindcss/postcss';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Inliner = require('inliner');
 
 const logger = LoggerFactory.getRoot();
 
@@ -48,12 +44,6 @@ export interface ProcessedHtml {
   html: string;
   /** Whether Tailwind was detected and processed */
   tailwindProcessed: boolean;
-  /** Number of CSS files inlined */
-  cssFilesInlined: number;
-  /** Number of JS files inlined */
-  jsFilesInlined: number;
-  /** Number of images inlined */
-  imagesInlined: number;
 }
 
 /**
@@ -73,31 +63,45 @@ function extractTailwindConfig(html: string): { config: string | null; htmlWitho
 }
 
 /**
- * Generate Tailwind CSS using postcss + tailwindcss v4
+ * Generate Tailwind CSS using @tailwindcss/cli v4
  */
 async function runTailwindCli(htmlPath: string, outputCssPath: string, configContent?: string): Promise<boolean> {
   try {
-    // For Tailwind v4 with @tailwindcss/postcss, we need to run from a directory
-    // where tailwindcss can be resolved. Use the project root.
-    const projectRoot = process.cwd();
+    const tmpDir = path.dirname(outputCssPath);
     
-    // Tailwind v4 uses @import "tailwindcss" and @source directive
+    // Create input CSS file with @import and @source directives (Tailwind v4 syntax)
+    const inputCssPath = path.join(tmpDir, 'input.css');
     const inputCss = `@import "tailwindcss";
 @source "${htmlPath}";`;
+    fs.writeFileSync(inputCssPath, inputCss);
     
-    // Process with postcss + @tailwindcss/postcss (v4)
-    // Run from project root so tailwindcss can be resolved
-    const result = await postcss([
-      tailwindcss()
-    ]).process(inputCss, {
-      from: path.join(projectRoot, 'input.css'),
-      to: outputCssPath
+    // Run Tailwind CLI via npx
+    return new Promise((resolve) => {
+      const proc = spawn('npx', ['@tailwindcss/cli', '-i', inputCssPath, '-o', outputCssPath], {
+        cwd: tmpDir,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: true,
+      });
+      
+      let stderr = '';
+      proc.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+      
+      proc.on('close', (code) => {
+        if (code === 0 && fs.existsSync(outputCssPath)) {
+          resolve(true);
+        } else {
+          logger.warn('Tailwind CLI failed', { code, stderr: stderr.slice(0, 500) });
+          resolve(false);
+        }
+      });
+      
+      proc.on('error', (err) => {
+        logger.warn('Tailwind CLI spawn error', { error: err.message });
+        resolve(false);
+      });
     });
-    
-    // Write output CSS
-    fs.writeFileSync(outputCssPath, result.css);
-    
-    return fs.existsSync(outputCssPath);
   } catch (err: any) {
     logger.warn('Tailwind processing failed', { error: err.message });
     return false;
@@ -105,41 +109,12 @@ async function runTailwindCli(htmlPath: string, outputCssPath: string, configCon
 }
 
 /**
- * Inline all assets in HTML using the inliner package
- */
-async function runInliner(htmlPath: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    try {
-      new Inliner(htmlPath, {
-        images: true,        // Inline images as base64 data URIs
-        compressCSS: false,  // Don't compress CSS
-        compressJS: false,   // Don't compress JS
-        skipAbsoluteUrls: false, // Process absolute URLs too
-      }, (error: Error | null, html: string) => {
-        if (error) {
-          logger.warn('Inliner failed, returning original HTML', { error: error.message });
-          resolve(fs.readFileSync(htmlPath, 'utf8'));
-        } else {
-          resolve(html);
-        }
-      });
-    } catch (err: any) {
-      // If inliner fails, return original content
-      logger.warn('Inliner failed, returning original HTML', { error: err.message });
-      resolve(fs.readFileSync(htmlPath, 'utf8'));
-    }
-  });
-}
-
-/**
- * Process an HTML file to inline all assets
+ * Process an HTML file to inline Tailwind CSS and inject scripts
  */
 export async function processHtmlFile(
   htmlContent: string,
   options: HtmlAssetInlinerOptions
 ): Promise<ProcessedHtml> {
-  const { baseDir } = options;
-  
   let html = htmlContent;
   let tailwindProcessed = false;
   
@@ -190,51 +165,26 @@ export async function processHtmlFile(
       }
     }
     
-    const fileName = `processed-${Date.now()}.html`;
-
-    // TODO: Can't you figure out a better path??? The whole /tmp thing won't work in windows!
-
-    const buildDir = path.join('/tmp', 'habits-html-inliner');
-    // Create if not there
-    if(!fs.existsSync(buildDir)) {
-        fs.mkdirSync(buildDir, { recursive: true });
-    }
-    // Step 2: Write the processed HTML to temp file
-    const htmlForInlining = path.join(buildDir, fileName);
-    
-    // Copy all assets from baseDir to tmpDir for inliner to find them
-    // copyDirRecursive(baseDir, tmpDir);
-    
-    // Write the processed HTML
-    fs.writeFileSync(htmlForInlining, html);
-    
-    // Step 3: Run inliner to inline CSS, JS, and images
-    logger.info('Running inliner to bundle all assets...');
-    let inlinedHtml = await runInliner(htmlForInlining);
-    
-    // Step 4: Inject scripts if provided
+    // Step 2: Inject scripts if provided
     if (options.injectScripts && options.injectScripts.length > 0) {
       const scriptsBlock = options.injectScripts
         .map(s => `<script id="${s.id}">\n${s.content}\n</script>`)
         .join('\n');
       
       // Inject before </head> or at start of <body>
-      if (inlinedHtml.includes('</head>')) {
-        inlinedHtml = inlinedHtml.replace('</head>', scriptsBlock + '\n</head>');
-      } else if (inlinedHtml.includes('<body>')) {
-        inlinedHtml = inlinedHtml.replace('<body>', '<body>\n' + scriptsBlock);
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', scriptsBlock + '\n</head>');
+      } else if (html.includes('<body>')) {
+        html = html.replace('<body>', '<body>\n' + scriptsBlock);
       } else {
-        inlinedHtml = scriptsBlock + '\n' + inlinedHtml;
+        html = scriptsBlock + '\n' + html;
       }
       logger.info('Injected scripts into HTML', { count: options.injectScripts.length });
     }
     
     return {
-      html: inlinedHtml,
+      html,
       tailwindProcessed,
-      cssFilesInlined: 0, // inliner doesn't report this
-      jsFilesInlined: 0,
-      imagesInlined: 0,
     };
   } finally {
     // Cleanup temp directory
@@ -242,27 +192,6 @@ export async function processHtmlFile(
       fs.rmSync(tmpDir, { recursive: true, force: true });
     } catch {
       // Ignore cleanup errors
-    }
-  }
-}
-
-/**
- * Copy directory recursively
- */
-function copyDirRecursive(src: string, dest: string): void {
-  const entries = fs.readdirSync(src, { withFileTypes: true });
-  
-  for (const entry of entries) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    
-    if (entry.isDirectory()) {
-      if (!fs.existsSync(destPath)) {
-        fs.mkdirSync(destPath, { recursive: true });
-      }
-      copyDirRecursive(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
     }
   }
 }

@@ -140,7 +140,7 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
         spawnCwd = workflowServerTempDir;
       } else {
         // Use local cortex code
-        // Priority: 1. TypeScript source (dev mode), 2. Packed bundle, 3. Built output
+        // Priority: 1. TypeScript source (dev mode), 2. Built output
         const possibleCortexConfigs = [
           // Dev mode: TypeScript source with tsx
           {
@@ -149,14 +149,6 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
             args: ['tsx', 'packages/cortex/server/src/main.ts', ...args],
             cwd: workspaceRoot,
             label: 'TypeScript source (dev mode)'
-          },
-          // Prod: Packed bundle (can run from temp dir)
-          {
-            path: path.join(workspaceRoot, 'dist/packages/cortex/pack/index.cjs'),
-            command: 'node',
-            args: [path.join(workspaceRoot, 'dist/packages/cortex/pack/index.cjs'), ...args],
-            cwd: workflowServerTempDir,
-            label: 'Packed bundle'
           },
           // Prod: Built output (can run from temp dir)
           {

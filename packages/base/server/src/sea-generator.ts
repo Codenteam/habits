@@ -155,17 +155,17 @@ export async function generateSeaBinary(config: SeaConfig): Promise<SeaGeneratio
   const workspaceRoot = path.resolve(__dirname, '../../../..');
   
   try {
-    // Step 1: Copy cortex server lib-pack to work directory (library without CLI)
+    // Step 1: Copy cortex server lib to work directory (library without CLI)
     // TODO: IMPORTANT: Once base is merged into habits/app, import stuff from cortex directly instead of copying files - this is a temporary workaround to allow bundling with ncc without including dev dependencies or source files
-    const cortexPackPath = path.join(workspaceRoot, 'dist/packages/cortex/lib-pack/index.cjs');
+    const cortexPackPath = path.join(workspaceRoot, 'dist/packages/cortex/lib/index.cjs');
     const cortexDestPath = path.join(workDir, 'cortex-server.cjs');
     
     if (!fs.existsSync(cortexPackPath)) {
-      // throw new Error(`Cortex server lib-pack not found at: ${cortexPackPath}. Run 'pnpm nx lib-pack @ha-bits/cortex' first.`);
-      logger.error('Cortex server lib-pack not found, skipping copy (expected if not built)', { path: cortexPackPath });
+      // throw new Error(`Cortex server lib not found at: ${cortexPackPath}. Run 'pnpm nx build-lib @ha-bits/cortex' first.`);
+      logger.error('Cortex server lib not found, skipping copy (expected if not built)', { path: cortexPackPath });
     } else {
     fs.copyFileSync(cortexPackPath, cortexDestPath);
-    logger.info('Copied cortex server pack', { from: cortexPackPath, to: cortexDestPath });
+    logger.info('Copied cortex server lib', { from: cortexPackPath, to: cortexDestPath });
     }
     
 
