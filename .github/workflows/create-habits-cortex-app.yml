@@ -53,8 +53,10 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          # Build DMG (notarized for direct download) and PKG (for App Store upload)
-          npx tsx build-release.ts --platform macos --upload-macos --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          # Build DMG (notarized for direct download)
+          # NOTE: --upload-macos disabled - requires "3rd Party Mac Developer Installer" certificate
+          # TODO: Fix uploading cert
+          npx tsx build-release.ts --platform macos --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
       
       - name: Build iOS
         env:
@@ -99,8 +101,11 @@ jobs:
       - name: Install Android NDK
         run: |
           sdkmanager --install "ndk;27.0.12077973"
-          echo "NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> $GITHUB_ENV
+          NDK_PATH="$ANDROID_HOME/ndk/27.0.12077973"
+          echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          # Add NDK toolchain to PATH for cross-compilation
+          echo "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

@@ -365,33 +365,29 @@ async function signMacOS(ctx: MacOSContext, artifacts: string[], options: CLIOpt
         const pkgName = `${appName}_${version}_universal.pkg`;
         const pkgPath = path.join(appDir, pkgName);
         
-        // Re-sign with Apple Distribution if Developer ID was used
-        if (ctx.developerIdIdentity && ctx.appStoreIdentity && ctx.developerIdIdentity !== ctx.appStoreIdentity) {
-          console.log('step', `Re-signing app for App Store with: ${ctx.appStoreIdentity.substring(0, 50)}...`);
+        // Re-sign with App Store identity if different from build identity
+        if (ctx.appStoreIdentity && ctx.developerIdIdentity && ctx.developerIdIdentity !== ctx.appStoreIdentity) {
+          console.log('step', `Re-signing app for App Store with: ...`);
           exec(`codesign --force --deep --sign "${ctx.appStoreIdentity}" "${appPath}"`);
           console.log('success', 'App re-signed for App Store');
         }
         
         console.log('step', `Creating .pkg from ${apps[0]}...`);
         
-        let installerIdentity = ctx.installerIdentity || '';
+        // Use APPLE_INSTALLER_IDENTITY from env - stateless, no keychain searching
+        const installerIdentity = ctx.installerIdentity;
+        
         if (!installerIdentity) {
-          const installerIdentities = execCapture('security find-identity -v -p basic | grep "3rd Party Mac Developer Installer" || true');
-          if (installerIdentities.includes('3rd Party Mac Developer Installer')) {
-            const installerMatch = installerIdentities.match(/"([^"]+3rd Party Mac Developer Installer[^"]+)"/);
-            installerIdentity = installerMatch ? installerMatch[1] : '';
-          }
+          console.log('error', 'APPLE_INSTALLER_IDENTITY not set');
+          console.log('error', 'Required for App Store uploads. Set to:');
+          console.log('error', '  "3rd Party Mac Developer Installer: Your Company (TEAMID)"');
+          console.log('error', 'Also set APPLE_INSTALLER_CERTIFICATE_BASE64 with the .p12 file');
+          throw new Error('Missing APPLE_INSTALLER_IDENTITY for App Store upload');
         }
         
-        if (installerIdentity) {
-          console.log('info', `Signing pkg with: ${installerIdentity.substring(0, 50)}...`);
-          exec(`productbuild --component "${appPath}" /Applications --sign "${installerIdentity}" "${pkgPath}"`);
-          console.log('success', `Created: ${pkgName}`);
-        } else {
-          console.log('warn', 'No "3rd Party Mac Developer Installer" certificate found');
-          console.log('info', 'Creating unsigned .pkg (will fail App Store validation)');
-          exec(`productbuild --component "${appPath}" /Applications "${pkgPath}"`);
-        }
+        console.log('info', `Signing pkg with: ${installerIdentity.substring(0, 50)}...`);
+        exec(`productbuild --component "${appPath}" /Applications --sign "${installerIdentity}" "${pkgPath}"`);
+        console.log('success', `Created: ${pkgName}`);
         
         if (fs.existsSync(pkgPath)) {
           artifacts.push(pkgPath);
