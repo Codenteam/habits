@@ -180,9 +180,9 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
   // ─── Apple (macOS & iOS shared) ───
   {
     name: 'APPLE_SIGNING_IDENTITY',
-    description: 'Code signing identity for App Store ("Apple Distribution: ..." for iOS/macOS App Store)',
+    description: 'Code signing identity for App Store ("Apple Distribution: ..." for macOS App Store)',
     required: true,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: 'Apple Distribution: Company Name (ABC123XYZ)',
   },
   {
@@ -218,7 +218,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     name: 'APPLE_CERTIFICATE_BASE64',
     description: 'Base64-encoded .p12 certificate file for code signing (Apple Distribution)',
     required: true,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     isBase64: true,
     example: 'base64 -i certificate.p12 | tr -d "\\n"',
   },
@@ -226,7 +226,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     name: 'APPLE_CERTIFICATE_PASSWORD',
     description: 'Password for the .p12 certificate',
     required: true,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: 'your-certificate-password',
   },
   {
@@ -246,9 +246,9 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
   },
   {
     name: 'APPLE_TEAM_ID',
-    description: 'Apple Developer Team ID (required for iOS, optional for macOS notarization)',
+    description: 'Apple Developer Team ID (required for macOS notarization)',
     required: true,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: 'ABC123XYZ',
   },
   {
@@ -269,26 +269,12 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     name: 'KEYCHAIN_PASSWORD',
     description: 'Password for temporary keychain (auto-generated if not set)',
     required: false,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: 'random-secure-password',
   },
 
-  // ─── iOS specific ───
-  {
-    name: 'IOS_PROVISIONING_PROFILE_BASE64',
-    description: 'Base64-encoded .mobileprovision file',
-    required: true,
-    platforms: ['ios'],
-    isBase64: true,
-    example: 'base64 -i profile.mobileprovision | tr -d "\\n"',
-  },
-  {
-    name: 'IOS_EXPORT_METHOD',
-    description: 'Export method: app-store, ad-hoc, enterprise, development',
-    required: true,
-    platforms: ['ios'],
-    example: 'app-store',
-  },
+  // ─── iOS specific (uses automatic signing via App Store Connect API) ───
+  // iOS requires APP_STORE_CONNECT_* variables defined below
 
   // ─── Android ───
   {
@@ -386,26 +372,48 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: 'your-gpg-passphrase',
   },
 
-  // ─── App Store Connect (for uploading to iOS/macOS App Stores) ───
+  // ─── App Store Connect (required for iOS automatic signing, optional for macOS/iOS uploads) ───
   {
     name: 'APP_STORE_CONNECT_API_KEY_ID',
-    description: 'App Store Connect API Key ID (e.g., ABC123DEF4) - get from appstoreconnect.apple.com',
+    description: 'App Store Connect API Key ID - REQUIRED for iOS builds (automatic signing)',
+    required: true,
+    platforms: ['ios'],
+    example: 'ABC123DEF4',
+  },
+  {
+    name: 'APP_STORE_CONNECT_API_KEY_ID',
+    description: 'App Store Connect API Key ID - optional for macOS (only needed for --upload-macos)',
     required: false,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: 'ABC123DEF4',
   },
   {
     name: 'APP_STORE_CONNECT_API_ISSUER_ID',
-    description: 'App Store Connect API Issuer ID (UUID format) - get from appstoreconnect.apple.com',
+    description: 'App Store Connect API Issuer ID - REQUIRED for iOS builds (automatic signing)',
+    required: true,
+    platforms: ['ios'],
+    example: '12345678-1234-1234-1234-123456789012',
+  },
+  {
+    name: 'APP_STORE_CONNECT_API_ISSUER_ID',
+    description: 'App Store Connect API Issuer ID - optional for macOS (only needed for --upload-macos)',
     required: false,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     example: '12345678-1234-1234-1234-123456789012',
   },
   {
     name: 'APP_STORE_CONNECT_API_KEY_BASE64',
-    description: 'Base64-encoded App Store Connect API Key file (.p8)',
+    description: 'Base64-encoded App Store Connect API Key (.p8) - REQUIRED for iOS builds',
+    required: true,
+    platforms: ['ios'],
+    isBase64: true,
+    example: 'base64 -i AuthKey_ABC123DEF4.p8 | tr -d "\\n"',
+  },
+  {
+    name: 'APP_STORE_CONNECT_API_KEY_BASE64',
+    description: 'Base64-encoded App Store Connect API Key (.p8) - optional for macOS uploads',
     required: false,
-    platforms: ['macos', 'ios'],
+    platforms: ['macos'],
     isBase64: true,
     example: 'base64 -i AuthKey_ABC123DEF4.p8 | tr -d "\\n"',
   },
