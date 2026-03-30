@@ -37,6 +37,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as os from 'os';
 
 import {
   Platform,
@@ -57,6 +58,7 @@ import {
   setupTempDir,
   cleanupTempDir,
   decodeBase64ToFile,
+  hasBase64EnvVar,
   setupBase64EnvVars,
   exec,
   execCapture,
@@ -113,6 +115,11 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Generate icons before building any platform
+    logSection('Generating icons');
+    exec('npm run tauri -- icon');
+    console.log('success', 'Icons generated');
+    
     // Build each platform
     for (const platform of options.platforms) {
       let artifacts: string[] = [];
@@ -215,7 +222,7 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   
   const keychainName = `build-release-${Date.now()}.keychain-db`;
   const keychainPath = path.join(TEMP_DIR, keychainName);
-  const keychainPassword = process.env.KEYCHAIN_PASSWORD || crypto.randomBytes(16).toString('hex');
+  const keychainPassword =  crypto.randomBytes(16).toString('hex');
   
   console.log('step', 'Creating temporary keychain...');
   exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
@@ -233,7 +240,7 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   const certPassword = process.env.APPLE_CERTIFICATE_PASSWORD;
   
   // Import Apple Distribution certificate (for App Store)
-  if (process.env.APPLE_CERTIFICATE_BASE64) {
+  if (hasBase64EnvVar('APPLE_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing Apple Distribution certificate...');
     const certPath = decodeBase64ToFile('APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
     exec(`security import "${certPath}" -k "${keychainPath}" -P "${certPassword}" -T /usr/bin/codesign -T /usr/bin/security`);
@@ -241,7 +248,7 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   }
   
   // Import Developer ID certificate (for direct distribution)
-  if (process.env.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64) {
+  if (hasBase64EnvVar('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing Developer ID certificate...');
     const devIdCertPath = decodeBase64ToFile('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64', 'developer-id.p12');
     const devIdPassword = process.env.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD || certPassword;
@@ -250,7 +257,7 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   }
   
   // Import installer certificate (for Mac App Store .pkg signing)
-  if (process.env.APPLE_INSTALLER_CERTIFICATE_BASE64) {
+  if (hasBase64EnvVar('APPLE_INSTALLER_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing installer certificate...');
     const installerCertPath = decodeBase64ToFile('APPLE_INSTALLER_CERTIFICATE_BASE64', 'installer.p12');
     const installerCertPassword = process.env.APPLE_INSTALLER_CERTIFICATE_PASSWORD || certPassword;
@@ -263,9 +270,9 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   const identities = execCapture(`security find-identity -v "${keychainPath}"`);
   console.log('info', 'Available signing identities:\n' + identities);
   
-  const hasDevIdCert = !!process.env.APPLE_DEVELOPER_ID_IDENTITY || !!process.env.APPLE_DEVELOPER_ID_CERTIFICATE_BASE64;
+  const hasDevIdCert = !!process.env.APPLE_DEVELOPER_ID_IDENTITY || hasBase64EnvVar('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64');
   const hasAppStoreCert = !!process.env.APPLE_SIGNING_IDENTITY;
-  const hasInstallerCert = !!process.env.APPLE_INSTALLER_IDENTITY || !!process.env.APPLE_INSTALLER_CERTIFICATE_BASE64;
+  const hasInstallerCert = !!process.env.APPLE_INSTALLER_IDENTITY || hasBase64EnvVar('APPLE_INSTALLER_CERTIFICATE_BASE64');
   
   return {
     keychainPath,
@@ -309,7 +316,7 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
     buildEnv.APPLE_API_KEY_PATH = undefined;
   } else {
     // Setup notarization credentials for Tauri
-    if (process.env.APPLE_API_KEY && process.env.APPLE_API_ISSUER && process.env.APPLE_API_KEY_BASE64) {
+    if (process.env.APPLE_API_KEY && process.env.APPLE_API_ISSUER && hasBase64EnvVar('APPLE_API_KEY_BASE64')) {
       const apiKeyPath = decodeBase64ToFile('APPLE_API_KEY_BASE64', 'AuthKey_notarize.p8');
       buildEnv.APPLE_API_KEY = process.env.APPLE_API_KEY;
       buildEnv.APPLE_API_ISSUER = process.env.APPLE_API_ISSUER;
@@ -318,7 +325,7 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
   
   console.log('step', `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
-  exec(`pnpm tauri build ${ctx.buildArgs} --target ${ctx.target} --bundles app,dmg`, { env: buildEnv });
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles app,dmg`, { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
@@ -363,33 +370,29 @@ async function signMacOS(ctx: MacOSContext, artifacts: string[], options: CLIOpt
         const pkgName = `${appName}_${version}_universal.pkg`;
         const pkgPath = path.join(appDir, pkgName);
         
-        // Re-sign with Apple Distribution if Developer ID was used
-        if (ctx.developerIdIdentity && ctx.appStoreIdentity && ctx.developerIdIdentity !== ctx.appStoreIdentity) {
-          console.log('step', `Re-signing app for App Store with: ${ctx.appStoreIdentity.substring(0, 50)}...`);
+        // Re-sign with App Store identity if different from build identity
+        if (ctx.appStoreIdentity && ctx.developerIdIdentity && ctx.developerIdIdentity !== ctx.appStoreIdentity) {
+          console.log('step', `Re-signing app for App Store with: ...`);
           exec(`codesign --force --deep --sign "${ctx.appStoreIdentity}" "${appPath}"`);
           console.log('success', 'App re-signed for App Store');
         }
         
         console.log('step', `Creating .pkg from ${apps[0]}...`);
         
-        let installerIdentity = ctx.installerIdentity || '';
+        // Use APPLE_INSTALLER_IDENTITY from env - stateless, no keychain searching
+        const installerIdentity = ctx.installerIdentity;
+        
         if (!installerIdentity) {
-          const installerIdentities = execCapture('security find-identity -v -p basic | grep "3rd Party Mac Developer Installer" || true');
-          if (installerIdentities.includes('3rd Party Mac Developer Installer')) {
-            const installerMatch = installerIdentities.match(/"([^"]+3rd Party Mac Developer Installer[^"]+)"/);
-            installerIdentity = installerMatch ? installerMatch[1] : '';
-          }
+          console.log('error', 'APPLE_INSTALLER_IDENTITY not set');
+          console.log('error', 'Required for App Store uploads. Set to:');
+          console.log('error', '  "3rd Party Mac Developer Installer: Your Company (TEAMID)"');
+          console.log('error', 'Also set APPLE_INSTALLER_CERTIFICATE_BASE64 with the .p12 file');
+          throw new Error('Missing APPLE_INSTALLER_IDENTITY for App Store upload');
         }
         
-        if (installerIdentity) {
-          console.log('info', `Signing pkg with: ${installerIdentity.substring(0, 50)}...`);
-          exec(`productbuild --component "${appPath}" /Applications --sign "${installerIdentity}" "${pkgPath}"`);
-          console.log('success', `Created: ${pkgName}`);
-        } else {
-          console.log('warn', 'No "3rd Party Mac Developer Installer" certificate found');
-          console.log('info', 'Creating unsigned .pkg (will fail App Store validation)');
-          exec(`productbuild --component "${appPath}" /Applications "${pkgPath}"`);
-        }
+        console.log('info', `Signing pkg with: ${installerIdentity.substring(0, 50)}...`);
+        exec(`productbuild --component "${appPath}" /Applications --sign "${installerIdentity}" "${pkgPath}"`);
+        console.log('success', `Created: ${pkgName}`);
         
         if (fs.existsSync(pkgPath)) {
           artifacts.push(pkgPath);
@@ -485,6 +488,53 @@ function cleanupMacOS(ctx: MacOSContext): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Setup iOS keychain with Apple Distribution certificate.
+ * Needed for code signing even with automatic signing (API key handles profile management).
+ */
+async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassword: string }> {
+  logSection('Setting up iOS Keychain');
+  
+  const keychainName = `ios-build-${crypto.randomBytes(8).toString('hex')}.keychain-db`;
+  const keychainPath = path.join(TEMP_DIR, keychainName);
+  const keychainPassword = crypto.randomBytes(16).toString('hex');
+  
+  console.log('step', 'Creating temporary keychain...');
+  exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
+  exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
+  exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
+  
+  // Add to keychain search list (FIRST so it's preferred)
+  const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+  exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+  
+  // Set as default keychain for this session
+  exec(`security default-keychain -s "${keychainPath}"`);
+  
+  console.log('success', `Created keychain: ${keychainName}`);
+  
+  // Import Apple Distribution certificate
+  if (hasBase64EnvVar('APPLE_CERTIFICATE_BASE64')) {
+    console.log('step', 'Importing Apple Distribution certificate...');
+    const certPath = decodeBase64ToFile('APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
+    const certPassword = process.env.APPLE_CERTIFICATE_PASSWORD || '';
+    exec(`security import "${certPath}" -k "${keychainPath}" -P "${certPassword}" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild`);
+    
+    // Allow codesign to access the key without prompting
+    exec(`security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychainPassword}" "${keychainPath}"`, { silent: true, ignoreError: true });
+    
+    console.log('success', 'Apple Distribution certificate imported');
+    
+    // Show available identities
+    const identities = execCapture(`security find-identity -v -p codesigning "${keychainPath}"`);
+    console.log('info', 'Available signing identities:\n' + identities);
+  } else {
+    console.log('warn', 'No APPLE_CERTIFICATE_BASE64 found - relying on cloud-managed signing');
+  }
+  
+  return { keychainPath, keychainPassword };
+}
+
+/**
  * Build iOS with automatic signing using App Store Connect API.
  * Xcode handles certificate/profile selection automatically.
  * 
@@ -492,6 +542,8 @@ function cleanupMacOS(ctx: MacOSContext): void {
  * - APP_STORE_CONNECT_API_KEY_ID
  * - APP_STORE_CONNECT_API_ISSUER_ID
  * - APP_STORE_CONNECT_API_KEY_BASE64
+ * - APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
+ * - APPLE_CERTIFICATE_PASSWORD
  */
 async function buildIOS(): Promise<string[]> {
   logHeader('Building iOS Application');
@@ -501,11 +553,14 @@ async function buildIOS(): Promise<string[]> {
   // Check for required API key credentials
   const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID && 
                     process.env.APP_STORE_CONNECT_API_ISSUER_ID && 
-                    process.env.APP_STORE_CONNECT_API_KEY_BASE64;
+                    hasBase64EnvVar('APP_STORE_CONNECT_API_KEY_BASE64');
   
   if (!hasApiKey) {
     throw new Error('iOS build requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_BASE64');
   }
+  
+  // Setup keychain with Apple Distribution certificate
+  await setupIOSKeychain();
   
   // Decode API key to file
   logSection('Setting up App Store Connect API Key');
@@ -529,7 +584,7 @@ async function buildIOS(): Promise<string[]> {
   console.log('info', 'Signing: automatic (App Store Connect API)');
   
   console.log('step', 'Building iOS app...');
-  exec(`pnpm tauri ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });
   
   console.log('success', 'iOS build completed');
   
@@ -569,7 +624,7 @@ async function uploadToAppStore(ipaOrPkgPath: string, platform: 'ios' | 'macos')
   // Check if App Store Connect credentials are configured
   const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID && 
                     process.env.APP_STORE_CONNECT_API_ISSUER_ID && 
-                    process.env.APP_STORE_CONNECT_API_KEY_BASE64;
+                    hasBase64EnvVar('APP_STORE_CONNECT_API_KEY_BASE64');
   
   if (!hasApiKey) {
     console.log('error', 'App Store Connect credentials not configured');
@@ -585,12 +640,26 @@ async function uploadToAppStore(ipaOrPkgPath: string, platform: 'ios' | 'macos')
   // Decode API key
   logSection('Setting up App Store Connect API Key');
   
-  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', 'AuthKey.p8');
   const apiKeyId = process.env.APP_STORE_CONNECT_API_KEY_ID!;
   const issuerId = process.env.APP_STORE_CONNECT_API_ISSUER_ID!;
   
+  // altool expects the key file in ~/private_keys/AuthKey_<KEY_ID>.p8
+  const privateKeysDir = path.join(os.homedir(), 'private_keys');
+  if (!fs.existsSync(privateKeysDir)) {
+    fs.mkdirSync(privateKeysDir, { recursive: true });
+  }
+  
+  const apiKeyFileName = `AuthKey_${apiKeyId}.p8`;
+  const apiKeyPath = path.join(privateKeysDir, apiKeyFileName);
+  
+  // Decode the base64 key to the expected location
+  const keyBase64 = process.env.APP_STORE_CONNECT_API_KEY_BASE64!;
+  const keyBuffer = Buffer.from(keyBase64, 'base64');
+  fs.writeFileSync(apiKeyPath, keyBuffer);
+  
   console.log('success', `API Key ID: ${apiKeyId}`);
   console.log('success', `Issuer ID: ${issuerId}`);
+  console.log('debug', `API Key Path: ${apiKeyPath}`);
   
   // Check if xcrun is available (macOS only)
   if (!commandExists('xcrun')) {
@@ -677,6 +746,12 @@ async function uploadToAppStore(ipaOrPkgPath: string, platform: 'ios' | 'macos')
     console.log('info', '  - Ensure the app version/build is not already uploaded');
     console.log('info', '  - Check your internet connection');
     throw error;
+  } finally {
+    // Clean up the API key file
+    if (fs.existsSync(apiKeyPath)) {
+      fs.unlinkSync(apiKeyPath);
+      console.log('debug', `Removed API key file: ${apiKeyPath}`);
+    }
   }
 }
 
@@ -688,7 +763,7 @@ async function uploadToGooglePlay(aabPath: string): Promise<void> {
   logHeader('Uploading Android to Google Play Console');
   
   // Check if Google Play credentials are configured
-  const hasCredentials = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 &&
+  const hasCredentials = hasBase64EnvVar('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64') &&
                          process.env.GOOGLE_PLAY_PACKAGE_NAME;
   
   if (!hasCredentials) {
@@ -941,7 +1016,7 @@ async function buildAndroid(options: CLIOptions): Promise<string[]> {
   const artifacts: string[] = [];
   
   // Check if signing credentials are available
-  const hasSigningCreds = process.env.ANDROID_KEYSTORE_BASE64 && 
+  const hasSigningCreds = hasBase64EnvVar('ANDROID_KEYSTORE_BASE64') && 
                           process.env.ANDROID_KEYSTORE_PASSWORD && 
                           process.env.ANDROID_KEY_ALIAS && 
                           process.env.ANDROID_KEY_PASSWORD;
@@ -990,12 +1065,12 @@ async function buildAndroid(options: CLIOptions): Promise<string[]> {
   
   // Build both APK and AAB (Android App Bundle for Google Play)
   console.log('step', 'Building APKs...');
-  exec(`pnpm tauri android build ${buildArgs} --apk --split-per-abi -t aarch64 -t armv7 -t x86_64`, {
+  exec(`npm run tauri -- android build ${buildArgs} --apk --split-per-abi -t aarch64 -t armv7 -t x86_64`, {
     env: buildEnv,
   });
   
   console.log('step', 'Building AAB (Android App Bundle) for Google Play...');
-  exec(`pnpm tauri android build ${buildArgs} --aab -t aarch64 -t armv7 -t x86_64`, {
+  exec(`npm run tauri -- android build ${buildArgs} --aab -t aarch64 -t armv7 -t x86_64`, {
     env: buildEnv,
   });
   
@@ -1160,13 +1235,13 @@ async function buildWindows(options: CLIOptions): Promise<string[]> {
     console.log('info', 'Cross-compilation may work but signing with signtool will not be available');
     console.log('info', 'Use osslsigncode for cross-platform signing if needed');
 
-      exec(`pnpm tauri build  --runner cargo-xwin --target x86_64-pc-windows-msvc`);
+      exec(`npm run tauri -- build  --runner cargo-xwin --target x86_64-pc-windows-msvc`);
 
 
   }
   
   // Check if signing credentials are available
-  const hasSigningCreds = process.env.WINDOWS_CERTIFICATE_BASE64 && 
+  const hasSigningCreds = hasBase64EnvVar('WINDOWS_CERTIFICATE_BASE64') && 
                           process.env.WINDOWS_CERTIFICATE_PASSWORD;
   
   let certPath: string | null = null;
@@ -1201,7 +1276,7 @@ async function buildWindows(options: CLIOptions): Promise<string[]> {
     process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD = certPassword;
   }
   
-  exec(`pnpm tauri build ${buildArgs} --target ${windowsTarget}`, {
+  exec(`npm run tauri -- build ${buildArgs} --target ${windowsTarget}`, {
     env: buildEnv,
   });
   
@@ -1298,7 +1373,7 @@ async function buildLinux(options: CLIOptions): Promise<string[]> {
   const buildArgs = options.debug ? '--debug' : '';
   
   console.log('step', 'Building AppImage...');
-  exec(`pnpm tauri build ${buildArgs}`);
+  exec(`npm run tauri -- build ${buildArgs}`);
   
   // Find built artifacts
   const targetDir = path.join(TAURI_DIR, 'target', options.debug ? 'debug' : 'release', 'bundle');
@@ -1322,7 +1397,7 @@ async function buildLinux(options: CLIOptions): Promise<string[]> {
   console.log('success', `Built ${artifacts.length} artifact(s)`);
   
   // Step 2: GPG Sign (optional)
-  if (process.env.APPIMAGE_GPG_PRIVATE_KEY_BASE64) {
+  if (hasBase64EnvVar('APPIMAGE_GPG_PRIVATE_KEY_BASE64')) {
     logSection('GPG Signing AppImage');
     
     const gpgKeyPath = decodeBase64ToFile('APPIMAGE_GPG_PRIVATE_KEY_BASE64', 'gpg-key.asc');
