@@ -33,3 +33,8 @@ L3: Composes L0/L1/L2, business-focused, sensible defaults, built-in error handl
 4. Access token: If you are on mobile and want it to work for a single user always (how to bundle?)
 5. Device Authorization Flow: If you are running as automation in CLI that is meant for multiple people. 
 6. Client Credentials Flow: If you are running the automation for your organization directly using service account, unfortunately separate account. 
+
+
+
+
+- Replace store links with correct ones

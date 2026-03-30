@@ -2,48 +2,52 @@
   "cortexApp": [
     {
       "platform": "Android",
-      "filename": "habits-cortex.apk",
-      "url": "",
+      "filename": "Cortex-universal-signed.apk",
+      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-universal-signed.apk",
+      "storeUrl": "https://play.google.com/store/apps/details?id=com.codenteam.habits",
       "version": "1.0.0",
-      "size": "Coming Soon",
+      "size": "~50 MB",
       "description": "Android 8.0+ (ARM64)",
-      "available": false
+      "available": true
     },
     {
-      "platform": "Ios",
-      "filename": "habits-cortex.ipa",
+      "platform": "iOS",
+      "filename": "",
       "url": "",
+      "storeUrl": "https://apps.apple.com/app/habits-cortex/id0000000000",
       "version": "1.0.0",
-      "size": "Coming Soon",
-      "description": "iOS 14+ (Ad Hoc)",
-      "available": false
+      "size": "~60 MB",
+      "description": "iOS 14+ (App Store)",
+      "available": true,
+      "storeOnly": true
     },
     {
       "platform": "Linux",
-      "filename": "habits-cortex.AppImage",
-      "url": "",
+      "filename": "Cortex-amd64.AppImage",
+      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-amd64.AppImage",
       "version": "1.0.0",
-      "size": "Coming Soon",
+      "size": "~80 MB",
       "description": "Linux (x64)",
-      "available": false
+      "available": true
     },
     {
-      "platform": "Macos",
-      "filename": "habits-cortex.dmg",
-      "url": "",
+      "platform": "macOS",
+      "filename": "Cortex-universal.dmg",
+      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-universal.dmg",
+      "storeUrl": "https://apps.apple.com/app/habits-cortex/id0000000000",
       "version": "1.0.0",
-      "size": "Coming Soon",
+      "size": "~70 MB",
       "description": "macOS 11+ (Intel & Apple Silicon)",
-      "available": false
+      "available": true
     },
     {
       "platform": "Windows",
-      "filename": "habits-cortex.exe",
-      "url": "",
+      "filename": "Cortex-x64-setup.exe",
+      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-x64-setup.exe",
       "version": "1.0.0",
-      "size": "Coming Soon",
+      "size": "~65 MB",
       "description": "Windows 10/11 (x64)",
-      "available": false
+      "available": true
     }
   ],
   "habitBundles": [

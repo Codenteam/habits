@@ -284,6 +284,60 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
       
+      - name: Rename artifacts for consistent download URLs
+        run: |
+          mkdir -p release-files
+          
+          # macOS DMG (universal)
+          find artifacts -name "*_universal.dmg" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex-universal.dmg
+          done
+          
+          # iOS IPA
+          find artifacts -name "*.ipa" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex.ipa
+          done
+          
+          # Android APK (universal signed)
+          find artifacts -name "*universal*-signed.apk" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex-universal-signed.apk
+          done
+          # Fallback: any signed APK if no universal found
+          if [ ! -f release-files/Cortex-universal-signed.apk ]; then
+            find artifacts -name "*-arm64-release-signed.apk" -type f | head -1 | while read f; do
+              cp "$f" release-files/Cortex-universal-signed.apk
+            done
+          fi
+          
+          # Android AAB
+          find artifacts -name "*.aab" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex.aab
+          done
+          
+          # Windows EXE (x64 setup)
+          find artifacts -name "*x64*setup*.exe" -o -name "*-setup.exe" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex-x64-setup.exe
+          done
+          # Fallback: any exe
+          if [ ! -f release-files/Cortex-x64-setup.exe ]; then
+            find artifacts -name "*.exe" -type f | head -1 | while read f; do
+              cp "$f" release-files/Cortex-x64-setup.exe
+            done
+          fi
+          
+          # Windows MSI
+          find artifacts -name "*.msi" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex-x64.msi
+          done
+          
+          # Linux AppImage
+          find artifacts -name "*.AppImage" -type f | head -1 | while read f; do
+            cp "$f" release-files/Cortex-amd64.AppImage
+          done
+          
+          echo "Renamed release files:"
+          ls -la release-files/
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -300,5 +354,7 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.msi
             artifacts/**/*.AppImage
+            release-files/*
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,11 @@
+# docker-compose.yaml
+services:
+  habits:
+    image: node:24
+    working_dir: /app
+    command: sh -c "npx habits@latest init && npx habits@latest base"
+    ports:
+      - "3000:3000"
+      - "13000:13000"
+    volumes:
+      - ./habit:/app

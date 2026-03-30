@@ -48,8 +48,6 @@
           },
           "external": [
             "@activepieces/*",
-            "@tailwindcss/oxide",
-            "@tailwindcss/oxide-*",
             "lightningcss"
           ],
           "packages": "bundle"
