@@ -42,6 +42,9 @@
             "output": "."
           }
         ],
+        "loader": {
+          ".local.js": "text"
+        },
         "esbuildOptions": {
           "banner": {
             "js": "#!/usr/bin/env node"

@@ -2,52 +2,103 @@
   "cortexApp": [
     {
       "platform": "Android",
-      "filename": "Cortex-universal-signed.apk",
-      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-universal-signed.apk",
-      "storeUrl": "https://play.google.com/store/apps/details?id=com.codenteam-oss.habits",
-      "version": "1.0.0",
-      "size": "~50 MB",
-      "description": "Android 8.0+ (ARM64)",
-      "available": true
+      "filename": "app-arm-release-signed.apk",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/app-arm-release-signed.apk",
+      "version": "1.5.13",
+      "size": "12.7 MB",
+      "description": "Android 8.0+ (ARM)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
     },
     {
-      "platform": "iOS",
-      "filename": "",
-      "url": "",
-      "storeUrl": "https://apps.apple.com/app/habits-cortex/id0000000000",
-      "version": "1.0.0",
-      "size": "~60 MB",
-      "description": "iOS 14+ (App Store)",
+      "platform": "Android",
+      "filename": "app-arm64-release-signed.apk",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/app-arm64-release-signed.apk",
+      "version": "1.5.13",
+      "size": "17.3 MB",
+      "description": "Android 8.0+ (ARM64)",
       "available": true,
-      "storeOnly": true
+      "publishedAt": "2026-03-30T07:29:03Z"
+    },
+    {
+      "platform": "Android",
+      "filename": "app-x86_64-release-signed.apk",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/app-x86_64-release-signed.apk",
+      "version": "1.5.13",
+      "size": "19.3 MB",
+      "description": "Android 8.0+ (x86_64)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
+    },
+    {
+      "platform": "Ios",
+      "filename": "Cortex.ipa",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex.ipa",
+      "version": "1.5.13",
+      "size": "8.0 MB",
+      "description": "iOS 14+ (Ad Hoc)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
     },
     {
       "platform": "Linux",
-      "filename": "Cortex-amd64.AppImage",
-      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-amd64.AppImage",
-      "version": "1.0.0",
-      "size": "~80 MB",
+      "filename": "Cortex_1.0.6_amd64.AppImage",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_amd64.AppImage",
+      "version": "1.5.13",
+      "size": "75.9 MB",
       "description": "Linux (x64)",
-      "available": true
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
     },
     {
-      "platform": "macOS",
-      "filename": "Cortex-universal.dmg",
-      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-universal.dmg",
-      "storeUrl": "https://apps.apple.com/app/habits-cortex/id0000000000",
-      "version": "1.0.0",
-      "size": "~70 MB",
+      "platform": "Macos",
+      "filename": "Cortex_1.0.6_universal.dmg",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_universal.dmg",
+      "version": "1.5.13",
+      "size": "10.4 MB",
       "description": "macOS 11+ (Intel & Apple Silicon)",
-      "available": true
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
     },
     {
       "platform": "Windows",
-      "filename": "Cortex-x64-setup.exe",
-      "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-x64-setup.exe",
-      "version": "1.0.0",
-      "size": "~65 MB",
+      "filename": "Cortex_1.0.6_x64-setup-unsigned.exe",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_x64-setup-unsigned.exe",
+      "version": "1.5.13",
+      "size": "3.2 MB",
       "description": "Windows 10/11 (x64)",
-      "available": true
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
+    },
+    {
+      "platform": "Windows",
+      "filename": "Cortex_1.0.6_x64-setup.exe",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_x64-setup.exe",
+      "version": "1.5.13",
+      "size": "3.2 MB",
+      "description": "Windows 10/11 (x64)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
+    },
+    {
+      "platform": "Windows",
+      "filename": "Cortex_1.0.6_x64_en-US-unsigned.msi",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_x64_en-US-unsigned.msi",
+      "version": "1.5.13",
+      "size": "4.3 MB",
+      "description": "Windows 10/11 (x64)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
+    },
+    {
+      "platform": "Windows",
+      "filename": "Cortex_1.0.6_x64_en-US.msi",
+      "url": "https://github.com/Codenteam/habits/releases/download/v1.5.13/Cortex_1.0.6_x64_en-US.msi",
+      "version": "1.5.13",
+      "size": "4.3 MB",
+      "description": "Windows 10/11 (x64)",
+      "available": true,
+      "publishedAt": "2026-03-30T07:29:03Z"
     }
   ],
   "habitBundles": [
@@ -101,6 +152,11 @@
       "description": "Self-contained ZIP bundle"
     }
   ],
-  "latestRelease": null,
-  "lastUpdated": "2026-03-28T19:01:06.315Z"
+  "latestRelease": {
+    "version": "1.5.13",
+    "name": "Habits Cortex v1.5.13",
+    "url": "https://github.com/Codenteam/habits/releases/tag/v1.5.13",
+    "publishedAt": "2026-03-30T07:29:03Z"
+  },
+  "lastUpdated": "2026-03-31T19:58:10.159Z"
 }

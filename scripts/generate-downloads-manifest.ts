@@ -121,6 +121,15 @@ function getPlatformFromFilename(filename: string): string | null {
   return null;
 }
 
+function getAndroidArchDescription(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.includes('arm64') || lower.includes('aarch64')) return 'Android 8.0+ (ARM64)';
+  if (lower.includes('x86_64') || lower.includes('x64')) return 'Android 8.0+ (x86_64)';
+  if (lower.includes('arm')) return 'Android 8.0+ (ARM)';
+  if (lower.includes('x86')) return 'Android 8.0+ (x86)';
+  return 'Android 8.0+ (ARM64)'; // Default fallback
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GITHUB RELEASES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -170,13 +179,18 @@ function processCortexDownloads(release: GitHubRelease | null): CortexDownload[]
       const config = PLATFORM_CONFIGS[platform];
       if (!config) continue;
       
+      // Use architecture-specific description for Android
+      const description = platform === 'android' 
+        ? getAndroidArchDescription(asset.name) 
+        : config.description;
+      
       downloads.push({
         platform: platform.charAt(0).toUpperCase() + platform.slice(1),
         filename: asset.name,
         url: asset.browser_download_url,
         version: release.tag_name.replace(/^v/, ''),
         size: formatBytes(asset.size),
-        description: config.description,
+        description,
         available: true,
         publishedAt: release.published_at,
       });
