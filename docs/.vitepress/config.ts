@@ -74,7 +74,7 @@ export default defineConfig({
           { text: 'When to Use Habits', link: '/getting-started/when-to-use' },
           { text: 'Concepts', link: '/getting-started/concepts' },
           { text: '.habit File Format Specification', link: '/dot-habit' },
-          { text: 'Privacy Policy', link: '/misc/privacy' },
+          { text: 'Privacy Policy', link: '/misc/privacy-policy' },
         ]
       },  
       {
