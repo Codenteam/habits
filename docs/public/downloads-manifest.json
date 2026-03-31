@@ -4,7 +4,7 @@
       "platform": "Android",
       "filename": "Cortex-universal-signed.apk",
       "url": "https://github.com/codenteam/habits/releases/latest/download/Cortex-universal-signed.apk",
-      "storeUrl": "https://play.google.com/store/apps/details?id=com.codenteam.habits",
+      "storeUrl": "https://play.google.com/store/apps/details?id=com.codenteam-oss.habits",
       "version": "1.0.0",
       "size": "~50 MB",
       "description": "Android 8.0+ (ARM64)",

@@ -50,3 +50,8 @@ habits-cortex/**/target/
 habits-cortex/build-release.md
 habits-cortex/private_keys
 habits-cortex/release/*
+habits-cortex/screenshots/output
+habits-cortex/screenshots/source
+habits-cortex/screenshots/temp
+notes
+

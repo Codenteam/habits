@@ -48,7 +48,11 @@
           },
           "external": [
             "@activepieces/*",
-            "lightningcss"
+            "lightningcss",
+            "@tailwindcss/postcss",
+            "postcss",
+            "tailwindcss",
+            "autoprefixer"
           ],
           "packages": "bundle"
         }

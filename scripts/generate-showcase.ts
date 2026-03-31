@@ -367,7 +367,7 @@ function copyShowcaseAssets(examples: ExampleData[]): void {
     
     const assetCount = example.images.length + example.habitFiles.length + example.downloads.length + (existsSync(stackFile) ? 1 : 0);
     const downloadNote = example.downloads.length > 0 ? ` [${example.downloads.length} downloads]` : '';
-    console.log(`  📁 ${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}${downloadNote}`);
+    console.log(`  📁 docs/public/showcase/${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}${downloadNote}`);
   }
 }
 
@@ -745,13 +745,13 @@ function generateMarkdownFiles(examples: ExampleData[]): void {
     const content = generateLandingPage(example);
     const filePath = join(showcaseDir, `${example.slug}.md`);
     writeFileSync(filePath, content);
-    console.log(`  📄 ${example.slug}.md`);
+    console.log(`  📄 docs/showcase/${example.slug}.md`);
   }
   
   // Generate index page
   const indexContent = generateIndexPage(examples);
   writeFileSync(join(showcaseDir, 'index.md'), indexContent);
-  console.log(`  📄 index.md`);
+  console.log(`  📄 docs/showcase/index.md`);
 }
 
 function generateZipFiles(examples: ExampleData[]): void {
@@ -776,9 +776,9 @@ function generateZipFiles(examples: ExampleData[]): void {
         `zip -r "${zipPath}" . -x ".env" -x "*.zip" -x "node_modules/*" -x ".git/*"`,
         { cwd: example.path, stdio: 'pipe' }
       );
-      console.log(`  📦 ${example.slug}/${zipName}`);
+      console.log(`  📦 docs/public/showcase/${example.slug}/${zipName}`);
     } catch (err) {
-      console.error(`  ❌ Failed to create ${zipName}:`, (err as Error).message);
+      console.error(`  ❌ Failed to create docs/public/showcase/${example.slug}/${zipName}:`, (err as Error).message);
     }
   }
 }
@@ -827,13 +827,13 @@ async function generateHabitFiles(examples: ExampleData[]): Promise<void> {
       
       // Verify file was actually created
       if (existsSync(habitPath)) {
-        console.log(`  📦 ${example.slug}/${habitName}`);
+        console.log(`  📦 docs/public/showcase/${example.slug}/${habitName}`);
       } else {
-        console.error(`  ⚠️  Pack completed but file not created: ${habitName}`);
+        console.error(`  ⚠️  Pack completed but file not created: docs/public/showcase/${example.slug}/${habitName}`);
       }
     } catch (err: unknown) {
       const error = err as { status?: number; stderr?: Buffer; stdout?: Buffer };
-      console.error(`  ⚠️  Failed to create ${habitName} (exit ${error.status || 'unknown'})`);
+      console.error(`  ⚠️  Failed to create docs/public/showcase/${example.slug}/${habitName} (exit ${error.status || 'unknown'})`);
       if (error.stderr) console.error(`     stderr: ${error.stderr.toString().slice(0, 300)}`);
       if (error.stdout) console.error(`     stdout: ${error.stdout.toString().slice(0, 300)}`);
     }
@@ -924,7 +924,7 @@ function generateHabitsIndexJson(examples: ExampleData[]): void {
   // Write to public/showcase/index.json
   const indexPath = join(publicShowcaseDir, 'index.json');
   writeFileSync(indexPath, JSON.stringify(habitsIndex, null, 2));
-  console.log(`  📄 public/showcase/index.json (${habitsIndex.length} habits)`);
+  console.log(`  📄 docs/public/showcase/index.json (${habitsIndex.length} habits)`);
 }
 
 async function main(): Promise<void> {

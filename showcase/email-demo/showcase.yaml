@@ -1,0 +1,45 @@
+# Showcase metadata for Email Demo
+# Demonstrates IMAP/SMTP email operations
+
+name: Email Send & Receive Demo
+description: Complete email workflow demonstration with IMAP polling and SMTP sending capabilities.
+
+longDescription: |
+  The Email Demo showcases the `@ha-bits/bit-email` module's capabilities for
+  building email-powered workflows, especially on mobile. 
+
+  ## What It Does
+
+  - **Send Email**: Send emails via SMTP to any recipient
+  - **Poll Inbox**: Fetch and display emails from IMAP inbox
+  - **Round-Trip Test**: Send an email to yourself and verify receipt
+  - **Auto-Polling**: Continuously monitor inbox for new messages
+  - **Real-time UI**: Interactive web interface for testing email operations
+
+  ## Features
+
+  - ✉️ SMTP email sending with customizable recipient, subject, and body
+  - 📥 IMAP inbox polling with unread/all message filtering
+  - 🔄 Complete round-trip testing (send → receive verification)
+  - ⚡ Auto-refresh polling for inbox monitoring
+  - 🎨 Clean, modern dark-mode UI
+
+  Perfect for understanding email automation, building notification systems,
+  or creating email-based workflows with Habits.
+
+type: automation
+
+tags:
+  - email
+  - imap
+  - smtp
+  - automation
+  - communication
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - Email account with IMAP/SMTP access (Gmail, Outlook, etc.)
+  - App password for Gmail users

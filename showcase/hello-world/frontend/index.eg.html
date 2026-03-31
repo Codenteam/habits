@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>𓂀 Ancient Pharaoh's Oracle 𓂀</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'egyptian': ['"Cinzel Decorative"', 'serif'],
+            'hieratic': ['"Cinzel"', 'serif'],
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'shimmer': 'shimmer 3s linear infinite',
+            'glow-gold': 'glow-gold 2s ease-in-out infinite alternate',
+            'scarab-walk': 'scarab-walk 8s linear infinite',
+            'sun-pulse': 'sun-pulse 4s ease-in-out infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes glow-gold {
+      from { 
+        box-shadow: 0 0 20px rgba(218, 165, 32, 0.3), 0 0 40px rgba(218, 165, 32, 0.1),
+                    inset 0 0 20px rgba(255, 215, 0, 0.1); 
+      }
+      to { 
+        box-shadow: 0 0 40px rgba(218, 165, 32, 0.6), 0 0 80px rgba(218, 165, 32, 0.3),
+                    inset 0 0 30px rgba(255, 215, 0, 0.2); 
+      }
+    }
+    @keyframes scarab-walk {
+      0% { transform: translateX(-100%) rotate(0deg); }
+      100% { transform: translateX(100vw) rotate(720deg); }
+    }
+    @keyframes sun-pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+      50% { transform: scale(1.1) rotate(180deg); opacity: 1; }
+    }
+    
+    body {
+      background: linear-gradient(to bottom, 
+        #1a0f0a 0%, 
+        #2d1810 20%,
+        #4a2c1a 50%,
+        #2d1810 80%,
+        #1a0f0a 100%
+      );
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* Papyrus texture */
+    .papyrus {
+      background: 
+        linear-gradient(90deg, transparent 79px, rgba(218, 165, 32, 0.03) 79px, rgba(218, 165, 32, 0.03) 81px, transparent 81px),
+        linear-gradient(rgba(218, 165, 32, 0.03) 0.5px, transparent 0.5px);
+      background-size: 81px 81px, 81px 81px;
+      background-color: rgba(40, 30, 20, 0.4);
+    }
+    
+    /* Egyptian border pattern */
+    .egyptian-border {
+      border: 4px solid;
+      border-image: repeating-linear-gradient(
+        45deg,
+        #DAA520 0px,
+        #DAA520 10px,
+        #8B7355 10px,
+        #8B7355 20px,
+        #1e293b 20px,
+        #1e293b 30px,
+        #8B7355 30px,
+        #8B7355 40px
+      ) 4;
+      box-shadow: 
+        0 0 0 2px #000,
+        0 0 0 6px #DAA520,
+        inset 0 0 30px rgba(218, 165, 32, 0.2);
+    }
+    
+    /* Cartouche shape */
+    .cartouche {
+      background: linear-gradient(135deg, #2d1810 0%, #1a0f0a 100%);
+      border: 3px solid #DAA520;
+      border-radius: 50px;
+      position: relative;
+      box-shadow: 
+        0 0 30px rgba(218, 165, 32, 0.4),
+        inset 0 0 20px rgba(0, 0, 0, 0.5),
+        inset 0 2px 0 rgba(255, 215, 0, 0.3);
+    }
+    
+    .cartouche::before,
+    .cartouche::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #DAA520;
+      border: 2px solid #000;
+    }
+    
+    .cartouche::before {
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+    }
+    
+    .cartouche::after {
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+    }
+    
+    /* Gold text effect */
+    .gold-text {
+      background: linear-gradient(135deg, 
+        #8B7355 0%,
+        #DAA520 25%,
+        #FFD700 50%,
+        #DAA520 75%,
+        #8B7355 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+      text-shadow: 0 0 30px rgba(218, 165, 32, 0.5);
+    }
+    
+    /* Lapis lazuli accent */
+    .lapis {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e3a8a 100%);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Hieroglyphic divider */
+    .hieroglyph-divider {
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent 0%,
+        #DAA520 20%,
+        #FFD700 50%,
+        #DAA520 80%,
+        transparent 100%
+      );
+      position: relative;
+    }
+    
+    .hieroglyph-divider::before {
+      content: '𓂀';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a0f0a;
+      padding: 0 15px;
+      color: #DAA520;
+      font-size: 20px;
+    }
+    
+    .btn-pharaoh {
+      background: linear-gradient(135deg, #8B7355 0%, #DAA520 50%, #FFD700 100%);
+      border: 3px solid #000;
+      box-shadow: 
+        0 8px 0 #654321,
+        0 12px 20px rgba(0, 0, 0, 0.5),
+        inset 0 2px 0 rgba(255, 215, 0, 0.4),
+        0 0 30px rgba(218, 165, 32, 0.3);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .btn-pharaoh:hover {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 11px 0 #654321,
+        0 15px 25px rgba(0, 0, 0, 0.6),
+        inset 0 2px 0 rgba(255, 215, 0, 0.5),
+        0 0 50px rgba(218, 165, 32, 0.6);
+    }
+    
+    .btn-pharaoh:active {
+      transform: translateY(4px);
+      box-shadow: 
+        0 4px 0 #654321,
+        0 6px 10px rgba(0, 0, 0, 0.4),
+        inset 0 2px 0 rgba(255, 215, 0, 0.3),
+        0 0 20px rgba(218, 165, 32, 0.2);
+    }
+    
+    .input-papyrus {
+      background: rgba(235, 220, 180, 0.1);
+      border: 2px solid #8B7355;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .input-papyrus:focus {
+      border-color: #DAA520;
+      box-shadow: 
+        inset 0 2px 10px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(218, 165, 32, 0.4);
+      outline: none;
+    }
+    
+    .scarab {
+      position: fixed;
+      bottom: 20px;
+      font-size: 30px;
+      animation: scarab-walk 8s linear infinite;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+    
+    .sun-ra {
+      position: fixed;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #FFD700 0%, #DAA520 50%, transparent 70%);
+      animation: sun-pulse 4s ease-in-out infinite;
+      filter: blur(20px);
+    }
+    
+    .column {
+      width: 40px;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        #8B7355 0px,
+        #8B7355 10px,
+        #DAA520 10px,
+        #DAA520 15px,
+        #8B7355 15px,
+        #8B7355 25px
+      );
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .pyramid {
+      width: 0;
+      height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-bottom: 70px solid #8B7355;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    }
+    
+    .result-reveal {
+      animation: reveal 0.8s ease-out forwards;
+    }
+    
+    @keyframes reveal {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px) scale(0.9);
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+    
+    /* Eye of Horus blinking */
+    @keyframes blink-eye {
+      0%, 90%, 100% { opacity: 1; }
+      95% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 font-hieratic">
+  
+  <!-- Sun Ra -->
+  <div class="sun-ra" style="top: 10%; right: 10%;"></div>
+  
+  <!-- Walking Scarab -->
+  <div class="scarab">🪲</div>
+  
+  <!-- Pyramid decorations -->
+  <div class="fixed bottom-10 left-10 pyramid opacity-20"></div>
+  <div class="fixed bottom-10 right-10 pyramid opacity-20"></div>
+  
+  <!-- Egyptian columns -->
+  <div class="column fixed left-8 top-1/2 transform -translate-y-1/2 opacity-30"></div>
+  <div class="column fixed right-8 top-1/2 transform -translate-y-1/2 opacity-30"></div>
+  
+  <!-- Main card -->
+  <div class="relative z-10 animate-float" style="animation-duration: 8s;">
+    <div class="papyrus egyptian-border rounded-3xl p-10 max-w-xl w-full relative">
+      
+      <!-- Eye of Horus decoration -->
+      <div class="absolute top-4 left-4 text-4xl opacity-50" style="animation: blink-eye 5s infinite;">𓂀</div>
+      <div class="absolute top-4 right-4 text-4xl opacity-50" style="animation: blink-eye 5s infinite 2.5s;">𓂀</div>
+      
+      <!-- Header -->
+      <div class="text-center mb-8 relative">
+        <div class="text-5xl mb-3">𓋹 𓂀 𓋹</div>
+        <h1 class="text-5xl font-egyptian font-black gold-text mb-2" style="letter-spacing: 0.1em;">
+          The beginning
+        </h1>
+        <div class="hieroglyph-divider my-4"></div>
+        <p class="text-amber-200/70 text-sm tracking-widest font-hieratic">
+          ⟨ Sacred Greeting Ritual ⟩
+        </p>
+      </div>
+      
+      <!-- Mode selector tabs - Egyptian styled -->
+      <div class="relative flex mb-6 bg-black/30 rounded-xl p-1 border-2 border-amber-700/50">
+        <div id="tabSlider" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-lg transition-all duration-300 lapis"></div>
+        <button id="tabInput" onclick="setMode('input')" class="relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-100 z-10">
+          <span class="flex items-center justify-center gap-2">
+            <span>𓁹</span>
+            <span class="tracking-widest">Inputs</span>
+          </span>
+        </button>
+        <button id="tabEnv" onclick="setMode('env')" class="relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-600/60 hover:text-amber-500 z-10">
+          <span class="flex items-center justify-center gap-2">
+            <span>𓋹</span>
+            <span class="tracking-widest">Env</span>
+          </span>
+        </button>
+      </div>
+      
+      <!-- Hints -->
+      <div id="hintInput" class="relative overflow-hidden bg-amber-900/20 border-2 border-amber-600/40 rounded-xl p-4 mb-6 transition-all duration-500">
+        <div class="text-center">
+          <p class="text-amber-200 text-sm flex items-center justify-center gap-2 font-hieratic">
+            <span class="text-2xl">☥</span>
+            <span>Invoke with <code class="bg-amber-900/40 px-2 py-1 rounded text-amber-100 font-egyptian">"hello"</code> and <code class="bg-amber-900/40 px-2 py-1 rounded text-amber-100 font-egyptian">"world"</code></span>
+          </p>
+        </div>
+      </div>
+      
+      <div id="hintEnv" class="relative overflow-hidden bg-emerald-900/20 border-2 border-emerald-600/40 rounded-xl p-4 mb-6 hidden transition-all duration-500">
+        <div class="text-center">
+          <p class="text-emerald-200 text-sm flex items-center justify-center gap-2 font-hieratic">
+            <span class="text-2xl">𓋹</span>
+            <span>Scroll 1 from <code class="bg-emerald-900/40 px-2 py-1 rounded text-emerald-100 font-egyptian">PARAM1</code> decree</span>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Input fields - Papyrus style -->
+      <div id="param1Container" class="mb-5 transition-all duration-500">
+        <label for="param1" class="block text-amber-200 text-sm mb-3 font-egyptian font-bold tracking-widest flex items-center gap-2">
+          <span>𓁿</span> FIRST HIEROGLYPH
+        </label>
+        <div class="cartouche">
+          <input type="text" id="param1" placeholder="Inscribe the first word..." value="hello" 
+            class="w-full px-5 py-4 bg-transparent border-0 text-amber-100 placeholder-amber-700/50 focus:outline-none font-hieratic text-lg">
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <label for="param2" class="block text-amber-200 text-sm mb-3 font-egyptian font-bold tracking-widest flex items-center gap-2">
+          <span>𓁿</span> SECOND HIEROGLYPH
+        </label>
+        <div class="cartouche">
+          <input type="text" id="param2" placeholder="Inscribe the second word..." value="world" 
+            class="w-full px-5 py-4 bg-transparent border-0 text-amber-100 placeholder-amber-700/50 focus:outline-none font-hieratic text-lg">
+        </div>
+      </div>
+      
+      <!-- Submit button - Pharaoh style -->
+      <button id="runBtn" onclick="runWorkflow()" 
+        class="btn-pharaoh w-full text-black font-egyptian font-black py-5 px-6 rounded-xl focus:outline-none text-lg tracking-widest">
+        <span class="flex items-center justify-center gap-3">
+          <span class="text-2xl">⚡</span>
+          <span id="btnText">SUMMON THE ORACLE</span>
+          <span class="text-2xl">⚡</span>
+        </span>
+      </button>
+      
+      <!-- Status -->
+      <div id="status" class="mt-6 p-4 rounded-xl text-sm text-center hidden transition-all duration-500"></div>
+      
+      <!-- Result - Sacred scroll -->
+      <div id="result" class="mt-6 hidden">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-900/40 to-amber-950/60 border-4 border-amber-600/50 rounded-2xl p-8">
+          <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
+          
+          <!-- Decorative corners -->
+          <div class="absolute top-2 left-2 text-2xl text-amber-600">𓋴</div>
+          <div class="absolute top-2 right-2 text-2xl text-amber-600">𓋴</div>
+          <div class="absolute bottom-2 left-2 text-2xl text-amber-600">𓋴</div>
+          <div class="absolute bottom-2 right-2 text-2xl text-amber-600">𓋴</div>
+          
+          <div class="text-center">
+            <p class="text-amber-600 text-xs uppercase tracking-widest mb-3 font-egyptian">Divine Proclamation</p>
+            <div id="resultMessage" class="text-4xl font-egyptian font-black gold-text"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer hieroglyphs -->
+      <div class="mt-8 text-center text-amber-700/40 text-xs tracking-widest font-hieratic">
+        𓋹 Blessed by the Gods of the Nile 𓋹
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'input';
+    
+    function setMode(mode) {
+      currentMode = mode;
+      const tabInput = document.getElementById('tabInput');
+      const tabEnv = document.getElementById('tabEnv');
+      const tabSlider = document.getElementById('tabSlider');
+      const param1Container = document.getElementById('param1Container');
+      const hintInput = document.getElementById('hintInput');
+      const hintEnv = document.getElementById('hintEnv');
+      
+      if (mode === 'input') {
+        tabSlider.style.left = '4px';
+        tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg transition-all duration-300 lapis';
+        tabInput.className = 'relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-100 z-10';
+        tabEnv.className = 'relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-600/60 hover:text-amber-500 z-10';
+        param1Container.classList.remove('hidden');
+        param1Container.style.opacity = '1';
+        param1Container.style.transform = 'translateY(0)';
+        hintInput.classList.remove('hidden');
+        hintEnv.classList.add('hidden');
+      } else {
+        tabSlider.style.left = 'calc(50% + 0px)';
+        tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] bg-emerald-700 rounded-lg transition-all duration-300 shadow-lg shadow-emerald-600/40';
+        tabEnv.className = 'relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-100 z-10';
+        tabInput.className = 'relative flex-1 py-4 px-4 rounded-lg text-sm font-egyptian font-bold transition-all duration-300 text-amber-600/60 hover:text-amber-500 z-10';
+        param1Container.classList.add('hidden');
+        hintInput.classList.add('hidden');
+        hintEnv.classList.remove('hidden');
+      }
+    }
+    
+    async function runWorkflow() {
+      const btn = document.getElementById('runBtn');
+      const btnText = document.getElementById('btnText');
+      const status = document.getElementById('status');
+      const result = document.getElementById('result');
+      const resultMessage = document.getElementById('resultMessage');
+      
+      const param1 = document.getElementById('param1').value;
+      const param2 = document.getElementById('param2').value;
+      
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      btnText.innerHTML = '<span class="loading-dots">CONSULTING THE GODS</span>';
+      
+      status.className = 'mt-6 p-5 rounded-xl text-sm text-center block bg-amber-900/30 border-2 border-amber-600/40 text-amber-200 font-hieratic';
+      status.innerHTML = '<span class="flex items-center justify-center gap-2 text-base">⏳ The Oracle speaks...</span>';
+      result.className = 'mt-6 hidden';
+      
+      // Choose endpoint based on mode
+      const endpoint = currentMode === 'input' ? '/api/hello-world' : '/api/hello-world-env';
+      const body = currentMode === 'input' ? { param1, param2 } : { param2 };
+      
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          status.className = 'mt-6 p-5 rounded-xl text-sm text-center block bg-emerald-900/30 border-2 border-emerald-600/40 text-emerald-200 font-hieratic';
+          status.innerHTML = '<span class="flex items-center justify-center gap-2 text-base">✓ The prophecy is complete!</span>';
+          
+          result.className = 'mt-6 block result-reveal';
+          const message = data.output?.message || data.message || data.output || JSON.stringify(data);
+          resultMessage.textContent = message['greeting'];
+        } else {
+          throw new Error(data.message || 'The gods refuse to answer');
+        }
+      } catch (error) {
+        status.className = 'mt-6 p-5 rounded-xl text-sm text-center block bg-red-900/30 border-2 border-red-600/40 text-red-200 font-hieratic';
+        status.innerHTML = '<span class="flex items-center justify-center gap-2 text-base">⚠ ' + error.message + '</span>';
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-60', 'cursor-not-allowed');
+        btnText.innerHTML = 'SUMMON THE ORACLE';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -7,6 +7,9 @@ use serde::Serialize;
 use std::sync::Mutex;
 use tauri::{Manager, Emitter};
 
+#[cfg(debug_assertions)]
+mod automation;
+
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
 // Store file opened via file association (for Opened event)
 static OPENED_FILE: Mutex<Option<String>> = Mutex::new(None);
@@ -109,7 +112,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![test_complete, get_cli_args])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, _event| {
-
+        .run(|app_handle, _event| {
+            #[cfg(debug_assertions)]
+            automation::start_automation_server(app_handle.clone());
         });
 }

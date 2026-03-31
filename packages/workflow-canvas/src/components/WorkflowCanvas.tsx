@@ -383,6 +383,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
             {onAutoLayout && (
               <div className="relative">
                 <button
+                  id="btn-auto-arrange"
                   onClick={onAutoLayout}
                   className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg"
                   title="Auto-arrange nodes"
