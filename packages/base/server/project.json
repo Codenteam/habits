@@ -24,7 +24,7 @@
 
         "sourcemap": true,
         "declaration": false,
-        "generatePackageJson": false,
+        "generatePackageJson": true,
         "packages": "bundle",
         "minify": true,
         "assets": [
@@ -58,12 +58,17 @@
           "banner": {
             "js": "#!/usr/bin/env node"
           },
+          "loader": {
+            ".local.js": "text"
+          },
           "external": [
             "@activepieces/*",
+            "lightningcss",
+            "tailwindcss",
+            "@tailwindcss/cli",
             "@tailwindcss/postcss",
-            "@tailwindcss/oxide",
-            "@tailwindcss/oxide-*",
-            "lightningcss"
+            "postcss",
+            "autoprefixer"
           ],
           "packages": "bundle"
         }

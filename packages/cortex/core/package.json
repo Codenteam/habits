@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/cortex-core",
-  "version": "1.1.16",
+  "version": "1.1.17",
   "description": "Cortex Core - Platform-agnostic Habits Workflow Executor",
   "main": "./index.cjs",
   "module": "./index.js",

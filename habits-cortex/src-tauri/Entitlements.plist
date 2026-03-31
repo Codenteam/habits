@@ -2,8 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- App Store Required Identifiers -->
+    <key>com.apple.application-identifier</key>
+    <string>S54SCFZ347.com.codenteam-oss.habits</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>S54SCFZ347</string>
+    
     <!-- Required for Mac App Store -->
     <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.personal-information.keychain</key>
     <true/>
     
     <!-- Network access for API calls -->
@@ -17,5 +25,6 @@
     <true/>
     <key>com.apple.security.files.downloads.read-write</key>
     <true/>
+
 </dict>
 </plist>

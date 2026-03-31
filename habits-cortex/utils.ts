@@ -77,6 +77,7 @@ export interface ExecOptions {
 export interface MacOSContext {
   keychainPath: string;
   keychainPassword: string;
+  isTemporaryKeychain: boolean; // false if using login keychain
   signingIdentity: string;
   developerIdIdentity?: string;
   appStoreIdentity?: string;
@@ -155,7 +156,10 @@ export function logHeader(title: string): void {
 }
 
 export function logSection(title: string): void {
+  console.log(`${c.gray}${'─'.repeat(50)}${c.reset}`);
+  console.log(`${c.gray}${'─'.repeat(50)}${c.reset}`);
   console.log(`\n${c.magenta}▸ ${(title)}${c.reset}`);
+  console.log(`${c.gray}${'─'.repeat(50)}${c.reset}`);
   console.log(`${c.gray}${'─'.repeat(50)}${c.reset}`);
 }
 
@@ -197,14 +201,14 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: 'Apple Distribution: Company Name (ABC123XYZ)',
   },
   {
-    name: 'APPLE_DEVELOPER_ID_IDENTITY',
+    name: 'MAC_DEVELOPER_ID_IDENTITY',
     description: 'Developer ID identity for direct macOS distribution (required for notarization)',
     required: false,
     platforms: ['macos'],
     example: 'Developer ID Application: Company Name (ABC123XYZ)',
   },
   {
-    name: 'APPLE_DEVELOPER_ID_CERTIFICATE_BASE64',
+    name: 'MAC_DEVELOPER_ID_CERTIFICATE_BASE64',
     description: 'Base64-encoded .p12 Developer ID certificate for direct distribution notarization',
     required: false,
     platforms: ['macos'],
@@ -212,8 +216,8 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: 'base64 -i developer-id.p12 | tr -d "\\n"',
   },
   {
-    name: 'APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD',
-    description: 'Password for Developer ID .p12 certificate (defaults to APPLE_CERTIFICATE_PASSWORD)',
+    name: 'MAC_DEVELOPER_ID_CERTIFICATE_PASSWORD',
+    description: 'Password for Developer ID .p12 certificate (defaults to IOS_MAC_APPLE_CERTIFICATE_PASSWORD)',
     required: false,
     platforms: ['macos'],
     example: 'your-developer-id-password',
@@ -226,7 +230,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: '3rd Party Mac Developer Installer: Company Name (ABC123XYZ)',
   },
   {
-    name: 'APPLE_CERTIFICATE_BASE64',
+    name: 'IOS_MAC_APPLE_CERTIFICATE_BASE64',
     description: 'Base64-encoded .p12 certificate file for code signing (Apple Distribution)',
     required: true,
     platforms: ['macos'],
@@ -234,7 +238,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: 'base64 -i certificate.p12 | tr -d "\\n"',
   },
   {
-    name: 'APPLE_CERTIFICATE_PASSWORD',
+    name: 'IOS_MAC_APPLE_CERTIFICATE_PASSWORD',
     description: 'Password for the .p12 certificate',
     required: true,
     platforms: ['macos'],
@@ -250,7 +254,7 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
   },
   {
     name: 'APPLE_INSTALLER_CERTIFICATE_PASSWORD',
-    description: 'Password for the installer .p12 certificate (defaults to APPLE_CERTIFICATE_PASSWORD)',
+    description: 'Password for the installer .p12 certificate (defaults to IOS_MAC_APPLE_CERTIFICATE_PASSWORD)',
     required: false,
     platforms: ['macos'],
     example: 'your-installer-certificate-password',

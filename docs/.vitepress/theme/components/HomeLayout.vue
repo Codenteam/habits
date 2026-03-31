@@ -44,6 +44,22 @@ const highlightedCode = ref({})
 const tabs = [
   {
     label: 'Install',
+    code: `# docker-compose.yaml
+services:
+  habits:
+    image: node:24
+    working_dir: /app
+    command: sh -c "npx habits@latest init && npx habits@latest base"
+    ports:
+      - "3000:3000"
+      - "13000:13000"
+    volumes:
+      - ./habit:/app
+
+# Run with: docker compose up`
+  },
+  {
+    label: 'Install (manual)',
     code: `# Install habits globally
 curl -o- https://codenteam.com/intersect/habits/install.sh | bash
 
@@ -868,7 +884,7 @@ const hoveredUseCase = ref(null)
   background: var(--vp-c-bg-alt) !important;
   overflow-x: auto;
   min-height: 140px;
-  white-space: pre-line;
+  white-space: pre;
 }
 
 .highlighted-code :deep(code) {

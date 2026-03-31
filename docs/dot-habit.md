@@ -1996,6 +1996,7 @@ $ npx habits pack --format habit --config ./stack.yaml
 .journey-path {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   overflow-x: auto;
   padding: 8px 0;

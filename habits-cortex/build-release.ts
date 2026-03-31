@@ -211,47 +211,115 @@ async function main(): Promise<void> {
  * Main orchestrator for macOS build
  */
 async function prepareMacOS(options: CLIOptions): Promise<string[]> {
-
+  logHeader('Building macOS Application');
+  
+  // Setup
+  const ctx = await setupMacOS(options);
+  
+  console.log('info', `Distribution paths enabled:`);
+  console.log('info', `  Direct (DMG, notarized): ${ctx.hasDevIdCert ? 'Yes' : 'No (missing Developer ID cert)'}`);
+  console.log('info', `  App Store (PKG): ${ctx.hasAppStoreCert && ctx.hasInstallerCert ? 'Yes' : 'No (missing certs)'}`);
+  
+  try {
+    // Build
+    let artifacts = await buildMacOSApp(ctx, options);
+    
+    // Sign
+    artifacts = await signMacOS(ctx, artifacts, options);
+    
+    // Notarize
+    await notarizeMacOS(ctx, artifacts, options);
+    
+    console.log('success', `Built ${artifacts.length} artifact(s)`);
+    
+    return artifacts;
+  } finally {
+    // Always cleanup
+    cleanupMacOS(ctx);
+  }
+}
 
 
 /**
+ * Get the login keychain path if it exists
+ */
+function getLoginKeychainPath(): string | null {
+  const loginKeychainPath = path.join(os.homedir(), 'Library', 'Keychains', 'login.keychain-db');
+  if (fs.existsSync(loginKeychainPath)) {
+    return loginKeychainPath;
+  }
+  // Fallback to older naming convention
+  const loginKeychainPathOld = path.join(os.homedir(), 'Library', 'Keychains', 'login.keychain');
+  if (fs.existsSync(loginKeychainPathOld)) {
+    return loginKeychainPathOld;
+  }
+  return null;
+}
+
+/**
  * Setup macOS keychain and import certificates
+ * Uses login keychain if available, otherwise creates a temporary one
  */
 async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   logSection('Setting up Keychain');
   
-  const keychainName = `build-release-${Date.now()}.keychain-db`;
-  const keychainPath = path.join(TEMP_DIR, keychainName);
-  const keychainPassword =  crypto.randomBytes(16).toString('hex');
+  let keychainPath: string;
+  let keychainPassword: string;
+  let isTemporaryKeychain = true;
   
-  console.log('step', 'Creating temporary keychain...');
-  exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
-  exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
-  exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
-  
-  const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
-  exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
-  
-  console.log('success', `Created keychain: ${keychainName}`);
+  // Try to use login keychain if it exists
+  const loginKeychainPath = getLoginKeychainPath();
+  if (loginKeychainPath) {
+    console.log('step', 'Using existing login keychain...');
+    keychainPath = loginKeychainPath;
+    keychainPassword = ''; // Login keychain should already be unlocked
+    isTemporaryKeychain = false;
+    
+    // Ensure login keychain is unlocked (user may be prompted)
+    exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    
+    // Make sure login keychain is in the search list
+    const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+    if (!existingKeychains.includes(keychainPath)) {
+      exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+    }
+    
+    console.log('success', `Using login keychain: ${keychainPath}`);
+  } else {
+    // Fall back to creating temporary keychain
+    const keychainName = `habits-cortex-build-macos.keychain.db`;
+    keychainPath = path.join(TEMP_DIR, keychainName);
+    keychainPassword = crypto.randomBytes(16).toString('hex');
+    
+    console.log('step', 'Creating temporary keychain...');
+    exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
+    exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
+    exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
+    
+    const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+    exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+    
+    console.log('success', `Created temporary keychain: ${keychainName}`);
+  }
   
   // Import certificates
   logSection('Importing Certificates');
   
-  const certPassword = process.env.APPLE_CERTIFICATE_PASSWORD;
+  const certPassword = process.env.IOS_MAC_APPLE_CERTIFICATE_PASSWORD;
   
   // Import Apple Distribution certificate (for App Store)
-  if (hasBase64EnvVar('APPLE_CERTIFICATE_BASE64')) {
+  if (hasBase64EnvVar('IOS_MAC_APPLE_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing Apple Distribution certificate...');
-    const certPath = decodeBase64ToFile('APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
+    const certPath = decodeBase64ToFile('IOS_MAC_APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
     exec(`security import "${certPath}" -k "${keychainPath}" -P "${certPassword}" -T /usr/bin/codesign -T /usr/bin/security`);
     console.log('success', 'Apple Distribution certificate imported');
   }
   
   // Import Developer ID certificate (for direct distribution)
-  if (hasBase64EnvVar('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64')) {
+  if (hasBase64EnvVar('MAC_DEVELOPER_ID_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing Developer ID certificate...');
-    const devIdCertPath = decodeBase64ToFile('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64', 'developer-id.p12');
-    const devIdPassword = process.env.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD || certPassword;
+    const devIdCertPath = decodeBase64ToFile('MAC_DEVELOPER_ID_CERTIFICATE_BASE64', 'developer-id.p12');
+    const devIdPassword = process.env.MAC_DEVELOPER_ID_CERTIFICATE_PASSWORD || certPassword;
     exec(`security import "${devIdCertPath}" -k "${keychainPath}" -P "${devIdPassword}" -T /usr/bin/codesign -T /usr/bin/security`);
     console.log('success', 'Developer ID certificate imported');
   }
@@ -270,15 +338,33 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   const identities = execCapture(`security find-identity -v "${keychainPath}"`);
   console.log('info', 'Available signing identities:\n' + identities);
   
-  const hasDevIdCert = !!process.env.APPLE_DEVELOPER_ID_IDENTITY || hasBase64EnvVar('APPLE_DEVELOPER_ID_CERTIFICATE_BASE64');
+  const hasDevIdCert = !!process.env.MAC_DEVELOPER_ID_IDENTITY || hasBase64EnvVar('MAC_DEVELOPER_ID_CERTIFICATE_BASE64');
   const hasAppStoreCert = !!process.env.APPLE_SIGNING_IDENTITY;
   const hasInstallerCert = !!process.env.APPLE_INSTALLER_IDENTITY || hasBase64EnvVar('APPLE_INSTALLER_CERTIFICATE_BASE64');
   
+
+
+  // If there is no certs/Habits_Mac.provisionprofile and there is MAC_PROVISIONING_PROFILE_BASE64 in env
+  const profileTargetPath = path.join('certs', 'Habits_Mac.provisionprofile');
+  if (!fs.existsSync(profileTargetPath) &&hasBase64EnvVar('MAC_PROVISIONING_PROFILE_BASE64')) {
+  const profileDir = path.dirname(profileTargetPath);
+  
+  if (!fs.existsSync(profileDir)) {
+    fs.mkdirSync(profileDir, { recursive: true });
+  }
+  
+  // Decode directly to the expected location (not temp dir)
+  const base64Data = process.env.MAC_PROVISIONING_PROFILE_BASE64!;
+  fs.writeFileSync(profileTargetPath, Buffer.from(base64Data, 'base64'));
+  console.log('success', `Provisioning profile written to ${profileTargetPath}`);
+}
+
   return {
     keychainPath,
     keychainPassword,
+    isTemporaryKeychain,
     signingIdentity: process.env.APPLE_SIGNING_IDENTITY || '',
-    developerIdIdentity: process.env.APPLE_DEVELOPER_ID_IDENTITY,
+    developerIdIdentity: process.env.MAC_DEVELOPER_ID_IDENTITY,
     appStoreIdentity: process.env.APPLE_SIGNING_IDENTITY,
     installerIdentity: process.env.APPLE_INSTALLER_IDENTITY,
     hasDevIdCert,
@@ -301,7 +387,10 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   const appDir = path.join(ctx.targetDir, 'macos');
   
   // Determine which certificate to use for the build
-  const signingIdentity = ctx.developerIdIdentity || ctx.appStoreIdentity;
+  // Use Apple Distribution for App Store uploads, Developer ID for direct distribution
+  const signingIdentity = options.uploadMacos 
+    ? ctx.appStoreIdentity 
+    : (ctx.developerIdIdentity || ctx.appStoreIdentity);
   
   const buildEnv: Record<string, string | undefined> = {
     APPLE_SIGNING_IDENTITY: signingIdentity,
@@ -370,11 +459,13 @@ async function signMacOS(ctx: MacOSContext, artifacts: string[], options: CLIOpt
         const pkgName = `${appName}_${version}_universal.pkg`;
         const pkgPath = path.join(appDir, pkgName);
         
-        // Re-sign with App Store identity if different from build identity
-        if (ctx.appStoreIdentity && ctx.developerIdIdentity && ctx.developerIdIdentity !== ctx.appStoreIdentity) {
-          console.log('step', `Re-signing app for App Store with: ...`);
-          exec(`codesign --force --deep --sign "${ctx.appStoreIdentity}" "${appPath}"`);
-          console.log('success', 'App re-signed for App Store');
+        // Re-sign with Apple Distribution and entitlements for App Store
+        // This is required to embed the application-identifier in the signature
+        const entitlementsPath = path.join(TAURI_DIR, 'Entitlements.plist');
+        if (ctx.appStoreIdentity) {
+          console.log('step', `Re-signing app for App Store with entitlements...`);
+          exec(`codesign --force --deep --options runtime --sign "${ctx.appStoreIdentity}" --entitlements "${entitlementsPath}" "${appPath}"`);
+          console.log('success', 'App re-signed for App Store with entitlements');
         }
         
         console.log('step', `Creating .pkg from ${apps[0]}...`);
@@ -446,40 +537,14 @@ async function notarizeMacOS(ctx: MacOSContext, artifacts: string[], options: CL
 }
 
 /**
- * Cleanup macOS keychain
+ * Cleanup macOS keychain (only deletes temporary keychains, not login keychain)
  */
 function cleanupMacOS(ctx: MacOSContext): void {
-  console.log('step', 'Removing temporary keychain...');
-  exec(`security delete-keychain "${ctx.keychainPath}"`, { ignoreError: true });
-}
-
-
-
-  logHeader('Building macOS Application');
-  
-  // Setup
-  const ctx = await setupMacOS(options);
-  
-  console.log('info', `Distribution paths enabled:`);
-  console.log('info', `  Direct (DMG, notarized): ${ctx.hasDevIdCert ? 'Yes' : 'No (missing Developer ID cert)'}`);
-  console.log('info', `  App Store (PKG): ${ctx.hasAppStoreCert && ctx.hasInstallerCert ? 'Yes' : 'No (missing certs)'}`);
-  
-  try {
-    // Build
-    let artifacts = await buildMacOSApp(ctx, options);
-    
-    // Sign
-    artifacts = await signMacOS(ctx, artifacts, options);
-    
-    // Notarize
-    await notarizeMacOS(ctx, artifacts, options);
-    
-    console.log('success', `Built ${artifacts.length} artifact(s)`);
-    
-    return artifacts;
-  } finally {
-    // Always cleanup
-    cleanupMacOS(ctx);
+  if (ctx.isTemporaryKeychain) {
+    console.log('step', 'Removing temporary keychain...');
+    exec(`security delete-keychain "${ctx.keychainPath}"`, { ignoreError: true });
+  } else {
+    console.log('info', 'Using login keychain - skipping cleanup');
   }
 }
 
@@ -489,38 +554,69 @@ function cleanupMacOS(ctx: MacOSContext): void {
 
 /**
  * Setup iOS keychain with Apple Distribution certificate.
+ * Uses login keychain if available, otherwise creates a temporary one.
  * Needed for code signing even with automatic signing (API key handles profile management).
  */
-async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassword: string }> {
+async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassword: string; isTemporaryKeychain: boolean }> {
   logSection('Setting up iOS Keychain');
   
-  const keychainName = `ios-build-${crypto.randomBytes(8).toString('hex')}.keychain-db`;
-  const keychainPath = path.join(TEMP_DIR, keychainName);
-  const keychainPassword = crypto.randomBytes(16).toString('hex');
+  let keychainPath: string;
+  let keychainPassword: string;
+  let isTemporaryKeychain = true;
   
-  console.log('step', 'Creating temporary keychain...');
-  exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
-  exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
-  exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
-  
-  // Add to keychain search list (FIRST so it's preferred)
-  const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
-  exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
-  
-  // Set as default keychain for this session
-  exec(`security default-keychain -s "${keychainPath}"`);
-  
-  console.log('success', `Created keychain: ${keychainName}`);
+  // Try to use login keychain if it exists
+  const loginKeychainPath = getLoginKeychainPath();
+  if (loginKeychainPath) {
+    console.log('step', 'Using existing login keychain...');
+    keychainPath = loginKeychainPath;
+    keychainPassword = ''; // Login keychain should already be unlocked
+    isTemporaryKeychain = false;
+    
+    // Ensure login keychain is unlocked (user may be prompted)
+    exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    
+    // Make sure login keychain is in the search list and is the default
+    const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+    if (!existingKeychains.includes(keychainPath)) {
+      exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+    }
+    
+    // Set as default keychain for this session
+    exec(`security default-keychain -s "${keychainPath}"`);
+    
+    console.log('success', `Using login keychain: ${keychainPath}`);
+  } else {
+    // Fall back to creating temporary keychain
+    const keychainName = `habits-cortex-build-ios.keychain.db`;
+    keychainPath = path.join(TEMP_DIR, keychainName);
+    keychainPassword = crypto.randomBytes(16).toString('hex');
+    
+    console.log('step', 'Creating temporary keychain...');
+    exec(`security create-keychain -p "${keychainPassword}" "${keychainPath}"`);
+    exec(`security set-keychain-settings -lut 21600 "${keychainPath}"`);
+    exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`);
+    
+    // Add to keychain search list (FIRST so it's preferred)
+    const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
+    exec(`security list-keychains -d user -s "${keychainPath}" ${existingKeychains.join(' ')}`);
+    
+    // Set as default keychain for this session
+    exec(`security default-keychain -s "${keychainPath}"`);
+    
+    console.log('success', `Created temporary keychain: ${keychainName}`);
+  }
   
   // Import Apple Distribution certificate
-  if (hasBase64EnvVar('APPLE_CERTIFICATE_BASE64')) {
+  if (hasBase64EnvVar('IOS_MAC_APPLE_CERTIFICATE_BASE64')) {
     console.log('step', 'Importing Apple Distribution certificate...');
-    const certPath = decodeBase64ToFile('APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
-    const certPassword = process.env.APPLE_CERTIFICATE_PASSWORD || '';
+    const certPath = decodeBase64ToFile('IOS_MAC_APPLE_CERTIFICATE_BASE64', 'apple-distribution.p12');
+    const certPassword = process.env.IOS_MAC_APPLE_CERTIFICATE_PASSWORD || '';
     exec(`security import "${certPath}" -k "${keychainPath}" -P "${certPassword}" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild`);
     
-    // Allow codesign to access the key without prompting
-    exec(`security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychainPassword}" "${keychainPath}"`, { silent: true, ignoreError: true });
+    // Allow codesign to access the key without prompting (only works for temporary keychains with known password)
+    if (isTemporaryKeychain && keychainPassword) {
+      exec(`security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${keychainPassword}" "${keychainPath}"`, { silent: true, ignoreError: true });
+    }
     
     console.log('success', 'Apple Distribution certificate imported');
     
@@ -528,10 +624,10 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
     const identities = execCapture(`security find-identity -v -p codesigning "${keychainPath}"`);
     console.log('info', 'Available signing identities:\n' + identities);
   } else {
-    console.log('warn', 'No APPLE_CERTIFICATE_BASE64 found - relying on cloud-managed signing');
+    console.log('warn', 'No IOS_MAC_APPLE_CERTIFICATE_BASE64 found - relying on cloud-managed signing');
   }
   
-  return { keychainPath, keychainPassword };
+  return { keychainPath, keychainPassword, isTemporaryKeychain };
 }
 
 /**
@@ -542,8 +638,8 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
  * - APP_STORE_CONNECT_API_KEY_ID
  * - APP_STORE_CONNECT_API_ISSUER_ID
  * - APP_STORE_CONNECT_API_KEY_BASE64
- * - APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
- * - APPLE_CERTIFICATE_PASSWORD
+ * - IOS_MAC_APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
+ * - IOS_MAC_APPLE_CERTIFICATE_PASSWORD
  */
 async function buildIOS(): Promise<string[]> {
   logHeader('Building iOS Application');

@@ -45,7 +45,6 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      max-width: 480px;
       margin: 0 auto;
     }
 
@@ -74,6 +73,35 @@
       font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
+    }
+    
+    .storage-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    
+    .storage-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+    
+    .storage-indicator.secure .storage-dot {
+      background: var(--success);
+    }
+    
+    .storage-indicator.fallback .storage-dot {
+      background: var(--warning);
     }
 
     #habits-list-view {
@@ -998,6 +1026,10 @@
         <div>
           <h1 class="header-title">Habits</h1>
           <p class="header-subtitle">Run workflows locally</p>
+        </div>
+        <div id="storage-indicator" class="storage-indicator" style="display: none;">
+          <span class="storage-dot"></span>
+          <span id="storage-indicator-text">Checking...</span>
         </div>
       </header>
       

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { withBase } from 'vitepress'
 import feather from 'feather-icons'
 
 const icon = (name) => feather.icons[name]?.toSvg({ class: 'feather-icon' }) || ''
@@ -256,19 +257,21 @@ const orbs = [
         </div>
 
         <!-- Column 3: .habit -->
-        <div class="flow-card habit-card holographic">
-          <div class="holographic-shine"></div>
-          <div class="habit-badge">
-            <span class="badge-glow"></span>
-            <span v-html="icon('package')"></span>
-          </div>
-          <span class="habit-name">.habit</span>
-                    <span class="habit-desc">Single deployable file</span>
+        <a :href="withBase('/dot-habit')" class="habit-card-link">
+          <div class="flow-card habit-card holographic">
+            <div class="holographic-shine"></div>
+            <div class="habit-badge"> 
+              <span class="badge-glow"></span>
+              <span v-html="icon('package')"></span>
+            </div>
+            <span class="habit-name">.habit</span>
+            <span class="habit-desc">Single deployable file</span>
 
-          <div class="orbit-ring">
-            <span class="orbit-dot"></span>
+            <div class="orbit-ring">
+              <span class="orbit-dot"></span>
+            </div>
           </div>
-        </div>
+        </a>
       </div>
 
       <!-- Deploy targets -->
@@ -518,6 +521,16 @@ const orbs = [
 .nodes-card {
   min-width: 260px;
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M7 4l18 12-9 2.5-4 9.5L7 4z' fill='%235865F2' stroke='%23fff' stroke-width='1.5'/%3E%3Ctext x='22' y='12' font-size='10' fill='%2322c55e'%3E⬡%3C/text%3E%3C/svg%3E") 7 4, pointer;
+}
+
+/* Custom cursor for habit card - deployable file icon */
+.habit-card-link {
+  text-decoration: none;
+  display: block;
+}
+
+.habit-card {
+  
 }
 
 /* Custom cursor for AI card - magic wand with sparkle */

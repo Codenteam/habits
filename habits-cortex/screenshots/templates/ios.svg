@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1034 2213" width="1034" height="2213">
+  <!-- iPhone Frame - 1034 × 2213px (maintains 1200:2748 aspect ratio) -->
+  <defs>
+    <mask id="screenMask">
+      <rect x="0" y="0" width="1034" height="2213" fill="white"/>
+      <rect x="60" y="60" width="914" height="2093" rx="80" ry="80" fill="black"/>
+    </mask>
+    <clipPath id="screenshotClip">
+      <rect x="60" y="60" width="914" height="2093" rx="32" ry="32"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Device frame with screen cutout -->
+  <rect x="0" y="0" width="1034" height="2213" rx="100" ry="100" fill="#1a1a1a" mask="url(#screenMask)"/>
+  <rect x="14" y="14" width="1006" height="2185" rx="86" ry="86" fill="#2d2d2d" mask="url(#screenMask)"/>
+  <rect x="28" y="28" width="978" height="2157" rx="72" ry="72" fill="#1a1a1a" mask="url(#screenMask)"/>
+  
+
+  
+  <!-- Side buttons -->
+  <rect x="-10" y="420" width="10" height="80" rx="3" ry="3" fill="#2d2d2d"/>
+  <rect x="-10" y="560" width="10" height="160" rx="3" ry="3" fill="#2d2d2d"/>
+  <rect x="-10" y="760" width="10" height="160" rx="3" ry="3" fill="#2d2d2d"/>
+  <rect x="1034" y="560" width="10" height="220" rx="3" ry="3" fill="#2d2d2d"/>
+  
+  <!-- Screenshot image (top layer) -->
+  <image id="screenshot" clip-path="url(#screenshotClip)" x="60" y="60" width="914" height="2093" preserveAspectRatio="xMidYMin slice" xlink:href="placeholder.png"/>
+
+    <!-- Dynamic Island -->
+  <rect x="367" y="90" width="300" height="90" rx="45" ry="45" fill="#1a1a1a"/>
+</svg>

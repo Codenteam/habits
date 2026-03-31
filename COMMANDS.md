@@ -232,3 +232,14 @@ apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass 
 npx tsx packages/base/server/src/pack/inline-html.ts
 
 npx tsx scripts/generate-showcase.ts
+
+
+
+
+# SIGN - NOTARIZE - Submit
+
+## To build for macos store submission
+npx env-cmd .secrets -- npx tsx habits-cortex/build-release.ts --platform macos --upload-macos
+
+
+

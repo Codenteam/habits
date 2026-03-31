@@ -6,7 +6,9 @@ aside: false
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useData } from 'vitepress'
 
+const { site } = useData()
 const cortexDownloads = ref([])
 const habitBundles = ref([])
 const latestRelease = ref(null)
@@ -31,13 +33,18 @@ function getIconForPlatform(platform) {
 
 onMounted(async () => {
   try {
-    const response = await fetch('/downloads-manifest.json')
+    const base = site.value.base || '/'
+    const response = await fetch(`${base}downloads-manifest.json`)
     if (!response.ok) {
       throw new Error('Failed to fetch downloads manifest')
     }
     const data = await response.json()
     cortexDownloads.value = data.cortexApp || []
-    habitBundles.value = data.habitBundles || []
+    // Fix bundle URLs to include base path
+    habitBundles.value = (data.habitBundles || []).map(bundle => ({
+      ...bundle,
+      url: bundle.url.startsWith('/') ? `${base}${bundle.url.slice(1)}` : bundle.url
+    }))
     latestRelease.value = data.latestRelease || null
   } catch (err) {
     error.value = err.message
@@ -72,26 +79,32 @@ The Cortex App lets you run `.habit` files directly on your device - no server s
     <div class="download-info">
       <h3>{{ item.platform }}</h3>
       <p class="description">{{ item.description }}</p>
-      <p class="version">Version {{ item.version }} · {{ item.size }}</p>
+      <p class="version" style="display: none;">Version {{ item.version }} · {{ item.size }}</p>
     </div>
-    <a v-if="item.available" :href="item.url" class="download-btn" download>
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-      </svg>
-      Download
-    </a>
+    <div v-if="item.available" class="download-actions">
+      <a v-if="item.url && !item.storeOnly" :href="item.url" class="download-btn" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download
+      </a>
+      <span v-if="item.storeUrl" class="store-coming-soon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Store Coming Soon
+      </span>
+    </div>
+    <span v-else-if="item.storeOnly" class="coming-soon">App Store Coming Soon</span>
     <span v-else class="coming-soon">Coming Soon</span>
   </div>
 </div>
 
-<div v-if="!loading && latestRelease" class="release-info">
-  <p>
-    <strong>Latest Release:</strong> v{{ latestRelease.version }} 
-    <span class="release-date">({{ new Date(latestRelease.publishedAt).toLocaleDateString() }})</span>
-  </p>
-  <a :href="latestRelease.url" class="github-release-link" target="_blank" rel="noopener">
+<div class="release-info">
+  <a href="https://github.com/codenteam/habits/releases" class="github-release-link" target="_blank" rel="noopener">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
     </svg>
@@ -269,6 +282,46 @@ npx habits pack --format habit --config ./stack.yaml
 
 .download-btn:hover {
   background: #1d4ed8;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.store-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.store-btn:hover {
+  background: var(--vp-c-bg-soft);
+  border-color: var(--vp-c-text-3);
+}
+
+.store-coming-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--vp-c-bg-alt);
+  color: var(--vp-c-text-3);
+  border: 1px dashed var(--vp-c-divider);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .coming-soon {
