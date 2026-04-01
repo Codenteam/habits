@@ -6,181 +6,33 @@ on:
       - main
     paths:
       - 'nodes/bits/@ha-bits/**'
-  workflow_dispatch:
-    inputs:
-      package:
-        description: 'Specific package to publish (leave empty for changed packages only)'
-        required: false
-        type: string
 
 permissions:
   contents: read
 
 jobs:
-  detect-changes:
+  publish-bits:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get changed bits
-        id: set-matrix
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish bits
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # Packages to skip (require external dependencies not in this repo)
-          SKIP_PACKAGES="bit-intersect"
-          
+          ARGS=""
           if [ -n "${{ github.event.inputs.package }}" ]; then
-            # Manual trigger with specific package
-            PKG="${{ github.event.inputs.package }}"
-            if echo "$SKIP_PACKAGES" | grep -q "$PKG"; then
-              echo "Package $PKG is in skip list"
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              echo "matrix=[]" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            PACKAGES="[\"$PKG\"]"
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            # Detect changed packages from git diff
-            CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^nodes/bits/@ha-bits/' | cut -d'/' -f4 | sort -u | tr '\n' ',' | sed 's/,$//')
-            if [ -z "$CHANGED" ]; then
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              echo "matrix=[]" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            
-            # Filter out skipped packages
-            FILTERED=""
-            for pkg in $(echo "$CHANGED" | tr ',' ' '); do
-              if ! echo "$SKIP_PACKAGES" | grep -q "$pkg"; then
-                FILTERED="$FILTERED,$pkg"
-              else
-                echo "Skipping $pkg (in skip list)"
-              fi
-            done
-            CHANGED=$(echo "$FILTERED" | sed 's/^,//')
-            
-            if [ -z "$CHANGED" ]; then
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              echo "matrix=[]" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            
-            # Convert to JSON array
-            PACKAGES=$(echo "$CHANGED" | sed 's/,/, /g' | sed 's/^/["/' | sed 's/$/"]/' | sed 's/, /", "/g')
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            ARGS="--package ${{ github.event.inputs.package }}"
+          elif [ "${{ github.event.inputs.all }}" = "true" ]; then
+            ARGS="--all"
           fi
-          
-          echo "matrix=$PACKAGES" >> $GITHUB_OUTPUT
-          echo "Detected packages: $PACKAGES"
-
-  build-and-publish:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-    
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install dependencies
-        working-directory: nodes/bits/@ha-bits/${{ matrix.package }}
-        run: npm install
-
-      - name: Build package
-        working-directory: nodes/bits/@ha-bits/${{ matrix.package }}
-        run: npm run build
-
-      - name: Check if version already published
-        id: version-check
-        working-directory: nodes/bits/@ha-bits/${{ matrix.package }}
-        run: |
-          PACKAGE_NAME=$(jq -r '.name' package.json)
-          PACKAGE_VERSION=$(jq -r '.version' package.json)
-          
-          # Check if this version is already published
-          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version 2>/dev/null || echo "not-found")
-          
-          if [ "$PUBLISHED_VERSION" = "$PACKAGE_VERSION" ]; then
-            echo "Version $PACKAGE_VERSION already published for $PACKAGE_NAME"
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-          else
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Publish to NPM
-        if: steps.version-check.outputs.should_publish == 'true'
-        working-directory: nodes/bits/@ha-bits/${{ matrix.package }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm publish --access public
-          echo "📦 Published @ha-bits/${{ matrix.package }}" >> $GITHUB_STEP_SUMMARY
-
-  publish-all:
-    name: Publish All Bits (Manual)
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.package == ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Build and publish all bits
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          cd nodes/bits/@ha-bits
-          
-          # Packages to skip (require external dependencies not in this repo)
-          SKIP_PACKAGES="bit-intersect"
-          
-          # Get list of all bit directories
-          for dir in */; do
-            package=$(basename "$dir")
-            
-            # Skip packages that require external dependencies
-            if echo "$SKIP_PACKAGES" | grep -q "$package"; then
-              echo "⏭️ Skipping $package (requires external dependencies)" >> $GITHUB_STEP_SUMMARY
-              continue
-            fi
-            
-            echo "Processing $package..."
-            
-            cd "$package"
-            
-            # Install and build
-            npm install
-            npm run build || { echo "Build failed for $package, skipping..."; cd ..; continue; }
-            
-            # Get version info
-            PACKAGE_NAME=$(jq -r '.name' package.json)
-            PACKAGE_VERSION=$(jq -r '.version' package.json)
-            
-            # Check if already published
-            PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version 2>/dev/null || echo "not-found")
-            
-            if [ "$PUBLISHED_VERSION" != "$PACKAGE_VERSION" ]; then
-              npm publish --access public || echo "Publish failed for $package"
-              echo "📦 Published $PACKAGE_NAME@$PACKAGE_VERSION" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "⏭️ Skipped $PACKAGE_NAME@$PACKAGE_VERSION (already published)" >> $GITHUB_STEP_SUMMARY
-            fi
-            
-            cd ..
-          done
+          npx tsx scripts/publish-bits.ts $ARGS | npx tsx scripts/log-sanitizer.ts

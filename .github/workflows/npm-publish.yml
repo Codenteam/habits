@@ -9,60 +9,40 @@ on:
     tags:
       - 'v*'
       - 'release/**'
+
 permissions:
   contents: read
   id-token: write
+
 jobs:
   publish-to-npm:
     runs-on: ubuntu-latest
     environment: npm
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      - uses: pnpm/action-setup@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
           cache: true
           version: 10
 
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Determine version and tag
-        id: version
-        run: |
-          REF="${{ github.ref_name }}"
-          
-          if [[ "$REF" == "main" ]]; then
-            # Push to main → @next with commit-based version
-            VERSION="0.1.0-next.${{ github.run_number }}"
-
-            # For now, temporarily, we will tag main as latest, just like releases, just temporarily
-            # TAG="next"
-            TAG="latest"
-          else
-            # Tag or release branch → @latest with version from ref
-            VERSION="${REF#v}"
-            VERSION="${VERSION#release/}"
-            VERSION="${VERSION}.${{ github.run_number }}"
-            TAG="latest"
-          fi
-          
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Publish affected packages
+      - name: Publish packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_VERSION: ${{ steps.version.outputs.version }}
-          NPM_TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          pnpm nx affected --target=publish --base=origin/main~1 --head=HEAD
-          echo "📦 Published affected packages with version $NPM_VERSION and tag @$NPM_TAG" >> $GITHUB_STEP_SUMMARY
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: npx tsx scripts/npm-publish.ts | npx tsx scripts/log-sanitizer.ts
 

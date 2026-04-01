@@ -7,7 +7,7 @@ services:
     container_name: habits-base-1
     restart: unless-stopped
     working_dir: /app
-    command: npx habits@next base --port 3000
+    command: npx -y habits@next base --port 3000
     ports:
       - "3000:3000"
       - "13000:13000"
