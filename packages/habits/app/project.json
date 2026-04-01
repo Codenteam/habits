@@ -22,7 +22,8 @@
         "platform": "node",
         "format": ["cjs"],
         "bundle": true,
-        "sourcemap": true,
+        "thirdParty": true,
+        "sourcemap": false,
         "declaration": false,
         "minify": true,
         "assets": [
@@ -42,20 +43,16 @@
             "output": "."
           }
         ],
-        "loader": {
-          ".local.js": "text"
-        },
         "esbuildOptions": {
           "banner": {
             "js": "#!/usr/bin/env node"
           },
+          "loader": {
+            ".local.js": "text"
+          },
           "external": [
             "@activepieces/*",
-            "lightningcss",
-            "@tailwindcss/postcss",
-            "postcss",
-            "tailwindcss",
-            "autoprefixer"
+            "lightningcss"
           ],
           "packages": "bundle"
         }

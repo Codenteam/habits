@@ -22,7 +22,7 @@
         "bundle": true,
             "thirdParty": true,
 
-        "sourcemap": true,
+        "sourcemap": false,
         "declaration": false,
         "generatePackageJson": true,
         "packages": "bundle",
@@ -63,12 +63,7 @@
           },
           "external": [
             "@activepieces/*",
-            "lightningcss",
-            "tailwindcss",
-            "@tailwindcss/cli",
-            "@tailwindcss/postcss",
-            "postcss",
-            "autoprefixer"
+            "lightningcss"
           ],
           "packages": "bundle"
         }

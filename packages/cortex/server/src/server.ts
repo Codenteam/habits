@@ -2,7 +2,7 @@
 
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import yargs from 'yargs';
+import * as yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from '@ha-bits/bindings/fs';
 import * as nativeFs from 'fs';  // Native fs for binary file operations
@@ -1447,7 +1447,7 @@ async function loadConfigFromFile(configPath: string): Promise<{
 
 // CLI Interface
 async function runCLI() {
-  const argv = await yargs(hideBin(process.argv))
+  const argv = yargs.default(hideBin(process.argv))
     .command('server', 'Start the workflow execution server', {
       port: {
         alias: 'p',
@@ -1517,7 +1517,7 @@ async function runCLI() {
     })
     .demandCommand(1, 'You need to specify a command')
     .help()
-    .argv;
+    .parseSync();
 
   const command = argv._[0] as string;
 

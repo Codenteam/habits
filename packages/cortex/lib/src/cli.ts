@@ -573,7 +573,7 @@ async function runPrepareCommand(options: CortexCommandOptions): Promise<void> {
  * Run the full cortex CLI (standalone mode)
  */
 export async function runCLI(): Promise<void> {
-  const argv = await yargs(hideBin(process.argv))
+  const argv =  yargs.default(hideBin(process.argv))
     .command('server', 'Start the workflow execution server', {
       port: {
         alias: 'p',

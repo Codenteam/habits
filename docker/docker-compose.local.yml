@@ -1,0 +1,27 @@
+# Usage:
+#   1. Build the package first: pnpm nx pack habits
+#   2. Run: docker compose -f docker-compose.local.yml up -d
+#
+# This mounts the local dist and simulates npx behavior for testing before publishing.
+
+services:
+  habits-base-local:
+    image: node:24-alpine
+    container_name: habits-base-local
+    restart: unless-stopped
+    working_dir: /app/habits
+    volumes:
+      - ../dist/packages/habits:/app/habits
+    command: sh -c "npm install -g habits && npm exec habits -- base --port 3000"
+    ports:
+      - "3000:3000"
+      - "13000:13000"
+      - "13001:13001"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/habits/base/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
