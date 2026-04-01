@@ -73,20 +73,6 @@
         "@ha-bits/base-ui:build"
       ]
     },
-    "publish": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "chmod +x dist/packages/base/server/main.cjs",
-          "cd packages/base && npm version patch --no-git-tag-version",
-          "cd dist/packages/base && npm publish"
-        ],
-        "parallel": false
-      },
-      "dependsOn": [
-        "build"
-      ]
-    },
     "dev": {
       "executor": "nx:run-commands",
       "options": {
