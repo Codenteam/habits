@@ -52,6 +52,11 @@
             "input": "assets",
             "glob": "**/*",
             "output": "assets"
+          },
+          {
+            "input": "packages/base/server/src/pack",
+            "glob": "tailwind.local.txt",
+            "output": "."
           }
         ],
         "esbuildOptions": {

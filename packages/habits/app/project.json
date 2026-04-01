@@ -41,6 +41,11 @@
             "input": "packages/base/server/src",
             "glob": "sea-entry-template.js",
             "output": "."
+          },
+          {
+            "input": "packages/base/server/src/pack",
+            "glob": "tailwind.local.txt",
+            "output": "."
           }
         ],
         "esbuildOptions": {
@@ -48,7 +53,7 @@
             "js": "#!/usr/bin/env node"
           },
           "loader": {
-            ".local.js": "text"
+            ".local.txt": "text"
           },
           "external": [
             "@activepieces/*",

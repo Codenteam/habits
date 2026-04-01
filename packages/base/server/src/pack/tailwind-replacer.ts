@@ -5,9 +5,34 @@
  * No processing, no transformation - just a simple replacement.
  */
 
-// Import the Tailwind script content at build time as raw text
-// esbuild is configured to load *.local.js files as text
-import tailwindScriptRaw from './tailwind.local.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Load tailwind script at runtime using fs.readFileSync
+// Get the directory of this module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Try multiple possible paths (works for both tsx dev and built bundle)
+function loadTailwindScript(): string {
+  const paths = [
+    path.join(__dirname, 'tailwind.local.txt'),
+    path.join(__dirname, '..', 'pack', 'tailwind.local.txt'),
+    path.join(process.cwd(), 'packages/base/server/src/pack/tailwind.local.txt'),
+  ];
+  
+  for (const p of paths) {
+    if (fs.existsSync(p)) {
+      return fs.readFileSync(p, 'utf8');
+    }
+  }
+  
+  console.warn('Warning: tailwind.local.txt not found, Tailwind CDN replacement disabled');
+  return '';
+}
+
+const tailwindScriptRaw = loadTailwindScript();
 
 /**
  * Replace Tailwind CDN with local script
