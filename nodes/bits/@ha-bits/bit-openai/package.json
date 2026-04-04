@@ -25,6 +25,7 @@
   "author": "Habits Team",
   "license": "MIT",
   "dependencies": {
+    "@ha-bits/bit-ai": ">=1.0.0",
     "openai": "^4.0.0",
     "tiktoken": "^1.0.0",
     "form-data": "^4.0.0",
@@ -44,7 +45,8 @@
     "projectType": "library",
     "tags": [
       "scope:bits",
-      "type:bit"
+      "type:bit",
+      "level:L1"
     ],
     "targets": {
       "build": {
@@ -59,6 +61,7 @@
   },
   "habits": {
     "catalog": true,
-    "featured": true
+    "featured": true,
+    "replaces": "@ha-bits/bit-ai"
   }
 }

@@ -6,157 +6,6 @@ import { getNodesPath, getModuleFullPath, getNodesBasePath, getLocalModulePath, 
 import { registerCortexModule } from './customRequire';
 
 // ============================================================================
-// ActivePieces Dependency Linking
-// ============================================================================
-
-/**
- * ActivePieces peer dependencies that should be linked from cortex's node_modules.
- * These packages are already bundled in cortex and should be shared with pieces.
- */
-const ACTIVEPIECES_PEER_DEPS = [
-  '@activepieces/pieces-common',
-  '@activepieces/pieces-framework',
-  '@activepieces/shared'
-];
-
-/**
- * n8n peer dependencies that should be linked from the base node_modules.
- * These packages are required by n8n community nodes.
- */
-const N8N_PEER_DEPS = [
-  'n8n-workflow',
-  'n8n-core',
-  'moment-timezone',  // Often required by community nodes
-  // Note: n8n-nodes-base is too large (300+ nodes, crashes npm with OOM)
-  // Individual nodes should be installed separately if needed
-  //'n8n-nodes-base'
-];
-
-/**
- * Get the path to base node_modules where ActivePieces packages should be installed.
- */
-function getActivepiecesPackagesPath(): string | null {
-  const basePath = path.join(getNodesBasePath(), 'node_modules');
-  const testPath = path.join(basePath, '@activepieces', 'pieces-framework');
-  if (fs.existsSync(testPath)) {
-    return basePath;
-  }
-  return null;
-}
-
-/**
- * Ensure ActivePieces peer dependencies are installed in the base node_modules.
- * Similar to ensureN8nDepsInstalled but for ActivePieces packages.
- */
-async function ensureActivepiecesDepsInstalled(): Promise<string | null> {
-  const basePath = getNodesBasePath();
-  const baseNodeModules = path.join(basePath, 'node_modules');
-  
-  // Check if @activepieces/pieces-framework is already installed
-  const piecesFrameworkPath = path.join(baseNodeModules, '@activepieces', 'pieces-framework');
-  if (fs.existsSync(piecesFrameworkPath)) {
-    console.log(`✓ @activepieces/pieces-framework already installed at ${baseNodeModules}`);
-    return baseNodeModules;
-  }
-  
-  console.log(`📦 Installing ActivePieces peer dependencies to ${basePath}...`);
-  
-  // ============================================================================
-  // ℹ️  LICENSE INFO - ActivePieces has mixed licensing!
-  // ============================================================================
-  // ActivePieces framework (@activepieces/pieces-framework, etc.) is MIT licensed.
-  // However, some pieces may have different licenses:
-  // 
-  // ✅ OPEN SOURCE (MIT) - Safe to use and redistribute:
-  //   - Community pieces in @activepieces/piece-* packages
-  //   - Most integrations (OpenAI, Slack, Google, etc.)
-  // 
-  // ⚠️  CLOSED SOURCE / PREMIUM - Check before using:
-  //   - Some enterprise pieces may have restricted licenses
-  //   - Pieces marked as "premium" in the ActivePieces platform
-  //   - Custom pieces from third parties
-  // 
-  // Always verify the license of each piece you use:
-  //   - Check the piece's package.json for license field
-  //   - Review https://github.com/activepieces/activepieces
-  // ============================================================================
-  console.log(`\n${'='.repeat(80)}`);
-  console.log(`ℹ️  LICENSE INFO: ActivePieces has MIXED licensing!`);
-  console.log(`${'='.repeat(80)}`);
-  console.log(`ActivePieces framework (@activepieces/pieces-framework) is MIT licensed.`);
-  console.log(`However, SOME PIECES may have DIFFERENT or RESTRICTED licenses!`);
-  console.log(``);
-  console.log(`✅ OPEN SOURCE (MIT) - Safe to redistribute:`);
-  console.log(`   - Community pieces in @activepieces/piece-* packages`);
-  console.log(`   - Most integrations (OpenAI, Slack, Google, etc.)`);
-  console.log(``);
-  console.log(`⚠️  CLOSED SOURCE / PREMIUM / EE - Check before using:`);
-  console.log(`   - Some enterprise pieces have restricted licenses`);
-  console.log(`   - Pieces marked as "premium" in ActivePieces platform`);
-  console.log(`   - Custom pieces from third parties`);
-  console.log(``);
-  console.log(`Always verify the license of EACH piece before redistribution!`);
-  console.log(`${'='.repeat(80)}\n`);
-
-  try {
-    // Install all activepieces peer deps to the base path
-    // Using specific versions for compatibility
-    const depsToInstall = [
-      '@activepieces/pieces-common@^0.11.0',
-      '@activepieces/pieces-framework@^0.23.0',
-      '@activepieces/shared@^0.30.4'
-    ].join(' ');
-    
-    await npmInstall(depsToInstall, { 
-      prefix: basePath, 
-      legacyPeerDeps: true, 
-      production: true,
-      timeout: 300000
-    });
-    console.log(`✓ ActivePieces peer dependencies installed`);
-    return baseNodeModules;
-  } catch (error: any) {
-    console.warn(`⚠️  Failed to install ActivePieces peer dependencies: ${error.message}`);
-    return null;
-  }
-}
-
-/**
- * Link ActivePieces peer dependencies from base node_modules to a piece module.
- * This resolves the peer dependency issue where pieces need @activepieces/* packages.
- * 
- * @param modulePath - Path to the module where peer deps should be linked
- * @param moduleName - Name of the module (for logging)
- */
-async function linkActivepiecesDeps(modulePath: string, moduleName: string): Promise<void> {
-  // First ensure ActivePieces deps are installed (like n8n pattern)
-  const baseNodeModules = await ensureActivepiecesDepsInstalled();
-  
-  if (!baseNodeModules) {
-    console.warn(`⚠️  Could not find or install ActivePieces peer dependencies`);
-    return;
-  }
-  
-  const cortexNodeModules = baseNodeModules;
-
-  console.log(`🔗 Linking ActivePieces peer dependencies for ${moduleName}...`);
-  
-  // Link at module's own node_modules level
-  const moduleNodeModules = path.join(modulePath, 'node_modules');
-  await linkDepsToDirectory(moduleNodeModules, cortexNodeModules, moduleName);
-  
-  // Also link at parent node_modules level (where npm hoists dependencies)
-  // This handles the case where the module is in node_modules/@scope/package
-  // and Node.js looks in the parent node_modules first
-  const parentNodeModules = path.dirname(path.dirname(modulePath));
-  if (parentNodeModules.endsWith('node_modules')) {
-    console.log(`🔗 Also linking at parent node_modules: ${parentNodeModules}`);
-    await linkDepsToDirectory(parentNodeModules, cortexNodeModules, moduleName);
-  }
-}
-
-
-// ============================================================================
 // Bits Dependency Resolution
 // ============================================================================
 
@@ -180,233 +29,9 @@ async function linkBitsDeps(modulePath: string, moduleName: string): Promise<voi
   console.log(`✓ Bits module ${moduleName} can now resolve @ha-bits/cortex`);
 }
 
-/**
- * Link ActivePieces peer dependencies to a specific node_modules directory.
- */
-async function linkDepsToDirectory(targetNodeModules: string, sourceNodeModules: string, moduleName: string): Promise<void> {
-  // Skip if source and target are the same (would create self-referencing symlinks)
-  if (path.resolve(targetNodeModules) === path.resolve(sourceNodeModules)) {
-    console.log(`✓ Source and target are same, no linking needed at ${targetNodeModules}`);
-    return;
-  }
-  
-  const activepiecesDir = path.join(targetNodeModules, '@activepieces');
-  
-  // Create node_modules/@activepieces directory if it doesn't exist
-  if (!fs.existsSync(activepiecesDir)) {
-    fs.mkdirSync(activepiecesDir, { recursive: true });
-  }
-  
-  for (const dep of ACTIVEPIECES_PEER_DEPS) {
-    const [scope, pkgName] = dep.split('/');
-    const sourcePackagePath = path.join(sourceNodeModules, scope, pkgName);
-    const targetPackagePath = path.join(targetNodeModules, scope, pkgName);
-    
-    if (!fs.existsSync(sourcePackagePath)) {
-      console.warn(`⚠️  Source package not found: ${sourcePackagePath}`);
-      continue;
-    }
-    
-    // Check if source has actual content (not just node_modules folder)
-    const sourcePackageJson = path.join(sourcePackagePath, 'package.json');
-    if (!fs.existsSync(sourcePackageJson)) {
-      console.warn(`⚠️  Source package incomplete (no package.json): ${sourcePackagePath}`);
-      continue;
-    }
-    
-    // Remove existing package if present (might be a symlink, incomplete install, or real install)
-    if (fs.existsSync(targetPackagePath)) {
-      try {
-        const stats = fs.lstatSync(targetPackagePath);
-        if (stats.isSymbolicLink()) {
-          // Already linked, check if it points to correct location
-          const linkTarget = fs.readlinkSync(targetPackagePath);
-          if (linkTarget === sourcePackagePath || linkTarget.endsWith(path.join(scope, pkgName))) {
-            console.log(`✓ ${dep} already linked at ${targetNodeModules}`);
-            continue;
-          }
-        }
-        // Check if it's an incomplete install (has node_modules but no package.json)
-        const targetPackageJson = path.join(targetPackagePath, 'package.json');
-        if (!fs.existsSync(targetPackageJson)) {
-          console.log(`🔄 Replacing incomplete ${dep} at ${targetPackagePath}`);
-        }
-        fs.rmSync(targetPackagePath, { recursive: true, force: true });
-      } catch (e) {
-        // Ignore errors when removing
-      }
-    }
-    
-    // Create symlink to the cortex node_modules package
-    try {
-      fs.symlinkSync(sourcePackagePath, targetPackagePath, 'dir');
-      console.log(`✓ Linked ${dep} to ${targetNodeModules}`);
-    } catch (error: any) {
-      console.warn(`⚠️  Failed to link ${dep}: ${error.message}`);
-    }
-  }
-}
-
-/**
- * Ensures ActivePieces peer dependencies are linked after npm install.
- * This should be called AFTER npm install to override any installed peer deps.
- * 
- * @param modulePath - Path to the module
- * @param moduleName - Name of the module (for logging)
- */
-async function ensureActivepiecesDepsLinked(modulePath: string, moduleName: string): Promise<void> {
-  await linkActivepiecesDeps(modulePath, moduleName);
-}
-
 // Bits
 async function ensureBitsDepsLinked(modulePath: string, moduleName: string): Promise<void> {
   await linkBitsDeps(modulePath, moduleName);
-}
-
-
-
-/**
- * Public function to ensure ActivePieces dependencies are installed.
- * This should be called before dynamically importing @activepieces/* modules.
- */
-export async function ensureActivepiecesReady(): Promise<string | null> {
-  return await ensureActivepiecesDepsInstalled();
-}
-
-// ============================================================================
-// n8n Dependency Linking
-// ============================================================================
-
-/**
- * Get the path to base node_modules where n8n packages should be installed.
- */
-function getN8nPackagesPath(): string | null {
-  const basePath = path.join(getNodesBasePath(), 'node_modules');
-  const testPath = path.join(basePath, 'n8n-workflow');
-  if (fs.existsSync(testPath)) {
-    return basePath;
-  }
-  return null;
-}
-
-/**
- * Ensure n8n peer dependencies are installed in the base node_modules.
- */
-async function ensureN8nDepsInstalled(): Promise<string | null> {
-  const basePath = getNodesBasePath();
-  const baseNodeModules = path.join(basePath, 'node_modules');
-  
-  // Check if n8n-workflow is already installed
-  const n8nWorkflowPath = path.join(baseNodeModules, 'n8n-workflow');
-  if (fs.existsSync(n8nWorkflowPath)) {
-    console.log(`✓ n8n-workflow already installed at ${baseNodeModules}`);
-    return baseNodeModules;
-  }
-  
-  console.log(`📦 Installing n8n peer dependencies to ${basePath}...`);
-  
-  // ============================================================================
-  // ⚠️  LICENSE WARNING - n8n is NOT open source!
-  // ============================================================================
-  // n8n and its packages (n8n-workflow, n8n-core, n8n-nodes-base) are licensed
-  // under the Sustainable Use License (SUL), which is NOT an open source license.
-  // 
-  // You CANNOT:
-  //   - Redistribute n8n packages in commercial products without a license
-  //   - Offer n8n as a service without explicit permission
-  //   - Use n8n-nodes-base in production without proper licensing
-  // 
-  // If you do not have a valid n8n license for your use case, you should:
-  //   1. Use only Apache 2.0 / MIT licensed modules (ActivePieces pieces, Habits bits)
-  //   2. Purchase an n8n license from https://n8n.io/pricing
-  //   3. Remove n8n dependencies from your workflow
-  // 
-  // See: https://github.com/n8n-io/n8n/blob/master/LICENSE.md
-  // ============================================================================
-  console.log(`\n${'='.repeat(80)}`);
-  console.log(`⚠️  LICENSE WARNING: n8n is NOT open source!`);
-  console.log(`${'='.repeat(80)}`);
-  console.log(`n8n packages are licensed under the Sustainable Use License (SUL).`);
-  console.log(`You CANNOT redistribute or use n8n commercially without a license.`);
-  console.log(`If you don't have a valid n8n license, you can't use this habit for non-personal usage.`);
-  console.log(`Use Apache 2.0/MIT licensed alternatives: ActivePieces pieces or Habits bits.`);
-  console.log(`${'='.repeat(80)}\n`);
-
-  try {
-    // Install n8n-workflow, n8n-core, and moment-timezone to the base path
-    await npmInstall('n8n-workflow n8n-core moment-timezone', { 
-      prefix: basePath, 
-      legacyPeerDeps: true, 
-      production: true,
-      timeout: 300000
-    });
-    console.log(`✓ n8n peer dependencies installed`);
-    return baseNodeModules;
-  } catch (error: any) {
-    console.warn(`⚠️  Failed to install n8n peer dependencies: ${error.message}`);
-    return null;
-  }
-}
-
-/**
- * Link n8n peer dependencies from base node_modules to a module.
- */
-async function linkN8nDeps(modulePath: string, moduleName: string): Promise<void> {
-  // First ensure n8n deps are installed
-  const baseNodeModules = await ensureN8nDepsInstalled();
-  
-  if (!baseNodeModules) {
-    console.warn(`⚠️  Could not find or install n8n peer dependencies`);
-    return;
-  }
-
-  console.log(`🔗 Linking n8n peer dependencies for ${moduleName}...`);
-  
-  // Link at module's own node_modules level
-  const moduleNodeModules = path.join(modulePath, 'node_modules');
-  if (!fs.existsSync(moduleNodeModules)) {
-    fs.mkdirSync(moduleNodeModules, { recursive: true });
-  }
-  
-  for (const dep of N8N_PEER_DEPS) {
-    const sourcePackagePath = path.join(baseNodeModules, dep);
-    const targetPackagePath = path.join(moduleNodeModules, dep);
-    
-    if (!fs.existsSync(sourcePackagePath)) {
-      console.warn(`⚠️  Source package not found: ${sourcePackagePath}`);
-      continue;
-    }
-    
-    // Check if already linked or exists
-    if (fs.existsSync(targetPackagePath)) {
-      try {
-        const stats = fs.lstatSync(targetPackagePath);
-        if (stats.isSymbolicLink()) {
-          console.log(`✓ ${dep} already linked`);
-          continue;
-        }
-        // Remove existing if not a symlink
-        fs.rmSync(targetPackagePath, { recursive: true, force: true });
-      } catch (e) {
-        // Ignore
-      }
-    }
-    
-    // Create symlink
-    try {
-      fs.symlinkSync(sourcePackagePath, targetPackagePath, 'dir');
-      console.log(`✓ Linked ${dep}`);
-    } catch (error: any) {
-      console.warn(`⚠️  Failed to link ${dep}: ${error.message}`);
-    }
-  }
-}
-
-/**
- * Ensures n8n peer dependencies are linked after npm install.
- */
-async function ensureN8nDepsLinked(modulePath: string, moduleName: string): Promise<void> {
-  await linkN8nDeps(modulePath, moduleName);
 }
 
 
@@ -469,14 +94,11 @@ export async function cloneModule(
     if (fs.existsSync(path.join(modulePath, 'package.json'))) {
       console.log(`📦 Installing dependencies for ${name}...`);
       try {
-        // To get around "zod" related version-issues in activepieces, legacy peer deps is used
+        // Use legacy peer deps to avoid version conflicts
         await npmInstall(undefined, { cwd: modulePath, legacyPeerDeps: true, includePeer: true, timeout: 180000 });
         console.log(`✓ Dependencies installed for ${name}`);
         
-        // Link ActivePieces peer dependencies if this is an activepieces or bits module
-        if (moduleDefinition.framework === 'activepieces' ) {
-          await ensureActivepiecesDepsLinked(modulePath, name);
-        }
+        // Link bits module dependencies
         if(moduleDefinition.framework === 'bits') {
           await ensureBitsDepsLinked(modulePath, name);
         }
@@ -486,7 +108,7 @@ export async function cloneModule(
       }
     }
 
-    // Auto-detect subPath if needed (for activepieces modules)
+    // Auto-detect subPath if needed (for bits modules)
     const subPath = await detectSubPath(modulePath, moduleDefinition.framework);
     const workingDir = subPath ? path.join(modulePath, subPath) : modulePath;
 
@@ -508,9 +130,7 @@ export async function buildModule(
     await npmInstall(undefined, { cwd: modulePath, legacyPeerDeps: true, includePeer: true, production: true, timeout: 120000 });
     
     // Link peer dependencies based on framework
-    if (moduleDefinition.framework === 'activepieces') {
-      await ensureActivepiecesDepsLinked(modulePath, name);
-    } else if (moduleDefinition.framework === 'bits') {
+    if (moduleDefinition.framework === 'bits') {
       await ensureBitsDepsLinked(modulePath, name);
     }
   } catch (error: any) {
@@ -596,12 +216,8 @@ export async function ensureModuleReady(
     if (fs.existsSync(modulePath)) {
       console.log(`✓ npm module ${moduleName} already exists at ${modulePath}`);
       // Ensure peer dependencies are linked even for existing modules
-      if (moduleDefinition.framework === 'activepieces') {
-        await ensureActivepiecesDepsLinked(modulePath, moduleName);
-      } else if (moduleDefinition.framework === 'bits') {
+      if (moduleDefinition.framework === 'bits') {
         await ensureBitsDepsLinked(modulePath, moduleName);
-      } else if (moduleDefinition.framework === 'n8n') {
-        await ensureN8nDepsLinked(modulePath, moduleName);
       }
       return modulePath;
     }
@@ -618,12 +234,8 @@ export async function ensureModuleReady(
     if (fs.existsSync(targetModulePath)) {
       console.log(`✓ Local module ${moduleName} already installed at ${targetModulePath}`);
       // Ensure peer dependencies are available even for existing modules
-      if (moduleDefinition.framework === 'activepieces') {
-        await ensureActivepiecesDepsLinked(targetModulePath, moduleName);
-      } else if (moduleDefinition.framework === 'bits') {
+      if (moduleDefinition.framework === 'bits') {
         await ensureBitsDepsLinked(targetModulePath, moduleName);
-      } else if (moduleDefinition.framework === 'n8n') {
-        await ensureN8nDepsLinked(targetModulePath, moduleName);
       }
       return targetModulePath;
     }
@@ -660,25 +272,19 @@ export async function ensureModuleReady(
         console.log(`✓ Dependencies installed for ${moduleName}`);
         
         // Link peer dependencies based on framework
-        if (moduleDefinition.framework === 'activepieces') {
-          await ensureActivepiecesDepsLinked(targetModulePath, moduleName);
-        } else if (moduleDefinition.framework === 'bits') {
+        if (moduleDefinition.framework === 'bits') {
           await ensureBitsDepsLinked(targetModulePath, moduleName);
         }
       } catch (error: any) {
         console.warn(`⚠️  Warning: Failed to install dependencies for ${moduleName}: ${error.message}`);
         // Still try to link peer dependencies
-        if (moduleDefinition.framework === 'activepieces') {
-          await ensureActivepiecesDepsLinked(targetModulePath, moduleName);
-        } else if (moduleDefinition.framework === 'bits') {
+        if (moduleDefinition.framework === 'bits') {
           await ensureBitsDepsLinked(targetModulePath, moduleName);
         }
       }
     } else {
       // No package.json, but still try to link peer deps
-      if (moduleDefinition.framework === 'activepieces') {
-        await ensureActivepiecesDepsLinked(targetModulePath, moduleName);
-      } else if (moduleDefinition.framework === 'bits') {
+      if (moduleDefinition.framework === 'bits') {
         await ensureBitsDepsLinked(targetModulePath, moduleName);
       }
     }
@@ -697,12 +303,8 @@ export async function ensureModuleReady(
     if (fs.existsSync(modulePath)) {
       console.log(`✓ Linked module ${moduleName} already exists at ${modulePath}`);
       // Ensure peer dependencies are linked even for existing modules
-      if (moduleDefinition.framework === 'activepieces') {
-        await ensureActivepiecesDepsLinked(modulePath, moduleName);
-      } else if (moduleDefinition.framework === 'bits') {
+      if (moduleDefinition.framework === 'bits') {
         await ensureBitsDepsLinked(modulePath, moduleName);
-      } else if (moduleDefinition.framework === 'n8n') {
-        await ensureN8nDepsLinked(modulePath, moduleName);
       }
       return modulePath;
     }
@@ -715,10 +317,10 @@ export async function ensureModuleReady(
   }
 }
 
-// Helper function to detect subPath for frameworks like activepieces
+// Helper function to detect subPath for frameworks like bits
 async function detectSubPath(modulePath: string, framework: string): Promise<string | null> {
-  if (framework === 'activepieces' || framework === 'bits') {
-    // Check for common activepieces structure
+  if (framework === 'bits') {
+    // Check for common bits module structure
     const possibleSubPaths = [
       'packages/pieces/community',
       'packages/pieces',
@@ -921,12 +523,8 @@ async function installNpmModule(
     await fixPackageJsonMainEntry(modulePath);
 
     // Link peer dependencies based on framework
-    if (moduleDefinition.framework === 'activepieces') {
-      await ensureActivepiecesDepsLinked(modulePath, name);
-    } else if (moduleDefinition.framework === 'bits') {
+    if (moduleDefinition.framework === 'bits') {
       await ensureBitsDepsLinked(modulePath, name);
-    } else if (moduleDefinition.framework === 'n8n') {
-      await ensureN8nDepsLinked(modulePath, name);
     }
 
     console.log(`✓ Successfully installed ${name} from npm at ${modulePath}`);
@@ -1004,12 +602,8 @@ async function linkNpmModule(
     await fixPackageJsonMainEntry(modulePath);
 
     // Link peer dependencies based on framework
-    if (moduleDefinition.framework === 'activepieces') {
-      await ensureActivepiecesDepsLinked(modulePath, name);
-    } else if (moduleDefinition.framework === 'bits') {
+    if (moduleDefinition.framework === 'bits') {
       await ensureBitsDepsLinked(modulePath, name);
-    } else if (moduleDefinition.framework === 'n8n') {
-      await ensureN8nDepsLinked(modulePath, name);
     }
 
     console.log(`✓ Successfully linked ${name} at ${modulePath}`);
@@ -1052,8 +646,8 @@ export function getModulePath(moduleDefinition: ModuleDefinition): string {
  * Find the actual module path in a content-addressable store.
  * Some package managers create hidden directories like `.piece-name-hash` that contain the actual package.
  * 
- * @param expectedPath - The expected module path (e.g., /tmp/habits-nodes/node_modules/@activepieces/piece-openai)
- * @param moduleName - The module name (e.g., @activepieces/piece-openai)
+ * @param expectedPath - The expected module path (e.g., /tmp/habits-nodes/node_modules/@ha-bits/bit-openai)
+ * @param moduleName - The module name (e.g., @ha-bits/bit-openai)
  * @returns The actual path with package.json, or null if not found
  */
 function findPnpmStorePath(expectedPath: string, moduleName: string): string | null {
@@ -1064,7 +658,7 @@ function findPnpmStorePath(expectedPath: string, moduleName: string): string | n
   }
   
   // Extract the base package name without scope
-  // e.g., "@activepieces/piece-openai" -> "piece-openai"
+  // e.g., "@ha-bits/bit-openai" -> "bit-openai"
   const baseName = moduleName.includes('/') ? moduleName.split('/').pop()! : moduleName;
   
   try {
@@ -1155,7 +749,7 @@ export function getModuleMainFile(
     'build/index.js',
     'lib/index.js',
     'out/index.js',
-    // That's where activepieces modules are usually stored
+    // Source folder (for modules that don't have a build step)
     'src/index.js',
     'index.js',
     'main.js',

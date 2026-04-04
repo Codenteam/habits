@@ -12,11 +12,8 @@ export { HabitsExecutor, StartWorkflowOptions } from './esm';
 export { IWebhookHandler } from './WebhookHandler';
 
 // Module execution
-export { executeN8nModule } from './n8n/n8nExecutor';
-export { executeActivepiecesModule } from './activepieces/activepiecesExecutor';
-export { triggerHelper, TriggerHookType } from './activepieces/activepiecesTrigger';
 export { executeBitsModule, extractBitsPieceFromModule, pieceFromModule, BitsPiece } from './bits/bitsDoer';
-export { bitsTriggerHelper } from './bits/bitsWatcher';
+export { bitsTriggerHelper, TriggerHookType } from './bits/bitsWatcher';
 export { executeScriptModule } from './script/scriptExecutor';
 
 // Polling store for trigger deduplication
@@ -32,7 +29,7 @@ export { assertNotNullOrUndefined } from './utils';
 // Security utilities
 export { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
 
-// Bits framework exports - for creating bits modules without activepieces dependencies
+// Bits framework exports - for creating custom bits modules
 export {
   // HTTP Client
   httpClient,

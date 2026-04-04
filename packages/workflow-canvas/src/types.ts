@@ -3,7 +3,7 @@ import type { Node, Edge, NodeChange, EdgeChange, Connection } from 'reactflow';
 /**
  * Framework types supported by the workflow canvas
  */
-export type WorkflowFramework = 'n8n' | 'activepieces' | 'script' | 'bits';
+export type WorkflowFramework = 'script' | 'bits';
 
 /**
  * Node type classification

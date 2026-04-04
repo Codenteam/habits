@@ -90,10 +90,16 @@ pub fn run() {
         TEST_MODE.store(true, Ordering::SeqCst);
     }
     
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_keyring::init())
         .plugin(tauri_plugin_email::init())
-        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_shell::init());
+    
+    // Add llama plugin only on desktop (not iOS/Android)
+    #[cfg(not(any(target_os = "ios", target_os = "android")))]
+    let builder = builder.plugin(tauri_plugin_llama::init());
+    
+    builder
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_log::Builder::new()
             .target(Target::new(TargetKind::Stdout))
@@ -113,7 +119,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, _event| {
-            #[cfg(debug_assertions)]
+            #[cfg(all(debug_assertions, desktop))]
             automation::start_automation_server(app_handle.clone());
         });
 }

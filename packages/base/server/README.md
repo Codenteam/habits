@@ -97,9 +97,8 @@ Base uses `createRequire` from Node.js's `module` API for loading modules at run
 
 ### Supported Frameworks
 
-- **Activepieces**: Full support for Activepieces pieces
-- **n8n**: Support for n8n nodes
 - **Bits**: Custom lightweight modules
+- **Script**: Inline script execution
 
 ## License
 

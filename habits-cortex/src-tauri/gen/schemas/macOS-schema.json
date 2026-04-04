@@ -6525,6 +6525,90 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
+          "description": "Enables the chat command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-chat",
+          "markdownDescription": "Enables the chat command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the ensure_models_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-ensure-models-dir",
+          "markdownDescription": "Enables the ensure_models_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_model_info command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-get-model-info",
+          "markdownDescription": "Enables the get_model_info command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the install_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-install-model",
+          "markdownDescription": "Enables the install_model command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-list-models",
+          "markdownDescription": "Enables the list_models command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the load_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-load-model",
+          "markdownDescription": "Enables the load_model command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unload_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:allow-unload-model",
+          "markdownDescription": "Enables the unload_model command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the chat command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-chat",
+          "markdownDescription": "Denies the chat command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the ensure_models_dir command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-ensure-models-dir",
+          "markdownDescription": "Denies the ensure_models_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_model_info command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-get-model-info",
+          "markdownDescription": "Denies the get_model_info command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the install_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-install-model",
+          "markdownDescription": "Denies the install_model command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_models command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-list-models",
+          "markdownDescription": "Denies the list_models command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the load_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-load-model",
+          "markdownDescription": "Denies the load_model command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unload_model command without any pre-configured scope.",
+          "type": "string",
+          "const": "llama:deny-unload-model",
+          "markdownDescription": "Denies the unload_model command without any pre-configured scope."
+        },
+        {
           "description": "Allows the log command\n#### This default permission set includes:\n\n- `allow-log`",
           "type": "string",
           "const": "log:default",

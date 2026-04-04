@@ -336,7 +336,6 @@ export class CreatorController {
         `== CRITICAL: USE BITS, NOT SCRIPTS ==`,
         `You MUST build habits using bit modules (framework: bits), NOT inline scripts.`,
         `Inline scripts (framework: script) should ONLY be used as a last resort when no bit can do the job.`,
-        `NEVER use activepieces or n8n nodes or patterns.`,
         ``,
         `== OUTPUT RULES ==`,
         `• Create ALL files inside this directory: ${stagingDir}`,

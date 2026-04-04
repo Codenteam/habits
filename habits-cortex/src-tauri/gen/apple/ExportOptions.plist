@@ -3,6 +3,19 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>debugging</string>
+    <string>app-store-connect</string>
+    <key>teamID</key>
+    <string>S54SCFZ347</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.codenteam-oss.habits</key>
+        <string>Habits iOS provision profile</string>
+    </dict>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    <key>uploadSymbols</key>
+    <true/>
 </dict>
 </plist>

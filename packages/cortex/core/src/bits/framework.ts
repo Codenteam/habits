@@ -960,7 +960,7 @@ export {
 } from './bitsDoer';
 
 // ============================================================================
-// Declarative Node Types (for creating n8n-style declarative bits)
+// Declarative Node Types (for creating declarative bits with routing)
 // ============================================================================
 
 export {

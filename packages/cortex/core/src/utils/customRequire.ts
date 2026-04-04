@@ -72,8 +72,28 @@ export function registerCortexModule(): void {
   // rather than the original Node.js version.
   const currentResolveFilename = (Module as any)._resolveFilename;
   
-  // Patch Module._resolveFilename to intercept @ha-bits/cortex requests
+  // Patch Module._resolveFilename to intercept @ha-bits/cortex and @ha-bits/cortex-core requests
   (Module as any)._resolveFilename = function(request: string, parent: NodeModule, isMain: boolean, options?: any) {
+    // Intercept requests for @ha-bits/cortex-core (redirect to this package)
+    if (request === '@ha-bits/cortex-core' || request.startsWith('@ha-bits/cortex-core/')) {
+      const mainPath = path.join(cortexPath, 'src', 'index.ts');
+      if (fs.existsSync(mainPath)) {
+        return mainPath;
+      }
+      const distPath = path.join(cortexPath, 'pack', 'index.cjs');
+      if (fs.existsSync(distPath)) {
+        return distPath;
+      }
+      const cjsPath = path.join(cortexPath, 'index.cjs');
+      if (fs.existsSync(cjsPath)) {
+        return cjsPath;
+      }
+      const jsPath = path.join(cortexPath, 'index.js');
+      if (fs.existsSync(jsPath)) {
+        return jsPath;
+      }
+    }
+    
     // Intercept requests for @ha-bits/cortex
     if (request === '@ha-bits/cortex' || request.startsWith('@ha-bits/cortex/')) {
       // For the main package, resolve to the package's main entry
@@ -125,7 +145,7 @@ export function registerCortexModule(): void {
 
 /**
  * Creates a patched require function that includes additional search paths for module resolution.
- * This is used to load n8n/activepieces modules with their actual runtime dependencies.
+ * This is used to load bits modules with their actual runtime dependencies.
  */
 export function createPatchedRequire(basePath: string, additionalPaths: string[]): NodeRequire {
   const baseRequire = createRequire(path.join(basePath, 'package.json'));
@@ -157,7 +177,7 @@ export function createPatchedRequire(basePath: string, additionalPaths: string[]
 
 /**
  * Require code from `pathToCode` while resolving dependencies from `searchPaths`.
- * Uses the actual n8n/activepieces runtime dependencies from node_modules.
+ * Uses the actual bits runtime dependencies from node_modules.
  */
 export function patchedRequire(pathToCode: string, searchPaths: string[]): unknown {
   const originalResolvePaths = (Module as any)._resolveLookupPaths;

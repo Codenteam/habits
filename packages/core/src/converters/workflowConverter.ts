@@ -1,12 +1,12 @@
 /**
  * Workflow Converter
  * Main converter that detects workflow type and delegates to specific converters
+ * 
+ * Supported formats: Habits, Script
  */
 
 import type { FrontendWorkflow, ScriptWorkflow } from '../types';
-import type { N8nWorkflow, ActivepiecesWorkflow, ConversionResult, WorkflowType } from './types';
-import { convertN8nWorkflow } from './n8nConverter';
-import { convertActivepiecesWorkflow, extractConnectionsFromHabitsWorkflow } from './activepiecesConverter';
+import type { ConversionResult, WorkflowType } from './types';
 import { ScriptWorkflowConverter } from './scriptConverter';
 
 /**
@@ -28,21 +28,6 @@ export function detectWorkflowType(workflow: any): WorkflowType {
     return 'script';
   }
 
-  // Check if it's an n8n workflow
-  if (workflow.nodes && Array.isArray(workflow.nodes) && workflow.connections) {
-    return 'n8n';
-  }
-
-  // Check if it's an Activepieces workflow
-  if ((workflow.trigger) && workflow.displayName !== undefined) {
-    return 'activepieces';
-  }
-  
-  // Check if it's an Activepieces template workflow
-  if ((workflow?.template?.trigger) && workflow?.template?.displayName !== undefined) {
-    return 'activepieces-template';
-  }
-
   return 'unknown';
 }
 
@@ -55,16 +40,10 @@ export function convertWorkflow(workflow: any): FrontendWorkflow {
   switch (type) {
     case 'habits':
       return workflow as FrontendWorkflow;
-    case 'n8n':
-      return convertN8nWorkflow(workflow as N8nWorkflow);
-    case 'activepieces-template':
-      return convertActivepiecesWorkflow((workflow as any).template as ActivepiecesWorkflow).workflow;
-    case 'activepieces':
-      return convertActivepiecesWorkflow(workflow as ActivepiecesWorkflow).workflow;
     case 'script':
       return ScriptWorkflowConverter.fromScript(workflow as ScriptWorkflow);
     default:
-      throw new Error('Unknown workflow format. Supported formats: Habits, n8n, Activepieces, Script');
+      throw new Error('Unknown workflow format. Supported formats: Habits, Script');
   }
 }
 
@@ -76,27 +55,17 @@ export function convertWorkflowWithConnections(workflow: any): ConversionResult 
 
   switch (type) {
     case 'habits':
-      // For habits workflows, extract connections from existing params
       return {
         workflow: workflow as FrontendWorkflow,
-        connections: extractConnectionsFromHabitsWorkflow(workflow as FrontendWorkflow),
-      };
-    case 'n8n':
-      return {
-        workflow: convertN8nWorkflow(workflow as N8nWorkflow),
         connections: [],
       };
-    case 'activepieces-template':
-      return convertActivepiecesWorkflow((workflow as any).template as ActivepiecesWorkflow);
-    case 'activepieces':
-      return convertActivepiecesWorkflow(workflow as ActivepiecesWorkflow);
     case 'script':
       return {
         workflow: ScriptWorkflowConverter.fromScript(workflow as ScriptWorkflow),
         connections: [],
       };
     default:
-      throw new Error('Unknown workflow format. Supported formats: Habits, n8n, Activepieces, Script');
+      throw new Error('Unknown workflow format. Supported formats: Habits, Script');
   }
 }
 
@@ -107,12 +76,6 @@ export function getWorkflowTypeName(type: WorkflowType): string {
   switch (type) {
     case 'habits':
       return 'Habits';
-    case 'n8n':
-      return 'n8n';
-    case 'activepieces':
-      return 'Activepieces';
-    case 'activepieces-template':
-      return 'Activepieces Template';
     case 'script':
       return 'Script';
     default:

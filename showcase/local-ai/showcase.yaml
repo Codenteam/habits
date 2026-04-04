@@ -1,0 +1,31 @@
+name: Local AI Chat
+description: Run AI models locally on your device without cloud services. Uses llama.cpp for efficient CPU/GPU inference.
+version: 1.0.0
+author: Habits Team
+tags:
+  - ai
+  - local
+  - llm
+  - llama
+  - privacy
+  - offline
+category: AI
+featured: true
+
+# Requirements
+requirements:
+  - At least 4GB RAM (8GB recommended for larger models)
+  - For GPU acceleration: Metal (macOS), CUDA (NVIDIA), or Vulkan
+  - ~2GB storage for a small model (Llama 3.2 1B)
+
+# Quick start instructions
+quickstart: |
+  1. Start the server: `npx habits cortex --config showcase/local-ai/stack.yaml`
+  2. Open http://localhost:13000 in your browser
+  3. Click "Install Model" to download a model (first time only)
+  4. Start chatting with your local AI!
+
+# Screenshots
+screenshots:
+  - demo/chat-ui.png
+  - demo/model-install.png

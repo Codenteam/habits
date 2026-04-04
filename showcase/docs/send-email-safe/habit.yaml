@@ -1,9 +1,0 @@
-id: send-email-safe
-name: Send Email (Safe)
-nodes:
-  - id: send-email
-    type: activepieces
-    data:
-      framework: activepieces
-      module: "@activepieces/piece-sendgrid"
-      label: Send Email via SendGrid

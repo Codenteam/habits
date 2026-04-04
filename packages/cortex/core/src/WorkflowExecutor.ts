@@ -1,10 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Cron } from 'croner';
-import { executeN8nModule } from './n8n/n8nExecutor';
-import { executeActivepiecesModule } from './activepieces/activepiecesExecutor';
-import { triggerHelper, TriggerHookType } from './activepieces/activepiecesTrigger';
 import { executeBitsModule, pieceFromModule } from './bits/bitsDoer';
-import { bitsTriggerHelper, TriggerHookType as BitsTriggerHookType } from './bits/bitsWatcher';
+import { bitsTriggerHelper, TriggerHookType } from './bits/bitsWatcher';
 import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';
@@ -221,85 +218,9 @@ export class WorkflowExecutor {
 
     await Promise.all(preloadPromises);
     this.logger.log(`\n📦 Module preloading complete\n`);
-
-    // Hook polling triggers for activepieces modules
-    await this.hookPollingTriggers();
     
     // Register bits polling triggers with cron scheduling
     await this.registerBitsPollingTriggers();
-  }
-
-  /**
-   * Hook polling triggers for all loaded workflows
-   * This sets up activepieces polling triggers to run immediately
-   */
-  private async hookPollingTriggers(): Promise<void> {
-    for (const [workflowId, { workflow }] of this.loadedWorkflows) {
-      for (const node of workflow.nodes || []) {
-        // Check if this is an activepieces polling trigger
-        if (triggerHelper.isActivepiecesTrigger(node) && node.data?.triggerType === 'polling') {
-          const triggerName = node.data.operation;
-          if (!triggerName) {
-            this.logger.warn(`⚠️ No operation specified for polling trigger: ${node.id}`);
-            continue;
-          }
-
-          this.logger.log(`\n🔔 Hooking polling trigger: ${node.id} (${triggerName}) in workflow ${workflowId}`);
-          
-          try {
-            const moduleDefinition = {
-              framework: node.data.framework,
-              source: node.data.source as 'github' | 'npm',
-              repository: node.data.module || '',
-            };
-
-            // Resolve template strings in params and credentials
-            const resolvedParams = this.resolveParameters(node.data.params || {}, {});
-            const resolvedCredentials = this.resolveParameters(node.data.credentials || {}, {});
-
-            // Merge params and credentials for trigger input
-            const triggerInput = {
-              ...resolvedParams,
-              credentials: resolvedCredentials,
-            };
-
-            this.logger.log(`  📋 Trigger input: ${JSON.stringify(triggerInput, null, 2)}`);
-
-            // Execute the specific trigger immediately
-            this.logger.log(`  🚀 Running trigger ${triggerName} immediately...`);
-            const result = await triggerHelper.executeActivepiecesTrigger({
-              moduleDefinition,
-              triggerName,
-              input: triggerInput,
-            });
-
-            this.logger.log(`\n📬 Trigger result for ${triggerName}:`);
-            this.logger.log(`   Success: ${result.success}`);
-            this.logger.log(`   Output items: ${result.output?.length || 0}`);
-            if (result.output && result.output.length > 0) {
-              this.logger.log(`   Output: ${JSON.stringify(result.output, null, 2)}`);
-              
-              // Trigger returned data - execute workflow continuation
-              this.logger.log(`\n🚀 Trigger ${node.id} returned data, executing workflow continuation...`);
-              for (const item of result.output) {
-                try {
-                  // Execute workflow with trigger node pre-populated
-                  const executionResult = await this.executeWorkflow(workflowId, {
-                    startFromNode: node.id,
-                    triggerData: { [node.id]: item },
-                  });
-                  this.logger.log(`   ✅ Workflow execution completed: ${executionResult.status}`);
-                } catch (execError: any) {
-                  this.logger.error(`   ❌ Workflow execution failed: ${execError.message}`);
-                }
-              }
-            }
-          } catch (error: any) {
-            this.logger.error(`   ❌ Failed to hook trigger ${node.id}: ${error.message}`);
-          }
-        }
-      }
-    }
   }
 
   /**
@@ -373,7 +294,7 @@ export class WorkflowExecutor {
             moduleDefinition,
             triggerName,
             input: triggerProps,
-            hookType: BitsTriggerHookType.ON_ENABLE,
+            hookType: TriggerHookType.ON_ENABLE,
             trigger,
             workflowId,
             nodeId: node.id,
@@ -407,7 +328,7 @@ export class WorkflowExecutor {
                 moduleDefinition,
                 triggerName,
                 input: triggerProps,
-                hookType: BitsTriggerHookType.RUN,
+                hookType: TriggerHookType.RUN,
                 trigger,
                 workflowId,
                 nodeId: node.id,
@@ -424,7 +345,7 @@ export class WorkflowExecutor {
                   return;
                 }
                 
-                // Execute workflow for EACH item (like Activepieces does for polling triggers)
+                // Execute workflow for EACH item from polling trigger
                 for (let i = 0; i < runResult.output.length; i++) {
                   const item = runResult.output[i];
                   this.logger.log(`   🔄 Processing item ${i + 1}/${runResult.output.length}`);
@@ -994,14 +915,14 @@ export class WorkflowExecutor {
   private findWebhookTriggers(nodes: WorkflowNode[]): WebhookTriggerInfo[] {
     return nodes
       .filter(node => this.isWebhookTriggerNode(node))
-      .map(node => triggerHelper.getWebhookConfig(node));
+      .map(node => bitsTriggerHelper.getWebhookConfig(node));
   }
 
   /**
    * Check if a node is a webhook trigger
    */
   private isWebhookTriggerNode(node: WorkflowNode): boolean {
-    return triggerHelper.isWebhookTrigger(node);
+    return bitsTriggerHelper.isWebhookTrigger(node);
   }
 
   /**
@@ -1033,7 +954,7 @@ export class WorkflowExecutor {
       this.logger.log(`✅ Webhook received for workflow ${workflowId}, node ${node.id}`);
 
       // Execute the webhook trigger handler
-      const triggerResult = await triggerHelper.executeWebhookTrigger(
+      const triggerResult = await bitsTriggerHelper.executeWebhookTrigger(
         node.id,
         webhookPayload.payload,
         webhookPayload.headers,
@@ -1294,39 +1215,6 @@ export class WorkflowExecutor {
       // Execute based on framework
       let nodeResult: any;
       switch (node.data.framework) {
-        case 'activepieces':
-          if (triggerHelper.isActivepiecesTrigger(node)) {
-            const triggerResult = await triggerHelper.executeActivepiecesTrigger({
-              moduleDefinition: {
-                framework: node.data.framework,
-                source: (node.data.source as 'github' | 'npm') || 'npm',
-                repository: node.data.module || 'unknown',
-              },
-              triggerName: node.data.operation || 'unknown',
-              input: fullParams,
-              payload: context.triggerPayload || context.webhookPayload || {},
-              webhookUrl: context.webhookUrl,
-            });
-
-            if (!triggerResult.success) {
-              throw new Error(triggerResult.message || 'Trigger execution failed');
-            }
-            nodeResult = triggerResult.output;
-          } else {
-            // Regular action execution
-            const output = await executeActivepiecesModule({ source: node.data.source!, framework: node.data.framework, moduleName: node.data.module || 'unknown', params: fullParams });
-            nodeResult = output.result;
-          }
-          break;
-        case 'n8n':
-          // Pass full execution params including source
-          nodeResult = await executeN8nModule({
-            framework: 'n8n',
-            source: node.data.source || 'npm',
-            moduleName: node.data.module || 'unknown',
-            params: fullParams
-          });
-          break;
         case 'script':
           nodeResult = await executeScriptModule({
             framework: 'script',
@@ -1341,7 +1229,7 @@ export class WorkflowExecutor {
           });
           break;
         case 'bits':
-          // Bits framework - independent of activepieces dependencies
+          // Bits framework - native Habits module execution
           if (bitsTriggerHelper.isBitsTrigger(node)) {
             const triggerResult = await bitsTriggerHelper.executeBitsTrigger({
               moduleDefinition: {

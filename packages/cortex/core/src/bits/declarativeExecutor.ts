@@ -2,8 +2,8 @@
  * Declarative API Executor
  * 
  * This module handles the execution of declarative bits that define API
- * integrations through a description object with routing configuration,
- * similar to n8n's declarative node pattern - but without any n8n dependencies.
+ * integrations through a description object with routing configuration
+ * (a declarative node pattern).
  * 
  * Example declarative bit:
  * ```typescript

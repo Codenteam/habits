@@ -5,7 +5,7 @@
  */
 
 import { Request, Response } from 'express';
-import { createResponse, extractN8nSchema, extractActivepiecesSchema, extractBitsSchema } from '../helpers';
+import { createResponse, extractBitsSchema } from '../helpers';
 import { listModules } from "@ha-bits/cortex-core/utils/moduleManager";
 import {
   installModule,
@@ -219,30 +219,7 @@ export class ModulesController {
 
       let schema: any = {};
 
-      if (framework === "n8n") {
-        schema = await extractN8nSchema(modulePathDir, moduleName);
-        if (!schema) {
-          schema = {
-            displayName: moduleName,
-            name: moduleName,
-            description: `${moduleName} n8n module`,
-            properties: [],
-          };
-        }
-      } else if (framework === "activepieces") {
-        try {
-          schema = await extractActivepiecesSchema(modulePathDir, mainFile, moduleName);
-        } catch (error) {
-          logger.error("Error extracting Activepieces schema:", { error: String(error) });
-          // Fallback schema
-          schema = {
-            displayName: moduleName,
-            name: moduleName,
-            description: `${moduleName} activepieces module`,
-            properties: [],
-          };
-        }
-      } else if (framework === "bits") {
+      if (framework === "bits") {
         try {
           schema = await extractBitsSchema(modulePathDir, mainFile, moduleName);
         } catch (error) {
@@ -256,6 +233,15 @@ export class ModulesController {
             properties: [],
           };
         }
+      } else {
+        res.json(
+          createResponse(
+            false,
+            undefined,
+            `Unsupported framework '${framework}'. Supported frameworks: bits`,
+          ),
+        );
+        return;
       }
 
       logger.debug("Schema generated", { schema: JSON.stringify(schema) });

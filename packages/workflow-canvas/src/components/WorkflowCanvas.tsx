@@ -25,8 +25,6 @@ const getMinimapNodeColor = (node: WorkflowNode): string => {
    
   if (isTrigger) {
     switch (framework) {
-      case 'n8n': return '#166534'; // green-800
-      case 'activepieces': return '#1e40af'; // blue-800
       case 'script': return '#9a3412'; // orange-800
       case 'bits': return '#115e59'; // teal-800
       default: return '#1f2937'; // gray-800
@@ -35,8 +33,6 @@ const getMinimapNodeColor = (node: WorkflowNode): string => {
   
   // Action nodes
   switch (framework) {
-    case 'n8n': return '#991b1b'; // red-800
-    case 'activepieces': return '#6b21a8'; // purple-800
     case 'script': return '#155e75'; // cyan-800
     case 'bits': return '#065f46'; // emerald-800
     default: return '#1f2937'; // gray-800

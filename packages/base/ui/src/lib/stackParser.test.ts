@@ -142,10 +142,10 @@ name: My Test Habit
 description: A test habit
 nodes:
   - id: node-1
-    type: activepieces
+    type: bits
     data:
-      framework: activepieces
-      module: "@activepieces/piece-openai"
+      framework: bits
+      module: "bit-openai"
       operation: ask_chatgpt
       params:
         prompt: Hello
@@ -204,10 +204,10 @@ edges: []
         nodes: [
           {
             id: 'node-1',
-            type: 'activepieces',
+            type: 'bits',
             data: {
-              framework: 'activepieces',
-              module: '@activepieces/piece-openai',
+              framework: 'bits',
+              module: 'bit-openai',
               operation: 'ask_chatgpt',
               params: { prompt: 'Hello' },
               credentials: { apiKey: 'secret' },
@@ -227,8 +227,8 @@ edges: []
       expect(result.nodes).toHaveLength(1);
       expect(result.nodes[0].id).toBe('node-1');
       expect(result.nodes[0].type).toBe('custom');
-      expect(result.nodes[0].data.framework).toBe('activepieces');
-      expect(result.nodes[0].data.module).toBe('@activepieces/piece-openai');
+      expect(result.nodes[0].data.framework).toBe('bits');
+      expect(result.nodes[0].data.module).toBe('bit-openai');
       expect(result.nodes[0].position).toEqual({ x: 100, y: 100 });
       expect(result.edges).toHaveLength(1);
       expect(result.edges[0].source).toBe('node-1');
@@ -324,7 +324,7 @@ id: habit-2
 name: Second Habit
 nodes:
   - id: n2
-    type: activepieces
+    type: bits
     data:
       label: Node 2
 edges: []

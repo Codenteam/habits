@@ -1,6 +1,6 @@
 import { memo, useMemo, useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Activity, Zap, Play, Code, Box, ChevronDown, ChevronRight } from 'lucide-react';
+import { Zap, Play, Code, Box, ChevronDown, ChevronRight } from 'lucide-react';
 import type { BaseNodeData, WorkflowFramework } from '../types';
 import { isTriggerNode, getNodeColors, getNodeDefinition } from '../nodeDefinitions';
 import { 
@@ -67,11 +67,9 @@ function getNodeIcon(framework: WorkflowFramework, isTrigger: boolean) {
   if (isTrigger) return Play;
   
   switch (framework) {
-    case 'n8n': return Activity;
-    case 'activepieces': return Zap;
     case 'script': return Code;
     case 'bits': return Box;
-    default: return Activity;
+    default: return Zap;
   }
 }
 

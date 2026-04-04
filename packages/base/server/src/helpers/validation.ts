@@ -1,5 +1,7 @@
 /**
  * Form validation helpers
+ * 
+ * Supports: bits framework
  */
 
 import * as path from "path";
@@ -7,13 +9,12 @@ import * as fs from "fs";
 import { getModulePath, getModuleMainFile } from "@ha-bits/cortex/utils/moduleCloner";
 import { getModuleName } from "@ha-bits/cortex/utils/moduleLoader";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractPiece } from './activepieces-loader';
-
-// Type imports (compile-time only, not bundled)
-import type { Piece } from "@activepieces/pieces-framework";
+import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
 
 /**
  * Validate form data for a module action
+ * 
+ * Supports: bits framework
  */
 export async function validateFormData(
   framework: string,
@@ -31,7 +32,7 @@ export async function validateFormData(
   let isValid = true;
 
   try {
-    if (framework === "activepieces") {
+    if (framework === "bits") {
       // Get the module schema to validate against
       const modulePathDir = getModulePath(moduleDefinition);
       const mainFile = getModuleMainFile(moduleDefinition);
@@ -45,12 +46,11 @@ export async function validateFormData(
       const module = customRequire(mainFile, modulePathDir);
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-      // JIT load activepieces and extract piece
-      const piece = await extractPiece<Piece>({
-        module,
-        pieceName: getModuleName(moduleDefinition),
-        pieceVersion: packageJson.version,
-      });
+      // Extract bits piece from module
+      const piece = extractBitsPieceFromModule(module);
+      if (!piece) {
+        throw new Error(`Failed to extract bits piece from module ${getModuleName(moduleDefinition)}`);
+      }
 
       // Validate auth if required
       if (piece.auth && piece.auth.required && !auth) {
@@ -133,12 +133,9 @@ export async function validateFormData(
           isValid = false;
         }
       }
-    } else if (framework === "n8n") {
-      // Basic n8n validation - can be extended based on node definition
-      if (!formData.operation) {
-        errors.operation = "Operation is required";
-        isValid = false;
-      }
+    } else {
+      errors._form = `Unsupported framework: ${framework}. Supported frameworks: bits`;
+      isValid = false;
     }
 
     return {
@@ -158,6 +155,8 @@ export async function validateFormData(
 
 /**
  * Verify authentication credentials for a module
+ * 
+ * Supports: bits framework
  */
 export async function verifyAuthCredentials(
   framework: string,
@@ -165,7 +164,7 @@ export async function verifyAuthCredentials(
   auth: any,
 ): Promise<{ isValid: boolean; message: string }> {
   try {
-    if (framework === "activepieces") {
+    if (framework === "bits") {
       // Get the module schema to check auth requirements
       const modulePathDir = getModulePath(moduleDefinition);
       const mainFile = getModuleMainFile(moduleDefinition);
@@ -179,12 +178,11 @@ export async function verifyAuthCredentials(
       const packageJsonPath = path.join(modulePathDir, "package.json");
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-      // JIT load activepieces and extract piece
-      const piece = await extractPiece<Piece>({
-        module,
-        pieceName: moduleDefinition.name || packageJson.name,
-        pieceVersion: packageJson.version,
-      });
+      // Extract bits piece from module
+      const piece = extractBitsPieceFromModule(module);
+      if (!piece) {
+        throw new Error(`Failed to extract bits piece from module`);
+      }
 
       // Basic auth validation
       if (!piece.auth) {
@@ -215,21 +213,11 @@ export async function verifyAuthCredentials(
       }
 
       return { isValid: true, message: "Authentication format is valid" };
-    } else if (framework === "n8n") {
-      // Basic n8n auth validation
-      if (!auth) {
-        return {
-          isValid: false,
-          message: "Authentication credentials are required",
-        };
-      }
-
-      return { isValid: true, message: "N8N authentication format is valid" };
     }
 
     return {
       isValid: false,
-      message: "Unsupported framework for auth verification",
+      message: `Unsupported framework for auth verification: ${framework}. Supported frameworks: bits`,
     };
   } catch (error: any) {
     return {

@@ -1,0 +1,41 @@
+# Install Model Workflow
+# Download and install a GGUF model
+
+id: install-model
+name: Install Model
+description: Download and install a GGUF model from HuggingFace or direct URL
+
+input:
+  type: object
+  properties:
+    modelUrl:
+      type: string
+      description: URL to download the model from
+    modelName:
+      type: string
+      description: Name for the installed model
+  required:
+    - modelUrl
+    - modelName
+
+nodes:
+  - id: install
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-local-ai"
+      operation: install_model
+      label: Install Model
+      isTrigger: false
+      params:
+        modelUrl: "{{habits.input.modelUrl}}"
+        modelName: "{{habits.input.modelName}}"
+
+edges: []
+
+output:
+  success: "{{install.success}}"
+  path: "{{install.path}}"
+  size: "{{install.size}}"
+  error: "{{install.error}}"

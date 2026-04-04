@@ -26,7 +26,6 @@ import {
   detectWorkflowType,
   convertWorkflow,
   convertWorkflowWithConnections,
-  generateEnvContent,
   getWorkflowTypeName,
 } from '@ha-bits/core';
 import { WorkflowExecutor, IWebhookHandler } from '@ha-bits/cortex-core';
@@ -1490,7 +1489,7 @@ async function runCLI() {
         type: 'string'
       }
     })
-    .command('convert', 'Convert a workflow from n8n, Activepieces, or Script format to Habits format', {
+    .command('convert', 'Convert a workflow from Script format to Habits format', {
       input: {
         alias: 'i',
         describe: 'Path to input workflow JSON file',
@@ -1501,12 +1500,6 @@ async function runCLI() {
         alias: 'o',
         describe: 'Path to output Habits workflow JSON file (defaults to stdout)',
         type: 'string'
-      },
-      env: {
-        alias: 'e',
-        describe: 'Also generate a .env file for extracted connections/credentials',
-        type: 'boolean',
-        default: false
       },
       pretty: {
         alias: 'p',
@@ -1744,10 +1737,9 @@ async function runCLI() {
       process.exit(1);
     }
   } else if (command === 'convert') {
-    // Convert workflow from n8n/Activepieces/Script to Habits format
+    // Convert workflow from Script format to Habits format
     const inputPath = argv.input as string;
     const outputPath = argv.output as string | undefined;
-    const generateEnv = argv.env as boolean;
     const prettyPrint = argv.pretty as boolean;
     
     // Validate input file exists
@@ -1769,7 +1761,7 @@ async function runCLI() {
       const workflowType = detectWorkflowType(inputWorkflow);
       
       if (workflowType === 'unknown') {
-        console.error('❌ Unknown workflow format. Supported formats: n8n, Activepieces, Script, Habits');
+        console.error('❌ Unknown workflow format. Supported formats: Script, Habits');
         process.exit(1);
       }
       
@@ -1786,7 +1778,7 @@ async function runCLI() {
       console.log(`🔍 Detected workflow type: ${getWorkflowTypeName(workflowType)}`);
       
       // Convert the workflow
-      const { workflow, connections } = convertWorkflowWithConnections(inputWorkflow);
+      const { workflow } = convertWorkflowWithConnections(inputWorkflow);
       
       // Generate output JSON
       const outputJson = prettyPrint 
@@ -1801,20 +1793,6 @@ async function runCLI() {
         console.log(`   Nodes: ${workflow.nodes.length}`);
         console.log(`   Edges: ${workflow.edges.length}`);
       } else {
-      }
-      
-      // Generate .env file if requested and there are connections
-      if (generateEnv && connections.length > 0) {
-        const envContent = generateEnvContent(workflow.name, connections);
-        const envPath = outputPath 
-          ? outputPath.replace(/\.json$/, '.env')
-          : path.join(process.cwd(), `${workflow.name.replace(/[^a-zA-Z0-9]/g, '_')}.env`);
-        
-        fs.writeFileSync(envPath, envContent);
-        console.log(`🔐 Environment file saved to: ${envPath}`);
-        console.log(`   Extracted ${connections.length} connection reference(s)`);
-      } else if (connections.length > 0 && !generateEnv) {
-        console.log(`ℹ️  Found ${connections.length} connection reference(s). Use --env to generate a .env template file.`);
       }
       
     } catch (error: any) {

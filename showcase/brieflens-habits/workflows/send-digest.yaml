@@ -8,11 +8,11 @@ version: "1.0"
 nodes:
   # Schedule trigger - runs daily at 7 AM
   - id: schedule-trigger
-    type: activepieces
+    type: bits
     data:
-      framework: activepieces
+      framework: bits
       source: npm
-      module: "@activepieces/piece-schedule"
+      module: "bit-schedule"
       operation: cron_expression
       triggerType: polling
       params:

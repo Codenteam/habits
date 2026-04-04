@@ -42,7 +42,7 @@ brieflens-habits/
 | `@ha-bits/bit-database-sql` | SQLite storage |
 | `@ha-bits/bit-email` | SMTP email sending |
 | `@ha-bits/bit-openai` | AI-powered summaries |
-| `@activepieces/piece-schedule` | Cron triggers |
+| `bit-schedule` | Cron triggers |
 
 ### Native Cortex Operations
 
@@ -170,7 +170,7 @@ emails: { userEmail, type, subject, sentAt }
 | Runtime | Python + Flask + APScheduler | Node.js + Habits |
 | Database | MongoDB | SQLite |
 | HTTP Client | requests + axios | Native fetch |
-| Scheduling | APScheduler cron | @activepieces/piece-schedule |
+| Scheduling | APScheduler cron | bit-schedule |
 | Iteration | Python loops | bit-loop |
 | Configuration | Python code | Declarative YAML |
 

@@ -54,11 +54,11 @@ cortex execute --config ./stack.yaml --id my-workflow --input '{"prompt": "Hello
 
 #### Convert Workflow
 
-Convert n8n, Activepieces, or Script workflows to Habits format:
+Convert Script workflows to Habits format:
 
 ```bash
-cortex convert --input ./n8n-workflow.json --output ./habits.yaml
-cortex convert -i ./workflow.json -o ./habits.yaml --env  # Generate .env template
+cortex convert --input ./script-workflow.json --output ./habits.yaml
+cortex convert -i ./workflow.json -o ./habits.yaml
 ```
 
 ### Local Development

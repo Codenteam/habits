@@ -1,0 +1,32 @@
+# List Models Workflow
+# List locally installed AI models
+
+id: list-models
+name: List Local Models
+description: List all GGUF models installed locally
+
+input:
+  type: object
+  properties:
+    directory:
+      type: string
+      description: Custom directory to scan (optional, defaults to ~/.habits/models/)
+
+nodes:
+  - id: list
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-local-ai"
+      operation: list_models
+      label: List Models
+      isTrigger: false
+      params:
+        directory: "{{habits.input.directory}}"
+
+edges: []
+
+output:
+  models: "{{list.models}}"
+  count: "{{list.totalCount}}"

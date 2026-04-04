@@ -1,0 +1,72 @@
+{
+  "name": "@ha-bits/bit-local-ai",
+  "version": "1.0.0",
+  "description": "L1 bit for local AI/LLM inference using llama.cpp - runs models locally on CPU/GPU",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "ai",
+    "llm",
+    "local",
+    "llama",
+    "gguf",
+    "L1"
+  ],
+  "author": "Habits Team",
+  "license": "MIT",
+  "dependencies": {
+    "node-llama-cpp": "^3.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@ha-bits/bit-ai": ">=1.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-local-ai/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L1"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true,
+    "replaces": "@ha-bits/bit-ai",
+    "stubs": {
+      "@ha-bits/bit-local-ai/driver": "./src/stubs/tauri-driver.js"
+    },
+    "tauriPlugins": {
+      "llama": {
+        "cargo": "tauri-plugin-llama = { path = \"../../tauri-plugin-llama\" }",
+        "init": "tauri_plugin_llama::init()",
+        "permissions": []
+      }
+    }
+  }
+}

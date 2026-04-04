@@ -3,7 +3,7 @@ import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
 /**
  * Framework types supported by the workflow viewer
  */
-export type WorkflowFramework = 'n8n' | 'activepieces' | 'script' | 'bits';
+export type WorkflowFramework = 'script' | 'bits';
 
 /**
  * Node type classification

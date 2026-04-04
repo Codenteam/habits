@@ -1,0 +1,26 @@
+id: license-free-workflow
+name: License Free Workflow
+nodes:
+  - id: ai-call
+    type: bits
+    data:
+      framework: bits
+      module: "bit-openai"
+      label: OpenAI (MIT)
+  - id: custom-script
+    type: script
+    data:
+      framework: script
+      label: Custom Script
+      params:
+        type: script
+        language: deno
+        script: |
+          // Custom logic, no dependency concerns
+          export async function main() {
+            return { success: true };
+          }
+edges:
+  - id: e1
+    source: ai-call
+    target: custom-script

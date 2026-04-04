@@ -336,9 +336,8 @@ export default function NodeConfigPanel({ node }: NodeConfigPanelProps) {
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Framework</label>
                       <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        node.data.framework === 'n8n' ? 'bg-red-900/50 text-red-400 border border-red-800' : 
-                        node.data.framework === 'activepieces' ? 'bg-purple-900/50 text-purple-400 border border-purple-800' :
                         node.data.framework === 'bits' ? 'bg-cyan-900/50 text-cyan-400 border border-cyan-800' :
+                        node.data.framework === 'script' ? 'bg-amber-900/50 text-amber-400 border border-amber-800' :
                         'bg-slate-700 text-slate-300'
                       }`}>
                         {node.data.framework}

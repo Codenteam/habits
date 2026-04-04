@@ -18,7 +18,7 @@
  *   init     Initialize a new Habits project with .env and modules.json
  *   cortex   Start the Habits server (Cortex mode)
  *   execute  Execute a workflow from file or config
- *   convert  Convert a workflow from n8n/Activepieces to Habits format
+ *   convert  Convert a workflow from Script format to Habits format
  *   edit|base     Start the Base server for editing modules and workflows
  *   bundle   Generate cortex-bundle.js for browser/Tauri (shortcut for pack --format bundle)
  *   pack     Generate standalone bundle, Tauri app, binary (SEA), .habit file, or mobile app
@@ -34,7 +34,7 @@ import { hideBin } from 'yargs/helpers';
 import dotenv from 'dotenv';
 import { startHabitsServer, startBaseServer } from './server';
 import { WorkflowExecutor } from '@ha-bits/cortex';
-import { convertWorkflow, convertWorkflowWithConnections, generateEnvContent } from '@ha-bits/core';
+import { convertWorkflow, convertWorkflowWithConnections } from '@ha-bits/core';
 import { defaultModules } from './modules';
 import {
   getSupportedPlatforms,
@@ -67,8 +67,6 @@ export interface HabitsCommandOptions {
   inputFile?: string;
   /** Output file path for convert */
   output?: string;
-  /** Generate env file */
-  env?: boolean;
   /** Pretty print */
   pretty?: boolean;
 }
@@ -118,7 +116,7 @@ export async function runCLI(): Promise<void> {
         type: 'string',
       },
     })
-    .command('convert', 'Convert a workflow to Habits format', {
+    .command('convert', 'Convert a workflow from Script format to Habits format', {
       input: {
         alias: 'i',
         describe: 'Path to input workflow JSON file',
@@ -129,12 +127,6 @@ export async function runCLI(): Promise<void> {
         alias: 'o',
         describe: 'Path to output file',
         type: 'string',
-      },
-      env: {
-        alias: 'e',
-        describe: 'Generate .env file for credentials',
-        type: 'boolean',
-        default: false,
       },
       pretty: {
         describe: 'Pretty print output',
@@ -432,17 +424,7 @@ async function runConvertCommand(argv: any): Promise<void> {
   
   console.log(`📄 Converting: ${inputPath}\n`);
   
-  let result: any;
-  let envContent: string | undefined;
-  
-  if (argv.env) {
-    const converted = convertWorkflowWithConnections(inputWorkflow);
-    result = converted.workflow;
-    const workflowName = result.name || result.id || 'workflow';
-    envContent = generateEnvContent(workflowName, converted.connections);
-  } else {
-    result = convertWorkflow(inputWorkflow);
-  }
+  const result = convertWorkflow(inputWorkflow);
   
   const output = argv.pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result);
   
@@ -450,19 +432,8 @@ async function runConvertCommand(argv: any): Promise<void> {
     const outputPath = path.resolve(argv.output);
     fs.writeFileSync(outputPath, output);
     console.log(`✅ Saved to: ${outputPath}`);
-    
-    if (envContent) {
-      const envPath = outputPath.replace(/\.json$/, '.env');
-      fs.writeFileSync(envPath, envContent);
-      console.log(`📝 Environment file: ${envPath}`);
-    }
   } else {
     console.log(output);
-    
-    if (envContent) {
-      console.log('\n--- Environment Variables ---\n');
-      console.log(envContent);
-    }
   }
 }
 /**
