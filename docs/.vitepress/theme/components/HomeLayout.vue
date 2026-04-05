@@ -875,6 +875,7 @@ const hoveredUseCase = ref(null)
   color: var(--vp-c-text-1);
   white-space: pre;
   word-break: break-all;
+  white-space: break-spaces;
 }
 
 
@@ -1487,7 +1488,7 @@ const hoveredUseCase = ref(null)
   .hero-container {
     grid-template-columns: 1fr;
     gap: 48px;
-    text-align: center;
+    text-align: left;
   }
   
   .hero-left {
