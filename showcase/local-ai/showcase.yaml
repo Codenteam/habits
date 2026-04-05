@@ -1,14 +1,13 @@
 name: Local AI Chat
+type: agent
 description: Run AI models locally on your device without cloud services. Uses llama.cpp for efficient CPU/GPU inference.
 version: 1.0.0
 author: Habits Team
 tags:
   - ai
-  - local
-  - llm
-  - llama
-  - privacy
-  - offline
+  - developer
+
+difficulty: intermediate
 category: AI
 featured: true
 
@@ -24,8 +23,3 @@ quickstart: |
   2. Open http://localhost:13000 in your browser
   3. Click "Install Model" to download a model (first time only)
   4. Start chatting with your local AI!
-
-# Screenshots
-screenshots:
-  - demo/chat-ui.png
-  - demo/model-install.png
