@@ -1,0 +1,31 @@
+# Get System Info Workflow
+# Get information about the local AI environment
+
+id: system-info
+name: Get System Info
+description: Get information about the local AI environment (device support, version, etc.)
+
+input:
+  type: object
+  properties: {}
+
+nodes:
+  - id: info
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-local-ai"
+      operation: get_system_info
+      label: System Info
+      isTrigger: false
+      params: {}
+
+edges: []
+
+output:
+  version: "{{info.version}}"
+  metalSupport: "{{info.metalSupport}}"
+  cudaSupport: "{{info.cudaSupport}}"
+  configuredDevice: "{{info.configuredDevice}}"
+  modelsBasePath: "{{info.modelsBasePath}}"

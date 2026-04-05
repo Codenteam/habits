@@ -1,8 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { CanvasNode, CanvasEdge } from '@ha-bits/core';
+import type { CanvasNode, CanvasEdge, ExtractedConnection } from '@ha-bits/core';
 import type { Workflow, AvailableModuleDefinition } from '@habits/shared/types';
 import type { PieceSchema, FormValue, FormErrors } from '../../lib/formBuilder/types';
-import type { ExtractedConnection } from '../../lib/workflowConverter';
 import { extractSchemaHabit } from '../../lib/habitExtractor';
 import { validateHabits, validateHabit, type HabitValidationError } from '../validation';
 import { generateExportBundle, envVariablesToString, type ServerOptions } from '../../lib/exportUtils';

@@ -1,0 +1,64 @@
+{
+  "name": "@ha-bits/bit-ai",
+  "version": "1.0.0",
+  "description": "L0 base bit for AI/LLM services - provides common interfaces and types for chat completion, assistants, and model management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "ai",
+    "llm",
+    "chat",
+    "base",
+    "L0"
+  ],
+  "author": "Habits Team",
+  "license": "MIT",
+  "dependencies": {
+    "@ha-bits/cortex-core": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex-core": ">=0.1.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-ai/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L0"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": false,
+    "replaceableBy": [
+      "@ha-bits/bit-openai",
+      "@ha-bits/bit-local-ai"
+    ]
+  }
+}

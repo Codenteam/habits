@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Local AI Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .typing-indicator span {
+      animation: pulse 1.4s infinite;
+    }
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    .message-content {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .chat-container {
+      height: calc(100vh - 180px);
+    }
+    @media (max-width: 640px) {
+      .chat-container {
+        height: calc(100vh - 200px);
+      }
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div class="flex flex-col h-screen max-w-4xl mx-auto">
+    <!-- Header -->
+    <header class="flex items-center justify-between p-4 border-b border-zinc-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+          <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-semibold text-lg">Local AI</h1>
+          <p class="text-xs text-zinc-500" id="model-status">No model loaded</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openSettings()" class="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+        <button onclick="clearChat()" class="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages -->
+    <div id="chat-messages" class="chat-container overflow-y-auto p-4 space-y-4">
+      <!-- Welcome message -->
+      <div class="flex justify-center">
+        <div class="bg-zinc-900 rounded-xl p-6 max-w-md text-center">
+          <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <h2 class="text-lg font-semibold mb-2">Welcome to Local AI</h2>
+          <p class="text-zinc-400 text-sm mb-4">Run AI models privately on your device. Your conversations never leave your computer.</p>
+          <button onclick="openSettings()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium transition-colors">
+            Configure Model
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-4 border-t border-zinc-800">
+      <div class="flex gap-2">
+        <textarea
+          id="message-input"
+          placeholder="Type your message..."
+          class="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 resize-none focus:outline-none focus:border-emerald-500 transition-colors"
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button
+          onclick="sendMessage()"
+          id="send-btn"
+          class="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:cursor-not-allowed rounded-xl transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-semibold">Settings</h2>
+          <button onclick="closeSettings()" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Model Selection -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">Model</label>
+            <select id="model-select" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 focus:outline-none focus:border-emerald-500">
+              <option value="">Loading models...</option>
+            </select>
+          </div>
+
+          <div class="text-center py-2">
+            <span class="text-zinc-500 text-sm">or</span>
+          </div>
+
+          <!-- Install Model -->
+          <div class="bg-zinc-800 rounded-xl p-4">
+            <h3 class="font-medium mb-3">Install New Model</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs text-zinc-400 mb-1">Model URL</label>
+                <input
+                  id="install-url"
+                  type="text"
+                  placeholder="https://huggingface.co/.../model.gguf"
+                  class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-zinc-400 mb-1">Model Name</label>
+                <input
+                  id="install-name"
+                  type="text"
+                  placeholder="llama-3.2-1b"
+                  class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
+                >
+              </div>
+              <button onclick="installModel()" id="install-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 rounded-lg text-sm font-medium transition-colors">
+                Download & Install
+              </button>
+              <div id="install-progress" class="hidden">
+                <div class="w-full bg-zinc-700 rounded-full h-2">
+                  <div id="progress-bar" class="bg-emerald-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-zinc-400 mt-1 text-center" id="progress-text">Downloading...</p>
+              </div>
+            </div>
+
+            <!-- Recommended Models -->
+            <div class="mt-4 pt-4 border-t border-zinc-700">
+              <p class="text-xs text-zinc-400 mb-2">Recommended models:</p>
+              <div class="space-y-2">
+                <button onclick="prefillModel('https://huggingface.co/mradermacher/Tiny-LLM-GGUF/resolve/main/Tiny-LLM.Q2_K.gguf', 'tiny-llm')" class="w-full text-left px-3 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-lg text-sm transition-colors border border-emerald-700">
+                  <span class="font-medium">Tiny LLM</span>
+                  <span class="text-emerald-400 text-xs ml-2">~50MB • Tiniest</span>
+                </button>
+                <button onclick="prefillModel('https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf', 'qwen2.5-0.5b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                  <span class="font-medium">Qwen 2.5 0.5B</span>
+                  <span class="text-zinc-400 text-xs ml-2">~400MB • Fast</span>
+                </button>
+                <button onclick="prefillModel('https://huggingface.co/lmstudio-community/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf', 'llama-3.2-1b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                  <span class="font-medium">Llama 3.2 1B</span>
+                  <span class="text-zinc-400 text-xs ml-2">~1.3GB • Fast</span>
+                </button>
+                <button onclick="prefillModel('https://huggingface.co/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf', 'llama-3.2-3b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                  <span class="font-medium">Llama 3.2 3B</span>
+                  <span class="text-zinc-400 text-xs ml-2">~2.5GB • Balanced</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Prompt -->
+          <div>
+            <label class="block text-sm font-medium mb-2">System Prompt</label>
+            <textarea
+              id="system-prompt"
+              placeholder="You are a helpful assistant."
+              class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 focus:outline-none focus:border-emerald-500 resize-none"
+              rows="3"
+            >You are a helpful assistant.</textarea>
+          </div>
+
+          <!-- Temperature -->
+          <div>
+            <label class="block text-sm font-medium mb-2">Temperature: <span id="temp-value">0.7</span></label>
+            <input
+              id="temperature"
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value="0.7"
+              class="w-full"
+              oninput="document.getElementById('temp-value').textContent = this.value"
+            >
+            <div class="flex justify-between text-xs text-zinc-500 mt-1">
+              <span>Precise</span>
+              <span>Creative</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="saveSettings()" class="w-full mt-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-medium transition-colors">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let settings = {
+      model: localStorage.getItem('localai_model') || '',
+      systemPrompt: localStorage.getItem('localai_systemPrompt') || 'You are a helpful assistant.',
+      temperature: parseFloat(localStorage.getItem('localai_temperature') || '0.7'),
+      memoryKey: 'local-ai-chat'
+    };
+    let isLoading = false;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadModels();
+      loadSettings();
+    });
+
+    // Load available models
+    async function loadModels() {
+      try {
+        const response = await fetch('/api/list-models', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        const models = data?.output.models || [];
+        
+        const select = document.getElementById('model-select');
+        select.innerHTML = models.length > 0
+          ? models.map(m => `<option value="${m.path}">${m.name} (${formatSize(m.size)})</option>`).join('')
+          : '<option value="">No models installed</option>';
+        
+        if (settings.model) {
+          select.value = settings.model;
+        }
+        
+        updateModelStatus(models.length > 0 ? (settings.model || models[0]?.name || 'Select a model') : 'No models');
+      } catch (error) {
+        console.error('Failed to load models:', error);
+        document.getElementById('model-select').innerHTML = '<option value="">Failed to load models</option>';
+      }
+    }
+
+    // Format file size
+    function formatSize(bytes) {
+      if (!bytes) return 'Unknown';
+      const gb = bytes / (1024 * 1024 * 1024);
+      return gb >= 1 ? `${gb.toFixed(1)}GB` : `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
+    }
+
+    // Update model status in header
+    function updateModelStatus(text) {
+      document.getElementById('model-status').textContent = text;
+    }
+
+    // Open settings modal
+    function openSettings() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+      loadSettings();
+    }
+
+    // Close settings modal
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    // Load settings into form
+    function loadSettings() {
+      document.getElementById('system-prompt').value = settings.systemPrompt;
+      document.getElementById('temperature').value = settings.temperature;
+      document.getElementById('temp-value').textContent = settings.temperature;
+      if (settings.model) {
+        document.getElementById('model-select').value = settings.model;
+      }
+    }
+
+    // Save settings
+    function saveSettings() {
+      settings.model = document.getElementById('model-select').value;
+      settings.systemPrompt = document.getElementById('system-prompt').value;
+      settings.temperature = parseFloat(document.getElementById('temperature').value);
+      
+      localStorage.setItem('localai_model', settings.model);
+      localStorage.setItem('localai_systemPrompt', settings.systemPrompt);
+      localStorage.setItem('localai_temperature', settings.temperature.toString());
+      
+      const modelName = document.getElementById('model-select').selectedOptions[0]?.text || 'Model selected';
+      updateModelStatus(modelName.split(' (')[0]);
+      
+      closeSettings();
+    }
+
+    // Prefill model installation form
+    function prefillModel(url, name) {
+      document.getElementById('install-url').value = url;
+      document.getElementById('install-name').value = name;
+    }
+
+    // Install model
+    async function installModel() {
+      const url = document.getElementById('install-url').value.trim();
+      const name = document.getElementById('install-name').value.trim();
+      
+      if (!url || !name) {
+        alert('Please enter both URL and name');
+        return;
+      }
+      
+      const btn = document.getElementById('install-btn');
+      const progress = document.getElementById('install-progress');
+      
+      btn.disabled = true;
+      btn.textContent = 'Installing...';
+      progress.classList.remove('hidden');
+      
+      try {
+        const response = await fetch('/api/install-model', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modelUrl: url, modelName: name })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('progress-bar').style.width = '100%';
+          document.getElementById('progress-text').textContent = 'Complete!';
+          
+          // Reload models list
+          await loadModels();
+          
+          // Select the new model
+          settings.model = data.path;
+          document.getElementById('model-select').value = data.path;
+          
+          setTimeout(() => {
+            progress.classList.add('hidden');
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('install-url').value = '';
+            document.getElementById('install-name').value = '';
+          }, 1500);
+        } else {
+          throw new Error(data.error || 'Installation failed');
+        }
+      } catch (error) {
+        alert('Failed to install model: ' + error.message);
+        progress.classList.add('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Download & Install';
+      }
+    }
+
+    // Send message
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const message = input.value.trim();
+      
+      if (!message || isLoading) return;
+      
+      if (!settings.model) {
+        openSettings();
+        return;
+      }
+      
+      // Clear welcome message on first message
+      const welcome = document.querySelector('#chat-messages > .flex.justify-center');
+      if (welcome) welcome.remove();
+      
+      // Add user message
+      addMessage(message, 'user');
+      input.value = '';
+      autoResize(input);
+      
+      // Show typing indicator
+      const typingId = addTypingIndicator();
+      isLoading = true;
+      updateSendButton();
+      
+      try {
+        const response = await fetch('/api/ask-local-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: message,
+            model: settings.model,
+            systemPrompt: settings.systemPrompt,
+            temperature: settings.temperature,
+            memoryKey: settings.memoryKey
+          })
+        });
+        
+        const data = await response.json();
+        
+        removeTypingIndicator(typingId);
+        addMessage(data.output.message || data.output.message || 'No response', 'assistant');
+      } catch (error) {
+        removeTypingIndicator(typingId);
+        addMessage('Error: ' + error.message, 'error');
+      } finally {
+        isLoading = false;
+        updateSendButton();
+      }
+    }
+
+    // Add message to chat
+    function addMessage(content, type) {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'}`;
+      
+      const bgColor = type === 'user' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-900' : 'bg-zinc-800';
+      
+      div.innerHTML = `
+        <div class="${bgColor} rounded-2xl px-4 py-3 max-w-[85%]">
+          <p class="message-content text-sm">${escapeHtml(content)}</p>
+        </div>
+      `;
+      
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Add typing indicator
+    function addTypingIndicator() {
+      const container = document.getElementById('chat-messages');
+      const id = 'typing-' + Date.now();
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = 'flex justify-start';
+      div.innerHTML = `
+        <div class="bg-zinc-800 rounded-2xl px-4 py-3">
+          <div class="typing-indicator flex gap-1">
+            <span class="w-2 h-2 bg-zinc-400 rounded-full"></span>
+            <span class="w-2 h-2 bg-zinc-400 rounded-full"></span>
+            <span class="w-2 h-2 bg-zinc-400 rounded-full"></span>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
+    }
+
+    // Remove typing indicator
+    function removeTypingIndicator(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    // Clear chat
+    function clearChat() {
+      const container = document.getElementById('chat-messages');
+      container.innerHTML = `
+        <div class="flex justify-center">
+          <div class="bg-zinc-900 rounded-xl p-6 max-w-md text-center">
+            <p class="text-zinc-400 text-sm">Chat cleared. Start a new conversation!</p>
+          </div>
+        </div>
+      `;
+      // Clear memory key by changing it
+      settings.memoryKey = 'local-ai-chat-' + Date.now();
+    }
+
+    // Update send button state
+    function updateSendButton() {
+      const btn = document.getElementById('send-btn');
+      btn.disabled = isLoading;
+    }
+
+    // Handle Enter key
+    function handleKeyDown(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    }
+
+    // Auto-resize textarea
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

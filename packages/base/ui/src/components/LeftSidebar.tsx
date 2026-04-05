@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, Layers,
-  Activity, Zap, Code, Settings, Puzzle, FileCode,
+  Zap, Code, Settings, Puzzle, FileCode,
   ArrowUpFromLineIcon,
   FolderOpen,
   AlertTriangle,
@@ -31,7 +31,7 @@ interface VisibleSections {
 }
 
 interface LeftSidebarProps {
-  onAddNode: (template: { framework: 'n8n' | 'activepieces' | 'script' | 'bits'; module: string; label: string }) => void;
+  onAddNode: (template: { framework: 'script' | 'bits'; module: string; label: string }) => void;
 }
 
 export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
@@ -49,7 +49,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
 
   // Node palette state
   const availableModules = useAppSelector(state => state.workflow.availableModules);
-  const [selectedFrameworks, setSelectedFrameworks] = useState<('n8n' | 'activepieces' | 'script' | 'bits')[]>(['n8n', 'activepieces', 'script', 'bits']);
+  const [selectedFrameworks, setSelectedFrameworks] = useState<('script' | 'bits')[]>(['script', 'bits']);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showCodeViewModal, setShowCodeViewModal] = useState(false);
 
@@ -137,7 +137,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
         const workflowType = detectWorkflowType(workflow);
         
         if (workflowType === 'unknown') {
-          setDialogConfig({ message: 'Unknown workflow format. Supported formats: n8n, Activepieces, or Habits native format.', type: 'error' });
+          setDialogConfig({ message: 'Unknown workflow format. Supported format: Habits native format.', type: 'error' });
           setDialogOpen(true);
           return;
         }
@@ -213,11 +213,10 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   };
 
   // ===== NODE PALETTE HANDLERS =====
-  const n8nModules = availableModules.filter((m) => m.framework === 'n8n');
-  const activepiecesModules = availableModules.filter((m) => m.framework === 'activepieces');
+  const bitsModules = availableModules.filter((m) => m.framework === 'bits');
   const scriptModules = availableModules.filter((m) => m.framework === 'script');
 
-  const toggleFramework = (framework: 'n8n' | 'activepieces' | 'script' | 'bits') => {
+  const toggleFramework = (framework: 'script' | 'bits') => {
     if (selectedFrameworks.includes(framework)) {
       if (selectedFrameworks.length === 1) return;
       setSelectedFrameworks(selectedFrameworks.filter(f => f !== framework));
@@ -226,7 +225,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
     }
   };
 
-  const handleAddNode = (framework: 'n8n' | 'activepieces' | 'script' | 'bits', module: string, label: string) => {
+  const handleAddNode = (framework: 'script' | 'bits', module: string, label: string) => {
     onAddNode({ framework, module, label });
   };
 
@@ -343,7 +342,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                     onClick={() => convertInputRef.current?.click()}
                     disabled={converting}
                     className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded transition-colors disabled:opacity-50"
-                    title="Import & convert n8n/Activepieces workflow"
+                    title="Import workflow"
                   >
                     <ArrowUpFromLineIcon className={`w-3.5 h-3.5 ${converting ? 'animate-spin' : ''}`} />
                     Import
@@ -495,36 +494,28 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                 </div>
                 
                 {/* Framework toggle buttons */}
-                <div className="grid grid-cols-3 gap-1 mb-3">
+                <div className="grid grid-cols-2 gap-1 mb-3">
                   <button
-                    onClick={() => toggleFramework('activepieces')}
+                    onClick={() => toggleFramework('bits')}
                     className={`flex flex-col items-center justify-center gap-1 px-2 py-1.5 rounded transition-colors text-xs ${
-                      selectedFrameworks.includes('activepieces')
-                        ? 'bg-purple-600/20 text-purple-400 border border-purple-500/50'
+                      selectedFrameworks.includes('bits')
+                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/50'
                         : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border border-transparent'
                     }`}
                   >
                     <Zap className="w-3.5 h-3.5" />
-                    bits
+                    Bits
                   </button>
                   <button
-                    onClick={() => toggleFramework('n8n')}
+                    onClick={() => toggleFramework('script')}
                     className={`flex flex-col items-center justify-center gap-1 px-2 py-1.5 rounded transition-colors text-xs ${
-                      selectedFrameworks.includes('n8n')
-                        ? 'bg-red-600/20 text-red-400 border border-red-500/50'
+                      selectedFrameworks.includes('script')
+                        ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/50'
                         : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border border-transparent'
                     }`}
                   >
-                    <Activity className="w-3.5 h-3.5" />
-                    n8n
-                  </button>
-                  <button
-                    onClick={() => handleAddNode('script', 'script', 'Script')}
-                    className="flex flex-col items-center justify-center gap-1 px-2 py-1.5 rounded transition-colors text-xs bg-cyan-600/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-600/30"
-                    title="Add Script node"
-                  >
                     <Code className="w-3.5 h-3.5" />
-                    + Script
+                    Script
                   </button>
                 </div>
                 
@@ -539,10 +530,10 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
               </div>
 
               <div className="flex-1 overflow-y-auto p-2 space-y-2 max-h-100vh">
-                {/* Bits - Always visible when bits filter is active */}
-                {selectedFrameworks.includes('activepieces') && (
+                {/* Built-in Bits - Always visible when bits filter is active */}
+                {selectedFrameworks.includes('bits') && (
                   <div className="space-y-1">
-                    <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Bits</h4>
+                    <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Built-in Bits</h4>
                     {BITS.map((bit) => {
                       const IconComponent = bit.icon;
                       return (
@@ -566,48 +557,24 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                   </div>
                 )}
 
-                {/* Bits modules */}
-                {selectedFrameworks.includes('activepieces') && activepiecesModules.length > 0 && (
+                {/* Custom Bits modules */}
+                {selectedFrameworks.includes('bits') && bitsModules.length > 0 && (
                   <div className="space-y-1">
-                    <h4 className="text-xs font-medium text-purple-400 border-b border-purple-500/30 pb-1 px-1">bits</h4>
-                    {activepiecesModules.map((module) => (
+                    <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Custom Bits</h4>
+                    {bitsModules.map((module) => (
                       <button
-                        key={`activepieces-${module.name}`}
-                        onClick={() => handleAddNode('activepieces', module.name, module.name.replace('piece-', ''))}
-                        className="w-full text-left px-2 py-2 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 rounded transition-colors group"
+                        key={`bits-${module.name}`}
+                        onClick={() => handleAddNode('bits', module.name, module.name.replace('bit-', ''))}
+                        className="w-full text-left px-2 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded transition-colors group"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <ModuleIcon logoUrl={module.logoUrl} className="w-3.5 h-3.5 text-purple-400 shrink-0" fallbackIcon="Zap" />
-                            <span className="text-xs text-purple-400 truncate">
-                              {module.displayName || module.name.replace('piece-', '')}
+                            <ModuleIcon logoUrl={module.logoUrl} className="w-3.5 h-3.5 text-emerald-400 shrink-0" fallbackIcon="Zap" />
+                            <span className="text-xs text-emerald-400 truncate">
+                              {module.displayName || module.name.replace('bit-', '')}
                             </span>
                           </div>
-                          <Plus className="w-3.5 h-3.5 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* n8n modules */}
-                {selectedFrameworks.includes('n8n') && n8nModules.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-medium text-red-400 border-b border-red-500/30 pb-1 px-1">n8n</h4>
-                    {n8nModules.map((module) => (
-                      <button
-                        key={`n8n-${module.name}`}
-                        onClick={() => handleAddNode('n8n', module.name, module.name.replace('n8n-nodes-', ''))}
-                        className="w-full text-left px-2 py-2 bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 rounded transition-colors group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <ModuleIcon logoUrl={module.logoUrl} className="w-3.5 h-3.5 text-red-400 shrink-0" fallbackIcon="Activity" />
-                            <span className="text-xs text-red-400 truncate">
-                              {module.displayName || module.name.replace('n8n-nodes-', '')}
-                            </span>
-                          </div>
-                          <Plus className="w-3.5 h-3.5 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          <Plus className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </div>
                       </button>
                     ))}

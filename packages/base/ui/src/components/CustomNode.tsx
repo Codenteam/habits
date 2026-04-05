@@ -81,8 +81,7 @@ export default memo(({ data, selected, id }: NodeProps) => {
   const [editedId, setEditedId] = useState(id);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(data.description || '');
-  const isN8n = data.framework === 'n8n';
-  const isActivepieces = data.framework === 'activepieces';
+  const isBits = data.framework === 'bits';
   const isScript = data.framework === 'script';
   
   // Use type from data if available, otherwise fallback to old method
@@ -97,30 +96,25 @@ export default memo(({ data, selected, id }: NodeProps) => {
   let IconComponent: typeof Activity = Activity;
   
   if (isTrigger) {
-    if (isN8n) {
-      bgColor = 'bg-green-900';
-      borderColor = 'border-green-500';
-      textColor = 'text-green-200';
-    } else if (isActivepieces) {
-      bgColor = 'bg-blue-900';
-      borderColor = 'border-blue-500';
-      textColor = 'text-blue-200';
+    if (isBits) {
+      bgColor = 'bg-teal-900';
+      borderColor = 'border-teal-500';
+      textColor = 'text-teal-200';
     } else if (isScript) {
       bgColor = 'bg-orange-900';
       borderColor = 'border-orange-500';
       textColor = 'text-orange-200';
+    } else {
+      bgColor = 'bg-gray-800';
+      borderColor = 'border-gray-500';
+      textColor = 'text-gray-200';
     }
     IconComponent = Play;
   } else {
-    if (isN8n) {
-      bgColor = 'bg-red-900';
-      borderColor = 'border-red-500';
-      textColor = 'text-red-200';
-      IconComponent = Activity;
-    } else if (isActivepieces) {
-      bgColor = 'bg-purple-900';
-      borderColor = 'border-purple-500';
-      textColor = 'text-purple-200';
+    if (isBits) {
+      bgColor = 'bg-blue-900';
+      borderColor = 'border-blue-500';
+      textColor = 'text-blue-200';
       IconComponent = Zap;
     } else if (isScript) {
       bgColor = 'bg-cyan-900';
@@ -132,7 +126,7 @@ export default memo(({ data, selected, id }: NodeProps) => {
       bgColor = 'bg-gray-800';
       borderColor = 'border-gray-500';
       textColor = 'text-gray-200';
-      IconComponent = Activity;
+      IconComponent = Zap;
     }
   }
 

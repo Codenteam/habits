@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
-import { setWorkflowName, setStackDescription, setHabitEnvConnections, selectHabits, selectActiveHabit, selectActiveEnvConnections, selectStackDescription, selectHasValidationErrors, selectExportBundle } from '../store/slices/workflowSlice';
+import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle } from '../store/slices/workflowSlice';
 import { setViewMode } from '../store/slices/uiSlice';
 import { api } from '../lib/api';
-import { extractConnectionsFromHabitsWorkflow, type ExtractedConnection } from '../lib/workflowConverter';
 import { habitToYaml, parseStackYaml } from '../lib/exportUtils';
 import CodeViewModal from './CodeViewModal';
 import OpenModal from './OpenModal';
@@ -15,7 +14,6 @@ import ShareLinkModal from './ShareLinkModal';
 import GenerateModal from './GenerateModal';
 import ValidationModal from './ValidationModal';
 import Dialog from './Dialog';
-import { FrontendWorkflow } from '@ha-bits/core';
 import { validateHabit, type ValidatableHabit } from '../store/validation/habitValidation';
 
 export default function Toolbar() {
@@ -26,7 +24,6 @@ export default function Toolbar() {
   const activeHabit = useAppSelector(selectActiveHabit);
   const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
   const viewMode = useAppSelector(state => state.ui.viewMode);
-  const storedEnvConnections = useAppSelector(selectActiveEnvConnections);
   const hasValidationErrors = useAppSelector(selectHasValidationErrors);
   const [serving, setServing] = useState(false);
   const [serverRunning, setServerRunning] = useState(false);
@@ -35,7 +32,6 @@ export default function Toolbar() {
   const [showPublishDeployModal, setShowPublishDeployModal] = useState(false);
   const [showOpenModal, setShowOpenModal] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
-  const [extractedConnections, setExtractedConnections] = useState<ExtractedConnection[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [showServePopup, setShowServePopup] = useState(false);
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
@@ -59,13 +55,6 @@ export default function Toolbar() {
   useEffect(() => {
     setEditedStackDescription(stackDescription);
   }, [stackDescription]);
-
-  // Sync extractedConnections with Redux state when it changes
-  useEffect(() => {
-    if (storedEnvConnections.length > 0) {
-      setExtractedConnections(storedEnvConnections);
-    }
-  }, [storedEnvConnections]);
 
   // Get the active habit name
   const activeHabitName = activeHabit?.name || 'No habit selected';
@@ -174,41 +163,6 @@ export default function Toolbar() {
       return;
     }
 
-    // Extract connections from ALL habits
-    const allConnections: ExtractedConnection[] = [...extractedConnections];
-    
-    for (const habit of habitsWithNodes) {
-      // Convert habit to workflow format for connection extraction
-      const habitWorkflowData: FrontendWorkflow = {
-        id: habit.id,
-        name: habit.name,
-        nodes: habit.nodes.map((node: any) => ({
-          id: node.id,
-          type: node.data?.framework === 'n8n' ? 'n8n' : 'activepieces',
-          position: node.position,
-          data: node.data,
-        })),
-        edges: habit.edges?.map((edge: any) => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-        })) || [],
-        version: '1.0'
-      };
-      
-      const connections = extractConnectionsFromHabitsWorkflow(habitWorkflowData);
-      
-      for (const conn of connections) {
-        // Avoid duplicates
-        if (!allConnections.find(c => c.envVarName === conn.envVarName)) {
-          allConnections.push(conn);
-        }
-      }
-    }
-    
-    setExtractedConnections(allConnections);
-    // Save to Redux state for persistence
-    dispatch(setHabitEnvConnections(allConnections));
     setShowPublishDeployModal(true);
   };
 

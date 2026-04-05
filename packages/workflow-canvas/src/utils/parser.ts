@@ -162,7 +162,7 @@ export function applyDagreLayout(nodes: WorkflowNode[], edges: WorkflowEdge[] = 
  * Convert HabitYaml node to WorkflowNode
  */
 function convertHabitNode(node: HabitYamlNode, _index: number): WorkflowNode {
-  const framework = (node.data.framework || node.type || 'n8n') as WorkflowFramework;
+  const framework = (node.data.framework || node.type || 'bits') as WorkflowFramework;
   const module = node.data.module || '';
   const nodeType = isTriggerNode(framework, module) ? 'trigger' : 'action';
   const definition = getNodeDefinition(framework, module, nodeType);

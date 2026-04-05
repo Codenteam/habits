@@ -4,29 +4,6 @@ import type { NodeDefinition, WorkflowFramework, NodeType } from './types';
  * Default node definitions by framework and module type
  */
 export const nodeDefinitions: Record<string, NodeDefinition> = {
-  // n8n core nodes
-  'n8n-trigger': { inputs: [], outputs: ['main'] },
-  'n8n-webhook': { inputs: [], outputs: ['main'] },
-  'n8n-schedule': { inputs: [], outputs: ['main'] },
-  'n8n-http': { inputs: ['main'], outputs: ['main'] },
-  'n8n-if': { inputs: ['main'], outputs: ['main', 'false'] },
-  'n8n-switch': { inputs: ['main'], outputs: ['0', '1', '2', '3'] },
-  'n8n-merge': { inputs: ['main', 'main'], outputs: ['main'] },
-  'n8n-set': { inputs: ['main'], outputs: ['main'] },
-  'n8n-function': { inputs: ['main'], outputs: ['main'] },
-  'n8n-code': { inputs: ['main'], outputs: ['main'] },
-  'n8n-chatwoot': { inputs: ['main'], outputs: ['main'] },
-  'n8n-gmail': { inputs: ['main'], outputs: ['main'] },
-  'n8n-slack': { inputs: ['main'], outputs: ['main'] },
-  'n8n-googlesheets': { inputs: ['main'], outputs: ['main'] },
-  'n8n-notion': { inputs: ['main'], outputs: ['main'] },
-
-  // Activepieces nodes
-  'activepieces-trigger': { inputs: [], outputs: ['main'] },
-  'activepieces-action': { inputs: ['main'], outputs: ['main'] },
-  'activepieces-webhook': { inputs: [], outputs: ['main'] },
-  'activepieces-schedule': { inputs: [], outputs: ['main'] },
-
   // Script nodes
   'script-trigger': { inputs: [], outputs: ['main'] },
   'script-script': { inputs: ['main'], outputs: ['main'] },
@@ -38,6 +15,12 @@ export const nodeDefinitions: Record<string, NodeDefinition> = {
   // Bits nodes
   'bits-trigger': { inputs: [], outputs: ['main'] },
   'bits-action': { inputs: ['main'], outputs: ['main'] },
+  'bits-webhook': { inputs: [], outputs: ['main'] },
+  'bits-schedule': { inputs: [], outputs: ['main'] },
+  'bits-http': { inputs: ['main'], outputs: ['main'] },
+  'bits-if': { inputs: ['main'], outputs: ['main', 'false'] },
+  'bits-switch': { inputs: ['main'], outputs: ['0', '1', '2', '3'] },
+  'bits-merge': { inputs: ['main', 'main'], outputs: ['main'] },
 };
 
 /**
@@ -57,7 +40,7 @@ export function getNodeDefinition(
   nodeType?: NodeType
 ): NodeDefinition {
   // Try to match by framework and module
-  const moduleKey = `${framework}-${module.replace(/^(n8n-nodes-|piece-)/, '')}`;
+  const moduleKey = `${framework}-${module.replace(/^(bit-)/, '')}`;
   if (nodeDefinitions[moduleKey]) {
     return nodeDefinitions[moduleKey];
   }
@@ -132,10 +115,6 @@ export function getNodeColors(framework: WorkflowFramework, isTrigger: boolean):
 } {
   if (isTrigger) {
     switch (framework) {
-      case 'n8n':
-        return { bg: 'bg-green-900', border: 'border-green-500', text: 'text-green-200' };
-      case 'activepieces':
-        return { bg: 'bg-blue-900', border: 'border-blue-500', text: 'text-blue-200' };
       case 'script':
         return { bg: 'bg-orange-900', border: 'border-orange-500', text: 'text-orange-200' };
       case 'bits':
@@ -147,10 +126,6 @@ export function getNodeColors(framework: WorkflowFramework, isTrigger: boolean):
   
   // Action nodes
   switch (framework) {
-    case 'n8n':
-      return { bg: 'bg-red-900', border: 'border-red-500', text: 'text-red-200' };
-    case 'activepieces':
-      return { bg: 'bg-purple-900', border: 'border-purple-500', text: 'text-purple-200' };
     case 'script':
       return { bg: 'bg-cyan-900', border: 'border-cyan-500', text: 'text-cyan-200' };
     case 'bits':

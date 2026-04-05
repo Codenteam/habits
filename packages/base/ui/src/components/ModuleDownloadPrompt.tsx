@@ -123,7 +123,7 @@ export default function ModuleDownloadPrompt({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
               <p className="text-sm text-gray-500">
-                Enter the exact npm package name (e.g., "n8n-nodes-custom" or "@my-org/piece-custom")
+                Enter the exact npm package name (e.g., "bit-custom" or "@my-org/bit-custom")
               </p>
             </div>
           )}

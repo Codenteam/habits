@@ -32,7 +32,7 @@ export interface NpmInstallOptions {
 function buildNpmInstallCommand(packageSpec?: string, options: NpmInstallOptions = {}): string {
   const parts = ['npm', 'install'];
   
-  // Always ignore engine requirements to allow n8n modules that require newer Node versions
+  // Always ignore engine requirements to allow modules that require newer Node versions
   parts.push('--engine-strict=false');
   // Ignore scripts to reduce memory usage and speed up installs
   parts.push('--ignore-scripts');
@@ -163,7 +163,7 @@ export function getNodesBasePath(): string {
 /**
  * Get the full path to the nodes directory for a specific framework.
  * 
- * @param framework - The framework name (e.g., 'activepieces', 'n8n', 'script')
+ * @param framework - The framework name (e.g., 'bits', 'script')
  * @returns The full path to the framework's nodes directory
  */
 export function getNodesPath(framework: string): string {
@@ -173,8 +173,8 @@ export function getNodesPath(framework: string): string {
 /**
  * Get the full path to a specific module within a framework.
  * 
- * @param framework - The framework name (e.g., 'activepieces', 'n8n', 'script')
- * @param moduleName - The module name (e.g., '@ha-bits/piece-intersect')
+ * @param framework - The framework name (e.g., 'bits', 'script')
+ * @param moduleName - The module name (e.g., '@ha-bits/bit-openai')
  * @returns The full path to the module
  */
 export function getModuleFullPath(framework: string, moduleName: string): string {
@@ -190,7 +190,7 @@ export function getModuleFullPath(framework: string, moduleName: string): string
  * 2. 'nodes' directory relative to process.cwd()
  * 3. Search up from __dirname for a 'nodes' directory
  * 
- * @param framework - The framework name (e.g., 'activepieces', 'n8n')
+ * @param framework - The framework name (e.g., 'bits', 'script')
  * @returns The path to local nodes, or null if not found
  */
 export function getLocalModulePath(framework: string, moduleName: string): string | null {

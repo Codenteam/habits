@@ -182,8 +182,8 @@ function run(stack, workflows, env){
     const createStubRedirectPlugin = (stubAliases) => ({
         name: 'stub-redirect',
         setup(build) {
-            // Match relative imports like ./driver
-            build.onResolve({ filter: /^\.\/driver$/ }, (args) => {
+            // Match relative imports like ./driver or ./diffusion-driver
+            build.onResolve({ filter: /^\.\/[a-z-]+$/ }, (args) => {
                 // Find which package this import is coming from
                 const importer = args.importer;
                 if (!importer) return null;
@@ -196,9 +196,11 @@ function run(stack, workflows, env){
                 if (!haBitsMatch) return null;
                 
                 const packageName = haBitsMatch[1];
-                const stubKey = `${packageName}/driver`;
+                // Extract the module name from the relative path (e.g., ./driver -> driver)
+                const moduleName = args.path.replace('./', '');
+                const stubKey = `${packageName}/${moduleName}`;
                 
-                // Check if we have a stub for this package's driver
+                // Check if we have a stub for this package's module
                 if (stubAliases[stubKey]) {
                     console.log(`🔀 Redirecting ${args.path} from ${packageName} → ${stubAliases[stubKey]}`);
                     return { path: stubAliases[stubKey] };

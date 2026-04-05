@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-transcriber-transcribe"
+description = "Enables the transcriber_transcribe command without any pre-configured scope."
+commands.allow = ["transcriber_transcribe"]
+
+[[permission]]
+identifier = "deny-transcriber-transcribe"
+description = "Denies the transcriber_transcribe command without any pre-configured scope."
+commands.deny = ["transcriber_transcribe"]

@@ -1,4 +1,5 @@
 // Node definitions for determining inputs and outputs
+// Supports: bits, script frameworks
 export interface NodeDefinition {
   inputs: string[];
   outputs: string[];
@@ -7,85 +8,25 @@ export interface NodeDefinition {
 
 // Default node definitions by framework and module type
 export const nodeDefinitions: Record<string, NodeDefinition> = {
-  // n8n core nodes
-  'n8n-trigger': {
+  // Bits nodes
+  'bits-trigger': {
     inputs: [],
     outputs: ['main'],
   },
-  'n8n-webhook': {
+  'bits-action': {
+    inputs: ['main'],
+    outputs: ['main'],
+  },
+  'bits-webhook': {
     inputs: [],
     outputs: ['main'],
   },
-  'n8n-schedule': {
+  'bits-schedule': {
     inputs: [],
     outputs: ['main'],
   },
-  'n8n-http': {
+  'bits-http': {
     inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-if': {
-    inputs: ['main'],
-    outputs: ['main', 'false'],
-  },
-  'n8n-switch': {
-    inputs: ['main'],
-    outputs: ['0', '1', '2', '3'],
-  },
-  'n8n-merge': {
-    inputs: ['main', 'main'],
-    outputs: ['main'],
-  },
-  'n8n-set': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-function': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-code': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-
-  // n8n integrations (standard behavior)
-  'n8n-chatwoot': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-gmail': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-slack': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-googlesheets': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'n8n-notion': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-
-  // Activepieces nodes (typically single input/output)
-  'activepieces-trigger': {
-    inputs: [],
-    outputs: ['main'],
-  },
-  'activepieces-action': {
-    inputs: ['main'],
-    outputs: ['main'],
-  },
-  'activepieces-webhook': {
-    inputs: [],
-    outputs: ['main'],
-  },
-  'activepieces-schedule': {
-    inputs: [],
     outputs: ['main'],
   },
 
@@ -122,9 +63,9 @@ export const DEFAULT_NODE_DEFINITION: NodeDefinition = {
   outputs: ['main'],
 };
 
-export function getNodeDefinition(framework: 'n8n' | 'activepieces' | 'script' | 'bits', module: string, nodeType?: string): NodeDefinition {
+export function getNodeDefinition(framework: 'script' | 'bits', module: string, nodeType?: string): NodeDefinition {
   // Try to match by framework and module
-  const moduleKey = `${framework}-${module.replace(/^(n8n-nodes-|piece-)/, '')}`;
+  const moduleKey = `${framework}-${module.replace(/^(bit-)/, '')}`;
   if (nodeDefinitions[moduleKey]) {
     return nodeDefinitions[moduleKey];
   }
@@ -201,27 +142,6 @@ export function getNodeDefinition(framework: 'n8n' | 'activepieces' | 'script' |
     };
   }
 
-  // Default to single input/output for standard action nodes
+  // Default to standard input/output
   return DEFAULT_NODE_DEFINITION;
-}
-
-// Helper to determine if a node is a trigger
-export function isTriggerNode(framework: 'n8n' | 'activepieces' | 'script' | 'bits', module: string, nodeType?: string): boolean {
-  const definition = getNodeDefinition(framework, module, nodeType);
-  return definition.inputs.length === 0;
-}
-
-// Helper to determine node color based on type
-export function getNodeColor(framework: 'n8n' | 'activepieces' | 'script' | 'bits', module: string, nodeType?: string): string {
-  if (isTriggerNode(framework, module, nodeType)) {
-    if (framework === 'n8n') return 'bg-green-50 border-green-300';
-    if (framework === 'activepieces') return 'bg-blue-50 border-blue-300';
-    if (framework === 'script') return 'bg-orange-50 border-orange-300';
-  }
-  
-  if (framework === 'n8n') return 'bg-red-50 border-red-300';
-  if (framework === 'activepieces') return 'bg-purple-50 border-purple-300';
-  if (framework === 'script') return 'bg-cyan-50 border-cyan-300';
-  
-  return 'bg-gray-50 border-gray-300';
 }

@@ -1,0 +1,57 @@
+# Extract Structured Data Workflow
+# Parse unstructured text into structured JSON using local AI
+
+id: extract-data
+name: Extract Structured Data
+description: Extract structured data from text using a JSON schema
+
+input:
+  type: object
+  properties:
+    content:
+      type: string
+      description: The text content to extract data from
+    schema:
+      type: object
+      description: JSON schema defining the expected output structure
+    model:
+      type: string
+      description: Model preset (optional)
+    instructions:
+      type: string
+      description: Additional extraction instructions (optional)
+    temperature:
+      type: number
+      description: Randomness control (optional, default 0.2 for extraction)
+    maxTokens:
+      type: number
+      description: Maximum response tokens (optional)
+  required:
+    - content
+    - schema
+
+nodes:
+  - id: extract
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-local-ai"
+      operation: extract_structured_data
+      label: Data Extraction
+      isTrigger: false
+      params:
+        model: "{{habits.input.model || 'qwen2-0.5b'}}"
+        content: "{{habits.input.content}}"
+        schema: "{{habits.input.schema}}"
+        instructions: "{{habits.input.instructions}}"
+        temperature: "{{habits.input.temperature || 0.2}}"
+        maxTokens: "{{habits.input.maxTokens || 1024}}"
+
+edges: []
+
+output:
+  data: "{{extract.data}}"
+  success: "{{extract.success}}"
+  rawContent: "{{extract.rawContent}}"
+  model: "{{extract.model}}"

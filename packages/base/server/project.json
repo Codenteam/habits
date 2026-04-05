@@ -67,7 +67,6 @@
             ".local.js": "text"
           },
           "external": [
-            "@activepieces/*",
             "lightningcss"
           ],
           "packages": "bundle"

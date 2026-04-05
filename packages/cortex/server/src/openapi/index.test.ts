@@ -25,12 +25,12 @@ const workflowWithInputRefs: FrontendWorkflow = {
   nodes: [
     {
       id: 'node-1',
-      type: 'n8n',
+      type: 'bits',
       position: { x: 0, y: 0 },
       data: {
         label: 'HTTP Request',
-        framework: 'n8n',
-        module: '@n8n/n8n-nodes-http',
+        framework: 'bits',
+        module: 'bit-http',
         params: {
           url: 'https://api.example.com/users/{{habits.input.userId}}',
           body: '{"prompt": "{{habits.input.prompt}}", "context": "{{habits.input.context}}"}'
@@ -48,12 +48,12 @@ const workflowWithHeaderRefs: FrontendWorkflow = {
   nodes: [
     {
       id: 'node-1',
-      type: 'activepieces',
+      type: 'bits',
       position: { x: 0, y: 0 },
       data: {
         label: 'API Call',
-        framework: 'activepieces',
-        module: '@activepieces/piece-http',
+        framework: 'bits',
+        module: 'bit-http',
         params: {
           headers: {
             'Authorization': '{{habits.header.authorization}}',
@@ -93,12 +93,12 @@ const workflowWithMixedRefs: FrontendWorkflow = {
   nodes: [
     {
       id: 'node-1',
-      type: 'n8n',
+      type: 'bits',
       position: { x: 0, y: 0 },
       data: {
         label: 'Mixed Node',
-        framework: 'n8n',
-        module: '@n8n/n8n-nodes-http',
+        framework: 'bits',
+        module: 'bit-http',
         params: {
           url: '{{habits.input.endpoint}}',
           headers: { 'Auth': '{{habits.header.authToken}}' },

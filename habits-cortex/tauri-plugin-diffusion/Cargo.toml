@@ -1,0 +1,53 @@
+[package]
+name = "tauri-plugin-diffusion"
+version = "0.1.0"
+description = "A Tauri plugin for local image generation using Stable Diffusion via Candle"
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+exclude = ["/examples", "/webview-dist", "/webview-src", "/node_modules"]
+links = "tauri-plugin-diffusion"
+
+[dependencies]
+tauri = { version = "2.1.0" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+
+# HuggingFace Candle for SD inference
+candle-core = "0.8"
+candle-nn = "0.8"
+candle-transformers = "0.8"
+
+# Image processing
+image = "0.25"
+
+# For file operations
+reqwest = { version = "0.12", features = ["stream"] }
+futures-util = "0.3"
+futures = "0.3"
+
+# For app data directory
+dirs = "5"
+
+# Random number generation
+rand = "0.8"
+
+# Base64 encoding for output
+base64 = "0.22"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Metal acceleration on macOS
+candle-core = { version = "0.8", features = ["metal"] }
+
+[target.'cfg(all(target_os = "linux", feature = "cuda"))'.dependencies]
+# CUDA acceleration on Linux
+candle-core = { version = "0.8", features = ["cuda"] }
+
+[build-dependencies]
+tauri-plugin = { version = "2.0.3", features = ["build"] }
+
+[features]
+default = []
+cuda = []

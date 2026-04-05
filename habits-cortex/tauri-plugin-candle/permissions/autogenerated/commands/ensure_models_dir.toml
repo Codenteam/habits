@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-ensure-models-dir"
+description = "Enables the ensure_models_dir command without any pre-configured scope."
+commands.allow = ["ensure_models_dir"]
+
+[[permission]]
+identifier = "deny-ensure-models-dir"
+description = "Denies the ensure_models_dir command without any pre-configured scope."
+commands.deny = ["ensure_models_dir"]

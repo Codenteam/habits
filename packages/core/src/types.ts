@@ -5,7 +5,7 @@
 export interface WorkflowStep {
   id: string;
   type: 'trigger' | 'action';
-  framework: 'activepieces' | 'n8n' | 'script';
+  framework: 'script' | 'bits';
   module: string;
   params: Record<string, any>;
   conditions?: {
@@ -50,11 +50,11 @@ export interface BackendWorkflow {
 // Frontend workflow UI types
 export interface WorkflowNode {
   id: string;
-  type: 'n8n' | 'activepieces' | 'script' | 'trigger' | 'action' | 'bits';
+  type: 'script' | 'trigger' | 'action' | 'bits';
   position: { x: number; y: number };
   data: {
     label: string;
-    framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+    framework: 'script' | 'bits';
     source?: 'npm' | 'github' | 'local' | 'hub' | 'inline';
     module?: string;
     resource?: string;
@@ -164,7 +164,7 @@ export interface HabitNode {
   type: string;
   position?: { x: number; y: number };
   data: {
-    framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+    framework: 'script' | 'bits';
     module?: string;
     label?: string;
     source?: string;
@@ -331,7 +331,7 @@ export interface ScriptWorkflow {
 export interface NodeTemplate {
   id: string;
   label: string;
-  framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+  framework: 'script' | 'bits';
   module: string;
   icon?: string;
   color: string;
@@ -538,7 +538,7 @@ export interface StreamEvent extends ExecutionContext {
 export type StreamCallback = (event: StreamEvent) => void;
 
 // Common framework types
-export type Framework = 'activepieces' | 'n8n' | 'script' | 'bits';
+export type Framework = 'script' | 'bits';
 export type StepType = 'trigger' | 'action';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type ScriptLanguage = 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript';

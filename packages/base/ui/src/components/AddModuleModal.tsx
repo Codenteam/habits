@@ -44,7 +44,7 @@ const SCRIPT_LANGUAGES = [
 ] as const;
 
 export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddModuleModalProps) {
-  const [framework, setFramework] = useState<string>('n8n');
+  const [framework, setFramework] = useState<string>('bits');
   const [source, setSource] = useState<'github' | 'npm' | 'script'>('npm');
   const [repository, setRepository] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -62,7 +62,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
   const [scriptContent, setScriptContent] = useState<string>('');
 
   // Debounced search function
-  const searchNpm = useCallback(async (query: string, isN8n: boolean) => {
+  const searchNpm = useCallback(async (query: string) => {
     if (!query.trim() || query.length < 2) {
       setSearchResults([]);
       return;
@@ -70,10 +70,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
 
     setIsSearching(true);
     try {
-      // For n8n, search with the community node tag
-      const searchUrl = isN8n
-        ? `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}+keywords:n8n-community-node-package&size=15`
-        : `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=15`;
+      const searchUrl = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(query)}&size=15`;
       
       const response = await fetch(searchUrl);
       const data: NpmSearchResult = await response.json();
@@ -102,7 +99,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
     
     // Debounce the search
     const timeoutId = setTimeout(() => {
-      searchNpm(query, framework === 'n8n');
+      searchNpm(query);
     }, 300);
     
     return () => clearTimeout(timeoutId);
@@ -192,7 +189,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
 
   const resetForm = () => {
     setRepository('');
-    setFramework('n8n');
+    setFramework('bits');
     setSource('npm');
     setSearchQuery('');
     setSearchResults([]);
@@ -227,20 +224,20 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
 
   if (!isOpen) return null;
 
-  const renderN8nNpmSearch = () => (
+  const renderBitsNpmSearch = () => (
     <div className="space-y-3">
-      <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
         <div className="flex items-start gap-2">
-          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-blue-700">
-            n8n community nodes are marked with the <code className="bg-blue-100 px-1 rounded">n8n-community-node-package</code> tag on npm.
+          <Info className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-emerald-700">
+            Search npm for bits packages. Look for packages starting with <code className="bg-emerald-100 px-1 rounded">bit-</code> or containing "bits" in the name.
           </p>
         </div>
       </div>
       
       <div className="relative">
         <label htmlFor="npm-search" className="block text-sm font-medium text-gray-700 mb-2">
-          Search npm for n8n Community Nodes
+          Search npm for Bits Packages
         </label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -250,7 +247,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
             value={searchQuery}
             onChange={handleSearchChange}
             disabled={isSubmitting}
-            placeholder="Search for n8n community packages..."
+            placeholder="Search for bits packages..."
             className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {isSearching && (
@@ -344,131 +341,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
           setSelectedPackage(null);
         }}
         disabled={isSubmitting}
-        placeholder="n8n-nodes-package-name"
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
-  );
-
-  const renderActivepiecesNpmSearch = () => (
-    <div className="space-y-3">
-      <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-        <div className="flex items-start gap-2">
-          <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-amber-700">
-            There is no specific tag for Activepieces community pieces. We search the entire npm registry. 
-            Look for packages starting with <code className="bg-amber-100 px-1 rounded">@activepieces/</code> or containing "activepieces" in the name.
-          </p>
-        </div>
-      </div>
-      
-      <div className="relative">
-        <label htmlFor="npm-search-ap" className="block text-sm font-medium text-gray-700 mb-2">
-          Search npm for Activepieces Packages
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            id="npm-search-ap"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            disabled={isSubmitting}
-            placeholder="Search npm packages..."
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          {isSearching && (
-            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-          )}
-        </div>
-        
-        {/* Search Results Dropdown */}
-        {searchResults.length > 0 && !selectedPackage && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-            {searchResults.map((pkg) => (
-              <button
-                key={pkg.name}
-                type="button"
-                onClick={() => handlePackageSelect(pkg)}
-                className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      <span className="font-medium text-gray-900 truncate">{pkg.name}</span>
-                      <span className="text-xs text-gray-500">v{pkg.version}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-600 line-clamp-2">{pkg.description}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                        License: {pkg.license}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Selected Package Display */}
-      {selectedPackage && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-green-600" />
-                <span className="font-medium text-green-800">{selectedPackage.name}</span>
-                <span className="text-xs text-green-600">v{selectedPackage.version}</span>
-              </div>
-              <p className="mt-1 text-sm text-green-700">{selectedPackage.description}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">
-                  License: {selectedPackage.license}
-                </span>
-                {selectedPackage.links.npm && (
-                  <a
-                    href={selectedPackage.links.npm}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-green-600 hover:text-green-800 flex items-center gap-1"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    View on npm
-                  </a>
-                )}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedPackage(null);
-                setRepository('');
-                setSearchQuery('');
-              }}
-              className="text-green-600 hover:text-green-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Manual input fallback */}
-      <div className="text-sm text-gray-500 flex items-center gap-1">
-        <span>Or enter package name manually:</span>
-      </div>
-      <input
-        type="text"
-        value={repository}
-        onChange={(e) => {
-          setRepository(e.target.value);
-          setSelectedPackage(null);
-        }}
-        disabled={isSubmitting}
-        placeholder="@activepieces/piece-name or package-name"
+        placeholder="bit-package-name"
         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
     </div>
@@ -649,21 +522,20 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
               disabled={isSubmitting}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="n8n">n8n</option>
-              <option value="activepieces">Activepieces</option>
+              <option value="bits">Bits</option>
               <option value="script">Script</option>
             </select>
           </div>
 
           {/* Framework-specific content */}
-          {framework === 'n8n' && (
+          {framework === 'bits' && (
             <>
               <div>
-                <label htmlFor="n8n-source" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="bits-source" className="block text-sm font-medium text-gray-700 mb-2">
                   Source
                 </label>
                 <select
-                  id="n8n-source"
+                  id="bits-source"
                   value={source}
                   onChange={(e) => setSource(e.target.value as 'github' | 'npm')}
                   disabled={isSubmitting}
@@ -673,28 +545,7 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
                   <option value="github">GitHub Repository</option>
                 </select>
               </div>
-              {source === 'npm' ? renderN8nNpmSearch() : renderGithubSource()}
-            </>
-          )}
-
-          {framework === 'activepieces' && (
-            <>
-              <div>
-                <label htmlFor="ap-source" className="block text-sm font-medium text-gray-700 mb-2">
-                  Source
-                </label>
-                <select
-                  id="ap-source"
-                  value={source}
-                  onChange={(e) => setSource(e.target.value as 'github' | 'npm')}
-                  disabled={isSubmitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="npm">npm Package</option>
-                  <option value="github">GitHub Repository</option>
-                </select>
-              </div>
-              {source === 'npm' ? renderActivepiecesNpmSearch() : renderGithubSource()}
+              {source === 'npm' ? renderBitsNpmSearch() : renderGithubSource()}
             </>
           )}
 
@@ -758,8 +609,9 @@ func main(param1 string, param2 int) map[string]interface{} {
 # Access arguments with $1, $2, etc.
 echo "Result: $1"`;
     case 'sql':
-      return `-- SQL query
-SELECT * FROM table_name WHERE column = $1;`;
+      return `-- SQL script
+SELECT * FROM table_name
+WHERE column = :param1;`;
     default:
       return '// Your code here';
   }

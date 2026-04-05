@@ -1,6 +1,8 @@
 /**
  * Forms Controller
  * Handles: POST /api/forms/validate, POST /api/forms/verify-auth, POST /api/forms/populate-options
+ * 
+ * Supports: bits framework
  */
 
 import { Request, Response } from 'express';
@@ -16,11 +18,8 @@ import {
   getModulePath,
 } from "@ha-bits/cortex/utils/moduleCloner";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractPiece } from '../helpers/activepieces-loader';
+import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
 import { LoggerFactory } from '@ha-bits/core/logger';
-
-// Type imports (compile-time only, not bundled)
-import type { Action, Piece } from "@activepieces/pieces-framework";
 
 const logger = LoggerFactory.getRoot();
 
@@ -148,6 +147,8 @@ export class FormsController {
   /**
    * POST /api/forms/populate-options
    * Populate options for a form field dropdown
+   * 
+   * Supports: bits framework
    */
   populateOptions = async (req: Request, res: Response): Promise<void> => {
     const { framework, moduleId, actionName, fieldName, currentValues } = req.body;
@@ -161,7 +162,8 @@ export class FormsController {
         );
       }
 
-      if (framework === "n8n") {
+      if (framework === "bits") {
+        // Load bits piece and call its method to get options
         const modulePathDir = getModulePath(moduleDefinition);
         const mainFile = getModuleMainFile(moduleDefinition);
 
@@ -170,43 +172,15 @@ export class FormsController {
         }
 
         const module = customRequire(mainFile, modulePathDir);
-        const nodeClass = module.default;
-        const nodeInstance = new nodeClass();
-
-        if (typeof nodeInstance.getOptions === "function") {
-          const options = await nodeInstance.getOptions(fieldName, currentValues);
-          const mappedOptions = options.map((opt: any) => ({
-            label: opt.name || opt.label || opt.value,
-            value: opt.value,
-          }));
-          res.json(createResponse(true, { options: mappedOptions }));
-          return;
+        
+        // Extract bits piece from module
+        const piece = extractBitsPieceFromModule(module);
+        if (!piece) {
+          throw new Error(`Failed to extract bits piece from module ${getModuleName(moduleDefinition)}`);
         }
-
-        throw new Error("getOptions method not found on n8n node");
-      } else if (framework === "activepieces") {
-        // Load Activepieces piece and call its method to get options
-        const modulePathDir = getModulePath(moduleDefinition);
-        const mainFile = getModuleMainFile(moduleDefinition);
-
-        if (!mainFile) {
-          throw new Error("Module main file not found");
-        }
-
-        const module = customRequire(mainFile, modulePathDir);
-        const packageJsonPath = require("path").join(modulePathDir, "package.json");
-        const packageJson = JSON.parse(
-          require("fs").readFileSync(packageJsonPath, "utf8"),
-        );
-
-        const piece = await extractPiece<Piece>({
-          module,
-          pieceName: getModuleName(moduleDefinition),
-          pieceVersion: packageJson.version,
-        });
 
         const actions = piece.actions() || {};
-        const action = actions[actionName] as Action<any>;
+        const action = actions[actionName];
 
         if (!action) {
           throw new Error(`Action '${actionName}' not found`);
@@ -218,6 +192,12 @@ export class FormsController {
         if (!property) {
           throw new Error(
             `Property '${fieldName}' not found in action '${actionName}'`,
+          );
+        }
+
+        if (typeof property.options !== 'function') {
+          throw new Error(
+            `Property '${fieldName}' does not have dynamic options`,
           );
         }
 
@@ -233,7 +213,7 @@ export class FormsController {
         return;
       }
 
-      res.json(createResponse(false, undefined, "No options found"));
+      res.json(createResponse(false, undefined, `Unsupported framework: ${framework}. Supported frameworks: bits`));
     } catch (error: any) {
       res.json(createResponse(false, undefined, error.message));
     }

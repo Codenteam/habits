@@ -3,12 +3,12 @@ import { getNodeDefinition } from '@ha-bits/workflow-canvas';
 
 /**
  * Data Transfer Object for workflow nodes
- * Provides a unified interface for both n8n and activepieces nodes
+ * Provides a unified interface for bits and script nodes
  */
 export class NodeDTO {
   public readonly id: string;
-  public readonly type: 'n8n' | 'activepieces' | 'script' | 'trigger' | 'action' | 'bits';
-  public readonly framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+  public readonly type: 'script' | 'trigger' | 'action' | 'bits';
+  public readonly framework: 'script' | 'bits';
   public readonly position: { x: number; y: number };
   public readonly label: string;
   public readonly module: string;
@@ -28,7 +28,7 @@ export class NodeDTO {
   constructor(data: WorkflowNode | Partial<WorkflowNode>) {
     this.id = data.id || `node-${Date.now()}`;
     this.position = data.position || { x: 0, y: 0 };
-    this.framework = data.data?.framework || 'n8n';
+    this.framework = data.data?.framework || 'bits';
     this.type = data.type || this.framework;
     this.label = data.data?.label || 'Untitled Node';
     this.module = data.data?.module || '';
@@ -68,7 +68,7 @@ export class NodeDTO {
    * Create a NodeDTO for a new node
    */
   static createNew(options: {
-    framework: 'n8n' | 'activepieces' | 'script' | 'bits';
+    framework: 'script' | 'bits';
     module: string;
     label?: string;
     position?: { x: number; y: number };
@@ -85,7 +85,7 @@ export class NodeDTO {
       data: {
         framework: options.framework,
         module: options.module,
-        label: options.label || options.module.replace(/^(n8n-nodes-|piece-)/, ''),
+        label: options.label || options.module.replace(/^(bit-)/, ''),
         resource: options.resource || '',
         operation: options.operation || '',
         params: {},
@@ -165,17 +165,10 @@ export class NodeDTO {
   }
 
   /**
-   * Check if this is an n8n node
+   * Check if this is a bits node
    */
-  isN8n(): boolean {
-    return this.framework === 'n8n';
-  }
-
-  /**
-   * Check if this is an activepieces node
-   */
-  isActivepieces(): boolean {
-    return this.framework === 'activepieces';
+  isBits(): boolean {
+    return this.framework === 'bits';
   }
 
   /**
@@ -214,9 +207,9 @@ export class NodeDTO {
    */
   getColorClass(): string {
     if (this.isTrigger()) {
-      return this.isN8n() ? 'bg-green-50 border-green-300 text-green-700' : 'bg-blue-50 border-blue-300 text-blue-700';
+      return this.isBits() ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-green-50 border-green-300 text-green-700';
     }
-    return this.isN8n() ? 'bg-red-50 border-red-300 text-red-700' : 'bg-purple-50 border-purple-300 text-purple-700';
+    return this.isBits() ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-gray-50 border-gray-300 text-gray-700';
   }
 
   /**
@@ -226,7 +219,7 @@ export class NodeDTO {
     if (this.isTrigger()) {
       return 'Play';
     }
-    return this.isN8n() ? 'Activity' : 'Zap';
+    return this.isBits() ? 'Zap' : 'Code';
   }
 
   /**
@@ -274,8 +267,8 @@ export class NodeDTO {
       errors.push('Node ID is required');
     }
 
-    if (!this.framework || !['n8n', 'activepieces', 'script'].includes(this.framework)) {
-      errors.push('Valid framework (n8n, activepieces, or script) is required');
+    if (!this.framework || !['script', 'bits'].includes(this.framework)) {
+      errors.push('Valid framework (script or bits) is required');
     }
 
     if (!this.module) {
@@ -284,13 +277,6 @@ export class NodeDTO {
 
     if (!this.label) {
       errors.push('Label is required');
-    }
-
-    // Framework-specific validation
-    if (this.isN8n()) {
-      if (this.resource && !this.operation) {
-        errors.push('Operation is required when resource is specified for n8n nodes');
-      }
     }
 
     return {

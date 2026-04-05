@@ -6,35 +6,37 @@
 import { NodeDTO } from './NodeDTO';
 import { NodeFactory } from './NodeFactory';
 
-// Example 1: Creating a basic n8n node
-export function createBasicN8nNode() {
+// Example 1: Creating a basic bits node
+export function createBasicBitsNode() {
   const node = NodeDTO.createNew({
-    framework: 'n8n',
-    module: 'n8n-nodes-chatwoot',
-    label: 'Get Contacts',
+    framework: 'bits',
+    module: '@ha-bits/bit-http',
+    label: 'HTTP Request',
     position: { x: 100, y: 100 },
-    resource: 'contact',
-    operation: 'getAll',
+    resource: 'http',
+    operation: 'request',
   });
 
   console.log('Created node:', node.getSummary());
   return node;
 }
 
-// Example 2: Creating an activepieces node
-export function createActivepiecesNode() {
+// Example 2: Creating a script node
+export function createScriptNode() {
   const node = NodeDTO.createNew({
-    framework: 'activepieces',
-    module: 'piece-slack',
-    label: 'Send Message',
+    framework: 'script',
+    module: 'script',
+    label: 'Process Data',
     position: { x: 300, y: 100 },
+    language: 'typescript',
+    content: 'export default function process(input: any) { return input; }',
   });
 
   return node;
 }
 
 // Example 3: Using NodeFactory for specific node types
-export function createChatwootWorkflow() {
+export function createHttpWorkflow() {
   // Create a schedule trigger
   const trigger = NodeFactory.createScheduleTriggerNode({
     interval: 'daily',
@@ -42,33 +44,29 @@ export function createChatwootWorkflow() {
     position: { x: 0, y: 100 },
   });
 
-  // Create a Chatwoot node to get contacts
-  const getContacts = NodeFactory.createChatwootNode({
-    resource: 'contact',
-    operation: 'getAll',
-    label: 'Get All Contacts',
+  // Create an HTTP request node
+  const httpRequest = NodeFactory.createHttpRequestNode({
+    method: 'GET',
+    url: 'https://api.example.com/data',
+    label: 'Fetch Data',
     position: { x: 200, y: 100 },
-    credentials: {
-      url: 'https://app.chatwoot.com',
-      token: 'your-token-here',
-    },
-    params: {
-      accountId: '1',
+    headers: {
+      'Content-Type': 'application/json',
     },
   });
 
   // Create an IF condition node
   const condition = NodeFactory.createIfNode({
-    condition: 'active',
-    label: 'Check Active Contacts',
+    condition: 'status == 200',
+    label: 'Check Status',
     position: { x: 400, y: 100 },
   });
 
-  // Create an HTTP request node
-  const httpRequest = NodeFactory.createHttpRequestNode({
+  // Create another HTTP request node
+  const notify = NodeFactory.createHttpRequestNode({
     method: 'POST',
     url: 'https://api.example.com/webhook',
-    label: 'Send to External API',
+    label: 'Send Notification',
     position: { x: 600, y: 100 },
     headers: {
       'Content-Type': 'application/json',
@@ -76,13 +74,13 @@ export function createChatwootWorkflow() {
     },
   });
 
-  return [trigger, getContacts, condition, httpRequest];
+  return [trigger, httpRequest, condition, notify];
 }
 
 // Example 4: Node validation and error checking
 export function validateNodeExample() {
   const node = NodeDTO.createNew({
-    framework: 'n8n',
+    framework: 'bits',
     module: '', // Invalid - empty module
     label: '',  // Invalid - empty label
   });
@@ -126,9 +124,9 @@ export function testNodeConnections() {
 
 // Example 6: Cloning and updating nodes
 export function nodeManipulationExample() {
-  const originalNode = NodeFactory.createChatwootNode({
-    resource: 'contact',
-    operation: 'get',
+  const originalNode = NodeFactory.createHttpRequestNode({
+    method: 'GET',
+    url: 'https://api.example.com',
     label: 'Original Node',
     position: { x: 0, y: 0 },
   });
@@ -141,9 +139,8 @@ export function nodeManipulationExample() {
   // Update the cloned node
   const updatedNode = clonedNode.update({
     label: 'Updated Node',
-    operation: 'update',
     params: {
-      contactId: '123',
+      method: 'POST',
     },
   });
 
@@ -158,35 +155,31 @@ export function createCompleteWorkflow() {
   const workflowNodes = NodeFactory.createNodeChain([
     {
       type: 'trigger',
-      framework: 'n8n',
-      module: 'n8n-nodes-base.scheduleTrigger',
+      framework: 'bits',
+      module: '@ha-bits/bit-schedule',
       label: 'Daily Schedule',
       params: { interval: 'daily' },
     },
     {
       type: 'action',
-      framework: 'n8n',
-      module: 'n8n-nodes-chatwoot',
-      resource: 'contact',
-      operation: 'getAll',
-      label: 'Fetch Contacts',
-      credentials: {
-        url: 'https://app.chatwoot.com',
-        token: 'token',
-      },
+      framework: 'bits',
+      module: '@ha-bits/bit-http',
+      resource: 'http',
+      operation: 'request',
+      label: 'Fetch Data',
     },
     {
       type: 'action',
-      framework: 'n8n',
-      module: 'n8n-nodes-base.if',
+      framework: 'bits',
+      module: '@ha-bits/bit-logic',
       resource: 'logic',
       operation: 'if',
-      label: 'Filter Active',
+      label: 'Filter Results',
     },
     {
       type: 'action',
-      framework: 'n8n',
-      module: 'n8n-nodes-base.httpRequest',
+      framework: 'bits',
+      module: '@ha-bits/bit-http',
       resource: 'http',
       operation: 'request',
       label: 'Send Notification',
@@ -215,9 +208,9 @@ export function loadAndManipulateWorkflow(workflowData: any) {
   const triggers = nodes.filter((node: NodeDTO) => node.isTrigger());
   console.log('Found', triggers.length, 'trigger nodes');
 
-  // Find n8n nodes
-  const n8nNodes = nodes.filter((node: NodeDTO) => node.isN8n());
-  console.log('Found', n8nNodes.length, 'n8n nodes');
+  // Find bits nodes
+  const bitsNodes = nodes.filter((node: NodeDTO) => node.isBits());
+  console.log('Found', bitsNodes.length, 'bits nodes');
 
   // Find nodes with multiple outputs
   const multiOutputNodes = nodes.filter((node: NodeDTO) => node.hasMultipleOutputs());
@@ -232,7 +225,7 @@ export function loadAndManipulateWorkflow(workflowData: any) {
   return {
     nodes,
     triggers,
-    n8nNodes,
+    bitsNodes,
     multiOutputNodes,
     executionConfigs,
   };

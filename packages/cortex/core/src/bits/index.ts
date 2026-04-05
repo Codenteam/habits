@@ -1,8 +1,8 @@
 /**
  * Bits Module Index
  * 
- * Exports all bits-related functionality for executing bits modules
- * without activepieces dependencies.
+ * Exports all bits-related functionality for executing bits modules -
+ * the native Habits module system.
  */
 
 export { 
@@ -77,7 +77,7 @@ export {
   createCustomApiCallAction,
 } from './framework';
 
-// Declarative API executor (n8n-style declarative nodes without n8n deps)
+// Declarative API executor (declarative routing-based nodes)
 export {
   executeDeclarativeNode,
   execute,

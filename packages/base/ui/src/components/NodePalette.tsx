@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Zap, Plus, Code, Settings } from 'lucide-react';
+import { Zap, Plus, Code, Settings } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { setAvailableModules } from '../store/slices/workflowSlice';
 import { api } from '../lib/api';
@@ -8,13 +8,13 @@ import AddModuleModal from './AddModuleModal';
 import ModuleIcon from './ModuleIcon';
 
 interface NodePaletteProps {
-  onAddNode: (template: { framework: 'n8n' | 'activepieces' | 'script' | 'bits'; module: string; label: string }) => void;
+  onAddNode: (template: { framework: 'script' | 'bits'; module: string; label: string }) => void;
 }
 
 export default function NodePalette({ onAddNode }: NodePaletteProps) {
   const dispatch = useAppDispatch();
   const availableModules = useAppSelector(state => state.workflow.availableModules);
-  const [selectedFrameworks, setSelectedFrameworks] = useState<('n8n' | 'activepieces' | 'script' | 'bits')[]>(['n8n', 'activepieces', 'script', 'bits']);
+  const [selectedFrameworks, setSelectedFrameworks] = useState<('script' | 'bits')[]>(['bits', 'script']);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
@@ -30,11 +30,10 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
     }
   };
 
-  const n8nModules = availableModules.filter((m) => m.framework === 'n8n');
-  const activepiecesModules = availableModules.filter((m) => m.framework === 'activepieces');
+  const bitsModules = availableModules.filter((m) => m.framework === 'bits');
   const scriptModules = availableModules.filter((m) => m.framework === 'script');
 
-  const toggleFramework = (framework: 'n8n' | 'activepieces' | 'script' | 'bits') => {
+  const toggleFramework = (framework: 'script' | 'bits') => {
     if (selectedFrameworks.includes(framework)) {
       // Don't allow deselecting if it's the only selected framework
       if (selectedFrameworks.length === 1) return;
@@ -44,7 +43,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
     }
   };
 
-  const handleAddNode = (framework: 'n8n' | 'activepieces' | 'script' | 'bits', module: string, label: string) => {
+  const handleAddNode = (framework: 'script' | 'bits', module: string, label: string) => {
     onAddNode({
       framework,
       module,
@@ -62,7 +61,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
         <h3 className="font-semibold text-lg mb-3 text-white">Node Palette</h3>
         
         {/* Framework toggle buttons */}
-        <div className="grid grid-cols-4 gap-1 mb-4">
+        <div className="grid grid-cols-2 gap-1 mb-4">
           <button
             onClick={() => toggleFramework('bits')}
             className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs ${
@@ -72,33 +71,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
             }`}
           >
             <Zap className="w-4 h-4" />
-            bits
-          </button>
-          <button
-            onClick={() => toggleFramework('activepieces')}
-            title="Deprecating: Activepieces pieces support will be removed in a future release"
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs relative ${
-              selectedFrameworks.includes('activepieces')
-                ? 'bg-purple-600/20 text-purple-400 border-2 border-purple-500/50'
-                : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border-2 border-transparent'
-            }`}
-          >
-            <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[8px] bg-yellow-500/80 text-yellow-900 rounded font-bold">DEP</span>
-            <Zap className="w-4 h-4" />
-            AP
-          </button>
-          <button
-            onClick={() => toggleFramework('n8n')}
-            title="Deprecating: n8n nodes support will be removed in a future release"
-            className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-md transition-colors text-xs relative ${
-              selectedFrameworks.includes('n8n')
-                ? 'bg-red-600/20 text-red-400 border-2 border-red-500/50'
-                : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border-2 border-transparent'
-            }`}
-          >
-            <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[8px] bg-yellow-500/80 text-yellow-900 rounded font-bold">DEP</span>
-            <Activity className="w-4 h-4" />
-            n8n
+            Bits
           </button>
           <button
             onClick={() => toggleFramework('script')}
@@ -124,10 +97,10 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
       </div>
 
       <div className="p-4 space-y-3">
-        {/* Bits - Always visible when bits filter is active */}
+        {/* Built-in Bits - Always visible when bits filter is active */}
         {selectedFrameworks.includes('bits') && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-emerald-400 border-b border-emerald-500/30 pb-1">Bits</h4>
+            <h4 className="text-sm font-medium text-emerald-400 border-b border-emerald-500/30 pb-1">Built-in Bits</h4>
             {BITS.map((bit) => {
               const IconComponent = bit.icon;
               return (
@@ -159,29 +132,22 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
           </div>
         )}
 
-        {/* Activepieces modules */}
-        {selectedFrameworks.includes('activepieces') && (
+        {/* Custom Bits modules */}
+        {selectedFrameworks.includes('bits') && bitsModules.length > 0 && (
           <div className="space-y-2">
-            {activepiecesModules.length > 0 && (
-              <h4 className="text-sm font-medium text-purple-400 border-b border-purple-500/30 pb-1">Activepieces Modules <span className="text-yellow-400 text-xs">(Deprecating)</span></h4>
-            )}
-            {activepiecesModules.length === 0 && selectedFrameworks.length === 1 && (
-              <div className="text-sm text-slate-500 text-center py-4">
-                No Activepieces modules available
-              </div>
-            )}
-            {activepiecesModules.map((module) => (
+            <h4 className="text-sm font-medium text-emerald-400 border-b border-emerald-500/30 pb-1">Custom Bits</h4>
+            {bitsModules.map((module) => (
               <button
-                key={`activepieces-${module.name}`}
-                onClick={() => handleAddNode('activepieces', module.name, module.name.replace('piece-', ''))}
-                className="w-full text-left px-3 py-3 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/30 rounded-md transition-colors group"
+                key={`bits-${module.name}`}
+                onClick={() => handleAddNode('bits', module.name, module.name.replace('bit-', ''))}
+                className="w-full text-left px-3 py-3 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded-md transition-colors group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <ModuleIcon logoUrl={module.logoUrl} className="w-4 h-4 text-purple-400" fallbackIcon="Zap" />
-                      <div className="font-medium text-sm text-purple-400">
-                        {module.displayName || module.name.replace('piece-', '')}
+                      <ModuleIcon logoUrl={module.logoUrl} className="w-4 h-4 text-emerald-400" fallbackIcon="Zap" />
+                      <div className="font-medium text-sm text-emerald-400">
+                        {module.displayName || module.name.replace('bit-', '')}
                       </div>
                       <span className={`px-1.5 py-0.5 text-xs rounded ${
                         (module as any).source === 'npm' 
@@ -195,50 +161,7 @@ export default function NodePalette({ onAddNode }: NodePaletteProps) {
                       <div className="text-xs text-green-400 mt-1">✓ Installed</div>
                     )}
                   </div>
-                  <Plus className="w-4 h-4 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* n8n modules */}
-        {selectedFrameworks.includes('n8n') && (
-          <div className="space-y-2">
-            {n8nModules.length > 0 && (
-              <h4 className="text-sm font-medium text-red-400 border-b border-red-500/30 pb-1">n8n Modules <span className="text-yellow-400 text-xs">(Deprecating)</span></h4>
-            )}
-            {n8nModules.length === 0 && selectedFrameworks.length === 1 && (
-              <div className="text-sm text-slate-500 text-center py-4">
-                No n8n modules available
-              </div>
-            )}
-            {n8nModules.map((module) => (
-              <button
-                key={`n8n-${module.name}`}
-                onClick={() => handleAddNode('n8n', module.name, module.name.replace('n8n-nodes-', ''))}
-                className="w-full text-left px-3 py-3 bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 rounded-md transition-colors group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <ModuleIcon logoUrl={module.logoUrl} className="w-4 h-4 text-red-400" fallbackIcon="Activity" />
-                      <div className="font-medium text-sm text-red-400">
-                        {module.displayName || module.name.replace('n8n-nodes-', '')}
-                      </div>
-                      <span className={`px-1.5 py-0.5 text-xs rounded ${
-                        (module as any).source === 'npm' 
-                          ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-green-500/20 text-green-400'
-                      }`}>
-                        {(module as any).source || 'github'}
-                      </span>
-                    </div>
-                    {module.installed && (
-                      <div className="text-xs text-green-400 mt-1">✓ Installed</div>
-                    )}
-                  </div>
-                  <Plus className="w-4 h-4 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Plus className="w-4 h-4 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </button>
             ))}

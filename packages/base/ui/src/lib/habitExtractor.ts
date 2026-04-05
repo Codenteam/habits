@@ -9,7 +9,7 @@ import { normalizePathsInObject } from '@ha-bits/core';
 /** Schema-compliant workflow node data */
 export interface SchemaNodeData {
   label?: string;
-  framework?: 'activepieces' | 'n8n' | 'script' | 'bits';
+  framework?: 'script' | 'bits';
   module?: string;
   operation?: string;
   resource?: string;
@@ -39,7 +39,7 @@ export interface SchemaNodeData {
 /** Schema-compliant workflow node */
 export interface SchemaNode {
   id: string;
-  type: 'action' | 'activepieces' | 'n8n' | 'trigger' | 'script' | 'bit';
+  type: 'action' | 'trigger' | 'script' | 'bit';
   position: { x: number; y: number };
   data: SchemaNodeData;
 }
@@ -135,8 +135,6 @@ function mapNodeType(node: CanvasNode): SchemaNode['type'] {
   const framework = node.data?.framework;
   const isTrigger = node.data?.isTrigger;
   
-  if (framework === 'n8n') return 'n8n';
-  if (framework === 'activepieces') return 'activepieces';
   if (framework === 'script') return 'script';
   if (framework === 'bits') return 'bit';
   

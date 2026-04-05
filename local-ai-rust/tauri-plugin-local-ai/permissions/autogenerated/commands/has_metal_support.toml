@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-has-metal-support"
+description = "Enables the has_metal_support command without any pre-configured scope."
+commands.allow = ["has_metal_support"]
+
+[[permission]]
+identifier = "deny-has-metal-support"
+description = "Denies the has_metal_support command without any pre-configured scope."
+commands.deny = ["has_metal_support"]

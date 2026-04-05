@@ -4,7 +4,7 @@
  * Provides commands:
  * - server: Start the workflow execution server
  * - execute: Execute a workflow from file or config
- * - convert: Convert workflows from n8n/Activepieces to Habits format
+ * - convert: Convert workflows from Script format to Habits format
  */
 
 import * as fs from '@ha-bits/bindings/fs';
@@ -16,7 +16,6 @@ import dotenv from 'dotenv';
 import {
   detectWorkflowType,
   convertWorkflowWithConnections,
-  generateEnvContent,
   getWorkflowTypeName,
 } from '@ha-bits/core';
 import { WorkflowExecutor } from '@ha-bits/cortex/WorkflowExecutor';
@@ -42,8 +41,6 @@ export interface CortexCommandOptions {
   workflow?: string;
   /** Output path for convert command */
   output?: string;
-  /** Generate .env file for convert command */
-  env?: boolean;
   /** Pretty print output */
   pretty?: boolean;
   /** Server options */
@@ -97,7 +94,7 @@ export function createCortexCLI(yargsInstance: Argv): Argv {
         type: 'string'
       }
     })
-    .command('convert', 'Convert a workflow from n8n, Activepieces, or Script format to Habits format', {
+    .command('convert', 'Convert a workflow from Script format to Habits format', {
       input: {
         alias: 'i',
         describe: 'Path to input workflow JSON file',
@@ -108,12 +105,6 @@ export function createCortexCLI(yargsInstance: Argv): Argv {
         alias: 'o',
         describe: 'Path to output Habits workflow JSON file (defaults to stdout)',
         type: 'string'
-      },
-      env: {
-        alias: 'e',
-        describe: 'Also generate a .env file for extracted connections/credentials',
-        type: 'boolean',
-        default: false
       },
       pretty: {
         alias: 'p',
@@ -381,7 +372,6 @@ async function runExecuteCommand(options: CortexCommandOptions): Promise<void> {
 async function runConvertCommand(options: CortexCommandOptions): Promise<void> {
   const inputPath = options.input!;
   const outputPath = options.output;
-  const generateEnv = options.env ?? false;
   const prettyPrint = options.pretty ?? true;
   
   if (!fs.existsSync(inputPath)) {
@@ -400,7 +390,7 @@ async function runConvertCommand(options: CortexCommandOptions): Promise<void> {
     const workflowType = detectWorkflowType(inputWorkflow);
     
     if (workflowType === 'unknown') {
-      console.error('❌ Unknown workflow format. Supported formats: n8n, Activepieces, Script, Habits');
+      console.error('❌ Unknown workflow format. Supported formats: Script, Habits');
       process.exit(1);
     }
     
@@ -417,7 +407,7 @@ async function runConvertCommand(options: CortexCommandOptions): Promise<void> {
     
     console.log(`🔍 Detected workflow type: ${getWorkflowTypeName(workflowType)}`);
     
-    const { workflow, connections } = convertWorkflowWithConnections(inputWorkflow);
+    const { workflow } = convertWorkflowWithConnections(inputWorkflow);
     
     const outputJson = prettyPrint 
       ? JSON.stringify(workflow, null, 2)
@@ -431,19 +421,6 @@ async function runConvertCommand(options: CortexCommandOptions): Promise<void> {
       console.log(`   Edges: ${workflow.edges.length}`);
     } else {
       console.log(outputJson);
-    }
-    
-    if (generateEnv && connections.length > 0) {
-      const envContent = generateEnvContent(workflow.name, connections);
-      const envPath = outputPath 
-        ? outputPath.replace(/\.json$/, '.env')
-        : path.join(process.cwd(), `${workflow.name.replace(/[^a-zA-Z0-9]/g, '_')}.env`);
-      
-      fs.writeFileSync(envPath, envContent);
-      console.log(`🔐 Environment file saved to: ${envPath}`);
-      console.log(`   Extracted ${connections.length} connection reference(s)`);
-    } else if (connections.length > 0 && !generateEnv) {
-      console.log(`ℹ️  Found ${connections.length} connection reference(s). Use --env to generate a .env template file.`);
     }
     
   } catch (error: any) {
@@ -616,7 +593,7 @@ export async function runCLI(): Promise<void> {
         type: 'string'
       }
     })
-    .command('convert', 'Convert a workflow to Habits format', {
+    .command('convert', 'Convert a workflow from Script format to Habits format', {
       input: {
         alias: 'i',
         describe: 'Path to input workflow JSON file',
@@ -627,12 +604,6 @@ export async function runCLI(): Promise<void> {
         alias: 'o',
         describe: 'Path to output file',
         type: 'string'
-      },
-      env: {
-        alias: 'e',
-        describe: 'Generate .env file',
-        type: 'boolean',
-        default: false
       },
       pretty: {
         alias: 'p',
@@ -669,7 +640,6 @@ export async function runCLI(): Promise<void> {
     input: argv.input as string | undefined,
     workflow: argv.workflow as string | undefined,
     output: argv.output as string | undefined,
-    env: argv.env as boolean | undefined,
     pretty: argv.pretty as boolean | undefined,
     registry: (argv as any).registry as string | undefined,
   } as any);

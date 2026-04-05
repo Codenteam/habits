@@ -1,0 +1,73 @@
+{
+  "name": "@ha-bits/bit-local-ai",
+  "version": "0.1.0",
+  "description": "Local AI inference bit module with OpenAI-compatible interface - text generation, image generation, audio transcription, text-to-speech, and image captioning using local models",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "bits",
+    "habits",
+    "local-ai",
+    "llm",
+    "whisper",
+    "stable-diffusion",
+    "text-generation",
+    "image-generation",
+    "text-to-speech",
+    "transcription",
+    "offline",
+    "local",
+    "ai"
+  ],
+  "author": "Habits Team",
+  "license": "MIT",
+  "dependencies": {
+    "@ha-bits/bit-ai": ">=1.0.0",
+    "@ha-bits/cortex-core": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex-core": ">=0.1.0"
+  },
+  "optionalDependencies": {
+    "@local-ai/node": ">=0.1.0"
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-local-ai/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "level:L1"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true,
+    "replaces": "@ha-bits/bit-ai"
+  }
+}

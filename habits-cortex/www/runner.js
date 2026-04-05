@@ -20,9 +20,7 @@ const KEYRING_SERVICE = 'habits';
 
 // Showcase URL - detect dev vs prod environment
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const SHOWCASE_BASE_URL = isDev 
-  ? 'http://localhost:5173/intersect/habits'
-  : 'https://codenteam.com/intersect/habits';
+const SHOWCASE_BASE_URL = 'https://codenteam.com/intersect/habits';
 const SHOWCASE_INDEX_URL = `${SHOWCASE_BASE_URL}/showcase/index.json`;
 
 // ============================================================================
@@ -224,15 +222,18 @@ async function deleteSecretFromKeyring(key) {
 // ============================================================================
 
 async function getHabitsDir() {
+  const tauri = await waitForTauri();
   if (!state.appDataPath) {
     state.appDataPath = await getAppDataDir();
   }
-  return state.appDataPath + 'habits/';
+  // Use path.join for cross-platform compatibility (Android, iOS, desktop)
+  return tauri.path.join(state.appDataPath, 'habits');
 }
 
 async function getManifestPath() {
+  const tauri = await waitForTauri();
   const habitsDir = await getHabitsDir();
-  return habitsDir + 'manifest.json';
+  return tauri.path.join(habitsDir, 'manifest.json');
 }
 
 async function loadManifest() {
@@ -318,9 +319,50 @@ async function extractHabitFile(filePath) {
     }
     const bundleJs = await bundleFile.async('string');
     
-    // Try to get habit name from filename
-    const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'Unknown';
-    const habitName = fileName.replace(/\.habit$/, '');
+    // Try to get habit name from stack.yaml inside zip (more reliable than file path)
+    // File paths on Android are content:// URIs which don't contain the actual filename
+    let habitName = 'Unknown';
+    const stackFile = zip.file('stack.yaml') || zip.file('stack.yml');
+    if (stackFile) {
+      try {
+        const stackContent = await stackFile.async('string');
+        
+        // 1. First try: explicit name field
+        const nameMatch = stackContent.match(/^name:\s*['"]?([^'"\n]+)['"]?/m);
+        if (nameMatch && nameMatch[1]) {
+          habitName = nameMatch[1].trim();
+        }
+        
+        // 2. Second try: first workflow id (more reliable than filename on Android)
+        if (habitName === 'Unknown') {
+          const workflowIdMatch = stackContent.match(/^\s*-\s*id:\s*['"]?([^'"\n]+)['"]?/m);
+          if (workflowIdMatch && workflowIdMatch[1]) {
+            // Convert workflow-id to readable name: "hello-world" -> "Hello World"
+            habitName = workflowIdMatch[1].trim()
+              .split(/[-_]/)
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+        }
+      } catch (e) {
+        console.log('[Habits] Could not parse stack.yaml for name:', e);
+      }
+    }
+    
+    // 3. Fallback: try to extract from filename (works on desktop, may fail on mobile)
+    if (habitName === 'Unknown') {
+      const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || '';
+      // On Android, content URIs may end with document IDs like "raw:12345" or just numbers
+      // Check if it looks like a valid filename (contains .habit extension)
+      if (fileName.endsWith('.habit')) {
+        habitName = fileName.replace(/\.habit$/, '');
+        // Convert filename to readable: "hello-world" -> "Hello World"
+        habitName = habitName
+          .split(/[-_]/)
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+    }
     
     console.log('[Habits] Extracted habit:', habitName);
     console.log('[Habits] Index HTML size:', indexHtml.length, 'bytes');
@@ -765,10 +807,10 @@ async function downloadAndImportShowcaseHabit(habit) {
     const arrayBuffer = await blob.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     
-    // Save to app data directory
+    // Save to app data directory (use path.join for Android/iOS compatibility)
     const tauri = await waitForTauri();
     const appDataDir = await tauri.path.appDataDir();
-    const habitsDir = `${appDataDir}habits`;
+    const habitsDir = await tauri.path.join(appDataDir, 'habits');
     
     // Ensure habits directory exists
     if (!(await exists(habitsDir))) {
@@ -776,7 +818,7 @@ async function downloadAndImportShowcaseHabit(habit) {
     }
     
     const filename = habit.slug + '.habit';
-    const filePath = `${habitsDir}/${filename}`;
+    const filePath = await tauri.path.join(habitsDir, filename);
     
     // Write file using wrapper (Tauri 2.x API)
     await writeBinaryFile(filePath, bytes);

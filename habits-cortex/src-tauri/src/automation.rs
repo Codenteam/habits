@@ -1,9 +1,10 @@
-#[cfg(debug_assertions)]
+// Only compile automation server for desktop debug builds
+#[cfg(all(debug_assertions, desktop))]
 use std::path::PathBuf;
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, desktop))]
 use xcap::Window;
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, desktop))]
 pub fn start_automation_server(app: tauri::AppHandle) {
     use std::net::TcpListener;
     use std::io::{Read, Write};
@@ -112,7 +113,7 @@ pub fn start_automation_server(app: tauri::AppHandle) {
     });
 }
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, desktop))]
 fn take_tauri_window_screenshot(win: &tauri::WebviewWindow) -> Result<PathBuf, String> {
     // Get the tauri window title to find the matching xcap window
     let title = win.title().map_err(|e| e.to_string())?;

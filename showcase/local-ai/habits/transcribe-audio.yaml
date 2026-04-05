@@ -1,0 +1,60 @@
+# Transcribe Audio Workflow
+# Transcribe audio files to text using local Whisper models
+
+id: transcribe-audio
+name: Transcribe Audio
+description: Transcribe audio files to text using local Whisper models
+
+input:
+  type: object
+  properties:
+    audioUrl:
+      type: string
+      description: URL or path to the audio file
+    model:
+      type: string
+      enum: [tiny, base, small, medium, large, large-v2, large-v3]
+      description: Whisper model size (optional, default base)
+    language:
+      type: string
+      description: Language code (optional, auto-detected if not provided)
+    task:
+      type: string
+      enum: [Transcribe, Translate]
+      description: Transcribe (keep language) or Translate (to English)
+    timestamps:
+      type: boolean
+      description: Include timestamps in output
+    responseFormat:
+      type: string
+      enum: [text, json, srt, vtt]
+      description: Output format (optional, default text)
+  required:
+    - audioUrl
+
+nodes:
+  - id: transcribe
+    type: action
+    data:
+      framework: bits
+      source: local
+      module: "@ha-bits/bit-local-ai"
+      operation: transcribe_audio
+      label: Audio Transcription
+      isTrigger: false
+      params:
+        model: "{{habits.input.model || 'base'}}"
+        audioUrl: "{{habits.input.audioUrl}}"
+        language: "{{habits.input.language}}"
+        task: "{{habits.input.task || 'Transcribe'}}"
+        timestamps: "{{habits.input.timestamps || false}}"
+        responseFormat: "{{habits.input.responseFormat || 'text'}}"
+
+edges: []
+
+output:
+  text: "{{transcribe.text}}"
+  language: "{{transcribe.language}}"
+  segments: "{{transcribe.segments}}"
+  formatted: "{{transcribe.formatted}}"
+  model: "{{transcribe.model}}"

@@ -164,7 +164,7 @@ export default function WorkflowEditor() {
   }, [nodes, edges, setNodesState, dispatch]);
 
   const handleAddNode = useCallback(
-    (template: { framework: 'n8n' | 'activepieces' | 'script' | 'bits'; module: string; label: string }) => {
+    (template: { framework: 'script' | 'bits'; module: string; label: string }) => {
       const instance = canvasRef.current?.getInstance();
       const position = instance
         ? instance.screenToFlowPosition({

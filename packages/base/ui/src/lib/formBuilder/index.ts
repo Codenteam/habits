@@ -2,23 +2,12 @@
 
 // Schema Converters - Re-export from @ha-bits/core
 export {
-  // N8N Schema Converter
-  N8NConverter,
-  createN8NConverter,
-  convertN8NResponse,
-  // ActivePieces Schema Converter
-  ActivePiecesConverter,
-  createActivePiecesConverter,
-  convertActivePiecesResponse,
   // Types
   type FormFieldType,
   type FormField,
   type PieceSchema,
   type ActionDefinition,
   type AuthConfig,
-  type N8NResponse,
-  type ActivePiecesResponse,
-  type PlatformConverter
 } from '@ha-bits/core';
 
 // API utilities
@@ -31,5 +20,4 @@ export type {
   FormValidationResult,
   FormBuilderConfig,
   FormState,
-  ActivePiecesData
 } from './types';

@@ -42,9 +42,6 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@activepieces/pieces-common": "^0.10.1",
-    "@activepieces/pieces-framework": "^0.22.2",
-    "@activepieces/shared": "^0.29.0",
     "@nx/esbuild": "^22.4.5",
     "@nx/js": "^22.4.5",
     "@nx/vite": "^22.4.5",

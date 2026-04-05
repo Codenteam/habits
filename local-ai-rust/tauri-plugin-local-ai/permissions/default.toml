@@ -1,0 +1,66 @@
+# Default permissions for Local AI plugin
+
+[[permission]]
+identifier = "allow-generate-text"
+description = "Allow text generation commands"
+commands.allow = [
+  "generate_text",
+  "create_text_generator",
+  "text_generator_generate"
+]
+
+[[permission]]
+identifier = "allow-image-caption"
+description = "Allow image captioning commands"
+commands.allow = [
+  "caption_image",
+  "create_image_captioner",
+  "image_captioner_caption"
+]
+
+[[permission]]
+identifier = "allow-image-gen"
+description = "Allow image generation commands"
+commands.allow = [
+  "generate_image",
+  "create_image_generator",
+  "image_generator_generate"
+]
+
+[[permission]]
+identifier = "allow-transcribe"
+description = "Allow audio transcription commands"
+commands.allow = [
+  "transcribe_audio",
+  "create_transcriber",
+  "transcriber_transcribe"
+]
+
+[[permission]]
+identifier = "allow-text-to-voice"
+description = "Allow text-to-voice commands"
+commands.allow = [
+  "synthesize_speech",
+  "create_voice_synthesizer",
+  "voice_synthesizer_synthesize"
+]
+
+[[permission]]
+identifier = "allow-utilities"
+description = "Allow utility commands"
+commands.allow = [
+  "get_version",
+  "has_metal_support",
+  "has_cuda_support"
+]
+
+[default]
+description = "Default permissions for Local AI plugin - allows all AI operations"
+permissions = [
+  "allow-generate-text",
+  "allow-image-caption",
+  "allow-image-gen",
+  "allow-transcribe",
+  "allow-text-to-voice",
+  "allow-utilities"
+]

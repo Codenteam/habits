@@ -7,12 +7,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 // Load tailwind script at runtime using fs.readFileSync
-// Get the directory of this module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname is available in CommonJS modules
 
 // Try multiple possible paths (works for both tsx dev and built bundle)
 function loadTailwindScript(): string {

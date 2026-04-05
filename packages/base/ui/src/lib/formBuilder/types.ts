@@ -11,13 +11,6 @@ export type {
   PieceSchema,
   ActionDefinition,
   AuthConfig,
-  N8NResponse,
-  ActivePiecesResponse,
-  ActivePiecesPieceConfig,
-  ActivePiecesActionConfig,
-  ActivePiecesPropertyConfig,
-  ActivePiecesAuthConfig,
-  PlatformConverter
 } from '@ha-bits/core';
 
 // UI-specific types
@@ -57,15 +50,4 @@ export interface FormState {
   isValidating: boolean;
   selectedAction?: string;
   lastRefresh?: number;
-}
-
-// ActivePieces Data wrapper (for API response handling in UI)
-export interface ActivePiecesData {
-  schema: {
-    displayName: string;
-    name: string;
-    version: string;
-    pieces: import('@ha-bits/core').ActivePiecesPieceConfig;
-    auth?: import('@ha-bits/core').ActivePiecesAuthConfig;
-  };
 }

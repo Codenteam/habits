@@ -125,11 +125,8 @@ definitions:
         type: string
         enum:
           - action
-          - activepieces
-          - n8n
           - trigger
           - script
-          # Future/WIP type - used in conceptual docs examples
           - bit         # Custom bits (see roadmap/bits.md) - includes declarative, moderation, and other bit subtypes
       position:
         type: object
@@ -146,10 +143,7 @@ definitions:
           framework:
             type: string
             enum:
-              - activepieces
-              - n8n
               - script
-              # Future/WIP framework - used in conceptual docs examples
               - bits      # Custom bits framework (see roadmap/bits.md)
           module:
             type: string

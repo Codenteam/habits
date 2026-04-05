@@ -1,9 +1,10 @@
 /**
  * Module execution helpers
+ * 
+ * Supports: bits, script frameworks
  */
 
-import { executeN8nModule } from "@ha-bits/cortex/n8n/n8nExecutor";
-import { executeActivepiecesModule } from "@ha-bits/cortex/activepieces/activepiecesExecutor";
+import { executeBitsModule } from "@ha-bits/cortex-core";
 import { ExecutionResult } from '../types';
 
 // Store async execution results
@@ -11,25 +12,25 @@ export const executionResults = new Map<string, ExecutionResult>();
 
 /**
  * Execute module based on framework
+ * 
+ * Supported frameworks: bits, script
  */
 export async function executeModule(
   framework: string,
   moduleName: string,
   params: Record<string, any>,
 ): Promise<any> {
-  if (framework === "n8n") {
-    // Pass the full npm package name (e.g., 'n8n-nodes-chatwoot')
-    return await executeN8nModule(moduleName, params);
-  } else if (framework === "activepieces") {
-    // Pass the full npm package name (e.g., '@activepieces/piece-google-sheets')
-    return await executeActivepiecesModule({
+  if (framework === "bits") {
+    return await executeBitsModule({
       source: "npm",
       framework,
       moduleName,
       params,
     });
+  } else if (framework === "script") {
+    throw new Error(`Script execution is not supported directly. Use workflow execution instead.`);
   } else {
-    throw new Error(`Unknown framework: ${framework}`);
+    throw new Error(`Unknown framework: ${framework}. Supported frameworks: bits`);
   }
 }
 
