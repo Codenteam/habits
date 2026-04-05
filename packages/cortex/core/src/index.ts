@@ -114,6 +114,10 @@ export {
   // Utilities
   createCustomApiCallRoutine,
   createCustomApiCallAction,
+  getBitRoutines,
+  getBitCues,
+  countBitRoutines,
+  countBitCues,
 } from './bits/framework';
 
 // Declarative node types - for creating declarative/routing-based bits

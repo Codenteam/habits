@@ -919,6 +919,40 @@ export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<Auth
 export const createPiece = createBit;
 
 // ============================================================================
+// Utility: Bit Counting Helpers
+// ============================================================================
+
+/**
+ * Get routines from a bit, supporting both new (routines) and old (actions) property names
+ */
+export function getBitRoutines(bit: any): Record<string, BitRoutine> {
+  return bit.routines || bit.actions || {};
+}
+
+/**
+ * Get cues from a bit, supporting both new (cues) and old (triggers) property names
+ */
+export function getBitCues(bit: any): Record<string, BitCue> {
+  return bit.cues || bit.triggers || {};
+}
+
+/**
+ * Count routines in a bit, supporting both new (routines) and old (actions) property names
+ */
+export function countBitRoutines(bit: any): number {
+  const routines = getBitRoutines(bit);
+  return Object.keys(routines).length;
+}
+
+/**
+ * Count cues in a bit, supporting both new (cues) and old (triggers) property names
+ */
+export function countBitCues(bit: any): number {
+  const cues = getBitCues(bit);
+  return Object.keys(cues).length;
+}
+
+// ============================================================================
 // Utility: Custom API Call Routine
 // ============================================================================
 

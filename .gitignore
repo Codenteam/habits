@@ -95,3 +95,7 @@ candle-bindings/*.node
 candle-bindings/target/
 candle-bindings/index.js
 candle-bindings/index.d.ts
+
+
+.github/instructions/general.instructions.md
+*.test.yaml
