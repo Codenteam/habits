@@ -10,4 +10,3 @@ export { runCLI, type HabitsCommandOptions } from './cli';
 
 // Re-export key components from cortex
 export { WorkflowExecutor } from '@ha-bits/cortex';
-export { convertWorkflow, convertWorkflowWithConnections, generateEnvContent } from '@ha-bits/core';
