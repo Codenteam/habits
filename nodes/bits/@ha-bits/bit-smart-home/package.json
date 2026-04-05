@@ -1,0 +1,25 @@
+{
+  "name": "@ha-bits/bit-smart-home",
+  "version": "0.0.1",
+  "description": "Smart home control bit using Matter protocol for mobile apps",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "MIT",
+  "keywords": [
+    "habits",
+    "bit",
+    "smart-home",
+    "matter",
+    "homekit",
+    "google-home",
+    "lights",
+    "iot",
+    "mobile"
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex-core": "*"
+  }
+}

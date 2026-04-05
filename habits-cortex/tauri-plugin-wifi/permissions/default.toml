@@ -1,0 +1,9 @@
+[default]
+description = "Default permissions for the Wi-Fi plugin"
+permissions = [
+    "allow-get-current-network",
+    "allow-is-connected",
+    "allow-list-saved-networks",
+    "allow-check-permissions",
+    "allow-request-permissions",
+]

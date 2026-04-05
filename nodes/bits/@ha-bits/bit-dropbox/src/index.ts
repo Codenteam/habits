@@ -161,6 +161,7 @@ const dropboxBit = {
   displayName: 'Dropbox',
   description: 'Dropbox cloud storage integration for file hosting operations',
   logoUrl: 'lucide:Inbox',
+  runtime: 'all',
   
   // This bit replaces the base file-hosting bit
   replaces: '@ha-bits/bit-file-hosting',

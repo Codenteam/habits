@@ -99,6 +99,7 @@ const googleDriveBit = {
   displayName: 'Google Drive',
   description: 'Google Drive cloud storage integration for file hosting operations',
   logoUrl: 'lucide:HardDrive',
+  runtime: 'all',
   
   // This bit replaces the base file-hosting bit
   replaces: '@ha-bits/bit-file-hosting',

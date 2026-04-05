@@ -1,0 +1,21 @@
+{
+  "name": "@ha-bits/bit-wifi",
+  "version": "0.0.1",
+  "description": "Wi-Fi network monitoring bit for mobile apps",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "MIT",
+  "keywords": [
+    "habits",
+    "bit",
+    "wifi",
+    "network",
+    "mobile"
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex-core": "*"
+  }
+}

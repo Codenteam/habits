@@ -134,6 +134,7 @@ const twitterBit = {
   displayName: 'Twitter/X',
   description: 'Post tweets and manage Twitter/X presence',
   logoUrl: 'lucide:Twitter',
+  runtime: 'all',
   
   // OAuth 2.0 PKCE authentication for Twitter API v2
   auth: {

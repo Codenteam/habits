@@ -47,6 +47,7 @@ const tasksBit = {
   displayName: 'Tasks / Tickets',
   description: 'Task and ticket management for Jira, Asana, and other systems',
   logoUrl: 'lucide:CheckSquare',
+  runtime: 'all',
   
   auth: {
     type: 'CUSTOM',

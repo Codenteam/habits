@@ -578,6 +578,7 @@ export const ai = createBit({
   displayName: 'AI',
   description: 'L0 base bit for AI/LLM services. Provides common interfaces and simple random responses. Use @ha-bits/bit-openai or @ha-bits/bit-local-ai for real AI functionality.',
   logoUrl: 'lucide:Brain',
+  runtime: 'all',
   categories: [BitCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['Habits Team'],
   actions: [askAI, askAssistantAI, listModels, installModel],

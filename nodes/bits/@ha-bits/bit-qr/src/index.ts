@@ -40,6 +40,7 @@ const qrBit = {
   displayName: 'QR Code',
   description: 'Generate and read QR codes - supports text, URLs, vCard, WiFi, and calendar formats',
   logoUrl: 'lucide:QrCode',
+  runtime: 'all',
   
   actions: {
     generate: {

@@ -84,6 +84,7 @@ const hubspotBit = {
   displayName: 'HubSpot CRM',
   description: 'HubSpot CRM integration for contacts, deals, and lead management',
   logoUrl: 'lucide:Users',
+  runtime: 'all',
   replaces: '@ha-bits/bit-crm',
   
   auth: {

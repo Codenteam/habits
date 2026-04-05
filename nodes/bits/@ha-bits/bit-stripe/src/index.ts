@@ -86,6 +86,7 @@ const stripeBit = {
   displayName: 'Stripe',
   description: 'Stripe payment processing - triggers and actions',
   logoUrl: 'lucide:CreditCard',
+  runtime: 'all',
   
   auth: {
     type: 'SECRET_TEXT',

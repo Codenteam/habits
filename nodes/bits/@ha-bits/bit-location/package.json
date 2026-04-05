@@ -1,0 +1,73 @@
+{
+  "name": "@ha-bits/bit-location",
+  "version": "1.0.0",
+  "description": "Location and geofencing bit using Tauri geolocation plugin",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./driver": {
+      "types": "./dist/driver.d.ts",
+      "default": "./dist/driver.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "location",
+    "geolocation",
+    "geofence",
+    "gps",
+    "tauri"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "src/stubs"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-location/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true,
+    "stubs": {
+      "@ha-bits/bit-location/driver": "./src/stubs/tauri-driver.js"
+    },
+    "tauriPlugins": {
+      "geolocation": {
+        "cargo": "tauri-plugin-geolocation = \"2\"",
+        "npm": "@tauri-apps/plugin-geolocation"
+      }
+    }
+  }
+}

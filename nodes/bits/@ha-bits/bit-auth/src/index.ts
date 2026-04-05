@@ -15,6 +15,7 @@ const authBit = {
   displayName: 'Authentication',
   description: 'JWT sign, verify, and decode operations for authentication',
   logoUrl: 'lucide:Shield',
+  runtime: 'all',
   
   actions: {
     /**

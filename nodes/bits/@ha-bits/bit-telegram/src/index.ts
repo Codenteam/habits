@@ -50,6 +50,7 @@ const telegramBit = {
   displayName: 'Telegram',
   description: 'Send messages and notifications via Telegram Bot API',
   logoUrl: 'lucide:Send',
+  runtime: 'all',
   
   auth: {
     type: 'SECRET_TEXT',

@@ -208,6 +208,7 @@ const crmBit = {
   displayName: 'CRM (Base)',
   description: 'L0 CRM base bit - in-memory demo. Replace with HubSpot, Salesforce, or GoHighLevel.',
   logoUrl: 'lucide:Users',
+  runtime: 'all',
   
   /**
    * Declares which bits can replace this one.

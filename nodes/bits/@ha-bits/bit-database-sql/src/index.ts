@@ -33,6 +33,7 @@ const sqlBit = {
   displayName: 'Database / Storage (SQL/SQLite)',
   description: 'Store and retrieve data in workflows using SQLite with Drizzle ORM',
   logoUrl: 'lucide:Database',
+  runtime: 'all',
   replaces: '@ha-bits/bit-database',
   
   actions: {

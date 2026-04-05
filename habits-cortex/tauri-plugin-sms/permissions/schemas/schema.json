@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PermissionFile",
+  "description": "Permission file schema for tauri-plugin-sms",
+  "type": "object",
+  "properties": {
+    "default": {
+      "description": "Default permissions for the plugin",
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "permission": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "commands": {
+            "type": "object",
+            "properties": {
+              "allow": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "deny": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": ["identifier"]
+      }
+    }
+  }
+}

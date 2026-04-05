@@ -18,6 +18,7 @@ const markdownToHtmlBit = {
   displayName: 'Markdown to HTML',
   description: 'Convert Markdown to HTML. WARNING: Does not sanitize output - use with caution for user-generated content.',
   logoUrl: 'lucide:FileCode',
+  runtime: 'all',
   
   actions: {
     /**

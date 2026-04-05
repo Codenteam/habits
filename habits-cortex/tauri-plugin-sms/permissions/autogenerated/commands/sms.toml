@@ -1,0 +1,31 @@
+"$schema" = "schemas/schema.json"
+
+[[permission]]
+identifier = "allow-send-sms"
+description = "Allows sending SMS messages from the application"
+commands.allow = ["send_sms"]
+
+[[permission]]
+identifier = "deny-send-sms"
+description = "Denies sending SMS messages from the application"
+commands.deny = ["send_sms"]
+
+[[permission]]
+identifier = "allow-read-sms"
+description = "Allows reading SMS messages (Android only)"
+commands.allow = ["read_sms"]
+
+[[permission]]
+identifier = "deny-read-sms"
+description = "Denies reading SMS messages"
+commands.deny = ["read_sms"]
+
+[[permission]]
+identifier = "allow-check-permissions"
+description = "Allows checking SMS permission status"
+commands.allow = ["check_permissions"]
+
+[[permission]]
+identifier = "allow-request-permissions"
+description = "Allows requesting SMS permissions from the user"
+commands.allow = ["request_permissions"]

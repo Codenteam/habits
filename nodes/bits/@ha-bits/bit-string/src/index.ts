@@ -9,6 +9,7 @@ const stringBit = {
   displayName: 'String Utils',
   description: 'Simple string manipulation utilities',
   logoUrl: 'lucide:CaseSensitive',
+  runtime: 'all',
   
   // Actions as a record
   actions: {

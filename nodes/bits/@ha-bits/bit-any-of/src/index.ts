@@ -54,6 +54,7 @@ const anyOfBit = {
   displayName: 'Any Of (Race)',
   description: 'Flow control gate that continues when ANY one incoming edge completes. Single output whose value is determined by which input branch triggered it.',
   logoUrl: 'lucide:CircleDot',
+  runtime: 'all',
   
   actions: {
     /**

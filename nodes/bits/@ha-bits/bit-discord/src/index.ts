@@ -93,6 +93,7 @@ const discordBit = {
   displayName: 'Discord',
   description: 'Send messages and notifications via Discord webhooks or bot',
   logoUrl: 'lucide:MessageSquare',
+  runtime: 'all',
 
   auth: {
     type: 'SECRET_TEXT',

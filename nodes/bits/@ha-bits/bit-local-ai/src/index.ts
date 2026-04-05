@@ -210,6 +210,7 @@ export const localAi = createBit({
   description: 'Local AI inference services with OpenAI-compatible interface. Run LLMs, Stable Diffusion, Whisper, and more entirely on your machine.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'lucide:Cpu',
+  runtime: 'all',
   categories: [BitCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localAiAuth,
   actions: [

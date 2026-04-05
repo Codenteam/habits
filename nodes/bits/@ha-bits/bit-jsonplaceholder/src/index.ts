@@ -19,6 +19,7 @@ import type {
  * Uses https://jsonplaceholder.typicode.com - a free fake API for testing
  */
 export class JSONPlaceholder implements IDeclarativeNodeType {
+  runtime: 'app' | 'server' | 'all' = 'all';
   description: DeclarativeNodeDescription = {
     displayName: 'JSONPlaceholder',
     name: 'jsonPlaceholder',

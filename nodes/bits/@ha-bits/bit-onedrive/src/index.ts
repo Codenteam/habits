@@ -134,6 +134,7 @@ const oneDriveBit = {
   displayName: 'Microsoft OneDrive',
   description: 'Microsoft OneDrive cloud storage integration for file hosting operations',
   logoUrl: 'lucide:Cloud',
+  runtime: 'all',
   
   // This bit replaces the base file-hosting bit
   replaces: '@ha-bits/bit-file-hosting',

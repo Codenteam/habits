@@ -222,6 +222,13 @@ export interface BitsPiece {
   displayName: string;
   description?: string;
   logoUrl?: string;
+  /**
+   * Runtime environment where this bit can execute.
+   * - 'app': Mobile/desktop Tauri app only (requires native plugins)
+   * - 'server': Server-side only (Node.js environment)
+   * - 'all': Works in both environments (default)
+   */
+  runtime?: 'app' | 'server' | 'all';
   auth?: any;
   /** Get all routines provided by this bit */
   routines: () => Record<string, BitsRoutine>;

@@ -71,6 +71,7 @@ const pdfBit = {
   displayName: 'PDF',
   description: 'Extract text, metadata, and content from PDF documents',
   logoUrl: 'lucide:FileText',
+  runtime: 'all',
   
   actions: {
     extractText: {

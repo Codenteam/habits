@@ -99,3 +99,4 @@ candle-bindings/index.d.ts
 
 .github/instructions/general.instructions.md
 *.test.yaml
+untracked

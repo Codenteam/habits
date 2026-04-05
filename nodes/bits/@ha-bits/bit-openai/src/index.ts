@@ -97,6 +97,7 @@ export const openai = createBit({
   description: 'OpenAI AI services including ChatGPT, GPT-4, Assistants, DALL-E, and more. Implements the @ha-bits/bit-ai interface.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'lucide:Sparkles',
+  runtime: 'all',
   categories: [BitCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
   actions: [

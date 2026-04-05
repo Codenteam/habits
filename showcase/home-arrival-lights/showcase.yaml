@@ -1,0 +1,37 @@
+# Home Arrival Lights Showcase
+# 
+# This showcase demonstrates the home automation scenario:
+# When you arrive home (enter geofence), the smart home lights turn on.
+# When you leave home (exit geofence), the lights turn off.
+#
+# Required bits (mobile app only - runtime: 'app'):
+# - @ha-bits/bit-location: For geofence monitoring
+# - @ha-bits/bit-smart-home: For Matter-based light control
+#
+# Platform support:
+# - Android: Full support using official Tauri geolocation + Google Home Matter SDK
+# - iOS: Full support using official Tauri geolocation + HomeKit (Matter)
+
+name: home-arrival-lights
+title: "Home Arrival Lights"
+description: "Automatically control smart home lights based on location"
+runtime: app
+icon: "🏠"
+tags:
+  - automation
+  - smart-home
+  - location
+  - lights
+  - matter
+
+features:
+  - Geofence-based automation triggers
+  - Matter protocol smart home control
+  - Works with Google Home (Android) and HomeKit (iOS)
+  - Configurable home location and radius
+  - Support for multiple lights
+
+requirements:
+  - Mobile device with location services
+  - Matter-compatible smart lights
+  - Google Home app (Android) or Home app (iOS) configured with lights

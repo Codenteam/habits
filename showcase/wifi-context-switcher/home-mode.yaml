@@ -1,0 +1,40 @@
+id: wifi-home-mode
+name: Disable Work Mode on Home Wi-Fi
+description: Automatically disable focus mode when connecting to home Wi-Fi
+
+# Configuration - user sets their home Wi-Fi name
+config:
+  home_wifi_ssid: "HomeNetwork"  # Example home network name
+
+nodes:
+  # Step 1: (Trigger) Monitor connection to home Wi-Fi
+  - id: wifi-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wifi"
+      operation: onConnectTo
+      params:
+        ssid: "{{config.home_wifi_ssid}}"
+        pollingInterval: 5000
+
+  # Step 2: Disable focus mode (composite action)
+  # This unmutes media, sets normal ringer, and disables DND
+  - id: disable-focus
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-system-settings"
+      operation: clearFocusMode
+      params: {}
+
+edges:
+  - source: wifi-trigger
+    target: disable-focus
+
+output:
+  trigger: "{{wifi-trigger}}"
+  result: "{{disable-focus}}"
+  message: "Home mode enabled - relax!"

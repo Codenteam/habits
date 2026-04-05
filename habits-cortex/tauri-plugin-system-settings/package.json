@@ -1,0 +1,34 @@
+{
+  "name": "tauri-plugin-system-settings-api",
+  "version": "0.1.0",
+  "description": "TypeScript API for the system-settings Tauri plugin",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "keywords": [
+    "tauri",
+    "plugin",
+    "system-settings",
+    "volume",
+    "bluetooth",
+    "dnd",
+    "mobile"
+  ],
+  "license": "MIT"
+}

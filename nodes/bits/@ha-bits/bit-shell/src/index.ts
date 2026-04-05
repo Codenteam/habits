@@ -31,6 +31,7 @@ const shellBit = {
   displayName: 'Shell',
   description: 'Execute shell commands on the system',
   logoUrl: 'lucide:Terminal',
+  runtime: 'all',
 
   auth: {
     type: 'NONE',

@@ -143,6 +143,7 @@ const databaseBit = {
   displayName: 'Database / Storage (Memory)',
   description: 'Store and retrieve data in workflows using in-memory storage',
   logoUrl: 'lucide:Database',
+  runtime: 'all',
   
   /**
    * Declares which bits can replace this one.

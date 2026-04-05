@@ -36,6 +36,7 @@ export const agent = createBit({
     'AI Agent with LangChain and MCP integration. Connect to multiple MCP servers to give your agent access to tools like Google Drive, Slack, GitHub, Notion, Figma, and more.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'lucide:Bot',
+  runtime: 'all',
   categories: [BitCategory.ARTIFICIAL_INTELLIGENCE],
   auth: agentAuth,
   actions: [runAgent],

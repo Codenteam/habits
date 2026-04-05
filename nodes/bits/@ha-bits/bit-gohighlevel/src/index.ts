@@ -87,6 +87,7 @@ const goHighLevelBit = {
   displayName: 'GoHighLevel CRM',
   description: 'GoHighLevel CRM integration for contacts, opportunities, and marketing automation',
   logoUrl: 'lucide:Rocket',
+  runtime: 'all',
   replaces: '@ha-bits/bit-crm',
   
   auth: {

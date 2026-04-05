@@ -1,0 +1,40 @@
+{
+  "name": "tauri-plugin-wifi",
+  "version": "0.1.0",
+  "description": "Tauri plugin for Wi-Fi network monitoring on mobile devices",
+  "main": "dist-js/index.cjs",
+  "module": "dist-js/index.js",
+  "types": "dist-js/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-js/index.d.ts",
+      "import": "./dist-js/index.js",
+      "require": "./dist-js/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "files": [
+    "dist-js",
+    "guest-js",
+    "README.md"
+  ],
+  "keywords": [
+    "tauri",
+    "plugin",
+    "wifi",
+    "network",
+    "mobile"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.0",
+    "rollup": "^4.0.0",
+    "tslib": "^2.6.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  }
+}

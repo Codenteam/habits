@@ -153,6 +153,7 @@ const pouchBit = {
   displayName: 'Database / Storage (PouchDB)',
   description: 'Store and retrieve data in workflows using PouchDB local storage',
   logoUrl: 'lucide:Database',
+  runtime: 'all',
   
   /**
    * Declares which bit this one can replace.
