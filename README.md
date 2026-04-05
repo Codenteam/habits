@@ -102,9 +102,9 @@ my-automation/
 ```
 
 See the [mixed example](showcase/mixed) for a complete working setup:
-- [stack.yaml](showcase/mixed/stack.yaml) - Server configuration and workflow paths
-- [habit.yaml](showcase/mixed/habit.yaml) - Workflow definition with nodes
-- [.env.example](showcase/mixed/.env.example) - Environment variables template
+- [stack.yaml](showcase/hello-world/stack.yaml) - Server configuration and workflow paths
+- [habit.yaml](showcase/hello-world/habit.yaml) - Workflow definition with nodes
+- [.env.example](showcase/hello-world/.env.example) - Environment variables template
 
 ### Run the Server
 
@@ -226,7 +226,7 @@ cd habits
 pnpm install
 
 # Run Cortex in dev mode
-pnpm nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml
+pnpm nx dev @ha-bits/cortex --config showcase/hello-world/stack.yaml
 
 # Run Base (visual builder)
 pnpm nx dev @ha-bits/base

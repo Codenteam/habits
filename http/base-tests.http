@@ -57,7 +57,7 @@ Content-Type: application/json
 
 ### Get mixed template - stack.yaml
 # @name mixedStackYaml
-GET {{host}}:{{port}}/habits/base/api/templates/mixed/stack.yaml
+GET {{host}}:{{port}}/habits/base/api/templates/hello-world/stack.yaml
 Content-Type: application/json
 
 ?? status == 200
@@ -85,7 +85,7 @@ Content-Type: application/json
 
 ### Test 404 - Non-existent file in existing template
 # @name templateFile404
-GET {{host}}:{{port}}/habits/base/api/templates/mixed/non-existent-file.yaml
+GET {{host}}:{{port}}/habits/base/api/templates/hello-world/non-existent-file.yaml
 Content-Type: application/json
 
 ?? status == 404

@@ -53,7 +53,7 @@ export const packBase = () => run('pnpm nx pack @ha-bits/base');
 export const packAll = () => { packHabits(); packCortex(); packBase(); };
 
 // Pack formats
-const DEFAULT_CONFIG = 'showcase/mixed/stack.yaml';
+const DEFAULT_CONFIG = 'showcase/hello-world/stack.yaml';
 const DEFAULT_BACKEND = 'http://localhost:3000';
 export const packSea = (config = DEFAULT_CONFIG) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format single-executable -o /tmp/habits-sea`);
 export const packDesktop = (config = DEFAULT_CONFIG, backendUrl = DEFAULT_BACKEND) => run(`node dist/packages/habits/app/main.cjs pack --config ${config} --format desktop --backend-url ${backendUrl} --desktop-platform dmg -o /tmp/habits-desktop`);
@@ -220,7 +220,7 @@ export const npmLogin = () => run('npm login --registry https://registry.npmjs.o
 export const npmWhoami = () => run('npm whoami --registry https://registry.npmjs.org/');
 
 // Dev servers
-export const devCortex = (config = 'showcase/mixed/stack.yaml') => run(`pnpm nx cortex habits --config ${config}`);
+export const devCortex = (config = 'showcase/hello-world/stack.yaml') => run(`pnpm nx cortex habits --config ${config}`);
 export const devBase = () => run('pnpm nx dev @ha-bits/base');
 
 // Run example

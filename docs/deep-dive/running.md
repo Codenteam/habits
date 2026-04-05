@@ -57,7 +57,7 @@ If you're developing locally and have cloned the repository, use nx to run Corte
 
 ```bash
 # Run the dev target (uses preconfigured test config)
-npx nx dev @ha-bits/cortex --config=./showcase/mixed/stack.yaml
+npx nx dev @ha-bits/cortex --config=./showcase/hello-world/stack.yaml
 ```
 
 This is the recommended approach when:

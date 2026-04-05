@@ -41,22 +41,22 @@ cd packages/habits && npm version patch --no-git-tag-version && cd ../.. && pnpm
 pnpm nx cortex habits --config showcase/hello-world/stack.yaml
 
 # Dev Cortex (mixed/stack.yaml)
-pnpm nx cortex habits --config showcase/mixed/stack.yaml
+pnpm nx cortex habits --config showcase/hello-world/stack.yaml
 
 # Pack Showcase App (interactive, example for mixed showcase)
-pnpm tsx packages/habits/app/src/main.ts pack --config showcase/mixed/stack.yaml --format mobile-full --mobile-target android --app-name "Mixed App" --output /tmp/mixed-app.apk
+pnpm tsx packages/habits/app/src/main.ts pack --config showcase/hello-world/stack.yaml --format mobile-full --mobile-target android --app-name "Mixed App" --output /tmp/mixed-app.apk
 
 # Pack SEA Binary (single executable)
-node dist/packages/habits/app/main.cjs pack --config showcase/mixed/stack.yaml --format single-executable -o /tmp/habits-sea
+node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format single-executable -o /tmp/habits-sea
 
 # Pack Desktop App (Electron dmg)
-node dist/packages/habits/app/main.cjs pack --config showcase/mixed/stack.yaml --format desktop --backend-url http://localhost:3000 --desktop-platform dmg -o /tmp/habits-desktop
+node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format desktop --backend-url http://localhost:3000 --desktop-platform dmg -o /tmp/habits-desktop
 
 # Pack Mobile App (Cordova android)
-node dist/packages/habits/app/main.cjs pack --config showcase/mixed/stack.yaml --format mobile --backend-url http://localhost:3000 --mobile-target android -o /tmp/habits-mobile
+node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format mobile --backend-url http://localhost:3000 --mobile-target android -o /tmp/habits-mobile
 
 # Pack Mobile + Sign (release APK with debug sign)
-pnpm tsx packages/habits/app/src/main.ts pack --config showcase/mixed/stack.yaml --format mobile-full --mobile-target android
+pnpm tsx packages/habits/app/src/main.ts pack --config showcase/hello-world/stack.yaml --format mobile-full --mobile-target android
 
 # Sign APK (with debug keystore)
 jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android /tmp/habits-mobile.apk androiddebugkey

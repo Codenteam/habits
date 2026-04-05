@@ -64,7 +64,7 @@ cortex convert -i ./workflow.json -o ./habits.yaml
 ### Local Development
 
 ```bash
-pnpm nx dev @ha-bits/cortex --config showcase/mixed/stack.yaml
+pnpm nx dev @ha-bits/cortex --config showcase/hello-world/stack.yaml
 ```
 
 ## API Endpoints

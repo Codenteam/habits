@@ -14,7 +14,7 @@
  * Examples:
  *   npx tsx scripts/cli.ts build:all
  *   npx tsx scripts/cli.ts pack:showcase --showcase marketing-campaign --format desktop-full --target mac
- *   npx tsx scripts/cli.ts dev:cortex --config showcase/mixed/stack.yaml
+ *   npx tsx scripts/cli.ts dev:cortex --config showcase/hello-worldstack.yaml
  *   npx tsx scripts/cli.ts bits:build-one --bit bit-openai
  */
 
@@ -158,14 +158,14 @@ const CATEGORIES: Category[] = [
       {
         slug: 'sea',
         desc: 'Pack single-executable archive',
-        args: [{ name: 'config', desc: 'Config file path', default: 'showcase/mixed/stack.yaml' }],
+        args: [{ name: 'config', desc: 'Config file path', default: 'showcase/hello-world/stack.yaml' }],
         handler: (args) => { logHeader('Packing SEA'); actions.packSea(args.config as string); },
       },
       {
         slug: 'desktop',
         desc: 'Pack desktop app (needs backend)',
         args: [
-          { name: 'config', desc: 'Config file path', default: 'showcase/mixed/stack.yaml' },
+          { name: 'config', desc: 'Config file path', default: 'showcase/hello-world/stack.yaml' },
           { name: 'backend-url', desc: 'Backend URL', default: 'http://localhost:3000' },
         ],
         handler: (args) => { logHeader('Packing Desktop'); actions.packDesktop(args.config as string, args['backend-url'] as string); },
@@ -174,7 +174,7 @@ const CATEGORIES: Category[] = [
         slug: 'mobile',
         desc: 'Pack mobile app (needs backend)',
         args: [
-          { name: 'config', desc: 'Config file path', default: 'showcase/mixed/stack.yaml' },
+          { name: 'config', desc: 'Config file path', default: 'showcase/hello-world/stack.yaml' },
           { name: 'backend-url', desc: 'Backend URL', default: 'http://localhost:3000' },
         ],
         handler: (args) => { logHeader('Packing Mobile'); actions.packMobile(args.config as string, args['backend-url'] as string); },
@@ -230,7 +230,7 @@ const CATEGORIES: Category[] = [
       {
         slug: 'cortex',
         desc: 'Start Cortex dev server',
-        args: [{ name: 'config', desc: 'Config file path', default: 'showcase/mixed/stack.yaml' }],
+        args: [{ name: 'config', desc: 'Config file path', default: 'showcase/hello-world/stack.yaml' }],
         handler: (args) => { logHeader('Dev Cortex'); actions.devCortex(args.config as string); },
       },
       { slug: 'base', desc: 'Start Base dev server', handler: () => { logHeader('Dev Base'); actions.devBase(); } },

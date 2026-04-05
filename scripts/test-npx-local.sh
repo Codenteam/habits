@@ -247,7 +247,7 @@ test_base_mode() {
     
     test_endpoint "Base UI" "http://localhost:$BASE_PORT/habits/base/" 200 "<!doctype html>"
     test_endpoint "Base API" "http://localhost:$BASE_PORT/habits/base/api" 200 "Habits API"
-    test_endpoint "Templates API (mixed)" "http://localhost:$BASE_PORT/habits/base/api/templates/mixed/stack.yaml" 200 "workflows"
+    test_endpoint "Templates API (mixed)" "http://localhost:$BASE_PORT/habits/base/api/templates/hello-world/stack.yaml" 200 "workflows"
     
     cleanup
 }
@@ -261,7 +261,7 @@ test_cortex_mode() {
     
     cleanup
     
-    local CONFIG_PATH="$ISOLATED_PACKAGE_DIR/showcase/mixed/stack.yaml"
+    local CONFIG_PATH="$ISOLATED_PACKAGE_DIR/showcase/hello-world/stack.yaml"
     
     if [ ! -f "$CONFIG_PATH" ]; then
         log_error "Config not found: $CONFIG_PATH"
