@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Cron } from 'croner';
-import { executeBitsModule, pieceFromModule } from './bits/bitsDoer';
-import { bitsTriggerHelper, TriggerHookType } from './bits/bitsWatcher';
+import { executeBitsModule, pieceFromModule } from './bits/bitsRoutine';
+import { bitsTriggerHelper, TriggerHookType } from './bits/bitsCue';
 import { executeScriptModule } from './script/scriptExecutor';
 import { ensureModuleInstalled } from './utils/moduleLoader';
 import { getSecurityConfig, scanInputForSecurity } from './security/inputScanner';

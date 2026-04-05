@@ -7,30 +7,46 @@
 
 export { 
   executeBitsModule, 
-  getBitsModuleActions, 
-  getBitsModuleTriggers,
+  // New primary exports
+  getBitsModuleRoutines,
+  getBitsModuleCues,
   pieceFromModule,
   extractBitsPieceFromModule,
-  type BitsAction,
-  type BitsActionContext,
-  type BitsTrigger,
-  type BitsTriggerContext,
-  BitsTriggerType,
+  // New primary types
+  type BitsRoutine,
+  type BitsRoutineContext,
+  type BitsCue,
+  type BitsCueContext,
+  BitsCueType,
   type BitsStore,
   type BitsListener,
   type BitsScheduleOptions,
   type BitsPiece,
   type BitsExecutionParams,
   type BitsExecutionResult,
-} from './bitsDoer';
+  // Deprecated aliases
+  getBitsModuleActions, 
+  getBitsModuleTriggers,
+  type BitsAction,
+  type BitsActionContext,
+  type BitsTrigger,
+  type BitsTriggerContext,
+  BitsTriggerType,
+} from './bitsRoutine';
 
 export {
+  // New primary exports
+  bitsCueHelper,
+  CueHookType,
+  tryCatch,
+  type CueExecutionParams,
+  type CueExecutionResult,
+  // Deprecated aliases
   bitsTriggerHelper,
   TriggerHookType,
-  tryCatch,
   type TriggerExecutionParams,
   type TriggerExecutionResult,
-} from './bitsWatcher';
+} from './bitsCue';
 
 // Framework exports for creating bits modules
 export {
@@ -53,13 +69,24 @@ export {
   PieceAuth,
   AuthValidationResult,
   
-  // Action builders
+  // New primary routine builders
+  createRoutine,
+  createBitRoutine,
+  BitRoutine,
+  BitRoutineContext,
+  
+  // New primary cue builders
+  createCue,
+  createBitCue,
+  BitCue,
+  BitCueContext,
+  CueStrategy,
+  
+  // Deprecated action/trigger aliases
   createAction,
   createBitAction,
   BitAction,
   BitActionContext,
-  
-  // Trigger builders
   createTrigger,
   createBitTrigger,
   BitTrigger,
@@ -74,6 +101,7 @@ export {
   BitCategory,
   
   // Utilities
+  createCustomApiCallRoutine,
   createCustomApiCallAction,
 } from './framework';
 

@@ -51,20 +51,24 @@ export interface IWorkflowExecutor {
 // ============================================================================
 
 /**
- * Represents a Bits action that can be executed
+ * Represents a Bits routine that can be executed.
+ * A routine performs a specific operation as part of a habit's workflow.
  */
-export interface BitsAction {
+export interface BitsRoutine {
   name: string;
   displayName: string;
   description: string;
   props: Record<string, any>;
-  run: (context: BitsActionContext) => Promise<any>;
+  run: (context: BitsRoutineContext) => Promise<any>;
 }
 
+/** @deprecated Use BitsRoutine instead */
+export type BitsAction = BitsRoutine;
+
 /**
- * Context passed to action.run()
+ * Context passed to routine.run()
  */
-export interface BitsActionContext {
+export interface BitsRoutineContext {
   auth?: any;
   propsValue: Record<string, any>;
   store?: BitsStore;
@@ -74,6 +78,9 @@ export interface BitsActionContext {
   /** Workflow executor for invoking sub-workflows directly */
   executor?: IWorkflowExecutor;
 }
+
+/** @deprecated Use BitsRoutineContext instead */
+export type BitsActionContext = BitsRoutineContext;
 
 /**
  * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
@@ -90,41 +97,50 @@ export interface WebhookFilterPayload {
 }
 
 /**
- * Represents a Bits trigger
+ * Represents a Bits cue - an event or condition that starts a habit.
+ * Cues observe external systems or schedules and emit events that initiate workflows.
  */
-export interface BitsTrigger {
+export interface BitsCue {
   name: string;
   displayName: string;
   description: string;
-  type: BitsTriggerType;
+  type: BitsCueType;
   props: Record<string, any>;
-  onEnable?: (context: BitsTriggerContext) => Promise<void>;
-  onDisable?: (context: BitsTriggerContext) => Promise<void>;
-  run?: (context: BitsTriggerContext) => Promise<any[]>;
-  test?: (context: BitsTriggerContext) => Promise<any[]>;
-  onHandshake?: (context: BitsTriggerContext) => Promise<any>;
+  onEnable?: (context: BitsCueContext) => Promise<void>;
+  onDisable?: (context: BitsCueContext) => Promise<void>;
+  run?: (context: BitsCueContext) => Promise<any[]>;
+  test?: (context: BitsCueContext) => Promise<any[]>;
+  onHandshake?: (context: BitsCueContext) => Promise<any>;
   /**
-   * Filter function for webhook triggers.
+   * Filter function for webhook cues.
    * Called when a webhook is received for this bit's module.
-   * Return true if this trigger should handle the event, false to skip.
-   * If not defined, the trigger accepts all webhook events.
+   * Return true if this cue should handle the event, false to skip.
+   * If not defined, the cue accepts all webhook events.
    */
   filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
 }
 
+/** @deprecated Use BitsCue instead */
+export type BitsTrigger = BitsCue;
+
 /**
- * Trigger types
+ * Cue types - determines how the cue detects events
  */
-export enum BitsTriggerType {
+export enum BitsCueType {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',
   APP_WEBHOOK = 'APP_WEBHOOK',
 }
 
+/** @deprecated Use BitsCueType instead */
+export const BitsTriggerType = BitsCueType;
+/** @deprecated Use BitsCueType instead */
+export type BitsTriggerType = BitsCueType;
+
 /**
- * Context passed to trigger methods
+ * Context passed to cue methods
  */
-export interface BitsTriggerContext {
+export interface BitsCueContext {
   auth?: any;
   propsValue: Record<string, any>;
   payload: unknown;
@@ -136,15 +152,18 @@ export interface BitsTriggerContext {
   setSchedule: (options: BitsScheduleOptions) => void;
   /** Workflow executor for invoking workflows (including self) */
   executor?: IWorkflowExecutor;
-  /** ID of the workflow this trigger belongs to */
+  /** ID of the workflow this cue belongs to */
   workflowId?: string;
-  /** ID of this trigger node */
+  /** ID of this cue node */
   nodeId?: string;
-  /** Webhook payload data (for webhook triggers) */
+  /** Webhook payload data (for webhook cues) */
   webhookPayload?: WebhookFilterPayload;
-  /** Polling store for deduplication (for polling triggers) */
+  /** Polling store for deduplication (for polling cues) */
   pollingStore?: BitsPollingStore;
 }
+
+/** @deprecated Use BitsCueContext instead */
+export type BitsTriggerContext = BitsCueContext;
 
 /**
  * Listener configuration for app webhooks
@@ -204,8 +223,14 @@ export interface BitsPiece {
   description?: string;
   logoUrl?: string;
   auth?: any;
-  actions: () => Record<string, BitsAction>;
-  triggers: () => Record<string, BitsTrigger>;
+  /** Get all routines provided by this bit */
+  routines: () => Record<string, BitsRoutine>;
+  /** Get all cues provided by this bit */
+  cues: () => Record<string, BitsCue>;
+  /** @deprecated Use routines() instead */
+  actions: () => Record<string, BitsRoutine>;
+  /** @deprecated Use cues() instead */
+  triggers: () => Record<string, BitsCue>;
 }
 
 /**
@@ -257,7 +282,7 @@ export interface BitsExecutionResult {
 
 /**
  * Extract piece from a loaded module.
- * Bits modules export a piece object with 'actions' and 'triggers' properties.
+ * Bits modules export a piece object with 'routines'/'actions' and 'cues'/'triggers' properties.
  * Also supports declarative nodes that have a description with routing.
  */
 export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
@@ -269,7 +294,7 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
   }
 
   // Find the piece export in the module
-  // It's the object that has both 'actions' and 'triggers' methods/properties
+  // It's the object that has routines/actions and cues/triggers methods/properties
   let piece: any = null;
 
   // Check if it's a direct export
@@ -278,10 +303,10 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
     for (const key of Object.keys(loadedModule)) {
       const exported = loadedModule[key];
       if (exported && typeof exported === 'object') {
-        // Check if it has actions and triggers (either as functions or objects)
-        const hasActions = 'actions' in exported;
-        const hasTriggers = 'triggers' in exported;
-        if (hasActions && hasTriggers) {
+        // Check if it has routines/actions and cues/triggers (either as functions or objects)
+        const hasRoutines = 'routines' in exported || 'actions' in exported;
+        const hasCues = 'cues' in exported || 'triggers' in exported;
+        if (hasRoutines && hasCues) {
           piece = exported;
           break;
         }
@@ -290,22 +315,38 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
   }
 
   if (!piece) {
-    throw new Error('No valid bits piece found in module. Expected export with actions and triggers.');
+    throw new Error('No valid bits piece found in module. Expected export with routines/actions and cues/triggers.');
   }
 
-  // Normalize the piece to our interface
+  // Create accessor functions that support both old and new property names
+  const getRoutines = () => {
+    if (typeof piece.routines === 'function') return piece.routines();
+    if (piece.routines) return piece.routines;
+    if (typeof piece.actions === 'function') return piece.actions();
+    if (piece.actions) return piece.actions;
+    return {};
+  };
+
+  const getCues = () => {
+    if (typeof piece.cues === 'function') return piece.cues();
+    if (piece.cues) return piece.cues;
+    if (typeof piece.triggers === 'function') return piece.triggers();
+    if (piece.triggers) return piece.triggers;
+    return {};
+  };
+
+  // Normalize the piece to our interface with both new and deprecated accessors
   return {
     id: piece.id, // Webhook routing ID (e.g., 'gohighlevel', 'hubspot')
     displayName: piece.displayName || 'Unknown Piece',
     description: piece.description,
     logoUrl: piece.logoUrl,
     auth: piece.auth,
-    actions: typeof piece.actions === 'function' 
-      ? piece.actions.bind(piece)
-      : () => piece.actions || {},
-    triggers: typeof piece.triggers === 'function'
-      ? piece.triggers.bind(piece)
-      : () => piece.triggers || {},
+    routines: getRoutines,
+    cues: getCues,
+    // Deprecated aliases for backward compatibility
+    actions: getRoutines,
+    triggers: getCues,
   };
 }
 
@@ -315,47 +356,53 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
 function convertDeclarativeNodeToBitsPiece(node: IDeclarativeNodeType): BitsPiece {
   const desc = node.description;
   
-  // Extract operations from properties to create actions
-  const actions: Record<string, BitsAction> = {};
+  // Extract operations from properties to create routines
+  const routines: Record<string, BitsRoutine> = {};
   
-  // Find operation/resource properties to determine available actions
+  // Find operation/resource properties to determine available routines
   const operationProp = desc.properties.find(p => p.name === 'operation');
   const resourceProp = desc.properties.find(p => p.name === 'resource');
   
   if (operationProp?.options) {
-    // Create an action for each operation
+    // Create a routine for each operation
     for (const opt of operationProp.options as any[]) {
       if (opt.value && opt.routing) {
-        const actionName = String(opt.value);
-        actions[actionName] = {
-          name: actionName,
-          displayName: opt.name || actionName,
+        const routineName = String(opt.value);
+        routines[routineName] = {
+          name: routineName,
+          displayName: opt.name || routineName,
           description: opt.description || '',
-          props: buildPropsForOperation(desc.properties, actionName, resourceProp?.default),
-          run: createDeclarativeActionRunner(node, actionName),
+          props: buildPropsForOperation(desc.properties, routineName, resourceProp?.default),
+          run: createDeclarativeRoutineRunner(node, routineName),
         };
       }
     }
   }
   
-  // If no operation-based actions found, create a single "execute" action
-  if (Object.keys(actions).length === 0) {
-    actions['execute'] = {
+  // If no operation-based routines found, create a single "execute" routine
+  if (Object.keys(routines).length === 0) {
+    routines['execute'] = {
       name: 'execute',
       displayName: desc.displayName,
       description: desc.description || '',
       props: buildPropsFromDeclarative(desc.properties),
-      run: createDeclarativeActionRunner(node),
+      run: createDeclarativeRoutineRunner(node),
     };
   }
+
+  const getRoutines = () => routines;
+  const getCues = () => ({});
 
   return {
     displayName: desc.displayName,
     description: desc.description,
     logoUrl: desc.icon,
     auth: undefined, // Declarative nodes handle auth differently
-    actions: () => actions,
-    triggers: () => ({}), // Declarative nodes typically don't have triggers
+    routines: getRoutines,
+    cues: getCues,
+    // Deprecated aliases
+    actions: getRoutines,
+    triggers: getCues,
   };
 }
 
@@ -441,13 +488,13 @@ function convertDeclarativePropertyToProp(prop: any): any {
 }
 
 /**
- * Create a runner function for declarative actions
+ * Create a runner function for declarative routines
  */
-function createDeclarativeActionRunner(
+function createDeclarativeRoutineRunner(
   node: IDeclarativeNodeType,
   operation?: string
-): (context: BitsActionContext) => Promise<any> {
-  return async (context: BitsActionContext) => {
+): (context: BitsRoutineContext) => Promise<any> {
+  return async (context: BitsRoutineContext) => {
     const parameters = { ...context.propsValue };
     
     // Add operation to parameters if specified
@@ -463,6 +510,9 @@ function createDeclarativeActionRunner(
     return result.data;
   };
 }
+
+/** @deprecated Use createDeclarativeRoutineRunner instead */
+const createDeclarativeActionRunner = createDeclarativeRoutineRunner;
 
 /**
  * Load a bits piece from module definition
@@ -719,9 +769,9 @@ export async function executeBitsModule(params: BitsExecutionParams): Promise<Bi
 }
 
 /**
- * Get available actions from a bits module
+ * Get available routines from a bits module
  */
-export async function getBitsModuleActions(params: {
+export async function getBitsModuleRoutines(params: {
   source: string;
   framework: string;
   moduleName: string;
@@ -734,13 +784,16 @@ export async function getBitsModuleActions(params: {
 
   await ensureModuleInstalled(moduleDefinition);
   const piece = await pieceFromModule(moduleDefinition);
-  return Object.keys(piece.actions());
+  return Object.keys(piece.routines());
 }
+
+/** @deprecated Use getBitsModuleRoutines instead */
+export const getBitsModuleActions = getBitsModuleRoutines;
 
 /**
- * Get available triggers from a bits module
+ * Get available cues from a bits module
  */
-export async function getBitsModuleTriggers(params: {
+export async function getBitsModuleCues(params: {
   source: string;
   framework: string;
   moduleName: string;
@@ -753,5 +806,8 @@ export async function getBitsModuleTriggers(params: {
 
   await ensureModuleInstalled(moduleDefinition);
   const piece = await pieceFromModule(moduleDefinition);
-  return Object.keys(piece.triggers());
+  return Object.keys(piece.cues());
 }
+
+/** @deprecated Use getBitsModuleCues instead */
+export const getBitsModuleTriggers = getBitsModuleCues;

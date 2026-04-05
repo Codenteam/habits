@@ -18,7 +18,7 @@ import {
   getModulePath,
 } from "@ha-bits/cortex/utils/moduleCloner";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
+import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsRoutine";
 import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
@@ -179,19 +179,19 @@ export class FormsController {
           throw new Error(`Failed to extract bits piece from module ${getModuleName(moduleDefinition)}`);
         }
 
-        const actions = piece.actions() || {};
-        const action = actions[actionName];
+        const routines = piece.routines() || {};
+        const routine = routines[actionName];
 
-        if (!action) {
-          throw new Error(`Action '${actionName}' not found`);
+        if (!routine) {
+          throw new Error(`Routine '${actionName}' not found`);
         }
 
-        const props = action.props || {};
+        const props = routine.props || {};
         const property = props[fieldName];
 
         if (!property) {
           throw new Error(
-            `Property '${fieldName}' not found in action '${actionName}'`,
+            `Property '${fieldName}' not found in routine '${actionName}'`,
           );
         }
 

@@ -166,9 +166,13 @@ definitions:
               If not provided, uses HABITS_NPM_REGISTRY_URL environment variable,
               or defaults to https://registry.npmjs.org.
               Useful for private registries like Verdaccio.
+          isCue:
+            type: boolean
+            description: Marks this node as a cue (entry point) for the workflow. A cue triggers the workflow to start.
           isTrigger:
             type: boolean
-            description: Marks this node as a trigger/entry point for the workflow
+            description: (Deprecated) Use isCue instead. Marks this node as an entry point for the workflow.
+            deprecated: true
           inputs:
             type: array
             items:

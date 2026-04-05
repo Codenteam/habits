@@ -5,7 +5,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
+import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsRoutine";
 
 /**
  * Extract schema from bits module
@@ -32,14 +32,14 @@ export async function extractBitsSchema(
   }
 
   const auth = piece.auth;
-  const actions = piece.actions();
-  const triggers = piece.triggers();
+  const routines = piece.routines();
+  const cues = piece.cues();
 
-  // Process actions to resolve dynamic options if needed
-  for (const key of Object.keys(actions || {})) {
-    const action = actions[key];
-    if (action && action.props) {
-      for (const prop of Object.values(action.props) as any[]) {
+  // Process routines to resolve dynamic options if needed
+  for (const key of Object.keys(routines || {})) {
+    const routine = routines[key];
+    if (routine && routine.props) {
+      for (const prop of Object.values(routine.props) as any[]) {
         if (typeof prop.options === "function") {
           try {
             const options = await prop.options();
@@ -52,11 +52,11 @@ export async function extractBitsSchema(
     }
   }
 
-  // Process triggers to resolve dynamic options if needed
-  for (const key of Object.keys(triggers || {})) {
-    const trigger = triggers[key];
-    if (trigger && trigger.props) {
-      for (const prop of Object.values(trigger.props) as any[]) {
+  // Process cues to resolve dynamic options if needed
+  for (const key of Object.keys(cues || {})) {
+    const cue = cues[key];
+    if (cue && cue.props) {
+      for (const prop of Object.values(cue.props) as any[]) {
         if (typeof prop.options === "function") {
           try {
             const options = await prop.options();
@@ -77,8 +77,8 @@ export async function extractBitsSchema(
     description: piece.description || packageJson.description,
     version: packageJson.version,
     properties: {},
-    triggers: triggers,
-    actions,
+    triggers: cues,
+    actions: routines,
     pieces: piece,
     auth,
   };

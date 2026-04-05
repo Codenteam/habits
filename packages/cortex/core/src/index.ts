@@ -12,13 +12,41 @@ export { HabitsExecutor, StartWorkflowOptions } from './esm';
 export { IWebhookHandler } from './WebhookHandler';
 
 // Module execution
-export { executeBitsModule, extractBitsPieceFromModule, pieceFromModule, BitsPiece } from './bits/bitsDoer';
-export { bitsTriggerHelper, TriggerHookType } from './bits/bitsWatcher';
+export { 
+  executeBitsModule, 
+  extractBitsPieceFromModule, 
+  pieceFromModule, 
+  BitsPiece,
+  // New primary exports
+  getBitsModuleRoutines,
+  getBitsModuleCues,
+  BitsRoutine,
+  BitsRoutineContext,
+  BitsCue,
+  BitsCueContext,
+  BitsCueType,
+  // Deprecated aliases
+  getBitsModuleActions,
+  getBitsModuleTriggers,
+  BitsAction,
+  BitsActionContext,
+  BitsTrigger,
+  BitsTriggerContext,
+  BitsTriggerType,
+} from './bits/bitsRoutine';
+export { 
+  // New primary exports
+  bitsCueHelper, 
+  CueHookType,
+  // Deprecated aliases
+  bitsTriggerHelper, 
+  TriggerHookType 
+} from './bits/bitsCue';
 export { executeScriptModule } from './script/scriptExecutor';
 
 // Polling store for trigger deduplication
 export { PollingStore, createPollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions } from './store';
-export { BitsPollingStore } from './bits/bitsDoer';
+export { BitsPollingStore } from './bits/bitsRoutine';
 
 // Module management utilities
 export { ensureModuleInstalled, registerBundledModule, getBundledModule, isBundledModule } from './utils/moduleLoader';
@@ -51,19 +79,30 @@ export {
   PieceAuth,
   AuthValidationResult,
   
-  // Action builders
+  // New primary routine builders
+  createRoutine,
+  createBitRoutine,
+  BitRoutine,
+  BitRoutineContext,
+  
+  // New primary cue builders
+  createCue,
+  createBitCue,
+  BitCue,
+  BitCueContext,
+  CueStrategy,
+  WebhookFilterPayload,
+  
+  // Deprecated action/trigger aliases
   createAction,
   createBitAction,
   BitAction,
   BitActionContext,
-  
-  // Trigger builders
   createTrigger,
   createBitTrigger,
   BitTrigger,
   BitTriggerContext,
   TriggerStrategy,
-  WebhookFilterPayload,
   
   // Piece/Bit builders
   createBit,
@@ -73,6 +112,7 @@ export {
   PieceCategory,
   
   // Utilities
+  createCustomApiCallRoutine,
   createCustomApiCallAction,
 } from './bits/framework';
 

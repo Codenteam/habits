@@ -1,2 +1,3 @@
-// Re-export from cortex-core for backwards compatibility
-export * from '@ha-bits/cortex-core/bits/bitsDoer';
+// Re-export from bitsRoutine for backwards compatibility
+// @deprecated Import from bitsRoutine instead
+export * from './bitsRoutine';

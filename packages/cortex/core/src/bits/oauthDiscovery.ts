@@ -8,7 +8,7 @@
 import { Workflow, WorkflowNode } from '@habits/shared/types';
 import { OAuth2Status, OAuth2Config } from './oauth2Types';
 import { oauthTokenStore } from './oauthTokenStore';
-import { pieceFromModule, extractBitsPieceFromModule } from './bitsDoer';
+import { pieceFromModule, extractBitsPieceFromModule } from './bitsRoutine';
 import { getModuleName, getBundledModule, isBundledModule } from '../utils/moduleLoader';
 import { getModuleMainFile, ModuleDefinition } from '../utils/moduleCloner';
 import { simpleRequire } from '../utils/customRequire';

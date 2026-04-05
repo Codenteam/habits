@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Zap, Play, Code, Box, ChevronDown, ChevronRight } from 'lucide-react';
 import type { BaseNodeData, WorkflowFramework } from '../types';
-import { isTriggerNode, getNodeColors, getNodeDefinition } from '../nodeDefinitions';
+import { isCueNode, getNodeColors, getNodeDefinition } from '../nodeDefinitions';
 import { 
   parseVariableSegments, 
   VARIABLE_TOKEN_STYLES, 
@@ -63,8 +63,8 @@ function renderValueWithTokens(value: string): React.ReactNode {
 /**
  * Get icon component based on framework and node type
  */
-function getNodeIcon(framework: WorkflowFramework, isTrigger: boolean) {
-  if (isTrigger) return Play;
+function getNodeIcon(framework: WorkflowFramework, isCue: boolean) {
+  if (isCue) return Play;
   
   switch (framework) {
     case 'script': return Code;
@@ -119,13 +119,13 @@ function BaseNodeComponent({ data, selected, id }: NodeProps<BaseNodeData>) {
   // Local collapsed state - initialized from data.collapsed prop
   const [isCollapsed, setIsCollapsed] = useState(data.collapsed ?? false);
   
-  // Determine if trigger
-  const isTrigger = data.type === 'trigger' || 
-                    (!data.type && isTriggerNode(data.framework, data.module || ''));
+  // Determine if cue (entry point)
+  const isCue = data.type === 'cue' || data.type === 'trigger' || 
+                    (!data.type && isCueNode(data.framework, data.module || ''));
   
   // Get colors and icon
-  const colors = getNodeColors(data.framework, isTrigger);
-  const IconComponent = getNodeIcon(data.framework, isTrigger);
+  const colors = getNodeColors(data.framework, isCue);
+  const IconComponent = getNodeIcon(data.framework, isCue);
   
   // Get inputs/outputs
   const definition = getNodeDefinition(data.framework, data.module || '', data.type);
@@ -150,8 +150,8 @@ function BaseNodeComponent({ data, selected, id }: NodeProps<BaseNodeData>) {
 
   return (
     <div className={`px-5 py-4 shadow-lg shadow-black/30 rounded-xl border-2 ${colors.bg} ${colors.border} ${selectedBorder} ${nodeWidth} relative transition-all duration-200`}>
-      {/* Input handles - only for non-trigger nodes */}
-      {!isTrigger && inputs.map((input: string, index: number) => (
+      {/* Input handles - only for non-cue nodes */}
+      {!isCue && inputs.map((input: string, index: number) => (
         <Handle
           key={`input-${input}-${index}`}
           type="target"

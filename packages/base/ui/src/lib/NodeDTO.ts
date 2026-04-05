@@ -158,10 +158,18 @@ export class NodeDTO {
   }
 
   /**
+   * Check if this is a cue node (entry point with no inputs)
+   */
+  isCue(): boolean {
+    return this.inputs.length === 0;
+  }
+
+  /**
+   * @deprecated Use isCue() instead
    * Check if this is a trigger node (no inputs)
    */
   isTrigger(): boolean {
-    return this.inputs.length === 0;
+    return this.isCue();
   }
 
   /**
@@ -206,7 +214,7 @@ export class NodeDTO {
    * Get node color class based on framework and type
    */
   getColorClass(): string {
-    if (this.isTrigger()) {
+    if (this.isCue()) {
       return this.isBits() ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-green-50 border-green-300 text-green-700';
     }
     return this.isBits() ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-gray-50 border-gray-300 text-gray-700';
@@ -216,7 +224,7 @@ export class NodeDTO {
    * Get icon name based on framework and type
    */
   getIcon(): string {
-    if (this.isTrigger()) {
+    if (this.isCue()) {
       return 'Play';
     }
     return this.isBits() ? 'Zap' : 'Code';

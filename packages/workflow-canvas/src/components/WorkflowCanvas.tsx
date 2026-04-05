@@ -14,16 +14,16 @@ import 'reactflow/dist/style.css';
 import { BaseNode } from './BaseNode';
 import type { WorkflowCanvasProps, WorkflowNode, ExportFormat, WorkflowEdge } from '../types';
 import { exportElement, prepareForExport } from '../utils/exporter';
-import { isTriggerNode } from '../nodeDefinitions';
+import { isCueNode } from '../nodeDefinitions';
 import { applyDagreLayout } from '../utils/parser';
 
 // Color mapping for minimap (dark mode colors)
 const getMinimapNodeColor = (node: WorkflowNode): string => {
   const framework = node.data?.framework;
-  const isTrigger = node.data?.type === 'trigger' || 
-    (!node.data?.type && isTriggerNode(framework, node.data?.module || ''));
+  const isCue = node.data?.type === 'cue' || node.data?.type === 'trigger' || 
+    (!node.data?.type && isCueNode(framework, node.data?.module || ''));
    
-  if (isTrigger) {
+  if (isCue) {
     switch (framework) {
       case 'script': return '#9a3412'; // orange-800
       case 'bits': return '#115e59'; // teal-800
@@ -31,7 +31,7 @@ const getMinimapNodeColor = (node: WorkflowNode): string => {
     }
   }
   
-  // Action nodes
+  // Routine nodes
   switch (framework) {
     case 'script': return '#155e75'; // cyan-800
     case 'bits': return '#065f46'; // emerald-800

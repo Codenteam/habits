@@ -6,9 +6,9 @@ import { NodeDTO } from './NodeDTO';
  */
 export class NodeFactory {
   /**
-   * Create a bits trigger node
+   * Create a bits cue node (entry point that starts a workflow)
    */
-  static createBitsTrigger(options: {
+  static createBitsCue(options: {
     module: string;
     label?: string;
     position?: { x: number; y: number };
@@ -18,7 +18,7 @@ export class NodeFactory {
     return NodeDTO.createNew({
       framework: 'bits',
       module: options.module,
-      label: options.label || `${options.module.replace('@ha-bits/', '')} Trigger`,
+      label: options.label || `${options.module.replace('@ha-bits/', '')} Cue`,
       position: options.position,
     }).update({
       params: options.params,
@@ -26,10 +26,13 @@ export class NodeFactory {
     });
   }
 
+  /** @deprecated Use createBitsCue instead */
+  static createBitsTrigger = NodeFactory.createBitsCue;
+
   /**
-   * Create a bits action node
+   * Create a bits routine node (performs an operation in the workflow)
    */
-  static createBitsAction(options: {
+  static createBitsRoutine(options: {
     module: string;
     resource?: string;
     operation?: string;
@@ -50,6 +53,9 @@ export class NodeFactory {
       credentials: options.credentials,
     });
   }
+
+  /** @deprecated Use createBitsRoutine instead */
+  static createBitsAction = NodeFactory.createBitsRoutine;
 
   /**
    * Create an HTTP Request node (bits)

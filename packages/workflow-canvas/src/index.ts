@@ -11,7 +11,7 @@ export { parseHabitContent, convertToCanvasFormat, applyDagreLayout } from './ut
 export { exportElement, downloadExport, prepareForExport } from './utils/exporter';
 
 // Node definitions
-export { nodeDefinitions, getNodeDefinition, isTriggerNode, getNodeColors } from './nodeDefinitions';
+export { nodeDefinitions, getNodeDefinition, isCueNode, isTriggerNode, getNodeColors } from './nodeDefinitions';
 
 // Types
 export type {

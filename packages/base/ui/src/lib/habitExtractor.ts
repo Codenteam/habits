@@ -14,6 +14,9 @@ export interface SchemaNodeData {
   operation?: string;
   resource?: string;
   source?: string;
+  /** Marks this node as a cue (entry point) for the workflow */
+  isCue?: boolean;
+  /** @deprecated Use isCue instead */
   isTrigger?: boolean;
   inputs?: string[];
   outputs?: string[];
@@ -77,6 +80,8 @@ function extractNodeData(data: any): SchemaNodeData {
   if (data.operation) cleanData.operation = data.operation;
   if (data.resource) cleanData.resource = data.resource;
   if (data.source) cleanData.source = data.source;
+  // Support both isCue (new) and isTrigger (deprecated)
+  if (typeof data.isCue === 'boolean') cleanData.isCue = data.isCue;
   if (typeof data.isTrigger === 'boolean') cleanData.isTrigger = data.isTrigger;
   
   // Arrays (normalize bracket to dot notation in string values)
@@ -133,12 +138,13 @@ function extractNodeData(data: any): SchemaNodeData {
  */
 function mapNodeType(node: CanvasNode): SchemaNode['type'] {
   const framework = node.data?.framework;
-  const isTrigger = node.data?.isTrigger;
+  // Support both isCue (new) and isTrigger (deprecated)
+  const isCue = node.data?.isCue || node.data?.isTrigger;
   
   if (framework === 'script') return 'script';
   if (framework === 'bits') return 'bit';
   
-  return isTrigger ? 'trigger' : 'action';
+  return isCue ? 'trigger' : 'action';
 }
 
 /**
