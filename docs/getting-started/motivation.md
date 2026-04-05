@@ -15,7 +15,7 @@ Habits provides **pre-built nodes** that handle the hard parts:
 ```yaml
 nodes:
   - id: send-email
-    type: activepieces
+    type: bits
     data:
       module: "@ha-bits/bit-database"
       operation: insert
@@ -30,7 +30,7 @@ nodes:
 | **Pre-built integrations** | 200+ connectors for common services (APIs, databases, AI, etc.), we are gradually open-sourcing those and releasing to public NPM |
 | **Less code** | Configure what you want, not how to do it |
 | **Easy to audit** | YAML files show exactly what happens in each workflow |
-| **Mix and match** | Combine nodes from different platforms (Habits, Activepieces, n8n) in one workflow |
+| **Mix and match** | Combine bits and scripts in one workflow |
 
 ## Three Ways to Build
 
@@ -45,15 +45,8 @@ nodes:
 Habits is **Apache 2.0 licensed**.
 
 ::: tip Node Licensing
-When using nodes from different ecosystems, check their licenses:
-- **Bits & ActivePieces nodes** → MIT (fully permissive)
-- **n8n nodes** → SUL (some commercial restrictions)
+All Habits bits are MIT licensed (fully permissive).
 :::
-
-## Why not bundle n8n and Activepieces?
-
-Habits initially aimed to be a runtime (The cortex part) that runs n8n and Activepieces nodes for SaaS backends. However, n8n's source-available licensing created constraints, and Activepieces' single-trigger model didn't fit our multi-trigger, out-of-order execution needs. We kept some compatibility with both ecosystems while introducing our own Bits for flexibility.
-
 
 ## Why Not Vibecode Everything?
 

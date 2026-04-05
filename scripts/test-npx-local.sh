@@ -115,8 +115,8 @@ setup_isolated_environment() {
         exit 1
     fi
     
-    # Show package.json to verify it's clean (no @activepieces in runtime deps)
-    log_info "Package dependencies (should have NO @activepieces in dependencies):"
+    # Show package.json to verify it's clean
+    log_info "Package dependencies:"
     if command -v jq &> /dev/null; then
         jq '.dependencies' "$ISOLATED_PACKAGE_DIR/package.json" | head -20
     else
@@ -132,15 +132,6 @@ setup_isolated_environment() {
         log_error "Failed to install dependencies"
         cat "$LOG_DIR/npm-install.log" | tail -20
         exit 1
-    fi
-    
-    # Verify no @activepieces in node_modules (should be empty or not present)
-    if [ -d "$ISOLATED_PACKAGE_DIR/node_modules/@activepieces" ]; then
-        log_error "@activepieces found in node_modules - should NOT be a runtime dependency!"
-        ls -la "$ISOLATED_PACKAGE_DIR/node_modules/@activepieces"
-        exit 1
-    else
-        log_success "Verified: No @activepieces in runtime dependencies"
     fi
 }
 
@@ -266,7 +257,7 @@ test_base_mode() {
 # =============================================================================
 
 test_cortex_mode() {
-    log_section "Testing Cortex Mode (Isolated, with ActivePieces JIT)"
+    log_section "Testing Cortex Mode (Isolated, JIT)"
     
     cleanup
     
@@ -306,13 +297,7 @@ test_cortex_mode() {
     test_endpoint "Cortex UI" "http://localhost:$CORTEX_PORT/habits/cortex/" 200 "<!DOCTYPE html>"
     test_endpoint "Base UI (embedded)" "http://localhost:$CORTEX_PORT/habits/base/" 200 "<!doctype html>"
     
-    # Check if ActivePieces was JIT installed
-    log_info "Verifying JIT installation..."
-    if [ -d "/tmp/habits-nodes/node_modules/@activepieces/pieces-framework" ]; then
-        log_success "ActivePieces JIT installation verified at /tmp/habits-nodes"
-    else
-        log_warn "ActivePieces JIT directory not found (may be cached or not needed for this config)"
-    fi
+
     
     cleanup
 }

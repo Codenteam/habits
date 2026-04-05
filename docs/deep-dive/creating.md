@@ -1,6 +1,6 @@
 # Creating Habits
 
-This guide covers all the ways to create habits: writing YAML/JSON directly (Habit as Code), using the visual Base editor, or importing from existing n8n/Activepieces workflows.
+This guide covers all the ways to create habits: writing YAML/JSON directly (Habit as Code) or using the visual Base editor.
 
 
 <script setup>
@@ -188,92 +188,6 @@ You can use base also to edit UI of the habit by clicking the UI button. This is
 </div>
 
 You can use AI to directly generate a UI that can work with the logic. Use Intersect for best results, if not possible, use Anthropic Opus or Gemini Pro models. 
-## Option #3: Importing from n8n and Activepieces
-
-Already have workflows in n8n or Activepieces? Import them directly into Habits.
-
-> <Icon name="warning" /> **Note:** Both Activepieces and n8n workflow importing is currently **experimental**.
-
-### Exporting from n8n
-
-1. Open your workflow in n8n
-2. Click the **⋮** (three dots) menu
-3. Select **Download**
-4. Save the JSON file
-
-### Exporting from Activepieces
-
-1. Open your flow in Activepieces
-2. Click the **⋮** menu in the toolbar
-3. Select **Export Flow**
-4. Save the JSON file
-
-### Importing via GUI (Base)
-
-1. Start Base: `npx habits edit`
-2. Click **Import & Convert** in the toolbar
-3. Select your exported JSON file
-4. Habits auto-detects the format and converts it
-5. Review and adjust the converted workflow
-
-### Importing via CLI
-
-```bash
-# Convert an n8n workflow
-habits convert --input ./n8n-workflow.json --output ./habits-workflow.json
-
-# Convert an Activepieces workflow  
-habits convert --input ./activepieces-flow.json --output ./habits-workflow.json
-
-# Generate .env template for credentials
-habits convert --input ./workflow.json --output ./habits.json --env
-```
-
-### CLI Options
-
-| Option | Description |
-|--------|-------------|
-| `--input`, `-i` | Path to input workflow JSON (required) |
-| `--output`, `-o` | Path to output file |
-| `--env`, `-e` | Generate .env file for credentials |
-
-### What Gets Converted
-
-| Component | n8n | Activepieces |
-|-----------|-----|--------------|
-| Nodes/Actions | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
-| Triggers | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
-| Connections | <Icon name="warning" /> Experimental | <Icon name="warning" /> Partial |
-| Parameters | <Icon name="warning" /> Experimental | <Icon name="check-circle" /> Full support |
-| Credentials | <Icon name="warning" /> Experimental | <Icon name="warning" /> Env var refs |
-
-### Credential Handling
-
-Credentials are converted to environment variable references:
-
-::: v-pre
-```json
-{
-  "params": {
-    "apiKey": "{{habits.env.OPENAI_API_KEY}}"
-  }
-}
-```
-:::
-
-
-
-
-Use the `--env` flag to generate a template file for these variables.
-
-### Post-Import Steps
-
-1. **Review nodes** - Verify all nodes converted correctly
-2. **Configure credentials** - Fill in the generated `.env` file
-3. **Test** - Run the workflow to verify behavior
-4. **Adjust** - Fine-tune parameters as needed
-
-
 
 ## Best Practices
 

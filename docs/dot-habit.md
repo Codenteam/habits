@@ -746,7 +746,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
           <td data-label="Field"><code>data.framework</code></td>
           <td data-label="Type">string</td>
           <td data-label="Required"><span class="rfc-keyword should">SHOULD</span></td>
-          <td data-label="Description">Framework: <code>bits</code>, <code>activepieces</code>, <code>n8n</code>, or <code>script</code>.</td>
+          <td data-label="Description">Framework: <code>bits</code> or <code>script</code>.</td>
         </tr>
         <tr>
           <td data-label="Field"><code>data.module</code></td>
@@ -881,7 +881,7 @@ output:
     <component :is="AlertTriangle" :size="18" />
     <div>
       <strong>Deprecation Notice</strong>
-      <p>Support for <code>activepieces</code> and <code>n8n</code> node types is deprecated and will be removed in a future version. Please migrate to <code>bits</code> nodes. The examples below are provided for legacy compatibility only.</p>
+      <p>Support for <code>activepieces</code> and <code>n8n</code> node types is deprecated. Please migrate to <code>bits</code> nodes. The examples below are provided for legacy compatibility only.</p>
     </div>
   </div>
 

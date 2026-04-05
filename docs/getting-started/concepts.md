@@ -24,9 +24,7 @@ A **Stack** groups multiple habits together. Define one `stack.yaml` to run rela
 ## Bit
 
 A **Bit** is a single node in a habit. It can be:
-- A **Habits bit** (e.g., `@ha-bits/bit-intersect)
-- An **ActivePieces piece** (e.g., `@activepieces/piece-openai`)
-- An **n8n node** (e.g., `n8n-nodes-base`)
+- A **Habits bit** (e.g., `@ha-bits/bit-intersect`)
 - A **custom script** (Deno/TypeScript)
 
 ## Base

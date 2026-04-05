@@ -19,7 +19,7 @@ Habits is a **lightweight workflow creator, runtime, and packer** for building a
 |-----------|------|-------------|
 | **Stack** | Workflow Set | Multiple habits running together |
 | **Habit** | Workflow | A YAML file defining connected nodes |
-| **Bit** | Node | A single step: Habits bit or script (n8n/ActivePieces deprecated) |
+| **Bit** | Node | A single step: Habits bit or script |
 | **Base** | Builder | Visual editor for creating habits |
 | **Cortex** | Executor | Runtime that executes workflows |
 
@@ -47,10 +47,6 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 **Ways to run:**
 - **REST API**: Start a server and trigger via HTTP/Frontend
 - **CLI**: `habits execute --config ./stack.yaml`
-
-::: danger Deprecation Notice
-**n8n and ActivePieces nodes are being deprecated.** We are removing support for n8n and ActivePieces nodes in favor of native Habits bits, which are fully Apache 2.0 licensed with no commercial restrictions. Migrate your workflows to use Habits bits for long-term compatibility.
-:::
 
 ## Key Features
 

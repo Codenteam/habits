@@ -332,7 +332,6 @@ if (typeof globalThis.process === 'undefined') {
         },
         // External packages that can't be bundled
         external: [
-            '@activepieces/*',
             '@ha-bits/bindings',
             '@habits/shared',
         ],

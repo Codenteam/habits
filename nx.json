@@ -7,7 +7,7 @@
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
-      "include": ["packages/**/*", "nodes/activepieces/@ha-bits/piece-*/**/*"],
+      "include": ["packages/**/*"],
       "exclude": ["node_modules/**/*", "docs/**/*", "workflows/**/*", "samples/**/*"]
     }
   ],
@@ -49,7 +49,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm esbuild {args.input} --bundle --platform=node --format=cjs --outfile={args.output} --external:@activepieces/* --minify{args.banner}"
+          "pnpm esbuild {args.input} --bundle --platform=node --format=cjs --outfile={args.output} --minify{args.banner}"
         ],
         "cwd": "{workspaceRoot}",
         "parallel": false,
@@ -64,7 +64,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "pnpm esbuild {args.input} --bundle --platform=node --format=esm --outfile={args.output} --external:@activepieces/* --minify"
+          "pnpm esbuild {args.input} --bundle --platform=node --format=esm --outfile={args.output} --minify"
         ],
         "cwd": "{workspaceRoot}",
         "parallel": false

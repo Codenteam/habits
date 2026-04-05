@@ -40,9 +40,6 @@
           "banner": {
             "js": "#!/usr/bin/env node"
           },
-          "external": [
-            "@activepieces/*"
-          ],
           "packages": "bundle"
         }
       },
@@ -104,9 +101,6 @@
         "sourcemap": false,
         "declaration": false,
         "esbuildOptions": {
-          "external": [
-            "@activepieces/*"
-          ],
           "packages": "bundle"
         }
       },

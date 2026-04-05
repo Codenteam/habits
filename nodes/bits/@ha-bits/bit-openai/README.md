@@ -4,9 +4,9 @@ openai AI integration bit module for the Habits workflow system.
 
 This module provides AI actions (chat, image generation, transcription, etc.) that connect to openai AI services.
 
-## Key Difference from @ha-bits/piece-openai
+## Architecture
 
-This module imports from `@ha-bits/cortex` instead of `@activepieces/*` packages, making it fully independent of the Activepieces ecosystem.
+This module imports from `@ha-bits/cortex`, using the native Bits framework for workflow automation.
 
 ## Features
 

@@ -258,10 +258,10 @@ export interface BitsExecutionResult {
 /**
  * Extract piece from a loaded module.
  * Bits modules export a piece object with 'actions' and 'triggers' properties.
- * Also supports declarative nodes (n8n-style) that have a description with routing.
+ * Also supports declarative nodes that have a description with routing.
  */
 export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
-  // First, check if this is a declarative node (n8n-style with routing)
+  // First, check if this is a declarative node (with routing)
   const declarativeNode = extractDeclarativeNode(loadedModule);
   if (declarativeNode) {
     logger.log(`📋 Detected declarative node: ${declarativeNode.description.displayName}`);

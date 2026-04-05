@@ -94,16 +94,16 @@ Content-Type: application/json
 # Module Schema API
 # =============================================================================
 
-### Get module schema - Activepieces OpenAI
-# @name moduleSchemaOpenAI
-GET {{host}}:{{port}}/habits/base/api/modules/schema/activepieces/@activepieces%2Fpiece-openai
+### Get module schema - Bits HTTP
+# @name moduleSchemaHTTP
+GET {{host}}:{{port}}/habits/base/api/modules/schema/bits/@ha-bits%2Fbit-http
 Content-Type: application/json
 
 ?? status == 200
 
-### Check module availability - Activepieces OpenAI
-# @name moduleCheckOpenAI
-GET {{host}}:{{port}}/habits/base/api/modules/check/activepieces/@activepieces%2Fpiece-openai
+### Check module availability - Bits HTTP
+# @name moduleCheckHTTP
+GET {{host}}:{{port}}/habits/base/api/modules/check/bits/@ha-bits%2Fbit-http
 Content-Type: application/json
 
 ?? status == 200
@@ -112,21 +112,16 @@ Content-Type: application/json
 # Module Execution API
 # =============================================================================
 
-### Execute module - n8n Chatwoot (example)
+### Execute module - Bits HTTP (example)
 # @name executeModule
 POST {{host}}:{{port}}/habits/base/api/execute
 Content-Type: application/json
 
 {
-  "module": "n8n/n8n-nodes-chatwoot",
+  "module": "bits/@ha-bits/bit-http",
   "params": {
-    "resource": "contact",
-    "operation": "getAll",
-    "accountId": "1",
-    "credentials": {
-      "url": "https://app.chatwoot.com",
-      "accessToken": "test"
-    }
+    "method": "GET",
+    "url": "https://httpbin.org/get"
   }
 }
 
@@ -140,11 +135,9 @@ POST {{host}}:{{port}}/habits/base/api/forms/populate-options
 Content-Type: application/json
 
 {
-  "framework": "activepieces",
-  "moduleId": "@activepieces/piece-openai",
-  "actionName": "generate_image",
-  "fieldName": "resolution",
-  "currentValues": {
-    "model": "dall-e-2"
-  }
+  "framework": "bits",
+  "moduleId": "@ha-bits/bit-intersect",
+  "actionName": "send_prompt",
+  "fieldName": "model",
+  "currentValues": {}
 }

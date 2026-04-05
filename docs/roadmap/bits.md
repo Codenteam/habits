@@ -1,20 +1,17 @@
 # Bits
 
-Enhanced workflow nodes with built-in capabilities, mandatory testing, and an Activepieces-like OOP API.
+Enhanced workflow nodes with built-in capabilities, mandatory testing, and an OOP API.
 
 ## Overview
 
-**Bits** are the next evolution of workflow nodes in Habits. While any Activepieces trigger/action or n8n node works seamlessly with Habits, Bits introduce powerful enhancements:
+**Bits** are the workflow nodes in Habits. They provide a modular, type-safe way to build automations:
 
-| Feature | Activepieces/n8n Nodes | Bits |
-|---------|------------------------|------|
-| Execution | <Icon name="check-circle" /> Works | <Icon name="check-circle" /> Works |
-| Capabilities Model | <Icon name="x-circle" /> Unrestricted | <Icon name="check-circle" /> Explicit capabilities (`fs:read`, `http:request`, etc.) |
-| Mandatory Tests | <Icon name="x-circle" /> Optional | <Icon name="check-circle" /> Required end-to-end test |
-| Script Support | <Icon name="x-circle" /> Limited | <Icon name="check-circle" /> TypeScript, Python, and more |
-| Familiar API | - | <Icon name="check-circle" /> Activepieces-like `createDoer`/`createWatcher` |
-
-> <Icon name="warning" /> **n8n Runtime Note**: Using n8n nodes requires installing the entire n8n runtime (`n8n-core`, `n8n-workflow`, etc.) via npm. This significantly bloats your runtime and **immediately applies the [Sustainable Use License (SUL)](https://github.com/n8n-io/n8n/blob/master/LICENSE.md)** to your project. Consider using Bits or Activepieces nodes if licensing or bundle size is a concern.
+| Feature | Description |
+|---------|-------------|
+| Capabilities Model | Explicit capabilities (`fs:read`, `http:request`, etc.) |
+| Mandatory Tests | Required end-to-end test for each bit |
+| Script Support | TypeScript, Python, and more |
+| Familiar API | `createDoer`/`createWatcher` pattern |
 
 ---
 
@@ -1240,60 +1237,16 @@ sampleData: {
 
 ---
 
-## Migration from Activepieces/n8n Nodes
-
-Existing Activepieces and n8n nodes continue to work. You can gradually migrate to bits when you need:
-
-- Capability controls for security auditing
-- Mandatory test coverage
-- Custom integrations with specific requirements
-
-```yaml
-# habit: mixed-nodes-migration
-# Mix bits and existing nodes in the same habit
-id: mixed-nodes-migration
-name: Mixed Nodes Migration Example
-
-nodes:
-  # Existing Activepieces node
-  - id: openai-chat
-    type: activepieces
-    data:
-      framework: activepieces
-      module: "@activepieces/piece-openai"
-      operation: ask_chatgpt
-      label: OpenAI Chat
-
-  # New bit with capabilities
-  - id: custom-api
-    type: bit
-    data:
-      framework: bits
-      module: "@ha-bits/bits-http"
-      operation: resilient_http_request
-      label: Custom API Call
-
-edges:
-  - id: e1
-    source: openai-chat
-    target: custom-api
-```
-
-<HabitViewer :content="mixedNodesMigrationYaml" :hide-controls="true" :fit-view="true" :height="280" />
-
----
-
 ## Terminology Aliases
 
 For developers coming from different backgrounds, the framework supports intuitive aliases:
 
-| Bits Term | Activepieces Term | n8n Term |
-|-----------|-------------------|----------|
-| `createDoer` | `createAction` | - |
-| `createWatcher` | `createTrigger` | - |
-| `doers` | `actions` | `nodes` |
-| `watchers` | `triggers` | `trigger nodes` |
-| `BitAuth` | `PieceAuth` | `credentials` |
+| Bits Term | Alias |
+|-----------|-------|
+| `createDoer` | `createAction` |
+| `createWatcher` | `createTrigger` |
+| `doers` | `actions` |
+| `watchers` | `triggers` |
 
 Both the primary terms and aliases work interchangeably:
 
@@ -1309,6 +1262,5 @@ import { createTrigger } from '@ha-bits/bits';
 
 <script setup>
 import automatedReportingYaml from '../../showcase/docs/automated-reporting/habit.yaml?raw'
-import mixedNodesMigrationYaml from '../../showcase/docs/mixed-nodes-migration/habit.yaml?raw'
 </script>
 

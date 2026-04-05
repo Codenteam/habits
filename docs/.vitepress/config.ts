@@ -84,7 +84,6 @@ export default defineConfig({
           { text: 'Build Habit using AI', link: '/getting-started/first-habit-using-ai' },
           { text: 'Build Full AI Powered App', link: '/getting-started/first-app-using-habits' },
           { text: 'Build Standalone App (No APIs)', link: '/getting-started/standalone-app' },
-          { text: 'Code Habit using HaC (Mix n8n/ActivePieces)', link: '/getting-started/first-habit-mixed' },
         ]
       },      
       {

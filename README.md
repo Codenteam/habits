@@ -57,13 +57,13 @@ Habits is a **lightweight workflows creator, runtime, and packer**, designed for
 |-----------|------|-------------|
 | **Habit** | Workflow | A complete routine composed of connected nodes |
 | **Stack** | Workflow Set | A collection of habits executed together |
-| **Bit** | Node | A single step: a bit, ActivePieces piece, n8n node, or script |
+| **Bit** | Node | A single step: a bit or script |
 | **Base** | Builder | Visual workflow designer for constructing habits |
 | **Cortex** | Executor | The orchestration engine that runs everything |
 
 ## Features
 
-- **Multi-Framework Support** - Combine ActivePieces pieces, n8n nodes, custom bits, and scripts in a single workflow
+- **Native Bits** - Use Habits bits for fully Apache 2.0 licensed integrations
 - **True Open Source (Apache 2.0)** - Embed in commercial products, distribute without restrictions
 - **Flexible Execution** - Run via CLI, REST API, or with an auto-generated frontend
 - **Dynamic Module Loading** - Install modules from npm, GitHub, or local sources on-the-fly
@@ -194,13 +194,8 @@ npx habits@latest cortex --config ./stack.yaml
 - Serverless & edge deployments (AWS Lambda, Cloudflare Workers)
 - Embedding workflows in your SaaS product
 - A fully open-source stack (Apache 2.0 + MIT)
-- Mixed framework workflows (Bits + ActivePieces + n8n + scripts)
+- Mixed framework workflows (Bits + scripts)
 - CLI/REST API workflow for CI/CD pipelines
-
-**Use n8n or ActivePieces directly when you need:**
-- A full visual builder with all features
-- A managed/hosted platform
-- Built-in monitoring and team features
 
 ## Enabling Features
 
@@ -210,14 +205,12 @@ npx habits@latest cortex --config ./stack.yaml
 | Management Portal | `HABITS_MANAGE_ENABLED=true` | `/manage` |
 | Frontend | Set `frontend` in stack.yaml | `/` |
 
-## License Considerations
+## License
 
 | Module Source | License | Safe to Distribute? |
 |--------------|---------|---------------------|
 | Habits core | Apache 2.0 | Yes |
-| ActivePieces pieces | MIT | Yes |
-| Community n8n nodes | Usually MIT | Check each |
-| n8n-nodes-base | Sustainable Use | No |
+| Bits modules | MIT | Yes |
 
 Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
 

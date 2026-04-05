@@ -58,6 +58,9 @@ notes
 
 old-showcases/
 
+# Deprecated (moved here for reference)
+deprecated/
+
 
 # TypeScript build artifacts in source directories (should only be in dist/)
 packages/**/src/**/*.js

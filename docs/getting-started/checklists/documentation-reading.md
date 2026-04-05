@@ -16,14 +16,11 @@
 - [ ] Read [Logging](/deep-dive/logging.md) - debugging and monitoring
 
 ### If you want to see working examples
-- [ ] Check [Mixed Framework Example](/showcase/mixed.md) - combines multiple frameworks
+- [ ] Check [Marketing Campaign Example](/showcase/marketing-campaign.md) - AI-powered marketing content generation
 - [ ] Check [AI Cookbook Example](/showcase/ai-cookbook.md) - AI-powered recipe generation
 - [ ] Check [Email Classification Example](/showcase/email-classification.md) - email processing
 - [ ] Check [Minimal Blog Example](/showcase/minimal-blog.md) - simple content management
 - [ ] Browse [Examples Directory](/showcase/) - all example stacks with code
-
-### If you want to import from existing tools
-- [ ] Read [Importing & Converting](/deep-dive/importing-converting.md) - import from n8n, Activepieces, etc.
 
 ### If you want to distribute your habits
 - [ ] Read [Pack & Distribute](/deep-dive/pack-distribute.md) - export and distribution options
