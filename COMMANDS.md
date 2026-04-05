@@ -243,3 +243,9 @@ npx env-cmd .secrets -- npx tsx habits-cortex/build-release.ts --platform macos 
 
 
 
+
+
+# Testing
+To run a testing file (usually in yaml file), using this command: 
+npx tsx scripts/e2e/run-habit-tests.cts --test-file showcase/local-ai/habit.test.yaml
+

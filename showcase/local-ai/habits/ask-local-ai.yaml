@@ -36,11 +36,11 @@ nodes:
       framework: bits
       source: local
       module: "@ha-bits/bit-local-ai"
-      operation: ask_ai
+      operation: ask_local_llm
       label: Local AI Chat
       isTrigger: false
       params:
-        model: "{{habits.input.model || 'qwen2.5-0.5b'}}"
+        model: "{{habits.input.model || 'qwen2-0.5b'}}"
         prompt: "{{habits.input.prompt}}"
         systemPrompt: "{{habits.input.systemPrompt || 'You are a helpful assistant.'}}"
         temperature: "{{habits.input.temperature || 0.7}}"
@@ -50,6 +50,6 @@ nodes:
 edges: []
 
 output:
-  message: "{{chat.content}}"
-  usage: "{{chat.usage}}"
+  message: "{{chat.text}}"
+  tokensGenerated: "{{chat.tokensGenerated}}"
   model: "{{chat.model}}"

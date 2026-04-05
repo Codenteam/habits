@@ -3,7 +3,7 @@
 
 id: install-model
 name: Install Model
-description: Download and install a GGUF model from HuggingFace or direct URL
+description: Download and install an AI model from HuggingFace or direct URL
 
 input:
   type: object
@@ -14,6 +14,13 @@ input:
     modelName:
       type: string
       description: Name for the installed model
+    modelType:
+      type: string
+      enum: [text-gen, image-gen, whisper, tts, caption, vision, other]
+      description: Type of model (determines installation directory)
+    overwrite:
+      type: boolean
+      description: Overwrite if model already exists
   required:
     - modelUrl
     - modelName
@@ -31,6 +38,8 @@ nodes:
       params:
         modelUrl: "{{habits.input.modelUrl}}"
         modelName: "{{habits.input.modelName}}"
+        modelType: "{{habits.input.modelType || 'text-gen'}}"
+        overwrite: "{{habits.input.overwrite || false}}"
 
 edges: []
 

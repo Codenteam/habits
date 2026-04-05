@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-create-image-captioner"
+description = "Enables the create_image_captioner command without any pre-configured scope."
+commands.allow = ["create_image_captioner"]
+
+[[permission]]
+identifier = "deny-create-image-captioner"
+description = "Denies the create_image_captioner command without any pre-configured scope."
+commands.deny = ["create_image_captioner"]

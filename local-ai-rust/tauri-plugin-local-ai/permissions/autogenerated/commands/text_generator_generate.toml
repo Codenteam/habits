@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-text-generator-generate"
+description = "Enables the text_generator_generate command without any pre-configured scope."
+commands.allow = ["text_generator_generate"]
+
+[[permission]]
+identifier = "deny-text-generator-generate"
+description = "Denies the text_generator_generate command without any pre-configured scope."
+commands.deny = ["text_generator_generate"]

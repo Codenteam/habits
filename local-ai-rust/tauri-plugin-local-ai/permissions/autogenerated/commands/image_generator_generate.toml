@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-image-generator-generate"
+description = "Enables the image_generator_generate command without any pre-configured scope."
+commands.allow = ["image_generator_generate"]
+
+[[permission]]
+identifier = "deny-image-generator-generate"
+description = "Denies the image_generator_generate command without any pre-configured scope."
+commands.deny = ["image_generator_generate"]

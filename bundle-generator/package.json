@@ -34,6 +34,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@ha-bits/bit-local-ai-nn": "file:../nodes/bits/@ha-bits/bit-local-ai-nn",
     "esbuild": "^0.20.0",
     "js-yaml": "^4.1.0",
     "quickjs-emscripten": "^0.29.0"

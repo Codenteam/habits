@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-caption-image"
+description = "Enables the caption_image command without any pre-configured scope."
+commands.allow = ["caption_image"]
+
+[[permission]]
+identifier = "deny-caption-image"
+description = "Denies the caption_image command without any pre-configured scope."
+commands.deny = ["caption_image"]

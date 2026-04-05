@@ -16,6 +16,34 @@ workflows:
     path: ./habits/install-model.yaml
     enabled: true
 
+  - id: vision-prompt
+    path: ./habits/vision-prompt.yaml
+    enabled: true
+
+  - id: generate-image
+    path: ./habits/generate-image.yaml
+    enabled: true
+
+  - id: extract-data
+    path: ./habits/extract-data.yaml
+    enabled: true
+
+  - id: transcribe-audio
+    path: ./habits/transcribe-audio.yaml
+    enabled: true
+
+  - id: text-to-speech
+    path: ./habits/text-to-speech.yaml
+    enabled: true
+
+  - id: caption-image
+    path: ./habits/caption-image.yaml
+    enabled: true
+
+  - id: system-info
+    path: ./habits/system-info.yaml
+    enabled: true
+
 server:
   port: 13000
   host: "0.0.0.0"

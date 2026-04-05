@@ -193,6 +193,113 @@ export interface ListModelsResult {
   totalCount: number;
 }
 
+// ---- Vision (Image-to-Text) ----
+
+export interface VisionParams {
+  /** Model identifier or path (must be a vision-capable model like Qwen3.5 multimodal) */
+  model: string;
+  /** Image as base64 string, data URL, or file path */
+  image: string;
+  /** Question or prompt about the image */
+  prompt: string;
+  /** Detail level for image processing */
+  detail?: 'low' | 'high' | 'auto';
+  /** System instructions */
+  systemPrompt?: string;
+  /** Temperature (0-1) */
+  temperature?: number;
+  /** Maximum tokens to generate */
+  maxTokens?: number;
+  /** Top-p sampling */
+  topP?: number;
+}
+
+export interface VisionResult {
+  /** The assistant's response about the image */
+  message: ChatMessage;
+  /** Full response content as string */
+  content: string;
+  /** Token usage statistics */
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  /** Reason generation stopped */
+  finishReason?: 'stop' | 'length' | 'error';
+  /** Model used */
+  model?: string;
+}
+
+// ---- Image Generation (Text-to-Image) ----
+
+export interface ImageGenerationParams {
+  /** Model identifier or path (SD 1.5 GGUF, etc.) */
+  model: string;
+  /** Text prompt describing the desired image */
+  prompt: string;
+  /** Negative prompt (what to avoid) */
+  negativePrompt?: string;
+  /** Image width in pixels */
+  width?: number;
+  /** Image height in pixels */
+  height?: number;
+  /** Number of inference steps (higher = better quality, slower) */
+  steps?: number;
+  /** Guidance scale / CFG scale (higher = more prompt adherence) */
+  guidanceScale?: number;
+  /** Random seed for reproducibility (-1 = random) */
+  seed?: number;
+  /** Number of images to generate */
+  numImages?: number;
+  /** Output format */
+  responseFormat?: 'url' | 'b64_json';
+}
+
+export interface ImageGenerationResult {
+  /** Generated images */
+  images: Array<{
+    /** Base64-encoded image data (if responseFormat is 'b64_json') */
+    b64_json?: string;
+    /** URL to generated image (if responseFormat is 'url') */
+    url?: string;
+    /** Revised prompt (if model modified it) */
+    revisedPrompt?: string;
+  }>;
+  /** Seed used for generation */
+  seed?: number;
+  /** Model used */
+  model?: string;
+}
+
+// ---- Structured Data Extraction ----
+
+export interface ExtractStructuredDataParams {
+  /** Model identifier or path */
+  model: string;
+  /** Text content to extract data from */
+  content: string;
+  /** JSON schema defining the expected output structure */
+  schema: Record<string, any>;
+  /** System prompt for extraction guidance */
+  systemPrompt?: string;
+  /** Temperature (lower = more deterministic) */
+  temperature?: number;
+  /** Maximum tokens */
+  maxTokens?: number;
+}
+
+export interface ExtractStructuredDataResult {
+  /** Extracted structured data matching the schema */
+  data: Record<string, any>;
+  /** Raw response content */
+  rawContent: string;
+  /** Whether extraction was successful */
+  success: boolean;
+  /** Error message if extraction failed */
+  error?: string;
+}
+
 // ============================================================================
 // Sample Models List
 // ============================================================================

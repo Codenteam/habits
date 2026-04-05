@@ -1,7 +1,7 @@
 {
   "name": "@ha-bits/bit-local-ai",
-  "version": "1.0.0",
-  "description": "L1 bit for local AI/LLM inference using llama.cpp - runs models locally on CPU/GPU",
+  "version": "0.1.0",
+  "description": "Local AI inference bit module with OpenAI-compatible interface - text generation, image generation, audio transcription, text-to-speech, and image captioning using local models",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "commonjs",
@@ -10,31 +10,42 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "keywords": [
-    "habits",
     "bits",
-    "ai",
+    "habits",
+    "local-ai",
     "llm",
+    "whisper",
+    "stable-diffusion",
+    "text-generation",
+    "image-generation",
+    "text-to-speech",
+    "transcription",
+    "offline",
     "local",
-    "llama",
-    "gguf",
-    "L1"
+    "ai"
   ],
   "author": "Habits Team",
   "license": "MIT",
   "dependencies": {
-    "node-llama-cpp": "^3.18.0"
+    "@ha-bits/bit-ai": ">=1.0.0",
+    "@ha-bits/cortex-core": ">=0.1.0"
   },
   "devDependencies": {
-    "@types/node": "^20.19.37",
-    "typescript": "^5.9.3"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "@ha-bits/bit-ai": ">=1.0.0"
+    "@ha-bits/cortex-core": ">=0.1.0"
   },
-  "files": [
-    "dist"
-  ],
+  "optionalDependencies": {
+    "@local-ai/node": ">=0.1.0"
+  },
   "nx": {
     "sourceRoot": "@ha-bits/bit-local-ai/src",
     "projectType": "library",
@@ -57,16 +68,6 @@
   "habits": {
     "catalog": true,
     "featured": true,
-    "replaces": "@ha-bits/bit-ai",
-    "stubs": {
-      "@ha-bits/bit-local-ai/driver": "./src/stubs/tauri-driver.js"
-    },
-    "tauriPlugins": {
-      "llama": {
-        "cargo": "tauri-plugin-llama = { path = \"../../tauri-plugin-llama\" }",
-        "init": "tauri_plugin_llama::init()",
-        "permissions": []
-      }
-    }
+    "replaces": "@ha-bits/bit-ai"
   }
 }

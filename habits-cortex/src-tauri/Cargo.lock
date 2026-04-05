@@ -6298,6 +6298,7 @@ dependencies = [
 name = "tauri-plugin-llama"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "dirs 5.0.1",
  "encoding_rs",
  "futures",

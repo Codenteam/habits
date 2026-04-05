@@ -1,0 +1,53 @@
+[package]
+name = "tauri-plugin-local-ai"
+version = "0.1.0"
+edition = "2021"
+description = "Tauri v2 plugin for Local AI inference"
+license = "MIT OR Apache-2.0"
+authors = ["Your Name"]
+repository = "https://github.com/your-org/local-ai-rust"
+links = "tauri-plugin-local-ai"
+
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+# Core library
+local-ai-core = { path = "../local-ai-core" }
+
+# Tauri
+tauri = { version = "2" }
+tauri-plugin = { version = "2", features = ["runtime"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async
+tokio = { version = "1", features = ["sync"] }
+
+# UUID for instance IDs
+uuid = { version = "1", features = ["v4"] }
+
+# Logging
+log = "0.4"
+thiserror = "1.0"
+
+[features]
+default = []
+
+# macOS Metal acceleration
+metal = ["local-ai-core/metal"]
+
+# macOS Accelerate framework (CPU optimization)
+accelerate = ["local-ai-core/accelerate"]
+
+# Linux/Windows CUDA acceleration
+cuda = ["local-ai-core/cuda"]
+
+# Intel MKL (CPU optimization for Intel processors)
+mkl = ["local-ai-core/mkl"]

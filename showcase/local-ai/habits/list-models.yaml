@@ -8,9 +8,9 @@ description: List all GGUF models installed locally
 input:
   type: object
   properties:
-    directory:
+    category:
       type: string
-      description: Custom directory to scan (optional, defaults to ~/.habits/models/)
+      description: Filter by model category (text-gen, image-gen, whisper, tts, caption, vision)
 
 nodes:
   - id: list
@@ -23,7 +23,7 @@ nodes:
       label: List Models
       isTrigger: false
       params:
-        directory: "{{habits.input.directory}}"
+        category: "{{habits.input.category}}"
 
 edges: []
 

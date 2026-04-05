@@ -57,3 +57,38 @@ notes
 
 
 old-showcases/
+
+
+# TypeScript build artifacts in source directories (should only be in dist/)
+packages/**/src/**/*.js
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts.map
+
+
+# local-ai-rust generated files
+local-ai-rust/local-ai-node/*.node
+local-ai-rust/local-ai-node/index.js
+local-ai-rust/local-ai-node/index.d.ts
+local-ai-rust/local-ai-node/dist/
+local-ai-rust/local-ai-node/target/
+local-ai-rust/**/target/
+
+# Tauri plugin local-ai generated files
+local-ai-rust/tauri-plugin-local-ai/guest-js/dist/
+local-ai-rust/tauri-plugin-local-ai/target/
+
+# ML model files (large binary files)
+local-ai-rust/models/
+*.gguf
+*.ggml
+*.safetensors
+*.bin
+!bundle-generator/*.js
+!scripts/**/*.bin
+
+# Candle bindings generated files
+candle-bindings/*.node
+candle-bindings/target/
+candle-bindings/index.js
+candle-bindings/index.d.ts
