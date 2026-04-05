@@ -28,7 +28,7 @@ your-project/
 {
   "onerror": "log",
   "resources": {
-    "./node_modules/@activepieces/piece-http/dist/index.js": {
+    "./node_modules/@ha-bits/bit-http/dist/index.js": {
       "integrity": "sha384-ABC123...",
       "dependencies": true
     }

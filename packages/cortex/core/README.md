@@ -6,7 +6,7 @@ Platform-agnostic workflow execution engine for Habits (workflows). This package
 
 - **Platform-agnostic**: Works in browsers, Deno, Bun, and Node.js
 - **No server dependencies**: No Express, Yargs, or Dotenv required
-- **Multiple framework support**: Execute n8n, Activepieces, and Bits modules
+- **Bits framework support**: Execute Bits modules and scripts
 - **Streaming support**: Real-time execution updates via callbacks
 - **Security scanning**: Built-in DLP, PII, and moderation support
 

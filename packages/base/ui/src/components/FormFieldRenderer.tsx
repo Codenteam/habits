@@ -155,7 +155,6 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
       case 'DROPDOWN':
       case 'STATIC_DROPDOWN':
         const dropdownOptions = field?.options?.options?.length ? field?.options.options : (field.resolvedOptions?.options || []);
-        // It seems in ActivePieces you can refresh no matter what even if there are no refreshers
         const canRefresh = true;
         
         return (

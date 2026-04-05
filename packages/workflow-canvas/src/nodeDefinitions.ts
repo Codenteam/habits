@@ -4,17 +4,21 @@ import type { NodeDefinition, WorkflowFramework, NodeType } from './types';
  * Default node definitions by framework and module type
  */
 export const nodeDefinitions: Record<string, NodeDefinition> = {
-  // Script nodes
-  'script-trigger': { inputs: [], outputs: ['main'] },
-  'script-script': { inputs: ['main'], outputs: ['main'] },
+  // Script nodes - cue (primary) and routine nodes
+  'script-cue': { inputs: [], outputs: ['main'] },
+  'script-trigger': { inputs: [], outputs: ['main'] }, // @deprecated - use script-cue
+  'script-routine': { inputs: ['main'], outputs: ['main'] },
+  'script-script': { inputs: ['main'], outputs: ['main'] }, // @deprecated - use script-routine
   'script-forloop': { inputs: ['main'], outputs: ['main'] },
   'script-branch': { inputs: ['main'], outputs: ['main', 'branch1', 'branch2'] },
   'script-flow': { inputs: ['main'], outputs: ['main'] },
   'script-approval': { inputs: ['main'], outputs: ['main', 'approved', 'rejected'] },
 
-  // Bits nodes
-  'bits-trigger': { inputs: [], outputs: ['main'] },
-  'bits-action': { inputs: ['main'], outputs: ['main'] },
+  // Bits nodes - cue (primary) and routine nodes
+  'bits-cue': { inputs: [], outputs: ['main'] },
+  'bits-trigger': { inputs: [], outputs: ['main'] }, // @deprecated - use bits-cue
+  'bits-routine': { inputs: ['main'], outputs: ['main'] },
+  'bits-action': { inputs: ['main'], outputs: ['main'] }, // @deprecated - use bits-routine
   'bits-webhook': { inputs: [], outputs: ['main'] },
   'bits-schedule': { inputs: [], outputs: ['main'] },
   'bits-http': { inputs: ['main'], outputs: ['main'] },
@@ -70,8 +74,8 @@ export function getNodeDefinition(
     return { inputs: ['main'], outputs: ['main'] };
   }
   
-  // Trigger detection
-  if (moduleName.includes('trigger') || moduleName.includes('webhook') || moduleName.includes('schedule')) {
+  // Cue detection (entry points with no inputs)
+  if (moduleName.includes('cue') || moduleName.includes('trigger') || moduleName.includes('webhook') || moduleName.includes('schedule')) {
     return { inputs: [], outputs: ['main'] };
   }
 
@@ -90,6 +94,23 @@ export function getNodeDefinition(
 }
 
 /**
+ * Determine if a node is a cue (entry point) based on framework and module
+ */
+export function isCueNode(
+  framework: WorkflowFramework, 
+  module: string, 
+  nodeType?: NodeType
+): boolean {
+  // Explicit type takes precedence
+  if (nodeType === 'cue' || nodeType === 'trigger') return true;
+  if (nodeType === 'routine' || nodeType === 'action') return false;
+
+  const definition = getNodeDefinition(framework, module, nodeType);
+  return definition.inputs.length === 0;
+}
+
+/**
+ * @deprecated Use isCueNode() instead
  * Determine if a node is a trigger based on framework and module
  */
 export function isTriggerNode(
@@ -97,23 +118,20 @@ export function isTriggerNode(
   module: string, 
   nodeType?: NodeType
 ): boolean {
-  // Explicit type takes precedence
-  if (nodeType === 'trigger') return true;
-  if (nodeType === 'action') return false;
-
-  const definition = getNodeDefinition(framework, module, nodeType);
-  return definition.inputs.length === 0;
+  return isCueNode(framework, module, nodeType);
 }
 
 /**
  * Get node styling colors based on framework and type - Dark mode with high contrast
+ * @param framework - The workflow framework (script or bits)
+ * @param isCue - Whether the node is a cue (entry point)
  */
-export function getNodeColors(framework: WorkflowFramework, isTrigger: boolean): {
+export function getNodeColors(framework: WorkflowFramework, isCue: boolean): {
   bg: string;
   border: string;
   text: string;
 } {
-  if (isTrigger) {
+  if (isCue) {
     switch (framework) {
       case 'script':
         return { bg: 'bg-orange-900', border: 'border-orange-500', text: 'text-orange-200' };
@@ -124,7 +142,7 @@ export function getNodeColors(framework: WorkflowFramework, isTrigger: boolean):
     }
   }
   
-  // Action nodes
+  // Routine nodes
   switch (framework) {
     case 'script':
       return { bg: 'bg-cyan-900', border: 'border-cyan-500', text: 'text-cyan-200' };

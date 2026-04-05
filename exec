@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 
 # Default test module
-TEST_NAME=${1:-n8n-top-6}
+TEST_NAME=${1:-hello-world}
 # TEST_NAME=${1:-business-intersect}
 TEST_DIR="$WORKSPACE_ROOT/showcase/$TEST_NAME"
 CONFIG_FILE="$TEST_DIR/config.json"

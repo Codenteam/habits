@@ -1,4 +1,4 @@
-# Note: This example is API-only and does not include a frontend.
+# Note: This example is API-focused with a simple info page frontend.
 
 version: "1.0"
 workflows:
@@ -8,3 +8,4 @@ workflows:
 server:
   port: 13000
   host: "0.0.0.0"
+  frontend: ./frontend

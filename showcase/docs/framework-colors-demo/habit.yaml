@@ -1,0 +1,36 @@
+id: framework-colors-demo
+name: Framework Colors Demo
+nodes:
+  # Script framework nodes (Orange trigger, Cyan action)
+  - id: script-trigger
+    type: bits
+    data:
+      framework: script
+      module: script-trigger
+      label: Script Trigger
+  - id: script-action
+    type: bits
+    data:
+      framework: script
+      module: script-action
+      label: Script Action
+  # Bits framework nodes (Teal trigger, Emerald action)
+  - id: bits-trigger
+    type: bits
+    data:
+      framework: bits
+      module: "@ha-bits/bit-webhook"
+      label: Bits Trigger
+  - id: bits-action
+    type: bits
+    data:
+      framework: bits
+      module: "@ha-bits/bit-http"
+      label: Bits Action
+edges:
+  - id: edge-script
+    source: script-trigger
+    target: script-action
+  - id: edge-bits
+    source: bits-trigger
+    target: bits-action

@@ -36,9 +36,6 @@
           }
         ],
         "esbuildOptions": {
-          "external": [
-            "@activepieces/*"
-          ],
           "packages": "bundle"
         }
       },

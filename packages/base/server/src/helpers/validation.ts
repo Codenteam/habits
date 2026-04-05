@@ -9,7 +9,7 @@ import * as fs from "fs";
 import { getModulePath, getModuleMainFile } from "@ha-bits/cortex/utils/moduleCloner";
 import { getModuleName } from "@ha-bits/cortex/utils/moduleLoader";
 import { customRequire } from "@ha-bits/cortex/utils/customRequire";
-import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsDoer";
+import { extractBitsPieceFromModule } from "@ha-bits/cortex/bits/bitsRoutine";
 
 /**
  * Validate form data for a module action
@@ -58,12 +58,12 @@ export async function validateFormData(
         isValid = false;
       }
 
-      // Get action definition
-      const actions = piece.actions() || {};
-      const actionDefinition = actions[action];
+      // Get routine definition
+      const routines = piece.routines() || {};
+      const routineDefinition = routines[action];
 
-      if (!actionDefinition) {
-        errors._action = `Action '${action}' not found`;
+      if (!routineDefinition) {
+        errors._action = `Routine '${action}' not found`;
         isValid = false;
         return { isValid, errors };
       }
@@ -93,8 +93,8 @@ export async function validateFormData(
         }
       }
 
-      // Validate action properties
-      const props = actionDefinition.props || {};
+      // Validate routine properties
+      const props = routineDefinition.props || {};
 
       for (const [propKey, prop] of Object.entries(props)) {
         const value = formData[propKey];

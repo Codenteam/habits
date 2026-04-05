@@ -31,12 +31,7 @@ types: Node Types {
     style.stroke: "#90cdf4"
     style.font-color: "#bee3f8"
   }
-  ap: ActivePieces {
-    style.fill: "#2c5282"
-    style.stroke: "#90cdf4"
-    style.font-color: "#bee3f8"
-  }
-  n8n: n8n {
+  scripts: Scripts {
     style.fill: "#2c5282"
     style.stroke: "#90cdf4"
     style.font-color: "#bee3f8"

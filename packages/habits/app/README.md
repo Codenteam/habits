@@ -74,10 +74,10 @@ habits execute --config ./stack.yaml --id my-workflow --input '{"key": "value"}'
 
 ### Convert Workflow
 
-Convert n8n, Activepieces, or Script workflows to Habits format:
+Convert Script workflows to Habits format:
 
 ```bash
-habits convert --input ./n8n-workflow.json --output ./habits-workflow.yaml
+habits convert --input ./script-workflow.json --output ./habits-workflow.yaml
 
 # Also generate .env template for credentials
 habits convert --input ./workflow.json --output ./habits.yaml --env

@@ -204,7 +204,7 @@ ${c.cyan}Output:${c.reset}
 ${c.cyan}Examples:${c.reset}
   npx tsx showcase/run-all-examples.ts
   npx tsx showcase/run-all-examples.ts --only hello-world,mixed
-  npx tsx showcase/run-all-examples.ts --skip activepieces-export
+  npx tsx showcase/run-all-examples.ts --skip hello-world
 `);
 }
 

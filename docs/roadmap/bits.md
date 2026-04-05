@@ -1,20 +1,17 @@
 # Bits
 
-Enhanced workflow nodes with built-in capabilities, mandatory testing, and an Activepieces-like OOP API.
+Enhanced workflow nodes with built-in capabilities, mandatory testing, and an OOP API.
 
 ## Overview
 
-**Bits** are the next evolution of workflow nodes in Habits. While any Activepieces trigger/action or n8n node works seamlessly with Habits, Bits introduce powerful enhancements:
+**Bits** are the workflow nodes in Habits. They provide a modular, type-safe way to build automations:
 
-| Feature | Activepieces/n8n Nodes | Bits |
-|---------|------------------------|------|
-| Execution | <Icon name="check-circle" /> Works | <Icon name="check-circle" /> Works |
-| Capabilities Model | <Icon name="x-circle" /> Unrestricted | <Icon name="check-circle" /> Explicit capabilities (`fs:read`, `http:request`, etc.) |
-| Mandatory Tests | <Icon name="x-circle" /> Optional | <Icon name="check-circle" /> Required end-to-end test |
-| Script Support | <Icon name="x-circle" /> Limited | <Icon name="check-circle" /> TypeScript, Python, and more |
-| Familiar API | - | <Icon name="check-circle" /> Activepieces-like `createDoer`/`createWatcher` |
-
-> <Icon name="warning" /> **n8n Runtime Note**: Using n8n nodes requires installing the entire n8n runtime (`n8n-core`, `n8n-workflow`, etc.) via npm. This significantly bloats your runtime and **immediately applies the [Sustainable Use License (SUL)](https://github.com/n8n-io/n8n/blob/master/LICENSE.md)** to your project. Consider using Bits or Activepieces nodes if licensing or bundle size is a concern.
+| Feature | Description |
+|---------|-------------|
+| Capabilities Model | Explicit capabilities (`fs:read`, `http:request`, etc.) |
+| Mandatory Tests | Required end-to-end test for each bit |
+| Script Support | TypeScript, Python, and more |
+| Familiar API | `createRoutine`/`createCue` pattern |
 
 ---
 
@@ -22,18 +19,18 @@ Enhanced workflow nodes with built-in capabilities, mandatory testing, and an Ac
 
 Bits come in two kinds, inspired by the habit loop:
 
-| Kind | Alias For | Description |
-|------|-----------|-------------|
-| **Watcher** | Trigger | Monitors for events and initiates workflow executions |
-| **Doer** | Action | Performs operations when invoked |
+| Kind | Deprecated Alias | Description |
+|------|-----------------|-------------|
+| **Cue** | Trigger/Watcher | Monitors for events and initiates workflow executions |
+| **Routine** | Action/Doer | Performs operations when invoked |
 
-### Watcher (Trigger)
+### Cue (Entry Point)
 
-A **Watcher** observes external systems or schedules and emits events that start a habit. Think of it as the "cue" in the habit loop. Use `createWatcher` (or its alias `createTrigger`).
+A **Cue** observes external systems or schedules and emits events that start a habit. Think of it as the "cue" in the habit loop - the signal that initiates the routine. Use `createCue` (deprecated aliases: `createTrigger`, `createWatcher`).
 
-### Doer (Action)
+### Routine (Operation)
 
-A **Doer** executes a specific operation as part of the habit's routine. It receives input, performs work, and returns output. Use `createDoer` (or its alias `createAction`).
+A **Routine** executes a specific operation as part of the habit's workflow. It receives input, performs work, and returns output. Use `createRoutine` (deprecated aliases: `createAction`, `createDoer`).
 
 ---
 
@@ -60,9 +57,9 @@ Bits declare explicit capabilities to control what resources they can access. Ca
 ### Capability Declaration
 
 ```typescript
-import { createDoer } from '@ha-bits/bits';
+import { createRoutine } from '@ha-bits/bits';
 
-export const myDoer = createDoer({
+export const myRoutine = createRoutine({
   // ...
   capabilities: ['http:request', 'secrets:read'], // Declare required capabilities
   // ...
@@ -77,26 +74,26 @@ If a bit attempts to use a resource it hasn't declared, execution will fail with
 
 Bits use an OOP-style API. The framework provides two primary functions:
 
-- `createDoer` / `createAction` – Create action bits
-- `createWatcher` / `createTrigger` – Create trigger bits
+- `createRoutine` – Create routine bits (deprecated aliases: `createAction`, `createDoer`)
+- `createCue` – Create cue bits (deprecated aliases: `createTrigger`, `createWatcher`)
 
 Both functions accept a capabilities array alongside the standard configuration.
 
 ---
 
-## Creating a Doer (Action)
+## Creating a Routine
 
-Use `createDoer` to define an action that performs work when invoked.
+Use `createRoutine` to define an operation that performs work when invoked.
 
-### Basic Doer Example
+### Basic Routine Example
 
 ```typescript
 // bits/slack/send-message.ts
-import { createDoer, Property } from '@ha-bits/bits';
+import { createRoutine, Property } from '@ha-bits/bits';
 import { httpClient, HttpMethod } from '@ha-bits/bits-common';
 import { slackAuth } from '../..';
 
-export const sendSlackMessage = createDoer({
+export const sendSlackMessage = createRoutine({
   name: 'send_slack_message',
   auth: slackAuth,
   displayName: 'Send Slack Message',
@@ -1004,18 +1001,18 @@ context.propsValue = { channel: '#test', text: 'Hello' };
 
 ## API Reference
 
-### createDoer / createAction
+### createRoutine (Primary) / createDoer / createAction (Deprecated)
 
 ```typescript
-import { createDoer, Property } from '@ha-bits/bits';
+import { createRoutine, Property } from '@ha-bits/bits';
 
-export const myDoer = createDoer({
+export const myRoutine = createRoutine({
   // Required
   name: string;                    // Unique identifier (snake_case)
   displayName: string;             // UI display name
-  description: string;             // What this doer does
+  description: string;             // What this routine does
   props: Record<string, Property>; // Input properties
-  run: (context: DoerContext) => Promise<unknown>;
+  run: (context: RoutineContext) => Promise<unknown>;
 
   // Optional
   auth?: PieceAuth;               // Authentication requirement
@@ -1027,28 +1024,29 @@ export const myDoer = createDoer({
   };
 });
 
-// Alias
-export const createAction = createDoer;
+// Deprecated aliases (still work for backward compatibility)
+export const createDoer = createRoutine;
+export const createAction = createRoutine;
 ```
 
-### createWatcher / createTrigger
+### createCue (Primary) / createWatcher / createTrigger (Deprecated)
 
 ```typescript
-import { createWatcher, Property, WatcherStrategy } from '@ha-bits/bits';
+import { createCue, Property, CueStrategy } from '@ha-bits/bits';
 
-export const myWatcher = createWatcher({
+export const myCue = createCue({
   // Required
   name: string;                    // Unique identifier (snake_case)
   displayName: string;             // UI display name
-  description: string;             // What this watcher monitors
+  description: string;             // What this cue monitors
   props: Record<string, Property>; // Configuration properties
-  type: WatcherStrategy;           // POLLING | WEBHOOK | APP_WEBHOOK
-  run: (context: WatcherContext) => Promise<unknown[]>;
+  type: CueStrategy;               // POLLING | WEBHOOK | APP_WEBHOOK
+  run: (context: CueContext) => Promise<unknown[]>;
 
   // Required for POLLING
-  test: (context: WatcherContext) => Promise<unknown[]>;
-  onEnable: (context: WatcherContext) => Promise<void>;
-  onDisable: (context: WatcherContext) => Promise<void>;
+  test: (context: CueContext) => Promise<unknown[]>;
+  onEnable: (context: CueContext) => Promise<void>;
+  onDisable: (context: CueContext) => Promise<void>;
 
   // Optional
   auth?: PieceAuth;               // Authentication requirement
@@ -1056,8 +1054,9 @@ export const myWatcher = createWatcher({
   sampleData?: unknown;           // Example output for UI
 });
 
-// Alias
-export const createTrigger = createWatcher;
+// Deprecated aliases (still work for backward compatibility)
+export const createWatcher = createCue;
+export const createTrigger = createCue;
 ```
 
 ### Property Types
@@ -1240,75 +1239,31 @@ sampleData: {
 
 ---
 
-## Migration from Activepieces/n8n Nodes
-
-Existing Activepieces and n8n nodes continue to work. You can gradually migrate to bits when you need:
-
-- Capability controls for security auditing
-- Mandatory test coverage
-- Custom integrations with specific requirements
-
-```yaml
-# habit: mixed-nodes-migration
-# Mix bits and existing nodes in the same habit
-id: mixed-nodes-migration
-name: Mixed Nodes Migration Example
-
-nodes:
-  # Existing Activepieces node
-  - id: openai-chat
-    type: activepieces
-    data:
-      framework: activepieces
-      module: "@activepieces/piece-openai"
-      operation: ask_chatgpt
-      label: OpenAI Chat
-
-  # New bit with capabilities
-  - id: custom-api
-    type: bit
-    data:
-      framework: bits
-      module: "@ha-bits/bits-http"
-      operation: resilient_http_request
-      label: Custom API Call
-
-edges:
-  - id: e1
-    source: openai-chat
-    target: custom-api
-```
-
-<HabitViewer :content="mixedNodesMigrationYaml" :hide-controls="true" :fit-view="true" :height="280" />
-
----
-
 ## Terminology Aliases
 
-For developers coming from different backgrounds, the framework supports intuitive aliases:
+The framework has evolved its terminology to better align with the habit loop metaphor. The new primary terms are **Routine** and **Cue**, but deprecated aliases are fully supported for backward compatibility:
 
-| Bits Term | Activepieces Term | n8n Term |
-|-----------|-------------------|----------|
-| `createDoer` | `createAction` | - |
-| `createWatcher` | `createTrigger` | - |
-| `doers` | `actions` | `nodes` |
-| `watchers` | `triggers` | `trigger nodes` |
-| `BitAuth` | `PieceAuth` | `credentials` |
+| Primary Term | Deprecated Aliases |
+|-------------|-------------------|
+| `createRoutine` | `createDoer`, `createAction` |
+| `createCue` | `createWatcher`, `createTrigger` |
+| `routines` | `doers`, `actions` |
+| `cues` | `watchers`, `triggers` |
+| `CueStrategy` | `WatcherStrategy`, `TriggerStrategy` |
 
-Both the primary terms and aliases work interchangeably:
+All terms work interchangeably:
 
 ```typescript
-// These are equivalent
-import { createDoer } from '@ha-bits/bits';
-import { createAction } from '@ha-bits/bits';
+// New primary terms (recommended)
+import { createRoutine } from '@ha-bits/bits';
+import { createCue } from '@ha-bits/bits';
 
-// These are equivalent
-import { createWatcher } from '@ha-bits/bits';
-import { createTrigger } from '@ha-bits/bits';
+// Deprecated aliases (still supported)
+import { createDoer, createAction } from '@ha-bits/bits';
+import { createWatcher, createTrigger } from '@ha-bits/bits';
 ```
 
 <script setup>
 import automatedReportingYaml from '../../showcase/docs/automated-reporting/habit.yaml?raw'
-import mixedNodesMigrationYaml from '../../showcase/docs/mixed-nodes-migration/habit.yaml?raw'
 </script>
 

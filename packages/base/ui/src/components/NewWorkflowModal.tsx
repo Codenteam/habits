@@ -61,7 +61,7 @@ const TEMPLATES: Template[] = [
     name: 'Mixed Framework',
     description: 'A mixed workflow example with text-to-voice processing, demonstrating multi-framework integration.',
     icon: <FileText className="w-6 h-6" />,
-    stackPath: '/habits/base/api/templates/mixed/stack.yaml',
+    stackPath: '/habits/base/api/templates/hello-world/stack.yaml',
   },
 ];
 

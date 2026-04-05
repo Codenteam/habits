@@ -58,6 +58,9 @@ notes
 
 old-showcases/
 
+# Deprecated (moved here for reference)
+deprecated/
+
 
 # TypeScript build artifacts in source directories (should only be in dist/)
 packages/**/src/**/*.js
@@ -92,3 +95,7 @@ candle-bindings/*.node
 candle-bindings/target/
 candle-bindings/index.js
 candle-bindings/index.d.ts
+
+
+.github/instructions/general.instructions.md
+*.test.yaml

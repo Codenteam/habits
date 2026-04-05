@@ -1,16 +1,6 @@
 {
   "modules": [
     {
-      "framework": "activepieces",
-      "source": "npm",
-      "repository": "@activepieces/piece-openai"
-    },
-    {
-      "framework": "activepieces",
-      "source": "npm",
-      "repository": "@ha-bits/piece-intersect"
-    },
-    {
       "framework": "bits",
       "source": "npm",
       "repository": "@ha-bits/bit-intersect"
@@ -139,16 +129,6 @@
       "framework": "bits",
       "source": "link",
       "repository": "@ha-bits/bit-whatsapp"
-    },
-    {
-      "framework": "n8n",
-      "source": "npm",
-      "repository": "n8n-nodes-google-sheets-trigger"
-    },
-    {
-      "framework": "n8n",
-      "source": "npm",
-      "repository": "n8n-nodes-elevenlabs"
     }
   ]
 }

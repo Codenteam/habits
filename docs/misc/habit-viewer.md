@@ -103,8 +103,6 @@ Nodes are colored based on their framework and type:
 
 | Framework | Trigger Color | Action Color |
 |-----------|---------------|--------------|
-| n8n | Green | Red |
-| activepieces | Blue | Purple |
 | script | Orange | Cyan |
 | bits | Teal | Emerald |
 

@@ -237,7 +237,6 @@ backend: Remote Backend {
   style.fill: "#553c9a"
   style.stroke: "#b794f4"
   style.font-color: "#e9d8fd"
-  icon: https://icons.terrastruct.com/tech%2Fserver.svg
   
   label: "Your Deployed Backend\nhttps://api.example.com"
 }

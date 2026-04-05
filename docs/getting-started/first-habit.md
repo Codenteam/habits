@@ -276,7 +276,7 @@ Base comes with many pre-built modules (bits). Browse the **Modules** tab to dis
 - **AI/LLM**: OpenAI, Anthropic, Cohere, local LLMs
 - **Communication**: Email, SMS, Discord, Slack
 - **Data**: Database, file storage, APIs
-- **Workflows**: Activepieces, n8n nodes
+- **Utilities**: HTTP requests, transformations, scheduling
 - **And many more...**
 
 ## Troubleshooting

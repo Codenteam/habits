@@ -570,13 +570,13 @@ export const BitAuth = {
 export const PieceAuth = BitAuth; // Alias for compatibility with AP if needed
 
 // ============================================================================
-// Action Builder
+// Routine Builder
 // ============================================================================
 
 /**
- * Action context passed to run function
+ * Routine context passed to run function
  */
-export interface BitActionContext<AuthType = any, PropsType = any> {
+export interface BitRoutineContext<AuthType = any, PropsType = any> {
   auth: AuthType;
   propsValue: PropsType;
   store: {
@@ -595,36 +595,45 @@ export interface BitActionContext<AuthType = any, PropsType = any> {
   logger?: ILogger;
 }
 
+/** @deprecated Use BitRoutineContext instead */
+export type BitActionContext<AuthType = any, PropsType = any> = BitRoutineContext<AuthType, PropsType>;
+
 /**
- * Action definition
+ * Routine definition - represents an operation that can be executed
  */
-export interface BitAction<AuthType = any, PropsType = Record<string, any>> {
+export interface BitRoutine<AuthType = any, PropsType = Record<string, any>> {
   name: string;
   displayName: string;
   description: string;
   auth?: PropertyDefinition;
   props: Record<string, PropertyDefinition>;
-  run: (context: BitActionContext<AuthType, PropsType>) => Promise<any>;
+  run: (context: BitRoutineContext<AuthType, PropsType>) => Promise<any>;
 }
 
+/** @deprecated Use BitRoutine instead */
+export type BitAction<AuthType = any, PropsType = Record<string, any>> = BitRoutine<AuthType, PropsType>;
+
 /**
- * Action configuration for createAction
+ * Routine configuration for createRoutine
  */
-interface ActionConfig<AuthType = any, PropsType = Record<string, any>> {
+interface RoutineConfig<AuthType = any, PropsType = Record<string, any>> {
   name: string;
   displayName: string;
   description: string;
   auth?: PropertyDefinition;
   props: Record<string, PropertyDefinition>;
-  run: (context: BitActionContext<AuthType, PropsType>) => Promise<any>;
+  run: (context: BitRoutineContext<AuthType, PropsType>) => Promise<any>;
 }
 
+/** @deprecated Use RoutineConfig type */
+type ActionConfig<AuthType = any, PropsType = Record<string, any>> = RoutineConfig<AuthType, PropsType>;
+
 /**
- * Create a bit action
+ * Create a bit routine
  */
-export function createAction<AuthType = any, PropsType = Record<string, any>>(
-  config: ActionConfig<AuthType, PropsType>
-): BitAction<AuthType, PropsType> {
+export function createRoutine<AuthType = any, PropsType = Record<string, any>>(
+  config: RoutineConfig<AuthType, PropsType>
+): BitRoutine<AuthType, PropsType> {
   return {
     name: config.name,
     displayName: config.displayName,
@@ -635,21 +644,32 @@ export function createAction<AuthType = any, PropsType = Record<string, any>>(
   };
 }
 
-// Alias for compatibility
-export const createBitAction = createAction;
+/** @deprecated Use createRoutine instead */
+export const createAction = createRoutine;
+
+/** @deprecated Use createRoutine instead */
+export const createBitAction = createRoutine;
+
+/** Alias for createRoutine */
+export const createBitRoutine = createRoutine;
 
 // ============================================================================
-// Trigger Builder
+// Cue Builder
 // ============================================================================
 
 /**
- * Trigger types
+ * Cue strategy - determines how the cue detects events
  */
-export enum TriggerStrategy {
+export enum CueStrategy {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',
   APP_WEBHOOK = 'APP_WEBHOOK',
 }
+
+/** @deprecated Use CueStrategy instead */
+export const TriggerStrategy = CueStrategy;
+/** @deprecated Use CueStrategy instead */
+export type TriggerStrategy = CueStrategy;
 
 /**
  * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
@@ -666,9 +686,9 @@ export interface WebhookFilterPayload {
 }
 
 /**
- * Trigger context
+ * Cue context - passed to cue lifecycle methods
  */
-export interface BitTriggerContext<AuthType = any, PropsType = any> {
+export interface BitCueContext<AuthType = any, PropsType = any> {
   auth: AuthType;
   propsValue: PropsType;
   payload: unknown;
@@ -682,60 +702,69 @@ export interface BitTriggerContext<AuthType = any, PropsType = any> {
     createListeners: (listener: { events: string[]; identifierValue: string; identifierKey: string }) => void;
   };
   setSchedule: (options: { cronExpression: string; timezone?: string }) => void;
-  /** Webhook payload data (for webhook triggers) */
+  /** Webhook payload data (for webhook cues) */
   webhookPayload?: WebhookFilterPayload;
 }
 
+/** @deprecated Use BitCueContext instead */
+export type BitTriggerContext<AuthType = any, PropsType = any> = BitCueContext<AuthType, PropsType>;
+
 /**
- * Trigger definition
+ * Cue definition - represents an event or condition that starts a habit
  */
-export interface BitTrigger<AuthType = any, PropsType = Record<string, any>> {
+export interface BitCue<AuthType = any, PropsType = Record<string, any>> {
   name: string;
   displayName: string;
   description: string;
-  type: TriggerStrategy;
+  type: CueStrategy;
   auth?: PropertyDefinition;
   props: Record<string, PropertyDefinition>;
-  onEnable?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<void>;
-  onDisable?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<void>;
-  run?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
-  test?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
-  onHandshake?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any>;
+  onEnable?: (context: BitCueContext<AuthType, PropsType>) => Promise<void>;
+  onDisable?: (context: BitCueContext<AuthType, PropsType>) => Promise<void>;
+  run?: (context: BitCueContext<AuthType, PropsType>) => Promise<any[]>;
+  test?: (context: BitCueContext<AuthType, PropsType>) => Promise<any[]>;
+  onHandshake?: (context: BitCueContext<AuthType, PropsType>) => Promise<any>;
   /**
-   * Filter function for webhook triggers.
+   * Filter function for webhook cues.
    * Called when a webhook is received for this bit's module.
-   * Return true if this trigger should handle the event, false to skip.
-   * If not defined, the trigger accepts all webhook events.
+   * Return true if this cue should handle the event, false to skip.
+   * If not defined, the cue accepts all webhook events.
    */
   filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
   sampleData?: any;
 }
 
+/** @deprecated Use BitCue instead */
+export type BitTrigger<AuthType = any, PropsType = Record<string, any>> = BitCue<AuthType, PropsType>;
+
 /**
- * Trigger configuration
+ * Cue configuration for createCue
  */
-interface TriggerConfig<AuthType = any, PropsType = Record<string, any>> {
+interface CueConfig<AuthType = any, PropsType = Record<string, any>> {
   name: string;
   displayName: string;
   description: string;
-  type: TriggerStrategy;
+  type: CueStrategy;
   auth?: PropertyDefinition;
   props: Record<string, PropertyDefinition>;
-  onEnable?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<void>;
-  onDisable?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<void>;
-  run?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
-  test?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any[]>;
-  onHandshake?: (context: BitTriggerContext<AuthType, PropsType>) => Promise<any>;
+  onEnable?: (context: BitCueContext<AuthType, PropsType>) => Promise<void>;
+  onDisable?: (context: BitCueContext<AuthType, PropsType>) => Promise<void>;
+  run?: (context: BitCueContext<AuthType, PropsType>) => Promise<any[]>;
+  test?: (context: BitCueContext<AuthType, PropsType>) => Promise<any[]>;
+  onHandshake?: (context: BitCueContext<AuthType, PropsType>) => Promise<any>;
   filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
   sampleData?: any;
 }
 
+/** @deprecated Use CueConfig type */
+type TriggerConfig<AuthType = any, PropsType = Record<string, any>> = CueConfig<AuthType, PropsType>;
+
 /**
- * Create a bit trigger
+ * Create a bit cue
  */
-export function createTrigger<AuthType = any, PropsType = Record<string, any>>(
-  config: TriggerConfig<AuthType, PropsType>
-): BitTrigger<AuthType, PropsType> {
+export function createCue<AuthType = any, PropsType = Record<string, any>>(
+  config: CueConfig<AuthType, PropsType>
+): BitCue<AuthType, PropsType> {
   return {
     name: config.name,
     displayName: config.displayName,
@@ -753,8 +782,14 @@ export function createTrigger<AuthType = any, PropsType = Record<string, any>>(
   };
 }
 
-// Alias for compatibility
-export const createBitTrigger = createTrigger;
+/** @deprecated Use createCue instead */
+export const createTrigger = createCue;
+
+/** @deprecated Use createCue instead */
+export const createBitTrigger = createCue;
+
+/** Alias for createCue */
+export const createBitCue = createCue;
 
 // ============================================================================
 // Piece/Bit Builder
@@ -810,8 +845,14 @@ export interface Bit<AuthType = any> {
   maximumSupportedRelease?: string;
   categories?: BitCategory[];
   auth?: PropertyDefinition;
-  actions: Record<string, BitAction<AuthType>>;
-  triggers: Record<string, BitTrigger<AuthType>>;
+  /** Routines provided by this bit */
+  routines: Record<string, BitRoutine<AuthType>>;
+  /** Cues provided by this bit */
+  cues: Record<string, BitCue<AuthType>>;
+  /** @deprecated Use routines instead */
+  actions: Record<string, BitRoutine<AuthType>>;
+  /** @deprecated Use cues instead */
+  triggers: Record<string, BitCue<AuthType>>;
   authors?: string[];
 }
 
@@ -827,8 +868,14 @@ interface BitConfig<AuthType = any> {
   maximumSupportedRelease?: string;
   categories?: BitCategory[];
   auth?: PropertyDefinition;
-  actions: BitAction<AuthType>[];
-  triggers?: BitTrigger<AuthType>[];
+  /** Routines to include (can also use deprecated 'actions' name) */
+  routines?: BitRoutine<AuthType>[];
+  /** @deprecated Use routines instead */
+  actions?: BitRoutine<AuthType>[];
+  /** Cues to include (can also use deprecated 'triggers' name) */
+  cues?: BitCue<AuthType>[];
+  /** @deprecated Use cues instead */
+  triggers?: BitCue<AuthType>[];
   authors?: string[];
 }
 
@@ -836,17 +883,19 @@ interface BitConfig<AuthType = any> {
  * Create a bit/piece module
  */
 export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<AuthType> {
+  // Support both new (routines/cues) and old (actions/triggers) property names
+  const routinesArray = config.routines || config.actions || [];
+  const cuesArray = config.cues || config.triggers || [];
+
   // Convert arrays to records keyed by name
-  const actionsRecord: Record<string, BitAction<AuthType>> = {};
-  for (const action of config.actions) {
-    actionsRecord[action.name] = action;
+  const routinesRecord: Record<string, BitRoutine<AuthType>> = {};
+  for (const routine of routinesArray) {
+    routinesRecord[routine.name] = routine;
   }
 
-  const triggersRecord: Record<string, BitTrigger<AuthType>> = {};
-  if (config.triggers) {
-    for (const trigger of config.triggers) {
-      triggersRecord[trigger.name] = trigger;
-    }
+  const cuesRecord: Record<string, BitCue<AuthType>> = {};
+  for (const cue of cuesArray) {
+    cuesRecord[cue.name] = cue;
   }
 
   return {
@@ -858,8 +907,11 @@ export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<Auth
     maximumSupportedRelease: config.maximumSupportedRelease,
     categories: config.categories,
     auth: config.auth,
-    actions: actionsRecord,
-    triggers: triggersRecord,
+    routines: routinesRecord,
+    cues: cuesRecord,
+    // Deprecated aliases pointing to same records
+    actions: routinesRecord,
+    triggers: cuesRecord,
     authors: config.authors,
   };
 }
@@ -867,18 +919,52 @@ export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<Auth
 export const createPiece = createBit;
 
 // ============================================================================
-// Utility: Custom API Call Action
+// Utility: Bit Counting Helpers
 // ============================================================================
 
 /**
- * Create a custom API call action 
+ * Get routines from a bit, supporting both new (routines) and old (actions) property names
  */
-export function createCustomApiCallAction(config: {
+export function getBitRoutines(bit: any): Record<string, BitRoutine> {
+  return bit.routines || bit.actions || {};
+}
+
+/**
+ * Get cues from a bit, supporting both new (cues) and old (triggers) property names
+ */
+export function getBitCues(bit: any): Record<string, BitCue> {
+  return bit.cues || bit.triggers || {};
+}
+
+/**
+ * Count routines in a bit, supporting both new (routines) and old (actions) property names
+ */
+export function countBitRoutines(bit: any): number {
+  const routines = getBitRoutines(bit);
+  return Object.keys(routines).length;
+}
+
+/**
+ * Count cues in a bit, supporting both new (cues) and old (triggers) property names
+ */
+export function countBitCues(bit: any): number {
+  const cues = getBitCues(bit);
+  return Object.keys(cues).length;
+}
+
+// ============================================================================
+// Utility: Custom API Call Routine
+// ============================================================================
+
+/**
+ * Create a custom API call routine 
+ */
+export function createCustomApiCallRoutine(config: {
   baseUrl: (auth: any) => string;
   auth: PropertyDefinition;
   authMapping?: (auth: any) => Promise<{ headers: Record<string, string> }>;
-}): BitAction {
-  return createAction({
+}): BitRoutine {
+  return createRoutine({
     name: 'custom_api_call',
     displayName: 'Custom API Call',
     description: 'Make a custom API call to any endpoint',
@@ -944,20 +1030,29 @@ export function createCustomApiCallAction(config: {
   });
 }
 
+/** @deprecated Use createCustomApiCallRoutine instead */
+export const createCustomApiCallAction = createCustomApiCallRoutine;
+
 // ============================================================================
 // Re-exports for convenience
 // ============================================================================
 
 export {
-  // BitsDoer types (for runtime)
+  // New primary types
+  type BitsRoutine,
+  type BitsRoutineContext,
+  type BitsCue,
+  type BitsCueType,
+  type BitsCueContext,
+  type BitsStore,
+  type BitsPiece,
+  // Deprecated aliases
   type BitsAction,
   type BitsActionContext,
   type BitsTrigger,
   type BitsTriggerType,
   type BitsTriggerContext,
-  type BitsStore,
-  type BitsPiece,
-} from './bitsDoer';
+} from './bitsRoutine';
 
 // ============================================================================
 // Declarative Node Types (for creating declarative bits with routing)

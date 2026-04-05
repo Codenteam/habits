@@ -27,7 +27,7 @@ Each node represents a single operation in your workflow.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | Unique identifier for the node |
-| `type` | string |  `activepieces`, `n8n`, `script`, or `bit` |
+| `type` | string |  `script` or `bit` |
 | `position` | object | Optional `{ x, y }` coordinates for visual layout |
 | `data` | object | Node configuration (see below) |
 
@@ -36,10 +36,9 @@ Each node represents a single operation in your workflow.
 | Field | Type | Description |
 |-------|------|-------------|
 | `label` | string | Display name for the node |
-| `framework` | string | `activepieces`, `n8n`, `script`, or `bits` |
-| `module` | string | Module/package name (e.g., `@activepieces/piece-openai`) |
+| `framework` | string | `script` or `bits` |
+| `module` | string | Module/package name (e.g., `@ha-bits/bit-openai`) |
 | `operation` | string | Operation to execute |
-| `resource` | string | Resource type (n8n nodes) |
 | `source` | string | Module source (`npm`, `inline`) |
 | `isTrigger` | boolean | Marks node as workflow entry point |
 | `params` | object | Operation parameters |
@@ -98,20 +97,6 @@ The `stack.yaml` file defines workflows and server settings:
 | `server.host` | string | Server host (default: 0.0.0.0) |
 | `logging` | object | Logging configuration |
 
-## Examples
-
-See complete working examples:
-
-::: code-group
-
-<<< @/../showcase/mixed/habit.yaml [Mixed Workflow]
-
-<<< @/../showcase/mixed/stack.yaml [Stack Config]
-
-
-<<< @/../showcase/basic-habit/habit.yaml [Script Workflow]
-
-:::
 
 ## Next Steps
 

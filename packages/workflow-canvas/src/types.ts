@@ -7,8 +7,10 @@ export type WorkflowFramework = 'script' | 'bits';
 
 /**
  * Node type classification
+ * 'cue' is the primary term for entry points, 'trigger' is kept for backward compatibility
+ * 'routine' is the primary term for actions, 'action' is kept for backward compatibility
  */
-export type NodeType = 'trigger' | 'action' | 'forloopflow' | 'branchone' | 'branchall';
+export type NodeType = 'cue' | 'routine' | 'forloopflow' | 'branchone' | 'branchall' | 'trigger' | 'action';
 
 /**
  * Base data structure for workflow nodes

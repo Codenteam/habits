@@ -313,10 +313,15 @@ if (typeof globalThis.process === 'undefined') {
         metafile: true,
         banner: { js: globalProcessShim },
         plugins: [createStubRedirectPlugin(bitStubs), nodePolyfillPlugin],
+        // Add nodePaths to resolve @ha-bits packages from workspace locations
+        nodePaths: [
+            path.join(__dirname, 'node_modules'),
+            path.join(__dirname, '../node_modules'),
+            path.join(__dirname, '../nodes/bits'),
+        ],
         // Alias @ha-bits packages to local node_modules
         // Bit stubs are discovered from package.json habits.stubs field
         alias: {
-            '@ha-bits/bit-intersect': path.join(__dirname, 'node_modules/@ha-bits/bit-intersect/dist/index.js'),
             '@ha-bits/cortex-core': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
             // @ha-bits/cortex (full package) should resolve to cortex-core for bundling
             '@ha-bits/cortex': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
@@ -332,7 +337,6 @@ if (typeof globalThis.process === 'undefined') {
         },
         // External packages that can't be bundled
         external: [
-            '@activepieces/*',
             '@ha-bits/bindings',
             '@habits/shared',
         ],

@@ -1,7 +1,8 @@
 /**
- * Bits Trigger Watcher
+ * Bits Cue Handler
  * 
- * Handles bits module triggers (polling, webhook, app webhook).
+ * Handles bits module cues (polling, webhook, app webhook).
+ * Cues are events or conditions that start habits.
  */
 
 import { ensureModuleInstalled } from '../utils/moduleLoader';
@@ -9,14 +10,18 @@ import { ModuleDefinition } from '../utils/moduleCloner';
 import { 
   pieceFromModule, 
   BitsPiece, 
-  BitsTrigger, 
-  BitsTriggerType, 
+  BitsCue, 
+  BitsCueType, 
   BitsStore,
   BitsPollingStore,
-  BitsTriggerContext,
+  BitsCueContext,
   BitsListener,
   BitsScheduleOptions,
-} from './bitsDoer';
+  // Deprecated aliases - for backward compat within this module
+  BitsTrigger,
+  BitsTriggerType,
+  BitsTriggerContext,
+} from './bitsRoutine';
 import { PollingStore, createPollingStore, DedupStrategy } from '../store';
 import { LoggerFactory } from '@ha-bits/core/logger';
 
@@ -26,7 +31,10 @@ const logger = LoggerFactory.getRoot();
 // Types
 // ============================================================================
 
-export enum TriggerHookType {
+/**
+ * Hook types for cue execution lifecycle
+ */
+export enum CueHookType {
   ON_ENABLE = 'ON_ENABLE',
   ON_DISABLE = 'ON_DISABLE',
   RUN = 'RUN',
@@ -34,25 +42,52 @@ export enum TriggerHookType {
   HANDSHAKE = 'HANDSHAKE',
 }
 
-export interface TriggerExecutionParams {
+/** @deprecated Use CueHookType instead */
+export const TriggerHookType = CueHookType;
+/** @deprecated Use CueHookType instead */
+export type TriggerHookType = CueHookType;
+
+/**
+ * Parameters for cue execution
+ */
+export interface CueExecutionParams {
   moduleDefinition: ModuleDefinition;
-  triggerName: string;
+  cueName: string;
   input: Record<string, any>;
-  hookType: TriggerHookType;
-  trigger?: BitsTrigger;
+  hookType: CueHookType;
+  cue?: BitsCue;
   payload?: unknown;
   webhookUrl?: string;
   isTest?: boolean;
   store?: BitsStore;
   /** Workflow executor for invoking workflows */
   executor?: any;
-  /** ID of the workflow this trigger belongs to */
+  /** ID of the workflow this cue belongs to */
   workflowId?: string;
-  /** ID of this trigger node */
+  /** ID of this cue node */
   nodeId?: string;
 }
 
-export interface TriggerExecutionResult {
+/** @deprecated Use CueExecutionParams instead */
+export interface TriggerExecutionParams {
+  moduleDefinition: ModuleDefinition;
+  triggerName: string;
+  input: Record<string, any>;
+  hookType: CueHookType;
+  trigger?: BitsCue;
+  payload?: unknown;
+  webhookUrl?: string;
+  isTest?: boolean;
+  store?: BitsStore;
+  executor?: any;
+  workflowId?: string;
+  nodeId?: string;
+}
+
+/**
+ * Result of cue execution
+ */
+export interface CueExecutionResult {
   success: boolean;
   output?: unknown[];
   message?: string;
@@ -60,6 +95,9 @@ export interface TriggerExecutionResult {
   scheduleOptions?: BitsScheduleOptions;
   response?: unknown;
 }
+
+/** @deprecated Use CueExecutionResult instead */
+export type TriggerExecutionResult = CueExecutionResult;
 
 // ============================================================================
 // Simple In-Memory Store
@@ -162,10 +200,10 @@ function mapTriggerType(type: string | undefined): BitsTriggerType {
 }
 
 // ============================================================================
-// Bits Trigger Helper
+// Bits Cue Helper
 // ============================================================================
 
-export const bitsTriggerHelper = {
+const _cueHelperImpl = {
   /**
    * Load a piece from module definition
    */
@@ -613,8 +651,8 @@ export const bitsTriggerHelper = {
     payload: any,
     headers?: Record<string, string>,
     query?: Record<string, string>
-  ): Promise<TriggerExecutionResult> {
-    logger.log(`🔔 Executing webhook trigger for node: ${nodeId}`);
+  ): Promise<CueExecutionResult> {
+    logger.log(`🔔 Executing webhook cue for node: ${nodeId}`);
 
     return {
       success: true,
@@ -631,6 +669,14 @@ export const bitsTriggerHelper = {
     };
   },
 };
+
+/**
+ * Primary cue helper - provides utilities for executing and managing cues
+ */
+export const bitsCueHelper = _cueHelperImpl;
+
+/** @deprecated Use bitsCueHelper instead */
+export const bitsTriggerHelper = _cueHelperImpl;
 
 // ============================================================================
 // Utility Functions
@@ -652,12 +698,20 @@ export async function tryCatch<T>(
 
 // Re-export types for convenience
 export { 
-  BitsTrigger, 
-  BitsTriggerType, 
+  BitsCue,
+  BitsCueType, 
+  BitsCueContext,
+  BitsRoutine,
+  BitsRoutineContext,
   BitsStore, 
-  BitsTriggerContext,
   BitsListener,
   BitsScheduleOptions,
-} from './bitsDoer';
+  // Deprecated aliases
+  BitsTrigger, 
+  BitsTriggerType, 
+  BitsTriggerContext,
+  BitsAction,
+  BitsActionContext,
+} from './bitsRoutine';
 
 export default bitsTriggerHelper;

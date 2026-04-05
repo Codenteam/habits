@@ -1,1 +1,3 @@
-n8n workflows: https://github.com/Zie619/n8n-workflows/tree/main/workflows
+# Sample Workflows
+
+This directory contains example workflows in various formats.

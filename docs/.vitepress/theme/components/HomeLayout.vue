@@ -108,7 +108,7 @@ const screenshots = [
   { img: '/images/base.webp', caption: 'Habits Base (Builder)', link: '/getting-started/introduction#habits-base-screenshot' },
   { img: '/images/base-frontend.webp', caption: 'Habits Base UI Editor (Frontend Builder)', link: '/getting-started/introduction#habits-base-frontend-screenshot' },
   { img: '/images/cortex.webp', caption: 'Cortex Engine', link: '/deep-dive/running#cortex-engine-screenshot' },
-  { img: '/images/mixed.webp', caption: 'Mix bits, n8n, ActivePieces and scripts', link: '/showcase/mixed#mixed-frameworks-screenshot' },
+  { img: '/images/mixed.webp', caption: 'Mix bits and scripts', link: '/showcase/mixed#mixed-frameworks-screenshot' },
   { img: '/images/swagger.webp', caption: 'OpenAPI Swagger', link: '/deep-dive/running#swagger-screenshot' },
   { img: '/images/mixed-frontend.webp', caption: 'Text to Audio Example', link: '/showcase/mixed#text-to-audio-screenshot' },
   { img: '/images/blog-clone.webp', caption: 'Simple CMS built with Habits', link: '/showcase/minimal-blog#minimal-blog-screenshot' },
@@ -875,6 +875,7 @@ const hoveredUseCase = ref(null)
   color: var(--vp-c-text-1);
   white-space: pre;
   word-break: break-all;
+  white-space: break-spaces;
 }
 
 
@@ -1487,7 +1488,7 @@ const hoveredUseCase = ref(null)
   .hero-container {
     grid-template-columns: 1fr;
     gap: 48px;
-    text-align: center;
+    text-align: left;
   }
   
   .hero-left {

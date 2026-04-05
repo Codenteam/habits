@@ -28,8 +28,6 @@ In the [Habit Loop](/extra-reading/neuroscience), the **Cue** is the trigger tha
 | **CLI** | Execute workflows from the command line | <Icon name="check-circle" /> Available |
 | **REST API** | Trigger workflows via HTTP endpoints | <Icon name="check-circle" /> Available |
 | **Bits Watchers**| Event-based triggers from Habits bits | <Icon name="check-circle" /> Available |
-| **ActivePieces Triggers** | Event-based triggers from ActivePieces Pieces | <Icon name="wrench" /> WIP |
-| **n8n Triggers** | Event-based triggers from n8n nodes | <Icon name="clock" /> Idea Abandoned, won't be in Habits |
 
 ### CLI Triggers
 
@@ -59,7 +57,7 @@ If you're developing locally and have cloned the repository, use nx to run Corte
 
 ```bash
 # Run the dev target (uses preconfigured test config)
-npx nx dev @ha-bits/cortex --config=n8n-top-6
+npx nx dev @ha-bits/cortex --config=./showcase/hello-world/stack.yaml
 ```
 
 This is the recommended approach when:

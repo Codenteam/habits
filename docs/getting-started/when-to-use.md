@@ -1,6 +1,6 @@
 # When to Use Habits
 
-Habits is a **lightweight runtime engine**, not a full automation platform like n8n or ActivePieces. It's designed for specific scenarios where you need a minimal, embeddable, or serverless-friendly execution layer.
+Habits is a **lightweight runtime engine** designed for specific scenarios where you need a minimal, embeddable, or serverless-friendly execution layer.
 
 ## <Icon name="check-circle" /> When to Use Habits
 
@@ -16,25 +16,25 @@ You need to run automations in lightweight environments:
 
 You want to bundle automation with a frontend to create complete web applications:
 - Ship automation as a product feature
-- White-label workflow execution (Make sure all used nodes and depedencies licenses allow that)
+- White-label workflow execution
 - Embed automation in your existing app
 
 ### Fully Open-Source Stack
 
 You need a 100% open-source solution:
-- Habits (Apache 2.0) + ActivePieces pieces (MIT) = fully open-source
+- Habits (Apache 2.0) + Bits (MIT) = fully open-source
 - No fair-code or AGPL restrictions
 - Complete freedom to modify and distribute
 
-### Mixed Framework Workflows
+### Combining Bits and Scripts
 
-You want to combine modules from different automation frameworks:
+You want to combine pre-built integrations with custom logic:
 
 ```json
 {
   "nodes": [
-    { "type": "activepieces", "data": { "module": "@activepieces/piece-http" } },
-    { "type": "n8n", "data": { "module": "n8n-nodes-text-manipulation" } },
+    { "type": "bits", "data": { "module": "@ha-bits/bit-http" } },
+    { "type": "bits", "data": { "module": "@ha-bits/bit-openai" } },
     { "type": "script", "data": { "params": { "language": "python3" } } }
   ]
 }
@@ -47,24 +47,12 @@ You need a fully **Apache 2.0 licensed** runner that you can:
 - Distribute to customers without restrictions
 - Modify without source-available obligations
 
-::: info License Comparison
-| Platform | License |
-|----------|---------|
-| **Habits** | Apache 2.0 <Icon name="check-circle" /> |
-| ActivePieces | MIT <Icon name="check-circle" /> |
-| n8n | Sustainable Use License (fair-code) |
-:::
-
 ### Distribution to Customers
 
 You want to ship automation workflows to your customers:
 - No per-seat licensing concerns
 - Full control over the runtime
 - White-label capability
-
-### Multiple Triggers in ActivePieces
-
-You need ActivePieces workflows with multiple webhook or scheduled triggers (not supported natively in ActivePieces).
 
 ### Custom Execution Flow
 
@@ -80,46 +68,34 @@ You want to run workflows as CLI commands for:
 - Cron jobs
 - Shell scripts
 
-### Native Execution Mode
-
-Habits runs n8n or ActivePieces modules using their actual runtime dependencies, useful when you need exact behavior matching with the original platforms.
-
 ---
 
 ## <Icon name="x-circle" /> When NOT to Use Habits
 
 ### You Need a Full Visual Builder
 
-If you're starting from scratch and need a complete visual workflow designer with all the bells and whistles, use **n8n** or **ActivePieces** directly. Habits' Base is experimental and not meant to replace mature workflow builders.
+If you're starting from scratch and need a complete visual workflow designer with all the bells and whistles, Habits' Base is experimental and may not have all features of mature workflow builders.
 
 ### You Want a Managed Platform
 
-If you prefer a hosted solution with built-in monitoring, user management, and team features, use the cloud offerings from n8n or ActivePieces.
+If you prefer a hosted solution with built-in monitoring, user management, and team features, consider cloud automation platforms.
 
 ### You Don't Need Lightweight Deployment
 
-If you're running on traditional servers with plenty of resources, the full n8n or ActivePieces platforms may be more suitable.
+If you're running on traditional servers with plenty of resources, full automation platforms may be more suitable.
 
 ---
 
-## License Mixing Considerations
+## License Considerations
 
-When combining modules from different sources, the **most restrictive license applies** to your distribution:
+All Habits core and Bits are open-source:
 
 | Module Source | License | Distribution Impact |
 |--------------|---------|---------------------|
 | Habits core | Apache 2.0 | No restrictions |
-| ActivePieces pieces | MIT | No restrictions |
-| Community n8n nodes | Usually MIT | Check each package |
-| n8n-nodes-base | SUL | Cannot redistribute |
-
-::: danger License Warning
-Using non-Apache/MIT modules may impose license restrictions on your entire solution. Always verify the license of each module you use.
-:::
-
+| Habits bits | MIT | No restrictions |
 
 ## Next Steps
 
 - [Running Habits](/deep-dive/running): Get Habits up and running
 - [Creating Habits](/deep-dive/creating): Build your own automation workflows
-- [Licensing](/extra-reading/licensing): Understanding module licenses

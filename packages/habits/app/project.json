@@ -56,7 +56,6 @@
             ".local.txt": "text"
           },
           "external": [
-            "@activepieces/*",
             "lightningcss"
           ],
           "packages": "bundle"

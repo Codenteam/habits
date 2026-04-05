@@ -160,7 +160,7 @@ const visibleCodeLines = computed(() => {
                 <div 
                   v-for="(node, i) in workflowNodes" 
                   :key="node.id"
-                  class="n8n-node"
+                  class="workflow-node"
                   :class="[node.color, { visible: progress > 0.01 + i * 0.015 }]"
                   :style="{ left: node.x + '%', top: node.y + '%' }"
                 >
@@ -471,8 +471,8 @@ const visibleCodeLines = computed(() => {
   to { stroke-dashoffset: -12; }
 }
 
-/* n8n-style nodes - Absolute positioned */
-.n8n-node {
+/*  nodes - Absolute positioned */
+.workflow-node {
   position: absolute;
   min-width: 120px;
   border-radius: 8px;
@@ -484,27 +484,27 @@ const visibleCodeLines = computed(() => {
   z-index: 1;
 }
 
-.n8n-node.visible {
+.workflow-node.visible {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
 
-.n8n-node.green {
+.workflow-node.green {
   background: #14532d;
   border-color: #22c55e;
 }
 
-.n8n-node.green .node-header {
+.workflow-node.green .node-header {
   background: #166534;
   color: #86efac;
 }
 
-.n8n-node.red {
+.workflow-node.red {
   background: #7f1d1d;
   border-color: #ef4444;
 }
 
-.n8n-node.red .node-header {
+.workflow-node.red .node-header {
   background: #991b1b;
   color: #fca5a5;
 }
@@ -532,8 +532,8 @@ const visibleCodeLines = computed(() => {
   height: 20px;
 }
 
-.n8n-node.green .node-icon { color: #86efac; }
-.n8n-node.red .node-icon { color: #fca5a5; }
+.workflow-node.green .node-icon { color: #86efac; }
+.workflow-node.red .node-icon { color: #fca5a5; }
 
 .node-label {
   font-size: 0.75rem;
@@ -1119,7 +1119,7 @@ const visibleCodeLines = computed(() => {
   .workflow-area {
   }
   
-  .n8n-node {
+  .workflow-node {
     min-width: 100px;
     transform: scale(0.85);
   }
@@ -1157,7 +1157,7 @@ const visibleCodeLines = computed(() => {
     height: 160px;
   }
   
-  .n8n-node {
+  .workflow-node {
     min-width: 90px;
   }
 }

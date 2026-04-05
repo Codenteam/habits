@@ -89,6 +89,7 @@ function extractBitsFromWorkflows(workflows: any[]): Array<{ id: string; module:
       if (node.type === 'bits' || node.data?.framework === 'bits') {
         const moduleName = node.data?.module;
         if (moduleName) {
+          logger.debug(`Found bits module in workflow ${workflow.name || workflow.id}: ${moduleName}`);
           bitsSet.add(moduleName);
         }
       }
