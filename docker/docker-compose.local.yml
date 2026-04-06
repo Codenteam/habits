@@ -1,4 +1,6 @@
+
 # Usage:
+#   $ docker compose -f docker-compose.local.yml up
 #   1. Build the package first: pnpm nx pack habits
 #   2. Build bits: pnpm nx run-many -t build --projects='@ha-bits/*'
 #   3. Run: docker compose -f docker-compose.local.yml up -d
