@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Lead Generation"
 workflows:
   - id: capture-lead
     path: ./habits/capture-lead.yaml

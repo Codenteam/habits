@@ -196,6 +196,7 @@ export async function runPackCommand(options: PackCommandOptions): Promise<PackR
         habits,
         envContent,
         output: options.output,
+        skipBundle: options.skipBundle,
       });
 
     default:
@@ -300,13 +301,15 @@ interface PackHabitFileOptions {
   habits: HabitData[];
   envContent: string;
   output?: string;
+  /** Skip generating cortex-bundle.js (use when cortex-bundle-all.js is pre-loaded) */
+  skipBundle?: boolean;
 }
 
 /**
  * Pack habits into a .habit file (zip archive containing index.html, cortex-bundle.js, and frontend assets)
  * 
  * The .habit file is a self-contained package that can be opened by the Cortex app.
- * It requires a frontend path to be specified in the stack.yaml (server.frontend).
+ * Frontend is optional - if not specified, the Cortex app will auto-generate UI from schema.
  * 
  * HTML files are processed to:
  * - Remove Tailwind CDN and generate CSS via Tailwind CLI
@@ -314,39 +317,38 @@ interface PackHabitFileOptions {
  * - Inline all images as base64 data URLs
  */
 async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult> {
-  const { config, habits, envContent, output, configDir, configPath } = options;
+  const { config, habits, envContent, output, configDir, configPath, skipBundle } = options;
 
   console.log('\n📦 Generating .habit file...\n');
 
-  // Validate that frontend is specified
-  if (!config.server?.frontend) {
-    return {
-      success: false,
-      error: 'Habit format requires server.frontend to be specified in stack.yaml',
-      format: 'habit',
-    };
-  }
+  // Frontend is optional - if not specified, Cortex app will auto-generate UI from schema
+  const hasFrontend = !!config.server?.frontend;
+  let frontendPath: string | null = null;
 
-  // Resolve frontend path
-  const frontendPath = path.isAbsolute(config.server.frontend)
-    ? config.server.frontend
-    : path.resolve(configDir, config.server.frontend);
+  if (hasFrontend) {
+    // Resolve frontend path
+    frontendPath = path.isAbsolute(config.server!.frontend!)
+      ? config.server!.frontend!
+      : path.resolve(configDir, config.server!.frontend!);
 
-  if (!fs.existsSync(frontendPath)) {
-    return {
-      success: false,
-      error: `Frontend directory not found: ${frontendPath}`,
-      format: 'habit',
-    };
-  }
+    if (!fs.existsSync(frontendPath)) {
+      return {
+        success: false,
+        error: `Frontend directory not found: ${frontendPath}`,
+        format: 'habit',
+      };
+    }
 
-  const indexPath = path.join(frontendPath, 'index.html');
-  if (!fs.existsSync(indexPath)) {
-    return {
-      success: false,
-      error: `index.html not found in frontend directory: ${frontendPath}`,
-      format: 'habit',
-    };
+    const indexPath = path.join(frontendPath, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      return {
+        success: false,
+        error: `index.html not found in frontend directory: ${frontendPath}`,
+        format: 'habit',
+      };
+    }
+  } else {
+    console.log('   📱 No frontend specified - Cortex app will auto-generate UI from schema');
   }
 
   // Parse env content
@@ -358,19 +360,25 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
     id: h.slug,
   }));
 
-  // Generate bundle via @ha-bits/bundle-generator
-  const bundleResult = await generateBundle({
-    habits: workflows,
-    appName: config.name || 'HabitsApp',
-    envVars,
-  });
+  // Generate bundle via @ha-bits/bundle-generator (unless skipBundle is true)
+  // When skipBundle is true, we assume cortex-bundle-all.js is pre-loaded in the Tauri app
+  let bundleResult: BundleGeneratorResult | null = null;
+  if (!skipBundle) {
+    bundleResult = await generateBundle({
+      habits: workflows,
+      appName: config.name || 'HabitsApp',
+      envVars,
+    });
 
-  if (!bundleResult.success) {
-    return {
-      success: false,
-      error: bundleResult.error || 'Bundle generation failed',
-      format: 'habit',
-    };
+    if (!bundleResult.success) {
+      return {
+        success: false,
+        error: bundleResult.error || 'Bundle generation failed',
+        format: 'habit',
+      };
+    }
+  } else {
+    console.log('   ⏩ Skipping bundle generation (cortex-bundle-all.js will be used)');
   }
 
   // Note: We do NOT inject cortex-bundle.js into HTML for .habit format
@@ -384,53 +392,64 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   // Track which files are inlined (so we don't add them separately)
   const inlinedFiles = new Set<string>();
 
-  // Compute frontend directory name from config (e.g., "frontend" from "./frontend")
-  const frontendDirName = config.server!.frontend!.replace(/^\.[\/\\]/, '');
+  // Process frontend files if frontend is specified
+  if (hasFrontend && frontendPath) {
+    // Compute frontend directory name from config (e.g., "frontend" from "./frontend")
+    const frontendDirName = config.server!.frontend!.replace(/^\.[\/\\]/, '');
 
-  // Generate fetch proxy script for intercepting /api/* calls (executes via HabitsBundle)
-  const fetchProxyScript = getTauriFetchProxyScript({ mode: 'full' });
+    // Generate fetch proxy script for intercepting /api/* calls (executes via HabitsBundle)
+    const fetchProxyScript = getTauriFetchProxyScript({ mode: 'full' });
 
-  // Scripts to inject into HTML files (only fetch-proxy, NOT cortex-bundle)
-  // cortex-bundle.js is kept as a separate file and injected at runtime by Tauri apps
-  // Node.js server handles /api/* natively without needing the bundle
-  const injectScripts: InjectScript[] = [
-    { id: 'habits-fetch-proxy', content: fetchProxyScript },
-  ];
+    // Scripts to inject into HTML files (only fetch-proxy, NOT cortex-bundle)
+    // cortex-bundle.js is kept as a separate file and injected at runtime by Tauri apps
+    // Node.js server handles /api/* natively without needing the bundle
+    const injectScripts: InjectScript[] = [
+      { id: 'habits-fetch-proxy', content: fetchProxyScript },
+    ];
 
-  // Process all HTML files in the frontend directory
-  console.log('   🔧 Processing HTML files for offline use...');
-  const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
+    // Process all HTML files in the frontend directory
+    console.log('   🔧 Processing HTML files for offline use...');
+    const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
 
-  // Process each HTML file (inline CSS/JS/images but don't inject bundle scripts)
-  for (const [relativePath, processedResult] of processedHtmlFiles) {
-    const processedHtml = processedResult.html;
+    // Process each HTML file (inline CSS/JS/images but don't inject bundle scripts)
+    for (const [relativePath, processedResult] of processedHtmlFiles) {
+      const processedHtml = processedResult.html;
 
-    // Log processing results
-    if (processedResult.tailwindProcessed) {
-      console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+      // Log processing results
+      if (processedResult.tailwindProcessed) {
+        console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+      }
+
+      // Add processed (inlined) HTML files under the frontend directory for offline use
+      // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
+      const htmlZipPath = path.join(frontendDirName, relativePath);
+      zip.file(htmlZipPath, processedHtml);
+
+      // Also add original HTML files under frontend-src/ for base server to use if needed
+      const originalHtmlPath = path.join(frontendPath, relativePath);
+      const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
+      const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
+      zip.file(srcHtmlZipPath, originalHtml);
     }
 
-    // Add processed (inlined) HTML files under the frontend directory for offline use
-    // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
-    const htmlZipPath = path.join(frontendDirName, relativePath);
-    zip.file(htmlZipPath, processedHtml);
-
-    // Also add original HTML files under frontend-src/ for base server to use if needed
-    const originalHtmlPath = path.join(frontendPath, relativePath);
-    const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
-    const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
-    zip.file(srcHtmlZipPath, originalHtml);
+    // Add remaining frontend files (excluding already processed HTML and inlined assets)
+    // Store under the original frontend directory name to preserve structure
+    addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
+    
+    // Also add original frontend files under frontend-src/ (including CSS, JS that were inlined)
+    addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
   }
 
-  // Add remaining frontend files (excluding already processed HTML and inlined assets)
-  // Store under the original frontend directory name to preserve structure
-  addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
-  
-  // Also add original frontend files under frontend-src/ (including CSS, JS that were inlined)
-  addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
+  // Add a marker file to indicate auto-UI should be used (no frontend)
+  if (!hasFrontend) {
+    zip.file('_auto-ui', 'true');
+  }
 
   // Add cortex-bundle.js as a separate file (Tauri apps inject it at runtime)
-  zip.file('cortex-bundle.js', bundleResult.code!);
+  // Only add if bundle was generated (skipBundle = false)
+  if (bundleResult?.code) {
+    zip.file('cortex-bundle.js', bundleResult.code);
+  }
 
   // Add habit YAML files using their relative paths to preserve directory structure
   // (e.g., "habits/generate-recipe.yaml" instead of just "generate-recipe.yaml")
@@ -461,9 +480,17 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   const habitSize = zipBuffer.length;
   console.log(`   ✅ Habit file created: ${outputPath}`);
   console.log(`   📦 Size: ${(habitSize / 1024).toFixed(2)} KB`);
-  console.log(`   🧩 Bundled bits: ${bundleResult.bundledBits?.join(', ') || 'none'}`);
-  console.log(`   📄 Frontend: ${frontendPath}`);
-  console.log(`   🌐 Offline ready: All assets inlined`);
+  if (skipBundle) {
+    console.log(`   🧩 Bundle: skipped (using cortex-bundle-all.js)`);
+  } else {
+    console.log(`   🧩 Bundled bits: ${bundleResult?.bundledBits?.join(', ') || 'none'}`);
+  }
+  if (hasFrontend) {
+    console.log(`   📄 Frontend: ${frontendPath}`);
+    console.log(`   🌐 Offline ready: All assets inlined`);
+  } else {
+    console.log(`   📱 UI: Auto-generated from schema at runtime`);
+  }
 
   return {
     success: true,

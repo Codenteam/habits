@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Cloud File Upload"
 workflows:
   - id: cloud-file-upload
     path: ./habit.yaml

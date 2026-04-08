@@ -11,8 +11,9 @@ const COMMANDS: &[&str] = &[
 ];
 
 fn main() {
+    // Build for Android only - iOS uses WebView JavaScript bridges
+    // The swift-rs library has issues targeting iOS from cargo build
     tauri_plugin::Builder::new(COMMANDS)
         .android_path("android")
-        .ios_path("ios")
         .build();
 }

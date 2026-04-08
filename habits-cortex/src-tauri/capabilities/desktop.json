@@ -1,18 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop",
-  "description": "Desktop-only capabilities (llama plugin)",
+  "description": "Desktop-only capabilities (candle AI plugin)",
   "platforms": ["linux", "macOS", "windows"],
   "windows": [
     "main"
   ],
   "permissions": [
-    "llama:allow-chat",
-    "llama:allow-load-model",
-    "llama:allow-unload-model",
-    "llama:allow-list-models",
-    "llama:allow-install-model",
-    "llama:allow-get-model-info",
-    "llama:allow-ensure-models-dir"
+    "candle:default"
   ]
 }

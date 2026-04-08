@@ -1,0 +1,35 @@
+id: hello-world-hardcoded-world
+name: Hello (World Hardcoded)
+description: A hello world habit where param2 is hardcoded as "world"
+
+# Input schema - only param1 since param2 is hardcoded
+input:
+  - name: param1
+    type: string
+    displayAs: text
+    label: First Parameter
+    description: Enter the first word (use "hello" for greeting)
+    default: hello
+    required: true
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "{{habits.input.param1}}"
+        param2: "world"
+
+edges: []
+
+# Output schema
+output:
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting Result

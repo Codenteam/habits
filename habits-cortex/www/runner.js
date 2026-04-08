@@ -285,15 +285,23 @@ async function extractHabitFile(filePath) {
     
     const zip = await window.JSZip.loadAsync(fileData);
     
-    // Check for required files
+    // Check for auto-ui marker (no frontend, UI generated from schema)
+    const autoUiFile = zip.file('_auto-ui');
+    const useAutoUi = !!autoUiFile;
+    
+    // Check for index.html (optional if auto-ui is enabled)
     let indexFile = zip.file('index.html');
+    let indexHtml = null;
 
     if(!indexFile){
       // Try in frontend
       indexFile = zip.file('frontend/index.html');
     }
     
-    if (!indexFile) {
+    if (indexFile) {
+      indexHtml = await indexFile.async('string');
+    } else if (!useAutoUi) {
+      // No index.html and no auto-ui marker = invalid
       return {
         valid: false,
         error: {
@@ -302,9 +310,6 @@ async function extractHabitFile(filePath) {
         }
       };
     }
-    
-    // Extract content
-    const indexHtml = await indexFile.async('string');
     
     // Get cortex-bundle.js (required as separate file)
     const bundleFile = zip.file('cortex-bundle.js');
@@ -365,7 +370,8 @@ async function extractHabitFile(filePath) {
     }
     
     console.log('[Habits] Extracted habit:', habitName);
-    console.log('[Habits] Index HTML size:', indexHtml.length, 'bytes');
+    console.log('[Habits] Auto-UI mode:', useAutoUi);
+    console.log('[Habits] Index HTML size:', indexHtml ? indexHtml.length : 0, 'bytes');
     console.log('[Habits] Bundle JS size:', bundleJs.length, 'bytes');
     
     // Extract all files for asset handling
@@ -383,6 +389,7 @@ async function extractHabitFile(filePath) {
       bundleJs,
       files,
       filePath,
+      useAutoUi,
     };
   } catch (err) {
     console.error('[Habits] Failed to extract habit file:', err);
@@ -422,6 +429,7 @@ async function importHabitFile(filePath) {
     cachedIndexHtml: extraction.indexHtml,
     cachedBundleJs: extraction.bundleJs,
     cachedFiles: extraction.files,
+    useAutoUi: extraction.useAutoUi || false,
     installedAt: new Date().toISOString(),
   };
   
@@ -477,6 +485,12 @@ async function runHabit(habitId) {
   
   state.currentHabit = habit;
   
+  // If auto-UI mode, use form-based execution
+  if (habit.useAutoUi) {
+    console.log('[Habits] Using auto-UI mode for:', habit.name);
+    return runHabitWithForm(habitId);
+  }
+  
   try {
     let indexHtml, bundleJs;
     
@@ -494,6 +508,16 @@ async function runHabit(habitId) {
         goBackToList();
         return;
       }
+      
+      // Check if the re-extracted file now has auto-UI mode
+      if (extraction.useAutoUi) {
+        habit.useAutoUi = true;
+        habit.cachedBundleJs = extraction.bundleJs;
+        habit.cachedFiles = extraction.files;
+        console.log('[Habits] Switching to auto-UI mode');
+        return runHabitWithForm(habitId);
+      }
+      
       indexHtml = extraction.indexHtml;
       bundleJs = extraction.bundleJs;
       // Update cache
@@ -528,6 +552,9 @@ async function runHabit(habitId) {
     // Show habit view
     document.getElementById('habit-view').classList.add('active');
     
+    // Push history state for back gesture support
+    history.pushState({ habitView: true }, '', '#habit');
+    
     // Use an iframe to properly load the HTML with scripts
     const contentContainer = document.getElementById('habit-content');
     contentContainer.innerHTML = '';
@@ -549,6 +576,588 @@ async function runHabit(habitId) {
     console.error('Failed to run habit:', err);
     showError('Error', 'Failed to load habit: ' + err.message);
     goBackToList();
+  }
+}
+
+// ============================================================================
+// Schema-Based Form Execution (Mobile UI)
+// ============================================================================
+
+/**
+ * Parse habit YAML files to extract workflow schema
+ * @param {object} habit - Habit object with cachedFiles
+ * @returns {object} Schema information { workflows: [...], inputs: [...], env: [...] }
+ */
+function parseHabitWorkflows(habit) {
+  const result = {
+    workflows: [],
+    inputs: [],
+    outputs: [],
+    env: [],
+  };
+
+  if (!habit.cachedFiles) {
+    console.log('[Schema] No cached files for habit');
+    return result;
+  }
+
+  // Find all workflow YAML files (habit.yaml, *.yaml in workflows folder, or listed in stack.yaml)
+  const stackContent = habit.cachedFiles['stack.yaml'] || habit.cachedFiles['stack.yml'];
+  
+  if (stackContent) {
+    try {
+      // Parse stack.yaml workflows section to find workflow files
+      // Format: 
+      //   workflows:
+      //     - id: hello-world
+      //       path: ./habit.yaml
+      const lines = stackContent.split('\n');
+      let inWorkflows = false;
+      let currentWorkflow = null;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        
+        const indent = line.search(/\S/);
+        
+        // Check for workflows section
+        if (trimmed.startsWith('workflows:')) {
+          inWorkflows = true;
+          continue;
+        }
+        
+        // Exit workflows section when hitting another top-level key
+        if (indent === 0 && !trimmed.startsWith('-')) {
+          // Process last workflow before exiting
+          if (inWorkflows && currentWorkflow && currentWorkflow.id) {
+            processWorkflowEntry(currentWorkflow, habit, result);
+          }
+          inWorkflows = false;
+          currentWorkflow = null;
+          continue;
+        }
+        
+        if (!inWorkflows) continue;
+        
+        // New workflow item
+        if (trimmed.startsWith('- id:') || trimmed.startsWith('-id:')) {
+          // Save previous workflow
+          if (currentWorkflow && currentWorkflow.id) {
+            processWorkflowEntry(currentWorkflow, habit, result);
+          }
+          const idMatch = trimmed.match(/^-\s*id:\s*['"]?([^'"\n]+)['"]?/);
+          currentWorkflow = { id: idMatch ? idMatch[1].trim() : null, path: null };
+        } else if (trimmed.startsWith('id:') && currentWorkflow) {
+          const idMatch = trimmed.match(/^id:\s*['"]?([^'"\n]+)['"]?/);
+          if (idMatch) currentWorkflow.id = idMatch[1].trim();
+        } else if (trimmed.startsWith('path:') && currentWorkflow) {
+          const pathMatch = trimmed.match(/^path:\s*['"]?([^'"\n]+)['"]?/);
+          if (pathMatch) currentWorkflow.path = pathMatch[1].trim().replace(/^\.\//, '');
+        }
+      }
+      
+      // Process last workflow
+      if (currentWorkflow && currentWorkflow.id) {
+        processWorkflowEntry(currentWorkflow, habit, result);
+      }
+    } catch (e) {
+      console.error('[Schema] Failed to parse stack.yaml:', e);
+    }
+  }
+
+  // Deduplicate env vars
+  const envMap = new Map();
+  for (const env of result.env) {
+    if (!envMap.has(env.id)) {
+      envMap.set(env.id, env);
+    }
+  }
+  result.env = Array.from(envMap.values());
+
+  console.log('[Schema] Parsed workflows:', result.workflows.length, 'inputs:', result.inputs.length, 'env:', result.env.length);
+  return result;
+}
+
+/**
+ * Process a workflow entry from stack.yaml
+ */
+function processWorkflowEntry(workflow, habit, result) {
+  const workflowId = workflow.id;
+  const workflowPath = workflow.path;
+  
+  // Try to find the habit file using path or fallback patterns
+  const habitFile = (workflowPath && habit.cachedFiles[workflowPath])
+    || habit.cachedFiles[`${workflowId}/habit.yaml`] 
+    || habit.cachedFiles[`${workflowId}/habit.yml`]
+    || habit.cachedFiles[`${workflowId}.yaml`]
+    || habit.cachedFiles[`${workflowId}.yml`]
+    || habit.cachedFiles['habit.yaml']
+    || habit.cachedFiles['habit.yml'];
+  
+  console.log('[Schema] Processing workflow:', workflowId, 'path:', workflowPath, 'found:', !!habitFile);
+  
+  if (habitFile) {
+    const schema = parseHabitYaml(habitFile, workflowId);
+    result.workflows.push({
+      id: workflowId,
+      name: schema.name || workflowId,
+      description: schema.description || '',
+      schema,
+    });
+    // Merge inputs/outputs/env
+    result.inputs.push(...schema.inputs);
+    result.outputs.push(...schema.outputs);
+    result.env.push(...schema.env);
+  } else {
+    // Add workflow with no schema
+    result.workflows.push({
+      id: workflowId,
+      name: workflowId,
+      description: '',
+      schema: { inputs: [], outputs: [], env: [], hasExplicitSchema: false },
+    });
+  }
+}
+
+/**
+ * Parse a single habit.yaml file content
+ */
+function parseHabitYaml(yamlContent, defaultId) {
+  // Use SchemaForm parser if available
+  if (window.SchemaForm) {
+    // Simple YAML parsing (basic key: value extraction)
+    const habitObj = simpleYamlParse(yamlContent);
+    return window.SchemaForm.parseHabitSchema(habitObj);
+  }
+  
+  // Fallback: basic parsing
+  return {
+    id: defaultId,
+    name: defaultId,
+    inputs: [],
+    outputs: [],
+    env: [],
+    hasExplicitSchema: false,
+  };
+}
+
+/**
+ * Simple YAML parser for basic habit.yaml structure
+ * Handles: id, name, description, input (array), output (object/array), env (array), nodes (array)
+ */
+function simpleYamlParse(yamlContent) {
+  const result = {
+    id: null,
+    name: null,
+    description: null,
+    input: [],
+    output: null,
+    env: [],
+    nodes: [],
+  };
+
+  const lines = yamlContent.split('\n');
+  let currentKey = null;
+  let currentArray = null;
+  let currentArrayItem = null;
+  let indentLevel = 0;
+  
+  // For output object parsing
+  let outputKey = null;
+  let outputKeyIndent = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const lineIndent = line.search(/\S/);
+    
+    // Top-level keys
+    if (lineIndent === 0) {
+      // Save previous array item
+      if (currentArray && currentArrayItem) {
+        result[currentArray].push(currentArrayItem);
+        currentArrayItem = null;
+      }
+      outputKey = null;
+      
+      const match = trimmed.match(/^([a-zA-Z_]+):\s*(.*)?$/);
+      if (match) {
+        currentKey = match[1];
+        const value = match[2]?.trim();
+        
+        if (currentKey === 'input' || currentKey === 'env' || currentKey === 'nodes') {
+          currentArray = currentKey;
+          result[currentKey] = [];
+        } else if (currentKey === 'output') {
+          // Output can be object or array - check next line
+          currentArray = null;
+          result.output = {};
+        } else if (value && !value.startsWith('|') && !value.startsWith('>')) {
+          result[currentKey] = value.replace(/^['"]|['"]$/g, '');
+          currentArray = null;
+        }
+      }
+    } else if (currentArray && trimmed.startsWith('- ')) {
+      // Array item
+      if (currentArrayItem) {
+        result[currentArray].push(currentArrayItem);
+      }
+      
+      // Check if it's inline: - id: value
+      const inlineMatch = trimmed.match(/^-\s*([a-zA-Z_]+):\s*(.+)$/);
+      if (inlineMatch) {
+        currentArrayItem = { [inlineMatch[1]]: inlineMatch[2].replace(/^['"]|['"]$/g, '') };
+      } else {
+        currentArrayItem = {};
+      }
+      indentLevel = lineIndent;
+    } else if (currentArrayItem && lineIndent > indentLevel) {
+      // Property of current array item
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        let value = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        // Handle booleans
+        if (value === 'true') value = true;
+        else if (value === 'false') value = false;
+        currentArrayItem[propMatch[1]] = value;
+      }
+    } else if (currentKey === 'output' && !currentArray) {
+      // Output object properties - support nested objects
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        const propName = propMatch[1];
+        const propValue = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        
+        // Check if this is a top-level output key (e.g., "greeting:") or a nested property
+        if (lineIndent === 2 && !propValue) {
+          // This is a top-level output key with nested properties
+          outputKey = propName;
+          outputKeyIndent = lineIndent;
+          result.output[outputKey] = {};
+        } else if (lineIndent === 2 && propValue) {
+          // Simple output value (e.g., "result: {{node}}")
+          result.output[propName] = propValue;
+          outputKey = null;
+        } else if (outputKey && lineIndent > outputKeyIndent) {
+          // Nested property of output key
+          let value = propValue;
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          result.output[outputKey][propName] = value;
+        }
+      }
+    }
+  }
+
+  // Don't forget last item
+  if (currentArray && currentArrayItem) {
+    result[currentArray].push(currentArrayItem);
+  }
+
+  return result;
+}
+
+/**
+ * Run a habit with auto-generated form UI
+ * @param {string} habitId - Habit ID
+ * @param {string} workflowId - Optional specific workflow to run
+ */
+async function runHabitWithForm(habitId, workflowId = null) {
+  const habit = state.habits.find(h => h.id === habitId);
+  if (!habit) {
+    showError('Error', 'Habit not found');
+    return;
+  }
+
+  // Check secrets
+  const { allSet, missing } = await checkRequiredSecrets(habit);
+  if (!allSet) {
+    showSecretsModal(habit);
+    return;
+  }
+
+  state.currentHabit = habit;
+
+  try {
+    // Ensure we have cached files
+    if (!habit.cachedFiles && habit.filePath) {
+      const extraction = await extractHabitFile(habit.filePath);
+      if (!extraction.valid) {
+        showError(extraction.error.title, extraction.error.message);
+        goBackToList();
+        return;
+      }
+      habit.cachedIndexHtml = extraction.indexHtml;
+      habit.cachedBundleJs = extraction.bundleJs;
+      habit.cachedFiles = extraction.files;
+    }
+
+    // Parse workflows and schema
+    const workflowInfo = parseHabitWorkflows(habit);
+    
+    if (workflowInfo.workflows.length === 0) {
+      showError('No Workflows', 'This habit has no runnable workflows');
+      goBackToList();
+      return;
+    }
+
+    // Select workflow
+    let targetWorkflow = workflowInfo.workflows[0];
+    if (workflowId) {
+      targetWorkflow = workflowInfo.workflows.find(w => w.id === workflowId) || targetWorkflow;
+    }
+
+    console.log('[Form] Running workflow:', targetWorkflow.id, 'with schema:', targetWorkflow.schema);
+
+    // Show form view
+    document.getElementById('habit-view').classList.add('active');
+    
+    // Push history state for back gesture support
+    history.pushState({ habitView: true }, '', '#habit');
+    
+    const contentContainer = document.getElementById('habit-content');
+    contentContainer.innerHTML = '';
+
+    // Inject schema form styles
+    if (window.SchemaForm) {
+      window.SchemaForm.injectFormStyles();
+    }
+
+    // Generate form HTML
+    const formHtml = window.SchemaForm 
+      ? window.SchemaForm.generateFormHtml(targetWorkflow.schema, targetWorkflow.id)
+      : generateFallbackFormHtml(targetWorkflow);
+
+    // Create form container
+    const formContainer = document.createElement('div');
+    formContainer.className = 'schema-form-wrapper';
+    formContainer.innerHTML = `
+      <div class="form-header">
+        <h2 class="form-title">${escapeHtml(targetWorkflow.name || targetWorkflow.id)}</h2>
+        ${targetWorkflow.description ? `<p class="form-description">${escapeHtml(targetWorkflow.description)}</p>` : ''}
+      </div>
+      ${formHtml}
+      ${workflowInfo.workflows.length > 1 ? generateWorkflowTabs(workflowInfo.workflows, targetWorkflow.id, habitId) : ''}
+    `;
+    contentContainer.appendChild(formContainer);
+
+    // Setup form submission handler
+    const form = formContainer.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await executeWorkflowFromForm(habit, targetWorkflow, form, formContainer);
+      });
+    }
+
+    // Setup workflow tab click handlers
+    const workflowTabs = formContainer.querySelectorAll('.workflow-tab');
+    workflowTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const workflowId = tab.dataset.workflowId;
+        if (workflowId && workflowId !== targetWorkflow.id) {
+          runHabitWithForm(habitId, workflowId);
+        }
+      });
+    });
+
+    // Setup file picker buttons
+    const fileButtons = formContainer.querySelectorAll('.form-file-btn');
+    fileButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const fieldId = btn.dataset.field;
+        const input = formContainer.querySelector(`#field-${fieldId}`);
+        if (input) {
+          const tauri = await waitForTauri();
+          const selected = await tauri.dialog.open({
+            multiple: false,
+            title: 'Select File',
+          });
+          if (selected) {
+            input.value = selected;
+          }
+        }
+      });
+    });
+
+    console.log('[Form] Form UI rendered');
+
+  } catch (err) {
+    console.error('Failed to run habit with form:', err);
+    showError('Error', 'Failed to load habit: ' + err.message);
+    goBackToList();
+  }
+}
+
+/**
+ * Generate workflow tabs at bottom of form
+ */
+function generateWorkflowTabs(workflows, selectedId, habitId) {
+  const tabs = workflows.map(w => {
+    const displayName = w.name || w.id;
+    const isActive = w.id === selectedId;
+    return `<button type="button" class="workflow-tab${isActive ? ' active' : ''}" data-workflow-id="${escapeHtml(w.id)}">${escapeHtml(displayName)}</button>`;
+  }).join('');
+  
+  return `
+    <div class="workflow-tabs-container">
+      ${tabs}
+    </div>
+  `;
+}
+
+/**
+ * Generate fallback form HTML when SchemaForm is not available
+ */
+function generateFallbackFormHtml(workflow) {
+  return `
+    <div class="fallback-form">
+      <p>Schema form library not loaded. Please run with bundled UI instead.</p>
+      <button type="button" onclick="runHabit('${workflow.id}')" class="form-submit-btn">
+        Run with Bundled UI
+      </button>
+    </div>
+  `;
+}
+
+/**
+ * Execute workflow from form submission
+ */
+async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
+  const submitBtn = form.querySelector('.form-submit-btn');
+  const outputContainer = formContainer.querySelector(`#workflow-form-${workflow.id}-output`);
+
+  // Disable button and show loading
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = '<span>Running...</span>';
+  }
+
+  try {
+    // Collect form data
+    const inputData = window.SchemaForm 
+      ? window.SchemaForm.collectFormData(form, workflow.schema.inputs)
+      : collectBasicFormData(form);
+
+    // Validate
+    if (window.SchemaForm) {
+      const validation = window.SchemaForm.validateFormData(inputData, workflow.schema.inputs);
+      if (!validation.valid) {
+        showFormErrors(form, validation.errors);
+        return;
+      }
+    }
+
+    console.log('[Form] Executing workflow:', workflow.id, 'with input:', inputData);
+
+    // Load bundle if not already loaded
+    if (!window.HabitsBundle && habit.cachedBundleJs) {
+      console.log('[Form] Loading bundle...');
+      eval(habit.cachedBundleJs);
+      
+      // Wait for HabitsBundle to be defined
+      let attempts = 0;
+      while (!window.HabitsBundle && attempts < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+    }
+
+    if (!window.HabitsBundle) {
+      throw new Error('Workflow executor not loaded');
+    }
+
+    // Get secrets
+    const secretsIndex = await getSecretsIndex();
+    const secrets = {};
+    for (const key of secretsIndex) {
+      secrets[key] = await getSecretFromKeyring(key);
+    }
+
+    // Execute workflow
+    const result = await window.HabitsBundle.executeWorkflow(workflow.id, inputData, { env: secrets });
+
+    console.log('[Form] Workflow result:', result);
+
+    // Render output
+    if (outputContainer) {
+      outputContainer.classList.remove('hidden');
+      outputContainer.innerHTML = `
+        <div class="output-header">
+          <span class="output-success">✓ Completed</span>
+        </div>
+        ${window.SchemaForm 
+          ? window.SchemaForm.generateOutputHtml(workflow.schema, result)
+          : `<pre class="output-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`
+        }
+      `;
+    }
+
+  } catch (err) {
+    console.error('[Form] Workflow execution failed:', err);
+    
+    if (outputContainer) {
+      outputContainer.classList.remove('hidden');
+      outputContainer.innerHTML = `
+        <div class="output-error">
+          <strong>Error:</strong> ${escapeHtml(err.message || String(err))}
+        </div>
+      `;
+    }
+  } finally {
+    // Re-enable button
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      submitBtn.innerHTML = `
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Run Again
+      `;
+    }
+  }
+}
+
+/**
+ * Collect basic form data when SchemaForm is not available
+ */
+function collectBasicFormData(form) {
+  const formData = new FormData(form);
+  const data = {};
+  for (const [key, value] of formData.entries()) {
+    data[key] = value;
+  }
+  return data;
+}
+
+/**
+ * Show validation errors on form fields
+ */
+function showFormErrors(form, errors) {
+  // Clear previous errors
+  form.querySelectorAll('.form-field').forEach(field => {
+    field.classList.remove('has-error');
+    const errorEl = field.querySelector('.form-error');
+    if (errorEl) errorEl.remove();
+  });
+
+  // Show new errors
+  for (const [fieldId, message] of Object.entries(errors)) {
+    const fieldContainer = form.querySelector(`[data-field-id="${fieldId}"]`);
+    if (fieldContainer) {
+      fieldContainer.classList.add('has-error');
+      const errorEl = document.createElement('div');
+      errorEl.className = 'form-error';
+      errorEl.textContent = message;
+      fieldContainer.appendChild(errorEl);
+    }
   }
 }
 
@@ -608,6 +1217,12 @@ function renderHabitsList() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
         </svg>
         <div class="habit-dropdown" data-habit-id="${habit.id}">
+          <div class="dropdown-item habit-run-form" data-habit-id="${habit.id}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Run with Form
+          </div>
           <div class="dropdown-item habit-view-files" data-habit-id="${habit.id}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -637,6 +1252,14 @@ function renderHabitsList() {
     menuBtn.onclick = (e) => {
       e.stopPropagation();
       toggleDropdown(habit.id);
+    };
+    
+    // Add run with form click handler
+    const runFormBtn = item.querySelector('.habit-run-form');
+    runFormBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      runHabitWithForm(habit.id);
     };
     
     // Add view files click handler
@@ -693,7 +1316,9 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function goBackToList() {
+function goBackToList(fromPopState = false) {
+  if (!state.currentHabit) return;
+  
   state.currentHabit = null;
   
   // Clear habit content
@@ -701,6 +1326,11 @@ function goBackToList() {
   
   // Hide habit view
   document.getElementById('habit-view').classList.remove('active');
+  
+  // Clean up history if not triggered by back gesture
+  if (!fromPopState && location.hash === '#habit') {
+    history.back();
+  }
 }
 
 function showError(title, message) {
@@ -752,7 +1382,7 @@ async function loadShowcase() {
   try {
     // Use cache if available
     if (!showcaseCache) {
-      const response = await fetch(SHOWCASE_INDEX_URL);
+      const response = await tauriFetch(SHOWCASE_INDEX_URL);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       showcaseCache = await response.json();
     }
@@ -800,7 +1430,7 @@ async function downloadAndImportShowcaseHabit(habit) {
   
   try {
     const habitUrl = SHOWCASE_BASE_URL + habit.habitUrl;
-    const response = await fetch(habitUrl);
+    const response = await tauriFetch(habitUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
     const blob = await response.blob();
@@ -1453,6 +2083,13 @@ async function init() {
     }
   });
   
+  // Handle mobile back gesture (popstate event)
+  window.addEventListener('popstate', (e) => {
+    if (state.currentHabit) {
+      goBackToList(true);
+    }
+  });
+  
   // Close dropdowns when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.habit-menu-btn')) {
@@ -1489,6 +2126,9 @@ async function init() {
   
   // Check for CLI arguments (for testing/automation)
   await checkCliArgs();
+  
+  // Check for file-based auto-test (for iOS where CLI args don't work)
+  await checkAutoTestFile();
 }
 
 /**
@@ -1563,6 +2203,194 @@ async function checkCliArgs() {
 }
 
 /**
+ * Check for file-based auto-test configuration
+ * On iOS, CLI args aren't passed properly, so we check for a special config file
+ * File: Documents/.autotest.json (or <appData>/autotest.json)
+ * Format: { "habit": "/path/to/file.habit", "workflow": "workflow-name", "input": {...} }
+ */
+async function checkAutoTestFile() {
+  try {
+    const tauri = await waitForTauri();
+    if (!tauri || !tauri.path || !tauri.fs) {
+      console.log('[AutoTest] Tauri not available');
+      return;
+    }
+    
+    // Helper to log to file (stdout doesn't work on iOS)
+    const debugLog = async (msg) => {
+      console.log(msg);
+      try {
+        await tauri.core.invoke('debug_log', { message: msg });
+      } catch (e) {
+        // Ignore invoke errors
+      }
+      // Also write to a debug log file
+      try {
+        const appDir = await tauri.path.appDataDir();
+        const logPath = await tauri.path.join(appDir, 'autotest-debug.log');
+        const timestamp = new Date().toISOString();
+        const logLine = `${timestamp} ${msg}\n`;
+        // Append to file
+        let existingContent = '';
+        try {
+          existingContent = await tauri.fs.readTextFile(logPath);
+        } catch (e) { /* file might not exist */ }
+        await tauri.fs.writeTextFile(logPath, existingContent + logLine);
+      } catch (e) {
+        console.warn('Could not write debug log:', e);
+      }
+    };
+    
+    // Check multiple possible locations for autotest.json
+    const possiblePaths = [];
+    
+    // iOS: Documents directory
+    try {
+      const docDir = await tauri.path.documentDir();
+      await debugLog('[AutoTest] documentDir: ' + docDir);
+      possiblePaths.push(await tauri.path.join(docDir, '.autotest.json'));
+      possiblePaths.push(await tauri.path.join(docDir, 'autotest.json'));
+    } catch (e) { 
+      await debugLog('[AutoTest] documentDir error: ' + e);
+    }
+    
+    // App data directory (cross-platform)
+    try {
+      const appDir = await tauri.path.appDataDir();
+      await debugLog('[AutoTest] appDataDir: ' + appDir);
+      possiblePaths.push(await tauri.path.join(appDir, 'autotest.json'));
+    } catch (e) { 
+      await debugLog('[AutoTest] appDataDir error: ' + e);
+    }
+    
+    await debugLog('[AutoTest] Checking paths: ' + JSON.stringify(possiblePaths));
+    
+    let configPath = null;
+    let config = null;
+    
+    for (const path of possiblePaths) {
+      try {
+        const fileExists = await tauri.fs.exists(path);
+        await debugLog('[AutoTest] Checking ' + path + ' exists: ' + fileExists);
+        if (fileExists) {
+          const content = await tauri.fs.readTextFile(path);
+          config = JSON.parse(content);
+          configPath = path;
+          await debugLog('[AutoTest] Found config at: ' + path);
+          break;
+        }
+      } catch (e) {
+        await debugLog('[AutoTest] Error checking ' + path + ': ' + e);
+      }
+    }
+    
+    if (!config || !configPath) {
+      await debugLog('[AutoTest] No autotest.json found');
+      return;
+    }
+    
+    await debugLog('[AutoTest] Config: ' + JSON.stringify(config));
+    
+    // Delete the config file first to prevent re-running
+    try {
+      await tauri.fs.remove(configPath);
+      console.log('[AutoTest] Removed config file');
+    } catch (e) {
+      console.warn('[AutoTest] Could not remove config file:', e);
+    }
+    
+    // Import the habit file
+    if (!config.habit) {
+      const err = JSON.stringify({ success: false, error: 'No habit path in autotest config' });
+      await writeTestResult(err);
+      await tauri.core.invoke('test_complete', { result: err });
+      return;
+    }
+    
+    // If habit path is relative, resolve it relative to documents dir
+    let habitPath = config.habit;
+    if (!habitPath.startsWith('/')) {
+      try {
+        const docDir = await tauri.path.documentDir();
+        habitPath = await tauri.path.join(docDir, habitPath);
+        console.log('[AutoTest] Resolved habit path:', habitPath);
+      } catch (e) {
+        console.warn('[AutoTest] Could not resolve relative path:', e);
+      }
+    }
+    
+    console.log('[AutoTest] Importing habit:', habitPath);
+    const imported = await importHabitFile(habitPath);
+    
+    if (!imported) {
+      const err = JSON.stringify({ success: false, error: 'Failed to import habit file' });
+      await writeTestResult(err);
+      await tauri.core.invoke('test_complete', { result: err });
+      return;
+    }
+    
+    // Get the imported habit
+    const habit = state.habits[state.habits.length - 1];
+    if (!habit) {
+      const err = JSON.stringify({ success: false, error: 'No habit found after import' });
+      await writeTestResult(err);
+      await tauri.core.invoke('test_complete', { result: err });
+      return;
+    }
+    
+    // Parse input
+    let input = config.input || {};
+    if (typeof input === 'string') {
+      try {
+        input = JSON.parse(input);
+      } catch (e) {
+        // Keep as string
+      }
+    }
+    
+    // Execute the workflow
+    const workflowName = config.workflow || 'default';
+    console.log('[AutoTest] Executing workflow:', workflowName);
+    await executeWorkflowForTest(habit, workflowName, input);
+    
+  } catch (err) {
+    console.error('[AutoTest] Error:', err);
+    const tauri = await waitForTauri();
+    const errorResult = JSON.stringify({ success: false, error: err.message || String(err) });
+    await writeTestResult(errorResult);
+    if (tauri && tauri.core && tauri.core.invoke) {
+      await tauri.core.invoke('test_complete', { result: errorResult });
+    }
+  }
+}
+
+/**
+ * Write test result to file (for script-based testing on iOS)
+ */
+async function writeTestResult(result) {
+  console.log('[Test] Writing result...');
+  const tauri = await waitForTauri();
+  if (!tauri || !tauri.path || !tauri.fs) {
+    console.error('[Test] Tauri fs/path not available');
+    return;
+  }
+  
+  try {
+    // Get the document dir (where autotest.json was)
+    const docDir = await tauri.path.documentDir();
+    console.log('[Test] documentDir:', docDir);
+    
+    // Just use simple path concatenation like the manifest write
+    const resultPath = docDir + 'test-result.json';
+    console.log('[Test] Writing to:', resultPath);
+    await tauri.fs.writeTextFile(resultPath, result);
+    console.log('[Test] Result written successfully');
+  } catch (e) {
+    console.error('[Test] Write failed:', e && e.message ? e.message : String(e));
+  }
+}
+
+/**
  * Execute a workflow in test mode and output result
  */
 async function executeWorkflowForTest(habit, workflowName, input) {
@@ -1628,19 +2456,22 @@ async function executeWorkflowForTest(habit, workflowName, input) {
     // Execute the workflow
     const result = await window.HabitsBundle.executeWorkflow(workflowName, input, { env: secrets });
     
-    console.log('[CLI] Workflow result:', JSON.stringify(result));
+    const successResult = JSON.stringify({ success: true, result });
+    console.log('[CLI] Workflow done, output:', result.output?.greeting || 'no output');
     
-    // Output result and exit
-    await tauri.core.invoke('test_complete', { 
-      result: JSON.stringify({ success: true, result }) 
-    });
+    // Try writing sync-style with .then instead of await
+    const resultPath = (state.appDataPath || '/tmp') + '/test-result.json';
+    console.log('[CLI] Writing to:', resultPath);
+    tauri.fs.writeTextFile(resultPath, successResult)
+      .then(() => console.log('[CLI] File written'))
+      .catch(e => console.log('[CLI] Write error:', e));
     
   } catch (err) {
     console.error('[CLI] Error executing workflow:', err);
     const tauri = await waitForTauri();
-    await tauri.core.invoke('test_complete', { 
-      result: JSON.stringify({ success: false, error: err.message || String(err) }) 
-    });
+    const errorResult = JSON.stringify({ success: false, error: err.message || String(err) });
+    await writeTestResult(errorResult);
+    await tauri.core.invoke('test_complete', { result: errorResult });
   }
 }
 

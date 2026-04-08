@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Stripe Google Payment Invoice Processor"
 
 workflows:
   # Stripe payment → Google Drive + PDF Invoice

@@ -1,0 +1,51 @@
+# Geofence SMS Alert Showcase
+# Disabled - requires mobile app (runtime: app) not supported in web showcase
+disabled: true
+
+# 
+# This showcase demonstrates location-based SMS alerts:
+# When entering or leaving a geographic area, send an SMS notification.
+#
+# Use cases:
+# - Notify family when arriving/leaving locations
+# - Safety check-ins when entering areas
+# - Parental notifications for child location
+# - Delivery/arrival confirmations
+#
+# Required bits (mobile app only - runtime: 'app'):
+# - @ha-bits/bit-location: For geofence monitoring
+# - @ha-bits/bit-sms: For sending SMS messages
+#
+# Platform support:
+# - Android: Full support for both geofencing and SMS sending
+# - iOS: Geofencing works, SMS opens composer for confirmation
+
+name: geofence-sms-alert
+title: "Geofence SMS Alert"
+description: "Send automatic SMS notifications when entering/leaving locations"
+runtime: app
+icon: "📍"
+tags:
+  - automation
+  - location
+  - sms
+  - alerts
+  - geofence
+  - safety
+
+features:
+  - Geofence-based triggers with Haversine distance
+  - Automatic SMS on arrival/departure
+  - Pre-formatted alert messages
+  - Configurable locations and recipients
+  - Support for multiple geofences
+
+requirements:
+  - Mobile device with GPS/location services
+  - SMS capability (Android) or messaging app (iOS)
+  - Phone number for recipient
+
+limitations:
+  - iOS will open SMS composer requiring user confirmation
+  - Android requires SMS send permission
+  - Background location access needed for persistent monitoring

@@ -6,6 +6,7 @@
 # ============================================================
 
 version: "1.0"
+name: "Openclaw Clone"
 
 workflows:
   # Core AI Chat

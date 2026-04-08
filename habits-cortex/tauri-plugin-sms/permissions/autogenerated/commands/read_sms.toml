@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-read-sms"
+description = "Enables the read_sms command without any pre-configured scope."
+commands.allow = ["read_sms"]
+
+[[permission]]
+identifier = "deny-read-sms"
+description = "Denies the read_sms command without any pre-configured scope."
+commands.deny = ["read_sms"]

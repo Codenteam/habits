@@ -20,7 +20,7 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-shell = "2"
 tauri-plugin-http = "2"
 tauri-plugin-log = "2"
@@ -35,9 +35,17 @@ tauri-plugin-fs = { version = "2" }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
 
-# Desktop-only dependencies (don't support iOS/Android)
+# Mobile-only dependencies (iOS/Android)
+[target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
+tauri-plugin-geolocation = "2"
+tauri-plugin-wifi = { path = "../tauri-plugin-wifi" }
+tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }
+tauri-plugin-matter = { path = "../tauri-plugin-matter" }
+tauri-plugin-sms = { path = "../tauri-plugin-sms" }
+
+# Desktop-only dependencies (Candle doesn't support iOS/Android yet)
 [target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-tauri-plugin-llama = { path = "../tauri-plugin-llama" }
+tauri-plugin-candle = { path = "../tauri-plugin-candle" }
 
 # xcap only for desktop debug builds
 [target.'cfg(all(debug_assertions, not(any(target_os = "ios", target_os = "android"))))'.dependencies]

@@ -1,0 +1,46 @@
+# Wi-Fi Context Switcher Showcase
+# Disabled - requires mobile app (runtime: app) not supported in web showcase
+disabled: true
+
+# 
+# This showcase demonstrates context-aware automation:
+# When connecting to work Wi-Fi, enable focus mode (mute, DND, vibrate).
+# When connecting to home Wi-Fi, disable focus mode (unmute, normal ringer).
+#
+# Required bits (mobile app only - runtime: 'app'):
+# - @ha-bits/bit-wifi: For Wi-Fi network monitoring
+# - @ha-bits/bit-system-settings: For system settings control
+#
+# Platform support:
+# - Android: Full support for all features
+# - iOS: Limited support (cannot control volume/ringer programmatically)
+
+name: wifi-context-switcher
+title: "Wi-Fi Context Switcher"
+description: "Automatically adjust device settings based on Wi-Fi network"
+runtime: app
+icon: "📶"
+tags:
+  - automation
+  - wifi
+  - context
+  - focus
+  - dnd
+  - settings
+
+features:
+  - Wi-Fi network detection
+  - Automatic focus mode when at work
+  - Automatic relaxed mode when at home
+  - Volume and ringer control
+  - Do Not Disturb integration
+
+requirements:
+  - Mobile device with Wi-Fi
+  - Android for full functionality
+  - Wi-Fi network names configured
+
+limitations_ios:
+  - Cannot programmatically control volume
+  - Cannot programmatically control ringer mode
+  - Cannot control Do Not Disturb

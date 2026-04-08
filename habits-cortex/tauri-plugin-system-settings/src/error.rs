@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tauri::plugin::mobile::PluginInvokeError;
 
 /// Error type for the plugin
 #[derive(Debug, thiserror::Error)]
@@ -23,6 +24,12 @@ pub enum Error {
     
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
+}
+
+impl From<PluginInvokeError> for Error {
+    fn from(err: PluginInvokeError) -> Self {
+        Error::PluginInvoke(err.to_string())
+    }
 }
 
 impl Serialize for Error {

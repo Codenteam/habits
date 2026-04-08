@@ -153,7 +153,7 @@ class MatterPlugin: Plugin, HMHomeManagerDelegate {
     
     @objc public func discover_devices(_ invoke: Invoke) throws {
         guard let home = primaryHome else {
-            invoke.resolve([])
+            invoke.resolve(["devices": [], "count": 0])
             return
         }
         
@@ -162,12 +162,12 @@ class MatterPlugin: Plugin, HMHomeManagerDelegate {
             devices.append(accessoryToJson(accessory))
         }
         
-        invoke.resolve(devices)
+        invoke.resolve(["devices": devices, "count": devices.count])
     }
     
     @objc public func get_devices(_ invoke: Invoke) throws {
         guard let home = primaryHome else {
-            invoke.resolve([])
+            invoke.resolve(["devices": [], "count": 0])
             return
         }
         
@@ -176,7 +176,7 @@ class MatterPlugin: Plugin, HMHomeManagerDelegate {
             devices.append(accessoryToJson(accessory))
         }
         
-        invoke.resolve(devices)
+        invoke.resolve(["devices": devices, "count": devices.count])
     }
     
     @objc public func get_device_state(_ invoke: Invoke) throws {

@@ -6,11 +6,7 @@ use tauri::{
 
 use crate::models::*;
 
-#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "com.plugin.matter";
-
-#[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_matter);
 
 /// Access to the Matter smart home APIs.
 pub struct Matter<R: Runtime>(PluginHandle<R>);
@@ -70,11 +66,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     _app: &AppHandle<R>,
     api: PluginApi<R, C>,
 ) -> crate::Result<Matter<R>> {
-    #[cfg(target_os = "android")]
+    // Android-only - iOS disabled due to swift-rs targeting bug
     let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "MatterPlugin")?;
-    
-    #[cfg(target_os = "ios")]
-    let handle = api.register_ios_plugin(init_plugin_matter)?;
-    
     Ok(Matter(handle))
 }

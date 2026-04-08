@@ -11,6 +11,7 @@ mod commands;
 mod error;
 mod candle_manager;
 mod models;
+mod text_generation;
 
 pub use error::{Error, Result};
 pub use candle_manager::CandleManager;

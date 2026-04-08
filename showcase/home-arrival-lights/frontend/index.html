@@ -114,7 +114,7 @@
       
       // Call the workflow
       try {
-        const response = await fetch('/misc/execute/home-arrival-lights', {
+        const response = await fetch('/api/home-arrival-lights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -144,7 +144,7 @@
       
       // Call the workflow
       try {
-        const response = await fetch('/misc/execute/home-departure-lights', {
+        const response = await fetch('/api/home-departure-lights', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

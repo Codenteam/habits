@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tauri::plugin::mobile::PluginInvokeError;
 
 /// Error type for the plugin
 #[derive(Debug, thiserror::Error)]
@@ -27,8 +28,17 @@ pub enum Error {
     #[error("Matter SDK error: {0}")]
     MatterSdk(String),
     
+    #[error("Unsupported platform: {0}")]
+    UnsupportedPlatform(String),
+
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
+}
+
+impl From<PluginInvokeError> for Error {
+    fn from(err: PluginInvokeError) -> Self {
+        Error::PluginInvoke(err.to_string())
+    }
 }
 
 impl Serialize for Error {

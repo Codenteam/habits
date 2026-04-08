@@ -72,6 +72,11 @@ fn test_complete(result: String) {
 }
 
 #[tauri::command]
+fn debug_log(message: String) {
+    println!("[JS] {}", message);
+}
+
+#[tauri::command]
 fn get_cli_args() -> Option<CliArgs> {
     let args = parse_cli_args();
     if args.habit.is_some() || args.test {
@@ -95,9 +100,18 @@ pub fn run() {
         .plugin(tauri_plugin_email::init())
         .plugin(tauri_plugin_shell::init());
     
-    // Add llama plugin only on desktop (not iOS/Android)
+    // Add candle plugin only on desktop (not iOS/Android)
     #[cfg(not(any(target_os = "ios", target_os = "android")))]
-    let builder = builder.plugin(tauri_plugin_llama::init());
+    let builder = builder.plugin(tauri_plugin_candle::init());
+    
+    // Add mobile-only plugins (iOS/Android)
+    #[cfg(any(target_os = "ios", target_os = "android"))]
+    let builder = builder
+        .plugin(tauri_plugin_geolocation::init())
+        .plugin(tauri_plugin_wifi::init())
+        .plugin(tauri_plugin_system_settings::init())
+        .plugin(tauri_plugin_matter::init())
+        .plugin(tauri_plugin_sms::init());
     
     builder
         .plugin(tauri_plugin_http::init())
@@ -115,7 +129,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![test_complete, get_cli_args])
+        .invoke_handler(tauri::generate_handler![test_complete, get_cli_args, debug_log])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, _event| {

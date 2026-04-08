@@ -201,7 +201,7 @@ class WifiPlugin(private val activity: Activity) : Plugin(activity) {
     }
     
     @Command
-    fun checkPermissions(invoke: Invoke) {
+    override fun checkPermissions(invoke: Invoke) {
         try {
             val ret = JSObject()
             
@@ -225,7 +225,7 @@ class WifiPlugin(private val activity: Activity) : Plugin(activity) {
     }
     
     @Command
-    fun requestPermissions(invoke: Invoke) {
+    override fun requestPermissions(invoke: Invoke) {
         try {
             val args = invoke.parseArgs(RequestPermissionsArgs::class.java)
             

@@ -1,9 +1,24 @@
 {
   "name": "@ha-bits/bit-sms",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "SMS messaging bit for mobile apps",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./driver": {
+      "types": "./dist/driver.d.ts",
+      "default": "./dist/driver.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
   "license": "MIT",
   "keywords": [
     "habits",
@@ -11,12 +26,55 @@
     "sms",
     "messaging",
     "mobile",
-    "text"
+    "text",
+    "tauri"
   ],
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.52.0"
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "peerDependencies": {
     "@ha-bits/cortex-core": "*"
+  },
+  "files": [
+    "dist",
+    "src/stubs"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-sms/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true,
+    "stubs": {
+      "@ha-bits/bit-sms/driver": "./src/stubs/tauri-driver.js"
+    },
+    "tauriPlugins": {
+      "sms": {
+        "cargo": "tauri-plugin-sms = { path = \"../tauri-plugin-sms\" }",
+        "init": "tauri_plugin_sms::init()",
+        "permissions": [
+          "sms:default",
+          "sms:allow-send-sms",
+          "sms:allow-read-sms"
+        ]
+      }
+    }
   }
 }

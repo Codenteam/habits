@@ -41,13 +41,13 @@ class WifiPlugin: Plugin, CLLocationManagerDelegate {
                 "connected": true,
                 "network": [
                     "ssid": networkInfo.ssid,
-                    "bssid": networkInfo.bssid ?? NSNull(),
+                    "bssid": networkInfo.bssid as Any,
                     "signalStrength": NSNull(), // Not available on iOS
                     "signalLevel": NSNull(),
                     "frequency": NSNull(),
                     "is5ghz": NSNull(),
                     "linkSpeed": NSNull(),
-                    "ipAddress": getIPAddress() ?? NSNull()
+                    "ipAddress": getIPAddress() as Any
                 ]
             ])
         } else {
@@ -98,7 +98,7 @@ class WifiPlugin: Plugin, CLLocationManagerDelegate {
         ])
     }
     
-    @objc public func checkPermissions(_ invoke: Invoke) {
+    @objc override public func checkPermissions(_ invoke: Invoke) {
         let locationStatus = CLLocationManager.authorizationStatus()
         
         let locationPermission: String
@@ -119,7 +119,7 @@ class WifiPlugin: Plugin, CLLocationManagerDelegate {
         ])
     }
     
-    @objc public func requestPermissions(_ invoke: Invoke) {
+    @objc override public func requestPermissions(_ invoke: Invoke) {
         self.pendingPermissionInvoke = invoke
         
         if locationManager == nil {

@@ -6,11 +6,7 @@ use tauri::{
 
 use crate::models::*;
 
-#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "com.plugin.system_settings";
-
-#[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_system_settings);
 
 /// Access to the system-settings APIs.
 pub struct SystemSettings<R: Runtime>(PluginHandle<R>);
@@ -76,11 +72,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     _app: &AppHandle<R>,
     api: PluginApi<R, C>,
 ) -> crate::Result<SystemSettings<R>> {
-    #[cfg(target_os = "android")]
+    // Android-only - iOS disabled due to swift-rs targeting bug
     let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "SystemSettingsPlugin")?;
-    
-    #[cfg(target_os = "ios")]
-    let handle = api.register_ios_plugin(init_plugin_system_settings)?;
-    
     Ok(SystemSettings(handle))
 }

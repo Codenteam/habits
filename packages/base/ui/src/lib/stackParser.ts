@@ -10,6 +10,8 @@ export interface StackWorkflowReference {
 
 export interface StackConfig {
   version: string;
+  name?: string; // Human-readable name of the habit package (recommended)
+  description?: string;
   workflows: StackWorkflowReference[];
   server?: {
     port?: number;

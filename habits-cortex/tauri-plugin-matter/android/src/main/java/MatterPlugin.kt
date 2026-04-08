@@ -1,6 +1,7 @@
 package com.plugin.matter
 
 import android.app.Activity
+import android.content.ComponentName
 import android.util.Log
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -92,11 +93,13 @@ class MatterPlugin(private val activity: Activity) : Plugin(activity) {
                 // For now, we return cached/known devices
                 
                 val devices = JSArray()
-                deviceCache.values.forEach { device ->
+                deviceCache.values.forEach { device: JSObject ->
                     devices.put(device)
                 }
                 
-                invoke.resolve(devices)
+                val result = JSObject()
+                result.put("devices", devices)
+                invoke.resolve(result)
             } catch (e: Exception) {
                 Log.e(TAG, "Discovery failed", e)
                 invoke.reject("Discovery failed: ${e.message}")
@@ -108,10 +111,12 @@ class MatterPlugin(private val activity: Activity) : Plugin(activity) {
     fun get_devices(invoke: Invoke) {
         try {
             val devices = JSArray()
-            deviceCache.values.forEach { device ->
+            deviceCache.values.forEach { device: JSObject ->
                 devices.put(device)
             }
-            invoke.resolve(devices)
+            val result = JSObject()
+            result.put("devices", devices)
+            invoke.resolve(result)
         } catch (e: Exception) {
             invoke.reject("Failed to get devices: ${e.message}")
         }
@@ -238,8 +243,8 @@ class MatterPlugin(private val activity: Activity) : Plugin(activity) {
                 // Use Google Play Services Matter commissioning
                 val commissioningClient = Matter.getCommissioningClient(activity)
                 
+                // Build commissioning request (without custom service for basic flow)
                 val request = CommissioningRequest.builder()
-                    .setCommissioningService(activity.packageName)
                     .build()
                 
                 // This will launch the commissioning flow

@@ -335,10 +335,16 @@ if (typeof globalThis.process === 'undefined') {
             // Spread bit-declared stubs (e.g., dep → dep browser stub)
             ...bitStubs,
         },
-        // External packages that can't be bundled
+        // External packages that can't be bundled (resolved at runtime in Tauri app)
         external: [
             '@ha-bits/bindings',
             '@habits/shared',
+            // Tauri plugin APIs - only available at runtime in Tauri app
+            'tauri-plugin-sms-api',
+            'tauri-plugin-wifi-api',
+            'tauri-plugin-matter-api',
+            'tauri-plugin-system-settings-api',
+            '@tauri-apps/plugin-geolocation',
         ],
         logLevel: 'info',
     }).then((result) => {

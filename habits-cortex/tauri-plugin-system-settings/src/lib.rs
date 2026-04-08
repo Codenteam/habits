@@ -6,7 +6,7 @@
 //! - Bluetooth on/off
 //! - Do Not Disturb mode
 //!
-//! Note: Some features have limited support on iOS due to platform restrictions.
+//! Note: iOS support currently disabled due to swift-rs targeting bug.
 
 use tauri::{
     plugin::{Builder, TauriPlugin},
@@ -15,6 +15,7 @@ use tauri::{
 
 mod commands;
 mod error;
+#[cfg(target_os = "android")]
 mod mobile;
 pub mod models;
 
@@ -24,10 +25,12 @@ pub use models::*;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Extensions to the Tauri [`AppHandle`] for system settings functionality.
+#[cfg(target_os = "android")]
 pub trait SystemSettingsExt<R: Runtime> {
     fn system_settings(&self) -> &mobile::SystemSettings<R>;
 }
 
+#[cfg(target_os = "android")]
 impl<R: Runtime, T: Manager<R>> SystemSettingsExt<R> for T {
     fn system_settings(&self) -> &mobile::SystemSettings<R> {
         self.state::<mobile::SystemSettings<R>>().inner()
@@ -49,8 +52,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::set_dnd,
         ])
         .setup(|app, api| {
-            let system_settings = mobile::init(app, api)?;
-            app.manage(system_settings);
+            #[cfg(target_os = "android")]
+            {
+                let system_settings = mobile::init(app, api)?;
+                app.manage(system_settings);
+            }
+            let _ = api; // Suppress unused warning on iOS
+            let _ = app;
             Ok(())
         })
         .build()

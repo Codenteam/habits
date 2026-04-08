@@ -1,9 +1,12 @@
 // swift-tools-version:5.3
+// Tauri Plugin for Matter smart home devices
+
 import PackageDescription
 
 let package = Package(
     name: "tauri-plugin-matter",
     platforms: [
+        .macOS(.v10_15),
         .iOS(.v14)  // HomeKit with Matter requires iOS 14+
     ],
     products: [
@@ -20,7 +23,7 @@ let package = Package(
         .target(
             name: "tauri-plugin-matter",
             dependencies: [
-                .product(name: "Tauri", package: "Tauri")
+                .byName(name: "Tauri")
             ],
             path: "Sources"
         )

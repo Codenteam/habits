@@ -23,3 +23,10 @@ impl From<tauri::Error> for Error {
         Error::Plugin(e.to_string())
     }
 }
+
+#[cfg(mobile)]
+impl From<tauri::plugin::mobile::PluginInvokeError> for Error {
+    fn from(e: tauri::plugin::mobile::PluginInvokeError) -> Self {
+        Error::Plugin(e.to_string())
+    }
+}

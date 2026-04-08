@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Invoice Processor"
 workflows:
   # PDF extraction workflow
   - id: extract-pdf

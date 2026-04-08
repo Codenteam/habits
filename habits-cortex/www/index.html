@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Habits</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
     :root {
       --bg-primary: #0a0a0f;
@@ -1017,6 +1018,8 @@
     .hidden { display: none !important; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Optional: Pre-bundled bits for faster execution (generated at Tauri build time) -->
+  <script src="cortex-bundle-all.js" onerror="console.log('[Habits] cortex-bundle-all.js not available, using per-habit bundles')"></script>
 </head>
 <body>
   <div class="app-shell safe-top safe-bottom">
@@ -1209,6 +1212,7 @@
     </div>
   </div>
 
+  <script src="schema-form.js"></script>
   <script type="module" src="runner.js"></script>
 </body>
 </html>

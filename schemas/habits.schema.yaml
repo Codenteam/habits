@@ -102,6 +102,221 @@ definitions:
         additionalProperties:
           $ref: "#/definitions/LogLevel"
 
+  # ============================================================
+  # Workflow Input/Output/Env Schema Types
+  # Types for defining workflow inputs, outputs, and environment variables
+  # with rich type information for auto-generating mobile UIs.
+  # ============================================================
+
+  # Data types for workflow fields
+  FieldType:
+    type: string
+    enum:
+      - string        # Plain text
+      - number        # Numeric value (integer or float)
+      - boolean       # True/false checkbox
+      - object        # JSON object
+      - array         # JSON array
+      - json          # Arbitrary JSON (alias for object)
+      - base64        # Base64-encoded binary data
+      - file          # File upload/path
+      - email         # Email address (string with validation)
+      - url           # URL (string with validation)
+      - date          # Date string (ISO 8601)
+      - time          # Time string
+      - datetime      # DateTime string (ISO 8601)
+      - secret        # Sensitive value (masked in UI, stored securely)
+    description: |
+      Data type for workflow input/output/env fields.
+      Used for validation and to determine appropriate UI controls.
+
+  # UI display hints for input fields
+  InputDisplayAs:
+    type: string
+    enum:
+      - text          # Single-line text input
+      - textarea      # Multi-line text input
+      - number        # Numeric input with spinner
+      - checkbox      # Boolean toggle/checkbox
+      - dropdown      # Select from options
+      - radio         # Radio button group
+      - file-picker   # File selection dialog
+      - date-picker   # Date picker calendar
+      - time-picker   # Time picker
+      - datetime-picker # Combined date/time picker
+      - password      # Masked text input for secrets
+      - json-editor   # JSON editor with syntax highlighting
+      - code-editor   # Code editor (for scripts)
+    description: |
+      UI control type for rendering input fields.
+      If not specified, inferred from field type.
+
+  # UI display hints for output fields
+  OutputDisplayAs:
+    type: string
+    enum:
+      - text          # Plain text display
+      - json          # JSON tree viewer
+      - markdown      # Rendered markdown
+      - image         # Display as image (for base64/URLs)
+      - download      # Download link
+      - code          # Syntax-highlighted code block
+      - table         # Table view for arrays
+      - hidden        # Don't display (internal use)
+    description: |
+      UI display type for rendering output values.
+      If not specified, inferred from field type.
+
+  # Validation constraints for input fields
+  FieldValidation:
+    type: object
+    description: Validation rules for input fields
+    properties:
+      min:
+        type: number
+        description: Minimum value (for numbers) or minimum length (for strings)
+      max:
+        type: number
+        description: Maximum value (for numbers) or maximum length (for strings)
+      pattern:
+        type: string
+        description: Regex pattern for string validation
+      minLength:
+        type: integer
+        description: Minimum string length
+      maxLength:
+        type: integer
+        description: Maximum string length
+      minItems:
+        type: integer
+        description: Minimum array items
+      maxItems:
+        type: integer
+        description: Maximum array items
+
+  # Dropdown/radio option definition
+  FieldOption:
+    type: object
+    required:
+      - value
+    properties:
+      value:
+        description: The actual value to use
+      label:
+        type: string
+        description: Display label (defaults to value if not specified)
+      description:
+        type: string
+        description: Optional description shown as hint
+
+  # Workflow input field definition
+  WorkflowInputField:
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Field identifier, used as key in workflow input object
+      type:
+        $ref: "#/definitions/FieldType"
+        description: Data type (default: string)
+        default: string
+      displayAs:
+        $ref: "#/definitions/InputDisplayAs"
+        description: UI control type (inferred from type if not specified)
+      displayName:
+        type: string
+        description: Human-readable label shown in UI (defaults to id)
+      description:
+        type: string
+        description: Help text shown below the input field
+      required:
+        type: boolean
+        description: Whether this field is required
+        default: false
+      default:
+        description: Default value if not provided
+      placeholder:
+        type: string
+        description: Placeholder text shown in empty input
+      options:
+        type: array
+        items:
+          $ref: "#/definitions/FieldOption"
+        description: Options for dropdown/radio fields
+      validation:
+        $ref: "#/definitions/FieldValidation"
+        description: Validation constraints
+      dependsOn:
+        type: string
+        description: ID of another field this field depends on (for conditional visibility)
+      showIf:
+        type: string
+        description: Expression to evaluate for conditional visibility (e.g., "otherField === 'yes'")
+
+  # Workflow output field definition
+  WorkflowOutputField:
+    type: object
+    required:
+      - id
+      - value
+    properties:
+      id:
+        type: string
+        description: Output field identifier
+      value:
+        type: string
+        description: Template expression referencing a node output (e.g., "{{node-id}}" or "{{node-id.field}}")
+      type:
+        $ref: "#/definitions/FieldType"
+        description: Data type of the output (for UI rendering hints)
+        default: string
+      displayAs:
+        $ref: "#/definitions/OutputDisplayAs"
+        description: How to render this output in the UI
+      displayName:
+        type: string
+        description: Human-readable label shown in UI (defaults to id)
+      description:
+        type: string
+        description: Description of what this output represents
+
+  # Workflow environment variable definition
+  WorkflowEnvField:
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: |
+          Environment variable name (without HABITS_ prefix).
+          Referenced in workflow as {{habits.env.ID}}
+      type:
+        $ref: "#/definitions/FieldType"
+        description: Data type (default: string)
+        default: string
+      displayName:
+        type: string
+        description: Human-readable label shown in settings UI
+      description:
+        type: string
+        description: Help text explaining what this env var is used for
+      required:
+        type: boolean
+        description: Whether this env var is required for workflow execution
+        default: false
+      secret:
+        type: boolean
+        description: |
+          If true, value is stored in system keyring (secure storage) 
+          and masked in UI. Use for API keys, passwords, tokens.
+        default: false
+      default:
+        type: string
+        description: Default value if not set (not recommended for secrets)
+
   WorkflowEdge:
     type: object
     properties:
@@ -223,6 +438,43 @@ properties:
     type: string
   version:
     type: string
+  # Workflow input schema - defines expected inputs with types and UI hints
+  input:
+    type: array
+    items:
+      $ref: "#/definitions/WorkflowInputField"
+    description: |
+      Workflow input field definitions.
+      Defines the inputs the workflow expects with types, validation, and UI hints.
+      Used to auto-generate mobile UI forms.
+      Example:
+        input:
+          - id: email
+            type: email
+            displayName: Email Address
+            required: true
+          - id: message
+            type: string
+            displayAs: textarea
+            description: Your message
+  # Environment variable declarations
+  env:
+    type: array
+    items:
+      $ref: "#/definitions/WorkflowEnvField"
+    description: |
+      Environment variable declarations.
+      Explicitly declares env vars the workflow needs (referenced as {{habits.env.ID}}).
+      Used to auto-generate settings UI and prompt for missing values.
+      Example:
+        env:
+          - id: OPENAI_API_KEY
+            displayName: OpenAI API Key
+            secret: true
+            required: true
+          - id: DEBUG_MODE
+            type: boolean
+            default: "false"
   nodes:
     type: array
     items:
@@ -231,11 +483,33 @@ properties:
     type: array
     items:
       $ref: "#/definitions/WorkflowEdge"
+  # Workflow output schema - supports both legacy object format and new array format
   output:
-    type: object
-    description: Output mapping for workflow results
-    additionalProperties:
-      type: string
+    oneOf:
+      - type: object
+        description: |
+          Legacy output mapping (key-value pairs).
+          Keys are output names, values are template expressions.
+        additionalProperties:
+          type: string
+      - type: array
+        items:
+          $ref: "#/definitions/WorkflowOutputField"
+        description: |
+          New output field definitions with type hints.
+          Allows specifying output types and UI display hints.
+    description: |
+      Workflow output mapping.
+      Can be either:
+      1. Legacy format (object): Simple key-value mapping
+         output:
+           result: "{{node-id}}"
+      2. New format (array): Rich output definitions with types
+         output:
+           - id: result
+             value: "{{node-id}}"
+             type: json
+             displayAs: json
   logging:
     $ref: "#/definitions/LoggingConfig"
     description: |

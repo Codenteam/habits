@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Scheduler Test"
 workflows:
   - id: scheduler-test
     path: ./habit.yaml

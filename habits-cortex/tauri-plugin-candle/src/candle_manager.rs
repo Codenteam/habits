@@ -1,24 +1,13 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 use crate::error::{Error, Result};
 use crate::models::*;
+use crate::text_generation;
 
-use llama_cpp_2::context::params::LlamaContextParams;
-use llama_cpp_2::llama_backend::LlamaBackend;
-use llama_cpp_2::llama_batch::LlamaBatch;
-use llama_cpp_2::model::params::LlamaModelParams;
-use llama_cpp_2::model::LlamaModel;
-use llama_cpp_2::sampling::LlamaSampler;
 use candle_core::Device;
 
 /// Manages models and inference for text, vision, and image generation
 pub struct CandleManager {
-    /// llama.cpp backend for GGUF models
-    backend: LlamaBackend,
-    /// Loaded LLM models (path -> model)
-    llm_models: Mutex<HashMap<String, std::sync::Arc<LlamaModel>>>,
     /// Models directory
     models_dir: PathBuf,
     /// Diffusion models directory
@@ -29,15 +18,12 @@ pub struct CandleManager {
 
 impl CandleManager {
     pub fn new(models_dir: PathBuf) -> Self {
-        let backend = LlamaBackend::init().expect("Failed to initialize llama.cpp backend");
         let diffusion_dir = models_dir.join("diffusion");
         
         // Select best available device for Candle
         let device = Self::get_best_device();
         
         Self {
-            backend,
-            llm_models: Mutex::new(HashMap::new()),
             models_dir,
             diffusion_dir,
             device,
@@ -64,15 +50,14 @@ impl CandleManager {
         Ok(self.models_dir.clone())
     }
     
-    /// Load or get a cached LLM model
-    fn get_llm_model(&self, model_path: &str) -> Result<std::sync::Arc<LlamaModel>> {
-        let mut models = self.llm_models.lock().unwrap();
-        
-        if let Some(model) = models.get(model_path) {
-            return Ok(model.clone());
-        }
-        
-        let path = PathBuf::from(model_path);
+    /// Run chat completion using quantized LLMs
+    /// 
+    /// Supported models (smallest first):
+    /// - SmolLM2-135M (~100MB) - Llama architecture
+    /// - SmolLM2-360M (~250MB) - Llama architecture
+    /// - Qwen3-0.6B (~400MB) - Qwen3 architecture
+    pub fn chat(&self, params: &ChatParams) -> Result<ChatResult> {
+        let path = PathBuf::from(&params.model_path);
         let actual_path = if path.is_absolute() {
             path
         } else {
@@ -80,129 +65,26 @@ impl CandleManager {
         };
         
         if !actual_path.exists() {
+            // Suggest downloading a small model
+            let recommended = text_generation::get_recommended_models();
+            let suggestions: Vec<String> = recommended.iter()
+                .map(|(name, repo, file, size)| {
+                    format!("  - {} (~{}MB): {}/{}", name, size / 1_000_000, repo, file)
+                })
+                .collect();
+            
             return Err(Error::Model(format!(
-                "Model not found: {}",
-                actual_path.display()
+                "Model not found: {}\n\nRecommended small models:\n{}",
+                actual_path.display(),
+                suggestions.join("\n")
             )));
         }
         
-        println!("[Candle] Loading model: {}", actual_path.display());
-        
-        // Disable mmap to avoid threading issues with WebKit
-        let model_params = LlamaModelParams::default()
-            .with_use_mmap(false);
-        let model = LlamaModel::load_from_file(&self.backend, actual_path, &model_params)
-            .map_err(|e| Error::Model(format!("Failed to load model: {}", e)))?;
-        
-        let model_arc = std::sync::Arc::new(model);
-        models.insert(model_path.to_string(), model_arc.clone());
-        
-        Ok(model_arc)
-    }
-    
-    /// Run chat completion using llama.cpp
-    pub fn chat(&self, params: &ChatParams) -> Result<ChatResult> {
-        let model = self.get_llm_model(&params.model_path)?;
-        
-        // Build prompt from messages
-        let mut prompt = String::new();
-        if let Some(ref system) = params.system_prompt {
-            prompt.push_str(&format!("<|im_start|>system\n{}<|im_end|>\n", system));
-        }
-        for msg in &params.messages {
-            prompt.push_str(&format!("<|im_start|>{}\n{}<|im_end|>\n", msg.role, msg.content));
-        }
-        prompt.push_str("<|im_start|>assistant\n");
-        
-        // Create context
-        let ctx_params = LlamaContextParams::default()
-            .with_n_ctx(std::num::NonZeroU32::new(4096));
-        
-        let mut ctx = model.new_context(&self.backend, ctx_params)
-            .map_err(|e| Error::Inference(format!("Failed to create context: {}", e)))?;
-        
-        // Tokenize
-        let tokens = model.str_to_token(&prompt, llama_cpp_2::model::AddBos::Always)
-            .map_err(|e| Error::Inference(format!("Tokenization failed: {}", e)))?;
-        
-        let prompt_tokens = tokens.len() as u32;
-        
-        // Create batch
-        let mut batch = LlamaBatch::new(4096, 1);
-        for (i, token) in tokens.iter().enumerate() {
-            let is_last = i == tokens.len() - 1;
-            batch.add(*token, i as i32, &[0], is_last)
-                .map_err(|_| Error::Inference("Failed to add token to batch".to_string()))?;
-        }
-        
-        // Decode prompt
-        ctx.decode(&mut batch)
-            .map_err(|e| Error::Inference(format!("Prompt decode failed: {}", e)))?;
-        
-        // Create greedy sampler
-        let mut sampler = LlamaSampler::greedy();
-        
-        // Generate response
-        let mut response_tokens = Vec::new();
-        let mut n_cur = batch.n_tokens();
-        let max_tokens = params.max_tokens as i32;
-        
-        // Create decoder for token to string conversion
-        let mut decoder = encoding_rs::UTF_8.new_decoder();
-        
-        while n_cur < max_tokens {
-            // Sample next token using greedy sampler
-            let new_token = sampler.sample(&ctx, batch.n_tokens() - 1);
-            
-            // Check for EOS
-            if model.is_eog_token(new_token) {
-                break;
-            }
-            
-            response_tokens.push(new_token);
-            sampler.accept(new_token);
-            
-            // Prepare next batch
-            batch.clear();
-            batch.add(new_token, n_cur, &[0], true)
-                .map_err(|_| Error::Inference("Failed to add token".to_string()))?;
-            
-            ctx.decode(&mut batch)
-                .map_err(|e| Error::Inference(format!("Decode failed: {}", e)))?;
-            
-            n_cur += 1;
-        }
-        
-        // Convert tokens to string
-        let mut response_text = String::new();
-        for token in &response_tokens {
-            let piece = model.token_to_piece(*token, &mut decoder, true, None)
-                .map_err(|e| Error::Inference(format!("Token to string failed: {}", e)))?;
-            response_text.push_str(&piece);
-        }
-        
-        // Clean up trailing tags
-        if let Some(pos) = response_text.find("<|im_end|>") {
-            response_text.truncate(pos);
-        }
-        
-        Ok(ChatResult {
-            message: ChatMessage {
-                role: "assistant".to_string(),
-                content: response_text.clone(),
-            },
-            content: response_text,
-            model: params.model_path.clone(),
-            usage: UsageStats {
-                prompt_tokens,
-                completion_tokens: response_tokens.len() as u32,
-                total_tokens: prompt_tokens + response_tokens.len() as u32,
-            },
-        })
+        text_generation::chat_completion(&actual_path, params, &self.device)
     }
     
     /// Run vision chat - currently uses text model with image description
-    pub fn vision_chat(&self, params: &VisionParams) -> Result<VisionResult> {
+    pub fn vision_chat(&self, _params: &VisionParams) -> Result<VisionResult> {
         // For now, vision is not directly supported by all GGUF models
         // Return a helpful error message
         Err(Error::Vision(

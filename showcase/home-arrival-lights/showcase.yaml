@@ -1,4 +1,7 @@
 # Home Arrival Lights Showcase
+# Disabled - requires mobile app (runtime: app) not supported in web showcase
+disabled: true
+
 # 
 # This showcase demonstrates the home automation scenario:
 # When you arrive home (enter geofence), the smart home lights turn on.

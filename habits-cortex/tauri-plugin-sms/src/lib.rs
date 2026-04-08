@@ -9,20 +9,21 @@ mod commands;
 mod error;
 mod models;
 
-#[cfg(mobile)]
+#[cfg(target_os = "android")]
 mod mobile;
 
-#[cfg(mobile)]
+#[cfg(target_os = "android")]
 use mobile::Sms;
 
 pub use error::{Error, Result};
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the SMS APIs.
+#[cfg(target_os = "android")]
 pub trait SmsExt<R: Runtime> {
     fn sms(&self) -> &Sms<R>;
 }
 
-#[cfg(mobile)]
+#[cfg(target_os = "android")]
 impl<R: Runtime, T: Manager<R>> crate::SmsExt<R> for T {
     fn sms(&self) -> &Sms<R> {
         self.state::<Sms<R>>().inner()
@@ -37,7 +38,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::read_sms,
         ])
         .setup(|app, api| {
-            #[cfg(mobile)]
+            #[cfg(target_os = "android")]
             {
                 let sms = mobile::init(app, api)?;
                 app.manage(sms);

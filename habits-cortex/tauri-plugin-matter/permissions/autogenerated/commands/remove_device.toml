@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-remove-device"
+description = "Enables the remove_device command without any pre-configured scope."
+commands.allow = ["remove_device"]
+
+[[permission]]
+identifier = "deny-remove-device"
+description = "Denies the remove_device command without any pre-configured scope."
+commands.deny = ["remove_device"]

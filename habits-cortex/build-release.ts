@@ -115,6 +115,20 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Generate bundle-all.js with all bits
+    logSection('Generating cortex-bundle-all.js');
+    const bundleAllScript = path.resolve(__dirname, '..', 'bundle-generator', 'bundle-all.js');
+    const bundleAllOutput = path.resolve(__dirname, 'www', 'cortex-bundle-all.js');
+    
+    if (fs.existsSync(bundleAllScript)) {
+      exec(`node "${bundleAllScript}" --output "${bundleAllOutput}"`, {
+        cwd: path.resolve(__dirname, '..', 'bundle-generator'),
+      });
+      console.log('success', 'Bundle-all generated at www/cortex-bundle-all.js');
+    } else {
+      console.log('warn', 'bundle-all.js not found, skipping bundle generation');
+    }
+    
     // Generate icons before building any platform
     logSection('Generating icons');
     exec('npm run tauri -- icon');

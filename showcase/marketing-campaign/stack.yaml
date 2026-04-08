@@ -1,5 +1,6 @@
 {
   "version": "1.0",
+  "name": "Marketing Campaign",
   "workflows": [
     {
       "id": "marketing-campaign",

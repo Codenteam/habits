@@ -1,9 +1,12 @@
 // swift-tools-version:5.3
+// Tauri Plugin for system settings control
+
 import PackageDescription
 
 let package = Package(
     name: "tauri-plugin-system-settings",
     platforms: [
+        .macOS(.v10_13),
         .iOS(.v13)
     ],
     products: [
@@ -20,7 +23,7 @@ let package = Package(
         .target(
             name: "tauri-plugin-system-settings",
             dependencies: [
-                .product(name: "Tauri", package: "Tauri")
+                .byName(name: "Tauri")
             ],
             path: "Sources"
         )

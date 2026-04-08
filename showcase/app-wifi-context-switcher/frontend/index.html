@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wi-Fi Context Switcher - Demo UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0f172a; }
+  </style>
+</head>
+<body class="min-h-screen text-white p-4">
+  <div class="max-w-md mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8 pt-8">
+      <div class="text-6xl mb-4">📶</div>
+      <h1 class="text-2xl font-bold">Wi-Fi Context Switcher</h1>
+      <p class="text-slate-400 mt-2">Automatic settings based on Wi-Fi network</p>
+    </div>
+
+    <!-- Current Status Card -->
+    <div class="bg-slate-800 rounded-2xl p-6 mb-4">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-slate-400">Current Network</span>
+        <span id="current-wifi" class="text-cyan-400">Not connected</span>
+      </div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-slate-400">Context Mode</span>
+        <span id="context-mode" class="text-slate-300">Unknown</span>
+      </div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-slate-400">Ringer</span>
+        <span id="ringer-mode" class="text-slate-300">Normal</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Do Not Disturb</span>
+        <span id="dnd-status" class="text-slate-300">Off</span>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="bg-slate-800 rounded-2xl p-6 mb-4">
+      <h2 class="font-semibold mb-4">Network Configuration</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="text-slate-400 text-sm">Work Wi-Fi Name (SSID)</label>
+          <input type="text" id="work-ssid" value="OfficeNetwork" 
+                 class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
+        </div>
+        <div>
+          <label class="text-slate-400 text-sm">Home Wi-Fi Name (SSID)</label>
+          <input type="text" id="home-ssid" value="HomeNetwork"
+                 class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Cards -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div id="work-card" class="bg-slate-800 rounded-2xl p-4 border-2 border-transparent">
+        <div class="text-3xl mb-2">💼</div>
+        <div class="font-semibold">Work Mode</div>
+        <div class="text-slate-400 text-sm mt-1">
+          • Muted<br>
+          • Vibrate only<br>
+          • DND enabled
+        </div>
+      </div>
+      <div id="home-card" class="bg-slate-800 rounded-2xl p-4 border-2 border-transparent">
+        <div class="text-3xl mb-2">🏠</div>
+        <div class="font-semibold">Home Mode</div>
+        <div class="text-slate-400 text-sm mt-1">
+          • Sound on<br>
+          • Normal ringer<br>
+          • DND disabled
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="space-y-3">
+      <button onclick="simulateWorkWifi()" 
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+        💼 Simulate Connect to Work Wi-Fi
+      </button>
+      <button onclick="simulateHomeWifi()" 
+              class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+        🏠 Simulate Connect to Home Wi-Fi
+      </button>
+      <button onclick="detectCurrentWifi()"
+              class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition">
+        🔍 Detect Current Wi-Fi
+      </button>
+    </div>
+
+    <!-- Log -->
+    <div class="bg-slate-800 rounded-2xl p-6 mt-4">
+      <h2 class="font-semibold mb-4">Activity Log</h2>
+      <div id="log" class="text-sm text-slate-400 space-y-2 max-h-48 overflow-y-auto">
+        <div>Ready to monitor Wi-Fi...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.textContent = `[${time}] ${message}`;
+      logDiv.insertBefore(entry, logDiv.firstChild);
+    }
+
+    function setWorkMode() {
+      document.getElementById('context-mode').textContent = 'Work';
+      document.getElementById('context-mode').className = 'text-blue-400';
+      document.getElementById('ringer-mode').textContent = 'Vibrate';
+      document.getElementById('dnd-status').textContent = 'On';
+      document.getElementById('dnd-status').className = 'text-amber-400';
+      
+      document.getElementById('work-card').classList.add('border-blue-500');
+      document.getElementById('home-card').classList.remove('border-purple-500');
+    }
+
+    function setHomeMode() {
+      document.getElementById('context-mode').textContent = 'Home';
+      document.getElementById('context-mode').className = 'text-purple-400';
+      document.getElementById('ringer-mode').textContent = 'Normal';
+      document.getElementById('dnd-status').textContent = 'Off';
+      document.getElementById('dnd-status').className = 'text-slate-300';
+      
+      document.getElementById('home-card').classList.add('border-purple-500');
+      document.getElementById('work-card').classList.remove('border-blue-500');
+    }
+
+    async function simulateWorkWifi() {
+      const ssid = document.getElementById('work-ssid').value;
+      document.getElementById('current-wifi').textContent = ssid;
+      
+      log('📶 Connected to: ' + ssid);
+      log('💼 Enabling work mode...');
+      
+      setWorkMode();
+      
+      // Call the workflow
+      try {
+        const response = await fetch('/api/wifi-work-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config: { work_wifi_ssid: ssid }
+          })
+        });
+        const data = await response.json();
+        log('✅ Work mode enabled: ' + JSON.stringify(data.result?.actions?.length || 0) + ' actions');
+      } catch (e) {
+        log('⚠️ Demo mode - workflow call simulated');
+      }
+      
+      log('🔕 Muted, vibrate, DND on');
+    }
+
+    async function simulateHomeWifi() {
+      const ssid = document.getElementById('home-ssid').value;
+      document.getElementById('current-wifi').textContent = ssid;
+      
+      log('📶 Connected to: ' + ssid);
+      log('🏠 Enabling home mode...');
+      
+      setHomeMode();
+      
+      // Call the workflow
+      try {
+        const response = await fetch('/api/wifi-home-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config: { home_wifi_ssid: ssid }
+          })
+        });
+        const data = await response.json();
+        log('✅ Home mode enabled');
+      } catch (e) {
+        log('⚠️ Demo mode - workflow call simulated');
+      }
+      
+      log('🔔 Unmuted, normal ringer');
+    }
+
+    function detectCurrentWifi() {
+      // In a real app, this would call the wifi bit
+      log('🔍 Checking current Wi-Fi...');
+      log('⚠️ Wi-Fi detection requires running in Tauri mobile app');
+    }
+
+    log('📶 Wi-Fi Context Switcher ready');
+  </script>
+</body>
+</html>

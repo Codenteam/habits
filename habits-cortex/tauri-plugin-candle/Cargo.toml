@@ -1,7 +1,7 @@
 [package]
 name = "tauri-plugin-candle"
 version = "0.1.0"
-description = "A Tauri plugin for local AI using Candle and llama.cpp - unified text, vision, and image generation"
+description = "A Tauri plugin for local AI using Candle - image generation via Stable Diffusion"
 license = "MIT"
 edition = "2021"
 rust-version = "1.77.2"
@@ -14,9 +14,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2"
 tokio = { version = "1", features = ["full"] }
-
-# llama.cpp bindings for GGUF model support
-llama-cpp-2 = "0.1"
 
 # HuggingFace Candle for SD inference
 candle-core = "0.8"
@@ -31,17 +28,14 @@ futures = "0.3"
 # For app data directory
 dirs = "5"
 
-# For string decoding
-encoding_rs = "0.8"
-
-# For base64 image handling
-base64 = "0.22"
-
 # Image processing
 image = "0.25"
 
 # Random number generation
 rand = "0.8"
+
+# Base64 encoding
+base64 = "0.22"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # Metal acceleration on macOS

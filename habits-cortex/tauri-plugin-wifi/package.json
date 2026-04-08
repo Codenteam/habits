@@ -1,5 +1,5 @@
 {
-  "name": "tauri-plugin-wifi",
+  "name": "tauri-plugin-wifi-api",
   "version": "0.1.0",
   "description": "Tauri plugin for Wi-Fi network monitoring on mobile devices",
   "main": "dist-js/index.cjs",

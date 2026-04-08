@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Wise Google Payment Invoice Processor"
 
 workflows:
   # Wise SCA Authentication (manual - use for UK/EEA accounts)

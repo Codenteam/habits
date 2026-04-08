@@ -9,11 +9,7 @@ use crate::{
     Result,
 };
 
-#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "app.tauri.sms";
-
-#[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_sms);
 
 /// Access to the SMS plugin APIs.
 pub struct Sms<R: Runtime>(PluginHandle<R>);
@@ -38,9 +34,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     _app: &AppHandle<R>,
     api: PluginApi<R, C>,
 ) -> Result<Sms<R>> {
-    #[cfg(target_os = "android")]
+    // Only Android has working native plugin - iOS disabled due to swift-rs targeting bug
     let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "SmsPlugin")?;
-    #[cfg(target_os = "ios")]
-    let handle = api.register_ios_plugin(init_plugin_sms)?;
     Ok(Sms(handle))
 }

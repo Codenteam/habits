@@ -1,6 +1,7 @@
 # Note: This example is API-focused with a simple info page frontend.
 
 version: "1.0"
+name: "Email Classification"
 workflows:
   - id: email-classification-test
     path: ./habit.yaml

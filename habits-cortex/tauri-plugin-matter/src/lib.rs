@@ -2,7 +2,7 @@
 //!
 //! This plugin provides access to Matter-compatible smart home devices through:
 //! - Android's Matter SDK (Google Home)
-//! - iOS HomeKit (which includes Matter support)
+//! - iOS: Currently disabled due to swift-rs targeting bug
 //!
 //! Supported capabilities:
 //! - OnOff cluster: Turn devices on/off
@@ -16,6 +16,7 @@ use tauri::{
 
 mod commands;
 mod error;
+#[cfg(target_os = "android")]
 mod mobile;
 pub mod models;
 
@@ -25,10 +26,12 @@ pub use models::*;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Extensions to the Tauri [`AppHandle`] for Matter functionality.
+#[cfg(target_os = "android")]
 pub trait MatterExt<R: Runtime> {
     fn matter(&self) -> &mobile::Matter<R>;
 }
 
+#[cfg(target_os = "android")]
 impl<R: Runtime, T: Manager<R>> MatterExt<R> for T {
     fn matter(&self) -> &mobile::Matter<R> {
         self.state::<mobile::Matter<R>>().inner()
@@ -49,8 +52,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::remove_device,
         ])
         .setup(|app, api| {
-            let matter = mobile::init(app, api)?;
-            app.manage(matter);
+            #[cfg(target_os = "android")]
+            {
+                let matter = mobile::init(app, api)?;
+                app.manage(matter);
+            }
+            let _ = api; // Suppress unused warning on iOS
+            let _ = app;
             Ok(())
         })
         .build()

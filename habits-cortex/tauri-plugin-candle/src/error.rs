@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use thiserror::Error;
 
 /// Error types for the Candle plugin
@@ -12,6 +12,9 @@ pub enum Error {
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("Candle error: {0}")]
+    Candle(#[from] candle_core::Error),
 
     #[error("Vision error: {0}")]
     Vision(String),

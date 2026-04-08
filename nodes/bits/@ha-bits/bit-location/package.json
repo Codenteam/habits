@@ -66,7 +66,16 @@
     "tauriPlugins": {
       "geolocation": {
         "cargo": "tauri-plugin-geolocation = \"2\"",
-        "npm": "@tauri-apps/plugin-geolocation"
+        "init": "tauri_plugin_geolocation::init()",
+        "npm": "@tauri-apps/plugin-geolocation",
+        "permissions": [
+          "geolocation:default",
+          "geolocation:allow-get-current-position",
+          "geolocation:allow-watch-position",
+          "geolocation:allow-clear-watch",
+          "geolocation:allow-check-permissions",
+          "geolocation:allow-request-permissions"
+        ]
       }
     }
   }

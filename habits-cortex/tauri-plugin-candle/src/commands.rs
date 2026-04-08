@@ -1,8 +1,6 @@
-use std::sync::{Arc, Mutex};
 use tauri::{command, AppHandle, Runtime};
 
 use crate::error::Result;
-use crate::candle_manager::CandleManager;
 use crate::models::*;
 use crate::CandleExt;
 

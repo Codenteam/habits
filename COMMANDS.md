@@ -172,17 +172,33 @@ pnpm nx run-many --target=typecheck
 
 # Habits-Cortex Tauri App Commands
 
+## Build Variants
+Different bundle identifiers for dev/debug/release to coexist on same device:
+- **Dev** (com.codenteam-oss.habits.dev) - "Cortex Dev" - hot reload
+- **Debug** (com.codenteam-oss.habits.debug) - "Cortex Debug" - debug symbols
+- **Release** (com.codenteam-oss.habits) - "Cortex" - production
+
+### iOS Provisioning Setup (for debug/dev builds)
+To install dev/debug builds on iOS devices, register a wildcard App ID in Apple Developer:
+1. Go to https://developer.apple.com/account/resources/identifiers
+2. Click "+" to add new identifier → App IDs → App
+3. Description: "Habits Wildcard", Bundle ID: Wildcard, enter `com.codenteam-oss.habits.*`
+4. Xcode will auto-create provisioning profiles for `.dev` and `.debug` variants
+
 ## Build habits-cortex (debug, no bundle)
-cd habits-cortex && pnpm tauri build --debug --no-bundle
+cd habits-cortex && npm run build:debug
 
 ## Build habits-cortex (release)
-cd habits-cortex && pnpm tauri build
+cd habits-cortex && npm run build
 
 ## Run habits-cortex in dev mode
 cd habits-cortex && npm run dev
 
-## Build apk for habits-cortex
-npm run tauri android build -- --split-per-abi -t aarch64 --apk
+## Build apk for habits-cortex (release)
+cd habits-cortex && npm run tauri android build -- --split-per-abi -t aarch64 --apk
+
+## Build apk for habits-cortex (debug - separate app on device)
+cd habits-cortex && npm run android:build:debug -- --split-per-abi -t aarch64 --apk
 
 ## Test .habit file via habits-cortex CLI (executes workflow and exits)
 ./habits-cortex/src-tauri/target/debug/habits-cortex --test --habit showcase/hello-world/dist/hello-world.habit --workflow hello-world --input '{"param1":"hello","param2":"world"}'
@@ -195,22 +211,42 @@ pnpm nx run habits pack --format habit --config showcase/email-demo/stack.yaml
 
 npm run dev -- -- -- --habit showcase/email-demo/dist/email-demo.habit
 
+## Android Commands
+### release the lock
+rm -rf habits-cortex/src-tauri/target/.cargo-lock 2>/dev/null; find habits-cortex/src-tauri -name ".cargo-lock" -delete 2>/dev/null; fuser -k habits-cortex/src-tauri/target/.package-cache 2>/dev/null; echo "Cargo locks cleared"
+
+
+### Send file to android, preferable Downloads/Habits
+adb push <file> <dest>
+
+
 ## iOS Commands
 
-## Run iOS dev mode (requires booted simulator)
-cd habits-cortex && npm run tauri -- ios dev "iPhone 17 Pro"
+## Run iOS dev mode on physical device (Cortex Dev - separate app)
+cd habits-cortex && npm run ios:dev -- --host
+
+## Run iOS dev mode on simulator
+cd habits-cortex && npm run ios:dev -- "iPhone 17 Pro"
+
+## List ios devices:
+
+xcrun xctrace list devices
+
 
 ## Build iOS app for simulator (release, no code signing needed)
 cd habits-cortex && npm run tauri -- ios build --target aarch64-sim
+
+## Build iOS app for device (release - Cortex)
+cd habits-cortex && npm run ios:build
+
+## Build iOS app for device (debug - Cortex Debug - separate app)
+cd habits-cortex && npm run ios:build:debug
 
 ## Install and run built iOS app on simulator
 xcrun simctl boot "iPhone 17 Pro" || true
 open -a Simulator
 xcrun simctl install booted habits-cortex/src-tauri/gen/apple/build/arm64-sim/Cortex.app
-xcrun simctl launch booted com.habits.cortex
-
-## Build iOS app for device (requires Apple Developer signing)
-cd habits-cortex && npm run tauri -- ios build
+xcrun simctl launch booted com.codenteam-oss.habits
 
 
 ## Publish 
@@ -249,3 +285,9 @@ npx env-cmd .secrets -- npx tsx habits-cortex/build-release.ts --platform macos 
 To run a testing file (usually in yaml file), using this command: 
 npx tsx scripts/e2e/run-habit-tests.cts --test-file showcase/local-ai/habit.test.yaml
 
+
+
+# Docs
+
+To deploy docs:
+npx env-cmd -f .secrets -- npx tsx scripts/deploy-docs.ts

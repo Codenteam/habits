@@ -1,0 +1,31 @@
+version: "1.0"
+name: "App Smart Home Commander"
+
+workflows:
+  - id: process-command
+    path: ./habits/process-command.yaml
+    enabled: true
+
+  - id: create-routine
+    path: ./habits/create-routine.yaml
+    enabled: true
+
+  - id: list-routines
+    path: ./habits/list-routines.yaml
+    enabled: true
+
+  - id: list-commands
+    path: ./habits/list-commands.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

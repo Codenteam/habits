@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Support Ticket Router"
 
 workflows:
   - id: submit-ticket

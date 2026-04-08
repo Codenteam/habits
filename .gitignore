@@ -100,3 +100,21 @@ candle-bindings/index.d.ts
 .github/instructions/general.instructions.md
 *.test.yaml
 untracked
+
+
+
+
+
+
+
+# Scripts
+scripts
+!scripts/log-sanitizer.ts
+!scripts/validate-affected.sh
+
+
+
+COMMANDS.md
+
+.tauri
+.build

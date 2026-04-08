@@ -1,0 +1,27 @@
+id: hello-world-all-hardcoded
+name: Hello (All Hardcoded)
+description: A hello world habit with all values hardcoded - no inputs, no env
+
+# No inputs needed - everything is hardcoded
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "hello"
+        param2: "world"
+
+edges: []
+
+# Output schema
+output:
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting Result

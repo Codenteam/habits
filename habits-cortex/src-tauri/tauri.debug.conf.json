@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "identifier": "com.codenteam-oss.habits.debug",
+  "productName": "Cortex Debug",
+  "app": {
+    "windows": [
+      {
+        "title": "Cortex Debug"
+      }
+    ]
+  }
+}

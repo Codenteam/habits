@@ -12,11 +12,7 @@ use crate::{
     Result,
 };
 
-#[cfg(target_os = "android")]
 const PLUGIN_IDENTIFIER: &str = "app.tauri.wifi";
-
-#[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_wifi);
 
 /// Access to the Wi-Fi plugin APIs.
 pub struct Wifi<R: Runtime>(PluginHandle<R>);
@@ -62,9 +58,7 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
     _app: &AppHandle<R>,
     api: PluginApi<R, C>,
 ) -> Result<Wifi<R>> {
-    #[cfg(target_os = "android")]
+    // Android-only - iOS disabled due to swift-rs targeting bug
     let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "WifiPlugin")?;
-    #[cfg(target_os = "ios")]
-    let handle = api.register_ios_plugin(init_plugin_wifi)?;
     Ok(Wifi(handle))
 }
