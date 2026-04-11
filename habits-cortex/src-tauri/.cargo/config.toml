@@ -1,0 +1,4 @@
+[target.aarch64-apple-ios]
+# Enable fp16 for iOS builds - required by gemm-f16 (candle dependency)
+# All Apple A11+ chips (iPhone 8+) support ARMv8.2 fp16 instructions
+rustflags = ["-C", "target-feature=+fp16"]

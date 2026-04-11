@@ -1,6 +1,6 @@
 //! Tauri commands for Local AI plugin
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::state::{InstanceId, LocalAiState};
 use local_ai_core::{
     device::DeviceType,
@@ -529,4 +529,242 @@ pub fn has_metal_support() -> bool {
 #[command]
 pub fn has_cuda_support() -> bool {
     cfg!(feature = "cuda")
+}
+
+// ============================================================================
+// Model Management
+// ============================================================================
+
+/// Information about an installed model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelInfo {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub size: u64,
+}
+
+/// Result of listing models
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListModelsResult {
+    pub text_models: Vec<ModelInfo>,
+    pub diffusion_models: Vec<ModelInfo>,
+    pub caption_models: Vec<ModelInfo>,
+    pub whisper_models: Vec<ModelInfo>,
+    pub tts_models: Vec<ModelInfo>,
+    pub models_dir: String,
+}
+
+#[command]
+pub fn list_models(state: State<'_, LocalAiState>) -> Result<ListModelsResult> {
+    let models_dir = &state.models_dir;
+    let mut text_models = Vec::new();
+    let mut diffusion_models = Vec::new();
+    let mut caption_models = Vec::new();
+    let mut whisper_models = Vec::new();
+    let mut tts_models = Vec::new();
+    
+    // Helper to scan a subdirectory for GGUF models
+    fn scan_gguf_dir(dir: &std::path::Path) -> Vec<ModelInfo> {
+        let mut models = Vec::new();
+        if dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        // Look for model.gguf inside subdirectory
+                        let model_file = path.join("model.gguf");
+                        if model_file.exists() {
+                            let name = path.file_name()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let size = std::fs::metadata(&model_file)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+                            models.push(ModelInfo {
+                                id: name.clone(),
+                                name,
+                                path: model_file.to_string_lossy().to_string(),
+                                size,
+                            });
+                        }
+                    } else if path.is_file() {
+                        if let Some(ext) = path.extension() {
+                            if ext == "gguf" {
+                                let name = path.file_stem()
+                                    .map(|s| s.to_string_lossy().to_string())
+                                    .unwrap_or_default();
+                                let size = std::fs::metadata(&path)
+                                    .map(|m| m.len())
+                                    .unwrap_or(0);
+                                models.push(ModelInfo {
+                                    id: name.clone(),
+                                    name,
+                                    path: path.to_string_lossy().to_string(),
+                                    size,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        models
+    }
+    
+    // Scan for GGUF files at root level
+    if models_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&models_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(ext) = path.extension() {
+                        if ext == "gguf" {
+                            let name = path.file_stem()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let size = std::fs::metadata(&path)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+                            text_models.push(ModelInfo {
+                                id: name.clone(),
+                                name,
+                                path: path.to_string_lossy().to_string(),
+                                size,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Scan text-gen subdirectory
+    text_models.extend(scan_gguf_dir(&models_dir.join("text-gen")));
+    
+    // Scan caption subdirectory
+    caption_models.extend(scan_gguf_dir(&models_dir.join("caption")));
+    
+    // Scan whisper subdirectory
+    whisper_models.extend(scan_gguf_dir(&models_dir.join("whisper")));
+    
+    // Scan tts subdirectory
+    tts_models.extend(scan_gguf_dir(&models_dir.join("tts")));
+    
+    // Scan diffusion subdirectory
+    let diffusion_dir = models_dir.join("diffusion");
+    if diffusion_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&diffusion_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() {
+                    let name = path.file_name()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    // Check if it has the required SD files (unet.safetensors)
+                    let has_unet = path.join("unet.safetensors").exists() || 
+                        path.join("unet").exists() ||
+                        std::fs::read_dir(&path)
+                            .map(|d| d.filter_map(|e| e.ok())
+                                .any(|e| e.path().to_string_lossy().contains("unet")))
+                            .unwrap_or(false);
+                    if has_unet {
+                        // Calculate total size of all files in directory
+                        let size = std::fs::read_dir(&path)
+                            .map(|d| d.filter_map(|e| e.ok())
+                                .map(|e| std::fs::metadata(e.path()).map(|m| m.len()).unwrap_or(0))
+                                .sum())
+                            .unwrap_or(0);
+                        diffusion_models.push(ModelInfo {
+                            id: name.clone(),
+                            name,
+                            path: path.to_string_lossy().to_string(),
+                            size,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(ListModelsResult {
+        text_models,
+        diffusion_models,
+        caption_models,
+        whisper_models,
+        tts_models,
+        models_dir: models_dir.to_string_lossy().to_string(),
+    })
+}
+
+#[command]
+pub fn ensure_models_dir(state: State<'_, LocalAiState>) -> Result<String> {
+    let models_dir = &state.models_dir;
+    std::fs::create_dir_all(models_dir)?;
+    std::fs::create_dir_all(models_dir.join("text-gen"))?;
+    std::fs::create_dir_all(models_dir.join("diffusion"))?;
+    std::fs::create_dir_all(models_dir.join("whisper"))?;
+    std::fs::create_dir_all(models_dir.join("tts"))?;
+    std::fs::create_dir_all(models_dir.join("caption"))?;
+    Ok(models_dir.to_string_lossy().to_string())
+}
+
+/// Result of a file download
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadResult {
+    pub success: bool,
+    pub path: String,
+    pub size: u64,
+    pub error: Option<String>,
+}
+
+/// Download a file from a URL to a local path within the models directory
+#[command]
+pub async fn download_file(state: State<'_, LocalAiState>, url: String, relative_path: String, overwrite: Option<bool>) -> Result<DownloadResult> {
+    // Clone the path so we can use it across await points
+    let models_dir = state.models_dir.clone();
+    let target_path = models_dir.join(&relative_path);
+    
+    // Ensure parent directory exists
+    if let Some(parent) = target_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    
+    // Check if already exists
+    if target_path.exists() && !overwrite.unwrap_or(false) {
+        let size = std::fs::metadata(&target_path).map(|m| m.len()).unwrap_or(0);
+        return Ok(DownloadResult {
+            success: true,
+            path: target_path.to_string_lossy().to_string(),
+            size,
+            error: Some("File already exists".to_string()),
+        });
+    }
+    
+    // Download
+    let response = reqwest::get(&url).await.map_err(|e| Error::Other(format!("Download failed: {}", e)))?;
+    
+    if !response.status().is_success() {
+        return Ok(DownloadResult {
+            success: false,
+            path: target_path.to_string_lossy().to_string(),
+            size: 0,
+            error: Some(format!("HTTP {}: Download failed", response.status())),
+        });
+    }
+    
+    let bytes = response.bytes().await.map_err(|e| Error::Other(format!("Read failed: {}", e)))?;
+    let size = bytes.len() as u64;
+    
+    std::fs::write(&target_path, &bytes)?;
+    
+    Ok(DownloadResult {
+        success: true,
+        path: target_path.to_string_lossy().to_string(),
+        size,
+        error: None,
+    })
 }

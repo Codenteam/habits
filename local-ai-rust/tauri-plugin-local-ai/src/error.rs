@@ -8,6 +8,9 @@ pub enum Error {
     #[error("Local AI error: {0}")]
     LocalAi(#[from] local_ai_core::error::LocalAiError),
 
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
     #[error("Instance not found: {0}")]
     InstanceNotFound(String),
 

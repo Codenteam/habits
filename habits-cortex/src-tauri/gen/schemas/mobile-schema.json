@@ -6597,6 +6597,258 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
+          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`",
+          "type": "string",
+          "const": "local-ai:default",
+          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`"
+        },
+        {
+          "description": "Enables the caption_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-caption-image",
+          "markdownDescription": "Enables the caption_image command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_image_captioner command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-image-captioner",
+          "markdownDescription": "Enables the create_image_captioner command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_image_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-image-generator",
+          "markdownDescription": "Enables the create_image_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_text_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-text-generator",
+          "markdownDescription": "Enables the create_text_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_transcriber command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-transcriber",
+          "markdownDescription": "Enables the create_transcriber command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_voice_synthesizer command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-voice-synthesizer",
+          "markdownDescription": "Enables the create_voice_synthesizer command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the generate_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-generate-image",
+          "markdownDescription": "Enables the generate_image command without any pre-configured scope."
+        },
+        {
+          "description": "Allow text generation commands",
+          "type": "string",
+          "const": "local-ai:allow-generate-text",
+          "markdownDescription": "Allow text generation commands"
+        },
+        {
+          "description": "Enables the get_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-get-version",
+          "markdownDescription": "Enables the get_version command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_cuda_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-has-cuda-support",
+          "markdownDescription": "Enables the has_cuda_support command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_metal_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-has-metal-support",
+          "markdownDescription": "Enables the has_metal_support command without any pre-configured scope."
+        },
+        {
+          "description": "Allow image captioning commands",
+          "type": "string",
+          "const": "local-ai:allow-image-caption",
+          "markdownDescription": "Allow image captioning commands"
+        },
+        {
+          "description": "Enables the image_captioner_caption command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-image-captioner-caption",
+          "markdownDescription": "Enables the image_captioner_caption command without any pre-configured scope."
+        },
+        {
+          "description": "Allow image generation commands",
+          "type": "string",
+          "const": "local-ai:allow-image-gen",
+          "markdownDescription": "Allow image generation commands"
+        },
+        {
+          "description": "Enables the image_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-image-generator-generate",
+          "markdownDescription": "Enables the image_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the synthesize_speech command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-synthesize-speech",
+          "markdownDescription": "Enables the synthesize_speech command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the text_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-text-generator-generate",
+          "markdownDescription": "Enables the text_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Allow text-to-voice commands",
+          "type": "string",
+          "const": "local-ai:allow-text-to-voice",
+          "markdownDescription": "Allow text-to-voice commands"
+        },
+        {
+          "description": "Allow audio transcription commands",
+          "type": "string",
+          "const": "local-ai:allow-transcribe",
+          "markdownDescription": "Allow audio transcription commands"
+        },
+        {
+          "description": "Enables the transcribe_audio command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-transcribe-audio",
+          "markdownDescription": "Enables the transcribe_audio command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the transcriber_transcribe command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-transcriber-transcribe",
+          "markdownDescription": "Enables the transcriber_transcribe command without any pre-configured scope."
+        },
+        {
+          "description": "Allow utility commands",
+          "type": "string",
+          "const": "local-ai:allow-utilities",
+          "markdownDescription": "Allow utility commands"
+        },
+        {
+          "description": "Enables the voice_synthesizer_synthesize command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-voice-synthesizer-synthesize",
+          "markdownDescription": "Enables the voice_synthesizer_synthesize command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the caption_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-caption-image",
+          "markdownDescription": "Denies the caption_image command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_image_captioner command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-image-captioner",
+          "markdownDescription": "Denies the create_image_captioner command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_image_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-image-generator",
+          "markdownDescription": "Denies the create_image_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_text_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-text-generator",
+          "markdownDescription": "Denies the create_text_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_transcriber command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-transcriber",
+          "markdownDescription": "Denies the create_transcriber command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_voice_synthesizer command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-voice-synthesizer",
+          "markdownDescription": "Denies the create_voice_synthesizer command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the generate_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-generate-image",
+          "markdownDescription": "Denies the generate_image command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the generate_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-generate-text",
+          "markdownDescription": "Denies the generate_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-get-version",
+          "markdownDescription": "Denies the get_version command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_cuda_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-has-cuda-support",
+          "markdownDescription": "Denies the has_cuda_support command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_metal_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-has-metal-support",
+          "markdownDescription": "Denies the has_metal_support command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the image_captioner_caption command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-image-captioner-caption",
+          "markdownDescription": "Denies the image_captioner_caption command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the image_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-image-generator-generate",
+          "markdownDescription": "Denies the image_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the synthesize_speech command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-synthesize-speech",
+          "markdownDescription": "Denies the synthesize_speech command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the text_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-text-generator-generate",
+          "markdownDescription": "Denies the text_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the transcribe_audio command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-transcribe-audio",
+          "markdownDescription": "Denies the transcribe_audio command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the transcriber_transcribe command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-transcriber-transcribe",
+          "markdownDescription": "Denies the transcriber_transcribe command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the voice_synthesizer_synthesize command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-voice-synthesizer-synthesize",
+          "markdownDescription": "Denies the voice_synthesizer_synthesize command without any pre-configured scope."
+        },
+        {
           "description": "Allows the log command\n#### This default permission set includes:\n\n- `allow-log`",
           "type": "string",
           "const": "log:default",
@@ -7051,6 +7303,12 @@
           "type": "string",
           "const": "system-settings:deny-set-volume",
           "markdownDescription": "Denies the set_volume command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin",
+          "type": "string",
+          "const": "webdriver:default",
+          "markdownDescription": "Default permissions for the plugin"
         },
         {
           "description": "Default permissions for the Wi-Fi plugin\n#### This default permission set includes:\n\n- `allow-get-current-network`\n- `allow-is-connected`\n- `allow-list-saved-networks`\n- `allow-check-permissions`\n- `allow-request-permissions`",

@@ -213,11 +213,14 @@ npm run dev -- -- -- --habit showcase/email-demo/dist/email-demo.habit
 
 ## Android Commands
 ### release the lock
-rm -rf habits-cortex/src-tauri/target/.cargo-lock 2>/dev/null; find habits-cortex/src-tauri -name ".cargo-lock" -delete 2>/dev/null; fuser -k habits-cortex/src-tauri/target/.package-cache 2>/dev/null; echo "Cargo locks cleared"
+rm -rf habits-cortex/src-tauri/target/.cargo-lock; find habits-cortex/src-tauri -name ".cargo-lock" -delete; fuser -k habits-cortex/src-tauri/target/.package-cache; echo "Cargo locks cleared"
 
 
 ### Send file to android, preferable Downloads/Habits
 adb push <file> <dest>
+
+### Stream Cortex app logs on Android (live)
+adb logcat | grep -iE "codenteam|habits|cortex|tauri|RustStdoutStderr"
 
 
 ## iOS Commands
@@ -282,9 +285,46 @@ npx env-cmd .secrets -- npx tsx habits-cortex/build-release.ts --platform macos 
 
 
 # Testing
-To run a testing file (usually in yaml file), using this command: 
-npx tsx scripts/e2e/run-habit-tests.cts --test-file showcase/local-ai/habit.test.yaml
 
+## habits-test CLI
+The testing CLI can be run from source (local dev) or via npx (when published):
+```bash
+# Local development (from workspace root)
+npx tsx packages/testing/src/cli/index.ts <command> [options]
+
+# After @ha-bits/testing is published
+npx habits-test <command> [options]
+```
+
+## List all available tests
+npx tsx packages/testing/src/cli/index.ts list
+
+## Run Habit Tests (workflow tests)
+npx tsx packages/testing/src/cli/index.ts habit packages/testing/tests/habits/hello-world/workflow.test.yaml
+
+## Run Habit Tests (backend only - cortex mode)
+npx tsx packages/testing/src/cli/index.ts habit showcase/hello-world/stack.yaml --mode cortex
+
+## WebDriver E2E Tests (tauri-plugin-webdriver)
+Tests the habits-cortex Tauri app via embedded WebDriver server on port 4445.
+
+### Test on macOS
+npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform mac
+
+### Test on iOS Simulator
+npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform ios
+
+### Test on Android Emulator
+npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform android
+
+### Test with verbose output
+npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform mac --verbose
+
+### Notes:
+- macOS: Requires debug build (`cd habits-cortex/src-tauri && cargo build`)
+- iOS: Requires booted simulator with app installed
+- Android: Requires running emulator/device with app installed, uses ADB port forwarding
+- The WebDriver plugin creates a separate webview - workflow tests use HTTP calls to cortex server
 
 
 # Docs

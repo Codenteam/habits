@@ -23,14 +23,22 @@ import {
 } from '../common/models';
 import { DeviceType } from '../common/common';
 
-// Extend Window interface for Tauri
+// Extend Window interface for Tauri v2
 declare global {
   interface Window {
     __TAURI__?: {
-      invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
+      // Tauri v2 API structure
+      core?: {
+        invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
+      };
+      // Tauri v1 API structure (legacy)
+      invoke?: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
     };
   }
 }
+
+// Type for tauri invoke function
+type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
 
 // ============================================================================
 // Backend Interface
@@ -67,7 +75,25 @@ class TauriBackend implements LocalAiBackend {
   
   constructor() {
     if (typeof window !== 'undefined' && window.__TAURI__) {
-      this.invoke = window.__TAURI__.invoke;
+      // Support both Tauri v2 (core.invoke) and v1 (invoke) API
+      // Need to bind the function to preserve context
+      let rawInvoke: TauriInvoke;
+      if (window.__TAURI__.core?.invoke) {
+        rawInvoke = window.__TAURI__.core.invoke.bind(window.__TAURI__.core);
+      } else if (window.__TAURI__.invoke) {
+        rawInvoke = window.__TAURI__.invoke.bind(window.__TAURI__);
+      } else {
+        throw new Error('Tauri invoke function not found');
+      }
+      // Wrap invoke to convert Tauri string rejections into proper Error objects
+      this.invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
+        try {
+          return await rawInvoke<T>(cmd, args);
+        } catch (e: any) {
+          const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : JSON.stringify(e));
+          throw new Error(`Tauri invoke '${cmd}' failed: ${msg}`);
+        }
+      };
     } else {
       throw new Error('Tauri environment not detected');
     }
@@ -89,7 +115,7 @@ class TauriBackend implements LocalAiBackend {
     return this.invoke('plugin:local-ai|caption_image', {
       modelPath: config.modelPath,
       tokenizerPath: config.tokenizerPath,
-      imagePath,
+      imagePath: imagePath,
       device: config.device,
     });
   }
@@ -107,7 +133,7 @@ class TauriBackend implements LocalAiBackend {
       vaePath: config.vaePath,
       clipPath: config.clipPath,
       tokenizerPath: config.tokenizerPath,
-      outputPath,
+      outputPath: outputPath,
       height: config.height,
       width: config.width,
       steps: config.steps,
@@ -119,7 +145,7 @@ class TauriBackend implements LocalAiBackend {
   
   async transcribeAudio(config: TranscribeConfig, audioPath: string): Promise<TranscriptionResult> {
     return this.invoke('plugin:local-ai|transcribe_audio', {
-      audioPath,
+      audioPath: audioPath,
       modelPath: config.modelPath,
       tokenizerPath: config.tokenizerPath,
       configPath: config.configPath,
@@ -144,7 +170,7 @@ class TauriBackend implements LocalAiBackend {
       encodecPath: config.encodecPath,
       spkEmbPath: config.spkEmbPath,
       quantized: config.quantized,
-      outputPath,
+      outputPath: outputPath,
       guidanceScale: config.guidanceScale,
       temperature: config.temperature,
       maxTokens: config.maxTokens,
@@ -167,6 +193,14 @@ class TauriBackend implements LocalAiBackend {
     // Check at runtime via invoke if needed
     return false; // Would need async check
   }
+
+  async downloadFile(url: string, relativePath: string, overwrite?: boolean): Promise<{ success: boolean; path: string; size: number; error: string | null }> {
+    return this.invoke('plugin:local-ai|download_file', {
+      url,
+      relativePath,
+      overwrite: overwrite ?? false,
+    });
+  }
 }
 
 // ============================================================================
@@ -174,39 +208,46 @@ class TauriBackend implements LocalAiBackend {
 // ============================================================================
 
 // Known paths where the native addon might be found
-const NATIVE_ADDON_PATHS = [
-  '@local-ai/node', // npm installed
-  // Workspace development paths
-  process.env.LOCAL_AI_NODE_PATH,
-  // Check relative to habits workspace
-  require.resolve ? (() => {
-    try {
-      // Try to find it in the workspace
-      const path = require('path');
-      const fs = require('fs');
-      const workspacePaths = [
-        path.join(process.cwd(), 'local-ai-rust/local-ai-node'),
-        path.join(process.cwd(), '../local-ai-rust/local-ai-node')
-      ];
-      for (const p of workspacePaths) {
-        if (fs.existsSync(path.join(p, 'index.js'))) {
-          return p;
+// Wrapped in a function to avoid errors in browser context
+function getNativeAddonPaths(): string[] {
+  if (typeof process === 'undefined' || !process.versions?.node) {
+    return [];
+  }
+  return [
+    '@local-ai/node', // npm installed
+    // Workspace development paths
+    process.env.LOCAL_AI_NODE_PATH,
+    // Check relative to habits workspace
+    typeof require !== 'undefined' && require.resolve ? (() => {
+      try {
+        // Try to find it in the workspace
+        const path = require('path');
+        const fs = require('fs');
+        const workspacePaths = [
+          path.join(process.cwd(), 'local-ai-rust/local-ai-node'),
+          path.join(process.cwd(), '../local-ai-rust/local-ai-node')
+        ];
+        for (const p of workspacePaths) {
+          if (fs.existsSync(path.join(p, 'index.js'))) {
+            return p;
+          }
         }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
-    } catch {
-      return null;
-    }
-  })() : null,
-].filter(Boolean) as string[];
+    })() : null,
+  ].filter(Boolean) as string[];
+}
 
 class NodeBackend implements LocalAiBackend {
   private native: any;
   
   constructor() {
+    const addonPaths = getNativeAddonPaths();
     let loadError: Error | null = null;
     
-    for (const modulePath of NATIVE_ADDON_PATHS) {
+    for (const modulePath of addonPaths) {
       try {
         // Dynamic import to avoid bundling issues
         this.native = require(modulePath);
@@ -218,7 +259,7 @@ class NodeBackend implements LocalAiBackend {
       }
     }
     
-    throw new Error(`@local-ai/node native addon not available. Tried paths: ${NATIVE_ADDON_PATHS.join(', ')}. Last error: ${loadError?.message}`);
+    throw new Error(`@local-ai/node native addon not available. Tried paths: ${addonPaths.join(', ')}. Last error: ${loadError?.message}`);
   }
   
   async generateText(config: TextGenConfig, prompt: string): Promise<TextGenResult> {
@@ -473,8 +514,9 @@ export function getBackend(): LocalAiBackend {
     return _backend;
   }
   
-  // Try Tauri first (browser/desktop app)
-  if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+  // Try Tauri first (browser/desktop app) - check for v2 (core.invoke) or v1 (invoke)
+  if (typeof window !== 'undefined' && (window as any).__TAURI__ && 
+      ((window as any).__TAURI__.core?.invoke || (window as any).__TAURI__.invoke)) {
     try {
       _backend = new TauriBackend();
       logGpuCapabilities(_backend);

@@ -137,20 +137,20 @@
             <h3 class="font-medium mb-3">Install New Model</h3>
             <div class="space-y-3">
               <div>
-                <label class="block text-xs text-zinc-400 mb-1">Model URL</label>
-                <input
-                  id="install-url"
-                  type="text"
-                  placeholder="https://huggingface.co/.../model.gguf"
-                  class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-                >
-              </div>
-              <div>
                 <label class="block text-xs text-zinc-400 mb-1">Model Name</label>
                 <input
                   id="install-name"
                   type="text"
-                  placeholder="llama-3.2-1b"
+                  placeholder="qwen2-0.5b or custom name"
+                  class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-zinc-400 mb-1">URL <span class="text-zinc-600">(optional for known models)</span></label>
+                <input
+                  id="install-url"
+                  type="text"
+                  placeholder="Leave empty for known models"
                   class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
                 >
               </div>
@@ -165,27 +165,38 @@
               </div>
             </div>
 
-            <!-- Recommended Models -->
+            <!-- Known Models (one-click install) -->
             <div class="mt-4 pt-4 border-t border-zinc-700">
-              <p class="text-xs text-zinc-400 mb-2">Recommended models:</p>
+              <p class="text-xs text-zinc-400 mb-2">Known models (one-click install):</p>
               <div class="space-y-2">
-                <button onclick="prefillModel('https://huggingface.co/mradermacher/Tiny-LLM-GGUF/resolve/main/Tiny-LLM.Q2_K.gguf', 'tiny-llm')" class="w-full text-left px-3 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-lg text-sm transition-colors border border-emerald-700">
+                <button onclick="installKnownModel('tiny-llm')" class="w-full text-left px-3 py-2 bg-emerald-900 hover:bg-emerald-800 rounded-lg text-sm transition-colors border border-emerald-700">
                   <span class="font-medium">Tiny LLM</span>
                   <span class="text-emerald-400 text-xs ml-2">~50MB • Tiniest</span>
                 </button>
-                <button onclick="prefillModel('https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf', 'qwen2.5-0.5b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                <button onclick="installKnownModel('qwen2.5-0.5b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
                   <span class="font-medium">Qwen 2.5 0.5B</span>
                   <span class="text-zinc-400 text-xs ml-2">~400MB • Fast</span>
                 </button>
-                <button onclick="prefillModel('https://huggingface.co/lmstudio-community/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf', 'llama-3.2-1b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                <button onclick="installKnownModel('llama-3.2-1b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
                   <span class="font-medium">Llama 3.2 1B</span>
                   <span class="text-zinc-400 text-xs ml-2">~1.3GB • Fast</span>
                 </button>
-                <button onclick="prefillModel('https://huggingface.co/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf', 'llama-3.2-3b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                <button onclick="installKnownModel('llama-3.2-3b')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
                   <span class="font-medium">Llama 3.2 3B</span>
                   <span class="text-zinc-400 text-xs ml-2">~2.5GB • Balanced</span>
                 </button>
+                <button onclick="installKnownModel('blip')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                  <span class="font-medium">BLIP (Captioning)</span>
+                  <span class="text-zinc-400 text-xs ml-2">~2GB • Image Captioning</span>
+                </button>
+                <button onclick="installKnownModel('sd-1.5')" class="w-full text-left px-3 py-2 bg-zinc-900 hover:bg-zinc-700 rounded-lg text-sm transition-colors">
+                  <span class="font-medium">Stable Diffusion 1.5</span>
+                  <span class="text-zinc-400 text-xs ml-2">~3.5GB • Image Generation</span>
+                </button>
               </div>
+              <p class="text-xs text-zinc-500 mt-2">
+                <a href="https://huggingface.co/models?pipeline_tag=text-generation&sort=trending&search=gguf" target="_blank" class="text-emerald-500 hover:underline">Browse more models on HuggingFace →</a>
+              </p>
             </div>
           </div>
 
@@ -256,7 +267,7 @@
         
         const select = document.getElementById('model-select');
         select.innerHTML = models.length > 0
-          ? models.map(m => `<option value="${m.path}">${m.name} (${formatSize(m.size)})</option>`).join('')
+          ? models.map(m => `<option value="${m.id}">${m.name} (${formatSize(m.size)})</option>`).join('')
           : '<option value="">No models installed</option>';
         
         if (settings.model) {
@@ -319,19 +330,20 @@
       closeSettings();
     }
 
-    // Prefill model installation form
-    function prefillModel(url, name) {
-      document.getElementById('install-url').value = url;
+    // Install a known model by name (one-click)
+    async function installKnownModel(name) {
       document.getElementById('install-name').value = name;
+      document.getElementById('install-url').value = '';
+      await installModel();
     }
 
     // Install model
     async function installModel() {
-      const url = document.getElementById('install-url').value.trim();
       const name = document.getElementById('install-name').value.trim();
+      const url = document.getElementById('install-url').value.trim();
       
-      if (!url || !name) {
-        alert('Please enter both URL and name');
+      if (!name) {
+        alert('Please enter a model name');
         return;
       }
       
@@ -341,26 +353,29 @@
       btn.disabled = true;
       btn.textContent = 'Installing...';
       progress.classList.remove('hidden');
+      document.getElementById('progress-text').textContent = 'Downloading...';
       
       try {
+        const body = { modelName: name };
+        if (url) body.modelUrl = url;
+        
         const response = await fetch('/api/install-model', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modelUrl: url, modelName: name })
+          body: JSON.stringify(body),
         });
         
         const data = await response.json();
+        const output = data.output || data;
         
-        if (data.success) {
+        if (output.success) {
           document.getElementById('progress-bar').style.width = '100%';
-          document.getElementById('progress-text').textContent = 'Complete!';
+          document.getElementById('progress-text').textContent = output.totalFiles
+            ? `Complete! (${output.totalFiles} files)`
+            : 'Complete!';
           
           // Reload models list
           await loadModels();
-          
-          // Select the new model
-          settings.model = data.path;
-          document.getElementById('model-select').value = data.path;
           
           setTimeout(() => {
             progress.classList.add('hidden');
@@ -369,7 +384,7 @@
             document.getElementById('install-name').value = '';
           }, 1500);
         } else {
-          throw new Error(data.error || 'Installation failed');
+          throw new Error(output.error || 'Installation failed');
         }
       } catch (error) {
         alert('Failed to install model: ' + error.message);

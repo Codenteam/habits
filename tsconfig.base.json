@@ -29,8 +29,6 @@
       "@ha-bits/workflow-canvas/*": ["packages/workflow-canvas/src/*"],
       "@ha-bits/habit-viewer": ["packages/habit-viewer/src/main.tsx"],
       "@ha-bits/habit-viewer/*": ["packages/habit-viewer/src/*"],
-      "@ha-bits/test-utils": ["packages/test-utils/src/index.ts"],
-      "@ha-bits/test-utils/*": ["packages/test-utils/src/*"],
       "@ha-bits/bindings": ["packages/bindings/src/index.ts"],
       "@ha-bits/bindings/*": ["packages/bindings/src/*"],
       "habits": ["packages/habits/app/src/index.ts"],

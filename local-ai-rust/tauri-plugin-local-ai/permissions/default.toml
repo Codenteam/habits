@@ -51,7 +51,10 @@ description = "Allow utility commands"
 commands.allow = [
   "get_version",
   "has_metal_support",
-  "has_cuda_support"
+  "has_cuda_support",
+  "list_models",
+  "ensure_models_dir",
+  "download_file"
 ]
 
 [default]

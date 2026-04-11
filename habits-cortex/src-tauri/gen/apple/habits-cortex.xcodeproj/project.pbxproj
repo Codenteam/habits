@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ACCEL8E110000FW0BLDFILE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ACCEL8E110000FW0FILEREF /* Accelerate.framework */; };
 		0C203817D8171A0A549052A9 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FEA683A7AFE17737A2E7ED4 /* libapp.a */; };
 		10EA29D56A07F7B3656400C2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3A51BD367D6A92AA023B019 /* UIKit.framework */; };
 		638659CC22CFDBF281DB1233 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 84CE3BAFFAA883C5006E0A86 /* assets */; };
@@ -22,6 +23,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		ACCEL8E110000FW0FILEREF /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		066D3F7E7582A45A40081B76 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0C96191871FF79022FBFBB05 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		0D26664CF9F3C32B84A631F6 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -36,6 +38,7 @@
 		800053FD82E6AFF53A4B507F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		84CE3BAFFAA883C5006E0A86 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		A8FC6E15E9EFF35C15736EC4 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		B30F7452BDD9BA9F69DA3F4B /* fs_test_runner.rs */ = {isa = PBXFileReference; path = fs_test_runner.rs; sourceTree = "<group>"; };
 		C1395CD0ED14FB0953419D6C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		D085D0AEA268DAA5CDC62167 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		E23D509BE02A69732768F807 /* habits-cortex_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "habits-cortex_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -49,6 +52,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C203817D8171A0A549052A9 /* libapp.a in Frameworks */,
+				ACCEL8E110000FW0BLDFILE /* Accelerate.framework in Frameworks */,
 				E2463ABCAE70DB094F03809C /* CoreGraphics.framework in Frameworks */,
 				A04D7E8B149B2C4DF7E4DC94 /* Metal.framework in Frameworks */,
 				79D696E6112CF9FFC2239FA6 /* MetalKit.framework in Frameworks */,
@@ -62,6 +66,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0C1ACE1AB766B088C2BA29E9 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
 		1E46180FAA777C938420251E /* bindings */ = {
 			isa = PBXGroup;
 			children = (
@@ -99,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				44E5732F969683C0F4D65A4E /* automation.rs */,
+				B30F7452BDD9BA9F69DA3F4B /* fs_test_runner.rs */,
 				A8FC6E15E9EFF35C15736EC4 /* lib.rs */,
 				0C96191871FF79022FBFBB05 /* main.rs */,
 			);
@@ -112,6 +124,7 @@
 				84CE3BAFFAA883C5006E0A86 /* assets */,
 				066D3F7E7582A45A40081B76 /* Assets.xcassets */,
 				204360A6433422F2CCB6600A /* LaunchScreen.storyboard */,
+				0C1ACE1AB766B088C2BA29E9 /* Externals */,
 				C3E7FA4040DA6ECBE974C881 /* habits-cortex_iOS */,
 				83F9161E348480F6422D70AE /* Sources */,
 				8F2648F34A3B660BFCA2B962 /* src */,
@@ -134,6 +147,7 @@
 			children = (
 				7B85928E07234C124F9A91FA /* CoreGraphics.framework */,
 				0FEA683A7AFE17737A2E7ED4 /* libapp.a */,
+				ACCEL8E110000FW0FILEREF /* Accelerate.framework */,
 				C1395CD0ED14FB0953419D6C /* Metal.framework */,
 				0D26664CF9F3C32B84A631F6 /* MetalKit.framework */,
 				56270C6B292D67653FDC0B24 /* QuartzCore.framework */,
@@ -176,6 +190,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					D71789D799BBC09CDB71628E = {
+						DevelopmentTeam = S54SCFZ347;
+					};
 				};
 			};
 			buildConfigurationList = CF1696421B92F64C50A793E5 /* Build configuration list for PBXProject "habits-cortex" */;
@@ -230,7 +247,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"$HOME/.nvm/versions/node/v24.14.0/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\"\nnpm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+			shellScript = "npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -256,6 +273,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "habits-cortex_iOS/habits-cortex_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "S54SCFZ347";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -269,12 +287,11 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.codenteam-oss.habits.debug;
-				PRODUCT_NAME = "Cortex Debug";
+				PRODUCT_BUNDLE_IDENTIFIER = com.codenteam-oss.habits;
+				PRODUCT_NAME = "Cortex";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
-				DEVELOPMENT_TEAM = "S54SCFZ347";
 			};
 			name = release;
 		};
@@ -288,6 +305,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "habits-cortex_iOS/habits-cortex_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "S54SCFZ347";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -301,12 +319,11 @@
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.codenteam-oss.habits.debug;
-				PRODUCT_NAME = "Cortex Debug";
+				PRODUCT_BUNDLE_IDENTIFIER = com.codenteam-oss.habits;
+				PRODUCT_NAME = "Cortex";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
-				DEVELOPMENT_TEAM = "S54SCFZ347";
 			};
 			name = debug;
 		};
@@ -355,7 +372,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -417,7 +434,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

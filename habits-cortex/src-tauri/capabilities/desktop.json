@@ -1,12 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "desktop",
-  "description": "Desktop-only capabilities (candle AI plugin)",
+  "description": "Desktop-only capabilities (local-ai plugin)",
   "platforms": ["linux", "macOS", "windows"],
   "windows": [
     "main"
   ],
   "permissions": [
-    "candle:default"
+    "local-ai:allow-generate-text",
+    "local-ai:allow-image-caption",
+    "local-ai:allow-image-gen",
+    "local-ai:allow-transcribe",
+    "local-ai:allow-text-to-voice",
+    "local-ai:allow-utilities"
   ]
 }

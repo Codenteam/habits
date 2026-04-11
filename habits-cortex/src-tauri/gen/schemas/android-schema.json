@@ -7053,6 +7053,12 @@
           "markdownDescription": "Denies the set_volume command without any pre-configured scope."
         },
         {
+          "description": "Default permissions for the plugin",
+          "type": "string",
+          "const": "webdriver:default",
+          "markdownDescription": "Default permissions for the plugin"
+        },
+        {
           "description": "Default permissions for the Wi-Fi plugin\n#### This default permission set includes:\n\n- `allow-get-current-network`\n- `allow-is-connected`\n- `allow-list-saved-networks`\n- `allow-check-permissions`\n- `allow-request-permissions`",
           "type": "string",
           "const": "wifi:default",

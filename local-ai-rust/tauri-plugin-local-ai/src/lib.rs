@@ -47,10 +47,26 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::get_version,
             commands::has_metal_support,
             commands::has_cuda_support,
+            // Model management
+            commands::list_models,
+            commands::ensure_models_dir,
+            commands::download_file,
         ])
         .setup(|app, _api| {
-            // Initialize the state manager
-            app.manage(LocalAiState::default());
+            // Get the app data directory from Tauri's path resolver
+            let models_dir = app.path()
+                .app_data_dir()
+                .unwrap_or_else(|_| {
+                    dirs::data_dir()
+                        .unwrap_or_else(|| std::path::PathBuf::from("."))
+                        .join("com.codenteam-oss.habits")
+                })
+                .join("models");
+            
+            log::info!("Local AI plugin initialized with models dir: {:?}", models_dir);
+            
+            // Initialize the state manager with the correct models directory
+            app.manage(LocalAiState::new(models_dir));
             Ok(())
         })
         .build()

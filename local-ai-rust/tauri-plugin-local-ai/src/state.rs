@@ -9,6 +9,7 @@ use local_ai_core::{
     transcribe::Transcriber,
 };
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -16,8 +17,9 @@ use tokio::sync::RwLock;
 pub type InstanceId = String;
 
 /// State container for all AI model instances
-#[derive(Default)]
 pub struct LocalAiState {
+    /// Path to the models directory, set during plugin initialization
+    pub models_dir: PathBuf,
     text_generators: RwLock<HashMap<InstanceId, Arc<RwLock<TextGenerator>>>>,
     image_captioners: RwLock<HashMap<InstanceId, Arc<RwLock<ImageCaptioner>>>>,
     image_generators: RwLock<HashMap<InstanceId, Arc<ImageGenerator>>>,
@@ -25,7 +27,31 @@ pub struct LocalAiState {
     voice_synthesizers: RwLock<HashMap<InstanceId, Arc<RwLock<VoiceSynthesizer>>>>,
 }
 
+impl Default for LocalAiState {
+    fn default() -> Self {
+        // Fallback to hardcoded path if not initialized properly
+        Self::new(
+            dirs::data_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join("com.codenteam-oss.habits")
+                .join("models")
+        )
+    }
+}
+
 impl LocalAiState {
+    /// Create a new state with the given models directory
+    pub fn new(models_dir: PathBuf) -> Self {
+        Self {
+            models_dir,
+            text_generators: RwLock::new(HashMap::new()),
+            image_captioners: RwLock::new(HashMap::new()),
+            image_generators: RwLock::new(HashMap::new()),
+            transcribers: RwLock::new(HashMap::new()),
+            voice_synthesizers: RwLock::new(HashMap::new()),
+        }
+    }
+
     /// Generate a unique instance ID
     pub fn generate_id() -> InstanceId {
         uuid::Uuid::new_v4().to_string()

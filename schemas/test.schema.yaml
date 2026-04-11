@@ -1,5 +1,5 @@
 # Test Schema for bits testing - defines the structure of .test.yaml files
-# Used by @ha-bits/test-utils to run automated bit tests
+# Used by @ha-bits/testing to run automated bit tests
 $schema: http://json-schema.org/draft-07/schema#
 
 definitions:

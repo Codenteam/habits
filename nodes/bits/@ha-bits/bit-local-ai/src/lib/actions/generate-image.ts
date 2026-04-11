@@ -12,6 +12,7 @@ import {
   StableDiffusionModels, 
   ImageResolutions,
   getModelPath, 
+  getModelsBasePath,
   parseResolution,
   DeviceType 
 } from '../common/common';
@@ -90,14 +91,9 @@ export const generateImage = createAction({
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
     const backend = getBackend();
     
-    // Use defaults if auth not configured
-    const modelsBasePath = authValue.modelsBasePath || process.env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
-    const device = authValue.device || (process.env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
-    
-    // Resolve home directory
-    const resolvedBasePath = modelsBasePath.startsWith('~') 
-      ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
-      : modelsBasePath;
+    // Get models base path (handles Tauri app data directory automatically)
+    const resolvedBasePath = await getModelsBasePath(authValue);
+    const device = authValue.device || ((typeof process !== 'undefined' ? process.env.LOCAL_AI_DEVICE : undefined) as DeviceType) || DeviceType.Auto;
     
     // Determine model paths
     let basePath: string;
@@ -107,21 +103,21 @@ export const generateImage = createAction({
       }
       basePath = propsValue.customModelPath;
     } else {
-      basePath = getModelPath(resolvedBasePath, 'image-gen', propsValue.model);
+      basePath = getModelPath(resolvedBasePath, 'diffusion', propsValue.model);
     }
     
-    const unetPath = path.join(basePath, 'unet.safetensors');
-    const vaePath = path.join(basePath, 'vae.safetensors');
-    const clipPath = path.join(basePath, 'clip.safetensors');
-    const tokenizerPath = path.join(basePath, 'tokenizer.json');
+    const unetPath = `${basePath}/unet.safetensors`;
+    const vaePath = `${basePath}/vae.safetensors`;
+    const clipPath = `${basePath}/clip.safetensors`;
+    const tokenizerPath = `${basePath}/tokenizer.json`;
     
     // Parse resolution
     const { width, height } = parseResolution(propsValue.resolution);
     
     // Generate temporary output path
     const outputFileName = propsValue.outputFileName || 'generated_image';
-    const tmpDir = os.tmpdir();
-    const outputPath = path.join(tmpDir, `${outputFileName}_${Date.now()}.png`);
+    const tmpDir = typeof os !== 'undefined' && os.tmpdir ? os.tmpdir() : '/tmp';
+    const outputPath = `${tmpDir}/${outputFileName}_${Date.now()}.png`;
     
     // Configure image generation
     // Check if seed is a valid number (not an unresolved template)

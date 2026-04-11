@@ -145,6 +145,11 @@ async function getAppDataDir() {
   return tauri.path.appDataDir();
 }
 
+async function getHomeDir() {
+  const tauri = await waitForTauri();
+  return tauri.path.homeDir();
+}
+
 // ============================================================================
 // Keyring (Secure Storage via System Keychain)
 // ============================================================================
@@ -563,6 +568,14 @@ async function runHabit(habitId) {
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
     iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals';
     contentContainer.appendChild(iframe);
+    
+    // Bridge Tauri API to iframe - required for native plugin access from workflows
+    // The iframe has allow-same-origin so we can access its contentWindow
+    if (window.__TAURI__) {
+      iframe.contentWindow.__TAURI__ = window.__TAURI__;
+      iframe.contentWindow.__TAURI_INTERNALS__ = window.__TAURI_INTERNALS__;
+      console.log('[Habits] Bridged __TAURI__ API to iframe');
+    }
     
     // Write the HTML content to the iframe
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -1077,6 +1090,16 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
     const secrets = {};
     for (const key of secretsIndex) {
       secrets[key] = await getSecretFromKeyring(key);
+    }
+    
+    // Inject LOCAL_AI_MODELS_PATH pointing to app data models directory
+    try {
+      const appDataDir = await getAppDataDir();
+      const tauri = await waitForTauri();
+      secrets.LOCAL_AI_MODELS_PATH = await tauri.path.join(appDataDir, 'models');
+      console.log('[Form] LOCAL_AI_MODELS_PATH:', secrets.LOCAL_AI_MODELS_PATH);
+    } catch (e) {
+      console.warn('[Form] Could not set models path:', e);
     }
 
     // Execute workflow
@@ -2123,357 +2146,10 @@ async function init() {
   });
   
   console.log('Habits ready');
-  
-  // Check for CLI arguments (for testing/automation)
-  await checkCliArgs();
-  
-  // Check for file-based auto-test (for iOS where CLI args don't work)
-  await checkAutoTestFile();
 }
 
-/**
- * Check for CLI arguments passed from Rust backend
- * Supports: --habit <path> --test --workflow <name> --input <json>
- */
-async function checkCliArgs() {
-  try {
-    const tauri = await waitForTauri();
-    if (!tauri || !tauri.core || !tauri.core.invoke) {
-      return;
-    }
-    
-    const cliArgs = await tauri.core.invoke('get_cli_args');
-    if (!cliArgs) {
-      console.log('[CLI] No CLI arguments provided');
-      return;
-    }
-    
-    console.log('[CLI] Arguments:', JSON.stringify(cliArgs));
-    
-    // If --habit provided, load the habit file
-    if (cliArgs.habit) {
-      console.log('[CLI] Loading habit file:', cliArgs.habit);
-      const imported = await importHabitFile(cliArgs.habit);
-      
-      if (!imported) {
-        if (cliArgs.test) {
-          await tauri.core.invoke('test_complete', { 
-            result: JSON.stringify({ success: false, error: 'Failed to import habit file' }) 
-          });
-        }
-        return;
-      }
-      
-      // If in test mode with workflow specified, execute it
-      if (cliArgs.test && cliArgs.workflow) {
-        console.log('[CLI] Test mode: executing workflow', cliArgs.workflow);
-        
-        // Find the habit we just imported (most recent)
-        const habit = state.habits[state.habits.length - 1];
-        if (!habit) {
-          await tauri.core.invoke('test_complete', { 
-            result: JSON.stringify({ success: false, error: 'No habit found after import' }) 
-          });
-          return;
-        }
-        
-        // Parse input
-        let input = {};
-        if (cliArgs.input) {
-          try {
-            input = JSON.parse(cliArgs.input);
-          } catch (e) {
-            input = cliArgs.input; // Use as string if not valid JSON
-          }
-        }
-        
-        // Execute workflow in test mode
-        await executeWorkflowForTest(habit, cliArgs.workflow, input);
-      } else if (!cliArgs.test) {
-        // Not in test mode, just run the habit UI
-        const habit = state.habits[state.habits.length - 1];
-        if (habit) {
-          runHabit(habit.id);
-        }
-      }
-    }
-  } catch (err) {
-    console.error('[CLI] Error checking CLI args:', err);
-  }
-}
 
-/**
- * Check for file-based auto-test configuration
- * On iOS, CLI args aren't passed properly, so we check for a special config file
- * File: Documents/.autotest.json (or <appData>/autotest.json)
- * Format: { "habit": "/path/to/file.habit", "workflow": "workflow-name", "input": {...} }
- */
-async function checkAutoTestFile() {
-  try {
-    const tauri = await waitForTauri();
-    if (!tauri || !tauri.path || !tauri.fs) {
-      console.log('[AutoTest] Tauri not available');
-      return;
-    }
-    
-    // Helper to log to file (stdout doesn't work on iOS)
-    const debugLog = async (msg) => {
-      console.log(msg);
-      try {
-        await tauri.core.invoke('debug_log', { message: msg });
-      } catch (e) {
-        // Ignore invoke errors
-      }
-      // Also write to a debug log file
-      try {
-        const appDir = await tauri.path.appDataDir();
-        const logPath = await tauri.path.join(appDir, 'autotest-debug.log');
-        const timestamp = new Date().toISOString();
-        const logLine = `${timestamp} ${msg}\n`;
-        // Append to file
-        let existingContent = '';
-        try {
-          existingContent = await tauri.fs.readTextFile(logPath);
-        } catch (e) { /* file might not exist */ }
-        await tauri.fs.writeTextFile(logPath, existingContent + logLine);
-      } catch (e) {
-        console.warn('Could not write debug log:', e);
-      }
-    };
-    
-    // Check multiple possible locations for autotest.json
-    const possiblePaths = [];
-    
-    // iOS: Documents directory
-    try {
-      const docDir = await tauri.path.documentDir();
-      await debugLog('[AutoTest] documentDir: ' + docDir);
-      possiblePaths.push(await tauri.path.join(docDir, '.autotest.json'));
-      possiblePaths.push(await tauri.path.join(docDir, 'autotest.json'));
-    } catch (e) { 
-      await debugLog('[AutoTest] documentDir error: ' + e);
-    }
-    
-    // App data directory (cross-platform)
-    try {
-      const appDir = await tauri.path.appDataDir();
-      await debugLog('[AutoTest] appDataDir: ' + appDir);
-      possiblePaths.push(await tauri.path.join(appDir, 'autotest.json'));
-    } catch (e) { 
-      await debugLog('[AutoTest] appDataDir error: ' + e);
-    }
-    
-    await debugLog('[AutoTest] Checking paths: ' + JSON.stringify(possiblePaths));
-    
-    let configPath = null;
-    let config = null;
-    
-    for (const path of possiblePaths) {
-      try {
-        const fileExists = await tauri.fs.exists(path);
-        await debugLog('[AutoTest] Checking ' + path + ' exists: ' + fileExists);
-        if (fileExists) {
-          const content = await tauri.fs.readTextFile(path);
-          config = JSON.parse(content);
-          configPath = path;
-          await debugLog('[AutoTest] Found config at: ' + path);
-          break;
-        }
-      } catch (e) {
-        await debugLog('[AutoTest] Error checking ' + path + ': ' + e);
-      }
-    }
-    
-    if (!config || !configPath) {
-      await debugLog('[AutoTest] No autotest.json found');
-      return;
-    }
-    
-    await debugLog('[AutoTest] Config: ' + JSON.stringify(config));
-    
-    // Delete the config file first to prevent re-running
-    try {
-      await tauri.fs.remove(configPath);
-      console.log('[AutoTest] Removed config file');
-    } catch (e) {
-      console.warn('[AutoTest] Could not remove config file:', e);
-    }
-    
-    // Import the habit file
-    if (!config.habit) {
-      const err = JSON.stringify({ success: false, error: 'No habit path in autotest config' });
-      await writeTestResult(err);
-      await tauri.core.invoke('test_complete', { result: err });
-      return;
-    }
-    
-    // If habit path is relative, resolve it relative to documents dir
-    let habitPath = config.habit;
-    if (!habitPath.startsWith('/')) {
-      try {
-        const docDir = await tauri.path.documentDir();
-        habitPath = await tauri.path.join(docDir, habitPath);
-        console.log('[AutoTest] Resolved habit path:', habitPath);
-      } catch (e) {
-        console.warn('[AutoTest] Could not resolve relative path:', e);
-      }
-    }
-    
-    console.log('[AutoTest] Importing habit:', habitPath);
-    const imported = await importHabitFile(habitPath);
-    
-    if (!imported) {
-      const err = JSON.stringify({ success: false, error: 'Failed to import habit file' });
-      await writeTestResult(err);
-      await tauri.core.invoke('test_complete', { result: err });
-      return;
-    }
-    
-    // Get the imported habit
-    const habit = state.habits[state.habits.length - 1];
-    if (!habit) {
-      const err = JSON.stringify({ success: false, error: 'No habit found after import' });
-      await writeTestResult(err);
-      await tauri.core.invoke('test_complete', { result: err });
-      return;
-    }
-    
-    // Parse input
-    let input = config.input || {};
-    if (typeof input === 'string') {
-      try {
-        input = JSON.parse(input);
-      } catch (e) {
-        // Keep as string
-      }
-    }
-    
-    // Execute the workflow
-    const workflowName = config.workflow || 'default';
-    console.log('[AutoTest] Executing workflow:', workflowName);
-    await executeWorkflowForTest(habit, workflowName, input);
-    
-  } catch (err) {
-    console.error('[AutoTest] Error:', err);
-    const tauri = await waitForTauri();
-    const errorResult = JSON.stringify({ success: false, error: err.message || String(err) });
-    await writeTestResult(errorResult);
-    if (tauri && tauri.core && tauri.core.invoke) {
-      await tauri.core.invoke('test_complete', { result: errorResult });
-    }
-  }
-}
 
-/**
- * Write test result to file (for script-based testing on iOS)
- */
-async function writeTestResult(result) {
-  console.log('[Test] Writing result...');
-  const tauri = await waitForTauri();
-  if (!tauri || !tauri.path || !tauri.fs) {
-    console.error('[Test] Tauri fs/path not available');
-    return;
-  }
-  
-  try {
-    // Get the document dir (where autotest.json was)
-    const docDir = await tauri.path.documentDir();
-    console.log('[Test] documentDir:', docDir);
-    
-    // Just use simple path concatenation like the manifest write
-    const resultPath = docDir + 'test-result.json';
-    console.log('[Test] Writing to:', resultPath);
-    await tauri.fs.writeTextFile(resultPath, result);
-    console.log('[Test] Result written successfully');
-  } catch (e) {
-    console.error('[Test] Write failed:', e && e.message ? e.message : String(e));
-  }
-}
-
-/**
- * Execute a workflow in test mode and output result
- */
-async function executeWorkflowForTest(habit, workflowName, input) {
-  try {
-    const tauri = await waitForTauri();
-    
-    // Load the bundle JS
-    let bundleJs = habit.cachedBundleJs;
-    if (!bundleJs && habit.filePath) {
-      const extraction = await extractHabitFile(habit.filePath);
-      if (!extraction.valid) {
-        await tauri.core.invoke('test_complete', { 
-          result: JSON.stringify({ success: false, error: 'Failed to extract habit file' }) 
-        });
-        return;
-      }
-      bundleJs = extraction.bundleJs;
-    }
-    
-    // Create a minimal execution context
-    // The bundle exposes HabitsBundle global with executeWorkflow
-    if (!bundleJs) {
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'Bundle JS is null or undefined' }) 
-      });
-      return;
-    }
-    
-    // Execute bundle via eval (script injection can have timing issues)
-    try {
-      eval(bundleJs);
-    } catch (evalErr) {
-      console.error('[CLI] Bundle eval error:', evalErr);
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'Bundle eval error: ' + (evalErr.message || String(evalErr)) }) 
-      });
-      return;
-    }
-    
-    // Wait for HabitsBundle to be defined (should be immediate after eval)
-    let attempts = 0;
-    while (!window.HabitsBundle && attempts < 30) {
-      await new Promise(r => setTimeout(r, 100));
-      attempts++;
-    }
-    
-    if (!window.HabitsBundle) {
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'HabitsBundle not loaded after ' + attempts + ' attempts' }) 
-      });
-      return;
-    }
-    
-    // Get secrets for the workflow
-    const secretsIndex = await getSecretsIndex();
-    const secrets = {};
-    for (const key of secretsIndex) {
-      secrets[key] = await getSecretFromKeyring(key);
-    }
-    
-    console.log('[CLI] Executing workflow:', workflowName, 'with input:', JSON.stringify(input));
-    
-    // Execute the workflow
-    const result = await window.HabitsBundle.executeWorkflow(workflowName, input, { env: secrets });
-    
-    const successResult = JSON.stringify({ success: true, result });
-    console.log('[CLI] Workflow done, output:', result.output?.greeting || 'no output');
-    
-    // Try writing sync-style with .then instead of await
-    const resultPath = (state.appDataPath || '/tmp') + '/test-result.json';
-    console.log('[CLI] Writing to:', resultPath);
-    tauri.fs.writeTextFile(resultPath, successResult)
-      .then(() => console.log('[CLI] File written'))
-      .catch(e => console.log('[CLI] Write error:', e));
-    
-  } catch (err) {
-    console.error('[CLI] Error executing workflow:', err);
-    const tauri = await waitForTauri();
-    const errorResult = JSON.stringify({ success: false, error: err.message || String(err) });
-    await writeTestResult(errorResult);
-    await tauri.core.invoke('test_complete', { result: errorResult });
-  }
-}
 
 // Start when DOM is ready
 if (document.readyState === 'loading') {

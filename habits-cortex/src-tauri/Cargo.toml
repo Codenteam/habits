@@ -43,13 +43,22 @@ tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }
 tauri-plugin-matter = { path = "../tauri-plugin-matter" }
 tauri-plugin-sms = { path = "../tauri-plugin-sms" }
 
-# Desktop-only dependencies (Candle doesn't support iOS/Android yet)
-[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-tauri-plugin-candle = { path = "../tauri-plugin-candle" }
+# Desktop + iOS dependencies (local-ai requires ARMv8.2+ fullfp16, available on Apple Silicon & iOS devices, not Android emulator)
+[target.'cfg(not(target_os = "android"))'.dependencies]
+tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
 
 # xcap only for desktop debug builds
 [target.'cfg(all(debug_assertions, not(any(target_os = "ios", target_os = "android"))))'.dependencies]
 xcap = "0.9"
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
+
+# webdriver for iOS debug builds
+[target.'cfg(all(debug_assertions, target_os = "ios"))'.dependencies]
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
+
+# webdriver for Android debug builds
+[target.'cfg(all(debug_assertions, target_os = "android"))'.dependencies]
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

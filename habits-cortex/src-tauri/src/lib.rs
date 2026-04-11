@@ -100,9 +100,13 @@ pub fn run() {
         .plugin(tauri_plugin_email::init())
         .plugin(tauri_plugin_shell::init());
     
-    // Add candle plugin only on desktop (not iOS/Android)
-    #[cfg(not(any(target_os = "ios", target_os = "android")))]
-    let builder = builder.plugin(tauri_plugin_candle::init());
+    // Add local-ai plugin on desktop + iOS (not Android - requires ARMv8.2+ fullfp16)
+    #[cfg(not(target_os = "android"))]
+    let builder = builder.plugin(tauri_plugin_local_ai::init());
+    
+    // Add webdriver plugin for all debug builds (desktop, iOS, Android)
+    #[cfg(debug_assertions)]
+    let builder = builder.plugin(tauri_plugin_webdriver::init());
     
     // Add mobile-only plugins (iOS/Android)
     #[cfg(any(target_os = "ios", target_os = "android"))]

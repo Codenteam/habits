@@ -1,0 +1,102 @@
+id: smart-home-create-routine
+name: Create Routine
+description: Create a smart home automation routine
+
+input:
+  - id: name
+    type: string
+    required: true
+    description: Routine name
+  - id: description
+    type: string
+    required: false
+    description: Natural language description of routine
+  - id: trigger
+    type: string
+    required: true
+    description: What triggers the routine (time, command, sensor, etc.)
+  - id: devices
+    type: array
+    required: false
+    description: Available devices
+
+nodes:
+  # Generate routine from description
+  - id: generate-routine
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.4
+        maxTokens: 800
+        prompt: |
+          Create a smart home automation routine.
+          
+          Name: {{habits.input.name}}
+          Description: {{habits.input.description}}
+          Trigger: {{habits.input.trigger}}
+          Available devices: {{habits.input.devices}}
+          
+          Return JSON:
+          {
+            "name": "Routine name",
+            "trigger": {
+              "type": "time|voice|sensor|device_state|location",
+              "conditions": {
+                "time": "7:00 AM",
+                "days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+                "phrase": "Good morning",
+                "sensorType": "motion",
+                "location": "home"
+              }
+            },
+            "actions": [
+              {
+                "order": 1,
+                "device": "device name",
+                "deviceType": "lights",
+                "action": "turn_on",
+                "parameters": {"brightness": 75, "color_temp": "warm"},
+                "delay": 0
+              }
+            ],
+            "voiceSummary": "Natural language summary for voice confirmation",
+            "estimatedDuration": "X minutes",
+            "energyImpact": "low|medium|high"
+          }
+
+  # Save routine
+  - id: save-routine
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "smart_home_routines"
+        document:
+          name: "{{habits.input.name}}"
+          description: "{{habits.input.description}}"
+          trigger: "{{habits.input.trigger}}"
+          routine: "{{generate-routine}}"
+          enabled: true
+          createdAt: "{{habits.now}}"
+
+edges:
+  - source: generate-routine
+    target: save-routine
+
+output:
+  routineId: "{{save-routine.id}}"
+  routine: "{{generate-routine}}"

@@ -3,9 +3,12 @@
   "identifier": "mobile",
   "description": "Mobile-only capabilities (iOS/Android)",
   "platforms": ["iOS", "android"],
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
+  "webviews": ["main"],
+  "local": true,
+  "remote": {
+    "urls": ["tauri://localhost/*", "tauri://*"]
+  },
   "permissions": [
     "geolocation:default",
     "geolocation:allow-check-permissions",

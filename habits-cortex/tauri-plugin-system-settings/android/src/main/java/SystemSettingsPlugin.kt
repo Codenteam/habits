@@ -301,7 +301,7 @@ class SystemSettingsPlugin(private val activity: Activity) : Plugin(activity) {
 
             val result = JSObject()
             result.put("enabled", enabled)
-            result.put("hasPermission", hasPermission)
+            result.put("has_permission", hasPermission)
             invoke.resolve(result)
         } catch (e: Exception) {
             invoke.reject("Failed to get DND state: ${e.message}")

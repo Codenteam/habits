@@ -4,7 +4,7 @@ Habits provides a lightweight testing framework for bits that focuses on **Input
 
 ## Overview
 
-The `@ha-bits/test-utils` package provides:
+The `@ha-bits/testing` package provides:
 - **YAML-based tests** (`.test.yaml`) - Simple, declarative test definitions
 - **TypeScript tests** (`.test.ts`) - For complex mocking scenarios
 - **Fetch-level mocking** - HTTP request interception

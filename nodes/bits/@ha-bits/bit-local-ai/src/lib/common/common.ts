@@ -11,18 +11,18 @@ import { BitAuth, Property } from '@ha-bits/cortex-core';
  * Device type for inference
  */
 export enum DeviceType {
-  Cpu = 'Cpu',
-  Metal = 'Metal',
-  Cuda = 'Cuda',
-  Auto = 'Auto'
+  Cpu = 'cpu',
+  Metal = 'metal',
+  Cuda = 'cuda',
+  Auto = 'auto'
 }
 
 /**
  * Whisper task type
  */
 export enum WhisperTask {
-  Transcribe = 'Transcribe',
-  Translate = 'Translate'
+  Transcribe = 'transcribe',
+  Translate = 'translate'
 }
 
 /**
@@ -188,11 +188,120 @@ export const AudioFormats = [
 ];
 
 /**
+ * Known model registry entry
+ */
+export interface ModelRegistryEntry {
+  /** Display name */
+  label: string;
+  /** Model category/type */
+  type: 'text-gen' | 'caption' | 'diffusion' | 'whisper' | 'tts';
+  /** Approximate size string */
+  size: string;
+  /** Files to download: key = local filename, value = download URL */
+  files: Record<string, string>;
+}
+
+/**
+ * Registry of known models with their download URLs and required files.
+ * When install-model receives a known name, it downloads all files automatically.
+ */
+export const ModelRegistry: Record<string, ModelRegistryEntry> = {
+  'tiny-llm': {
+    label: 'Tiny LLM',
+    type: 'text-gen',
+    size: '~50MB',
+    files: {
+      'model.gguf': 'https://huggingface.co/mradermacher/Tiny-LLM-GGUF/resolve/main/Tiny-LLM.Q2_K.gguf',
+    },
+  },
+  'qwen2-0.5b': {
+    label: 'Qwen2 0.5B',
+    type: 'text-gen',
+    size: '~400MB',
+    files: {
+      'model.gguf': 'https://huggingface.co/Qwen/Qwen2-0.5B-Instruct-GGUF/resolve/main/qwen2-0_5b-instruct-q4_0.gguf',
+      'tokenizer.json': 'https://huggingface.co/Qwen/Qwen2-0.5B-Instruct/resolve/main/tokenizer.json',
+    },
+  },
+  'qwen2.5-0.5b': {
+    label: 'Qwen 2.5 0.5B',
+    type: 'text-gen',
+    size: '~400MB',
+    files: {
+      'model.gguf': 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf',
+      'tokenizer.json': 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/resolve/main/tokenizer.json',
+    },
+  },
+  'llama-3.2-1b': {
+    label: 'Llama 3.2 1B',
+    type: 'text-gen',
+    size: '~1.3GB',
+    files: {
+      'model.gguf': 'https://huggingface.co/lmstudio-community/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+    },
+  },
+  'llama-3.2-3b': {
+    label: 'Llama 3.2 3B',
+    type: 'text-gen',
+    size: '~2.5GB',
+    files: {
+      'model.gguf': 'https://huggingface.co/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf',
+    },
+  },
+  'blip': {
+    label: 'BLIP (Image Captioning)',
+    type: 'caption',
+    size: '~2GB',
+    files: {
+      'model.gguf': 'https://huggingface.co/lmz/candle-blip/resolve/main/blip-image-captioning-large-q4k.gguf',
+      'tokenizer.json': 'https://huggingface.co/Salesforce/blip-image-captioning-large/resolve/main/tokenizer.json',
+    },
+  },
+  'sd-1.5': {
+    label: 'Stable Diffusion 1.5',
+    type: 'diffusion',
+    size: '~3.5GB',
+    files: {
+      'unet.safetensors': 'https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors',
+      'vae.safetensors': 'https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/vae/diffusion_pytorch_model.fp16.safetensors',
+      'clip.safetensors': 'https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/text_encoder/model.fp16.safetensors',
+      'tokenizer.json': 'https://huggingface.co/openai/clip-vit-base-patch32/resolve/main/tokenizer.json',
+    },
+  },
+};
+
+/**
  * Helper to construct model paths from base path
  */
 export function getModelPath(basePath: string, modelName: string, ...subPaths: string[]): string {
   const parts = [basePath, modelName, ...subPaths].filter(Boolean);
   return parts.join('/').replace(/\/+/g, '/');
+}
+
+/**
+ * Get the models base path, handling Tauri environment automatically.
+ * In Tauri, queries the local-ai plugin for the correct app data directory.
+ * In Node.js, uses LOCAL_AI_MODELS_PATH env var or ~/.habits/models default.
+ */
+export async function getModelsBasePath(authValue?: Partial<LocalAiAuthValue>): Promise<string> {
+  // Check Tauri environment first
+  const tauri = typeof window !== 'undefined' ? (window as any).__TAURI__ : null;
+  if (tauri?.core?.invoke) {
+    try {
+      const result = await tauri.core.invoke('plugin:local-ai|list_models');
+      if (result?.modelsDir) {
+        return result.modelsDir;
+      }
+    } catch (e) {
+      // Fall through to default path resolution
+    }
+  }
+  
+  // Node.js / server-side path resolution
+  const env = typeof process !== 'undefined' ? process.env : {} as Record<string, string | undefined>;
+  const homeDir = env.HOME || '/tmp';
+  const basePath = authValue?.modelsBasePath || env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
+  return basePath.startsWith('~') ? basePath.replace('~', homeDir) : basePath;
 }
 
 /**

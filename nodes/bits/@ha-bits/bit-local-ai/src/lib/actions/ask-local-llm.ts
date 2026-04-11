@@ -6,7 +6,7 @@
  */
 
 import { createAction, Property, StoreScope } from '@ha-bits/cortex-core';
-import { localAiAuth, LocalAiAuthValue, TextGenModels, getModelPath, DeviceType } from '../common/common';
+import { localAiAuth, LocalAiAuthValue, TextGenModels, getModelPath, getModelsBasePath, DeviceType } from '../common/common';
 import { TextGenConfig } from '../common/models';
 import { getBackend } from '../stubs';
 
@@ -74,14 +74,12 @@ export const askLocalLlm = createAction({
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
     const backend = getBackend();
     
-    // Use defaults if auth not configured
-    const modelsBasePath = authValue.modelsBasePath || process.env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
-    const device = authValue.device || (process.env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
+    // Get environment variables safely (browser-compatible)
+    const env = typeof process !== 'undefined' ? process.env : {};
     
-    // Resolve home directory
-    const resolvedBasePath = modelsBasePath.startsWith('~') 
-      ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
-      : modelsBasePath;
+    // Get models base path (handles Tauri app data directory automatically)
+    const resolvedBasePath = await getModelsBasePath(authValue);
+    const device = authValue.device || (env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
     
     // Determine model paths
     let modelPath: string;
@@ -93,7 +91,36 @@ export const askLocalLlm = createAction({
       }
       modelPath = propsValue.customModelPath;
       tokenizerPath = propsValue.customTokenizerPath;
+    } else if (propsValue.model.includes('/') || propsValue.model.endsWith('.gguf')) {
+      // Model is a full path (e.g., from list-models path field) - use it directly
+      modelPath = propsValue.model;
+      // Derive tokenizer path: look for tokenizer.json in same directory
+      const modelDir = modelPath.substring(0, modelPath.lastIndexOf('/'));
+      const modelFileName = modelPath.substring(modelPath.lastIndexOf('/') + 1);
+      
+      // Check if this is a structured model path (has text-gen/ in path)
+      if (modelPath.includes('/text-gen/')) {
+        // Structured: models/text-gen/qwen2-0.5b/model.gguf -> models/text-gen/qwen2-0.5b/tokenizer.json
+        tokenizerPath = `${modelDir}/tokenizer.json`;
+      } else if (modelDir.endsWith('/models')) {
+        // Legacy: models/qwen2.5-0.5b.gguf - try to find matching structured model
+        const modelName = modelFileName.replace('.gguf', '').replace(/-instruct|-q[0-9]+_[0-9]+/g, '');
+        // First try exact match in text-gen folder
+        tokenizerPath = `${modelDir}/text-gen/${modelName}/tokenizer.json`;
+        // Also try without extra suffixes (qwen2.5-0.5b -> qwen2-0.5b)
+        const simplifiedName = modelName.replace(/\./g, '').replace(/([0-9]+)-([0-9]+)b/, '$1-$2b');
+        const altTokenizerPath = `${modelDir}/text-gen/${simplifiedName}/tokenizer.json`;
+        // Use qwen2-0.5b as fallback if no matching tokenizer found
+        if (modelName.startsWith('qwen')) {
+          tokenizerPath = `${modelDir}/text-gen/qwen2-0.5b/tokenizer.json`;
+        }
+        console.log(`[ask-local-llm] Legacy model detected: ${modelFileName}, using tokenizer: ${tokenizerPath}`);
+      } else {
+        // Unknown structure - try same directory
+        tokenizerPath = `${modelDir}/tokenizer.json`;
+      }
     } else {
+      // Model is an ID (e.g., 'qwen2-0.5b') - construct paths from base path
       modelPath = getModelPath(resolvedBasePath, 'text-gen', propsValue.model, 'model.gguf');
       tokenizerPath = getModelPath(resolvedBasePath, 'text-gen', propsValue.model, 'tokenizer.json');
     }
@@ -133,8 +160,20 @@ export const askLocalLlm = createAction({
       device: device as DeviceType,
     };
     
-    // Generate text
-    const result = await backend.generateText(config, fullPrompt);
+    // Generate text with proper error handling
+    let result;
+    try {
+      result = await backend.generateText(config, fullPrompt);
+    } catch (error: any) {
+      // Return error with debug info so users can see what went wrong
+      const errorMsg = error?.message || String(error);
+      throw new Error(
+        `Text generation failed: ${errorMsg}\n` +
+        `Model: ${modelPath}\n` +
+        `Tokenizer: ${tokenizerPath}\n` +
+        `Device: ${device}`
+      );
+    }
     
     // Store conversation history if memory key is set
     if (propsValue.memoryKey && store) {

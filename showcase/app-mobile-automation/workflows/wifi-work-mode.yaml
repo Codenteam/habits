@@ -1,0 +1,39 @@
+id: wifi-work-mode
+name: Enable Work Mode on Work Wi-Fi
+description: Automatically enable focus mode when connecting to work Wi-Fi
+
+# Configuration - user sets their work Wi-Fi name
+config:
+  work_wifi_ssid: "OfficeNetwork"  # Example work network name
+
+nodes:
+  # Step 1: Check if connected to work Wi-Fi
+  - id: wifi-check
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-wifi"
+      operation: isConnectedTo
+      params:
+        ssid: "{{config.work_wifi_ssid}}"
+
+  # Step 2: Enable focus mode (composite action)
+  # This mutes media, sets vibrate, and enables DND
+  - id: enable-focus
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-system-settings"
+      operation: setFocusMode
+      params: {}
+
+edges:
+  - source: wifi-check
+    target: enable-focus
+
+output:
+  wifi_status: "{{wifi-check}}"
+  result: "{{enable-focus}}"
+  message: "Work mode enabled - focus on!"
