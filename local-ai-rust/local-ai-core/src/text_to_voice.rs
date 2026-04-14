@@ -1,6 +1,6 @@
 //! Text to voice synthesis using MetaVoice
 
-use crate::audio::{normalize_loudness, write_pcm_as_wav};
+use crate::audio::{normalize_loudness, pcm_to_wav_base64, write_pcm_as_wav};
 use crate::device::DeviceType;
 use crate::error::{LocalAiError, Result};
 use candle_core::{DType, Device, IndexOp, Tensor};
@@ -67,6 +67,17 @@ fn default_seed() -> u64 {
 pub struct TextToVoiceResult {
     /// Path where audio was saved (if saved)
     pub output_path: Option<String>,
+    /// Sample rate of output audio
+    pub sample_rate: u32,
+    /// Duration in seconds
+    pub duration_seconds: f64,
+}
+
+/// Text-to-voice result with base64 data
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TextToVoiceBase64Result {
+    /// Base64-encoded WAV data URL
+    pub base64_data: String,
     /// Sample rate of output audio
     pub sample_rate: u32,
     /// Duration in seconds
@@ -313,6 +324,143 @@ impl VoiceSynthesizer {
             duration_seconds,
         })
     }
+
+    /// Synthesize speech and return as base64 data URL
+    pub fn synthesize_base64(&mut self, prompt: &str) -> Result<TextToVoiceBase64Result> {
+        self.synthesize_base64_with_progress(prompt, None)
+    }
+
+    /// Synthesize speech as base64 with progress callback
+    pub fn synthesize_base64_with_progress(
+        &mut self,
+        prompt: &str,
+        mut progress_callback: Option<ProgressCallback>,
+    ) -> Result<TextToVoiceBase64Result> {
+        // Tokenize prompt
+        let prompt_tokens = self
+            .fs_tokenizer
+            .encode(prompt)
+            .map_err(|e| LocalAiError::Tokenizer(e.to_string()))?;
+        let mut tokens = prompt_tokens.clone();
+
+        // Setup sampling
+        let mut logits_processor =
+            LogitsProcessor::new(self.config.seed, Some(self.config.temperature), Some(0.95));
+
+        // First stage generation
+        if let Some(ref mut callback) = progress_callback {
+            callback("first_stage", 0, self.config.max_tokens);
+        }
+
+        for index in 0..self.config.max_tokens {
+            let context_size = if index > 0 { 1 } else { tokens.len() };
+            let start_pos = tokens.len().saturating_sub(context_size);
+            let ctxt = &tokens[start_pos..];
+            let input = Tensor::new(ctxt, &self.device)?;
+            let input = Tensor::stack(&[&input, &input], 0)?;
+
+            let logits = match &mut self.first_stage_model {
+                MetaVoiceTransformer::Normal(m) => {
+                    m.forward(&input, &self.spk_emb, tokens.len() - context_size)?
+                }
+                MetaVoiceTransformer::Quantized(m) => {
+                    m.forward(&input, &self.spk_emb, tokens.len() - context_size)?
+                }
+            };
+
+            let logits0 = logits.i((0, 0))?;
+            let logits1 = logits.i((1, 0))?;
+            let logits =
+                ((logits0 * self.config.guidance_scale)? + logits1 * (1. - self.config.guidance_scale))?;
+            let logits = logits.to_dtype(DType::F32)?;
+            let next_token = logits_processor.sample(&logits)?;
+            tokens.push(next_token);
+
+            if let Some(ref mut callback) = progress_callback {
+                callback("first_stage", (index + 1) as usize, self.config.max_tokens);
+            }
+
+            if next_token == 2048 {
+                break;
+            }
+        }
+
+        // Decode first stage tokens
+        let fie2c = adapters::FlattenedInterleavedEncodec2Codebook::new(ENCODEC_NTOKENS);
+        let (_text_ids, ids1, ids2) = fie2c.decode(&tokens);
+
+        if let Some(ref mut callback) = progress_callback {
+            callback("second_stage", 0, 1);
+        }
+
+        // Second stage generation
+        let mut rng = rand::rngs::StdRng::seed_from_u64(self.config.seed + 1337);
+        let encoded_text: Vec<_> = prompt_tokens.iter().map(|v| v - 1024).collect();
+
+        let mut hierarchies_in1 =
+            [encoded_text.as_slice(), ids1.as_slice(), &[ENCODEC_NTOKENS]].concat();
+        let mut hierarchies_in2 = [
+            vec![ENCODEC_NTOKENS; encoded_text.len()].as_slice(),
+            ids2.as_slice(),
+            &[ENCODEC_NTOKENS],
+        ]
+        .concat();
+
+        hierarchies_in1.resize(self.second_stage_config.block_size, ENCODEC_NTOKENS);
+        hierarchies_in2.resize(self.second_stage_config.block_size, ENCODEC_NTOKENS);
+
+        let in_x1 = Tensor::new(hierarchies_in1, &self.device)?;
+        let in_x2 = Tensor::new(hierarchies_in2, &self.device)?;
+        let in_x = Tensor::stack(&[in_x1, in_x2], 0)?.unsqueeze(0)?;
+
+        let logits = self.second_stage_model.forward(&in_x)?;
+
+        // Sample from second stage
+        let mut codes = vec![];
+        for logits in logits.iter() {
+            let logits = logits.squeeze(0)?;
+            let (seq_len, _) = logits.dims2()?;
+            let mut codes_ = Vec::with_capacity(seq_len);
+            for step in 0..seq_len {
+                let logits = logits.i(step)?.to_dtype(DType::F32)?;
+                let logits = (&logits / 1.0)?;
+                let prs = candle_nn::ops::softmax_last_dim(&logits)?.to_vec1::<f32>()?;
+                let distr = rand::distr::weighted::WeightedIndex::new(prs.as_slice())
+                    .map_err(|e| LocalAiError::Other(e.to_string()))?;
+                let sample = distr.sample(&mut rng) as u32;
+                codes_.push(sample);
+            }
+            codes.push(codes_);
+        }
+
+        if let Some(ref mut callback) = progress_callback {
+            callback("decoding", 0, 1);
+        }
+
+        // Decode with encodec
+        let codes = Tensor::new(codes, &self.device)?.unsqueeze(0)?;
+        let codes = Tensor::cat(&[in_x, codes], 1)?;
+
+        let tilted_encodec = adapters::TiltedEncodec::new(ENCODEC_NTOKENS);
+        let codes = codes.i(0)?.to_vec2::<u32>()?;
+        let (_text_ids, audio_ids) = tilted_encodec.decode(&codes);
+
+        let audio_ids = Tensor::new(audio_ids, &self.encodec_device)?.unsqueeze(0)?;
+        let pcm = self.encodec_model.decode(&audio_ids)?;
+        let pcm = pcm.i(0)?.i(0)?.to_dtype(DType::F32)?;
+        let pcm = pcm.to_vec1::<f32>()?;
+        let pcm = normalize_loudness(&pcm);
+
+        // Convert to base64 WAV
+        let base64_data = pcm_to_wav_base64(&pcm, 24_000)?;
+        let duration_seconds = pcm.len() as f64 / 24_000.0;
+
+        Ok(TextToVoiceBase64Result {
+            base64_data,
+            sample_rate: 24_000,
+            duration_seconds,
+        })
+    }
 }
 
 /// Simple function to synthesize speech (creates a temporary synthesizer)
@@ -348,4 +496,38 @@ pub fn synthesize_speech(
 
     let mut synthesizer = VoiceSynthesizer::new(config)?;
     synthesizer.synthesize(prompt, output_path)
+}
+
+/// Simple function to synthesize speech to base64 (creates a temporary synthesizer)
+#[allow(clippy::too_many_arguments)]
+pub fn synthesize_speech_base64(
+    prompt: &str,
+    first_stage_path: &str,
+    first_stage_meta_path: &str,
+    second_stage_path: &str,
+    encodec_path: &str,
+    spk_emb_path: &str,
+    quantized: bool,
+    guidance_scale: f64,
+    temperature: f64,
+    max_tokens: u64,
+    seed: u64,
+    device: DeviceType,
+) -> Result<TextToVoiceBase64Result> {
+    let config = TextToVoiceConfig {
+        first_stage_path: first_stage_path.to_string(),
+        first_stage_meta_path: first_stage_meta_path.to_string(),
+        second_stage_path: second_stage_path.to_string(),
+        encodec_path: encodec_path.to_string(),
+        spk_emb_path: spk_emb_path.to_string(),
+        quantized,
+        guidance_scale,
+        temperature,
+        max_tokens,
+        seed,
+        device,
+    };
+
+    let mut synthesizer = VoiceSynthesizer::new(config)?;
+    synthesizer.synthesize_base64(prompt)
 }

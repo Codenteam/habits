@@ -1,6 +1,6 @@
 //! Audio transcription using Whisper models
 
-use crate::audio::pcm_decode;
+use crate::audio::{pcm_decode, pcm_decode_bytes};
 use crate::device::DeviceType;
 use crate::error::{LocalAiError, Result};
 use candle_core::{Device, IndexOp, Tensor};
@@ -220,9 +220,21 @@ impl Transcriber {
     pub fn transcribe<P: AsRef<Path>>(&mut self, audio_path: P) -> Result<TranscriptionResult> {
         // Load and process audio
         let (pcm_data, sample_rate) = pcm_decode(&audio_path)?;
+        self.transcribe_pcm(&pcm_data, sample_rate)
+    }
+
+    /// Transcribe audio from raw bytes
+    pub fn transcribe_bytes(&mut self, audio_bytes: &[u8]) -> Result<TranscriptionResult> {
+        // Load and process audio from bytes
+        let (pcm_data, sample_rate) = pcm_decode_bytes(audio_bytes)?;
+        self.transcribe_pcm(&pcm_data, sample_rate)
+    }
+
+    /// Internal: transcribe from PCM data
+    fn transcribe_pcm(&mut self, pcm_data: &[f32], sample_rate: u32) -> Result<TranscriptionResult> {
         if sample_rate != m::SAMPLE_RATE as u32 {
             return Err(LocalAiError::Audio(format!(
-                "Input file must have a {} sampling rate, got {}",
+                "Input audio must have a {} sampling rate, got {}",
                 m::SAMPLE_RATE,
                 sample_rate
             )));
@@ -367,4 +379,32 @@ pub fn transcribe_audio(
 
     let mut transcriber = Transcriber::new(config)?;
     transcriber.transcribe(audio_path)
+}
+
+/// Simple function to transcribe audio from bytes (creates a temporary transcriber)
+pub fn transcribe_audio_bytes(
+    audio_bytes: &[u8],
+    model_path: &str,
+    tokenizer_path: &str,
+    config_path: &str,
+    quantized: bool,
+    language: Option<String>,
+    task: WhisperTask,
+    timestamps: bool,
+    device: DeviceType,
+) -> Result<TranscriptionResult> {
+    let config = TranscribeConfig {
+        model_path: model_path.to_string(),
+        tokenizer_path: tokenizer_path.to_string(),
+        config_path: config_path.to_string(),
+        quantized,
+        language,
+        task,
+        timestamps,
+        seed: 42,
+        device,
+    };
+
+    let mut transcriber = Transcriber::new(config)?;
+    transcriber.transcribe_bytes(audio_bytes)
 }

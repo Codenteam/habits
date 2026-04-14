@@ -7,6 +7,7 @@ use candle_core::{DType, Device, Tensor};
 use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::{blip, quantized_blip};
 use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 use std::path::Path;
 use tokenizers::Tokenizer;
 
@@ -42,6 +43,30 @@ pub struct ImageCaptionResult {
 fn load_image_for_blip<P: AsRef<Path>>(path: P, device: &Device) -> Result<Tensor> {
     let img = image::ImageReader::open(path)?
         .decode()?
+        .resize_to_fill(384, 384, image::imageops::FilterType::Triangle);
+    let img = img.to_rgb8();
+    let data = img.into_raw();
+    let data = Tensor::from_vec(data, (384, 384, 3), &Device::Cpu)?.permute((2, 0, 1))?;
+
+    let mean =
+        Tensor::new(&[0.48145466f32, 0.4578275, 0.40821073], &Device::Cpu)?.reshape((3, 1, 1))?;
+    let std =
+        Tensor::new(&[0.26862954f32, 0.26130258, 0.27577711], &Device::Cpu)?.reshape((3, 1, 1))?;
+
+    let normalized = (data.to_dtype(DType::F32)? / 255.)?
+        .broadcast_sub(&mean)?
+        .broadcast_div(&std)?;
+
+    normalized.to_device(device).map_err(Into::into)
+}
+
+/// Load and preprocess image from bytes for BLIP model
+fn load_image_from_bytes(image_bytes: &[u8], device: &Device) -> Result<Tensor> {
+    let img = image::ImageReader::new(Cursor::new(image_bytes))
+        .with_guessed_format()
+        .map_err(|e| LocalAiError::Image(format!("Failed to guess image format: {}", e)))?
+        .decode()
+        .map_err(|e| LocalAiError::Image(format!("Failed to decode image: {}", e)))?
         .resize_to_fill(384, 384, image::imageops::FilterType::Triangle);
     let img = img.to_rgb8();
     let data = img.into_raw();
@@ -133,6 +158,51 @@ impl ImageCaptioner {
             tokens_generated: token_ids.len() - 1, // Exclude BOS token
         })
     }
+
+    /// Generate a caption for image from raw bytes
+    pub fn caption_bytes(&mut self, image_bytes: &[u8]) -> Result<ImageCaptionResult> {
+        let image = load_image_from_bytes(image_bytes, &self.device)?;
+
+        // Get image embeddings
+        let image_embeds = image.unsqueeze(0)?.apply(self.model.vision_model())?;
+
+        let mut logits_processor = LogitsProcessor::new(self.seed, None, None);
+        let mut token_ids = vec![30522u32]; // BOS token
+        const SEP_TOKEN_ID: u32 = 102;
+
+        let mut tos = TokenOutputStream::new(self.tokenizer.clone());
+        let mut caption = String::new();
+
+        // Generate caption
+        for index in 0..100 {
+            let context_size = if index > 0 { 1 } else { token_ids.len() };
+            let start_pos = token_ids.len().saturating_sub(context_size);
+            let input_ids = Tensor::new(&token_ids[start_pos..], &self.device)?.unsqueeze(0)?;
+
+            let logits = self.model.text_decoder().forward(&input_ids, &image_embeds)?;
+            let logits = logits.squeeze(0)?;
+            let logits = logits.get(logits.dim(0)? - 1)?;
+
+            let token = logits_processor.sample(&logits)?;
+            if token == SEP_TOKEN_ID {
+                break;
+            }
+
+            token_ids.push(token);
+            if let Some(t) = tos.next_token(token)? {
+                caption.push_str(&t);
+            }
+        }
+
+        if let Some(rest) = tos.decode_rest()? {
+            caption.push_str(&rest);
+        }
+
+        Ok(ImageCaptionResult {
+            caption,
+            tokens_generated: token_ids.len() - 1, // Exclude BOS token
+        })
+    }
 }
 
 /// Simple function to caption an image (creates a temporary captioner)
@@ -151,4 +221,22 @@ pub fn caption_image(
 
     let mut captioner = ImageCaptioner::new(config)?;
     captioner.caption(image_path)
+}
+
+/// Simple function to caption an image from bytes (creates a temporary captioner)
+pub fn caption_image_bytes(
+    model_path: &str,
+    tokenizer_path: &str,
+    image_bytes: &[u8],
+    device: DeviceType,
+) -> Result<ImageCaptionResult> {
+    let config = ImageCaptionConfig {
+        model_path: model_path.to_string(),
+        tokenizer_path: tokenizer_path.to_string(),
+        seed: 42,
+        device,
+    };
+
+    let mut captioner = ImageCaptioner::new(config)?;
+    captioner.caption_bytes(image_bytes)
 }

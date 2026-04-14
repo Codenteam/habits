@@ -266,6 +266,8 @@ pub struct JsImageGenConfig {
 pub struct JsImageGenResult {
     /// Path where image was saved
     pub output_path: Option<String>,
+    /// Base64-encoded PNG (if generated to base64)
+    pub base64: Option<String>,
     /// Image width
     pub width: u32,
     /// Image height
@@ -278,6 +280,7 @@ impl From<ImageGenResult> for JsImageGenResult {
     fn from(r: ImageGenResult) -> Self {
         JsImageGenResult {
             output_path: r.output_path,
+            base64: None,
             width: r.width as u32,
             height: r.height as u32,
             steps: r.steps as u32,
@@ -367,6 +370,63 @@ pub fn generate_image(
     .map_err(convert_error)?;
 
     Ok(result.into())
+}
+
+/// Generate an image and return as base64 PNG (uses temp file internally)
+#[napi]
+pub fn generate_image_base64(
+    prompt: String,
+    uncond_prompt: Option<String>,
+    unet_path: String,
+    vae_path: String,
+    clip_path: String,
+    tokenizer_path: String,
+    height: Option<u32>,
+    width: Option<u32>,
+    steps: Option<u32>,
+    guidance_scale: Option<f64>,
+    seed: Option<u32>,
+    device: Option<JsDeviceType>,
+) -> Result<JsImageGenResult> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use std::fs;
+    
+    // Create temp file path
+    let temp_path = std::env::temp_dir().join(format!("local_ai_gen_{}.png", std::process::id()));
+    let temp_path_str = temp_path.to_string_lossy().to_string();
+    
+    // Generate to temp file
+    let result = local_ai_core::image_gen::generate_image(
+        &prompt,
+        &uncond_prompt.unwrap_or_default(),
+        &unet_path,
+        &vae_path,
+        &clip_path,
+        &tokenizer_path,
+        &temp_path_str,
+        height.unwrap_or(512) as usize,
+        width.unwrap_or(512) as usize,
+        steps.unwrap_or(30) as usize,
+        guidance_scale.unwrap_or(7.5),
+        seed.unwrap_or(42) as u64,
+        device.map(Into::into).unwrap_or_default(),
+    )
+    .map_err(convert_error)?;
+    
+    // Read file and convert to base64
+    let bytes = fs::read(&temp_path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let base64_str = STANDARD.encode(&bytes);
+    
+    // Delete temp file
+    let _ = fs::remove_file(&temp_path);
+    
+    Ok(JsImageGenResult {
+        output_path: None,
+        base64: Some(base64_str),
+        width: result.width as u32,
+        height: result.height as u32,
+        steps: result.steps as u32,
+    })
 }
 
 // ============================================================================
@@ -552,6 +612,8 @@ pub struct JsTextToVoiceConfig {
 pub struct JsTextToVoiceResult {
     /// Path where audio was saved
     pub output_path: Option<String>,
+    /// Base64-encoded WAV (if generated to base64)
+    pub base64: Option<String>,
     /// Sample rate of output audio
     pub sample_rate: u32,
     /// Duration in seconds
@@ -562,6 +624,7 @@ impl From<TextToVoiceResult> for JsTextToVoiceResult {
     fn from(r: TextToVoiceResult) -> Self {
         JsTextToVoiceResult {
             output_path: r.output_path,
+            base64: None,
             sample_rate: r.sample_rate,
             duration_seconds: r.duration_seconds,
         }
@@ -649,6 +712,142 @@ pub fn synthesize_speech(
     )
     .map_err(convert_error)?;
 
+    Ok(result.into())
+}
+
+/// Synthesize speech and return as base64 WAV (uses temp file internally)
+#[napi]
+pub fn synthesize_speech_base64(
+    prompt: String,
+    first_stage_path: String,
+    first_stage_meta_path: String,
+    second_stage_path: String,
+    encodec_path: String,
+    spk_emb_path: String,
+    quantized: Option<bool>,
+    guidance_scale: Option<f64>,
+    temperature: Option<f64>,
+    max_tokens: Option<u32>,
+    seed: Option<u32>,
+    device: Option<JsDeviceType>,
+) -> Result<JsTextToVoiceResult> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use std::fs;
+    
+    // Create temp file path
+    let temp_path = std::env::temp_dir().join(format!("local_ai_tts_{}.wav", std::process::id()));
+    let temp_path_str = temp_path.to_string_lossy().to_string();
+    
+    // Generate to temp file
+    let result = local_ai_core::text_to_voice::synthesize_speech(
+        &prompt,
+        &first_stage_path,
+        &first_stage_meta_path,
+        &second_stage_path,
+        &encodec_path,
+        &spk_emb_path,
+        quantized.unwrap_or(false),
+        &temp_path_str,
+        guidance_scale.unwrap_or(3.0),
+        temperature.unwrap_or(1.0),
+        max_tokens.unwrap_or(2000) as u64,
+        seed.unwrap_or(42) as u64,
+        device.map(Into::into).unwrap_or_default(),
+    )
+    .map_err(convert_error)?;
+    
+    // Read file and convert to base64
+    let bytes = fs::read(&temp_path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let base64_str = STANDARD.encode(&bytes);
+    
+    // Delete temp file
+    let _ = fs::remove_file(&temp_path);
+    
+    Ok(JsTextToVoiceResult {
+        output_path: None,
+        base64: Some(base64_str),
+        sample_rate: result.sample_rate,
+        duration_seconds: result.duration_seconds,
+    })
+}
+
+/// Caption an image from base64 data (uses temp file internally)
+#[napi]
+pub fn caption_image_base64(
+    image_base64: String,
+    model_path: String,
+    tokenizer_path: String,
+    device: Option<JsDeviceType>,
+) -> Result<JsImageCaptionResult> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use std::fs;
+    
+    // Decode base64 to bytes
+    let bytes = STANDARD.decode(&image_base64)
+        .map_err(|e| napi::Error::from_reason(format!("Invalid base64: {}", e)))?;
+    
+    // Write to temp file
+    let temp_path = std::env::temp_dir().join(format!("local_ai_caption_{}.png", std::process::id()));
+    fs::write(&temp_path, &bytes).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let temp_path_str = temp_path.to_string_lossy().to_string();
+    
+    // Caption the image
+    let result = local_ai_core::image_caption::caption_image(
+        &model_path,
+        &tokenizer_path,
+        &temp_path_str,
+        device.map(Into::into).unwrap_or_default(),
+    )
+    .map_err(convert_error)?;
+    
+    // Delete temp file
+    let _ = fs::remove_file(&temp_path);
+    
+    Ok(result.into())
+}
+
+/// Transcribe audio from base64 data (uses temp file internally)
+#[napi]
+pub fn transcribe_audio_base64(
+    audio_base64: String,
+    model_path: String,
+    tokenizer_path: String,
+    config_path: String,
+    quantized: Option<bool>,
+    language: Option<String>,
+    task: Option<JsWhisperTask>,
+    timestamps: Option<bool>,
+    device: Option<JsDeviceType>,
+) -> Result<JsTranscriptionResult> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use std::fs;
+    
+    // Decode base64 to bytes
+    let bytes = STANDARD.decode(&audio_base64)
+        .map_err(|e| napi::Error::from_reason(format!("Invalid base64: {}", e)))?;
+    
+    // Write to temp file
+    let temp_path = std::env::temp_dir().join(format!("local_ai_transcribe_{}.wav", std::process::id()));
+    fs::write(&temp_path, &bytes).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let temp_path_str = temp_path.to_string_lossy().to_string();
+    
+    // Transcribe the audio
+    let result = local_ai_core::transcribe::transcribe_audio(
+        &temp_path_str,
+        &model_path,
+        &tokenizer_path,
+        &config_path,
+        quantized.unwrap_or(false),
+        language,
+        task.map(Into::into).unwrap_or_default(),
+        timestamps.unwrap_or(false),
+        device.map(Into::into).unwrap_or_default(),
+    )
+    .map_err(convert_error)?;
+    
+    // Delete temp file
+    let _ = fs::remove_file(&temp_path);
+    
     Ok(result.into())
 }
 

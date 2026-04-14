@@ -75,6 +75,30 @@
       color: var(--text-muted);
       margin-top: 2px;
     }
+
+    #app-version-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      margin-left: 6px;
+    } 
+
+    #app-version-badge.dev {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    #app-version-badge.debug {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+    }
+
+    #app-version-badge.release {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
     
     .storage-indicator {
       display: flex;
@@ -1028,7 +1052,7 @@
       <header class="header">
         <div>
           <h1 class="header-title">Habits</h1>
-          <p class="header-subtitle">Run workflows locally</p>
+          <p class="header-subtitle">Run workflows locally <span id="app-version-badge"></span></p>
         </div>
         <div id="storage-indicator" class="storage-indicator" style="display: none;">
           <span class="storage-dot"></span>

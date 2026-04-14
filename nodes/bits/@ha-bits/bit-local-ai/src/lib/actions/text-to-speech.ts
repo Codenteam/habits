@@ -4,20 +4,19 @@
  * Similar to OpenAI's TTS API - synthesizes speech from text using local MetaVoice models.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const process: any;
+declare const Buffer: any;
+
 import { createAction, Property } from '@ha-bits/cortex-core';
 import { 
   localAiAuth, 
   LocalAiAuthValue, 
   VoicePresets,
   AudioFormats,
-  getModelPath,
-  getModelsBasePath,
   DeviceType 
 } from '../common/common';
-import { TextToVoiceConfig } from '../common/models';
-import { getBackend } from '../stubs';
-import * as path from 'path';
-import * as os from 'os';
+import { synthesizeSpeech as synthesizeSpeechDriver } from '../driver';
 
 export const textToSpeech = createAction({
   auth: localAiAuth,
@@ -93,108 +92,48 @@ export const textToSpeech = createAction({
   },
   async run({ auth, propsValue, files }) {
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
-    const backend = getBackend();
+    const env = typeof process !== 'undefined' ? process.env : {};
+    const device = authValue.device || (env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
     
-    // Get models base path (handles Tauri app data directory automatically)
-    const resolvedBasePath = await getModelsBasePath(authValue);
-    const device = authValue.device || ((typeof process !== 'undefined' ? process.env.LOCAL_AI_DEVICE : undefined) as DeviceType) || DeviceType.Auto;
-    
-    // Determine model paths
-    const ttsBasePath = getModelPath(resolvedBasePath, 'tts', 'metavoice');
-    
-    // Check for quantized model (prefer .gguf if available)
-    const fs = await import('fs');
-    const ggufPath = path.join(ttsBasePath, 'first_stage.gguf');
-    const safetensorsPath = path.join(ttsBasePath, 'first_stage.safetensors');
-    const useQuantized = fs.existsSync(ggufPath);
-    
-    const firstStagePath = useQuantized ? ggufPath : safetensorsPath;
-    const firstStageMetaPath = path.join(ttsBasePath, 'first_stage.json');
-    const secondStagePath = path.join(ttsBasePath, 'second_stage.safetensors');
-    const encodecPath = path.join(ttsBasePath, 'encodec.safetensors');
-    
-    // Determine speaker embedding path
-    let spkEmbPath: string;
-    if (propsValue.customSpeakerEmbedding) {
-      spkEmbPath = propsValue.customSpeakerEmbedding;
-    } else {
-      // Use preset voice embedding - try both .npy and .safetensors
-      const voiceName = propsValue.voice === 'default' ? 'default' : propsValue.voice;
-      const npyPath = path.join(ttsBasePath, 'voices', `${voiceName}.npy`);
-      const safetensorsEmbPath = path.join(ttsBasePath, 'spk_emb.safetensors');
-      
-      // Prefer .npy in voices folder, fallback to spk_emb.safetensors
-      if (fs.existsSync(npyPath)) {
-        spkEmbPath = npyPath;
-      } else if (fs.existsSync(safetensorsEmbPath)) {
-        spkEmbPath = safetensorsEmbPath;
-      } else {
-        throw new Error(`Speaker embedding not found for voice: ${voiceName}`);
-      }
-    }
-    
-    // Generate temporary output path
-    const fileName = propsValue.fileName || 'speech';
-    const format = propsValue.format || 'wav';
-    const tmpDir = os.tmpdir();
-    const outputPath = path.join(tmpDir, `${fileName}_${Date.now()}.${format}`);
-    
-    // Configure text-to-voice
-    // Check if seed is a valid number (not an unresolved template)
     const isValidSeed = propsValue.seed !== undefined && 
       propsValue.seed !== null &&
       typeof propsValue.seed === 'number' &&
       !isNaN(propsValue.seed);
     
-    const config: TextToVoiceConfig = {
-      firstStagePath,
-      firstStageMetaPath,
-      secondStagePath,
-      encodecPath,
-      spkEmbPath,
-      quantized: useQuantized || propsValue.quantized || false,
+    const format = propsValue.format || 'wav';
+    const fileName = propsValue.fileName || 'speech';
+    
+    // Synthesize via driver (uses 'metavoice' model ID)
+    const result = await synthesizeSpeechDriver('metavoice', propsValue.text, {
       guidanceScale: propsValue.guidanceScale || 3.0,
       temperature: propsValue.temperature || 1.0,
       maxTokens: 2000,
       seed: isValidSeed ? propsValue.seed : undefined,
-      device: device as DeviceType,
-    };
+      quantized: propsValue.quantized || false,
+      device,
+    });
     
-    // Synthesize speech
-    const result = await backend.synthesizeSpeech(config, propsValue.text, outputPath);
+    // Save generated audio via files API
+    let audioUrl: string | null = null;
     
-    // Read the generated audio and return as file
-    if (files && result.outputPath) {
-      const fs = await import('fs');
-      const audioBuffer = fs.readFileSync(result.outputPath);
+    if (files && result.base64) {
+      const audioBuffer = Buffer.from(result.base64, 'base64');
       
       const savedFile = await files.write({
         fileName: `${fileName}.${format}`,
         data: audioBuffer,
       }) as any;
       
-      // Clean up temp file
-      try {
-        fs.unlinkSync(result.outputPath);
-      } catch (e) {
-        // Ignore cleanup errors
-      }
-      
-      return {
-        audioUrl: savedFile?.url || result.outputPath,
-        sampleRate: result.sampleRate,
-        durationSeconds: result.durationSeconds,
-        voice: propsValue.voice,
-        format: format,
-      };
+      audioUrl = savedFile?.url || null;
     }
     
     return {
-      audioPath: result.outputPath,
+      audioUrl,
+      audioBase64: result.base64 ? `data:audio/${format};base64,${result.base64}` : null,
       sampleRate: result.sampleRate,
       durationSeconds: result.durationSeconds,
       voice: propsValue.voice,
-      format: format,
+      format,
     };
   },
 });

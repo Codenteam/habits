@@ -20,6 +20,9 @@ pub enum Error {
     #[error("Invalid configuration: {0}")]
     InvalidConfig(String),
 
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
     #[error("{0}")]
     Other(String),
 }

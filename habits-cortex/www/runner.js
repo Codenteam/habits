@@ -3,6 +3,11 @@
  * Handles habit import, storage, and execution
  */
 
+// Module load marker for testing
+window.__habitsModuleLoaded__ = true;
+window.__habitsModuleVersion__ = '2026-04-11-v3';  // Version marker for cache debugging
+console.log('[Habits] Module loaded, version:', window.__habitsModuleVersion__);
+
 // ============================================================================
 // State Management
 // ============================================================================
@@ -97,6 +102,52 @@ async function openYamlFileDialog() {
     title: 'Select YAML File',
     filters: [{ name: 'YAML Files', extensions: ['yaml', 'yml'] }],
   });
+}
+
+/**
+ * Fetch app version and build type from Tauri, display in header badge
+ */
+async function displayAppVersion() {
+  const badge = document.getElementById('app-version-badge');
+  if (!badge) return;
+
+  try {
+    const tauri = await waitForTauri();
+
+    // Get version from Tauri app API
+    let version = '1.0.0';
+    if (tauri.app && tauri.app.getVersion) {
+      version = await tauri.app.getVersion();
+    }
+
+    // Determine build type
+    // Dev: running on localhost or with dev server
+    // Debug: Tauri build with debug mode (devtools enabled)
+    // Release: production build
+    let buildType = 'release';
+    if (isDev) {
+      buildType = 'dev';
+    } else if (tauri.app && tauri.app.getTauriVersion) {
+      // In debug builds, devtools are typically enabled
+      // We check by looking for dev indicators
+      try {
+        const tauriVer = await tauri.app.getTauriVersion();
+        // Check if running from file:// or using debug tauri
+        if (window.location.protocol === 'tauri:' && window.__TAURI_DEBUG__) {
+          buildType = 'debug';
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+
+    badge.textContent = `v${version} ${buildType}`;
+    badge.className = buildType;
+  } catch (e) {
+    console.log('[Habits] Could not get app version:', e);
+    badge.textContent = isDev ? 'dev' : '';
+    badge.className = isDev ? 'dev' : '';
+  }
 }
 
 async function readTextFile(path) {
@@ -338,9 +389,9 @@ async function extractHabitFile(filePath) {
         const stackContent = await stackFile.async('string');
         
         // 1. First try: explicit name field
-        const nameMatch = stackContent.match(/^name:\s*['"]?([^'"\n]+)['"]?/m);
-        if (nameMatch && nameMatch[1]) {
-          habitName = nameMatch[1].trim();
+        const nameMatch = stackContent.match(/^\s*"?name"?\s*:\s*['"]([^'"\n]+)['"]|^name:\s*['"]?([^'"\n]+)['"]?/m);
+        if (nameMatch && (nameMatch[1] || nameMatch[2])) {
+          habitName = (nameMatch[1] || nameMatch[2]).trim();
         }
         
         // 2. Second try: first workflow id (more reliable than filename on Android)
@@ -448,6 +499,200 @@ async function importHabitFile(filePath) {
   console.log('[Habits] Habit imported successfully:', habit.name);
   return true;
 }
+
+/**
+ * Extract habit from base64 data (identical to extractHabitFile but takes base64)
+ * @param {string} base64Data - Base64 encoded .habit file content
+ * @param {string} habitNameHint - Optional name hint for the habit
+ */
+async function extractHabitFromBase64(base64Data, habitNameHint = null) {
+  console.log('[Habits] Extracting habit from base64, length:', base64Data.length);
+  
+  try {
+    // Decode base64 to binary
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Load JSZip and extract
+    if (!window.JSZip) {
+      throw new Error('JSZip library not loaded');
+    }
+    
+    const zip = await window.JSZip.loadAsync(bytes);
+    
+    // Check for auto-ui marker (no frontend, UI generated from schema)
+    const autoUiFile = zip.file('_auto-ui');
+    const useAutoUi = !!autoUiFile;
+    
+    // Check for index.html (optional if auto-ui is enabled)
+    let indexFile = zip.file('index.html');
+    let indexHtml = null;
+
+    if (!indexFile) {
+      indexFile = zip.file('frontend/index.html');
+    }
+    
+    if (indexFile) {
+      indexHtml = await indexFile.async('string');
+    } else if (!useAutoUi) {
+      return {
+        valid: false,
+        error: {
+          title: 'Invalid Habit File',
+          message: 'The .habit file is missing index.html'
+        }
+      };
+    }
+    
+    // Get cortex-bundle.js (required as separate file)
+    const bundleFile = zip.file('cortex-bundle.js');
+    if (!bundleFile) {
+      return {
+        valid: false,
+        error: {
+          title: 'Invalid Habit File',
+          message: 'The .habit file is missing cortex-bundle.js'
+        }
+      };
+    }
+    const bundleJs = await bundleFile.async('string');
+    
+    // Try to get habit name from stack.yaml inside zip
+    let habitName = habitNameHint || 'Unknown';
+    const stackFile = zip.file('stack.yaml') || zip.file('stack.yml');
+    if (stackFile && habitName === 'Unknown') {
+      try {
+        const stackContent = await stackFile.async('string');
+        const nameMatch = stackContent.match(/^\s*"?name"?\s*:\s*['"]([^'"\n]+)['"]|^name:\s*['"]?([^'"\n]+)['"]?/m);
+        if (nameMatch && (nameMatch[1] || nameMatch[2])) {
+          habitName = (nameMatch[1] || nameMatch[2]).trim();
+        }
+        if (habitName === 'Unknown') {
+          const workflowIdMatch = stackContent.match(/^\s*-\s*id:\s*['"]?([^'"\n]+)['"]?/m);
+          if (workflowIdMatch && workflowIdMatch[1]) {
+            habitName = workflowIdMatch[1].trim()
+              .split(/[-_]/)
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+        }
+      } catch (e) {
+        console.log('[Habits] Could not parse stack.yaml for name:', e);
+      }
+    }
+    
+    console.log('[Habits] Extracted habit from base64:', habitName);
+    console.log('[Habits] Auto-UI mode:', useAutoUi);
+    console.log('[Habits] Index HTML size:', indexHtml ? indexHtml.length : 0, 'bytes');
+    console.log('[Habits] Bundle JS size:', bundleJs.length, 'bytes');
+    
+    // Extract all files for asset handling
+    const files = {};
+    for (const [name, file] of Object.entries(zip.files)) {
+      if (!file.dir) {
+        files[name] = await file.async('string');
+      }
+    }
+    
+    return {
+      valid: true,
+      habitName,
+      indexHtml,
+      bundleJs,
+      files,
+      filePath: null,
+      useAutoUi,
+    };
+  } catch (err) {
+    console.error('[Habits] Failed to extract habit from base64:', err);
+    return {
+      valid: false,
+      error: {
+        title: 'Extraction Failed',
+        message: 'Failed to extract habit from base64: ' + err.message
+      }
+    };
+  }
+}
+
+/**
+ * Import habit from base64 data (identical to importHabitFile but takes base64)
+ * @param {string} base64Data - Base64 encoded .habit file content
+ * @param {string} habitNameHint - Optional name hint for the habit
+ * @returns {Promise<{success: boolean, habitId?: string, error?: string}>}
+ */
+async function importHabitFromBase64(base64Data, habitNameHint = null) {
+  console.log('[Habits] Importing habit from base64');
+  
+  const extraction = await extractHabitFromBase64(base64Data, habitNameHint);
+  
+  if (!extraction.valid) {
+    return { success: false, error: extraction.error.message };
+  }
+  
+  // Generate unique ID
+  const habitId = 'habit-' + Date.now();
+  
+  // Create habit entry with cached content
+  const habit = {
+    id: habitId,
+    name: extraction.habitName,
+    filePath: null, // No file path for base64 imports
+    cachedIndexHtml: extraction.indexHtml,
+    cachedBundleJs: extraction.bundleJs,
+    cachedFiles: extraction.files,
+    useAutoUi: extraction.useAutoUi || false,
+    installedAt: new Date().toISOString(),
+  };
+  
+  // Add to state and save
+  state.habits.push(habit);
+  await saveManifest();
+  
+  // Update UI
+  renderHabitsList();
+  
+  console.log('[Habits] Habit imported from base64 successfully:', habit.name, 'id:', habitId);
+  return { success: true, habitId, habitName: habit.name };
+}
+
+// Expose to window for testing
+window.importHabitFromBase64 = importHabitFromBase64;
+
+/**
+ * Write a file to the app data directory from base64 content.
+ * Uses native Tauri command for reliable cross-platform file writing.
+ * @param {string} base64Content - Base64 encoded file content
+ * @param {string} relativePath - Path relative to app data dir (e.g., "models/text-gen/qwen2-0.5b/model.gguf")
+ * @param {boolean} append - If true, append to existing file (for chunked transfer)
+ * @returns {Promise<{success: boolean, path?: string, bytesWritten?: number, error?: string}>}
+ */
+async function writeAppDataFile(base64Content, relativePath, append = false) {
+  try {
+    const tauri = await waitForTauri();
+    if (!tauri || !tauri.core || !tauri.core.invoke) {
+      return { success: false, error: 'Tauri invoke not available' };
+    }
+
+    const result = await tauri.core.invoke('write_app_data_file', {
+      base64Content,
+      relativePath,
+      append,
+    });
+
+    console.log('[writeAppDataFile] Result:', result);
+    return result;
+  } catch (err) {
+    console.error('[writeAppDataFile] Error:', err);
+    return { success: false, error: err.message || String(err) };
+  }
+}
+
+// Expose to window for testing/MCP
+window.writeAppDataFile = writeAppDataFile;
 
 // ============================================================================
 // Habit Execution
@@ -675,7 +920,7 @@ function parseHabitWorkflows(habit) {
         processWorkflowEntry(currentWorkflow, habit, result);
       }
     } catch (e) {
-      console.error('[Schema] Failed to parse stack.yaml:', e);
+      console.error('[Schema] Failed to parse workflows:', e instanceof Error ? e.message : JSON.stringify(e), e instanceof Error ? e.stack : '');
     }
   }
 
@@ -775,10 +1020,17 @@ function simpleYamlParse(yamlContent) {
   let currentArray = null;
   let currentArrayItem = null;
   let indentLevel = 0;
+  let arrayStartIndent = 0;  // Track expected indentation for array items
   
   // For output object parsing
   let outputKey = null;
   let outputKeyIndent = 0;
+  
+  // For OpenAPI-style input parsing
+  let inputObjectMode = false;
+  let inputPropertiesSection = false;
+  let currentInputProperty = null;
+  let currentInputPropertyIndent = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -795,15 +1047,50 @@ function simpleYamlParse(yamlContent) {
         result[currentArray].push(currentArrayItem);
         currentArrayItem = null;
       }
+      // Save previous input property if in object mode
+      if (inputObjectMode && currentInputProperty) {
+        result.input.push(currentInputProperty);
+        currentInputProperty = null;
+      }
       outputKey = null;
+      inputObjectMode = false;
+      inputPropertiesSection = false;
       
       const match = trimmed.match(/^([a-zA-Z_]+):\s*(.*)?$/);
       if (match) {
         currentKey = match[1];
         const value = match[2]?.trim();
         
-        if (currentKey === 'input' || currentKey === 'env' || currentKey === 'nodes') {
+        if (currentKey === 'input') {
+          // Check if next non-empty line has "type: object" or "properties:" 
+          // to determine if this is OpenAPI format
+          let nextIdx = i + 1;
+          while (nextIdx < lines.length) {
+            const nextLine = lines[nextIdx].trim();
+            if (nextLine && !nextLine.startsWith('#')) {
+              if (nextLine.startsWith('type:') || nextLine.startsWith('properties:')) {
+                // OpenAPI object format
+                inputObjectMode = true;
+                result.input = [];
+                currentArray = null;
+              } else if (nextLine.startsWith('- ')) {
+                // Array format
+                currentArray = 'input';
+                arrayStartIndent = 2;
+                result.input = [];
+              }
+              break;
+            }
+            nextIdx++;
+          }
+          if (!inputObjectMode) {
+            currentArray = 'input';
+            arrayStartIndent = 2;
+            result.input = [];
+          }
+        } else if (currentKey === 'env' || currentKey === 'nodes') {
           currentArray = currentKey;
+          arrayStartIndent = 2;  // Top-level array items should be at indent 2
           result[currentKey] = [];
         } else if (currentKey === 'output') {
           // Output can be object or array - check next line
@@ -814,8 +1101,50 @@ function simpleYamlParse(yamlContent) {
           currentArray = null;
         }
       }
-    } else if (currentArray && trimmed.startsWith('- ')) {
-      // Array item
+    } else if (inputObjectMode && currentKey === 'input') {
+      // Handle OpenAPI-style input parsing
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        const propName = propMatch[1];
+        const propValue = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        
+        if (propName === 'properties' && lineIndent === 2) {
+          // Entering properties section
+          inputPropertiesSection = true;
+        } else if (propName === 'required' && lineIndent === 2) {
+          // Required array - parse subsequent lines for required field names
+          inputPropertiesSection = false;
+          // Read the required array items
+          let reqIdx = i + 1;
+          while (reqIdx < lines.length) {
+            const reqLine = lines[reqIdx].trim();
+            if (reqLine.startsWith('- ')) {
+              const reqField = reqLine.replace(/^-\s*/, '').replace(/^['"]|['"]$/g, '');
+              // Mark the field as required
+              const field = result.input.find(f => f.id === reqField);
+              if (field) field.required = true;
+            } else if (reqLine && !reqLine.startsWith('#')) {
+              break; // Exit on non-array line
+            }
+            reqIdx++;
+          }
+        } else if (inputPropertiesSection && lineIndent === 4 && !propValue) {
+          // New property in properties section (e.g., "prompt:")
+          if (currentInputProperty) {
+            result.input.push(currentInputProperty);
+          }
+          currentInputProperty = { id: propName, type: 'string' };
+          currentInputPropertyIndent = lineIndent;
+        } else if (currentInputProperty && lineIndent > currentInputPropertyIndent) {
+          // Property details (e.g., "type: string", "description: ...")
+          let value = propValue;
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          currentInputProperty[propName] = value;
+        }
+      }
+    } else if (currentArray && trimmed.startsWith('- ') && lineIndent === arrayStartIndent) {
+      // Array item - only at expected indentation level
       if (currentArrayItem) {
         result[currentArray].push(currentArrayItem);
       }
@@ -869,6 +1198,11 @@ function simpleYamlParse(yamlContent) {
   // Don't forget last item
   if (currentArray && currentArrayItem) {
     result[currentArray].push(currentArrayItem);
+  }
+  
+  // Don't forget last input property if in object mode
+  if (inputObjectMode && currentInputProperty) {
+    result.input.push(currentInputProperty);
   }
 
   return result;
@@ -1068,9 +1402,10 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
 
     console.log('[Form] Executing workflow:', workflow.id, 'with input:', inputData);
 
-    // Load bundle if not already loaded
-    if (!window.HabitsBundle && habit.cachedBundleJs) {
-      console.log('[Form] Loading bundle...');
+    // Always load the per-habit bundle if available — the global cortex-bundle-all.js
+    // may not contain this habit's specific workflow definitions.
+    if (habit.cachedBundleJs) {
+      console.log('[Form] Loading per-habit bundle...');
       eval(habit.cachedBundleJs);
       
       // Wait for HabitsBundle to be defined
@@ -1107,18 +1442,39 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
 
     console.log('[Form] Workflow result:', result);
 
-    // Render output
+    // Render output based on status
     if (outputContainer) {
       outputContainer.classList.remove('hidden');
-      outputContainer.innerHTML = `
-        <div class="output-header">
-          <span class="output-success">✓ Completed</span>
-        </div>
-        ${window.SchemaForm 
-          ? window.SchemaForm.generateOutputHtml(workflow.schema, result)
-          : `<pre class="output-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`
-        }
-      `;
+      
+      // Check if workflow failed
+      if (result.status === 'failed') {
+        // Collect error messages from failed nodes
+        const errors = (result.results || [])
+          .filter(r => !r.success && r.error)
+          .map(r => `${r.nodeId}: ${r.error}`)
+          .join('\n');
+        
+        outputContainer.innerHTML = `
+          <div class="output-header">
+            <span class="output-error-badge">✗ Failed</span>
+          </div>
+          <div class="output-error">
+            <strong>Workflow execution failed:</strong>
+            <pre class="error-details">${escapeHtml(errors || 'Unknown error')}</pre>
+          </div>
+        `;
+      } else {
+        // Success - render output
+        outputContainer.innerHTML = `
+          <div class="output-header">
+            <span class="output-success">✓ Completed</span>
+          </div>
+          ${window.SchemaForm 
+            ? window.SchemaForm.generateOutputHtml(workflow.schema, result)
+            : `<pre class="output-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`
+          }
+        `;
+      }
     }
 
   } catch (err) {
@@ -1671,7 +2027,47 @@ function openFileInViewer(habit, fileName) {
   openHabitViewer(fileContent);
 }
 
-function openHabitViewer(yamlContent) {
+function openHabitViewer(yamlContentOrHabitId) {
+  let yamlContent = yamlContentOrHabitId;
+  
+  // If a habit ID was passed (e.g., "habit-1234567890"), look up the habit's YAML content
+  if (typeof yamlContentOrHabitId === 'string' && yamlContentOrHabitId.startsWith('habit-')) {
+    const habit = state.habits.find(h => h.id === yamlContentOrHabitId);
+    if (!habit) {
+      showError('Error', `Habit not found: ${yamlContentOrHabitId}`);
+      return;
+    }
+    
+    // Try to find a workflow YAML file (habit.yaml, stack.yaml, or any .yaml file)
+    const cachedFiles = habit.cachedFiles || {};
+    const yamlFiles = ['stack.yaml', 'habit.yaml'];
+    let foundYaml = null;
+    
+    for (const fileName of yamlFiles) {
+      if (cachedFiles[fileName]) {
+        foundYaml = cachedFiles[fileName];
+        break;
+      }
+    }
+    
+    // Fallback: find any .yaml file that's not in frontend/
+    if (!foundYaml) {
+      for (const [fileName, content] of Object.entries(cachedFiles)) {
+        if (fileName.endsWith('.yaml') && !fileName.startsWith('frontend')) {
+          foundYaml = content;
+          break;
+        }
+      }
+    }
+    
+    if (!foundYaml) {
+      showError('Error', `No YAML content found in habit: ${habit.name}`);
+      return;
+    }
+    
+    yamlContent = foundYaml;
+  }
+  
   // URL-encode the YAML content for the habit parameter
   const encodedContent = encodeURIComponent(yamlContent);
   const habitViewerUrl = `./habit-viewer/index.html?habit=${encodedContent}&hideMinimap=true`;
@@ -1715,6 +2111,31 @@ function openHabitViewer(yamlContent) {
         height: 100%;
         border: none;
       }
+      .viewer-fallback {
+        display: none;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        padding: 32px;
+        box-sizing: border-box;
+      }
+      .viewer-fallback pre {
+        background: #1a1a24;
+        color: #e2e8f0;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+      }
+      .viewer-fallback-title {
+        color: #8b8b9e;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
     </style>
     <div class="viewer-container">
       <button class="viewer-close" onclick="closeYamlViewer()">
@@ -1726,12 +2147,36 @@ function openHabitViewer(yamlContent) {
         src="${habitViewerUrl}" 
         class="viewer-iframe"
         title="Habit Viewer"
+        onload="checkViewerFrame(this)"
       ></iframe>
+      <div class="viewer-fallback" id="viewer-fallback">
+        <div class="viewer-fallback-title">YAML Content (Visual viewer unavailable in dev mode)</div>
+        <pre>${yamlContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+      </div>
     </div>
   `;
   
   // Replace the current view with the habit viewer iframe
   document.body.innerHTML = viewerHtml;
+  
+  // Check if iframe loaded properly (React app mounted)
+  window.checkViewerFrame = function(iframe) {
+    try {
+      setTimeout(() => {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        const root = doc?.getElementById('root');
+        // If root is empty after 2 seconds, show fallback
+        if (!root || root.children.length === 0) {
+          iframe.style.display = 'none';
+          document.getElementById('viewer-fallback').style.display = 'block';
+        }
+      }, 2000);
+    } catch (e) {
+      // Cross-origin error - show fallback
+      iframe.style.display = 'none';
+      document.getElementById('viewer-fallback').style.display = 'block';
+    }
+  };
   
   // Add close function to window
   window.closeYamlViewer = function() {
@@ -2056,7 +2501,10 @@ async function deleteSecret(key) {
 
 async function init() {
   console.log('Habits initializing...');
-  
+
+  // Display app version badge
+  displayAppVersion();
+
   // Load saved habits
   await loadManifest();
   renderHabitsList();
@@ -2152,8 +2600,28 @@ async function init() {
 
 
 // Start when DOM is ready
+// Pre-expose testing functions (sync) before init runs (async)
+try {
+  window.__habits__ = {
+    importHabitFile,
+    importHabitFromBase64,
+    writeAppDataFile,
+    handleOpenHabitFile,
+    openHabitViewer,
+    runHabitWithForm,
+    sendMessage: window.sendMessage,
+    getHabits: () => state.habits,
+    getState: () => state,
+  };
+  console.log('[Habits] __habits__ pre-exposed successfully');
+} catch (e) {
+  console.error('[Habits] Error pre-exposing __habits__:', e);
+  window.__habitsError__ = e?.message || String(e);
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
-  init();
+  console.log('[Habits] DOM already ready, calling init directly');
+  init().catch(err => console.error('[Habits] Init error:', err));
 }

@@ -17,7 +17,7 @@ import { TextGenConfig } from '../common/models';
 import { getBackend } from '../stubs';
 import * as path from 'path';
 import * as os from 'os';
-import * as fs from 'fs';
+// fs is imported dynamically inside run() to support browser environments
 
 /**
  * Vision-capable model presets
@@ -140,7 +140,8 @@ export const visionPrompt = createAction({
         const arrayBuffer = await response.arrayBuffer();
         imageBase64 = Buffer.from(arrayBuffer).toString('base64');
       } else {
-        // Local file path
+        // Local file path - use dynamic import for browser compatibility
+        const fs = await import('fs');
         const imageBuffer = fs.readFileSync(imageInput);
         imageBase64 = imageBuffer.toString('base64');
       }

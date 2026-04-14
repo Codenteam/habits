@@ -383,7 +383,7 @@
           
           result.className = 'mt-5 block result-reveal';
           const message = data.output?.message || data.message || data.output || JSON.stringify(data);
-          resultMessage.textContent = message['greeting'];
+          resultMessage.textContent = message['greeting'].value;
         } else {
           throw new Error(data.message || 'Request failed');
         }

@@ -72,7 +72,7 @@ function installBits(modules) {
 /**
  * Generate bundle-all containing all bits
  */
-function generateBundleAll(modules, outputPath) {
+async function generateBundleAll(modules, outputPath) {
   // Filter to npm bits only
   const npmBits = modules.filter(m => m.framework === 'bits' && m.source === 'npm');
   
@@ -146,7 +146,8 @@ function generateBundleAll(modules, outputPath) {
   const stubRedirectPlugin = {
     name: 'stub-redirect',
     setup(build) {
-      build.onResolve({ filter: /^\.\/[a-z-]+$/ }, (args) => {
+      // Match relative imports like ./driver, ./diffusion-driver, ../stubs, ./lib/stubs
+      build.onResolve({ filter: /^\.\.?\/[a-z-]+(\/[a-z-]+)?$/ }, (args) => {
         const importer = args.importer;
         if (!importer) return null;
         
@@ -154,7 +155,18 @@ function generateBundleAll(modules, outputPath) {
         if (!haBitsMatch) return null;
         
         const packageName = haBitsMatch[1];
-        const moduleName = args.path.replace('./', '');
+        
+        // Extract the module name from relative path
+        // ./driver -> driver
+        // ../stubs -> stubs  
+        // ./lib/stubs -> lib/stubs
+        let moduleName = args.path;
+        if (moduleName.startsWith('../')) {
+          moduleName = moduleName.replace('../', '');
+        } else if (moduleName.startsWith('./')) {
+          moduleName = moduleName.replace('./', '');
+        }
+        
         const stubKey = `${packageName}/${moduleName}`;
         
         if (bitStubs[stubKey]) {
@@ -238,7 +250,7 @@ function generateBundleAll(modules, outputPath) {
 
   // Bundle
   try {
-    esbuild.buildSync({
+    await esbuild.build({
       entryPoints: [tempPath],
       bundle: true,
       format: 'iife',
@@ -289,7 +301,7 @@ function generateBundleAll(modules, outputPath) {
 /**
  * Main CLI entry point
  */
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   
   // Parse arguments
@@ -334,7 +346,7 @@ Options:
   installBits(modules);
 
   // Generate bundle
-  const result = generateBundleAll(modules, outputPath);
+  const result = await generateBundleAll(modules, outputPath);
   
   if (!result.success) {
     process.exit(1);
@@ -350,5 +362,8 @@ module.exports = {
 
 // Run if called directly
 if (require.main === module) {
-  main();
+  main().catch(err => {
+    console.error('Fatal error:', err);
+    process.exit(1);
+  });
 }

@@ -1,0 +1,4 @@
+[target.aarch64-linux-android]
+# Enable fp16 for Android builds - required by gemm-f16 (candle dependency)
+# Supported on ARMv8.2+ (virtually all Android devices since 2017)
+rustflags = ["-C", "target-feature=+fp16,+fullfp16"]

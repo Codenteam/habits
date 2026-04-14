@@ -23,6 +23,22 @@ import {
 } from '../common/models';
 import { DeviceType } from '../common/common';
 
+/**
+ * Convert DeviceType to native addon format (PascalCase).
+ * The JS enum uses lowercase ('auto', 'cpu', 'metal', 'cuda')
+ * but the NAPI-RS native addon expects PascalCase ('Auto', 'Cpu', 'Metal', 'Cuda').
+ */
+function toNativeDevice(device?: DeviceType): string | undefined {
+  if (!device) return undefined;
+  const map: Record<DeviceType, string> = {
+    [DeviceType.Auto]: 'Auto',
+    [DeviceType.Cpu]: 'Cpu',
+    [DeviceType.Metal]: 'Metal',
+    [DeviceType.Cuda]: 'Cuda',
+  };
+  return map[device] || undefined;
+}
+
 // Extend Window interface for Tauri v2
 declare global {
   interface Window {
@@ -50,15 +66,19 @@ export interface LocalAiBackend {
   
   // Image Captioning
   captionImage(config: ImageCaptionConfig, imagePath: string): Promise<ImageCaptionResult>;
+  captionImageBase64(config: ImageCaptionConfig, imageBase64: string): Promise<ImageCaptionResult>;
   
   // Image Generation
   generateImage(config: ImageGenConfig, prompt: string, negativePrompt: string, outputPath: string): Promise<ImageGenResult>;
+  generateImageBase64(config: ImageGenConfig, prompt: string, negativePrompt: string): Promise<ImageGenResult & { base64: string }>;
   
   // Audio Transcription
   transcribeAudio(config: TranscribeConfig, audioPath: string): Promise<TranscriptionResult>;
+  transcribeAudioBase64(config: TranscribeConfig, audioBase64: string): Promise<TranscriptionResult>;
   
   // Text to Voice
   synthesizeSpeech(config: TextToVoiceConfig, text: string, outputPath: string): Promise<TextToVoiceResult>;
+  synthesizeSpeechBase64(config: TextToVoiceConfig, text: string): Promise<TextToVoiceResult & { base64: string }>;
   
   // Utilities
   getVersion(): string;
@@ -74,32 +94,45 @@ class TauriBackend implements LocalAiBackend {
   private invoke: <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
   
   constructor() {
+    console.log('[TauriBackend] Constructor called');
     if (typeof window !== 'undefined' && window.__TAURI__) {
+      console.log('[TauriBackend] window.__TAURI__ found');
       // Support both Tauri v2 (core.invoke) and v1 (invoke) API
       // Need to bind the function to preserve context
       let rawInvoke: TauriInvoke;
       if (window.__TAURI__.core?.invoke) {
+        console.log('[TauriBackend] Using Tauri v2 API (core.invoke)');
         rawInvoke = window.__TAURI__.core.invoke.bind(window.__TAURI__.core);
       } else if (window.__TAURI__.invoke) {
+        console.log('[TauriBackend] Using Tauri v1 API (invoke)');
         rawInvoke = window.__TAURI__.invoke.bind(window.__TAURI__);
       } else {
         throw new Error('Tauri invoke function not found');
       }
       // Wrap invoke to convert Tauri string rejections into proper Error objects
       this.invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
+        console.log(`[TauriBackend] invoke: ${cmd}`, JSON.stringify(args).substring(0, 200));
         try {
-          return await rawInvoke<T>(cmd, args);
+          const result = await rawInvoke<T>(cmd, args);
+          console.log(`[TauriBackend] invoke success: ${cmd}`, typeof result);
+          return result;
         } catch (e: any) {
           const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : JSON.stringify(e));
+          console.error(`[TauriBackend] invoke error: ${cmd}`, msg);
           throw new Error(`Tauri invoke '${cmd}' failed: ${msg}`);
         }
       };
+      console.log('[TauriBackend] Successfully initialized');
     } else {
       throw new Error('Tauri environment not detected');
     }
   }
   
   async generateText(config: TextGenConfig, prompt: string): Promise<TextGenResult> {
+    console.log('[TauriBackend] generateText called');
+    console.log('  modelPath:', config.modelPath);
+    console.log('  tokenizerPath:', config.tokenizerPath);
+    console.log('  prompt length:', prompt.length);
     return this.invoke('plugin:local-ai|generate_text', {
       modelPath: config.modelPath,
       tokenizerPath: config.tokenizerPath,
@@ -116,6 +149,15 @@ class TauriBackend implements LocalAiBackend {
       modelPath: config.modelPath,
       tokenizerPath: config.tokenizerPath,
       imagePath: imagePath,
+      device: config.device,
+    });
+  }
+
+  async captionImageBase64(config: ImageCaptionConfig, imageBase64: string): Promise<ImageCaptionResult> {
+    return this.invoke('plugin:local-ai|caption_image_base64', {
+      modelPath: config.modelPath,
+      tokenizerPath: config.tokenizerPath,
+      imageBase64,
       device: config.device,
     });
   }
@@ -142,10 +184,45 @@ class TauriBackend implements LocalAiBackend {
       device: config.device,
     });
   }
+
+  async generateImageBase64(
+    config: ImageGenConfig,
+    prompt: string,
+    negativePrompt: string
+  ): Promise<ImageGenResult & { base64: string }> {
+    return this.invoke('plugin:local-ai|generate_image_base64', {
+      prompt,
+      uncondPrompt: negativePrompt,
+      unetPath: config.unetPath,
+      vaePath: config.vaePath,
+      clipPath: config.clipPath,
+      tokenizerPath: config.tokenizerPath,
+      height: config.height,
+      width: config.width,
+      steps: config.steps,
+      guidanceScale: config.guidanceScale,
+      seed: config.seed,
+      device: config.device,
+    });
+  }
   
   async transcribeAudio(config: TranscribeConfig, audioPath: string): Promise<TranscriptionResult> {
     return this.invoke('plugin:local-ai|transcribe_audio', {
       audioPath: audioPath,
+      modelPath: config.modelPath,
+      tokenizerPath: config.tokenizerPath,
+      configPath: config.configPath,
+      quantized: config.quantized,
+      language: config.language,
+      task: config.task,
+      timestamps: config.timestamps,
+      device: config.device,
+    });
+  }
+
+  async transcribeAudioBase64(config: TranscribeConfig, audioBase64: string): Promise<TranscriptionResult> {
+    return this.invoke('plugin:local-ai|transcribe_audio_base64', {
+      audioBase64,
       modelPath: config.modelPath,
       tokenizerPath: config.tokenizerPath,
       configPath: config.configPath,
@@ -171,6 +248,26 @@ class TauriBackend implements LocalAiBackend {
       spkEmbPath: config.spkEmbPath,
       quantized: config.quantized,
       outputPath: outputPath,
+      guidanceScale: config.guidanceScale,
+      temperature: config.temperature,
+      maxTokens: config.maxTokens,
+      seed: config.seed,
+      device: config.device,
+    });
+  }
+
+  async synthesizeSpeechBase64(
+    config: TextToVoiceConfig,
+    text: string
+  ): Promise<TextToVoiceResult & { base64: string }> {
+    return this.invoke('plugin:local-ai|synthesize_speech_base64', {
+      prompt: text,
+      firstStagePath: config.firstStagePath,
+      firstStageMetaPath: config.firstStageMetaPath,
+      secondStagePath: config.secondStagePath,
+      encodecPath: config.encodecPath,
+      spkEmbPath: config.spkEmbPath,
+      quantized: config.quantized,
       guidanceScale: config.guidanceScale,
       temperature: config.temperature,
       maxTokens: config.maxTokens,
@@ -270,7 +367,7 @@ class NodeBackend implements LocalAiBackend {
       config.maxTokens,
       config.temperature,
       config.seed,
-      config.device
+      toNativeDevice(config.device)
     );
   }
   
@@ -279,7 +376,16 @@ class NodeBackend implements LocalAiBackend {
       config.modelPath,
       config.tokenizerPath,
       imagePath,
-      config.device
+      toNativeDevice(config.device)
+    );
+  }
+
+  async captionImageBase64(config: ImageCaptionConfig, imageBase64: string): Promise<ImageCaptionResult> {
+    return this.native.captionImageBase64(
+      imageBase64,
+      config.modelPath,
+      config.tokenizerPath,
+      toNativeDevice(config.device)
     );
   }
   
@@ -302,7 +408,28 @@ class NodeBackend implements LocalAiBackend {
       config.steps,
       config.guidanceScale,
       config.seed,
-      config.device
+      toNativeDevice(config.device)
+    );
+  }
+
+  async generateImageBase64(
+    config: ImageGenConfig,
+    prompt: string,
+    negativePrompt: string
+  ): Promise<ImageGenResult & { base64: string }> {
+    return this.native.generateImageBase64(
+      prompt,
+      negativePrompt,
+      config.unetPath,
+      config.vaePath,
+      config.clipPath,
+      config.tokenizerPath,
+      config.height,
+      config.width,
+      config.steps,
+      config.guidanceScale,
+      config.seed,
+      toNativeDevice(config.device)
     );
   }
   
@@ -316,7 +443,21 @@ class NodeBackend implements LocalAiBackend {
       config.language,
       config.task,
       config.timestamps,
-      config.device
+      toNativeDevice(config.device)
+    );
+  }
+
+  async transcribeAudioBase64(config: TranscribeConfig, audioBase64: string): Promise<TranscriptionResult> {
+    return this.native.transcribeAudioBase64(
+      audioBase64,
+      config.modelPath,
+      config.tokenizerPath,
+      config.configPath,
+      config.quantized,
+      config.language,
+      config.task,
+      config.timestamps,
+      toNativeDevice(config.device)
     );
   }
   
@@ -338,7 +479,27 @@ class NodeBackend implements LocalAiBackend {
       config.temperature,
       config.maxTokens,
       config.seed,
-      config.device
+      toNativeDevice(config.device)
+    );
+  }
+
+  async synthesizeSpeechBase64(
+    config: TextToVoiceConfig,
+    text: string
+  ): Promise<TextToVoiceResult & { base64: string }> {
+    return this.native.synthesizeSpeechBase64(
+      text,
+      config.firstStagePath,
+      config.firstStageMetaPath,
+      config.secondStagePath,
+      config.encodecPath,
+      config.spkEmbPath,
+      config.quantized,
+      config.guidanceScale,
+      config.temperature,
+      config.maxTokens,
+      config.seed,
+      toNativeDevice(config.device)
     );
   }
   
@@ -373,6 +534,13 @@ class MockBackend implements LocalAiBackend {
       tokensGenerated: 8,
     };
   }
+
+  async captionImageBase64(_config: ImageCaptionConfig, _imageBase64: string): Promise<ImageCaptionResult> {
+    return {
+      caption: '[Mock caption for base64 image]',
+      tokensGenerated: 8,
+    };
+  }
   
   async generateImage(
     _config: ImageGenConfig,
@@ -387,10 +555,32 @@ class MockBackend implements LocalAiBackend {
       steps: 30,
     };
   }
+
+  async generateImageBase64(
+    _config: ImageGenConfig,
+    _prompt: string,
+    _negativePrompt: string
+  ): Promise<ImageGenResult & { base64: string }> {
+    return {
+      outputPath: null as any,
+      base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      width: 512,
+      height: 512,
+      steps: 30,
+    };
+  }
   
   async transcribeAudio(_config: TranscribeConfig, _audioPath: string): Promise<TranscriptionResult> {
     return {
       text: '[Mock transcription]',
+      segments: [],
+      language: 'en',
+    };
+  }
+
+  async transcribeAudioBase64(_config: TranscribeConfig, _audioBase64: string): Promise<TranscriptionResult> {
+    return {
+      text: '[Mock transcription from base64]',
       segments: [],
       language: 'en',
     };
@@ -403,6 +593,18 @@ class MockBackend implements LocalAiBackend {
   ): Promise<TextToVoiceResult> {
     return {
       outputPath,
+      sampleRate: 24000,
+      durationSeconds: 2.5,
+    };
+  }
+
+  async synthesizeSpeechBase64(
+    _config: TextToVoiceConfig,
+    _text: string
+  ): Promise<TextToVoiceResult & { base64: string }> {
+    return {
+      outputPath: null as any,
+      base64: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
       sampleRate: 24000,
       durationSeconds: 2.5,
     };
@@ -510,35 +712,53 @@ function logGpuCapabilities(backend: LocalAiBackend): void {
  * Detect and return the appropriate backend
  */
 export function getBackend(): LocalAiBackend {
+  console.log('[bit-local-ai] getBackend() called');
+  console.log('[bit-local-ai] _backend exists:', !!_backend);
+  
   if (_backend) {
+    console.log('[bit-local-ai] Returning cached backend:', _backend.getVersion());
     return _backend;
+  }
+  
+  // Debug environment
+  console.log('[bit-local-ai] Environment check:');
+  console.log('  - typeof window:', typeof window);
+  console.log('  - window.__TAURI__:', typeof window !== 'undefined' ? !!(window as any).__TAURI__ : 'N/A');
+  if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+    console.log('  - __TAURI__.core:', !!(window as any).__TAURI__.core);
+    console.log('  - __TAURI__.core?.invoke:', typeof (window as any).__TAURI__.core?.invoke);
+    console.log('  - __TAURI__.invoke:', typeof (window as any).__TAURI__.invoke);
   }
   
   // Try Tauri first (browser/desktop app) - check for v2 (core.invoke) or v1 (invoke)
   if (typeof window !== 'undefined' && (window as any).__TAURI__ && 
       ((window as any).__TAURI__.core?.invoke || (window as any).__TAURI__.invoke)) {
+    console.log('[bit-local-ai] Tauri environment detected, attempting TauriBackend...');
     try {
       _backend = new TauriBackend();
+      console.log('[bit-local-ai] TauriBackend created successfully');
       logGpuCapabilities(_backend);
       return _backend;
     } catch (e) {
-      console.warn('Tauri backend initialization failed:', e);
+      console.error('[bit-local-ai] TauriBackend initialization failed:', e);
     }
   }
   
   // Try Node.js native addon
   if (typeof process !== 'undefined' && process.versions?.node) {
+    console.log('[bit-local-ai] Node.js environment detected, attempting NodeBackend...');
     try {
       _backend = new NodeBackend();
+      console.log('[bit-local-ai] NodeBackend created successfully');
       logGpuCapabilities(_backend);
       return _backend;
     } catch (e) {
-      console.warn('Node.js backend initialization failed:', e);
+      console.error('[bit-local-ai] NodeBackend initialization failed:', e);
     }
   }
   
   // Fall back to mock for testing
-  console.warn('No local AI backend available, using mock implementation');
+  console.warn('[bit-local-ai] No local AI backend available, using MockBackend');
   _backend = new MockBackend();
   return _backend;
 }

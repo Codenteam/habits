@@ -268,6 +268,8 @@ export interface BitsExecutionResult {
  * Also supports declarative nodes that have a description with routing.
  */
 export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
+  console.log('[extractBitsPieceFromModule] loadedModule keys:', Object.keys(loadedModule || {}));
+  
   // First, check if this is a declarative node (with routing)
   const declarativeNode = extractDeclarativeNode(loadedModule);
   if (declarativeNode) {
@@ -284,12 +286,15 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
     // Check direct properties
     for (const key of Object.keys(loadedModule)) {
       const exported = loadedModule[key];
+      console.log(`[extractBitsPieceFromModule] checking key "${key}", type:`, typeof exported);
       if (exported && typeof exported === 'object') {
         // Check if it has actions and triggers (either as functions or objects)
         const hasActions = 'actions' in exported;
         const hasTriggers = 'triggers' in exported;
+        console.log(`[extractBitsPieceFromModule] key "${key}" hasActions:${hasActions} hasTriggers:${hasTriggers}`);
         if (hasActions && hasTriggers) {
           piece = exported;
+          console.log('[extractBitsPieceFromModule] Found piece:', piece.displayName, 'actions type:', typeof piece.actions, 'is array:', Array.isArray(piece.actions));
           break;
         }
       }
@@ -536,15 +541,24 @@ async function executeGenericBitsPiece(
   moduleDefinition: ModuleDefinition
 ): Promise<BitsExecutionResult> {
   try {
+    console.log('[executeGenericBitsPiece] Starting execution for', moduleDefinition.repository);
     const piece = await pieceFromModule(moduleDefinition);
 
+    console.log('[executeGenericBitsPiece] piece.displayName:', piece.displayName);
+    console.log('[executeGenericBitsPiece] piece.actions type:', typeof piece.actions);
+    
     logger.log(`🚀 Executing Bits piece: ${piece.displayName}`);
     const actionName = params.params.operation;
     const pieceActions = piece.actions();
+    
+    console.log('[executeGenericBitsPiece] pieceActions type:', typeof pieceActions, 'isArray:', Array.isArray(pieceActions));
+    console.log('[executeGenericBitsPiece] pieceActions keys:', pieceActions ? Object.keys(pieceActions) : 'null');
+    
     logger.log(`Available actions: ${Object.keys(pieceActions).join(', ')}`);
     logger.log(`Requested action: ${actionName}`);
     
     const action = pieceActions[actionName];
+    console.log('[executeGenericBitsPiece] action lookup result:', action ? action.displayName || action.name : 'undefined');
 
     // If action is not found, throw error with available actions
     if (!action) {
@@ -721,7 +735,9 @@ export async function executeBitsModule(params: BitsExecutionParams): Promise<Bi
   try {
     return await executeGenericBitsPiece(params, moduleDefinition);
   } catch (error: any) {
-    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${error.message}`);
+    // Handle different error types
+    const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${errorMsg}`);
   }
 }
 

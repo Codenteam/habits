@@ -293,6 +293,9 @@ export interface BitsExecutionResult {
  * Also supports declarative nodes that have a description with routing.
  */
 export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
+  console.log('[extractBitsPieceFromModule] loadedModule:', loadedModule ? typeof loadedModule : 'null/undefined');
+  console.log('[extractBitsPieceFromModule] loadedModule keys:', loadedModule ? Object.keys(loadedModule).slice(0, 20) : 'none');
+  
   // First, check if this is a declarative node (with routing)
   const declarativeNode = extractDeclarativeNode(loadedModule);
   if (declarativeNode) {
@@ -309,12 +312,15 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
     // Check direct properties
     for (const key of Object.keys(loadedModule)) {
       const exported = loadedModule[key];
+      console.log(`[extractBitsPieceFromModule] checking key "${key}", type:`, typeof exported);
       if (exported && typeof exported === 'object') {
         // Check if it has routines/actions and cues/triggers (either as functions or objects)
         const hasRoutines = 'routines' in exported || 'actions' in exported;
         const hasCues = 'cues' in exported || 'triggers' in exported;
+        console.log(`[extractBitsPieceFromModule] key "${key}" hasRoutines:${hasRoutines} hasCues:${hasCues}`);
         if (hasRoutines && hasCues) {
           piece = exported;
+          console.log('[extractBitsPieceFromModule] Found piece:', piece.displayName);
           break;
         }
       }
@@ -771,7 +777,9 @@ export async function executeBitsModule(params: BitsExecutionParams): Promise<Bi
   try {
     return await executeGenericBitsPiece(params, moduleDefinition);
   } catch (error: any) {
-    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${error.message}`);
+    // Handle different error types
+    const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${errorMsg}`);
   }
 }
 

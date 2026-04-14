@@ -6,6 +6,23 @@ description: A simple hello world habit using @ha-bits/bit-hello-world
 # - Returns "hello there" when param1="hello" and param2="world"
 # - Returns "Nah!" otherwise
 
+input:
+  - name: param1
+    type: string
+    displayAs: text
+    label: First Parameter
+    description: Enter the first word (use "hello" for greeting)
+    default: hello
+    required: true
+
+  - name: param2
+    type: string
+    displayAs: text
+    label: Second Parameter
+    description: Enter the second word (use "world" for greeting)
+    default: world
+    required: true
+
 nodes:
   - id: say-hello
     type: action
@@ -19,5 +36,10 @@ nodes:
         param2: "{{habits.input.param2}}"
 
 edges: []
-output: 
-  greeting: "{{say-hello}}"
+
+output:
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting

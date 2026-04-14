@@ -21,4 +21,8 @@ nodes:
 
 edges: []
 output: 
-  greeting: "{{say-hello}}"
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting

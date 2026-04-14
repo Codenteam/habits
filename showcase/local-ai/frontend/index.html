@@ -84,7 +84,58 @@
 
     <!-- Input Area -->
     <div class="p-4 border-t border-zinc-800">
+      <!-- Mode Selector -->
+      <div class="flex gap-2 mb-3 flex-wrap">
+        <button id="mode-chat" onclick="setMode('chat')" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-emerald-600 text-white transition-colors min-w-[60px]">
+          💬 Chat
+        </button>
+        <button id="mode-image-gen" onclick="setMode('image-gen')" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors min-w-[60px]">
+          🎨 Image
+        </button>
+        <button id="mode-image-caption" onclick="setMode('image-caption')" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors min-w-[60px]">
+          👁️ Caption
+        </button>
+        <button id="mode-tts" onclick="setMode('tts')" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors min-w-[60px]">
+          🔊 Speak
+        </button>
+        <button id="mode-stt" onclick="setMode('stt')" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors min-w-[60px]">
+          🎤 Listen
+        </button>
+      </div>
+      
+      <!-- Image Preview (for caption mode) -->
+      <div id="image-preview-container" class="hidden mb-3">
+        <div class="relative inline-block">
+          <img id="image-preview" class="max-h-32 rounded-lg border border-zinc-700" />
+          <button onclick="clearImagePreview()" class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-500">×</button>
+        </div>
+      </div>
+      
+      <!-- Audio Preview (for STT mode) -->
+      <div id="audio-preview-container" class="hidden mb-3">
+        <div class="flex items-center gap-3 bg-zinc-800 rounded-lg p-3">
+          <audio id="audio-preview" controls class="h-8 flex-1"></audio>
+          <button onclick="clearAudioPreview()" class="w-8 h-8 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-500">×</button>
+        </div>
+      </div>
+      
       <div class="flex gap-2">
+        <!-- Image Upload Button (for caption mode) -->
+        <button id="upload-btn" onclick="document.getElementById('image-input').click()" class="hidden px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors" title="Upload Image">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </button>
+        <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageSelect(event)" />
+        
+        <!-- Audio Upload Button (for STT mode) -->
+        <button id="audio-upload-btn" onclick="document.getElementById('audio-input').click()" class="hidden px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors" title="Upload Audio">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+        </button>
+        <input type="file" id="audio-input" accept="audio/*" class="hidden" onchange="handleAudioSelect(event)" />
+        
         <textarea
           id="message-input"
           placeholder="Type your message..."
@@ -247,12 +298,106 @@
       memoryKey: 'local-ai-chat'
     };
     let isLoading = false;
+    let currentMode = 'chat'; // 'chat', 'image-gen', 'image-caption', 'tts', 'stt'
+    let selectedImageBase64 = null;
+    let selectedAudioBase64 = null;
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       loadModels();
       loadSettings();
+      setMode('chat');
     });
+
+    // Set mode (chat, image-gen, image-caption, tts, stt)
+    function setMode(mode) {
+      currentMode = mode;
+      const input = document.getElementById('message-input');
+      const uploadBtn = document.getElementById('upload-btn');
+      const audioUploadBtn = document.getElementById('audio-upload-btn');
+      const modeChat = document.getElementById('mode-chat');
+      const modeImageGen = document.getElementById('mode-image-gen');
+      const modeImageCaption = document.getElementById('mode-image-caption');
+      const modeTts = document.getElementById('mode-tts');
+      const modeStt = document.getElementById('mode-stt');
+      
+      // Reset styles
+      [modeChat, modeImageGen, modeImageCaption, modeTts, modeStt].forEach(btn => {
+        btn.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors min-w-[60px]';
+      });
+      
+      // Hide all special buttons by default
+      uploadBtn.classList.add('hidden');
+      audioUploadBtn.classList.add('hidden');
+      
+      // Set active style
+      if (mode === 'chat') {
+        modeChat.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-emerald-600 text-white transition-colors min-w-[60px]';
+        input.placeholder = 'Type your message...';
+      } else if (mode === 'image-gen') {
+        modeImageGen.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-purple-600 text-white transition-colors min-w-[60px]';
+        input.placeholder = 'Describe the image you want to generate...';
+        clearImagePreview();
+        clearAudioPreview();
+      } else if (mode === 'image-caption') {
+        modeImageCaption.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-blue-600 text-white transition-colors min-w-[60px]';
+        input.placeholder = 'Optional prompt (e.g., "describe the colors")...';
+        uploadBtn.classList.remove('hidden');
+        clearAudioPreview();
+      } else if (mode === 'tts') {
+        modeTts.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-orange-600 text-white transition-colors min-w-[60px]';
+        input.placeholder = 'Enter text to convert to speech...';
+        clearImagePreview();
+        clearAudioPreview();
+      } else if (mode === 'stt') {
+        modeStt.className = 'flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-pink-600 text-white transition-colors min-w-[60px]';
+        input.placeholder = 'Optional: language code (e.g., en, es, fr)...';
+        audioUploadBtn.classList.remove('hidden');
+        clearImagePreview();
+      }
+    }
+
+    // Handle image selection
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        selectedImageBase64 = e.target.result;
+        document.getElementById('image-preview').src = selectedImageBase64;
+        document.getElementById('image-preview-container').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Clear image preview
+    function clearImagePreview() {
+      selectedImageBase64 = null;
+      document.getElementById('image-preview-container').classList.add('hidden');
+      document.getElementById('image-input').value = '';
+    }
+
+    // Handle audio selection for STT
+    function handleAudioSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        selectedAudioBase64 = e.target.result;
+        document.getElementById('audio-preview').src = selectedAudioBase64;
+        document.getElementById('audio-preview-container').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Clear audio preview
+    function clearAudioPreview() {
+      selectedAudioBase64 = null;
+      document.getElementById('audio-preview-container').classList.add('hidden');
+      document.getElementById('audio-input').value = '';
+    }
 
     // Load available models
     async function loadModels() {
@@ -400,9 +545,22 @@
       const input = document.getElementById('message-input');
       const message = input.value.trim();
       
-      if (!message || isLoading) return;
+      // Validate based on mode
+      if (currentMode === 'chat' || currentMode === 'image-gen' || currentMode === 'tts') {
+        if (!message || isLoading) return;
+      } else if (currentMode === 'image-caption') {
+        if (!selectedImageBase64 || isLoading) {
+          if (!selectedImageBase64) alert('Please select an image first');
+          return;
+        }
+      } else if (currentMode === 'stt') {
+        if (!selectedAudioBase64 || isLoading) {
+          if (!selectedAudioBase64) alert('Please select an audio file first');
+          return;
+        }
+      }
       
-      if (!settings.model) {
+      if (currentMode === 'chat' && !settings.model) {
         openSettings();
         return;
       }
@@ -411,8 +569,21 @@
       const welcome = document.querySelector('#chat-messages > .flex.justify-center');
       if (welcome) welcome.remove();
       
-      // Add user message
-      addMessage(message, 'user');
+      // Add user message based on mode
+      if (currentMode === 'image-gen') {
+        addMessage(`🎨 Generate: ${message}`, 'user');
+      } else if (currentMode === 'image-caption') {
+        addMessage(null, 'user', selectedImageBase64);
+        if (message) addMessage(`👁️ ${message}`, 'user');
+      } else if (currentMode === 'tts') {
+        addMessage(`🔊 Speak: "${message}"`, 'user');
+      } else if (currentMode === 'stt') {
+        addMessage(null, 'user', null, selectedAudioBase64);
+        if (message) addMessage(`🎤 Language: ${message}`, 'user');
+      } else {
+        addMessage(message, 'user');
+      }
+      
       input.value = '';
       autoResize(input);
       
@@ -422,22 +593,120 @@
       updateSendButton();
       
       try {
-        const response = await fetch('/api/ask-local-ai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: message,
-            model: settings.model,
-            systemPrompt: settings.systemPrompt,
-            temperature: settings.temperature,
-            memoryKey: settings.memoryKey
-          })
-        });
+        let response, data;
         
-        const data = await response.json();
+        if (currentMode === 'chat') {
+          response = await fetch('/api/ask-local-ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: message,
+              model: settings.model,
+              systemPrompt: settings.systemPrompt,
+              temperature: settings.temperature,
+              memoryKey: settings.memoryKey
+            })
+          });
+          data = await response.json();
+          removeTypingIndicator(typingId);
+          addMessage(data.output?.message || data.output || 'No response', 'assistant');
+          
+        } else if (currentMode === 'image-gen') {
+          response = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: message,
+              model: 'sd-1.5',
+              resolution: '512x512',
+              steps: 20
+            })
+          });
+          data = await response.json();
+          removeTypingIndicator(typingId);
+          
+          if (data.output?.imageUrl || data.output?.imagePath) {
+            // Convert file path to data URL or use imageUrl directly
+            const imageUrl = data.output.imageUrl || `file://${data.output.imagePath}`;
+            addMessage(null, 'assistant', imageUrl);
+          } else if (data.error) {
+            addMessage(`Error: ${data.error}`, 'error');
+          } else {
+            addMessage('Failed to generate image', 'error');
+          }
+          
+        } else if (currentMode === 'image-caption') {
+          response = await fetch('/api/caption-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              image: selectedImageBase64,
+              prompt: message || undefined
+            })
+          });
+          data = await response.json();
+          removeTypingIndicator(typingId);
+          
+          if (data.output?.caption) {
+            addMessage(`📝 ${data.output.caption}`, 'assistant');
+          } else if (data.error) {
+            addMessage(`Error: ${data.error}`, 'error');
+          } else {
+            addMessage('Failed to caption image', 'error');
+          }
+          
+          clearImagePreview();
+        } else if (currentMode === 'tts') {
+          // Text-to-Speech
+          response = await fetch('/api/text-to-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: message,
+              voice: 'default',
+              speed: 1.0,
+              format: 'wav'
+            })
+          });
+          data = await response.json();
+          removeTypingIndicator(typingId);
+          
+          if (data.output?.audioUrl || data.output?.audioPath) {
+            const audioUrl = data.output.audioUrl || data.output.audioPath;
+            addMessage(`🔊 Generated speech (${data.output.durationSeconds?.toFixed(1) || '?'}s)`, 'assistant', null, audioUrl);
+          } else if (data.error) {
+            addMessage(`Error: ${data.error}`, 'error');
+          } else {
+            addMessage('Failed to generate speech', 'error');
+          }
+          
+        } else if (currentMode === 'stt') {
+          // Speech-to-Text
+          response = await fetch('/api/transcribe-audio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              audioUrl: selectedAudioBase64,
+              model: 'base',
+              language: message || undefined,
+              task: 'Transcribe'
+            })
+          });
+          data = await response.json();
+          removeTypingIndicator(typingId);
+          
+          if (data.output?.text) {
+            const lang = data.output.language ? ` (${data.output.language})` : '';
+            addMessage(`📝 Transcription${lang}:\n"${data.output.text}"`, 'assistant');
+          } else if (data.error) {
+            addMessage(`Error: ${data.error}`, 'error');
+          } else {
+            addMessage('Failed to transcribe audio', 'error');
+          }
+          
+          clearAudioPreview();
+        }
         
-        removeTypingIndicator(typingId);
-        addMessage(data.output.message || data.output.message || 'No response', 'assistant');
       } catch (error) {
         removeTypingIndicator(typingId);
         addMessage('Error: ' + error.message, 'error');
@@ -447,20 +716,42 @@
       }
     }
 
-    // Add message to chat
-    function addMessage(content, type) {
+    // Add message to chat (supports images)
+    // Add message to chat (supports images and audio)
+    function addMessage(content, type, imageUrl = null, audioUrl = null) {
       const container = document.getElementById('chat-messages');
       const div = document.createElement('div');
       div.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'}`;
       
       const bgColor = type === 'user' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-900' : 'bg-zinc-800';
       
-      div.innerHTML = `
-        <div class="${bgColor} rounded-2xl px-4 py-3 max-w-[85%]">
-          <p class="message-content text-sm">${escapeHtml(content)}</p>
-        </div>
-      `;
+      let innerHTML;
+      if (imageUrl) {
+        // Image message
+        innerHTML = `
+          <div class="${bgColor} rounded-2xl p-2 max-w-[85%]">
+            <img src="${imageUrl}" class="max-w-full rounded-xl max-h-64 cursor-pointer" onclick="window.open('${imageUrl}', '_blank')" />
+            ${content ? `<p class="message-content text-sm mt-2 px-2">${escapeHtml(content)}</p>` : ''}
+          </div>
+        `;
+      } else if (audioUrl) {
+        // Audio message
+        innerHTML = `
+          <div class="${bgColor} rounded-2xl p-3 max-w-[85%]">
+            <audio controls src="${audioUrl}" class="w-full max-w-xs"></audio>
+            ${content ? `<p class="message-content text-sm mt-2">${escapeHtml(content)}</p>` : ''}
+          </div>
+        `;
+      } else {
+        // Text message
+        innerHTML = `
+          <div class="${bgColor} rounded-2xl px-4 py-3 max-w-[85%]">
+            <p class="message-content text-sm">${escapeHtml(content)}</p>
+          </div>
+        `;
+      }
       
+      div.innerHTML = innerHTML;
       container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }

@@ -19,14 +19,21 @@
   background: #45475a;
 }
 
-/* Safe area padding for mobile */
+
+/* Safe area padding for mobile (with max to prevent excessive inset) */
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    /* padding-top: max(env(safe-area-inset-top, 0px), 0px); */
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+    padding-left: max(env(safe-area-inset-left, 0px), 0px);
+    padding-right: max(env(safe-area-inset-right, 0px), 0px);
   }
+}
+
+/* Prevent scrolling on html and body */
+html, body { 
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Prevent text selection on buttons */
@@ -180,4 +187,21 @@ button {
 .output-success {
   color: #a6e3a1;
   font-weight: 500;
+}
+
+.output-error-badge {
+  color: #f38ba8;
+  font-weight: 500;
+}
+
+.error-details {
+  background: rgba(243, 139, 168, 0.1);
+  border: 1px solid rgba(243, 139, 168, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #cdd6f4;
 }

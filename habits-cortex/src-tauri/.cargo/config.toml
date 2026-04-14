@@ -2,3 +2,8 @@
 # Enable fp16 for iOS builds - required by gemm-f16 (candle dependency)
 # All Apple A11+ chips (iPhone 8+) support ARMv8.2 fp16 instructions
 rustflags = ["-C", "target-feature=+fp16"]
+
+[target.aarch64-linux-android]
+# Enable fp16 for Android builds - required by gemm-f16 (candle dependency)
+# Supported on ARMv8.2+ (virtually all Android devices since 2017)
+rustflags = ["-C", "target-feature=+fp16,+fullfp16"]

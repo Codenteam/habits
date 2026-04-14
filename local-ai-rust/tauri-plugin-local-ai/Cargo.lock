@@ -2757,6 +2757,7 @@ name = "local-ai-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "byteorder",
  "candle-core",
  "candle-nn",
@@ -5467,6 +5468,7 @@ dependencies = [
 name = "tauri-plugin-local-ai"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "dirs 5.0.1",
  "futures-util",
  "local-ai-core",

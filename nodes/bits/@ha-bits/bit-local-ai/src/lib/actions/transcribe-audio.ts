@@ -5,21 +5,20 @@
  * Supports various model sizes (tiny to large-v3)
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const process: any;
+declare const Buffer: any;
+
 import { createAction, Property } from '@ha-bits/cortex-core';
 import { 
   localAiAuth, 
   LocalAiAuthValue, 
   WhisperModels, 
   Languages,
-  getModelPath,
-  getModelsBasePath,
   WhisperTask,
   DeviceType 
 } from '../common/common';
-import { TranscribeConfig } from '../common/models';
-import { getBackend } from '../stubs';
-import * as path from 'path';
-import * as os from 'os';
+import { transcribeAudio as transcribeAudioDriver } from '../driver';
 
 export const transcribeAudio = createAction({
   auth: localAiAuth,
@@ -99,114 +98,77 @@ export const transcribeAudio = createAction({
   },
   async run({ auth, propsValue }) {
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
-    const backend = getBackend();
+    const env = typeof process !== 'undefined' ? process.env : {};
+    const device = authValue.device || (env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
     
-    // Get models base path (handles Tauri app data directory automatically)
-    const resolvedBasePath = await getModelsBasePath(authValue);
-    const device = authValue.device || ((typeof process !== 'undefined' ? process.env.LOCAL_AI_DEVICE : undefined) as DeviceType) || DeviceType.Auto;
+    // Handle audio file input - convert to base64
+    let audioBase64: string;
     
-    // Determine model paths
-    const modelName = propsValue.model;
-    const quantizedSuffix = propsValue.quantized ? '-q5_0' : '';
-    const modelPath = getModelPath(
-      resolvedBasePath, 
-      'whisper', 
-      modelName,
-      `model${quantizedSuffix}.safetensors`
-    );
-    const tokenizerPath = getModelPath(resolvedBasePath, 'whisper', modelName, 'tokenizer.json');
-    const configPath = getModelPath(resolvedBasePath, 'whisper', modelName, 'config.json');
-    
-    // Handle audio file input - can be either a file object or a URL/path string
-    let audioPath: string;
-    let tempAudioPath: string | undefined;
-    const fs = await import('fs');
-    const tmpDir = os.tmpdir();
-    
-    // Check if audioUrl is a valid value (not an unresolved template)
     const isValidAudioUrl = propsValue.audioUrl && 
       typeof propsValue.audioUrl === 'string' &&
       !propsValue.audioUrl.includes('{{') && 
       !propsValue.audioUrl.startsWith('habits.');
     
     if (isValidAudioUrl) {
-      // Use the provided URL/path directly
-      audioPath = propsValue.audioUrl;
+      if (propsValue.audioUrl.startsWith('data:audio/')) {
+        const matches = propsValue.audioUrl.match(/^data:audio\/([\w+-]+);base64,(.+)$/);
+        if (matches) {
+          audioBase64 = matches[2];
+        } else {
+          throw new Error('Invalid base64 audio data URL format');
+        }
+      } else {
+        const fsModule: any = await import('fs');
+        const audioBuffer = fsModule.readFileSync(propsValue.audioUrl);
+        audioBase64 = audioBuffer.toString('base64');
+      }
     } else if (propsValue.audio) {
-      // Handle file upload
-      const audioFile = propsValue.audio as { filename: string; data: Buffer; extension?: string };
-      tempAudioPath = path.join(tmpDir, `audio_${Date.now()}.${audioFile.extension || 'wav'}`);
-      fs.writeFileSync(tempAudioPath, new Uint8Array(audioFile.data));
-      audioPath = tempAudioPath;
+      const audioFile = propsValue.audio as { filename: string; data: any; extension?: string };
+      audioBase64 = Buffer.from(audioFile.data).toString('base64');
     } else {
       throw new Error('Either Audio File or Audio URL/Path must be provided');
     }
     
-    try {
-      // Check if language is a valid value (not an unresolved template)
-      const isValidLanguage = propsValue.language && 
-        typeof propsValue.language === 'string' &&
-        !propsValue.language.includes('{{') && 
-        !propsValue.language.startsWith('habits.');
-      
-      // Configure transcription
-      const config: TranscribeConfig = {
-        modelPath,
-        tokenizerPath,
-        configPath,
-        quantized: propsValue.quantized || false,
-        language: isValidLanguage ? propsValue.language : undefined,
-        task: propsValue.task as WhisperTask,
-        timestamps: propsValue.timestamps || false,
-        device: device as DeviceType,
-      };
-      
-      // Transcribe audio
-      const result = await backend.transcribeAudio(config, audioPath);
-      
-      // Format output based on requested format
-      let output: any;
-      
-      switch (propsValue.responseFormat) {
-        case 'json':
-          output = {
-            text: result.text,
-            language: result.language,
-            segments: result.segments,
-          };
-          break;
-          
-        case 'srt':
-          output = formatAsSrt(result.segments);
-          break;
-          
-        case 'vtt':
-          output = formatAsVtt(result.segments);
-          break;
-          
-        case 'text':
-        default:
-          output = result.text;
-          break;
-      }
-      
-      return {
-        text: result.text,
-        language: result.language,
-        segments: result.segments,
-        formatted: output,
-        model: modelName,
-      };
-    } finally {
-      // Clean up temp file only if we created one
-      if (tempAudioPath) {
-        try {
-          fs.unlinkSync(tempAudioPath);
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      }
+    const isValidLanguage = propsValue.language && 
+      typeof propsValue.language === 'string' &&
+      !propsValue.language.includes('{{') && 
+      !propsValue.language.startsWith('habits.');
+    
+    // Transcribe via driver
+    const result = await transcribeAudioDriver(propsValue.model, audioBase64, {
+      language: isValidLanguage ? propsValue.language : undefined,
+      task: propsValue.task as WhisperTask,
+      timestamps: propsValue.timestamps || false,
+      quantized: propsValue.quantized || false,
+      device,
+    });
+    
+    // Format output based on requested format
+    let output: any;
+    
+    switch (propsValue.responseFormat) {
+      case 'json':
+        output = { text: result.text, language: result.language, segments: result.segments };
+        break;
+      case 'srt':
+        output = formatAsSrt(result.segments);
+        break;
+      case 'vtt':
+        output = formatAsVtt(result.segments);
+        break;
+      case 'text':
+      default:
+        output = result.text;
+        break;
     }
+    
+    return {
+      text: result.text,
+      language: result.language,
+      segments: result.segments,
+      formatted: output,
+      model: propsValue.model,
+    };
   },
 });
 

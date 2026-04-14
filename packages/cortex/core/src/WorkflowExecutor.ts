@@ -1278,12 +1278,16 @@ export class WorkflowExecutor {
       this.logger.info(`Node ${node.id} executed successfully`);
 
     } catch (error: any) {
+      // Handle different error types
+      const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
       this.logger.error(`Node ${node.id} failed`, { 
-        error: error.message, 
+        error: errorMsg, 
+        errorType: typeof error,
+        errorObj: error,
         inputs: fullParams 
       });
       result.success = false;
-      result.error = error.message;
+      result.error = errorMsg;
     }
 
     result.duration = Date.now() - startTime;

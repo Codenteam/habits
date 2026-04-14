@@ -25,7 +25,24 @@ function parseHabitSchema(habitYaml) {
   // Check for explicit input schema (new format)
   if (Array.isArray(habitYaml.input)) {
     schema.hasExplicitSchema = true;
-    schema.inputs = habitYaml.input.map(normalizeInputField);
+    schema.inputs = habitYaml.input.map(normalizeInputField).filter(Boolean);
+  } else if (habitYaml.input && typeof habitYaml.input === 'object') {
+    // OpenAPI-style object format: { type: 'object', properties: { ... }, required: [...] }
+    if (habitYaml.input.properties && typeof habitYaml.input.properties === 'object') {
+      schema.hasExplicitSchema = true;
+      const requiredFields = Array.isArray(habitYaml.input.required) ? habitYaml.input.required : [];
+      schema.inputs = Object.entries(habitYaml.input.properties).map(([id, propDef]) => {
+        // propDef is { type: string, description?: string, ... }
+        return normalizeInputField({
+          id,
+          type: propDef.type || 'string',
+          description: propDef.description || '',
+          default: propDef.default,
+          required: requiredFields.includes(id),
+          options: propDef.enum || [],
+        });
+      }).filter(Boolean);
+    }
   } else {
     // Fallback: infer inputs from {{habits.input.*}} references in nodes
     schema.inputs = inferInputsFromNodes(habitYaml.nodes || []);
@@ -33,7 +50,7 @@ function parseHabitSchema(habitYaml) {
 
   // Check for explicit env schema (new format)
   if (Array.isArray(habitYaml.env)) {
-    schema.env = habitYaml.env.map(normalizeEnvField);
+    schema.env = habitYaml.env.map(normalizeEnvField).filter(Boolean);
   } else {
     // Fallback: infer env from {{habits.env.*}} references
     schema.env = inferEnvFromNodes(habitYaml.nodes || []);
@@ -73,6 +90,8 @@ function parseHabitSchema(habitYaml) {
 function normalizeInputField(field) {
   // Support both 'id' and 'name' for the field identifier
   const id = field.id || field.name;
+  // Guard: skip invalid fields without id
+  if (!id) return null;
   // Support both 'displayName' and 'label' for the display label
   const displayName = field.displayName || field.label || formatDisplayName(id);
   
@@ -98,6 +117,8 @@ function normalizeInputField(field) {
 function normalizeEnvField(field) {
   // Support both 'id' and 'name' for the field identifier
   const id = field.id || field.name;
+  // Guard: skip invalid fields without id
+  if (!id) return null;
   // Support both 'displayName' and 'label' for the display label
   const displayName = field.displayName || field.label || formatDisplayName(id);
   
@@ -118,6 +139,8 @@ function normalizeEnvField(field) {
 function normalizeOutputField(field) {
   // Support both 'id' and 'name' for the field identifier
   const id = field.id || field.name;
+  // Guard: skip invalid fields without id
+  if (!id) return null;
   // Support both 'displayName' and 'label' for the display label
   const displayName = field.displayName || field.label || formatDisplayName(id);
   
