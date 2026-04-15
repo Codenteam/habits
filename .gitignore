@@ -39,8 +39,6 @@ docs/public/downloads/*.zip
 docs/.vitepress/.temp
 docs/.vitepress/theme/data/
 docs/public/showcase
-docs/showcase
-docs/bits
 planning
 
 
