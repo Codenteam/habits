@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Sparkles } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-intersect']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-intersect"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Sparkles" :size="32" class="inline-icon" /> Intersect
@@ -13,7 +31,7 @@ import { Sparkles } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-intersect`</span>
   <span class="bit-version">v0.1.14</span>
-  <span class="bit-downloads">📥 1.4K downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-intersect">📥 <span class="download-count">1.4K</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">intersect</span> <span class="bit-category">openai</span> <span class="bit-category">ai</span></span>
 </div>
 

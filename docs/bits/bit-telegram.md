@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Send } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-telegram']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-telegram"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Send" :size="32" class="inline-icon" /> Telegram
@@ -13,7 +31,7 @@ import { Send } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-telegram`</span>
   <span class="bit-version">v1.0.2</span>
-  
+  <span class="bit-downloads" data-package="@ha-bits/bit-telegram">📥 <span class="download-count">328</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">telegram</span> <span class="bit-category">bot</span> <span class="bit-category">messaging</span> <span class="bit-category">notifications</span></span>
 </div>
 

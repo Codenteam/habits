@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Server } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-httpbin']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-httpbin"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Server" :size="32" class="inline-icon" /> HTTPBin
@@ -13,7 +31,7 @@ import { Server } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-httpbin`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads">📥 70 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-httpbin">📥 <span class="download-count">-</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">httpbin</span> <span class="bit-category">declarative</span> <span class="bit-category">api</span></span>
 </div>
 

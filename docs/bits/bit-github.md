@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Github } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-github']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-github"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Github" :size="32" class="inline-icon" /> GitHub
@@ -13,7 +31,7 @@ import { Github } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-github`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads">📥 209 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-github">📥 <span class="download-count">209</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">github</span> <span class="bit-category">pull-requests</span> <span class="bit-category">issues</span> <span class="bit-category">repositories</span></span>
 </div>
 

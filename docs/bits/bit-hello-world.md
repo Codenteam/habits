@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Hand } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-hello-world']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-hello-world"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Hand" :size="32" class="inline-icon" /> Hello World
@@ -13,7 +31,7 @@ import { Hand } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-hello-world`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads">📥 213 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-hello-world">📥 <span class="download-count">213</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">hello-world</span> <span class="bit-category">demo</span></span>
 </div>
 

@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Mail } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-email']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-email"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Mail" :size="32" class="inline-icon" /> Email (IMAP/SMTP)
@@ -13,7 +31,7 @@ import { Mail } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-email`</span>
   <span class="bit-version">v1.0.4</span>
-  <span class="bit-downloads">📥 584 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-email">📥 <span class="download-count">584</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">email</span> <span class="bit-category">imap</span> <span class="bit-category">smtp</span> <span class="bit-category">mail</span> <span class="bit-category">nodemailer</span></span>
 </div>
 

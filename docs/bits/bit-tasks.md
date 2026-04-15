@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Package } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-tasks']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-tasks"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Package" :size="32" class="inline-icon" /> Tasks / Tickets
@@ -13,7 +31,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-tasks`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads">📥 217 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-tasks">📥 <span class="download-count">217</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">tasks</span> <span class="bit-category">jira</span> <span class="bit-category">asana</span> <span class="bit-category">tickets</span></span>
 </div>
 

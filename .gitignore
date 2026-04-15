@@ -36,6 +36,7 @@ certs
 # Docs related stuff
 docs/public/viewer/*
 docs/public/downloads/*.zip
+docs/public/bits-stats.json
 docs/.vitepress/.temp
 docs/.vitepress/theme/data/
 docs/public/showcase

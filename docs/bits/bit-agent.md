@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Bot } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-agent']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-agent"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Bot" :size="32" class="inline-icon" /> Agent
@@ -13,7 +31,7 @@ import { Bot } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-agent`</span>
   <span class="bit-version">v0.1.2</span>
-  <span class="bit-downloads">📥 202 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-agent">📥 <span class="download-count">202</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">agent</span> <span class="bit-category">langchain</span> <span class="bit-category">mcp</span> <span class="bit-category">model-context-protocol</span> <span class="bit-category">ai</span></span>
 </div>
 

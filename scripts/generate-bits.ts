@@ -85,37 +85,17 @@ interface BitData {
 }
 
 // ============================================================================
-// NPM Downloads API
+// Formatting Helpers
 // ============================================================================
 
 /**
- * Fetch lifetime npm downloads for a package
- * Uses npm registry API with a wide date range for "lifetime" downloads
- */
-async function fetchNpmDownloads(packageName: string): Promise<number> {
-  try {
-    // Use a date range from 2015 (when npm started tracking) to today
-    const today = new Date().toISOString().split('T')[0];
-    const url = `https://api.npmjs.org/downloads/point/2015-01-01:${today}/${encodeURIComponent(packageName)}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-      // Package may not be published yet
-      return 0;
-    }
-    
-    const data = await response.json() as { downloads?: number };
-    return data.downloads || 0;
-  } catch (err) {
-    // Silently return 0 if fetch fails (package not published, network error, etc.)
-    return 0;
-  }
-}
-
-/**
  * Format download count for display (e.g., 1234 -> "1.2K", 1234567 -> "1.2M")
+ * Returns "-" for 0 (placeholder when downloads fetched separately)
  */
 function formatDownloads(count: number): string {
+  if (count === 0) {
+    return '-';
+  }
   if (count >= 1_000_000) {
     return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
   }
@@ -123,6 +103,30 @@ function formatDownloads(count: number): string {
     return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
   }
   return count.toString();
+}
+
+/**
+ * Load download stats from bits-stats.json if it exists.
+ * Returns a map of packageName -> downloads count.
+ */
+function loadDownloadStats(): Record<string, number> {
+  const statsPath = join(docsDir, 'public/bits-stats.json');
+  if (!existsSync(statsPath)) {
+    console.log('ℹ️  No bits-stats.json found. Run "npx tsx scripts/update-bits-stats.ts" first for download counts.');
+    return {};
+  }
+  try {
+    const data = JSON.parse(readFileSync(statsPath, 'utf-8'));
+    const stats: Record<string, number> = {};
+    for (const [pkg, info] of Object.entries(data.stats || {})) {
+      stats[pkg] = (info as { downloads: number }).downloads;
+    }
+    console.log(`📊 Loaded download stats for ${Object.keys(stats).length} packages`);
+    return stats;
+  } catch (err) {
+    console.warn('⚠️  Failed to load bits-stats.json:', (err as Error).message);
+    return {};
+  }
 }
 
 // ============================================================================
@@ -595,40 +599,38 @@ async function scanBits(): Promise<BitData[]> {
       console.error(`❌ Error processing ${dir}:`, (err as Error).message);
     }
   }
-  
-  // Fetch npm downloads in parallel for all packages
-  console.log(`\n📊 Fetching npm download stats for ${bitCandidates.length} packages...`);
-  const downloadPromises = bitCandidates.map(({ packageJson }) => 
-    fetchNpmDownloads(packageJson.name)
-  );
-  const downloadCounts = await Promise.all(downloadPromises);
-  
-  // Second pass: build BitData with downloads
+
+  // Load download stats from bits-stats.json (if available)
+  const downloadStats = loadDownloadStats();
+
+  // Build BitData for each candidate
   for (let i = 0; i < bitCandidates.length; i++) {
     const { packageJson, bitPath } = bitCandidates[i];
-    const downloads = downloadCounts[i];
-    
+
     try {
       const habitsConfig = packageJson.habits || {};
-      
+
       // Extract categories from keywords
       const categories = extractCategories(packageJson.keywords);
-      
+
       // Parse index.ts for actions/triggers
       const parsedIndex = parseIndexTs(bitPath);
-      
+
       // Get icon
       const icon = getIcon(habitsConfig, categories);
-      
+
       // Create slug from package name
       const slug = packageJson.name.replace('@ha-bits/', '');
-      
+
       // Find showcases using this bit
       const showcases = findShowcasesUsingBit(packageJson.name);
-      
+
       // Check for README
       const hasReadme = existsSync(join(bitPath, 'README.md'));
-      
+
+      // Get downloads from stats (or 0 if not available)
+      const downloads = downloadStats[packageJson.name] || 0;
+
       const bitData: BitData = {
         slug,
         packageName: packageJson.name,
@@ -645,10 +647,9 @@ async function scanBits(): Promise<BitData[]> {
         hasReadme,
         downloads,
       };
-      
+
       bits.push(bitData);
-      const downloadsStr = downloads > 0 ? `, ${formatDownloads(downloads)} downloads` : '';
-      console.log(`✅ ${bitData.displayName}: ${bitData.actions.length} actions, ${bitData.triggers.length} triggers, ${showcases.length} showcases${downloadsStr}`);
+      console.log(`✅ ${bitData.displayName}: ${bitData.actions.length} actions, ${bitData.triggers.length} triggers, ${showcases.length} showcases`);
       
     } catch (err) {
       console.error(`❌ Error processing ${packageJson.name}:`, (err as Error).message);
@@ -736,12 +737,10 @@ ${bit.triggers.map(t => `| **${t.displayName}** | ${t.description} |`).join('\n'
 ${bit.showcases.map(s => `- [${s}](/showcase/${s})`).join('\n')}
 `
     : '';
-  
-  // Downloads badge (only show if > 0)
-  const downloadsBadge = bit.downloads > 0
-    ? `<span class="bit-downloads">📥 ${formatDownloads(bit.downloads)} downloads</span>`
-    : '';
-  
+
+  // Downloads badge (always show for SEO, JS will update with real values)
+  const downloadsBadge = `<span class="bit-downloads" data-package="${bit.packageName}">📥 <span class="download-count">${formatDownloads(bit.downloads)}</span> downloads</span>`;
+
   return `---
 title: "${bit.displayName}"
 description: "${bit.description}"
@@ -750,6 +749,24 @@ aside: false
 
 <script setup>
 import { ${bit.icon} } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(\`\${base}bits-stats.json\`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['${bit.packageName}']
+      if (stats) {
+        const el = document.querySelector('[data-package="${bit.packageName}"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="${bit.icon}" :size="32" class="inline-icon" /> ${bit.displayName}
@@ -944,42 +961,28 @@ async function main(): Promise<void> {
   
   // Scan for bits (includes npm download fetching)
   const bits = await scanBits();
-  
+
   if (bits.length === 0) {
     console.log('\n⚠️  No eligible bits found.');
     console.log('   Bits need package.json with habits.catalog: true (or omitted)');
     process.exit(0);
   }
-  
-  // Report total downloads
-  const totalDownloads = bits.reduce((sum, b) => sum + b.downloads, 0);
-  console.log(`\n📦 Found ${bits.length} bits (${formatDownloads(totalDownloads)} total npm downloads)`);
-  
+
+  console.log(`\n📦 Found ${bits.length} bits`);
+
   // Generate data file for Vue components
   generateDataFile(bits);
-  
+
   // Generate markdown pages
   generateMarkdownFiles(bits);
-  
+
   // Print sidebar config
   printSidebarConfig(bits);
-  
-  // Print downloads summary
-  console.log('\n📊 NPM Downloads Summary:');
-  console.log('─'.repeat(50));
-  const sortedByDownloads = [...bits].sort((a, b) => b.downloads - a.downloads);
-  for (const bit of sortedByDownloads) {
-    const downloadsStr = bit.downloads > 0 
-      ? formatDownloads(bit.downloads).padStart(8) 
-      : '      -';
-    console.log(`  ${downloadsStr}  ${bit.displayName}`);
-  }
-  console.log('─'.repeat(50));
-  console.log(`     Total: ${formatDownloads(totalDownloads)} downloads`);
-  
+
   console.log('\n✨ Bits documentation generation complete!');
   console.log(`   ${bits.length} bits processed`);
   console.log(`   Output: docs/bits/`);
+  console.log(`\n💡 Run "npx tsx scripts/update-bits-stats.ts" to fetch npm download stats`);
 }
 
 main().catch(err => {

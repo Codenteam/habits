@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Package } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-google-sheets']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-google-sheets"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Package" :size="32" class="inline-icon" /> Google Sheets
@@ -13,7 +31,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-google-sheets`</span>
   <span class="bit-version">v1.0.0</span>
-  <span class="bit-downloads">📥 63 downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-google-sheets">📥 <span class="download-count">63</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">google-sheets</span> <span class="bit-category">spreadsheet</span> <span class="bit-category">google</span></span>
 </div>
 

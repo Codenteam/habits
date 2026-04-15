@@ -6,6 +6,24 @@ aside: false
 
 <script setup>
 import { Package } from 'lucide-vue-next'
+import { onMounted } from 'vue'
+import { useData } from 'vitepress'
+
+onMounted(async () => {
+  try {
+    const { site } = useData()
+    const base = site.value.base || '/'
+    const res = await fetch(`${base}bits-stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      const stats = data.stats['@ha-bits/bit-google-drive']
+      if (stats) {
+        const el = document.querySelector('[data-package="@ha-bits/bit-google-drive"] .download-count')
+        if (el) el.textContent = stats.downloadsFormatted
+      }
+    }
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 # <component :is="Package" :size="32" class="inline-icon" /> Google Drive
@@ -13,7 +31,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-google-drive`</span>
   <span class="bit-version">v1.0.0</span>
-  
+  <span class="bit-downloads" data-package="@ha-bits/bit-google-drive">📥 <span class="download-count">-</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">google-drive</span> <span class="bit-category">cloud-storage</span> <span class="bit-category">file-hosting</span> <span class="bit-category">oauth2</span></span>
 </div>
 
