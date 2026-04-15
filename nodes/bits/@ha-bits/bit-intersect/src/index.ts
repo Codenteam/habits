@@ -32,6 +32,7 @@ export const intersect = createBit({
   description: 'Use Intersect AI tools including ChatGPT, Gemini, Claude for text generaiton, image generation, Website Generation, Document drafts generations, Vector designs and more.',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'lucide:Sparkles',
+  runtime: 'all',
   categories: [],
   auth: intersectAuth,
   actions: [

@@ -8,21 +8,20 @@ description: Download and install an AI model from HuggingFace or direct URL
 input:
   type: object
   properties:
-    modelUrl:
-      type: string
-      description: URL to download the model from
     modelName:
       type: string
-      description: Name for the installed model
+      description: Known model name (e.g., qwen2-0.5b, blip, sd-1.5) or custom name when URL is provided
+    modelUrl:
+      type: string
+      description: URL to download from. Not needed for known models.
     modelType:
       type: string
-      enum: [text-gen, image-gen, whisper, tts, caption, vision, other]
-      description: Type of model (determines installation directory)
+      enum: [text-gen, diffusion, whisper, tts, caption, other]
+      description: Type of model (auto-detected for known models)
     overwrite:
       type: boolean
       description: Overwrite if model already exists
   required:
-    - modelUrl
     - modelName
 
 nodes:
@@ -36,8 +35,8 @@ nodes:
       label: Install Model
       isTrigger: false
       params:
-        modelUrl: "{{habits.input.modelUrl}}"
         modelName: "{{habits.input.modelName}}"
+        modelUrl: "{{habits.input.modelUrl || ''}}"
         modelType: "{{habits.input.modelType || 'text-gen'}}"
         overwrite: "{{habits.input.overwrite || false}}"
 

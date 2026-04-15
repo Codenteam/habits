@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permission to send SMS -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <!-- Permission to read SMS -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- Permission to receive SMS (optional, for real-time notifications) -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+</manifest>

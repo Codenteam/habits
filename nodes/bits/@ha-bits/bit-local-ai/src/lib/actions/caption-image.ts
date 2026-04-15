@@ -4,17 +4,13 @@
  * Similar to OpenAI's Vision API - generates captions/descriptions for images using local BLIP models.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const process: any;
+declare const Buffer: any;
+
 import { createAction, Property } from '@ha-bits/cortex-core';
-import { 
-  localAiAuth, 
-  LocalAiAuthValue, 
-  getModelPath,
-  DeviceType 
-} from '../common/common';
-import { ImageCaptionConfig } from '../common/models';
-import { getBackend } from '../stubs';
-import * as path from 'path';
-import * as os from 'os';
+import { localAiAuth, LocalAiAuthValue, DeviceType } from '../common/common';
+import { captionImage as captionImageDriver } from '../driver';
 
 /**
  * Image captioning model presets
@@ -74,89 +70,53 @@ export const captionImage = createAction({
   },
   async run({ auth, propsValue }) {
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
-    const backend = getBackend();
+    const env = typeof process !== 'undefined' ? process.env : {};
+    const device = authValue.device || (env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
     
-    // Use defaults if auth not configured
-    const modelsBasePath = authValue.modelsBasePath || process.env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
-    const device = authValue.device || (process.env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
-    
-    // Resolve home directory
-    const resolvedBasePath = modelsBasePath.startsWith('~') 
-      ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
-      : modelsBasePath;
-    
-    // Determine model paths
-    let modelPath: string;
-    let tokenizerPath: string;
-    
-    if (propsValue.model === 'custom') {
-      if (!propsValue.customModelPath || !propsValue.customTokenizerPath) {
-        throw new Error('Custom model requires both model path and tokenizer path to be specified');
-      }
-      modelPath = propsValue.customModelPath;
-      tokenizerPath = propsValue.customTokenizerPath;
-    } else {
-      modelPath = getModelPath(resolvedBasePath, 'caption', propsValue.model, 'model.gguf');
-      tokenizerPath = getModelPath(resolvedBasePath, 'caption', propsValue.model, 'tokenizer.json');
-    }
-    
-    // Handle image input
-    let imagePath: string;
-    let tempImagePath: string | null = null;
+    // Handle image input - convert to base64
+    let imageBase64: string;
     
     if (propsValue.imagePath) {
-      // Use provided image path directly
-      imagePath = propsValue.imagePath;
+      if (propsValue.imagePath.startsWith('data:image/')) {
+        const matches = propsValue.imagePath.match(/^data:image\/([\w+-]+);base64,(.+)$/);
+        if (matches) {
+          imageBase64 = matches[2];
+        } else {
+          throw new Error('Invalid base64 image data URL format');
+        }
+      } else {
+        const fsModule: any = await import('fs');
+        const imageBuffer = fsModule.readFileSync(propsValue.imagePath);
+        imageBase64 = imageBuffer.toString('base64');
+      }
     } else if (propsValue.image) {
-      // Write uploaded image to temp file
-      const imageFile = propsValue.image as { filename: string; data: Buffer; extension?: string };
-      const fs = await import('fs');
-      const tmpDir = os.tmpdir();
-      tempImagePath = path.join(tmpDir, `image_${Date.now()}.${imageFile.extension || 'jpg'}`);
-      fs.writeFileSync(tempImagePath, new Uint8Array(imageFile.data));
-      imagePath = tempImagePath;
+      const imageFile = propsValue.image as { filename: string; data: any; extension?: string };
+      imageBase64 = Buffer.from(imageFile.data).toString('base64');
     } else {
       throw new Error('Either Image or Image Path must be provided');
     }
     
-    try {
-      // Configure image captioning
-      const config: ImageCaptionConfig = {
-        modelPath,
-        tokenizerPath,
-        seed: propsValue.seed,
-        device: device as DeviceType,
-      };
-      
-      // Generate caption
-      const result = await backend.captionImage(config, imagePath);
-      
-      // If a prompt was provided, prepend it to make it look more like a description
-      let caption = result.caption;
-      // Check if prompt is a valid value (not an unresolved template)
-      const isValidPrompt = propsValue.prompt && 
-        !propsValue.prompt.includes('{{') && 
-        !propsValue.prompt.startsWith('habits.');
-      if (isValidPrompt) {
-        // The BLIP model uses the prompt as a prefix
-        caption = `${propsValue.prompt} ${caption}`;
-      }
-      
-      return {
-        caption: caption,
-        tokensGenerated: result.tokensGenerated,
-        model: propsValue.model,
-      };
-    } finally {
-      // Clean up temp file if we created one
-      if (tempImagePath) {
-        try {
-          const fs = await import('fs');
-          fs.unlinkSync(tempImagePath);
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      }
+    // Generate caption via driver
+    const result = await captionImageDriver(propsValue.model, imageBase64, {
+      seed: propsValue.seed,
+      device,
+      customModelPath: propsValue.customModelPath,
+      customTokenizerPath: propsValue.customTokenizerPath,
+    });
+    
+    // Prepend prompt if provided
+    let caption = result.caption;
+    const isValidPrompt = propsValue.prompt && 
+      !propsValue.prompt.includes('{{') && 
+      !propsValue.prompt.startsWith('habits.');
+    if (isValidPrompt) {
+      caption = `${propsValue.prompt} ${caption}`;
     }
+    
+    return {
+      caption,
+      tokensGenerated: result.tokensGenerated,
+      model: propsValue.model,
+    };
   },
 });

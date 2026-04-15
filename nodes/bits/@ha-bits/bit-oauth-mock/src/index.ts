@@ -64,6 +64,7 @@ const oauthMockBit = {
   displayName: 'OAuth Mock',
   description: 'Mock OAuth2 integration for testing OAuth2 PKCE authentication',
   logoUrl: 'lucide:Key',
+  runtime: 'all',
   
   // OAuth2 PKCE authentication configuration
   // This tells the system to use OAuth2 PKCE flow with the mock server

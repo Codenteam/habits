@@ -222,6 +222,13 @@ export interface BitsPiece {
   displayName: string;
   description?: string;
   logoUrl?: string;
+  /**
+   * Runtime environment where this bit can execute.
+   * - 'app': Mobile/desktop Tauri app only (requires native plugins)
+   * - 'server': Server-side only (Node.js environment)
+   * - 'all': Works in both environments (default)
+   */
+  runtime?: 'app' | 'server' | 'all';
   auth?: any;
   /** Get all routines provided by this bit */
   routines: () => Record<string, BitsRoutine>;
@@ -286,6 +293,8 @@ export interface BitsExecutionResult {
  * Also supports declarative nodes that have a description with routing.
  */
 export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
+  logger.log(`[extractBitsPieceFromModule] loadedModule: ${loadedModule ? typeof loadedModule : 'null/undefined'}`);
+  logger.log(`[extractBitsPieceFromModule] loadedModule keys: ${loadedModule ? Object.keys(loadedModule).slice(0, 20).join(', ') : 'none'}`);
   // First, check if this is a declarative node (with routing)
   const declarativeNode = extractDeclarativeNode(loadedModule);
   if (declarativeNode) {
@@ -302,12 +311,15 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
     // Check direct properties
     for (const key of Object.keys(loadedModule)) {
       const exported = loadedModule[key];
+      logger.log(`[extractBitsPieceFromModule] checking key "${key}", type: ${typeof exported}`);
       if (exported && typeof exported === 'object') {
         // Check if it has routines/actions and cues/triggers (either as functions or objects)
         const hasRoutines = 'routines' in exported || 'actions' in exported;
         const hasCues = 'cues' in exported || 'triggers' in exported;
+        logger.log(`[extractBitsPieceFromModule] key "${key}" hasRoutines:${hasRoutines} hasCues:${hasCues}`);
         if (hasRoutines && hasCues) {
           piece = exported;
+          logger.log(`[extractBitsPieceFromModule] Found piece: ${piece.displayName}, actions type: ${typeof piece.actions}, is array: ${Array.isArray(piece.actions)}`);
           break;
         }
       }
@@ -540,6 +552,7 @@ export async function pieceFromModule(moduleDefinition: ModuleDefinition): Promi
 
   logger.log(`📦 Bits module ready at: ${mainFilePath}`);
 
+  const process = await import('process');
   // Save current working directory and change to module directory for proper resolution
   const originalCwd = process.cwd();
   const moduleDir = path.dirname(mainFilePath);
@@ -579,15 +592,25 @@ async function executeGenericBitsPiece(
   moduleDefinition: ModuleDefinition
 ): Promise<BitsExecutionResult> {
   try {
+    logger.log(`[executeGenericBitsPiece] Starting execution for ${moduleDefinition.repository}`);
     const piece = await pieceFromModule(moduleDefinition);
+
+    logger.log(`[executeGenericBitsPiece] piece.displayName: ${piece.displayName}`);
+    logger.log(`[executeGenericBitsPiece] piece.actions type: ${typeof piece.actions}`);
 
     logger.log(`🚀 Executing Bits piece: ${piece.displayName}`);
     const actionName = params.params.operation;
     const pieceActions = piece.actions();
+
+    logger.log(`[executeGenericBitsPiece] pieceActions type: ${typeof pieceActions}, isArray: ${Array.isArray(pieceActions)}`);
+    logger.log(`[executeGenericBitsPiece] pieceActions keys: ${pieceActions ? Object.keys(pieceActions).join(', ') : 'null'}`);
+
     logger.log(`Available actions: ${Object.keys(pieceActions).join(', ')}`);
     logger.log(`Requested action: ${actionName}`);
     
     const action = pieceActions[actionName];
+
+    logger.log(`[executeGenericBitsPiece] action lookup result: ${action ? action.displayName || action.name : 'undefined'}`);
 
     // If action is not found, throw error with available actions
     if (!action) {
@@ -764,7 +787,9 @@ export async function executeBitsModule(params: BitsExecutionParams): Promise<Bi
   try {
     return await executeGenericBitsPiece(params, moduleDefinition);
   } catch (error: any) {
-    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${error.message}`);
+    // Handle different error types
+    const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+    throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${errorMsg}`);
   }
 }
 

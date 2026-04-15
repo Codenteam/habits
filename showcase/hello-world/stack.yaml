@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Hello World"
 workflows:
   - id: hello-world
     path: ./habit.yaml
@@ -6,9 +7,7 @@ workflows:
   - id: hello-world-env
     path: ./habit-env.yaml
     enabled: true
-  - id: hello-world-file-watcher
-    path: ./file-watcher.yaml
-    enabled: true
+    
 server:
   port: 13000
   host: "0.0.0.0"

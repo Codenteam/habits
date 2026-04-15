@@ -110,12 +110,108 @@ const listModels = createAction({
           { value: 'whisper', label: 'Audio Transcription (Whisper)' },
           { value: 'tts', label: 'Text-to-Speech' },
           { value: 'caption', label: 'Image Captioning (BLIP)' },
+          { value: 'vision', label: 'Vision Models' },
         ],
       },
     }),
   },
   async run({ auth, propsValue }) {
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
+    
+    // Check if running in Tauri environment - use native plugin
+    const tauri = typeof window !== 'undefined' ? (window as any).__TAURI__ : null;
+    if (tauri && tauri.core && tauri.core.invoke) {
+      console.log('[bit-local-ai] Using Tauri local-ai plugin for list_models');
+      try {
+        const result = await tauri.core.invoke('plugin:local-ai|list_models');
+        console.log('[bit-local-ai] local-ai plugin returned:', result);
+        
+        // Transform result to match expected format
+        const models: Array<{
+          id: string;
+          name: string;
+          category: string;
+          path: string;
+          size: number;
+        }> = [];
+        
+        // Add text models
+        if (result.textModels) {
+          for (const m of result.textModels) {
+            models.push({
+              id: m.id,
+              name: m.name,
+              category: 'text-gen',
+              path: m.path || '',
+              size: m.size || 0,
+            });
+          }
+        }
+        
+        // Add diffusion models
+        if (result.diffusionModels) {
+          for (const m of result.diffusionModels) {
+            models.push({
+              id: m.id,
+              name: m.name,
+              category: 'diffusion',
+              path: m.path || '',
+              size: m.size || 0,
+            });
+          }
+        }
+        
+        // Add caption models
+        if (result.captionModels) {
+          for (const m of result.captionModels) {
+            models.push({
+              id: m.id,
+              name: m.name,
+              category: 'caption',
+              path: m.path || '',
+              size: m.size || 0,
+            });
+          }
+        }
+        
+        // Add whisper models
+        if (result.whisperModels) {
+          for (const m of result.whisperModels) {
+            models.push({
+              id: m.id,
+              name: m.name,
+              category: 'whisper',
+              path: m.path || '',
+              size: m.size || 0,
+            });
+          }
+        }
+        
+        // Add tts models
+        if (result.ttsModels) {
+          for (const m of result.ttsModels) {
+            models.push({
+              id: m.id,
+              name: m.name,
+              category: 'tts',
+              path: m.path || '',
+              size: m.size || 0,
+            });
+          }
+        }
+        
+        return {
+          models,
+          totalCount: models.length,
+          basePath: result.modelsDir || '',
+        };
+      } catch (e) {
+        console.error('[bit-local-ai] local-ai plugin error:', e);
+        // Fall through to filesystem approach
+      }
+    }
+    
+    // Node.js / server-side approach using fs
     const fs = await import('fs');
     const path = await import('path');
     
@@ -127,6 +223,7 @@ const listModels = createAction({
       name: string;
       category: string;
       path: string;
+      size: number;
     }> = [];
     
     // Check if category is a valid value (not an unresolved template expression)
@@ -136,13 +233,59 @@ const listModels = createAction({
     
     const categories = isValidCategory
       ? [propsValue.category] 
-      : ['text-gen', 'image-gen', 'whisper', 'tts', 'caption'];
+      : ['text-gen', 'image-gen', 'whisper', 'tts', 'caption', 'vision', 'diffusion'];
     
     // Resolve home directory
     const resolvedBasePath = modelsBasePath.startsWith('~') 
       ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
       : modelsBasePath;
     
+    // Helper to get file/directory size
+    const getSize = (filePath: string): number => {
+      try {
+        const stat = fs.statSync(filePath);
+        if (stat.isFile()) return stat.size;
+        // For directories, sum up all files
+        let total = 0;
+        const entries = fs.readdirSync(filePath, { withFileTypes: true });
+        for (const entry of entries) {
+          total += getSize(path.join(filePath, entry.name));
+        }
+        return total;
+      } catch {
+        return 0;
+      }
+    };
+    
+    // First, scan for GGUF files directly in the base path (text-gen models)
+    try {
+      if (fs.existsSync(resolvedBasePath)) {
+        const baseEntries = fs.readdirSync(resolvedBasePath, { withFileTypes: true });
+        
+        for (const entry of baseEntries) {
+          const fullPath = path.join(resolvedBasePath, entry.name);
+          
+          if (entry.isFile() && entry.name.toLowerCase().endsWith('.gguf')) {
+            // GGUF files are text-gen models
+            const size = getSize(fullPath);
+            if (size > 0) {
+              const modelName = entry.name.replace(/\.gguf$/i, '');
+              models.push({
+                id: modelName,
+                name: modelName,
+                category: 'text-gen',
+                path: fullPath,
+                size,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`Could not scan base path ${resolvedBasePath}:`, e);
+    }
+    
+    // Then scan category subdirectories
     for (const category of categories) {
       const categoryPath = path.join(resolvedBasePath, category);
       
@@ -151,12 +294,29 @@ const listModels = createAction({
           const entries = fs.readdirSync(categoryPath, { withFileTypes: true });
           
           for (const entry of entries) {
+            const fullPath = path.join(categoryPath, entry.name);
+            const size = getSize(fullPath);
+            
+            // Skip empty directories
+            if (size === 0) continue;
+            
             if (entry.isDirectory()) {
               models.push({
                 id: `${category}/${entry.name}`,
                 name: entry.name,
                 category,
-                path: path.join(categoryPath, entry.name),
+                path: fullPath,
+                size,
+              });
+            } else if (entry.isFile() && (entry.name.endsWith('.gguf') || entry.name.endsWith('.bin') || entry.name.endsWith('.safetensors'))) {
+              // Also include model files directly in category folders
+              const modelName = entry.name.replace(/\.(gguf|bin|safetensors)$/i, '');
+              models.push({
+                id: `${category}/${modelName}`,
+                name: modelName,
+                category,
+                path: fullPath,
+                size,
               });
             }
           }

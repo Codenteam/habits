@@ -1,0 +1,12 @@
+[default]
+description = "Default permissions for the Matter smart home plugin"
+permissions = [
+    "allow-discover-devices",
+    "allow-get-devices",
+    "allow-get-device-state",
+    "allow-set-on-off",
+    "allow-set-level",
+    "allow-set-color",
+    "allow-commission-device",
+    "allow-remove-device"
+]

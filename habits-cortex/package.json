@@ -4,14 +4,17 @@
   "description": "Habits Cortex - Run habit workflows locally",
   "scripts": {
     "tauri": "tauri",
-    "dev": "tauri dev",
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "build": "tauri build",
+    "build:debug": "tauri build --debug --config src-tauri/tauri.debug.conf.json",
     "android:init": "tauri android init",
-    "android:dev": "tauri android dev",
+    "android:dev": "tauri android dev --config src-tauri/tauri.dev.conf.json",
     "android:build": "tauri android build",
+    "android:build:debug": "tauri android build --debug --config src-tauri/tauri.debug.conf.json",
     "ios:init": "tauri ios init",
-    "ios:dev": "tauri ios dev",
+    "ios:dev": "tauri ios dev --config src-tauri/tauri.dev.conf.json",
     "ios:build": "tauri ios build",
+    "ios:build:debug": "tauri ios build --debug --config src-tauri/tauri.debug.conf.json",
     "sign:debug": "apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android --out src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
   },
   "devDependencies": {

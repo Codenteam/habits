@@ -1,0 +1,89 @@
+{
+  "name": "@ha-bits/bit-system-settings",
+  "version": "1.0.0",
+  "description": "System settings control bit for mobile apps (volume, Bluetooth, DND)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./driver": {
+      "types": "./dist/driver.d.ts",
+      "default": "./dist/driver.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "license": "MIT",
+  "keywords": [
+    "habits",
+    "bit",
+    "system",
+    "settings",
+    "volume",
+    "bluetooth",
+    "dnd",
+    "mobile",
+    "tauri"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@ha-bits/cortex-core": "*"
+  },
+  "files": [
+    "dist",
+    "src/stubs"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-system-settings/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "featured": true,
+    "stubs": {
+      "@ha-bits/bit-system-settings/driver": "./src/stubs/tauri-driver.js"
+    },
+    "tauriPlugins": {
+      "system-settings": {
+        "cargo": "tauri-plugin-system-settings = { path = \"../tauri-plugin-system-settings\" }",
+        "init": "tauri_plugin_system_settings::init()",
+        "permissions": [
+          "system-settings:default",
+          "system-settings:allow-get-volume",
+          "system-settings:allow-set-volume",
+          "system-settings:allow-set-mute",
+          "system-settings:allow-get-ringer-mode",
+          "system-settings:allow-set-ringer-mode",
+          "system-settings:allow-get-bluetooth-state",
+          "system-settings:allow-set-bluetooth",
+          "system-settings:allow-get-dnd-state",
+          "system-settings:allow-set-dnd"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# Build artifacts
+target/
+dist-js/
+
+# Dependencies
+node_modules/
+Cargo.lock
+
+# IDE
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Generated
+*.log

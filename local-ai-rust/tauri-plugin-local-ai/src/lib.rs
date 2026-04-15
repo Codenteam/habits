@@ -29,28 +29,48 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::text_generator_generate,
             // Image captioning
             commands::caption_image,
+            commands::caption_image_base64,
             commands::create_image_captioner,
             commands::image_captioner_caption,
             // Image generation
             commands::generate_image,
+            commands::generate_image_base64,
             commands::create_image_generator,
             commands::image_generator_generate,
             // Audio transcription
             commands::transcribe_audio,
+            commands::transcribe_audio_base64,
             commands::create_transcriber,
             commands::transcriber_transcribe,
             // Text to voice
             commands::synthesize_speech,
+            commands::synthesize_speech_base64,
             commands::create_voice_synthesizer,
             commands::voice_synthesizer_synthesize,
             // Utilities
             commands::get_version,
             commands::has_metal_support,
             commands::has_cuda_support,
+            // Model management
+            commands::list_models,
+            commands::ensure_models_dir,
+            commands::download_file,
         ])
         .setup(|app, _api| {
-            // Initialize the state manager
-            app.manage(LocalAiState::default());
+            // Get the app data directory from Tauri's path resolver
+            let models_dir = app.path()
+                .app_data_dir()
+                .unwrap_or_else(|_| {
+                    dirs::data_dir()
+                        .unwrap_or_else(|| std::path::PathBuf::from("."))
+                        .join("com.codenteam-oss.habits")
+                })
+                .join("models");
+            
+            log::info!("Local AI plugin initialized with models dir: {:?}", models_dir);
+            
+            // Initialize the state manager with the correct models directory
+            app.manage(LocalAiState::new(models_dir));
             Ok(())
         })
         .build()

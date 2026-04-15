@@ -1,0 +1,48 @@
+id: geofence-departure-sms
+name: Send SMS on Geofence Departure
+description: Automatically send an SMS notification when leaving a location
+
+# Configuration - user sets their target location and recipient
+config:
+  location_name: "Work"
+  target_latitude: 37.7749  # Example coordinates
+  target_longitude: -122.4194
+  geofence_radius: 100  # meters
+  recipient_phone: "+1234567890"  # Phone number to notify
+
+nodes:
+  # Step 1: (Trigger) Monitor geofence exit
+  - id: geofence-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-location"
+      operation: onGeofenceExit
+      params:
+        geofenceId: "alert-location"
+        latitude: "{{config.target_latitude}}"
+        longitude: "{{config.target_longitude}}"
+        radius: "{{config.geofence_radius}}"
+
+  # Step 2: Send departure SMS
+  - id: send-sms
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sms"
+      operation: sendAlert
+      params:
+        phoneNumber: "{{config.recipient_phone}}"
+        alertType: "departure"
+        location: "{{config.location_name}}"
+
+edges:
+  - source: geofence-trigger
+    target: send-sms
+
+output:
+  trigger: "{{geofence-trigger}}"
+  sms: "{{send-sms}}"
+  message: "Departure notification sent"

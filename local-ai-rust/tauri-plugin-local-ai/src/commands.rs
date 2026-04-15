@@ -1,13 +1,14 @@
 //! Tauri commands for Local AI plugin
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::state::{InstanceId, LocalAiState};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use local_ai_core::{
     device::DeviceType,
     image_caption::{ImageCaptionConfig, ImageCaptionResult, ImageCaptioner},
-    image_gen::{ImageGenConfig, ImageGenResult, ImageGenerator},
+    image_gen::{ImageGenBase64Result, ImageGenConfig, ImageGenResult, ImageGenerator},
     text_gen::{TextGenConfig, TextGenResult, TextGenerator},
-    text_to_voice::{TextToVoiceConfig, TextToVoiceResult, VoiceSynthesizer},
+    text_to_voice::{TextToVoiceBase64Result, TextToVoiceConfig, TextToVoiceResult, VoiceSynthesizer},
     transcribe::{TranscribeConfig, TranscriptionResult, Transcriber, WhisperTask},
 };
 use serde::{Deserialize, Serialize};
@@ -183,6 +184,33 @@ pub fn caption_image(
     Ok(result)
 }
 
+/// Caption an image from base64-encoded bytes
+#[command]
+pub fn caption_image_base64(
+    model_path: String,
+    tokenizer_path: String,
+    image_base64: String,
+    device: Option<JsDeviceType>,
+) -> Result<ImageCaptionResult> {
+    // Strip data URL prefix if present
+    let base64_data = if image_base64.contains(',') {
+        image_base64.split(',').last().unwrap_or(&image_base64)
+    } else {
+        &image_base64
+    };
+    
+    let image_bytes = BASE64.decode(base64_data)
+        .map_err(|e| Error::InvalidInput(format!("Invalid base64 image data: {}", e)))?;
+    
+    let result = local_ai_core::image_caption::caption_image_bytes(
+        &model_path,
+        &tokenizer_path,
+        &image_bytes,
+        device.unwrap_or_default().into(),
+    )?;
+    Ok(result)
+}
+
 #[command]
 pub async fn create_image_captioner(
     state: State<'_, LocalAiState>,
@@ -291,6 +319,39 @@ pub fn generate_image(
     Ok(result)
 }
 
+/// Generate image and return as base64 data URL
+#[command]
+pub fn generate_image_base64(
+    prompt: String,
+    uncond_prompt: Option<String>,
+    unet_path: String,
+    vae_path: String,
+    clip_path: String,
+    tokenizer_path: String,
+    height: Option<usize>,
+    width: Option<usize>,
+    steps: Option<usize>,
+    guidance_scale: Option<f64>,
+    seed: Option<u64>,
+    device: Option<JsDeviceType>,
+) -> Result<ImageGenBase64Result> {
+    let result = local_ai_core::image_gen::generate_image_base64(
+        &prompt,
+        &uncond_prompt.unwrap_or_default(),
+        &unet_path,
+        &vae_path,
+        &clip_path,
+        &tokenizer_path,
+        height.unwrap_or(512),
+        width.unwrap_or(512),
+        steps.unwrap_or(30),
+        guidance_scale.unwrap_or(7.5),
+        seed.unwrap_or(42),
+        device.unwrap_or_default().into(),
+    )?;
+    Ok(result)
+}
+
 #[command]
 pub async fn create_image_generator(
     state: State<'_, LocalAiState>,
@@ -367,6 +428,43 @@ pub fn transcribe_audio(
 ) -> Result<TranscriptionResult> {
     let result = local_ai_core::transcribe::transcribe_audio(
         &audio_path,
+        &model_path,
+        &tokenizer_path,
+        &config_path,
+        quantized.unwrap_or(false),
+        language,
+        task.unwrap_or_default().into(),
+        timestamps.unwrap_or(false),
+        device.unwrap_or_default().into(),
+    )?;
+    Ok(result)
+}
+
+/// Transcribe audio from base64-encoded bytes
+#[command]
+pub fn transcribe_audio_base64(
+    audio_base64: String,
+    model_path: String,
+    tokenizer_path: String,
+    config_path: String,
+    quantized: Option<bool>,
+    language: Option<String>,
+    task: Option<JsWhisperTask>,
+    timestamps: Option<bool>,
+    device: Option<JsDeviceType>,
+) -> Result<TranscriptionResult> {
+    // Strip data URL prefix if present
+    let base64_data = if audio_base64.contains(',') {
+        audio_base64.split(',').last().unwrap_or(&audio_base64)
+    } else {
+        &audio_base64
+    };
+    
+    let audio_bytes = BASE64.decode(base64_data)
+        .map_err(|e| Error::InvalidInput(format!("Invalid base64 audio data: {}", e)))?;
+    
+    let result = local_ai_core::transcribe::transcribe_audio_bytes(
+        &audio_bytes,
         &model_path,
         &tokenizer_path,
         &config_path,
@@ -489,6 +587,39 @@ pub fn synthesize_speech(
     Ok(result)
 }
 
+/// Synthesize speech and return as base64 WAV data URL
+#[command]
+pub fn synthesize_speech_base64(
+    prompt: String,
+    first_stage_path: String,
+    first_stage_meta_path: String,
+    second_stage_path: String,
+    encodec_path: String,
+    spk_emb_path: String,
+    quantized: Option<bool>,
+    guidance_scale: Option<f64>,
+    temperature: Option<f64>,
+    max_tokens: Option<u64>,
+    seed: Option<u64>,
+    device: Option<JsDeviceType>,
+) -> Result<TextToVoiceBase64Result> {
+    let result = local_ai_core::text_to_voice::synthesize_speech_base64(
+        &prompt,
+        &first_stage_path,
+        &first_stage_meta_path,
+        &second_stage_path,
+        &encodec_path,
+        &spk_emb_path,
+        quantized.unwrap_or(false),
+        guidance_scale.unwrap_or(3.0),
+        temperature.unwrap_or(1.0),
+        max_tokens.unwrap_or(2000),
+        seed.unwrap_or(42),
+        device.unwrap_or_default().into(),
+    )?;
+    Ok(result)
+}
+
 #[command]
 pub async fn create_voice_synthesizer(
     state: State<'_, LocalAiState>,
@@ -529,4 +660,284 @@ pub fn has_metal_support() -> bool {
 #[command]
 pub fn has_cuda_support() -> bool {
     cfg!(feature = "cuda")
+}
+
+// ============================================================================
+// Model Management
+// ============================================================================
+
+/// Information about an installed model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelInfo {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub size: u64,
+}
+
+/// Result of listing models
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListModelsResult {
+    pub text_models: Vec<ModelInfo>,
+    pub diffusion_models: Vec<ModelInfo>,
+    pub caption_models: Vec<ModelInfo>,
+    pub whisper_models: Vec<ModelInfo>,
+    pub tts_models: Vec<ModelInfo>,
+    pub models_dir: String,
+}
+
+#[command]
+pub fn list_models(state: State<'_, LocalAiState>) -> Result<ListModelsResult> {
+    let models_dir = &state.models_dir;
+    let mut text_models = Vec::new();
+    let mut diffusion_models = Vec::new();
+    let mut caption_models = Vec::new();
+    let mut whisper_models = Vec::new();
+    let mut tts_models = Vec::new();
+    
+    // Helper to scan a subdirectory for model files (GGUF and SafeTensors)
+    fn scan_model_dir(dir: &std::path::Path) -> Vec<ModelInfo> {
+        let mut models = Vec::new();
+        if dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        // Look for model files inside subdirectory (model.gguf OR model.safetensors)
+                        let gguf_file = path.join("model.gguf");
+                        let safetensors_file = path.join("model.safetensors");
+                        let model_file = if gguf_file.exists() {
+                            Some(gguf_file)
+                        } else if safetensors_file.exists() {
+                            Some(safetensors_file)
+                        } else {
+                            None
+                        };
+                        if let Some(model_file) = model_file {
+                            let name = path.file_name()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let size = std::fs::metadata(&model_file)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+                            models.push(ModelInfo {
+                                id: name.clone(),
+                                name,
+                                path: model_file.to_string_lossy().to_string(),
+                                size,
+                            });
+                        }
+                    } else if path.is_file() {
+                        if let Some(ext) = path.extension() {
+                            if ext == "gguf" {
+                                let name = path.file_stem()
+                                    .map(|s| s.to_string_lossy().to_string())
+                                    .unwrap_or_default();
+                                let size = std::fs::metadata(&path)
+                                    .map(|m| m.len())
+                                    .unwrap_or(0);
+                                models.push(ModelInfo {
+                                    id: name.clone(),
+                                    name,
+                                    path: path.to_string_lossy().to_string(),
+                                    size,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        models
+    }
+    
+    // Scan for GGUF files at root level
+    if models_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&models_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(ext) = path.extension() {
+                        if ext == "gguf" {
+                            let name = path.file_stem()
+                                .map(|s| s.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let size = std::fs::metadata(&path)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+                            text_models.push(ModelInfo {
+                                id: name.clone(),
+                                name,
+                                path: path.to_string_lossy().to_string(),
+                                size,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Scan text-gen subdirectory
+    text_models.extend(scan_model_dir(&models_dir.join("text-gen")));
+    
+    // Scan caption subdirectory
+    caption_models.extend(scan_model_dir(&models_dir.join("caption")));
+    
+    // Scan whisper subdirectory
+    whisper_models.extend(scan_model_dir(&models_dir.join("whisper")));
+    
+    // Scan tts subdirectory for first_stage models (different structure)
+    let tts_dir = models_dir.join("tts");
+    if tts_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&tts_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() {
+                    // Check if it has TTS structure (first_stage_*, second_stage.safetensors)
+                    let has_first_stage = std::fs::read_dir(&path)
+                        .map(|d| d.filter_map(|e| e.ok())
+                            .any(|e| {
+                                let name = e.file_name().to_string_lossy().to_string();
+                                name.starts_with("first_stage")
+                            }))
+                        .unwrap_or(false);
+                    if has_first_stage {
+                        let name = path.file_name()
+                            .map(|s| s.to_string_lossy().to_string())
+                            .unwrap_or_default();
+                        // Calculate total size
+                        let size: u64 = std::fs::read_dir(&path)
+                            .map(|d| d.filter_map(|e| e.ok())
+                                .map(|e| std::fs::metadata(e.path()).map(|m| m.len()).unwrap_or(0))
+                                .sum())
+                            .unwrap_or(0);
+                        tts_models.push(ModelInfo {
+                            id: name.clone(),
+                            name,
+                            path: path.to_string_lossy().to_string(),
+                            size,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    // Scan diffusion subdirectory
+    let diffusion_dir = models_dir.join("diffusion");
+    if diffusion_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&diffusion_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() {
+                    let name = path.file_name()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    // Check if it has the required SD files (unet.safetensors)
+                    let has_unet = path.join("unet.safetensors").exists() || 
+                        path.join("unet").exists() ||
+                        std::fs::read_dir(&path)
+                            .map(|d| d.filter_map(|e| e.ok())
+                                .any(|e| e.path().to_string_lossy().contains("unet")))
+                            .unwrap_or(false);
+                    if has_unet {
+                        // Calculate total size of all files in directory
+                        let size = std::fs::read_dir(&path)
+                            .map(|d| d.filter_map(|e| e.ok())
+                                .map(|e| std::fs::metadata(e.path()).map(|m| m.len()).unwrap_or(0))
+                                .sum())
+                            .unwrap_or(0);
+                        diffusion_models.push(ModelInfo {
+                            id: name.clone(),
+                            name,
+                            path: path.to_string_lossy().to_string(),
+                            size,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    Ok(ListModelsResult {
+        text_models,
+        diffusion_models,
+        caption_models,
+        whisper_models,
+        tts_models,
+        models_dir: models_dir.to_string_lossy().to_string(),
+    })
+}
+
+#[command]
+pub fn ensure_models_dir(state: State<'_, LocalAiState>) -> Result<String> {
+    let models_dir = &state.models_dir;
+    std::fs::create_dir_all(models_dir)?;
+    std::fs::create_dir_all(models_dir.join("text-gen"))?;
+    std::fs::create_dir_all(models_dir.join("diffusion"))?;
+    std::fs::create_dir_all(models_dir.join("whisper"))?;
+    std::fs::create_dir_all(models_dir.join("tts"))?;
+    std::fs::create_dir_all(models_dir.join("caption"))?;
+    Ok(models_dir.to_string_lossy().to_string())
+}
+
+/// Result of a file download
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadResult {
+    pub success: bool,
+    pub path: String,
+    pub size: u64,
+    pub error: Option<String>,
+}
+
+/// Download a file from a URL to a local path within the models directory
+#[command]
+pub async fn download_file(state: State<'_, LocalAiState>, url: String, relative_path: String, overwrite: Option<bool>) -> Result<DownloadResult> {
+    // Clone the path so we can use it across await points
+    let models_dir = state.models_dir.clone();
+    let target_path = models_dir.join(&relative_path);
+    
+    // Ensure parent directory exists
+    if let Some(parent) = target_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    
+    // Check if already exists
+    if target_path.exists() && !overwrite.unwrap_or(false) {
+        let size = std::fs::metadata(&target_path).map(|m| m.len()).unwrap_or(0);
+        return Ok(DownloadResult {
+            success: true,
+            path: target_path.to_string_lossy().to_string(),
+            size,
+            error: Some("File already exists".to_string()),
+        });
+    }
+    
+    // Download
+    let response = reqwest::get(&url).await.map_err(|e| Error::Other(format!("Download failed: {}", e)))?;
+    
+    if !response.status().is_success() {
+        return Ok(DownloadResult {
+            success: false,
+            path: target_path.to_string_lossy().to_string(),
+            size: 0,
+            error: Some(format!("HTTP {}: Download failed", response.status())),
+        });
+    }
+    
+    let bytes = response.bytes().await.map_err(|e| Error::Other(format!("Read failed: {}", e)))?;
+    let size = bytes.len() as u64;
+    
+    std::fs::write(&target_path, &bytes)?;
+    
+    Ok(DownloadResult {
+        success: true,
+        path: target_path.to_string_lossy().to_string(),
+        size,
+        error: None,
+    })
 }

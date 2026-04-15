@@ -104,6 +104,7 @@ const foreachHabitBit = {
   displayName: 'For Each Habit',
   description: 'Iterate over items and invoke a sub-habit workflow for each one',
   logoUrl: 'lucide:GitBranch',
+  runtime: 'all',
   
   actions: {
     /**

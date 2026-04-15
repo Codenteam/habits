@@ -164,6 +164,7 @@ function discoverTauriPlugins(bits: Array<{ id: string; module: string }>): Taur
  * Generate a bundle using @ha-bits/bundle-generator via npx
  */
 export async function generateBundle(options: BundleGeneratorOptions): Promise<BundleGeneratorResult> {
+  const totalStart = Date.now();
   const {
     habits,
     appName = 'HabitsApp',
@@ -231,16 +232,20 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
     logger.info(`Running bundle-generator${localBundleGenerator ? ' (local)' : ' (npx)'}...`);
     
     try {
+      const commandStart = Date.now();
+      logger.info(`Bundle generator command start: ${new Date(commandStart).toISOString()}`);
       execSync(command, {
         stdio: ['pipe', 'pipe', 'pipe'],
         timeout: 120000, // 2 minutes timeout
         env: { ...process.env, NODE_ENV: 'production' },
         cwd: localBundleGenerator ? path.dirname(localBundleGenerator) : process.cwd(),
       });
+      logger.info(`Bundle generator command completed in ${Date.now() - commandStart}ms`);
     } catch (execError: any) {
       const stderr = execError.stderr?.toString() || '';
       const stdout = execError.stdout?.toString() || '';
       logger.error(`Bundle generator failed: ${stderr || stdout || execError.message}`);
+      logger.error(`Bundle generation failed after ${Date.now() - totalStart}ms`);
       return {
         success: false,
         error: `Bundle generation failed: ${stderr || stdout || execError.message}`,
@@ -256,7 +261,7 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
     }
 
     const code = fs.readFileSync(outputPath, 'utf8');
-    logger.info(`Bundle generated: ${(code.length / 1024).toFixed(2)} KB`);
+    logger.info(`Bundle generated: ${(code.length / 1024).toFixed(2)} KB in ${Date.now() - totalStart}ms`);
 
     // Discover Tauri plugins from bits
     const tauriPlugins = discoverTauriPlugins(bits);
@@ -280,6 +285,7 @@ export async function generateBundle(options: BundleGeneratorOptions): Promise<B
     };
   } catch (error: any) {
     logger.error(`Bundle generation failed: ${error.message}`);
+    logger.error(`Bundle generation failed after ${Date.now() - totalStart}ms`);
 
     // Cleanup on error
     try {

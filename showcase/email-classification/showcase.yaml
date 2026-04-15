@@ -1,5 +1,7 @@
 # Showcase metadata for Email Classification example
 # AI-powered email routing and categorization
+# Disabled - legacy example
+disabled: true
 
 name: Email Classification
 description: Smart email router that uses AI to automatically categorize and route emails to appropriate handlers using branching logic.

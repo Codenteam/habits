@@ -101,6 +101,7 @@ const linkedInBit = {
   displayName: 'LinkedIn',
   description: 'Post content and manage professional presence on LinkedIn',
   logoUrl: 'lucide:Linkedin',
+  runtime: 'all',
   
   // OAuth 2.0 PKCE authentication for LinkedIn API
   auth: {

@@ -1,0 +1,80 @@
+# Docker Compose for Google Home Matter Virtual Device (MVD)
+#
+# This runs Google's Matter Virtual Device to simulate Matter-compatible
+# smart home devices (lights, sensors, etc.) for development and testing.
+#
+# Prerequisites:
+#   - Docker Engine (recommended over Docker Desktop for network_mode: host)
+#   - Configure firewall to allow mDNS (port 5353 UDP)
+#   - XQuartz for macOS GUI support (optional)
+#
+# Usage:
+#   # Start the Matter Virtual Device
+#   docker compose -f docker-compose.matter.yaml up -d
+#
+#   # View logs
+#   docker compose -f docker-compose.matter.yaml logs -f
+#
+#   # Access web UI (noVNC)
+#   open http://localhost:6080
+#
+#   # Stop
+#   docker compose -f docker-compose.matter.yaml down
+#
+# Device Types Available:
+#   - On/Off Light
+#   - Dimmable Light
+#   - Color Temperature Light
+#   - Extended Color Light
+#   - On/Off Plug-in Unit
+#   - Dimmable Plug-in Unit
+#   - Temperature Sensor
+#   - Humidity Sensor
+#   - Occupancy Sensor
+#   - Contact Sensor
+#   - Door Lock
+#   - Window Covering
+#
+# Commissioning:
+#   1. Open the noVNC web UI at http://localhost:6080
+#   2. Select device type and click "Create Device"
+#   3. Scan the QR code with Google Home app or use the pairing code
+#   4. Device will appear in your Matter fabric
+
+services:
+  matter-virtual-device:
+    image: us-docker.pkg.dev/nest-matter/docker-repo/virtual-device-image:latest
+    container_name: matter-virtual-device
+    restart: unless-stopped
+    # Host network required for mDNS discovery and Matter protocol
+    network_mode: host
+    # Privileged mode for network access and device simulation
+    privileged: true
+    environment:
+      # Display for GUI (noVNC handles this internally)
+      DISPLAY: ":0"
+      # Enable noVNC web interface
+      ENABLE_NOVNC: "true"
+      # VNC password (change for production)
+      VNC_PASSWORD: "matter"
+    volumes:
+      # Persist device configurations and fabric data
+      - matter-data:/root/.matter
+      - matter-config:/config
+    # Note: With network_mode: host, ports are exposed directly
+    # - 6080: noVNC web interface
+    # - 5900: VNC server (optional, if connecting with VNC client)
+    # - 5353: mDNS (UDP) - used by Matter for device discovery
+    # - 5540: Matter default port
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:6080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  matter-data:
+    driver: local
+  matter-config:
+    driver: local

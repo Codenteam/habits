@@ -143,11 +143,12 @@ function installDocsPackages(): void {
   console.log('\n=== Installing Documentation Dependencies ===\n');
   run('pnpm install', { cwd: DOCS_DIR });
 }
-
+ 
 function generateDocsContent(): void {
   console.log('\n=== Generating Documentation Content ===\n');
   run('npx tsx scripts/generate-showcase.ts');
-  run('npx tsx scripts/generate-bits.ts');
+  run('npx tsx scripts/update-bits-stats.ts'); // Fetch stats first
+  run('npx tsx scripts/generate-bits.ts');     // Then generate pages with stats
 }
 
 function buildDocs(): void {

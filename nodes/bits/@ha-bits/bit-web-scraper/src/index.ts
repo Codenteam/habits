@@ -147,6 +147,7 @@ const webScraperBit = {
   displayName: 'Web Scraper',
   description: 'Extract data from webpages including text, links, emails, and tables',
   logoUrl: 'lucide:Globe',
+  runtime: 'all',
   
   actions: {
     /**

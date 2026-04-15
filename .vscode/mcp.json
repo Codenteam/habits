@@ -6,6 +6,25 @@
         "-y",
         "@anthropic-ai/mcp-chrome-devtools@latest"
       ]
+    },
+    "wdio-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wdio/mcp"
+      ]
+    },
+    "habits-manage-mcp": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${workspaceFolder}/packages/manage/src/mcp/index.ts"
+      ],
+      "env": {
+        "WEBDRIVER_PORT": "4445",
+        "WEBDRIVER_HOST": "127.0.0.1",
+        "WORKSPACE_ROOT": "${workspaceFolder}"
+      }
     }
   }
 }

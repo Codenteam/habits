@@ -47,11 +47,11 @@
       "timestampUrl": ""
     },
     "iOS": {
-      "minimumSystemVersion": "13.0",
+      "minimumSystemVersion": "14.0",
       "developmentTeam": "S54SCFZ347"
     },
     "android": {
-      "minSdkVersion": 24
+      "minSdkVersion": 27
     }
   },
   "app": {
@@ -64,7 +64,8 @@
         "resizable": true,
         "fullscreen": false,
         "decorations": true,
-        "transparent": false
+        "transparent": false,
+        "devtools": true
       }
     ],
     "security": {

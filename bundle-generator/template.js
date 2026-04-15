@@ -428,6 +428,15 @@ async function ensureInitialized() {
 async function executeWorkflow(workflowId, input, options = {}) {
   const exec = await ensureInitialized();
   
+  // Inject runtime env variables into process.env
+  if (options.env && typeof options.env === 'object') {
+    Object.keys(options.env).forEach(key => {
+      if (options.env[key] !== undefined && options.env[key] !== null) {
+        process.env[key] = options.env[key];
+      }
+    });
+  }
+  
   const result = await exec.executeWorkflow(workflowId, {
     initialContext: {
       habits: {

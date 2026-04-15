@@ -1,0 +1,13 @@
+[default]
+description = "Default permissions for the system-settings plugin"
+permissions = [
+    "allow-get-volume",
+    "allow-set-volume",
+    "allow-set-mute",
+    "allow-get-ringer-mode",
+    "allow-set-ringer-mode",
+    "allow-get-bluetooth-state",
+    "allow-set-bluetooth",
+    "allow-get-dnd-state",
+    "allow-set-dnd"
+]

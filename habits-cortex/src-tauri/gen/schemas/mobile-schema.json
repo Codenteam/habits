@@ -6357,6 +6357,78 @@
           "markdownDescription": "This enables all file write related commands without any pre-configured accessible paths."
         },
         {
+          "description": "Enables the check_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-check-permissions",
+          "markdownDescription": "Enables the check_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the clear_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-clear-permissions",
+          "markdownDescription": "Enables the clear_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the clear_watch command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-clear-watch",
+          "markdownDescription": "Enables the clear_watch command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_current_position command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-get-current-position",
+          "markdownDescription": "Enables the get_current_position command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the request_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-request-permissions",
+          "markdownDescription": "Enables the request_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the watch_position command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:allow-watch-position",
+          "markdownDescription": "Enables the watch_position command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-check-permissions",
+          "markdownDescription": "Denies the check_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the clear_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-clear-permissions",
+          "markdownDescription": "Denies the clear_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the clear_watch command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-clear-watch",
+          "markdownDescription": "Denies the clear_watch command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_current_position command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-get-current-position",
+          "markdownDescription": "Denies the get_current_position command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the request_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-request-permissions",
+          "markdownDescription": "Denies the request_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the watch_position command without any pre-configured scope.",
+          "type": "string",
+          "const": "geolocation:deny-watch-position",
+          "markdownDescription": "Denies the watch_position command without any pre-configured scope."
+        },
+        {
           "description": "This permission set configures what kind of\nfetch operations are available from the http plugin.\n\nThis enables all fetch operations but does not\nallow explicitly any origins to be fetched. This needs to\nbe manually configured before usage.\n\n#### Granted Permissions\n\nAll fetch operations are enabled.\n\n\n#### This default permission set includes:\n\n- `allow-fetch`\n- `allow-fetch-cancel`\n- `allow-fetch-send`\n- `allow-fetch-read-body`\n- `allow-fetch-cancel-body`",
           "type": "string",
           "const": "http:default",
@@ -6525,6 +6597,258 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
+          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`",
+          "type": "string",
+          "const": "local-ai:default",
+          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`"
+        },
+        {
+          "description": "Enables the caption_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-caption-image",
+          "markdownDescription": "Enables the caption_image command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_image_captioner command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-image-captioner",
+          "markdownDescription": "Enables the create_image_captioner command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_image_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-image-generator",
+          "markdownDescription": "Enables the create_image_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_text_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-text-generator",
+          "markdownDescription": "Enables the create_text_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_transcriber command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-transcriber",
+          "markdownDescription": "Enables the create_transcriber command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_voice_synthesizer command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-create-voice-synthesizer",
+          "markdownDescription": "Enables the create_voice_synthesizer command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the generate_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-generate-image",
+          "markdownDescription": "Enables the generate_image command without any pre-configured scope."
+        },
+        {
+          "description": "Allow text generation commands",
+          "type": "string",
+          "const": "local-ai:allow-generate-text",
+          "markdownDescription": "Allow text generation commands"
+        },
+        {
+          "description": "Enables the get_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-get-version",
+          "markdownDescription": "Enables the get_version command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_cuda_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-has-cuda-support",
+          "markdownDescription": "Enables the has_cuda_support command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the has_metal_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-has-metal-support",
+          "markdownDescription": "Enables the has_metal_support command without any pre-configured scope."
+        },
+        {
+          "description": "Allow image captioning commands",
+          "type": "string",
+          "const": "local-ai:allow-image-caption",
+          "markdownDescription": "Allow image captioning commands"
+        },
+        {
+          "description": "Enables the image_captioner_caption command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-image-captioner-caption",
+          "markdownDescription": "Enables the image_captioner_caption command without any pre-configured scope."
+        },
+        {
+          "description": "Allow image generation commands",
+          "type": "string",
+          "const": "local-ai:allow-image-gen",
+          "markdownDescription": "Allow image generation commands"
+        },
+        {
+          "description": "Enables the image_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-image-generator-generate",
+          "markdownDescription": "Enables the image_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the synthesize_speech command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-synthesize-speech",
+          "markdownDescription": "Enables the synthesize_speech command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the text_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-text-generator-generate",
+          "markdownDescription": "Enables the text_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Allow text-to-voice commands",
+          "type": "string",
+          "const": "local-ai:allow-text-to-voice",
+          "markdownDescription": "Allow text-to-voice commands"
+        },
+        {
+          "description": "Allow audio transcription commands",
+          "type": "string",
+          "const": "local-ai:allow-transcribe",
+          "markdownDescription": "Allow audio transcription commands"
+        },
+        {
+          "description": "Enables the transcribe_audio command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-transcribe-audio",
+          "markdownDescription": "Enables the transcribe_audio command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the transcriber_transcribe command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-transcriber-transcribe",
+          "markdownDescription": "Enables the transcriber_transcribe command without any pre-configured scope."
+        },
+        {
+          "description": "Allow utility commands",
+          "type": "string",
+          "const": "local-ai:allow-utilities",
+          "markdownDescription": "Allow utility commands"
+        },
+        {
+          "description": "Enables the voice_synthesizer_synthesize command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:allow-voice-synthesizer-synthesize",
+          "markdownDescription": "Enables the voice_synthesizer_synthesize command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the caption_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-caption-image",
+          "markdownDescription": "Denies the caption_image command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_image_captioner command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-image-captioner",
+          "markdownDescription": "Denies the create_image_captioner command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_image_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-image-generator",
+          "markdownDescription": "Denies the create_image_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_text_generator command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-text-generator",
+          "markdownDescription": "Denies the create_text_generator command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_transcriber command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-transcriber",
+          "markdownDescription": "Denies the create_transcriber command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_voice_synthesizer command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-create-voice-synthesizer",
+          "markdownDescription": "Denies the create_voice_synthesizer command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the generate_image command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-generate-image",
+          "markdownDescription": "Denies the generate_image command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the generate_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-generate-text",
+          "markdownDescription": "Denies the generate_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_version command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-get-version",
+          "markdownDescription": "Denies the get_version command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_cuda_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-has-cuda-support",
+          "markdownDescription": "Denies the has_cuda_support command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the has_metal_support command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-has-metal-support",
+          "markdownDescription": "Denies the has_metal_support command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the image_captioner_caption command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-image-captioner-caption",
+          "markdownDescription": "Denies the image_captioner_caption command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the image_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-image-generator-generate",
+          "markdownDescription": "Denies the image_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the synthesize_speech command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-synthesize-speech",
+          "markdownDescription": "Denies the synthesize_speech command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the text_generator_generate command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-text-generator-generate",
+          "markdownDescription": "Denies the text_generator_generate command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the transcribe_audio command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-transcribe-audio",
+          "markdownDescription": "Denies the transcribe_audio command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the transcriber_transcribe command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-transcriber-transcribe",
+          "markdownDescription": "Denies the transcriber_transcribe command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the voice_synthesizer_synthesize command without any pre-configured scope.",
+          "type": "string",
+          "const": "local-ai:deny-voice-synthesizer-synthesize",
+          "markdownDescription": "Denies the voice_synthesizer_synthesize command without any pre-configured scope."
+        },
+        {
           "description": "Allows the log command\n#### This default permission set includes:\n\n- `allow-log`",
           "type": "string",
           "const": "log:default",
@@ -6541,6 +6865,108 @@
           "type": "string",
           "const": "log:deny-log",
           "markdownDescription": "Denies the log command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the Matter smart home plugin\n#### This default permission set includes:\n\n- `allow-discover-devices`\n- `allow-get-devices`\n- `allow-get-device-state`\n- `allow-set-on-off`\n- `allow-set-level`\n- `allow-set-color`\n- `allow-commission-device`\n- `allow-remove-device`",
+          "type": "string",
+          "const": "matter:default",
+          "markdownDescription": "Default permissions for the Matter smart home plugin\n#### This default permission set includes:\n\n- `allow-discover-devices`\n- `allow-get-devices`\n- `allow-get-device-state`\n- `allow-set-on-off`\n- `allow-set-level`\n- `allow-set-color`\n- `allow-commission-device`\n- `allow-remove-device`"
+        },
+        {
+          "description": "Enables the commission_device command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-commission-device",
+          "markdownDescription": "Enables the commission_device command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the discover_devices command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-discover-devices",
+          "markdownDescription": "Enables the discover_devices command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_device_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-get-device-state",
+          "markdownDescription": "Enables the get_device_state command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_devices command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-get-devices",
+          "markdownDescription": "Enables the get_devices command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the remove_device command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-remove-device",
+          "markdownDescription": "Enables the remove_device command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-set-color",
+          "markdownDescription": "Enables the set_color command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_level command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-set-level",
+          "markdownDescription": "Enables the set_level command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_on_off command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:allow-set-on-off",
+          "markdownDescription": "Enables the set_on_off command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the commission_device command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-commission-device",
+          "markdownDescription": "Denies the commission_device command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the discover_devices command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-discover-devices",
+          "markdownDescription": "Denies the discover_devices command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_device_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-get-device-state",
+          "markdownDescription": "Denies the get_device_state command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_devices command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-get-devices",
+          "markdownDescription": "Denies the get_devices command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the remove_device command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-remove-device",
+          "markdownDescription": "Denies the remove_device command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-set-color",
+          "markdownDescription": "Denies the set_color command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_level command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-set-level",
+          "markdownDescription": "Denies the set_level command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_on_off command without any pre-configured scope.",
+          "type": "string",
+          "const": "matter:deny-set-on-off",
+          "markdownDescription": "Denies the set_on_off command without any pre-configured scope."
         },
         {
           "description": "This permission set allows opening `mailto:`, `tel:`, `https://` and `http://` urls using their default application\nas well as reveal file in directories using default file explorer\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-reveal-item-in-dir`\n- `allow-default-urls`",
@@ -6657,6 +7083,60 @@
           "markdownDescription": "Denies the stdin_write command without any pre-configured scope."
         },
         {
+          "description": "Default permissions for the SMS plugin - allows sending and reading SMS\n#### This default permission set includes:\n\n- `allow-send-sms`\n- `allow-read-sms`",
+          "type": "string",
+          "const": "sms:default",
+          "markdownDescription": "Default permissions for the SMS plugin - allows sending and reading SMS\n#### This default permission set includes:\n\n- `allow-send-sms`\n- `allow-read-sms`"
+        },
+        {
+          "description": "Allows checking SMS permission status",
+          "type": "string",
+          "const": "sms:allow-check-permissions",
+          "markdownDescription": "Allows checking SMS permission status"
+        },
+        {
+          "description": "Allows reading SMS messages (Android only)",
+          "type": "string",
+          "const": "sms:allow-read-sms",
+          "markdownDescription": "Allows reading SMS messages (Android only)"
+        },
+        {
+          "description": "Allows requesting SMS permissions from the user",
+          "type": "string",
+          "const": "sms:allow-request-permissions",
+          "markdownDescription": "Allows requesting SMS permissions from the user"
+        },
+        {
+          "description": "Allows sending SMS messages from the application",
+          "type": "string",
+          "const": "sms:allow-send-sms",
+          "markdownDescription": "Allows sending SMS messages from the application"
+        },
+        {
+          "description": "Denies the check_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "sms:deny-check-permissions",
+          "markdownDescription": "Denies the check_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies reading SMS messages",
+          "type": "string",
+          "const": "sms:deny-read-sms",
+          "markdownDescription": "Denies reading SMS messages"
+        },
+        {
+          "description": "Denies the request_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "sms:deny-request-permissions",
+          "markdownDescription": "Denies the request_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies sending SMS messages from the application",
+          "type": "string",
+          "const": "sms:deny-send-sms",
+          "markdownDescription": "Denies sending SMS messages from the application"
+        },
+        {
           "description": "### Default Permissions\n\nThis permission set configures what kind of\ndatabase operations are available from the sql plugin.\n\n### Granted Permissions\n\nAll reading related operations are enabled.\nAlso allows to load or close a connection.\n\n\n#### This default permission set includes:\n\n- `allow-close`\n- `allow-load`\n- `allow-select`",
           "type": "string",
           "const": "sql:default",
@@ -6709,6 +7189,192 @@
           "type": "string",
           "const": "sql:deny-select",
           "markdownDescription": "Denies the select command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the system-settings plugin\n#### This default permission set includes:\n\n- `allow-get-volume`\n- `allow-set-volume`\n- `allow-set-mute`\n- `allow-get-ringer-mode`\n- `allow-set-ringer-mode`\n- `allow-get-bluetooth-state`\n- `allow-set-bluetooth`\n- `allow-get-dnd-state`\n- `allow-set-dnd`",
+          "type": "string",
+          "const": "system-settings:default",
+          "markdownDescription": "Default permissions for the system-settings plugin\n#### This default permission set includes:\n\n- `allow-get-volume`\n- `allow-set-volume`\n- `allow-set-mute`\n- `allow-get-ringer-mode`\n- `allow-set-ringer-mode`\n- `allow-get-bluetooth-state`\n- `allow-set-bluetooth`\n- `allow-get-dnd-state`\n- `allow-set-dnd`"
+        },
+        {
+          "description": "Enables the get_bluetooth_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-get-bluetooth-state",
+          "markdownDescription": "Enables the get_bluetooth_state command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_dnd_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-get-dnd-state",
+          "markdownDescription": "Enables the get_dnd_state command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_ringer_mode command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-get-ringer-mode",
+          "markdownDescription": "Enables the get_ringer_mode command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_volume command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-get-volume",
+          "markdownDescription": "Enables the get_volume command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_bluetooth command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-set-bluetooth",
+          "markdownDescription": "Enables the set_bluetooth command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_dnd command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-set-dnd",
+          "markdownDescription": "Enables the set_dnd command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_mute command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-set-mute",
+          "markdownDescription": "Enables the set_mute command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_ringer_mode command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-set-ringer-mode",
+          "markdownDescription": "Enables the set_ringer_mode command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_volume command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:allow-set-volume",
+          "markdownDescription": "Enables the set_volume command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_bluetooth_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-get-bluetooth-state",
+          "markdownDescription": "Denies the get_bluetooth_state command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_dnd_state command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-get-dnd-state",
+          "markdownDescription": "Denies the get_dnd_state command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_ringer_mode command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-get-ringer-mode",
+          "markdownDescription": "Denies the get_ringer_mode command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_volume command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-get-volume",
+          "markdownDescription": "Denies the get_volume command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_bluetooth command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-set-bluetooth",
+          "markdownDescription": "Denies the set_bluetooth command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_dnd command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-set-dnd",
+          "markdownDescription": "Denies the set_dnd command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_mute command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-set-mute",
+          "markdownDescription": "Denies the set_mute command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_ringer_mode command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-set-ringer-mode",
+          "markdownDescription": "Denies the set_ringer_mode command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_volume command without any pre-configured scope.",
+          "type": "string",
+          "const": "system-settings:deny-set-volume",
+          "markdownDescription": "Denies the set_volume command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for the plugin",
+          "type": "string",
+          "const": "webdriver:default",
+          "markdownDescription": "Default permissions for the plugin"
+        },
+        {
+          "description": "Default permissions for the Wi-Fi plugin\n#### This default permission set includes:\n\n- `allow-get-current-network`\n- `allow-is-connected`\n- `allow-list-saved-networks`\n- `allow-check-permissions`\n- `allow-request-permissions`",
+          "type": "string",
+          "const": "wifi:default",
+          "markdownDescription": "Default permissions for the Wi-Fi plugin\n#### This default permission set includes:\n\n- `allow-get-current-network`\n- `allow-is-connected`\n- `allow-list-saved-networks`\n- `allow-check-permissions`\n- `allow-request-permissions`"
+        },
+        {
+          "description": "Enables the check_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:allow-check-permissions",
+          "markdownDescription": "Enables the check_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_current_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:allow-get-current-network",
+          "markdownDescription": "Enables the get_current_network command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the is_connected command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:allow-is-connected",
+          "markdownDescription": "Enables the is_connected command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_saved_networks command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:allow-list-saved-networks",
+          "markdownDescription": "Enables the list_saved_networks command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the request_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:allow-request-permissions",
+          "markdownDescription": "Enables the request_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:deny-check-permissions",
+          "markdownDescription": "Denies the check_permissions command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_current_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:deny-get-current-network",
+          "markdownDescription": "Denies the get_current_network command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_connected command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:deny-is-connected",
+          "markdownDescription": "Denies the is_connected command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_saved_networks command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:deny-list-saved-networks",
+          "markdownDescription": "Denies the list_saved_networks command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the request_permissions command without any pre-configured scope.",
+          "type": "string",
+          "const": "wifi:deny-request-permissions",
+          "markdownDescription": "Denies the request_permissions command without any pre-configured scope."
         }
       ]
     },

@@ -1,6 +1,9 @@
 # Showcase metadata for Minimal Blog example
 # A simple blog backend demonstrating CRUD operations
 
+# DEPRECATED: Uses legacy patterns - disabled from showcase
+disabled: true
+
 name: Minimal Blog
 description: A complete blog API backend with authentication, CRUD endpoints, and database integration using Habits bits.
 

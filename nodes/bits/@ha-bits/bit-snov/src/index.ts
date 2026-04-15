@@ -91,6 +91,7 @@ const snovBit = {
   displayName: 'Snov.io',
   description: 'Snov.io API integration for email enrichment and lead prospecting',
   logoUrl: 'lucide:Mail',
+  runtime: 'all',
   
   auth: {
     type: 'CUSTOM' as const,

@@ -42,6 +42,7 @@ const emailBit = {
   displayName: 'Email (IMAP/SMTP)',
   description: 'Email integration for fetching (IMAP) and sending (SMTP) emails',
   logoUrl: 'lucide:Mail',
+  runtime: 'all',
   
   auth: {
     type: 'CUSTOM',

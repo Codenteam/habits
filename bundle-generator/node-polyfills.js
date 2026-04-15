@@ -554,6 +554,152 @@ if (typeof module !== 'undefined' && module.exports) {
       once: () => {},
       emit: () => {},
       removeListener: () => {}
-    }
+    },
+    // fs polyfill that bridges to Tauri fs API when available
+    fs: (function() {
+      // Try to get Tauri fs API
+      const getTauriFs = () => {
+        if (typeof window !== 'undefined' && window.__TAURI__ && window.__TAURI__.fs) {
+          return window.__TAURI__.fs;
+        }
+        return null;
+      };
+
+      // Sync methods - cannot work in browser, throw clear errors
+      const syncNotAvailable = (method) => {
+        return (...args) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs) {
+            throw new Error(`fs.${method}() is sync and not available in browser. Use async fs.promises.${method.replace('Sync', '')}() with Tauri fs API instead.`);
+          }
+          throw new Error(`fs.${method}() not available in this environment`);
+        };
+      };
+
+      // Async methods that delegate to Tauri
+      const wrapTauriAsync = (tauriMethod) => {
+        return async (...args) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs && typeof tauriFs[tauriMethod] === 'function') {
+            return await tauriFs[tauriMethod](...args);
+          }
+          throw new Error(`fs.${tauriMethod}() not available - Tauri fs API not found`);
+        };
+      };
+
+      // Create promises namespace
+      const promises = {
+        readFile: wrapTauriAsync('readTextFile'),
+        writeFile: wrapTauriAsync('writeTextFile'),
+        readdir: wrapTauriAsync('readDir'),
+        mkdir: async (path, options) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs) return await tauriFs.mkdir(path, { recursive: options?.recursive });
+          throw new Error('fs.promises.mkdir() not available');
+        },
+        rm: wrapTauriAsync('remove'),
+        rmdir: wrapTauriAsync('remove'),
+        stat: async (path) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs) {
+            const exists = await tauriFs.exists(path);
+            return { isFile: () => exists, isDirectory: () => exists, size: 0 };
+          }
+          throw new Error('fs.promises.stat() not available');
+        },
+        access: async (path) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs) {
+            const exists = await tauriFs.exists(path);
+            if (!exists) throw new Error(`ENOENT: no such file or directory, access '${path}'`);
+          } else {
+            throw new Error('fs.promises.access() not available');
+          }
+        },
+        copyFile: wrapTauriAsync('copyFile'),
+        rename: wrapTauriAsync('rename'),
+        unlink: wrapTauriAsync('remove')
+      };
+
+      return {
+        // Sync methods - throw errors in browser
+        existsSync: syncNotAvailable('existsSync'),
+        readFileSync: syncNotAvailable('readFileSync'),
+        writeFileSync: syncNotAvailable('writeFileSync'),
+        mkdirSync: syncNotAvailable('mkdirSync'),
+        readdirSync: syncNotAvailable('readdirSync'),
+        statSync: syncNotAvailable('statSync'),
+        unlinkSync: syncNotAvailable('unlinkSync'),
+        rmdirSync: syncNotAvailable('rmdirSync'),
+        copyFileSync: syncNotAvailable('copyFileSync'),
+        renameSync: syncNotAvailable('renameSync'),
+        accessSync: syncNotAvailable('accessSync'),
+        
+        // Async methods (callback style)
+        readFile: (path, opts, cb) => {
+          if (typeof opts === 'function') { cb = opts; opts = {}; }
+          promises.readFile(path).then(data => cb(null, data)).catch(err => cb(err));
+        },
+        writeFile: (path, data, opts, cb) => {
+          if (typeof opts === 'function') { cb = opts; opts = {}; }
+          promises.writeFile(path, data).then(() => cb(null)).catch(err => cb(err));
+        },
+        mkdir: (path, opts, cb) => {
+          if (typeof opts === 'function') { cb = opts; opts = {}; }
+          promises.mkdir(path, opts).then(() => cb(null)).catch(err => cb(err));
+        },
+        readdir: (path, opts, cb) => {
+          if (typeof opts === 'function') { cb = opts; opts = {}; }
+          promises.readdir(path).then(data => cb(null, data)).catch(err => cb(err));
+        },
+        stat: (path, cb) => {
+          promises.stat(path).then(data => cb(null, data)).catch(err => cb(err));
+        },
+        access: (path, mode, cb) => {
+          if (typeof mode === 'function') { cb = mode; }
+          promises.access(path).then(() => cb(null)).catch(err => cb(err));
+        },
+        unlink: (path, cb) => {
+          promises.unlink(path).then(() => cb(null)).catch(err => cb(err));
+        },
+        copyFile: (src, dest, cb) => {
+          promises.copyFile(src, dest).then(() => cb(null)).catch(err => cb(err));
+        },
+        rename: (oldPath, newPath, cb) => {
+          promises.rename(oldPath, newPath).then(() => cb(null)).catch(err => cb(err));
+        },
+        
+        // exists (deprecated but still used)
+        exists: (path, cb) => {
+          const tauriFs = getTauriFs();
+          if (tauriFs) {
+            tauriFs.exists(path).then(exists => cb(exists)).catch(() => cb(false));
+          } else {
+            cb(false);
+          }
+        },
+        
+        // Promises API
+        promises,
+        
+        // Constants
+        constants: {
+          F_OK: 0,
+          R_OK: 4,
+          W_OK: 2,
+          X_OK: 1
+        },
+        
+        // Stream creators (stubs)
+        createReadStream: () => new Stream(),
+        createWriteStream: () => new Stream()
+      };
+    })()
+  };
+  
+  // Helper function to get a specific polyfill by name
+  module.exports.getPolyfill = function(moduleName) {
+    const polyfills = module.exports;
+    return polyfills[moduleName] || polyfills.events;
   };
 }

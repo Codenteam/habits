@@ -125,6 +125,7 @@ const schedulerBit = {
   displayName: 'Scheduler',
   description: 'Native cron scheduling trigger for running workflows on a schedule',
   logoUrl: 'lucide:Clock',
+  runtime: 'all',
   
   // No authentication required
   auth: undefined,

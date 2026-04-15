@@ -40,6 +40,7 @@ const textBit = {
   displayName: 'Text Processing',
   description: 'Text diff, cleanup, extraction, and formatting utilities',
   logoUrl: 'lucide:Type',
+  runtime: 'all',
   
   actions: {
     /**

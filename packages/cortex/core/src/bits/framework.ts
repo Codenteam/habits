@@ -841,6 +841,13 @@ export interface Bit<AuthType = any> {
   displayName: string;
   description?: string;
   logoUrl: string;
+  /**
+   * Runtime environment where this bit can execute.
+   * - 'app': Mobile/desktop Tauri app only (requires native plugins)
+   * - 'server': Server-side only (Node.js environment)
+   * - 'all': Works in both environments (default)
+   */
+  runtime?: 'app' | 'server' | 'all';
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   categories?: BitCategory[];
@@ -864,6 +871,13 @@ interface BitConfig<AuthType = any> {
   displayName: string;
   description?: string;
   logoUrl: string;
+  /**
+   * Runtime environment where this bit can execute.
+   * - 'app': Mobile/desktop Tauri app only (requires native plugins)
+   * - 'server': Server-side only (Node.js environment)
+   * - 'all': Works in both environments (default)
+   */
+  runtime?: 'app' | 'server' | 'all';
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   categories?: BitCategory[];

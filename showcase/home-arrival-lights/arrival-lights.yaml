@@ -1,0 +1,61 @@
+id: home-arrival-lights
+name: Turn Lights On at Home Arrival
+description: Automatically turn on smart lights when arriving home (entering geofence)
+
+# Configuration - these would be set by the user
+config:
+  home_latitude: 37.7749  # Example: San Francisco
+  home_longitude: -122.4194
+  geofence_radius: 100  # meters
+  brightness: 75  # percentage
+
+# This workflow is triggered by the location bit's geofence trigger
+# In a real app, this would be registered as a background trigger
+nodes:
+  # Step 1: (Trigger) Monitor geofence entry
+  # In production, this would be a persistent trigger running in the background
+  - id: geofence-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-location"
+      operation: onGeofenceEnter
+      params:
+        geofenceId: "home"
+        latitude: "{{config.home_latitude}}"
+        longitude: "{{config.home_longitude}}"
+        radius: "{{config.geofence_radius}}"
+
+  # Step 2: Get all available lights
+  - id: get-lights
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-smart-home"
+      operation: getLights
+      params: {}
+
+  # Step 3: Turn on all lights to configured brightness
+  - id: turn-on-lights
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-smart-home"
+      operation: turnAllOn
+      params:
+        brightness: "{{config.brightness}}"
+
+edges:
+  - source: geofence-trigger
+    target: get-lights
+  - source: get-lights
+    target: turn-on-lights
+
+output:
+  trigger: "{{geofence-trigger}}"
+  lights: "{{get-lights}}"
+  result: "{{turn-on-lights}}"
+  message: "Welcome home! Lights turned on."

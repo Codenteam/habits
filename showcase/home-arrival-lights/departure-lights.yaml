@@ -1,0 +1,44 @@
+id: home-departure-lights
+name: Turn Lights Off at Home Departure
+description: Automatically turn off smart lights when leaving home (exiting geofence)
+
+# Configuration - these would be set by the user
+config:
+  home_latitude: 37.7749  # Example: San Francisco
+  home_longitude: -122.4194
+  geofence_radius: 100  # meters
+
+# This workflow is triggered when leaving the home geofence
+nodes:
+  # Step 1: (Trigger) Monitor geofence exit
+  - id: geofence-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-location"
+      operation: onGeofenceExit
+      params:
+        geofenceId: "home"
+        latitude: "{{config.home_latitude}}"
+        longitude: "{{config.home_longitude}}"
+        radius: "{{config.geofence_radius}}"
+
+  # Step 2: Turn off all lights
+  - id: turn-off-lights
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-smart-home"
+      operation: turnAllOff
+      params: {}
+
+edges:
+  - source: geofence-trigger
+    target: turn-off-lights
+
+output:
+  trigger: "{{geofence-trigger}}"
+  result: "{{turn-off-lights}}"
+  message: "Goodbye! Lights turned off."

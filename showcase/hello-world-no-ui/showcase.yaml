@@ -1,0 +1,14 @@
+# Disabled - internal test showcase
+disabled: true
+
+name: hello-world-no-ui
+title: Hello World (No UI)
+description: |
+  A simple hello world habit that demonstrates auto-generated UI from input/output schema.
+  No frontend directory required - the Tauri app generates forms automatically.
+category: demo
+tags:
+  - hello-world
+  - auto-ui
+  - schema
+difficulty: beginner

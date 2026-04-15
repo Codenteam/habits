@@ -1,0 +1,43 @@
+id: hello-world-no-ui
+name: Hello World (Auto UI)
+description: A simple hello world habit that uses auto-generated UI based on input/output schema
+
+# Input schema - defines the form fields that will be auto-generated
+input:
+  - name: param1
+    type: string
+    displayAs: text
+    label: First Parameter
+    description: Enter the first word (use "hello" for greeting)
+    default: hello
+    required: true
+    
+  - name: param2
+    type: string
+    displayAs: text
+    label: Second Parameter
+    description: Enter the second word (use "world" for greeting)
+    default: world
+    required: true
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "{{habits.input.param1}}"
+        param2: "{{habits.input.param2}}"
+
+edges: []
+
+# Output schema - defines how the result will be displayed
+output:
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting Result

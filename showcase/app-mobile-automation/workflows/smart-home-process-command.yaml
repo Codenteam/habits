@@ -1,0 +1,131 @@
+id: smart-home-process-command
+name: Process Voice Command
+description: Parse natural language voice command and generate smart home actions
+
+input:
+  - id: command
+    type: string
+    required: true
+    description: Natural language command
+  - id: devices
+    type: array
+    required: false
+    description: Available devices in home
+  - id: context
+    type: object
+    required: false
+    description: Current home state (time, temperature, etc.)
+
+nodes:
+  # Parse and understand command
+  - id: parse-command
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 600
+        systemMessage: |
+          You are a smart home command parser. Parse natural language commands into structured actions.
+          Available device types: lights, thermostat, locks, cameras, blinds, speakers, tv, appliances
+        prompt: |
+          Parse this voice command:
+          Command: "{{habits.input.command}}"
+          Available devices: {{habits.input.devices}}
+          Context: {{habits.input.context}}
+          
+          Return JSON:
+          {
+            "intent": "control|query|routine|scene",
+            "confidence": 0.0-1.0,
+            "targets": [
+              {
+                "deviceType": "lights|thermostat|lock|etc",
+                "location": "room or area",
+                "specificDevice": "device name if mentioned"
+              }
+            ],
+            "actions": [
+              {
+                "action": "turn_on|turn_off|set|dim|lock|unlock|etc",
+                "parameters": {"brightness": 50, "temperature": 72, "color": "blue"},
+                "deviceType": "lights",
+                "location": "living room"
+              }
+            ],
+            "conditions": {
+              "time": "if time-based",
+              "duration": "if temporary",
+              "trigger": "conditional trigger"
+            },
+            "clarificationNeeded": false,
+            "clarificationQuestion": ""
+          }
+
+  # Generate human response
+  - id: generate-response
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-intersect"
+      resource: ask_chatgpt
+      operation: ask_chatgpt
+      credentials:
+        intersect:
+          host: "{{habits.env.HABITS_INTERSECT_HOST}}"
+          apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 200
+        prompt: |
+          Generate a natural voice assistant response.
+          
+          Original command: "{{habits.input.command}}"
+          Parsed actions: {{parse-command}}
+          
+          Return JSON:
+          {
+            "spokenResponse": "Natural confirmation response",
+            "shortResponse": "Brief response for display",
+            "actionsDescription": "What actions are being taken",
+            "suggestions": ["Related follow-up suggestions"]
+          }
+
+  # Save command history
+  - id: save-command
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      resource: insert
+      operation: insert
+      params:
+        collection: "smart_home_commands"
+        document:
+          command: "{{habits.input.command}}"
+          parsed: "{{parse-command}}"
+          response: "{{generate-response}}"
+          executedAt: "{{habits.now}}"
+
+edges:
+  - source: parse-command
+    target: generate-response
+  - source: generate-response
+    target: save-command
+
+output:
+  commandId: "{{save-command.id}}"
+  parsed: "{{parse-command}}"
+  response: "{{generate-response}}"

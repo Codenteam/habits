@@ -58,6 +58,7 @@ const slackBit = {
   displayName: 'Slack',
   description: 'Send messages and notifications to Slack channels',
   logoUrl: 'lucide:MessageSquareText',
+  runtime: 'all',
   
   auth: {
     type: 'SECRET_TEXT',

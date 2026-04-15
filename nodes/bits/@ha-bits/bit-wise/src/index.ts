@@ -157,6 +157,7 @@ const wiseBit = {
   displayName: 'Wise',
   description: 'Wise (TransferWise) money transfers and currency conversion',
   logoUrl: 'lucide:Wallet',
+  runtime: 'all',
   
   auth: {
     type: 'SECRET_TEXT',

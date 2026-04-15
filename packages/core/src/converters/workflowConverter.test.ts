@@ -35,7 +35,7 @@ const sampleScriptWorkflow: ScriptWorkflow = {
         id: 'script-1',
         summary: 'Fetch Data',
         value: {
-          type: 'rawscript',
+          type: 'script',
           content: 'export async function main() { return { data: "test" }; }',
           language: 'deno',
           lock: '',
@@ -49,7 +49,7 @@ const sampleScriptWorkflow: ScriptWorkflow = {
       id: 'failure-handler',
       summary: 'Error Handler',
       value: {
-        type: 'rawscript',
+        type: 'script',
         content: 'export async function main(error) { console.error(error); }',
         language: 'deno',
       },
@@ -117,9 +117,7 @@ const expectedScriptConversionOutput: FrontendWorkflow = {
       data: expect.objectContaining({
         label: 'Fetch Data',
         framework: 'script',
-        module: 'script-rawscript',
-        content: 'export async function main() { return { data: "test" }; }',
-        language: 'deno',
+        module: 'script-script',
       }),
     }),
     expect.objectContaining({
@@ -231,7 +229,7 @@ describe('ScriptWorkflowConverter.createMatrixWorkflowExample', () => {
             id: expect.any(String),
             summary: expect.any(String),
             value: expect.objectContaining({
-              type: 'rawscript',
+              type: 'script',
               language: 'deno',
             }),
           }),

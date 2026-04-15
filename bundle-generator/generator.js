@@ -182,8 +182,8 @@ function run(stack, workflows, env){
     const createStubRedirectPlugin = (stubAliases) => ({
         name: 'stub-redirect',
         setup(build) {
-            // Match relative imports like ./driver or ./diffusion-driver
-            build.onResolve({ filter: /^\.\/[a-z-]+$/ }, (args) => {
+            // Match relative imports like ./driver, ./diffusion-driver, ../stubs, ./lib/stubs
+            build.onResolve({ filter: /^\.\.?\/[a-z-]+(\/[a-z-]+)?$/ }, (args) => {
                 // Find which package this import is coming from
                 const importer = args.importer;
                 if (!importer) return null;
@@ -196,8 +196,18 @@ function run(stack, workflows, env){
                 if (!haBitsMatch) return null;
                 
                 const packageName = haBitsMatch[1];
-                // Extract the module name from the relative path (e.g., ./driver -> driver)
-                const moduleName = args.path.replace('./', '');
+                
+                // Extract the module name from relative path
+                // ./driver -> driver
+                // ../stubs -> stubs  
+                // ./lib/stubs -> lib/stubs
+                let moduleName = args.path;
+                if (moduleName.startsWith('../')) {
+                    moduleName = moduleName.replace('../', '');
+                } else if (moduleName.startsWith('./')) {
+                    moduleName = moduleName.replace('./', '');
+                }
+                
                 const stubKey = `${packageName}/${moduleName}`;
                 
                 // Check if we have a stub for this package's module
@@ -335,10 +345,16 @@ if (typeof globalThis.process === 'undefined') {
             // Spread bit-declared stubs (e.g., dep → dep browser stub)
             ...bitStubs,
         },
-        // External packages that can't be bundled
+        // External packages that can't be bundled (resolved at runtime in Tauri app)
         external: [
             '@ha-bits/bindings',
             '@habits/shared',
+            // Tauri plugin APIs - only available at runtime in Tauri app
+            'tauri-plugin-sms-api',
+            'tauri-plugin-wifi-api',
+            'tauri-plugin-matter-api',
+            'tauri-plugin-system-settings-api',
+            '@tauri-apps/plugin-geolocation',
         ],
         logLevel: 'info',
     }).then((result) => {

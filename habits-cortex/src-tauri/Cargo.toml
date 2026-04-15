@@ -20,7 +20,7 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-shell = "2"
 tauri-plugin-http = "2"
 tauri-plugin-log = "2"
@@ -34,14 +34,36 @@ tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-fs = { version = "2" }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+base64 = "0.22"
 
-# Desktop-only dependencies (don't support iOS/Android)
-[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-tauri-plugin-llama = { path = "../tauri-plugin-llama" }
+# Mobile-only dependencies (iOS/Android)
+[target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
+tauri-plugin-geolocation = "2"
+tauri-plugin-wifi = { path = "../tauri-plugin-wifi" }
+tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }
+tauri-plugin-matter = { path = "../tauri-plugin-matter" }
+tauri-plugin-sms = { path = "../tauri-plugin-sms" }
+
+# Desktop + iOS: local-ai with Metal + Accelerate (Apple Silicon / Apple frameworks)
+[target.'cfg(not(target_os = "android"))'.dependencies]
+tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
+
+# Android: local-ai with CPU-only inference (no Metal/Accelerate)
+[target.'cfg(target_os = "android")'.dependencies]
+tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 
 # xcap only for desktop debug builds
 [target.'cfg(all(debug_assertions, not(any(target_os = "ios", target_os = "android"))))'.dependencies]
 xcap = "0.9"
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
+
+# webdriver for iOS debug builds
+[target.'cfg(all(debug_assertions, target_os = "ios"))'.dependencies]
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
+
+# webdriver for Android debug builds
+[target.'cfg(all(debug_assertions, target_os = "android"))'.dependencies]
+tauri-plugin-webdriver = { path = "../../untracked/tauri-plugin-webdriver" }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

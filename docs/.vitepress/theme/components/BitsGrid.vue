@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import BitsCard from './BitsCard.vue'
+import { useBitsStats } from '../composables/useBitsStats'
 import {
   Search,
   X,
@@ -218,11 +219,19 @@ interface BitInfo {
   actionCount: number
   triggerCount: number
   showcaseCount: number
+  downloads: number
+  downloadsFormatted: string
 }
 
 const props = defineProps<{
   bits: BitInfo[]
 }>()
+
+// Merge static bits with runtime download stats
+const { mergedBits } = useBitsStats(props.bits)
+
+// Alias for template usage
+const bits = mergedBits
 
 const ITEMS_PER_PAGE = 12
 const MAX_VISIBLE_CATEGORIES = 10
@@ -236,7 +245,7 @@ const categoriesExpanded = ref(false)
 // Get all unique categories
 const availableCategories = computed(() => {
   const categories = new Set<string>()
-  props.bits.forEach(bit => {
+  mergedBits.value.forEach(bit => {
     bit.categories.forEach(cat => categories.add(cat))
   })
   return Array.from(categories).sort()
@@ -252,19 +261,19 @@ const visibleCategories = computed(() => {
 
 // Filter bits
 const filteredBits = computed(() => {
-  return props.bits.filter(bit => {
+  return mergedBits.value.filter(bit => {
     // Search filter
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      const matchesSearch = 
+      const matchesSearch =
         bit.displayName.toLowerCase().includes(query) ||
         bit.description.toLowerCase().includes(query) ||
         bit.packageName.toLowerCase().includes(query) ||
         bit.categories.some(cat => cat.toLowerCase().includes(query))
-      
+
       if (!matchesSearch) return false
     }
-    
+
     // Category filter
     if (selectedCategories.value.length > 0) {
       const hasSelectedCategory = selectedCategories.value.some(
@@ -272,7 +281,7 @@ const filteredBits = computed(() => {
       )
       if (!hasSelectedCategory) return false
     }
-    
+
     return true
   })
 })

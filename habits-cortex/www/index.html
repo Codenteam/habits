@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Habits</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
     :root {
       --bg-primary: #0a0a0f;
@@ -73,6 +74,30 @@
       font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
+    }
+
+    #app-version-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      margin-left: 6px;
+    } 
+
+    #app-version-badge.dev {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    #app-version-badge.debug {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+    }
+
+    #app-version-badge.release {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
     }
     
     .storage-indicator {
@@ -1017,6 +1042,8 @@
     .hidden { display: none !important; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Optional: Pre-bundled bits for faster execution (generated at Tauri build time) -->
+  <script src="cortex-bundle-all.js" onerror="console.log('[Habits] cortex-bundle-all.js not available, using per-habit bundles')"></script>
 </head>
 <body>
   <div class="app-shell safe-top safe-bottom">
@@ -1025,7 +1052,7 @@
       <header class="header">
         <div>
           <h1 class="header-title">Habits</h1>
-          <p class="header-subtitle">Run workflows locally</p>
+          <p class="header-subtitle">Run workflows locally <span id="app-version-badge"></span></p>
         </div>
         <div id="storage-indicator" class="storage-indicator" style="display: none;">
           <span class="storage-dot"></span>
@@ -1209,6 +1236,7 @@
     </div>
   </div>
 
+  <script src="schema-form.js"></script>
   <script type="module" src="runner.js"></script>
 </body>
 </html>

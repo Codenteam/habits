@@ -42,6 +42,7 @@ const helloWorldBit = {
   displayName: 'Hello World',
   description: 'A simple demonstration bit that greets the world',
   logoUrl: 'lucide:Hand',
+  runtime: 'all',
   
   actions: {
     /**

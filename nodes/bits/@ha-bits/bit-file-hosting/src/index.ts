@@ -221,6 +221,7 @@ const fileHostingBit = {
   displayName: 'File Hosting (Base)',
   description: 'L0 base bit for cloud file hosting - provides common interfaces and in-memory stub implementations',
   logoUrl: 'lucide:FolderCloud',
+  runtime: 'all',
   
   /**
    * Declares which bits can replace this one.

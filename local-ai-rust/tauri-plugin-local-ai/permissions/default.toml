@@ -14,6 +14,7 @@ identifier = "allow-image-caption"
 description = "Allow image captioning commands"
 commands.allow = [
   "caption_image",
+  "caption_image_base64",
   "create_image_captioner",
   "image_captioner_caption"
 ]
@@ -23,6 +24,7 @@ identifier = "allow-image-gen"
 description = "Allow image generation commands"
 commands.allow = [
   "generate_image",
+  "generate_image_base64",
   "create_image_generator",
   "image_generator_generate"
 ]
@@ -32,6 +34,7 @@ identifier = "allow-transcribe"
 description = "Allow audio transcription commands"
 commands.allow = [
   "transcribe_audio",
+  "transcribe_audio_base64",
   "create_transcriber",
   "transcriber_transcribe"
 ]
@@ -41,6 +44,7 @@ identifier = "allow-text-to-voice"
 description = "Allow text-to-voice commands"
 commands.allow = [
   "synthesize_speech",
+  "synthesize_speech_base64",
   "create_voice_synthesizer",
   "voice_synthesizer_synthesize"
 ]
@@ -51,7 +55,10 @@ description = "Allow utility commands"
 commands.allow = [
   "get_version",
   "has_metal_support",
-  "has_cuda_support"
+  "has_cuda_support",
+  "list_models",
+  "ensure_models_dir",
+  "download_file"
 ]
 
 [default]

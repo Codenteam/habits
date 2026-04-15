@@ -1,4 +1,5 @@
 version: "1.0"
+name: "Email Demo"
 workflows:
   - id: email-forward-demo
     path: ./habit.yaml

@@ -99,6 +99,7 @@ const githubBit = {
   displayName: 'GitHub',
   description: 'Manage pull requests, issues, and repositories via the GitHub API',
   logoUrl: 'lucide:Github',
+  runtime: 'all',
 
   auth: {
     type: 'SECRET_TEXT',

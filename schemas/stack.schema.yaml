@@ -1,0 +1,152 @@
+# Stack Configuration Schema
+# Defines the structure for stack.yaml files - the primary configuration manifest for .habit packages.
+$schema: http://json-schema.org/draft-07/schema#
+title: Stack Configuration
+description: |
+  The stack.yaml file is the primary configuration manifest for habit packages.
+  It defines workflows, server configuration, and package metadata.
+
+type: object
+
+required:
+  - version
+  - workflows
+
+properties:
+  version:
+    type: string
+    description: |
+      Format/schema version (e.g., "1.0").
+      Used by runtimes for compatibility checking.
+    examples:
+      - "1.0"
+      - "1.1"
+
+  name:
+    type: string
+    description: |
+      Human-readable name of the habit package.
+      This name is displayed in the Cortex app and other UIs.
+      Recommended to provide a meaningful name instead of relying on workflow IDs.
+    examples:
+      - "AI Journal"
+      - "Marketing Campaign Generator"
+      - "Invoice Processor"
+
+  description:
+    type: string
+    description: Human-readable description of the package purpose.
+
+  author:
+    type: string
+    description: Package author name or organization.
+
+  workflows:
+    type: array
+    description: |
+      Array of workflow definitions.
+      Each entry MUST have an 'id' and 'path'.
+    minItems: 1
+    items:
+      type: object
+      required:
+        - id
+        - path
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the workflow within this package.
+        path:
+          type: string
+          description: Relative path to the workflow YAML file.
+        enabled:
+          type: boolean
+          description: Whether this workflow is enabled (defaults to true).
+          default: true
+
+  server:
+    type: object
+    description: Server configuration options.
+    properties:
+      port:
+        type: integer
+        description: Default port for the server.
+        default: 3000
+        minimum: 1
+        maximum: 65535
+      host:
+        type: string
+        description: Host address to bind to.
+        default: "0.0.0.0"
+      frontend:
+        type: string
+        description: Path to frontend directory.
+        default: "./frontend"
+      openapi:
+        type: boolean
+        description: Enable OpenAPI documentation endpoint.
+        default: true
+      webhookTimeout:
+        type: integer
+        description: Timeout in milliseconds for webhook requests.
+
+  logging:
+    type: object
+    description: |
+      Stack-level logging configuration.
+      Overrides per-workflow logging config.
+      Can be overridden by environment variables.
+    properties:
+      level:
+        type: string
+        enum:
+          - trace
+          - debug
+          - info
+          - warn
+          - error
+          - fatal
+          - none
+        description: Default log level for all workflows.
+        default: info
+      outputs:
+        type: array
+        items:
+          type: string
+          enum:
+            - console
+            - file
+            - json
+        description: Output destinations.
+        default:
+          - console
+      format:
+        type: string
+        enum:
+          - text
+          - json
+        description: Output format for console/file.
+        default: text
+      colorize:
+        type: boolean
+        description: Enable ANSI colors in console output.
+
+  application:
+    type: object
+    description: |
+      Application configuration for desktop/mobile builds.
+      Used to configure Tauri apps with OAuth deep link support.
+    properties:
+      scheme:
+        type: string
+        description: |
+          Custom URL scheme for OAuth deep links.
+          Example: "myapp" creates URLs like myapp://oauth/callback
+      name:
+        type: string
+        description: Application display name (used in Tauri builds).
+      identifier:
+        type: string
+        description: |
+          Application identifier (e.g., "com.mycompany.myapp").
+          Used for bundle identifiers on iOS/macOS and package names on Android.

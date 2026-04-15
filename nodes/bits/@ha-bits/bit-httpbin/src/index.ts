@@ -19,6 +19,7 @@ import type {
  * Uses https://httpbin.org - a simple HTTP request/response service
  */
 export class HTTPBin implements IDeclarativeNodeType {
+  runtime: 'app' | 'server' | 'all' = 'all';
   description: DeclarativeNodeDescription = {
     displayName: 'HTTPBin',
     name: 'httpbin',

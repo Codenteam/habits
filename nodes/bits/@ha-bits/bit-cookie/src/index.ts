@@ -13,6 +13,7 @@ const cookieBit = {
   displayName: 'Cookie',
   description: 'Set and manage HTTP cookies in workflows',
   logoUrl: 'lucide:Cookie',
+  runtime: 'all',
   
   actions: {
     /**

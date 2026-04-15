@@ -1,5 +1,6 @@
 {
   "version": "1.0",
+  "name": "Brieflens Habits",
   "workflows": [
     {
       "id": "auth-callback",

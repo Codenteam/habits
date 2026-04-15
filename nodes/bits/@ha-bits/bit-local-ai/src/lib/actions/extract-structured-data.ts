@@ -10,6 +10,7 @@ import {
   LocalAiAuthValue, 
   TextGenModels,
   getModelPath,
+  getModelsBasePath,
   DeviceType 
 } from '../common/common';
 import { TextGenConfig } from '../common/models';
@@ -71,14 +72,9 @@ export const extractStructuredData = createAction({
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
     const backend = getBackend();
     
-    // Use defaults if auth not configured
-    const modelsBasePath = authValue.modelsBasePath || process.env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
-    const device = authValue.device || (process.env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
-    
-    // Resolve home directory
-    const resolvedBasePath = modelsBasePath.startsWith('~') 
-      ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
-      : modelsBasePath;
+    // Get models base path (handles Tauri app data directory automatically)
+    const resolvedBasePath = await getModelsBasePath(authValue);
+    const device = authValue.device || ((typeof process !== 'undefined' ? process.env.LOCAL_AI_DEVICE : undefined) as DeviceType) || DeviceType.Auto;
     
     // Determine model paths  
     let modelPath: string;

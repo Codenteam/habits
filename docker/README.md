@@ -8,6 +8,7 @@ This folder contains Docker Compose configuration for development services.
 |---------|------|-------------|
 | **Verdaccio** | 4873 | Private npm registry for publishing @ha-bits/* packages |
 | **Greenmail** | 3025 (SMTP), 3143 (IMAP), 8080 (Web API) | Test email server |
+| **Matter MVD** | 6080 (noVNC) | Google's Matter Virtual Device simulator |
 
 ## Usage
 
@@ -88,3 +89,53 @@ IMAP access:
 - Port: 3143
 - User: any email (e.g., test@localhost)
 - Password: any (auto-created)
+
+## Matter Virtual Device (MVD)
+
+Google's Matter Virtual Device simulates Matter-compatible smart home devices for development and testing with `tauri-plugin-matter`.
+
+Web UI: http://localhost:6080 (noVNC)
+
+### Prerequisites
+
+1. **Docker Engine** (recommended over Docker Desktop for `network_mode: host`)
+   ```bash
+   # macOS with Colima
+   brew install colima docker
+   colima start --network-address
+   ```
+
+2. **Firewall Configuration** (allow mDNS)
+   ```bash
+   # macOS
+   sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/sbin/mDNSResponder
+   sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /usr/sbin/mDNSResponder
+   
+   # Linux
+   sudo ufw allow 5353/udp
+   ```
+
+### Start Matter Virtual Device
+
+```bash
+cd services
+docker compose -f docker-compose.matter.yaml up -d
+
+# View logs
+docker compose -f docker-compose.matter.yaml logs -f
+```
+
+### Create and Commission a Device
+
+1. Open http://localhost:6080 (noVNC web interface)
+2. Select a device type (e.g., On/Off Light, Dimmable Light)
+3. Click "Create Device" to generate a virtual device
+4. Scan the QR code with Google Home app to commission
+5. Device appears in your Matter fabric and can be controlled via `tauri-plugin-matter`
+
+### Supported Device Types
+
+- On/Off Light, Dimmable Light, Color Temperature Light, Extended Color Light
+- On/Off Plug-in Unit, Dimmable Plug-in Unit
+- Temperature Sensor, Humidity Sensor, Occupancy Sensor, Contact Sensor
+- Door Lock, Window Covering

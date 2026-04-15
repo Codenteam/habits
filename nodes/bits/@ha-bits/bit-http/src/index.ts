@@ -47,6 +47,7 @@ const httpBit = {
   displayName: 'HTTP Request',
   description: 'Make HTTP requests to any API endpoint',
   logoUrl: 'lucide:Globe',
+  runtime: 'all',
   
   actions: {
     /**

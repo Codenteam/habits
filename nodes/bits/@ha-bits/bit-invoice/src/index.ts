@@ -70,6 +70,7 @@ const invoiceBit = {
   displayName: 'Invoice',
   description: 'Generate professional PDF invoices with dynamic content',
   logoUrl: 'lucide:Receipt',
+  runtime: 'all',
   
   actions: {
     createInvoice: {

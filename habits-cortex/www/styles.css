@@ -19,14 +19,21 @@
   background: #45475a;
 }
 
-/* Safe area padding for mobile */
+
+/* Safe area padding for mobile (with max to prevent excessive inset) */
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    /* padding-top: max(env(safe-area-inset-top, 0px), 0px); */
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+    padding-left: max(env(safe-area-inset-left, 0px), 0px);
+    padding-right: max(env(safe-area-inset-right, 0px), 0px);
   }
+}
+
+/* Prevent scrolling on html and body */
+html, body { 
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Prevent text selection on buttons */
@@ -65,4 +72,136 @@ button {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+/* Schema Form Wrapper (additional styles for runner.js integration) */
+.schema-form-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.schema-form-wrapper > .form-header {
+  flex-shrink: 0;
+}
+
+.schema-form-wrapper > .schema-form {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.schema-form-wrapper > .workflow-tabs-container {
+  flex-shrink: 0;
+}
+
+.form-header {
+  padding: 16px 16px 0;
+  background: #1e1e2e;
+}
+
+.form-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #cdd6f4;
+  margin: 0 0 6px;
+}
+
+.form-description {
+  font-size: 14px;
+  color: #a6adc8;
+  margin: 0 0 12px;
+}
+
+.workflow-tabs-container {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #313244;
+  background: linear-gradient(to top, #11111b 0%, #1e1e2e 100%);
+}
+
+.workflow-tab {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c7086;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+.workflow-tab::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background: #89b4fa;
+  border-radius: 0 0 3px 3px;
+  transition: width 0.2s ease;
+}
+
+.workflow-tab:hover {
+  color: #a6adc8;
+  background: rgba(69, 71, 90, 0.3);
+}
+
+.workflow-tab.active {
+  color: #cdd6f4;
+  background: rgba(137, 180, 250, 0.15);
+}
+
+.workflow-tab.active::before {
+  width: 24px;
+}
+
+.workflow-tab svg {
+  display: block;
+  margin: 0 auto 4px;
+  width: 20px;
+  height: 20px;
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #45475a;
+}
+
+.output-success {
+  color: #a6e3a1;
+  font-weight: 500;
+}
+
+.output-error-badge {
+  color: #f38ba8;
+  font-weight: 500;
+}
+
+.error-details {
+  background: rgba(243, 139, 168, 0.1);
+  border: 1px solid rgba(243, 139, 168, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #cdd6f4;
 }

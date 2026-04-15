@@ -1,0 +1,44 @@
+id: hello-world-env
+name: Hello World (Env)
+description: A hello world habit that reads param1 from environment variables
+
+# Environment variables required by this habit
+env:
+  - name: PARAM1
+    type: string
+    label: First Parameter (Env)
+    description: The first word, stored as a secret/env variable
+    required: true
+    secret: true
+
+# Input schema - only param2 since param1 comes from env
+input:
+  - name: param2
+    type: string
+    displayAs: text
+    label: Second Parameter
+    description: Enter the second word (use "world" for greeting)
+    default: world
+    required: true
+
+nodes:
+  - id: say-hello
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hello-world"
+      operation: greet
+      params:
+        param1: "{{habits.env.PARAM1}}"
+        param2: "{{habits.input.param2}}"
+
+edges: []
+
+# Output schema
+output:
+  greeting:
+    value: "{{say-hello}}"
+    type: string
+    displayAs: text
+    label: Greeting Result

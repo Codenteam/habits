@@ -3,6 +3,11 @@
  * Handles habit import, storage, and execution
  */
 
+// Module load marker for testing
+window.__habitsModuleLoaded__ = true;
+window.__habitsModuleVersion__ = '2026-04-11-v3';  // Version marker for cache debugging
+console.log('[Habits] Module loaded, version:', window.__habitsModuleVersion__);
+
 // ============================================================================
 // State Management
 // ============================================================================
@@ -99,6 +104,52 @@ async function openYamlFileDialog() {
   });
 }
 
+/**
+ * Fetch app version and build type from Tauri, display in header badge
+ */
+async function displayAppVersion() {
+  const badge = document.getElementById('app-version-badge');
+  if (!badge) return;
+
+  try {
+    const tauri = await waitForTauri();
+
+    // Get version from Tauri app API
+    let version = '1.0.0';
+    if (tauri.app && tauri.app.getVersion) {
+      version = await tauri.app.getVersion();
+    }
+
+    // Determine build type
+    // Dev: running on localhost or with dev server
+    // Debug: Tauri build with debug mode (devtools enabled)
+    // Release: production build
+    let buildType = 'release';
+    if (isDev) {
+      buildType = 'dev';
+    } else if (tauri.app && tauri.app.getTauriVersion) {
+      // In debug builds, devtools are typically enabled
+      // We check by looking for dev indicators
+      try {
+        const tauriVer = await tauri.app.getTauriVersion();
+        // Check if running from file:// or using debug tauri
+        if (window.location.protocol === 'tauri:' && window.__TAURI_DEBUG__) {
+          buildType = 'debug';
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+
+    badge.textContent = `v${version} ${buildType}`;
+    badge.className = buildType;
+  } catch (e) {
+    console.log('[Habits] Could not get app version:', e);
+    badge.textContent = isDev ? 'dev' : '';
+    badge.className = isDev ? 'dev' : '';
+  }
+}
+
 async function readTextFile(path) {
   const tauri = await waitForTauri();
   return tauri.fs.readTextFile(path);
@@ -143,6 +194,11 @@ async function readBinaryFile(path) {
 async function getAppDataDir() {
   const tauri = await waitForTauri();
   return tauri.path.appDataDir();
+}
+
+async function getHomeDir() {
+  const tauri = await waitForTauri();
+  return tauri.path.homeDir();
 }
 
 // ============================================================================
@@ -285,15 +341,23 @@ async function extractHabitFile(filePath) {
     
     const zip = await window.JSZip.loadAsync(fileData);
     
-    // Check for required files
+    // Check for auto-ui marker (no frontend, UI generated from schema)
+    const autoUiFile = zip.file('_auto-ui');
+    const useAutoUi = !!autoUiFile;
+    
+    // Check for index.html (optional if auto-ui is enabled)
     let indexFile = zip.file('index.html');
+    let indexHtml = null;
 
     if(!indexFile){
       // Try in frontend
       indexFile = zip.file('frontend/index.html');
     }
     
-    if (!indexFile) {
+    if (indexFile) {
+      indexHtml = await indexFile.async('string');
+    } else if (!useAutoUi) {
+      // No index.html and no auto-ui marker = invalid
       return {
         valid: false,
         error: {
@@ -302,9 +366,6 @@ async function extractHabitFile(filePath) {
         }
       };
     }
-    
-    // Extract content
-    const indexHtml = await indexFile.async('string');
     
     // Get cortex-bundle.js (required as separate file)
     const bundleFile = zip.file('cortex-bundle.js');
@@ -328,9 +389,9 @@ async function extractHabitFile(filePath) {
         const stackContent = await stackFile.async('string');
         
         // 1. First try: explicit name field
-        const nameMatch = stackContent.match(/^name:\s*['"]?([^'"\n]+)['"]?/m);
-        if (nameMatch && nameMatch[1]) {
-          habitName = nameMatch[1].trim();
+        const nameMatch = stackContent.match(/^\s*"?name"?\s*:\s*['"]([^'"\n]+)['"]|^name:\s*['"]?([^'"\n]+)['"]?/m);
+        if (nameMatch && (nameMatch[1] || nameMatch[2])) {
+          habitName = (nameMatch[1] || nameMatch[2]).trim();
         }
         
         // 2. Second try: first workflow id (more reliable than filename on Android)
@@ -365,7 +426,8 @@ async function extractHabitFile(filePath) {
     }
     
     console.log('[Habits] Extracted habit:', habitName);
-    console.log('[Habits] Index HTML size:', indexHtml.length, 'bytes');
+    console.log('[Habits] Auto-UI mode:', useAutoUi);
+    console.log('[Habits] Index HTML size:', indexHtml ? indexHtml.length : 0, 'bytes');
     console.log('[Habits] Bundle JS size:', bundleJs.length, 'bytes');
     
     // Extract all files for asset handling
@@ -383,6 +445,7 @@ async function extractHabitFile(filePath) {
       bundleJs,
       files,
       filePath,
+      useAutoUi,
     };
   } catch (err) {
     console.error('[Habits] Failed to extract habit file:', err);
@@ -422,6 +485,7 @@ async function importHabitFile(filePath) {
     cachedIndexHtml: extraction.indexHtml,
     cachedBundleJs: extraction.bundleJs,
     cachedFiles: extraction.files,
+    useAutoUi: extraction.useAutoUi || false,
     installedAt: new Date().toISOString(),
   };
   
@@ -435,6 +499,200 @@ async function importHabitFile(filePath) {
   console.log('[Habits] Habit imported successfully:', habit.name);
   return true;
 }
+
+/**
+ * Extract habit from base64 data (identical to extractHabitFile but takes base64)
+ * @param {string} base64Data - Base64 encoded .habit file content
+ * @param {string} habitNameHint - Optional name hint for the habit
+ */
+async function extractHabitFromBase64(base64Data, habitNameHint = null) {
+  console.log('[Habits] Extracting habit from base64, length:', base64Data.length);
+  
+  try {
+    // Decode base64 to binary
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Load JSZip and extract
+    if (!window.JSZip) {
+      throw new Error('JSZip library not loaded');
+    }
+    
+    const zip = await window.JSZip.loadAsync(bytes);
+    
+    // Check for auto-ui marker (no frontend, UI generated from schema)
+    const autoUiFile = zip.file('_auto-ui');
+    const useAutoUi = !!autoUiFile;
+    
+    // Check for index.html (optional if auto-ui is enabled)
+    let indexFile = zip.file('index.html');
+    let indexHtml = null;
+
+    if (!indexFile) {
+      indexFile = zip.file('frontend/index.html');
+    }
+    
+    if (indexFile) {
+      indexHtml = await indexFile.async('string');
+    } else if (!useAutoUi) {
+      return {
+        valid: false,
+        error: {
+          title: 'Invalid Habit File',
+          message: 'The .habit file is missing index.html'
+        }
+      };
+    }
+    
+    // Get cortex-bundle.js (required as separate file)
+    const bundleFile = zip.file('cortex-bundle.js');
+    if (!bundleFile) {
+      return {
+        valid: false,
+        error: {
+          title: 'Invalid Habit File',
+          message: 'The .habit file is missing cortex-bundle.js'
+        }
+      };
+    }
+    const bundleJs = await bundleFile.async('string');
+    
+    // Try to get habit name from stack.yaml inside zip
+    let habitName = habitNameHint || 'Unknown';
+    const stackFile = zip.file('stack.yaml') || zip.file('stack.yml');
+    if (stackFile && habitName === 'Unknown') {
+      try {
+        const stackContent = await stackFile.async('string');
+        const nameMatch = stackContent.match(/^\s*"?name"?\s*:\s*['"]([^'"\n]+)['"]|^name:\s*['"]?([^'"\n]+)['"]?/m);
+        if (nameMatch && (nameMatch[1] || nameMatch[2])) {
+          habitName = (nameMatch[1] || nameMatch[2]).trim();
+        }
+        if (habitName === 'Unknown') {
+          const workflowIdMatch = stackContent.match(/^\s*-\s*id:\s*['"]?([^'"\n]+)['"]?/m);
+          if (workflowIdMatch && workflowIdMatch[1]) {
+            habitName = workflowIdMatch[1].trim()
+              .split(/[-_]/)
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+        }
+      } catch (e) {
+        console.log('[Habits] Could not parse stack.yaml for name:', e);
+      }
+    }
+    
+    console.log('[Habits] Extracted habit from base64:', habitName);
+    console.log('[Habits] Auto-UI mode:', useAutoUi);
+    console.log('[Habits] Index HTML size:', indexHtml ? indexHtml.length : 0, 'bytes');
+    console.log('[Habits] Bundle JS size:', bundleJs.length, 'bytes');
+    
+    // Extract all files for asset handling
+    const files = {};
+    for (const [name, file] of Object.entries(zip.files)) {
+      if (!file.dir) {
+        files[name] = await file.async('string');
+      }
+    }
+    
+    return {
+      valid: true,
+      habitName,
+      indexHtml,
+      bundleJs,
+      files,
+      filePath: null,
+      useAutoUi,
+    };
+  } catch (err) {
+    console.error('[Habits] Failed to extract habit from base64:', err);
+    return {
+      valid: false,
+      error: {
+        title: 'Extraction Failed',
+        message: 'Failed to extract habit from base64: ' + err.message
+      }
+    };
+  }
+}
+
+/**
+ * Import habit from base64 data (identical to importHabitFile but takes base64)
+ * @param {string} base64Data - Base64 encoded .habit file content
+ * @param {string} habitNameHint - Optional name hint for the habit
+ * @returns {Promise<{success: boolean, habitId?: string, error?: string}>}
+ */
+async function importHabitFromBase64(base64Data, habitNameHint = null) {
+  console.log('[Habits] Importing habit from base64');
+  
+  const extraction = await extractHabitFromBase64(base64Data, habitNameHint);
+  
+  if (!extraction.valid) {
+    return { success: false, error: extraction.error.message };
+  }
+  
+  // Generate unique ID
+  const habitId = 'habit-' + Date.now();
+  
+  // Create habit entry with cached content
+  const habit = {
+    id: habitId,
+    name: extraction.habitName,
+    filePath: null, // No file path for base64 imports
+    cachedIndexHtml: extraction.indexHtml,
+    cachedBundleJs: extraction.bundleJs,
+    cachedFiles: extraction.files,
+    useAutoUi: extraction.useAutoUi || false,
+    installedAt: new Date().toISOString(),
+  };
+  
+  // Add to state and save
+  state.habits.push(habit);
+  await saveManifest();
+  
+  // Update UI
+  renderHabitsList();
+  
+  console.log('[Habits] Habit imported from base64 successfully:', habit.name, 'id:', habitId);
+  return { success: true, habitId, habitName: habit.name };
+}
+
+// Expose to window for testing
+window.importHabitFromBase64 = importHabitFromBase64;
+
+/**
+ * Write a file to the app data directory from base64 content.
+ * Uses native Tauri command for reliable cross-platform file writing.
+ * @param {string} base64Content - Base64 encoded file content
+ * @param {string} relativePath - Path relative to app data dir (e.g., "models/text-gen/qwen2-0.5b/model.gguf")
+ * @param {boolean} append - If true, append to existing file (for chunked transfer)
+ * @returns {Promise<{success: boolean, path?: string, bytesWritten?: number, error?: string}>}
+ */
+async function writeAppDataFile(base64Content, relativePath, append = false) {
+  try {
+    const tauri = await waitForTauri();
+    if (!tauri || !tauri.core || !tauri.core.invoke) {
+      return { success: false, error: 'Tauri invoke not available' };
+    }
+
+    const result = await tauri.core.invoke('write_app_data_file', {
+      base64Content,
+      relativePath,
+      append,
+    });
+
+    console.log('[writeAppDataFile] Result:', result);
+    return result;
+  } catch (err) {
+    console.error('[writeAppDataFile] Error:', err);
+    return { success: false, error: err.message || String(err) };
+  }
+}
+
+// Expose to window for testing/MCP
+window.writeAppDataFile = writeAppDataFile;
 
 // ============================================================================
 // Habit Execution
@@ -477,6 +735,12 @@ async function runHabit(habitId) {
   
   state.currentHabit = habit;
   
+  // If auto-UI mode, use form-based execution
+  if (habit.useAutoUi) {
+    console.log('[Habits] Using auto-UI mode for:', habit.name);
+    return runHabitWithForm(habitId);
+  }
+  
   try {
     let indexHtml, bundleJs;
     
@@ -494,6 +758,16 @@ async function runHabit(habitId) {
         goBackToList();
         return;
       }
+      
+      // Check if the re-extracted file now has auto-UI mode
+      if (extraction.useAutoUi) {
+        habit.useAutoUi = true;
+        habit.cachedBundleJs = extraction.bundleJs;
+        habit.cachedFiles = extraction.files;
+        console.log('[Habits] Switching to auto-UI mode');
+        return runHabitWithForm(habitId);
+      }
+      
       indexHtml = extraction.indexHtml;
       bundleJs = extraction.bundleJs;
       // Update cache
@@ -528,6 +802,9 @@ async function runHabit(habitId) {
     // Show habit view
     document.getElementById('habit-view').classList.add('active');
     
+    // Push history state for back gesture support
+    history.pushState({ habitView: true }, '', '#habit');
+    
     // Use an iframe to properly load the HTML with scripts
     const contentContainer = document.getElementById('habit-content');
     contentContainer.innerHTML = '';
@@ -536,6 +813,14 @@ async function runHabit(habitId) {
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
     iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals';
     contentContainer.appendChild(iframe);
+    
+    // Bridge Tauri API to iframe - required for native plugin access from workflows
+    // The iframe has allow-same-origin so we can access its contentWindow
+    if (window.__TAURI__) {
+      iframe.contentWindow.__TAURI__ = window.__TAURI__;
+      iframe.contentWindow.__TAURI_INTERNALS__ = window.__TAURI_INTERNALS__;
+      console.log('[Habits] Bridged __TAURI__ API to iframe');
+    }
     
     // Write the HTML content to the iframe
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -549,6 +834,709 @@ async function runHabit(habitId) {
     console.error('Failed to run habit:', err);
     showError('Error', 'Failed to load habit: ' + err.message);
     goBackToList();
+  }
+}
+
+// ============================================================================
+// Schema-Based Form Execution (Mobile UI)
+// ============================================================================
+
+/**
+ * Parse habit YAML files to extract workflow schema
+ * @param {object} habit - Habit object with cachedFiles
+ * @returns {object} Schema information { workflows: [...], inputs: [...], env: [...] }
+ */
+function parseHabitWorkflows(habit) {
+  const result = {
+    workflows: [],
+    inputs: [],
+    outputs: [],
+    env: [],
+  };
+
+  if (!habit.cachedFiles) {
+    console.log('[Schema] No cached files for habit');
+    return result;
+  }
+
+  // Find all workflow YAML files (habit.yaml, *.yaml in workflows folder, or listed in stack.yaml)
+  const stackContent = habit.cachedFiles['stack.yaml'] || habit.cachedFiles['stack.yml'];
+  
+  if (stackContent) {
+    try {
+      // Parse stack.yaml workflows section to find workflow files
+      // Format: 
+      //   workflows:
+      //     - id: hello-world
+      //       path: ./habit.yaml
+      const lines = stackContent.split('\n');
+      let inWorkflows = false;
+      let currentWorkflow = null;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        
+        const indent = line.search(/\S/);
+        
+        // Check for workflows section
+        if (trimmed.startsWith('workflows:')) {
+          inWorkflows = true;
+          continue;
+        }
+        
+        // Exit workflows section when hitting another top-level key
+        if (indent === 0 && !trimmed.startsWith('-')) {
+          // Process last workflow before exiting
+          if (inWorkflows && currentWorkflow && currentWorkflow.id) {
+            processWorkflowEntry(currentWorkflow, habit, result);
+          }
+          inWorkflows = false;
+          currentWorkflow = null;
+          continue;
+        }
+        
+        if (!inWorkflows) continue;
+        
+        // New workflow item
+        if (trimmed.startsWith('- id:') || trimmed.startsWith('-id:')) {
+          // Save previous workflow
+          if (currentWorkflow && currentWorkflow.id) {
+            processWorkflowEntry(currentWorkflow, habit, result);
+          }
+          const idMatch = trimmed.match(/^-\s*id:\s*['"]?([^'"\n]+)['"]?/);
+          currentWorkflow = { id: idMatch ? idMatch[1].trim() : null, path: null };
+        } else if (trimmed.startsWith('id:') && currentWorkflow) {
+          const idMatch = trimmed.match(/^id:\s*['"]?([^'"\n]+)['"]?/);
+          if (idMatch) currentWorkflow.id = idMatch[1].trim();
+        } else if (trimmed.startsWith('path:') && currentWorkflow) {
+          const pathMatch = trimmed.match(/^path:\s*['"]?([^'"\n]+)['"]?/);
+          if (pathMatch) currentWorkflow.path = pathMatch[1].trim().replace(/^\.\//, '');
+        }
+      }
+      
+      // Process last workflow
+      if (currentWorkflow && currentWorkflow.id) {
+        processWorkflowEntry(currentWorkflow, habit, result);
+      }
+    } catch (e) {
+      console.error('[Schema] Failed to parse workflows:', e instanceof Error ? e.message : JSON.stringify(e), e instanceof Error ? e.stack : '');
+    }
+  }
+
+  // Deduplicate env vars
+  const envMap = new Map();
+  for (const env of result.env) {
+    if (!envMap.has(env.id)) {
+      envMap.set(env.id, env);
+    }
+  }
+  result.env = Array.from(envMap.values());
+
+  console.log('[Schema] Parsed workflows:', result.workflows.length, 'inputs:', result.inputs.length, 'env:', result.env.length);
+  return result;
+}
+
+/**
+ * Process a workflow entry from stack.yaml
+ */
+function processWorkflowEntry(workflow, habit, result) {
+  const workflowId = workflow.id;
+  const workflowPath = workflow.path;
+  
+  // Try to find the habit file using path or fallback patterns
+  const habitFile = (workflowPath && habit.cachedFiles[workflowPath])
+    || habit.cachedFiles[`${workflowId}/habit.yaml`] 
+    || habit.cachedFiles[`${workflowId}/habit.yml`]
+    || habit.cachedFiles[`${workflowId}.yaml`]
+    || habit.cachedFiles[`${workflowId}.yml`]
+    || habit.cachedFiles['habit.yaml']
+    || habit.cachedFiles['habit.yml'];
+  
+  console.log('[Schema] Processing workflow:', workflowId, 'path:', workflowPath, 'found:', !!habitFile);
+  
+  if (habitFile) {
+    const schema = parseHabitYaml(habitFile, workflowId);
+    result.workflows.push({
+      id: workflowId,
+      name: schema.name || workflowId,
+      description: schema.description || '',
+      schema,
+    });
+    // Merge inputs/outputs/env
+    result.inputs.push(...schema.inputs);
+    result.outputs.push(...schema.outputs);
+    result.env.push(...schema.env);
+  } else {
+    // Add workflow with no schema
+    result.workflows.push({
+      id: workflowId,
+      name: workflowId,
+      description: '',
+      schema: { inputs: [], outputs: [], env: [], hasExplicitSchema: false },
+    });
+  }
+}
+
+/**
+ * Parse a single habit.yaml file content
+ */
+function parseHabitYaml(yamlContent, defaultId) {
+  // Use SchemaForm parser if available
+  if (window.SchemaForm) {
+    // Simple YAML parsing (basic key: value extraction)
+    const habitObj = simpleYamlParse(yamlContent);
+    return window.SchemaForm.parseHabitSchema(habitObj);
+  }
+  
+  // Fallback: basic parsing
+  return {
+    id: defaultId,
+    name: defaultId,
+    inputs: [],
+    outputs: [],
+    env: [],
+    hasExplicitSchema: false,
+  };
+}
+
+/**
+ * Simple YAML parser for basic habit.yaml structure
+ * Handles: id, name, description, input (array), output (object/array), env (array), nodes (array)
+ */
+function simpleYamlParse(yamlContent) {
+  const result = {
+    id: null,
+    name: null,
+    description: null,
+    input: [],
+    output: null,
+    env: [],
+    nodes: [],
+  };
+
+  const lines = yamlContent.split('\n');
+  let currentKey = null;
+  let currentArray = null;
+  let currentArrayItem = null;
+  let indentLevel = 0;
+  let arrayStartIndent = 0;  // Track expected indentation for array items
+  
+  // For output object parsing
+  let outputKey = null;
+  let outputKeyIndent = 0;
+  
+  // For OpenAPI-style input parsing
+  let inputObjectMode = false;
+  let inputPropertiesSection = false;
+  let currentInputProperty = null;
+  let currentInputPropertyIndent = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const lineIndent = line.search(/\S/);
+    
+    // Top-level keys
+    if (lineIndent === 0) {
+      // Save previous array item
+      if (currentArray && currentArrayItem) {
+        result[currentArray].push(currentArrayItem);
+        currentArrayItem = null;
+      }
+      // Save previous input property if in object mode
+      if (inputObjectMode && currentInputProperty) {
+        result.input.push(currentInputProperty);
+        currentInputProperty = null;
+      }
+      outputKey = null;
+      inputObjectMode = false;
+      inputPropertiesSection = false;
+      
+      const match = trimmed.match(/^([a-zA-Z_]+):\s*(.*)?$/);
+      if (match) {
+        currentKey = match[1];
+        const value = match[2]?.trim();
+        
+        if (currentKey === 'input') {
+          // Check if next non-empty line has "type: object" or "properties:" 
+          // to determine if this is OpenAPI format
+          let nextIdx = i + 1;
+          while (nextIdx < lines.length) {
+            const nextLine = lines[nextIdx].trim();
+            if (nextLine && !nextLine.startsWith('#')) {
+              if (nextLine.startsWith('type:') || nextLine.startsWith('properties:')) {
+                // OpenAPI object format
+                inputObjectMode = true;
+                result.input = [];
+                currentArray = null;
+              } else if (nextLine.startsWith('- ')) {
+                // Array format
+                currentArray = 'input';
+                arrayStartIndent = 2;
+                result.input = [];
+              }
+              break;
+            }
+            nextIdx++;
+          }
+          if (!inputObjectMode) {
+            currentArray = 'input';
+            arrayStartIndent = 2;
+            result.input = [];
+          }
+        } else if (currentKey === 'env' || currentKey === 'nodes') {
+          currentArray = currentKey;
+          arrayStartIndent = 2;  // Top-level array items should be at indent 2
+          result[currentKey] = [];
+        } else if (currentKey === 'output') {
+          // Output can be object or array - check next line
+          currentArray = null;
+          result.output = {};
+        } else if (value && !value.startsWith('|') && !value.startsWith('>')) {
+          result[currentKey] = value.replace(/^['"]|['"]$/g, '');
+          currentArray = null;
+        }
+      }
+    } else if (inputObjectMode && currentKey === 'input') {
+      // Handle OpenAPI-style input parsing
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        const propName = propMatch[1];
+        const propValue = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        
+        if (propName === 'properties' && lineIndent === 2) {
+          // Entering properties section
+          inputPropertiesSection = true;
+        } else if (propName === 'required' && lineIndent === 2) {
+          // Required array - parse subsequent lines for required field names
+          inputPropertiesSection = false;
+          // Read the required array items
+          let reqIdx = i + 1;
+          while (reqIdx < lines.length) {
+            const reqLine = lines[reqIdx].trim();
+            if (reqLine.startsWith('- ')) {
+              const reqField = reqLine.replace(/^-\s*/, '').replace(/^['"]|['"]$/g, '');
+              // Mark the field as required
+              const field = result.input.find(f => f.id === reqField);
+              if (field) field.required = true;
+            } else if (reqLine && !reqLine.startsWith('#')) {
+              break; // Exit on non-array line
+            }
+            reqIdx++;
+          }
+        } else if (inputPropertiesSection && lineIndent === 4 && !propValue) {
+          // New property in properties section (e.g., "prompt:")
+          if (currentInputProperty) {
+            result.input.push(currentInputProperty);
+          }
+          currentInputProperty = { id: propName, type: 'string' };
+          currentInputPropertyIndent = lineIndent;
+        } else if (currentInputProperty && lineIndent > currentInputPropertyIndent) {
+          // Property details (e.g., "type: string", "description: ...")
+          let value = propValue;
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          currentInputProperty[propName] = value;
+        }
+      }
+    } else if (currentArray && trimmed.startsWith('- ') && lineIndent === arrayStartIndent) {
+      // Array item - only at expected indentation level
+      if (currentArrayItem) {
+        result[currentArray].push(currentArrayItem);
+      }
+      
+      // Check if it's inline: - id: value
+      const inlineMatch = trimmed.match(/^-\s*([a-zA-Z_]+):\s*(.+)$/);
+      if (inlineMatch) {
+        currentArrayItem = { [inlineMatch[1]]: inlineMatch[2].replace(/^['"]|['"]$/g, '') };
+      } else {
+        currentArrayItem = {};
+      }
+      indentLevel = lineIndent;
+    } else if (currentArrayItem && lineIndent > indentLevel) {
+      // Property of current array item
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        let value = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        // Handle booleans
+        if (value === 'true') value = true;
+        else if (value === 'false') value = false;
+        currentArrayItem[propMatch[1]] = value;
+      }
+    } else if (currentKey === 'output' && !currentArray) {
+      // Output object properties - support nested objects
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        const propName = propMatch[1];
+        const propValue = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        
+        // Check if this is a top-level output key (e.g., "greeting:") or a nested property
+        if (lineIndent === 2 && !propValue) {
+          // This is a top-level output key with nested properties
+          outputKey = propName;
+          outputKeyIndent = lineIndent;
+          result.output[outputKey] = {};
+        } else if (lineIndent === 2 && propValue) {
+          // Simple output value (e.g., "result: {{node}}")
+          result.output[propName] = propValue;
+          outputKey = null;
+        } else if (outputKey && lineIndent > outputKeyIndent) {
+          // Nested property of output key
+          let value = propValue;
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          result.output[outputKey][propName] = value;
+        }
+      }
+    }
+  }
+
+  // Don't forget last item
+  if (currentArray && currentArrayItem) {
+    result[currentArray].push(currentArrayItem);
+  }
+  
+  // Don't forget last input property if in object mode
+  if (inputObjectMode && currentInputProperty) {
+    result.input.push(currentInputProperty);
+  }
+
+  return result;
+}
+
+/**
+ * Run a habit with auto-generated form UI
+ * @param {string} habitId - Habit ID
+ * @param {string} workflowId - Optional specific workflow to run
+ */
+async function runHabitWithForm(habitId, workflowId = null) {
+  const habit = state.habits.find(h => h.id === habitId);
+  if (!habit) {
+    showError('Error', 'Habit not found');
+    return;
+  }
+
+  // Check secrets
+  const { allSet, missing } = await checkRequiredSecrets(habit);
+  if (!allSet) {
+    showSecretsModal(habit);
+    return;
+  }
+
+  state.currentHabit = habit;
+
+  try {
+    // Ensure we have cached files
+    if (!habit.cachedFiles && habit.filePath) {
+      const extraction = await extractHabitFile(habit.filePath);
+      if (!extraction.valid) {
+        showError(extraction.error.title, extraction.error.message);
+        goBackToList();
+        return;
+      }
+      habit.cachedIndexHtml = extraction.indexHtml;
+      habit.cachedBundleJs = extraction.bundleJs;
+      habit.cachedFiles = extraction.files;
+    }
+
+    // Parse workflows and schema
+    const workflowInfo = parseHabitWorkflows(habit);
+    
+    if (workflowInfo.workflows.length === 0) {
+      showError('No Workflows', 'This habit has no runnable workflows');
+      goBackToList();
+      return;
+    }
+
+    // Select workflow
+    let targetWorkflow = workflowInfo.workflows[0];
+    if (workflowId) {
+      targetWorkflow = workflowInfo.workflows.find(w => w.id === workflowId) || targetWorkflow;
+    }
+
+    console.log('[Form] Running workflow:', targetWorkflow.id, 'with schema:', targetWorkflow.schema);
+
+    // Show form view
+    document.getElementById('habit-view').classList.add('active');
+    
+    // Push history state for back gesture support
+    history.pushState({ habitView: true }, '', '#habit');
+    
+    const contentContainer = document.getElementById('habit-content');
+    contentContainer.innerHTML = '';
+
+    // Inject schema form styles
+    if (window.SchemaForm) {
+      window.SchemaForm.injectFormStyles();
+    }
+
+    // Generate form HTML
+    const formHtml = window.SchemaForm 
+      ? window.SchemaForm.generateFormHtml(targetWorkflow.schema, targetWorkflow.id)
+      : generateFallbackFormHtml(targetWorkflow);
+
+    // Create form container
+    const formContainer = document.createElement('div');
+    formContainer.className = 'schema-form-wrapper';
+    formContainer.innerHTML = `
+      <div class="form-header">
+        <h2 class="form-title">${escapeHtml(targetWorkflow.name || targetWorkflow.id)}</h2>
+        ${targetWorkflow.description ? `<p class="form-description">${escapeHtml(targetWorkflow.description)}</p>` : ''}
+      </div>
+      ${formHtml}
+      ${workflowInfo.workflows.length > 1 ? generateWorkflowTabs(workflowInfo.workflows, targetWorkflow.id, habitId) : ''}
+    `;
+    contentContainer.appendChild(formContainer);
+
+    // Setup form submission handler
+    const form = formContainer.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await executeWorkflowFromForm(habit, targetWorkflow, form, formContainer);
+      });
+    }
+
+    // Setup workflow tab click handlers
+    const workflowTabs = formContainer.querySelectorAll('.workflow-tab');
+    workflowTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const workflowId = tab.dataset.workflowId;
+        if (workflowId && workflowId !== targetWorkflow.id) {
+          runHabitWithForm(habitId, workflowId);
+        }
+      });
+    });
+
+    // Setup file picker buttons
+    const fileButtons = formContainer.querySelectorAll('.form-file-btn');
+    fileButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const fieldId = btn.dataset.field;
+        const input = formContainer.querySelector(`#field-${fieldId}`);
+        if (input) {
+          const tauri = await waitForTauri();
+          const selected = await tauri.dialog.open({
+            multiple: false,
+            title: 'Select File',
+          });
+          if (selected) {
+            input.value = selected;
+          }
+        }
+      });
+    });
+
+    console.log('[Form] Form UI rendered');
+
+  } catch (err) {
+    console.error('Failed to run habit with form:', err);
+    showError('Error', 'Failed to load habit: ' + err.message);
+    goBackToList();
+  }
+}
+
+/**
+ * Generate workflow tabs at bottom of form
+ */
+function generateWorkflowTabs(workflows, selectedId, habitId) {
+  const tabs = workflows.map(w => {
+    const displayName = w.name || w.id;
+    const isActive = w.id === selectedId;
+    return `<button type="button" class="workflow-tab${isActive ? ' active' : ''}" data-workflow-id="${escapeHtml(w.id)}">${escapeHtml(displayName)}</button>`;
+  }).join('');
+  
+  return `
+    <div class="workflow-tabs-container">
+      ${tabs}
+    </div>
+  `;
+}
+
+/**
+ * Generate fallback form HTML when SchemaForm is not available
+ */
+function generateFallbackFormHtml(workflow) {
+  return `
+    <div class="fallback-form">
+      <p>Schema form library not loaded. Please run with bundled UI instead.</p>
+      <button type="button" onclick="runHabit('${workflow.id}')" class="form-submit-btn">
+        Run with Bundled UI
+      </button>
+    </div>
+  `;
+}
+
+/**
+ * Execute workflow from form submission
+ */
+async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
+  const submitBtn = form.querySelector('.form-submit-btn');
+  const outputContainer = formContainer.querySelector(`#workflow-form-${workflow.id}-output`);
+
+  // Disable button and show loading
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.innerHTML = '<span>Running...</span>';
+  }
+
+  try {
+    // Collect form data
+    const inputData = window.SchemaForm 
+      ? window.SchemaForm.collectFormData(form, workflow.schema.inputs)
+      : collectBasicFormData(form);
+
+    // Validate
+    if (window.SchemaForm) {
+      const validation = window.SchemaForm.validateFormData(inputData, workflow.schema.inputs);
+      if (!validation.valid) {
+        showFormErrors(form, validation.errors);
+        return;
+      }
+    }
+
+    console.log('[Form] Executing workflow:', workflow.id, 'with input:', inputData);
+
+    // Always load the per-habit bundle if available — the global cortex-bundle-all.js
+    // may not contain this habit's specific workflow definitions.
+    if (habit.cachedBundleJs) {
+      console.log('[Form] Loading per-habit bundle...');
+      eval(habit.cachedBundleJs);
+      
+      // Wait for HabitsBundle to be defined
+      let attempts = 0;
+      while (!window.HabitsBundle && attempts < 30) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+      }
+    }
+
+    if (!window.HabitsBundle) {
+      throw new Error('Workflow executor not loaded');
+    }
+
+    // Get secrets
+    const secretsIndex = await getSecretsIndex();
+    const secrets = {};
+    for (const key of secretsIndex) {
+      secrets[key] = await getSecretFromKeyring(key);
+    }
+    
+    // Inject LOCAL_AI_MODELS_PATH pointing to app data models directory
+    try {
+      const appDataDir = await getAppDataDir();
+      const tauri = await waitForTauri();
+      secrets.LOCAL_AI_MODELS_PATH = await tauri.path.join(appDataDir, 'models');
+      console.log('[Form] LOCAL_AI_MODELS_PATH:', secrets.LOCAL_AI_MODELS_PATH);
+    } catch (e) {
+      console.warn('[Form] Could not set models path:', e);
+    }
+
+    // Execute workflow
+    const result = await window.HabitsBundle.executeWorkflow(workflow.id, inputData, { env: secrets });
+
+    console.log('[Form] Workflow result:', result);
+
+    // Render output based on status
+    if (outputContainer) {
+      outputContainer.classList.remove('hidden');
+      
+      // Check if workflow failed
+      if (result.status === 'failed') {
+        // Collect error messages from failed nodes
+        const errors = (result.results || [])
+          .filter(r => !r.success && r.error)
+          .map(r => `${r.nodeId}: ${r.error}`)
+          .join('\n');
+        
+        outputContainer.innerHTML = `
+          <div class="output-header">
+            <span class="output-error-badge">✗ Failed</span>
+          </div>
+          <div class="output-error">
+            <strong>Workflow execution failed:</strong>
+            <pre class="error-details">${escapeHtml(errors || 'Unknown error')}</pre>
+          </div>
+        `;
+      } else {
+        // Success - render output
+        outputContainer.innerHTML = `
+          <div class="output-header">
+            <span class="output-success">✓ Completed</span>
+          </div>
+          ${window.SchemaForm 
+            ? window.SchemaForm.generateOutputHtml(workflow.schema, result)
+            : `<pre class="output-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`
+          }
+        `;
+      }
+    }
+
+  } catch (err) {
+    console.error('[Form] Workflow execution failed:', err);
+    
+    if (outputContainer) {
+      outputContainer.classList.remove('hidden');
+      outputContainer.innerHTML = `
+        <div class="output-error">
+          <strong>Error:</strong> ${escapeHtml(err.message || String(err))}
+        </div>
+      `;
+    }
+  } finally {
+    // Re-enable button
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      submitBtn.innerHTML = `
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Run Again
+      `;
+    }
+  }
+}
+
+/**
+ * Collect basic form data when SchemaForm is not available
+ */
+function collectBasicFormData(form) {
+  const formData = new FormData(form);
+  const data = {};
+  for (const [key, value] of formData.entries()) {
+    data[key] = value;
+  }
+  return data;
+}
+
+/**
+ * Show validation errors on form fields
+ */
+function showFormErrors(form, errors) {
+  // Clear previous errors
+  form.querySelectorAll('.form-field').forEach(field => {
+    field.classList.remove('has-error');
+    const errorEl = field.querySelector('.form-error');
+    if (errorEl) errorEl.remove();
+  });
+
+  // Show new errors
+  for (const [fieldId, message] of Object.entries(errors)) {
+    const fieldContainer = form.querySelector(`[data-field-id="${fieldId}"]`);
+    if (fieldContainer) {
+      fieldContainer.classList.add('has-error');
+      const errorEl = document.createElement('div');
+      errorEl.className = 'form-error';
+      errorEl.textContent = message;
+      fieldContainer.appendChild(errorEl);
+    }
   }
 }
 
@@ -608,6 +1596,12 @@ function renderHabitsList() {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
         </svg>
         <div class="habit-dropdown" data-habit-id="${habit.id}">
+          <div class="dropdown-item habit-run-form" data-habit-id="${habit.id}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Run with Form
+          </div>
           <div class="dropdown-item habit-view-files" data-habit-id="${habit.id}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -637,6 +1631,14 @@ function renderHabitsList() {
     menuBtn.onclick = (e) => {
       e.stopPropagation();
       toggleDropdown(habit.id);
+    };
+    
+    // Add run with form click handler
+    const runFormBtn = item.querySelector('.habit-run-form');
+    runFormBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      runHabitWithForm(habit.id);
     };
     
     // Add view files click handler
@@ -693,7 +1695,9 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function goBackToList() {
+function goBackToList(fromPopState = false) {
+  if (!state.currentHabit) return;
+  
   state.currentHabit = null;
   
   // Clear habit content
@@ -701,6 +1705,11 @@ function goBackToList() {
   
   // Hide habit view
   document.getElementById('habit-view').classList.remove('active');
+  
+  // Clean up history if not triggered by back gesture
+  if (!fromPopState && location.hash === '#habit') {
+    history.back();
+  }
 }
 
 function showError(title, message) {
@@ -752,7 +1761,7 @@ async function loadShowcase() {
   try {
     // Use cache if available
     if (!showcaseCache) {
-      const response = await fetch(SHOWCASE_INDEX_URL);
+      const response = await tauriFetch(SHOWCASE_INDEX_URL);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       showcaseCache = await response.json();
     }
@@ -800,7 +1809,7 @@ async function downloadAndImportShowcaseHabit(habit) {
   
   try {
     const habitUrl = SHOWCASE_BASE_URL + habit.habitUrl;
-    const response = await fetch(habitUrl);
+    const response = await tauriFetch(habitUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
     const blob = await response.blob();
@@ -1018,7 +2027,47 @@ function openFileInViewer(habit, fileName) {
   openHabitViewer(fileContent);
 }
 
-function openHabitViewer(yamlContent) {
+function openHabitViewer(yamlContentOrHabitId) {
+  let yamlContent = yamlContentOrHabitId;
+  
+  // If a habit ID was passed (e.g., "habit-1234567890"), look up the habit's YAML content
+  if (typeof yamlContentOrHabitId === 'string' && yamlContentOrHabitId.startsWith('habit-')) {
+    const habit = state.habits.find(h => h.id === yamlContentOrHabitId);
+    if (!habit) {
+      showError('Error', `Habit not found: ${yamlContentOrHabitId}`);
+      return;
+    }
+    
+    // Try to find a workflow YAML file (habit.yaml, stack.yaml, or any .yaml file)
+    const cachedFiles = habit.cachedFiles || {};
+    const yamlFiles = ['stack.yaml', 'habit.yaml'];
+    let foundYaml = null;
+    
+    for (const fileName of yamlFiles) {
+      if (cachedFiles[fileName]) {
+        foundYaml = cachedFiles[fileName];
+        break;
+      }
+    }
+    
+    // Fallback: find any .yaml file that's not in frontend/
+    if (!foundYaml) {
+      for (const [fileName, content] of Object.entries(cachedFiles)) {
+        if (fileName.endsWith('.yaml') && !fileName.startsWith('frontend')) {
+          foundYaml = content;
+          break;
+        }
+      }
+    }
+    
+    if (!foundYaml) {
+      showError('Error', `No YAML content found in habit: ${habit.name}`);
+      return;
+    }
+    
+    yamlContent = foundYaml;
+  }
+  
   // URL-encode the YAML content for the habit parameter
   const encodedContent = encodeURIComponent(yamlContent);
   const habitViewerUrl = `./habit-viewer/index.html?habit=${encodedContent}&hideMinimap=true`;
@@ -1062,6 +2111,31 @@ function openHabitViewer(yamlContent) {
         height: 100%;
         border: none;
       }
+      .viewer-fallback {
+        display: none;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        padding: 32px;
+        box-sizing: border-box;
+      }
+      .viewer-fallback pre {
+        background: #1a1a24;
+        color: #e2e8f0;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+      }
+      .viewer-fallback-title {
+        color: #8b8b9e;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
     </style>
     <div class="viewer-container">
       <button class="viewer-close" onclick="closeYamlViewer()">
@@ -1073,12 +2147,36 @@ function openHabitViewer(yamlContent) {
         src="${habitViewerUrl}" 
         class="viewer-iframe"
         title="Habit Viewer"
+        onload="checkViewerFrame(this)"
       ></iframe>
+      <div class="viewer-fallback" id="viewer-fallback">
+        <div class="viewer-fallback-title">YAML Content (Visual viewer unavailable in dev mode)</div>
+        <pre>${yamlContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+      </div>
     </div>
   `;
   
   // Replace the current view with the habit viewer iframe
   document.body.innerHTML = viewerHtml;
+  
+  // Check if iframe loaded properly (React app mounted)
+  window.checkViewerFrame = function(iframe) {
+    try {
+      setTimeout(() => {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        const root = doc?.getElementById('root');
+        // If root is empty after 2 seconds, show fallback
+        if (!root || root.children.length === 0) {
+          iframe.style.display = 'none';
+          document.getElementById('viewer-fallback').style.display = 'block';
+        }
+      }, 2000);
+    } catch (e) {
+      // Cross-origin error - show fallback
+      iframe.style.display = 'none';
+      document.getElementById('viewer-fallback').style.display = 'block';
+    }
+  };
   
   // Add close function to window
   window.closeYamlViewer = function() {
@@ -1403,7 +2501,10 @@ async function deleteSecret(key) {
 
 async function init() {
   console.log('Habits initializing...');
-  
+
+  // Display app version badge
+  displayAppVersion();
+
   // Load saved habits
   await loadManifest();
   renderHabitsList();
@@ -1453,6 +2554,13 @@ async function init() {
     }
   });
   
+  // Handle mobile back gesture (popstate event)
+  window.addEventListener('popstate', (e) => {
+    if (state.currentHabit) {
+      goBackToList(true);
+    }
+  });
+  
   // Close dropdowns when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.habit-menu-btn')) {
@@ -1486,167 +2594,34 @@ async function init() {
   });
   
   console.log('Habits ready');
-  
-  // Check for CLI arguments (for testing/automation)
-  await checkCliArgs();
 }
 
-/**
- * Check for CLI arguments passed from Rust backend
- * Supports: --habit <path> --test --workflow <name> --input <json>
- */
-async function checkCliArgs() {
-  try {
-    const tauri = await waitForTauri();
-    if (!tauri || !tauri.core || !tauri.core.invoke) {
-      return;
-    }
-    
-    const cliArgs = await tauri.core.invoke('get_cli_args');
-    if (!cliArgs) {
-      console.log('[CLI] No CLI arguments provided');
-      return;
-    }
-    
-    console.log('[CLI] Arguments:', JSON.stringify(cliArgs));
-    
-    // If --habit provided, load the habit file
-    if (cliArgs.habit) {
-      console.log('[CLI] Loading habit file:', cliArgs.habit);
-      const imported = await importHabitFile(cliArgs.habit);
-      
-      if (!imported) {
-        if (cliArgs.test) {
-          await tauri.core.invoke('test_complete', { 
-            result: JSON.stringify({ success: false, error: 'Failed to import habit file' }) 
-          });
-        }
-        return;
-      }
-      
-      // If in test mode with workflow specified, execute it
-      if (cliArgs.test && cliArgs.workflow) {
-        console.log('[CLI] Test mode: executing workflow', cliArgs.workflow);
-        
-        // Find the habit we just imported (most recent)
-        const habit = state.habits[state.habits.length - 1];
-        if (!habit) {
-          await tauri.core.invoke('test_complete', { 
-            result: JSON.stringify({ success: false, error: 'No habit found after import' }) 
-          });
-          return;
-        }
-        
-        // Parse input
-        let input = {};
-        if (cliArgs.input) {
-          try {
-            input = JSON.parse(cliArgs.input);
-          } catch (e) {
-            input = cliArgs.input; // Use as string if not valid JSON
-          }
-        }
-        
-        // Execute workflow in test mode
-        await executeWorkflowForTest(habit, cliArgs.workflow, input);
-      } else if (!cliArgs.test) {
-        // Not in test mode, just run the habit UI
-        const habit = state.habits[state.habits.length - 1];
-        if (habit) {
-          runHabit(habit.id);
-        }
-      }
-    }
-  } catch (err) {
-    console.error('[CLI] Error checking CLI args:', err);
-  }
-}
 
-/**
- * Execute a workflow in test mode and output result
- */
-async function executeWorkflowForTest(habit, workflowName, input) {
-  try {
-    const tauri = await waitForTauri();
-    
-    // Load the bundle JS
-    let bundleJs = habit.cachedBundleJs;
-    if (!bundleJs && habit.filePath) {
-      const extraction = await extractHabitFile(habit.filePath);
-      if (!extraction.valid) {
-        await tauri.core.invoke('test_complete', { 
-          result: JSON.stringify({ success: false, error: 'Failed to extract habit file' }) 
-        });
-        return;
-      }
-      bundleJs = extraction.bundleJs;
-    }
-    
-    // Create a minimal execution context
-    // The bundle exposes HabitsBundle global with executeWorkflow
-    if (!bundleJs) {
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'Bundle JS is null or undefined' }) 
-      });
-      return;
-    }
-    
-    // Execute bundle via eval (script injection can have timing issues)
-    try {
-      eval(bundleJs);
-    } catch (evalErr) {
-      console.error('[CLI] Bundle eval error:', evalErr);
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'Bundle eval error: ' + (evalErr.message || String(evalErr)) }) 
-      });
-      return;
-    }
-    
-    // Wait for HabitsBundle to be defined (should be immediate after eval)
-    let attempts = 0;
-    while (!window.HabitsBundle && attempts < 30) {
-      await new Promise(r => setTimeout(r, 100));
-      attempts++;
-    }
-    
-    if (!window.HabitsBundle) {
-      await tauri.core.invoke('test_complete', { 
-        result: JSON.stringify({ success: false, error: 'HabitsBundle not loaded after ' + attempts + ' attempts' }) 
-      });
-      return;
-    }
-    
-    // Get secrets for the workflow
-    const secretsIndex = await getSecretsIndex();
-    const secrets = {};
-    for (const key of secretsIndex) {
-      secrets[key] = await getSecretFromKeyring(key);
-    }
-    
-    console.log('[CLI] Executing workflow:', workflowName, 'with input:', JSON.stringify(input));
-    
-    // Execute the workflow
-    const result = await window.HabitsBundle.executeWorkflow(workflowName, input, { env: secrets });
-    
-    console.log('[CLI] Workflow result:', JSON.stringify(result));
-    
-    // Output result and exit
-    await tauri.core.invoke('test_complete', { 
-      result: JSON.stringify({ success: true, result }) 
-    });
-    
-  } catch (err) {
-    console.error('[CLI] Error executing workflow:', err);
-    const tauri = await waitForTauri();
-    await tauri.core.invoke('test_complete', { 
-      result: JSON.stringify({ success: false, error: err.message || String(err) }) 
-    });
-  }
-}
+
 
 // Start when DOM is ready
+// Pre-expose testing functions (sync) before init runs (async)
+try {
+  window.__habits__ = {
+    importHabitFile,
+    importHabitFromBase64,
+    writeAppDataFile,
+    handleOpenHabitFile,
+    openHabitViewer,
+    runHabitWithForm,
+    sendMessage: window.sendMessage,
+    getHabits: () => state.habits,
+    getState: () => state,
+  };
+  console.log('[Habits] __habits__ pre-exposed successfully');
+} catch (e) {
+  console.error('[Habits] Error pre-exposing __habits__:', e);
+  window.__habitsError__ = e?.message || String(e);
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
-  init();
+  console.log('[Habits] DOM already ready, calling init directly');
+  init().catch(err => console.error('[Habits] Init error:', err));
 }

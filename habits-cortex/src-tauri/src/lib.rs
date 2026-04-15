@@ -3,9 +3,10 @@ use log::LevelFilter;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::env;
 use std::path::Path;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::{Manager, Emitter};
+use base64::Engine;
 
 #[cfg(debug_assertions)]
 mod automation;
@@ -72,6 +73,83 @@ fn test_complete(result: String) {
 }
 
 #[tauri::command]
+fn debug_log(message: String) {
+    println!("[JS] {}", message);
+}
+
+/// Result from write_app_data_file command
+#[derive(Debug, Clone, Serialize)]
+pub struct WriteAppDataFileResult {
+    pub success: bool,
+    pub path: String,
+    pub bytes_written: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Write a file to the app's data directory from base64 content.
+/// Takes base64-encoded content and a relative path within app data dir.
+/// Creates parent directories if needed.
+/// Use append=true starting from chunk 2 to append to existing file (chunked transfer).
+#[tauri::command]
+async fn write_app_data_file(
+    app_handle: tauri::AppHandle,
+    base64_content: String,
+    relative_path: String,
+    append: Option<bool>,
+) -> Result<WriteAppDataFileResult, String> {
+    use std::fs::{self, OpenOptions};
+    use std::io::Write;
+
+    let append_mode = append.unwrap_or(false);
+
+    // Get app data directory
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+
+    // Build full path
+    let full_path = app_data_dir.join(&relative_path);
+
+    // Create parent directories if needed
+    if let Some(parent) = full_path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create parent directories: {}", e))?;
+    }
+
+    // Decode base64
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&base64_content)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+    let bytes_len = bytes.len();
+
+    // Write or append to file
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(append_mode)
+        .truncate(!append_mode)
+        .open(&full_path)
+        .map_err(|e| format!("Failed to open file: {}", e))?;
+
+    file.write_all(&bytes)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    println!("[write_app_data_file] {} {} bytes to {}",
+        if append_mode { "Appended" } else { "Wrote" },
+        bytes_len, full_path.display());
+
+    Ok(WriteAppDataFileResult {
+        success: true,
+        path: full_path.to_string_lossy().to_string(),
+        bytes_written: bytes_len,
+        error: None,
+    })
+}
+
+#[tauri::command]
 fn get_cli_args() -> Option<CliArgs> {
     let args = parse_cli_args();
     if args.habit.is_some() || args.test {
@@ -95,9 +173,21 @@ pub fn run() {
         .plugin(tauri_plugin_email::init())
         .plugin(tauri_plugin_shell::init());
     
-    // Add llama plugin only on desktop (not iOS/Android)
-    #[cfg(not(any(target_os = "ios", target_os = "android")))]
-    let builder = builder.plugin(tauri_plugin_llama::init());
+    // Add local-ai plugin on all platforms (desktop/iOS: Metal+Accelerate, Android: CPU-only)
+    let builder = builder.plugin(tauri_plugin_local_ai::init());
+    
+    // Add webdriver plugin for all debug builds (desktop, iOS, Android)
+    #[cfg(debug_assertions)]
+    let builder = builder.plugin(tauri_plugin_webdriver::init());
+    
+    // Add mobile-only plugins (iOS/Android)
+    #[cfg(any(target_os = "ios", target_os = "android"))]
+    let builder = builder
+        .plugin(tauri_plugin_geolocation::init())
+        .plugin(tauri_plugin_wifi::init())
+        .plugin(tauri_plugin_system_settings::init())
+        .plugin(tauri_plugin_matter::init())
+        .plugin(tauri_plugin_sms::init());
     
     builder
         .plugin(tauri_plugin_http::init())
@@ -115,7 +205,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![test_complete, get_cli_args])
+        .invoke_handler(tauri::generate_handler![test_complete, get_cli_args, debug_log, write_app_data_file])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, _event| {

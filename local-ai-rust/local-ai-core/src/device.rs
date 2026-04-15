@@ -57,18 +57,38 @@ impl DeviceType {
 pub fn select_best_device() -> Result<Device> {
     #[cfg(feature = "metal")]
     {
-        if let Ok(device) = Device::new_metal(0) {
-            return Ok(device);
+        log::info!("[LocalAI] Attempting to create Metal device...");
+        match Device::new_metal(0) {
+            Ok(device) => {
+                log::info!("[LocalAI] Metal device created successfully!");
+                return Ok(device);
+            }
+            Err(e) => {
+                log::warn!("[LocalAI] Failed to create Metal device: {:?}", e);
+            }
         }
+    }
+
+    #[cfg(not(feature = "metal"))]
+    {
+        log::info!("[LocalAI] Metal feature not compiled in");
     }
 
     #[cfg(feature = "cuda")]
     {
-        if let Ok(device) = Device::new_cuda(0) {
-            return Ok(device);
+        log::info!("[LocalAI] Attempting to create CUDA device...");
+        match Device::new_cuda(0) {
+            Ok(device) => {
+                log::info!("[LocalAI] CUDA device created successfully!");
+                return Ok(device);
+            }
+            Err(e) => {
+                log::warn!("[LocalAI] Failed to create CUDA device: {:?}", e);
+            }
         }
     }
 
+    log::info!("[LocalAI] Falling back to CPU device");
     Ok(Device::Cpu)
 }
 

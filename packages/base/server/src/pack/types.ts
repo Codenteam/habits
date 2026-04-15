@@ -64,6 +64,8 @@ export interface PackCommandOptions {
   debug?: boolean;
   /** Include .env values in bundle (default: false for security) */
   includeEnv?: boolean;
+  /** Skip generating cortex-bundle.js (use when cortex-bundle-all.js is pre-loaded) */
+  skipBundle?: boolean;
 }
 
 export interface HabitData {

@@ -116,6 +116,7 @@ const googleSheetsBit = {
   displayName: 'Google Sheets',
   description: 'Read, write, and append data to Google Sheets',
   logoUrl: 'lucide:Table',
+  runtime: 'all',
   
   auth: {
     type: 'OAUTH2',

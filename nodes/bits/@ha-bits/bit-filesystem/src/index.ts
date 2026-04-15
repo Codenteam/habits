@@ -16,6 +16,7 @@ const filesystemBit = {
   displayName: 'Filesystem',
   description: 'Read, write, and manage files on the local filesystem',
   logoUrl: 'lucide:FolderOpen',
+  runtime: 'all',
 
   auth: {
     type: 'NONE',

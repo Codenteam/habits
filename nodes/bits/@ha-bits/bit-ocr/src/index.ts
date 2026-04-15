@@ -88,6 +88,7 @@ const ocrBit = {
   displayName: 'OCR',
   description: 'Extract text from images using Tesseract.js optical character recognition',
   logoUrl: 'lucide:ScanText',
+  runtime: 'all',
   
   actions: {
     processImage: {

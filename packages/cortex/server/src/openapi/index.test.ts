@@ -56,8 +56,8 @@ const workflowWithHeaderRefs: FrontendWorkflow = {
         module: 'bit-http',
         params: {
           headers: {
-            'Authorization': '{{habits.header.authorization}}',
-            'X-Custom': '{{habits.header.customHeader}}'
+            'Authorization': '{{habits.headers.authorization}}',
+            'X-Custom': '{{habits.headers.customHeader}}'
           }
         }
       }
@@ -101,7 +101,7 @@ const workflowWithMixedRefs: FrontendWorkflow = {
         module: 'bit-http',
         params: {
           url: '{{habits.input.endpoint}}',
-          headers: { 'Auth': '{{habits.header.authToken}}' },
+          headers: { 'Auth': '{{habits.headers.authToken}}' },
           cookies: '{{habits.cookies.session}}'
         }
       }

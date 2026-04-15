@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "declaration": true,
+    "declarationDir": "./dist-js",
+    "outDir": "./dist-js",
+    "rootDir": "./guest-js",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "lib": ["ES2021", "DOM"]
+  },
+  "include": ["guest-js/**/*.ts"],
+  "exclude": ["node_modules", "dist-js"]
+}

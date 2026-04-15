@@ -36,11 +36,10 @@ certs
 # Docs related stuff
 docs/public/viewer/*
 docs/public/downloads/*.zip
+docs/public/bits-stats.json
 docs/.vitepress/.temp
-docs/.vitepress/theme/data/
+# Persist bits-data.json and showcase-data.json (needed by CI)
 docs/public/showcase
-docs/showcase
-docs/bits
 planning
 
 
@@ -53,6 +52,8 @@ habits-cortex/release/*
 habits-cortex/screenshots/output
 habits-cortex/screenshots/source
 habits-cortex/screenshots/temp
+habits-cortex/www/cortex-bundle-all.js
+habits-cortex/www/cortex-bundle.js
 notes
 
 
@@ -98,4 +99,18 @@ candle-bindings/index.d.ts
 
 
 .github/instructions/general.instructions.md
+
+# Ignore generated .test.yaml files (but track testing package)
 *.test.yaml
+
+untracked
+
+
+
+
+COMMANDS.md
+
+.tauri
+.build
+
+packages/manage/*

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Automation Suite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0f172a; }
+    .tab-active { border-color: #3b82f6; background-color: #1e293b; }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+  <div class="max-w-md mx-auto pb-20">
+    <!-- Header -->
+    <div class="text-center pt-8 pb-4 px-4">
+      <div class="text-5xl mb-2">🤖</div>
+      <h1 class="text-xl font-bold">Mobile Automation Suite</h1>
+      <p class="text-slate-400 text-sm">WiFi • Geofence • Smart Home</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-slate-700 px-2">
+      <button onclick="showTab('wifi')" id="tab-wifi" class="flex-1 py-3 text-sm font-medium border-b-2 border-transparent tab-active">
+        📶 WiFi
+      </button>
+      <button onclick="showTab('geofence')" id="tab-geofence" class="flex-1 py-3 text-sm font-medium border-b-2 border-transparent">
+        📍 Geofence
+      </button>
+      <button onclick="showTab('smarthome')" id="tab-smarthome" class="flex-1 py-3 text-sm font-medium border-b-2 border-transparent">
+        🏠 Smart Home
+      </button>
+    </div>
+
+    <!-- WiFi Tab -->
+    <div id="panel-wifi" class="p-4 space-y-4">
+      <div class="bg-slate-800 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-slate-400 text-sm">Current Network</span>
+          <span id="current-wifi" class="text-cyan-400 font-medium">Not connected</span>
+        </div>
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-slate-400 text-sm">Mode</span>
+          <span id="context-mode" class="text-slate-300">—</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 text-sm">DND</span>
+          <span id="dnd-status" class="text-slate-300">Off</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-xl p-4 space-y-3">
+        <div>
+          <label class="text-slate-400 text-xs">Work SSID</label>
+          <input type="text" id="work-ssid" value="OfficeNetwork" 
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs">Home SSID</label>
+          <input type="text" id="home-ssid" value="HomeNetwork"
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="simulateWorkWifi()" class="bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-sm font-medium">
+          💼 Work Mode
+        </button>
+        <button onclick="simulateHomeWifi()" class="bg-purple-600 hover:bg-purple-700 py-3 rounded-xl text-sm font-medium">
+          🏠 Home Mode
+        </button>
+      </div>
+    </div>
+
+    <!-- Geofence Tab -->
+    <div id="panel-geofence" class="p-4 space-y-4 hidden">
+      <div class="bg-slate-800 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-slate-400 text-sm">Location Status</span>
+          <span id="location-status" class="text-green-400">Active</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 text-sm">Last Event</span>
+          <span id="last-geofence-event" class="text-slate-300">—</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-xl p-4 space-y-3">
+        <div>
+          <label class="text-slate-400 text-xs">Zone Name</label>
+          <input type="text" id="zone-name" value="Home" 
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs">Notify Phone</label>
+          <input type="text" id="notify-phone" value="+1234567890"
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs">Message</label>
+          <input type="text" id="sms-message" value="I just arrived!"
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="simulateArrival()" class="bg-green-600 hover:bg-green-700 py-3 rounded-xl text-sm font-medium">
+          📍 Arrival
+        </button>
+        <button onclick="simulateDeparture()" class="bg-orange-600 hover:bg-orange-700 py-3 rounded-xl text-sm font-medium">
+          🚗 Departure
+        </button>
+      </div>
+    </div>
+
+    <!-- Smart Home Tab -->
+    <div id="panel-smarthome" class="p-4 space-y-4 hidden">
+      <div class="bg-slate-800 rounded-xl p-4">
+        <label class="text-slate-400 text-xs">Voice Command</label>
+        <div class="flex gap-2 mt-2">
+          <input type="text" id="voice-command" value="turn on living room lights" 
+                 class="flex-1 bg-slate-700 rounded-lg px-3 py-2 text-sm">
+          <button onclick="processCommand()" class="bg-cyan-600 hover:bg-cyan-700 px-4 rounded-lg">
+            🎤
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="font-medium">Routines</span>
+          <button onclick="listRoutines()" class="text-cyan-400 text-sm">Refresh</button>
+        </div>
+        <div id="routines-list" class="space-y-2 text-sm text-slate-400">
+          <div>No routines loaded</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 rounded-xl p-4 space-y-3">
+        <div class="font-medium text-sm">Create Routine</div>
+        <div>
+          <label class="text-slate-400 text-xs">Name</label>
+          <input type="text" id="routine-name" value="Morning" 
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+        <div>
+          <label class="text-slate-400 text-xs">Commands (comma-separated)</label>
+          <input type="text" id="routine-commands" value="lights on, set temp 72"
+                 class="w-full bg-slate-700 rounded-lg px-3 py-2 mt-1 text-sm">
+        </div>
+        <button onclick="createRoutine()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg text-sm font-medium">
+          + Create Routine
+        </button>
+      </div>
+
+      <button onclick="listCommands()" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-sm font-medium">
+        📋 List Available Commands
+      </button>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="px-4 mt-4">
+      <div class="bg-slate-800 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-medium text-sm">Activity Log</span>
+          <button onclick="clearLog()" class="text-slate-500 text-xs">Clear</button>
+        </div>
+        <div id="log" class="text-xs text-slate-400 space-y-1 max-h-32 overflow-y-auto">
+          <div>Ready...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.textContent = `[${time}] ${message}`;
+      logDiv.insertBefore(entry, logDiv.firstChild);
+      if (logDiv.children.length > 50) logDiv.lastChild.remove();
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '<div>Log cleared</div>';
+    }
+
+    function showTab(tab) {
+      ['wifi', 'geofence', 'smarthome'].forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('tab-' + t).classList.toggle('tab-active', t === tab);
+      });
+    }
+
+    // WiFi Functions
+    async function simulateWorkWifi() {
+      const ssid = document.getElementById('work-ssid').value;
+      document.getElementById('current-wifi').textContent = ssid;
+      document.getElementById('context-mode').textContent = 'Work';
+      document.getElementById('context-mode').className = 'text-blue-400 font-medium';
+      document.getElementById('dnd-status').textContent = 'On';
+      document.getElementById('dnd-status').className = 'text-amber-400';
+      log('📶 Connected to: ' + ssid);
+      
+      try {
+        const res = await fetch('/api/wifi-work-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config: { work_wifi_ssid: ssid } })
+        });
+        const data = await res.json();
+        log('💼 Work mode enabled');
+      } catch (e) {
+        log('💼 Work mode (simulated)');
+      }
+    }
+
+    async function simulateHomeWifi() {
+      const ssid = document.getElementById('home-ssid').value;
+      document.getElementById('current-wifi').textContent = ssid;
+      document.getElementById('context-mode').textContent = 'Home';
+      document.getElementById('context-mode').className = 'text-purple-400 font-medium';
+      document.getElementById('dnd-status').textContent = 'Off';
+      document.getElementById('dnd-status').className = 'text-slate-300';
+      log('📶 Connected to: ' + ssid);
+      
+      try {
+        const res = await fetch('/api/wifi-home-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config: { home_wifi_ssid: ssid } })
+        });
+        log('🏠 Home mode enabled');
+      } catch (e) {
+        log('🏠 Home mode (simulated)');
+      }
+    }
+
+    // Geofence Functions
+    async function simulateArrival() {
+      const zone = document.getElementById('zone-name').value;
+      const phone = document.getElementById('notify-phone').value;
+      const msg = document.getElementById('sms-message').value;
+      document.getElementById('last-geofence-event').textContent = 'Arrived @ ' + zone;
+      log('📍 Arrived at: ' + zone);
+      
+      try {
+        const res = await fetch('/api/geofence-arrival-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ zone_name: zone, phone_number: phone, message: msg })
+        });
+        log('📱 SMS sent to ' + phone);
+      } catch (e) {
+        log('📱 SMS (simulated)');
+      }
+    }
+
+    async function simulateDeparture() {
+      const zone = document.getElementById('zone-name').value;
+      const phone = document.getElementById('notify-phone').value;
+      document.getElementById('last-geofence-event').textContent = 'Left @ ' + zone;
+      log('🚗 Departed from: ' + zone);
+      
+      try {
+        const res = await fetch('/api/geofence-departure-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ zone_name: zone, phone_number: phone })
+        });
+        log('📱 Departure SMS sent');
+      } catch (e) {
+        log('📱 SMS (simulated)');
+      }
+    }
+
+    // Smart Home Functions
+    async function processCommand() {
+      const cmd = document.getElementById('voice-command').value;
+      log('🎤 Command: ' + cmd);
+      
+      try {
+        const res = await fetch('/api/smart-home-process-command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: cmd })
+        });
+        const data = await res.json();
+        log('✅ ' + (data.result?.response || 'Command processed'));
+      } catch (e) {
+        log('✅ Command processed (simulated)');
+      }
+    }
+
+    async function createRoutine() {
+      const name = document.getElementById('routine-name').value;
+      const cmds = document.getElementById('routine-commands').value.split(',').map(s => s.trim());
+      log('➕ Creating routine: ' + name);
+      
+      try {
+        const res = await fetch('/api/smart-home-create-routine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, commands: cmds })
+        });
+        log('✅ Routine created');
+        listRoutines();
+      } catch (e) {
+        log('✅ Routine created (simulated)');
+      }
+    }
+
+    async function listRoutines() {
+      log('📋 Loading routines...');
+      try {
+        const res = await fetch('/api/smart-home-list-routines', { method: 'POST' });
+        const data = await res.json();
+        const list = document.getElementById('routines-list');
+        const routines = data.result?.routines || [];
+        list.innerHTML = routines.length ? routines.map(r => 
+          `<div class="bg-slate-700 rounded px-3 py-2">${r.name}</div>`
+        ).join('') : '<div>No routines</div>';
+        log('📋 Found ' + routines.length + ' routines');
+      } catch (e) {
+        log('📋 Routines (simulated)');
+      }
+    }
+
+    async function listCommands() {
+      log('📋 Loading commands...');
+      try {
+        const res = await fetch('/api/smart-home-list-commands', { method: 'POST' });
+        const data = await res.json();
+        log('📋 Commands: ' + (data.result?.commands?.join(', ') || 'see response'));
+      } catch (e) {
+        log('📋 Commands: lights, thermostat, locks, blinds');
+      }
+    }
+
+    log('🤖 Mobile Automation Suite ready');
+  </script>
+</body>
+</html>

@@ -5,6 +5,17 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./driver": {
+      "types": "./dist/lib/driver.d.ts",
+      "default": "./dist/lib/driver.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
@@ -12,6 +23,8 @@
   },
   "files": [
     "dist",
+    "src/stubs",
+    "src/lib/stubs",
     "package.json",
     "README.md"
   ],
@@ -68,6 +81,15 @@
   "habits": {
     "catalog": true,
     "featured": true,
-    "replaces": "@ha-bits/bit-ai"
+    "replaces": "@ha-bits/bit-ai",
+    "stubs": {
+      "@ha-bits/bit-local-ai/driver": "./src/lib/stubs/driver.js"
+    },
+    "tauriPlugins": {
+      "local-ai": {
+        "cargo": "tauri-plugin-local-ai",
+        "init": "tauri_plugin_local_ai::init()"
+      }
+    }
   }
 }

@@ -75,6 +75,7 @@ const whatsappBit = {
   displayName: 'WhatsApp',
   description: 'Send messages via WhatsApp Business Cloud API (Meta)',
   logoUrl: 'lucide:MessageCircle',
+  runtime: 'all',
   
   auth: {
     type: 'CUSTOM',

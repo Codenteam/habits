@@ -6,10 +6,10 @@ description = "Cross-platform AI inference core library using Candle"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Candle core dependencies - use from crates.io for compatibility
-candle-core = "0.10"
-candle-nn = "0.10"
-candle-transformers = "0.10"
+# Candle core dependencies - use local candle with Metal support
+candle-core = { path = "../candle/candle-core" }
+candle-nn = { path = "../candle/candle-nn" }
+candle-transformers = { path = "../candle/candle-transformers" }
 
 # Tokenization
 tokenizers = { version = "0.22.0", default-features = false, features = ["onig"] }
@@ -31,6 +31,12 @@ rand = "0.9"
 # Serialization (for model configs)
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Base64 encoding/decoding
+base64 = "0.22"
+
+# Logging
+log = "0.4"
 
 # Hugging Face model hub
 hf-hub = { version = "0.4.1", features = ["tokio"] }

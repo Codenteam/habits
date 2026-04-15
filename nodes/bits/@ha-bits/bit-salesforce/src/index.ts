@@ -98,6 +98,7 @@ const salesforceBit = {
   displayName: 'Salesforce CRM',
   description: 'Salesforce CRM integration for contacts, leads, and opportunities',
   logoUrl: 'lucide:Cloud',
+  runtime: 'all',
   replaces: '@ha-bits/bit-crm',
   
   auth: {

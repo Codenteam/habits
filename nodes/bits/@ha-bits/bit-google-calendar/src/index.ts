@@ -51,6 +51,7 @@ const googleCalendarBit = {
   displayName: 'Google Calendar',
   description: 'Google Calendar integration with OAuth2 for fetching events and managing calendars',
   logoUrl: 'lucide:Calendar',
+  runtime: 'all',
   
   auth: {
     type: 'CUSTOM' as const,

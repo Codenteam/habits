@@ -73,6 +73,7 @@ const databaseMongoDBBit = {
   displayName: 'Database / Storage (MongoDB)',
   description: 'Store and retrieve data in workflows using MongoDB',
   logoUrl: 'lucide:Database',
+  runtime: 'all',
   
   /**
    * Declares which bit this one can replace.

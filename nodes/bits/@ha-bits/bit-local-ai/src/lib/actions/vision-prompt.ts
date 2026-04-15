@@ -10,13 +10,14 @@ import {
   localAiAuth, 
   LocalAiAuthValue, 
   getModelPath,
+  getModelsBasePath,
   DeviceType 
 } from '../common/common';
 import { TextGenConfig } from '../common/models';
 import { getBackend } from '../stubs';
 import * as path from 'path';
 import * as os from 'os';
-import * as fs from 'fs';
+// fs is imported dynamically inside run() to support browser environments
 
 /**
  * Vision-capable model presets
@@ -100,14 +101,9 @@ export const visionPrompt = createAction({
     const authValue = (auth as unknown as Partial<LocalAiAuthValue>) || {};
     const backend = getBackend();
     
-    // Use defaults if auth not configured
-    const modelsBasePath = authValue.modelsBasePath || process.env.LOCAL_AI_MODELS_PATH || '~/.habits/models';
-    const device = authValue.device || (process.env.LOCAL_AI_DEVICE as DeviceType) || DeviceType.Auto;
-    
-    // Resolve home directory
-    const resolvedBasePath = modelsBasePath.startsWith('~') 
-      ? modelsBasePath.replace('~', process.env.HOME || '/tmp')
-      : modelsBasePath;
+    // Get models base path (handles Tauri app data directory automatically)
+    const resolvedBasePath = await getModelsBasePath(authValue);
+    const device = authValue.device || ((typeof process !== 'undefined' ? process.env.LOCAL_AI_DEVICE : undefined) as DeviceType) || DeviceType.Auto;
     
     // Determine model paths
     let modelPath: string;
@@ -144,7 +140,8 @@ export const visionPrompt = createAction({
         const arrayBuffer = await response.arrayBuffer();
         imageBase64 = Buffer.from(arrayBuffer).toString('base64');
       } else {
-        // Local file path
+        // Local file path - use dynamic import for browser compatibility
+        const fs = await import('fs');
         const imageBuffer = fs.readFileSync(imageInput);
         imageBase64 = imageBuffer.toString('base64');
       }

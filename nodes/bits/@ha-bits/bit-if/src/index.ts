@@ -128,6 +128,7 @@ const ifBit = {
   displayName: 'If / Branch',
   description: 'Conditional branching with dynamic conditions. Supports simple If (single condition) or If/Else If/Else (multiple conditions like a switch).',
   logoUrl: 'lucide:GitBranch',
+  runtime: 'all',
   
   actions: {
     /**

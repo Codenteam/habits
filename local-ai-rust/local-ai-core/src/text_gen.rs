@@ -109,6 +109,8 @@ pub struct TextGenResult {
     pub text: String,
     /// Number of tokens generated
     pub tokens_generated: usize,
+    /// Device used for inference (cpu, metal, cuda)
+    pub device_used: String,
 }
 
 /// Text generator using Qwen2
@@ -116,6 +118,7 @@ pub struct TextGenerator {
     model: Qwen2,
     tos: TokenOutputStream,
     device: Device,
+    device_name: String,
     config: TextGenConfig,
     eos_token: u32,
 }
@@ -124,6 +127,13 @@ impl TextGenerator {
     /// Create a new text generator
     pub fn new(config: TextGenConfig) -> Result<Self> {
         let device = config.device.to_device()?;
+
+        // Determine the actual device name
+        let device_name = match &device {
+            Device::Cpu => "cpu".to_string(),
+            Device::Cuda(_) => "cuda".to_string(),
+            Device::Metal(_) => "metal".to_string(),
+        };
 
         // Load model
         let model_path = Path::new(&config.model_path);
@@ -147,6 +157,7 @@ impl TextGenerator {
             model,
             tos,
             device,
+            device_name,
             config,
             eos_token,
         })
@@ -223,6 +234,7 @@ impl TextGenerator {
         Ok(TextGenResult {
             text: generated_text,
             tokens_generated: all_tokens.len(),
+            device_used: self.device_name.clone(),
         })
     }
 
@@ -307,6 +319,7 @@ impl TextGenerator {
         Ok(TextGenResult {
             text: generated_text,
             tokens_generated: all_tokens.len(),
+            device_used: self.device_name.clone(),
         })
     }
 }

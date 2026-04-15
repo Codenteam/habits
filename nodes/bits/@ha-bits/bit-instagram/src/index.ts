@@ -138,6 +138,7 @@ const instagramBit = {
   displayName: 'Instagram',
   description: 'Post content and manage Instagram presence via Meta Graph API',
   logoUrl: 'lucide:Instagram',
+  runtime: 'all',
   
   // OAuth 2.0 PKCE authentication via Facebook Login
   auth: {
