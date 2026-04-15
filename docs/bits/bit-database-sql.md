@@ -13,7 +13,7 @@ import { Database } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database-sql`</span>
   <span class="bit-version">v1.0.1</span>
-  
+  <span class="bit-downloads">📥 74 downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">sql</span> <span class="bit-category">sqlite</span> <span class="bit-category">drizzle</span></span>
 </div>
 

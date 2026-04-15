@@ -13,7 +13,7 @@ import { Type } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-text`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads">📥 211 downloads</span>
+  
   <span class="bit-categories"><span class="bit-category">text</span> <span class="bit-category">diff</span> <span class="bit-category">cleanup</span> <span class="bit-category">extract</span></span>
 </div>
 

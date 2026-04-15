@@ -13,7 +13,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-tasks`</span>
   <span class="bit-version">v1.0.1</span>
-  
+  <span class="bit-downloads">📥 217 downloads</span>
   <span class="bit-categories"><span class="bit-category">tasks</span> <span class="bit-category">jira</span> <span class="bit-category">asana</span> <span class="bit-category">tickets</span></span>
 </div>
 

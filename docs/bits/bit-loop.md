@@ -13,7 +13,7 @@ import { Repeat } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-loop`</span>
   <span class="bit-version">v1.0.0</span>
-  
+  <span class="bit-downloads">📥 215 downloads</span>
   <span class="bit-categories"><span class="bit-category">loop</span> <span class="bit-category">foreach</span> <span class="bit-category">iteration</span> <span class="bit-category">subworkflow</span></span>
 </div>
 

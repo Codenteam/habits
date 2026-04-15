@@ -13,7 +13,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-scheduler`</span>
   <span class="bit-version">v1.0.0</span>
-  <span class="bit-downloads">📥 67 downloads</span>
+  
   <span class="bit-categories"><span class="bit-category">scheduler</span> <span class="bit-category">cron</span> <span class="bit-category">trigger</span> <span class="bit-category">schedule</span></span>
 </div>
 

@@ -13,7 +13,7 @@ import { Package } from 'lucide-vue-next'
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-markdown-to-html`</span>
   <span class="bit-version">v1.0.1</span>
-  
+  <span class="bit-downloads">📥 208 downloads</span>
   <span class="bit-categories"><span class="bit-category">markdown</span> <span class="bit-category">html</span> <span class="bit-category">convert</span></span>
 </div>
 
