@@ -38,7 +38,7 @@ docs/public/viewer/*
 docs/public/downloads/*.zip
 docs/public/bits-stats.json
 docs/.vitepress/.temp
-docs/.vitepress/theme/data/
+# Persist bits-data.json and showcase-data.json (needed by CI)
 docs/public/showcase
 planning
 
