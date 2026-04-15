@@ -106,12 +106,6 @@ candle-bindings/index.d.ts
 
 untracked
 
-
-
-
-
-
-
 # Scripts
 scripts
 !scripts/log-sanitizer.ts
@@ -123,3 +117,4 @@ COMMANDS.md
 
 .tauri
 .build
+
