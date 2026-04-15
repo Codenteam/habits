@@ -105,11 +105,6 @@ candle-bindings/index.d.ts
 
 untracked
 
-# Scripts
-scripts/*
-!scripts/log-sanitizer.ts
-!scripts/validate-affected.sh
-!scripts/update-bits-stats.ts
 
 
 
