@@ -1,6 +1,6 @@
 {
   "name": "habits",
-  "version": "1.5.92",
+  "version": "1.5.93",
   "description": "Habits - Unified automation workflow platform combining Cortex executor and Base builder",
   "main": "app/main.cjs",
   "types": "app/main.d.ts",

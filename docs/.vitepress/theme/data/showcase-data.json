@@ -116,19 +116,5 @@
     "featured": true,
     "thumbnail": "/showcase/resume-analyzer/1.webp",
     "imageCount": 4
-  },
-  {
-    "slug": "agent-mcp-demo",
-    "name": "Agent MCP Demo",
-    "description": "An intelligent AI agent with MCP integration enabling multi-source search across Google Drive, Slack, and filesystem.",
-    "tags": [
-      "ai",
-      "integration",
-      "developer"
-    ],
-    "difficulty": "advanced",
-    "featured": false,
-    "thumbnail": "/showcase/agent-mcp-demo/agent-default.svg",
-    "imageCount": 1
   }
 ]
