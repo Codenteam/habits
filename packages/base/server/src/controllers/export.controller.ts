@@ -559,8 +559,49 @@ export class ExportController {
    */
   packHabit = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { habits, stackYaml, habitFiles, stackName, envContent } = req.body;
-      const bundleResult = await generateBundle({ habits, appName: stackName || 'HabitsApp', envVars: {} });
+      const { habits, stackYaml, habitFiles, stackName, envContent, frontendHtml } = req.body;
+
+      // Validate required fields
+      if (!habits || !Array.isArray(habits) || habits.length === 0) {
+        res.status(400).json(createResponse(false, undefined, 'habits array is required'));
+        return;
+      }
+
+      if (!stackYaml) {
+        res.status(400).json(createResponse(false, undefined, 'stackYaml is required'));
+        return;
+      }
+
+      if (!habitFiles || !Array.isArray(habitFiles)) {
+        res.status(400).json(createResponse(false, undefined, 'habitFiles array is required'));
+        return;
+      }
+
+      // Validate filenames to prevent zip-slip vulnerabilities
+      for (const h of habitFiles) {
+        if (!h.filename || typeof h.filename !== 'string') {
+          res.status(400).json(createResponse(false, undefined, 'Each habitFile must have a valid filename'));
+          return;
+        }
+        // Reject unsafe paths: .., backslashes, drive letters, or leading /
+        if (h.filename.includes('..') || h.filename.includes('\\') || /^[a-zA-Z]:/.test(h.filename) || h.filename.startsWith('/')) {
+          res.status(400).json(createResponse(false, undefined, `Invalid filename: ${h.filename}. Filenames must be safe relative paths.`));
+          return;
+        }
+      }
+
+      // Parse env content into key-value object
+      const envVars: Record<string, string> = {};
+      if (envContent) {
+        for (const line of envContent.split('\n')) {
+          const match = line.match(/^([^=]+)=(.*)$/);
+          if (match) {
+            envVars[match[1].trim()] = match[2].trim();
+          }
+        }
+      }
+
+      const bundleResult = await generateBundle({ habits, appName: stackName || 'HabitsApp', envVars });
       if (!bundleResult.success) { res.status(500).json(createResponse(false, undefined, bundleResult.error)); return; }
 
       const JSZip = (await import('jszip')).default;
@@ -569,6 +610,14 @@ export class ExportController {
       zip.file('stack.yaml', stackYaml);
       for (const h of habitFiles) zip.file(h.filename, h.content);
       if (envContent) zip.file('.env', envContent);
+      
+      // Add frontend HTML or _auto-ui marker
+      if (frontendHtml) {
+        zip.file('frontend/index.html', frontendHtml);
+      } else {
+        // Add _auto-ui marker when no frontend is provided
+        zip.file('_auto-ui', 'true');
+      }
 
       const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
       res.setHeader('Content-Type', 'application/zip');

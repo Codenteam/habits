@@ -261,6 +261,7 @@ export const api = {
     habitFiles: Array<{ filename: string; content: string }>;
     stackName?: string;
     envContent?: string;
+    frontendHtml?: string;
   }): Promise<Blob> {
     const response = await axios.post(`${API_BASE_URL}/export/pack/habit`, data, {
       responseType: 'blob',

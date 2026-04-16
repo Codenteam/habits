@@ -307,11 +307,19 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
         habitFiles: exportBundle.habitFiles,
         stackName,
         envContent,
+        frontendHtml,
       });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${stackName || 'habits'}.habit`;
-      a.click();
+      try {
+        a.href = url;
+        a.download = `${sanitizedStackName || 'habits'}.habit`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
     } catch (e: any) {
       console.error('Habit export error:', e);
     }
