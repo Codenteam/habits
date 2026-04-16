@@ -155,7 +155,7 @@ echo ""
 # Now the showcase/bits are generated only when needed, not everytime. Because we now persist the pages. 
 # npx -y tsx scripts/generate-showcase.ts
 # npx -y tsx scripts/generate-bits.ts
-npx -y tsx scripts/update-bits-stats.ts
+# npx -y tsx scripts/update-bits-stats.ts
 cd docs
 # Install d2
 curl -fsSL https://d2lang.com/install.sh | sh -s --
