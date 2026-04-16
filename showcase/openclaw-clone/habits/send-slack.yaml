@@ -20,7 +20,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-slack"
-      resource: sendMessage
       operation: sendMessage
       params:
         botToken: "{{habits.env.SLACK_BOT_TOKEN}}"

@@ -848,12 +848,10 @@ async function generateHabitFiles(examples: ExampleData[]): Promise<void> {
 function generateDataFile(examples: ExampleData[]): void {
   console.log('\n💾 Generating data files...');
   
-  // Sort featured first, then by name
-  const sortedExamples = [...examples].sort((a, b) => {
-    if (a.featured && !b.featured) return -1;
-    if (!a.featured && b.featured) return 1;
-    return a.name.localeCompare(b.name);
-  });
+  // Filter to featured examples and sort by name for deterministic output
+  const sortedExamples = [...examples]
+    .filter(e => e.featured)
+    .sort((a, b) => a.name.localeCompare(b.name));
   
   // Showcase data for Vue components
   const data = sortedExamples.map(e => ({

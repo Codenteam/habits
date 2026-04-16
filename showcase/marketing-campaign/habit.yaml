@@ -16,7 +16,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: gpt-5-mini
@@ -37,7 +36,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: gpt-5-mini
@@ -58,7 +56,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: gpt-5-mini
@@ -79,7 +76,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: gpt-5-mini
@@ -100,7 +96,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: generate_image
       operation: generate_image
       params:
         model: gpt-image-1
@@ -121,7 +116,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: create_canvas
       operation: create_canvas
       params:
         type: webcanvas
@@ -140,7 +134,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: gpt-5-mini
@@ -161,7 +154,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: create_canvas
       operation: create_canvas
       params:
         type: draftcanvas
@@ -180,7 +172,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: create_canvas
       operation: create_canvas
       params:
         type: svgcanvas

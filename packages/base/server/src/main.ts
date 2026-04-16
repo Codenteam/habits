@@ -133,9 +133,9 @@ async function preinstallModules() {
     }
     
     console.log(`📦 Pre-installing ${modulesToInstall.length} module(s)...`);
-    // Install in parallel to speed up pre-installation
-    await Promise.all(
-      modulesToInstall.map(async (module) => {
+    // Install sequentially to avoid race conditions when multiple npm installs
+    // write to the same prefix package.json (causes corruption on Windows)
+    for (const module of modulesToInstall) {
       try {
         const moduleName = module.repository;
         logger.info(`⏳ Installing: ${moduleName}`);
@@ -144,8 +144,7 @@ async function preinstallModules() {
       } catch (error) {
         logger.warn(`Failed to pre-install ${module.repository}`, { error: String(error) });
       }
-      })
-    );
+    }
     
     console.log('✓ Module pre-installation complete\n');
   } catch (error) {

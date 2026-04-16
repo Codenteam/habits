@@ -36,7 +36,7 @@ nodes:
     type: action
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-local-ai"
       operation: vision_prompt
       label: Vision Analysis

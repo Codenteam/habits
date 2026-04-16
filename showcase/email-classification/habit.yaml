@@ -28,7 +28,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-if"
-      resource: branch
       operation: branch
       isTrigger: true
       params:
@@ -91,7 +90,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-email"
-      resource: newEmail
       operation: newEmail
       params:
         folder: "INBOX"
@@ -120,7 +118,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-any-of"
-      resource: race
       operation: race
       params:
         passThrough: true
@@ -139,7 +136,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: chatCompletion
       operation: chatCompletion
       params:
         model: "gpt-4o-mini"
@@ -171,7 +167,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-if"
-      resource: branch
       operation: branch
       params:
         mode: switch
@@ -205,7 +200,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-telegram"
-      resource: sendMessage
       operation: sendMessage
       params:
         chatId: "{{habits.env.TELEGRAM_CHAT_ID}}"
@@ -236,7 +230,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-email"
-      resource: sendEmail
       operation: sendEmail
       params:
         smtpHost: "localhost"
@@ -270,7 +263,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-whatsapp"
-      resource: sendTextMessage
       operation: sendTextMessage
       params:
         to: "{{habits.env.WHATSAPP_PHONE}}"

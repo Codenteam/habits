@@ -17,7 +17,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-whatsapp"
-      resource: sendTextMessage
       operation: sendTextMessage
       params:
         accessToken: "{{habits.env.WHATSAPP_ACCESS_TOKEN}}"

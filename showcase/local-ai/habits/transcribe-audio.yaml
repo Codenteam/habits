@@ -37,7 +37,7 @@ nodes:
     type: action
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-local-ai"
       operation: transcribe_audio
       label: Audio Transcription

@@ -387,7 +387,7 @@ class WorkflowExecutorServer {
           let bitPiece: any = null;
           try {
             const moduleDefinition = { 
-              source: (nodeData.source || 'npm') as 'npm' | 'local' | 'github' | 'link', 
+              source: (nodeData.source || 'npm') as 'npm' | 'github', 
               module: moduleName,
               framework: 'bits',
               repository: moduleName, // npm package name

@@ -24,7 +24,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-linkedin"
-      resource: createPost
       operation: createPost
       # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
       credentials:
@@ -43,7 +42,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-linkedin"
-      resource: createArticlePost
       operation: createArticlePost
       credentials:
         linkedin:

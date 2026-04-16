@@ -44,7 +44,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-http"
-      resource: request
       operation: request
       params:
         method: GET
@@ -61,7 +60,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -88,7 +86,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -112,7 +109,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -134,7 +130,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -156,7 +151,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-linkedin"
-      resource: createPost
       operation: createPost
       credentials:
         linkedin:
@@ -176,7 +170,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-twitter"
-      resource: tweet
       operation: tweet
       credentials:
         twitter:
@@ -195,7 +188,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-instagram"
-      resource: createPost
       operation: createPost
       credentials:
         instagram:

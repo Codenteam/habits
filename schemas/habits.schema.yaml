@@ -364,16 +364,17 @@ definitions:
             type: string
           operation:
             type: string
-          resource:
-            type: string
+            description: |
+              Which action/function to execute in the bit module.
+              Maps to a specific function exported by the bit (e.g., 'install_model', 'query', 'sendEmail').
+              Required when a bit exposes multiple operations.
+              Also used for filtering which input parameters are shown in the UI via displayOptions.show.operation.
           source:
             type: string
-            description: Module source - 'local', 'npm', 'github', or 'link'
+            description: Module source - 'npm' or 'github'
             enum:
-              - local
               - npm
               - github
-              - link
           registry:
             type: string
             description: |

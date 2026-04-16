@@ -14,11 +14,11 @@
         "@wdio/mcp"
       ]
     },
-    "habits-manage-mcp": {
+    "habits-manage-tauri-mcp": {
       "command": "npx",
       "args": [
         "tsx",
-        "${workspaceFolder}/packages/manage/src/mcp/index.ts"
+        "${workspaceFolder}/packages/manage/src/mcp/tauri.ts"
       ],
       "env": {
         "WEBDRIVER_PORT": "4445",

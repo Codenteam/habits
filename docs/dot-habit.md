@@ -804,7 +804,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      resource: query
       operation: query
       params:
         collection: "posts"

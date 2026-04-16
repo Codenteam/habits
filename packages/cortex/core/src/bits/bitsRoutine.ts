@@ -371,9 +371,8 @@ function convertDeclarativeNodeToBitsPiece(node: IDeclarativeNodeType): BitsPiec
   // Extract operations from properties to create routines
   const routines: Record<string, BitsRoutine> = {};
   
-  // Find operation/resource properties to determine available routines
+  // Find operation property to determine available routines
   const operationProp = desc.properties.find(p => p.name === 'operation');
-  const resourceProp = desc.properties.find(p => p.name === 'resource');
   
   if (operationProp?.options) {
     // Create a routine for each operation
@@ -384,7 +383,7 @@ function convertDeclarativeNodeToBitsPiece(node: IDeclarativeNodeType): BitsPiec
           name: routineName,
           displayName: opt.name || routineName,
           description: opt.description || '',
-          props: buildPropsForOperation(desc.properties, routineName, resourceProp?.default),
+          props: buildPropsForOperation(desc.properties, routineName),
           run: createDeclarativeRoutineRunner(node, routineName),
         };
       }
@@ -423,22 +422,18 @@ function convertDeclarativeNodeToBitsPiece(node: IDeclarativeNodeType): BitsPiec
  */
 function buildPropsForOperation(
   properties: any[],
-  operation: string,
-  resource?: string
+  operation: string
 ): Record<string, any> {
   const props: Record<string, any> = {};
   
   for (const prop of properties) {
-    // Skip operation and resource props - they're handled differently
-    if (prop.name === 'operation' || prop.name === 'resource') continue;
+    // Skip operation prop - handled separately
+    if (prop.name === 'operation') continue;
     
     // Check if prop should be shown for this operation
     if (prop.displayOptions?.show) {
       const showOp = prop.displayOptions.show.operation;
-      const showRes = prop.displayOptions.show.resource;
-      
       if (showOp && !showOp.includes(operation)) continue;
-      if (showRes && resource && !showRes.includes(resource)) continue;
     }
     
     props[prop.name] = convertDeclarativePropertyToProp(prop);

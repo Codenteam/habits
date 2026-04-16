@@ -20,7 +20,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-telegram"
-      resource: sendMessage
       operation: sendMessage
       params:
         botToken: "{{habits.env.TELEGRAM_BOT_TOKEN}}"

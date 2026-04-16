@@ -28,7 +28,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -63,7 +62,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -99,7 +97,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -141,7 +138,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -190,7 +186,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:

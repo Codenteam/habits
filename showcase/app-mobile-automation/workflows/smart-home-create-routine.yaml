@@ -28,7 +28,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         intersect:
@@ -81,7 +80,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      resource: insert
       operation: insert
       params:
         collection: "smart_home_routines"

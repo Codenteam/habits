@@ -20,7 +20,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       params:
         model: "gpt-4o"

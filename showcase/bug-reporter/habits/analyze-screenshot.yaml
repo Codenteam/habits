@@ -19,7 +19,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: vision_prompt
       operation: vision_prompt
       credentials:
         intersect:

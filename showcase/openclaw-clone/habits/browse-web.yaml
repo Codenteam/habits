@@ -17,7 +17,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-http"
-      resource: request
       operation: request
       params:
         url: "{{habits.input.url}}"

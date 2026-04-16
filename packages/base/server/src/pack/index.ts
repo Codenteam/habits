@@ -385,6 +385,10 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   // When running via cortex server (Node.js), the server handles workflow execution
   // via normal /api/* endpoints. The cortex-bundle.js is only used by Tauri apps
   // which inject it at runtime.
+  // 
+  // IMPORTANT: We also do NOT inject the fetch-proxy script for .habit files!
+  // The Cortex server handles /api/* requests natively. The fetch-proxy is ONLY
+  // for Tauri apps that need to intercept fetch calls for direct HabitsBundle execution.
 
   // Create zip archive
   const zip = new JSZip();
@@ -397,15 +401,9 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
     // Compute frontend directory name from config (e.g., "frontend" from "./frontend")
     const frontendDirName = config.server!.frontend!.replace(/^\.[\/\\]/, '');
 
-    // Generate fetch proxy script for intercepting /api/* calls (executes via HabitsBundle)
-    const fetchProxyScript = getTauriFetchProxyScript({ mode: 'full' });
-
-    // Scripts to inject into HTML files (only fetch-proxy, NOT cortex-bundle)
-    // cortex-bundle.js is kept as a separate file and injected at runtime by Tauri apps
-    // Node.js server handles /api/* natively without needing the bundle
-    const injectScripts: InjectScript[] = [
-      { id: 'habits-fetch-proxy', content: fetchProxyScript },
-    ];
+    // NO scripts to inject for .habit format - server handles /api/* natively
+    // The fetch-proxy and cortex-bundle are ONLY for Tauri apps and are injected in runtime.
+    const injectScripts: InjectScript[] = [];
 
     // Process all HTML files in the frontend directory
     console.log('   🔧 Processing HTML files for offline use...');
@@ -450,6 +448,11 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   if (bundleResult?.code) {
     zip.file('cortex-bundle.js', bundleResult.code);
   }
+
+  // Add habits-fetch-proxy.js as a separate file (Tauri apps inject it at runtime)
+  // This is ONLY used by Tauri for direct HabitsBundle execution - NOT used by Node.js server mode
+  const fetchProxyScript = getTauriFetchProxyScript({ mode: 'full' });
+  zip.file('habits-fetch-proxy.js', fetchProxyScript);
 
   // Add habit YAML files using their relative paths to preserve directory structure
   // (e.g., "habits/generate-recipe.yaml" instead of just "generate-recipe.yaml")
