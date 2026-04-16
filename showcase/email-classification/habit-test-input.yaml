@@ -67,7 +67,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: chatCompletion
       operation: chatCompletion
       params:
         model: "gpt-4o-mini"
@@ -99,7 +98,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-if"
-      resource: branch
       operation: branch
       params:
         mode: switch

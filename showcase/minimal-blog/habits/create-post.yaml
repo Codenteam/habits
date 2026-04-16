@@ -32,7 +32,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      resource: insert
       operation: insert
       params:
         collection: "posts"

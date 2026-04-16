@@ -19,6 +19,7 @@ import {
 import { packMobileForWeb } from '../pack/mobile';
 import { packDesktopForWeb } from '../pack/desktop';
 import { packDockerForWeb } from '../pack/docker';
+import { generateBundle } from '../pack/bundle-generator-wrapper';
 import {
   checkCompatibility,
   parseJavaVersion,
@@ -549,6 +550,33 @@ export class ExportController {
     } catch (error: any) {
       console.error('Docker export error:', error);
       res.status(500).json(createResponse(false, undefined, error.message));
+    }
+  };
+
+  /**
+   * POST /api/export/pack/habit
+   * Generate .habit file (self-contained ZIP with bundle, stack.yaml, habits)
+   */
+  packHabit = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { habits, stackYaml, habitFiles, stackName, envContent } = req.body;
+      const bundleResult = await generateBundle({ habits, appName: stackName || 'HabitsApp', envVars: {} });
+      if (!bundleResult.success) { res.status(500).json(createResponse(false, undefined, bundleResult.error)); return; }
+
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      zip.file('cortex-bundle.js', bundleResult.code || '');
+      zip.file('stack.yaml', stackYaml);
+      for (const h of habitFiles) zip.file(h.filename, h.content);
+      if (envContent) zip.file('.env', envContent);
+
+      const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${stackName || 'habits'}.habit"`);
+      res.send(buffer);
+    } catch (e: any) {
+      console.error('Habit export error:', e);
+      res.status(500).json(createResponse(false, undefined, e.message));
     }
   };
 }

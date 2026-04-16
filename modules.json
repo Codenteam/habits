@@ -2,8 +2,9 @@
   "modules": [
     {
       "framework": "bits",
-      "source": "npm",
-      "repository": "@ha-bits/bit-intersect"
+      "source": "local",
+      "repository": "@ha-bits/bit-intersect",
+      "path": "nodes/bits/@ha-bits/bit-intersect"
     },
     {
       "framework": "bits",

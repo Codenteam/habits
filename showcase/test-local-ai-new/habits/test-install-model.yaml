@@ -18,7 +18,7 @@ nodes:
     type: action
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-local-ai-new"
       operation: install-model
       label: Install Model

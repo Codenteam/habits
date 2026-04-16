@@ -181,13 +181,16 @@ export class ModulesController {
 
     try {
       const modulePath = `${framework}/${moduleName}`;
-      const moduleDefinition = getModuleByPath(modulePath);
+      let moduleDefinition = getModuleByPath(modulePath);
 
+      // If module is not in config, create a temporary definition assuming npm source
+      // This matches the behavior of the check endpoint
       if (!moduleDefinition) {
-        res.json(
-          createResponse(false, undefined, `Module '${modulePath}' not found`),
-        );
-        return;
+        moduleDefinition = {
+          framework,
+          source: 'npm' as const,
+          repository: moduleName,
+        };
       }
 
       if (!isModuleCloned(moduleDefinition) || !isModuleBuilt(moduleDefinition)) {

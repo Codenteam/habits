@@ -5,6 +5,7 @@ export * from './types';
 export * from './converters';
 export * from './normalizeUtils';  // Browser-safe normalize utilities
 export * from './variableUtils';
+export * from './modules';  // Default modules configuration
 
 // NOTE: Logger module is NOT exported from main index for browser compatibility.
 // For server-side code that needs logger, import from '@ha-bits/core/logger' directly:

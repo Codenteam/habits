@@ -255,6 +255,20 @@ export const api = {
     return response.data;
   },
 
+  async exportHabit(data: {
+    habits: any[];
+    stackYaml: string;
+    habitFiles: Array<{ filename: string; content: string }>;
+    stackName?: string;
+    envContent?: string;
+  }): Promise<Blob> {
+    const response = await axios.post(`${API_BASE_URL}/export/pack/habit`, data, {
+      responseType: 'blob',
+      timeout: 120000, // 2 minute timeout for bundle generation
+    });
+    return response.data;
+  },
+
   // AI Generation: SSE streaming
 
   /**

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Package, 
-  Loader2, 
-  AlertTriangle, 
-  FileCode, 
-  Monitor, 
-  Smartphone, 
+import {
+  Package,
+  Loader2,
+  AlertTriangle,
+  FileCode,
+  Monitor,
+  Smartphone,
   Download,
   CheckCircle2,
   Info,
@@ -14,14 +14,16 @@ import {
   ArchiveIcon,
   ImageIcon,
   Upload,
-  X
+  X,
+  FileArchive,
+  ChevronDown
 } from 'lucide-react';
 import { api } from '../lib/api';
 import JSZip from 'jszip';
 import { ExportBundle } from '@ha-bits/core';
 
 // Types
-type PackFormat = 'full-stack' | 'desktop' | 'mobile';
+type PackFormat = 'habit' | 'full-stack' | 'desktop' | 'mobile';
 type FullStackOption = 'export' | 'docker' | 'executable';
 type SeaPlatform = 'darwin-arm64' | 'darwin-x64' | 'linux-x64' | 'win32-x64' | 'current';
 type DesktopPlatform = 'dmg' | 'exe' | 'appimage' | 'deb' | 'rpm' | 'msi' | 'all';
@@ -154,8 +156,12 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   const sanitizedStackName = sanitizeStackName(stackName);
 
   // Tab state
-  const [activeFormat, setActiveFormat] = useState<PackFormat>('full-stack');
+  const [activeFormat, setActiveFormat] = useState<PackFormat>('habit');
   const [activeFullStackOption, setActiveFullStackOption] = useState<FullStackOption>('export');
+
+  // Habit generation state
+  const [habitGenerating, setHabitGenerating] = useState(false);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
   
   // Capabilities state
   const [capabilities, setCapabilities] = useState<PackCapabilities | null>(null);
@@ -290,6 +296,26 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
     } finally {
       setCapabilitiesLoading(false);
     }
+  };
+
+  const handleGenerateHabit = async () => {
+    setHabitGenerating(true);
+    try {
+      const blob = await api.exportHabit({
+        habits: habits.map(h => ({ ...h })),
+        stackYaml: exportBundle.stackYaml,
+        habitFiles: exportBundle.habitFiles,
+        stackName,
+        envContent,
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${stackName || 'habits'}.habit`;
+      a.click();
+    } catch (e: any) {
+      console.error('Habit export error:', e);
+    }
+    setHabitGenerating(false);
   };
 
   const handleGenerateSingleExecutable = async () => {
@@ -561,28 +587,42 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
         {/* Format Tabs */}
         <div className="flex bg-slate-900/50 rounded-lg p-1 border border-slate-700">
           <button
+            onClick={() => setActiveFormat('habit')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              activeFormat === 'habit'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <FileArchive className="w-4 h-4" />
+            <span>.habit</span>
+          </button>
+          <button
             onClick={() => setActiveFormat('full-stack')}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
               activeFormat === 'full-stack'
-                ? 'bg-purple-600 text-white'
+                ? 'bg-green-600 text-white'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
             <Package className="w-4 h-4" />
-            <span>Full-Stack</span>
+            <div className="flex flex-col items-center">
+              <span>Full-Stack</span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-red-600/40 text-red-200 rounded mt-0.5 uppercase font-semibold">Deprecated</span>
+            </div>
           </button>
           <button
             onClick={() => setActiveFormat('desktop')}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
               activeFormat === 'desktop'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-green-600 text-white'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
             <Monitor className="w-4 h-4" />
             <div className="flex flex-col items-center">
               <span>Desktop</span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-amber-600/40 text-amber-200 rounded mt-0.5 uppercase font-semibold">Experimental</span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-red-600/40 text-red-200 rounded mt-0.5 uppercase font-semibold">Deprecated</span>
             </div>
           </button>
           <button
@@ -596,7 +636,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             <Smartphone className="w-4 h-4" />
             <div className="flex flex-col items-center">
               <span>Mobile</span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-amber-600/40 text-amber-200 rounded mt-0.5 uppercase font-semibold">Experimental</span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-red-600/40 text-red-200 rounded mt-0.5 uppercase font-semibold">Deprecated</span>
             </div>
           </button>
         </div>
@@ -628,9 +668,140 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
           </div>
         )}
 
+        {/* .habit Section */}
+        {activeFormat === 'habit' && (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-700/50">
+              <h5 className="text-sm font-medium text-blue-300 mb-2">Recommended Distribution Method</h5>
+              <p className="text-xs text-slate-300 mb-2">
+                The .habit format is the best way to distribute your workflows. It creates a self-contained package that can be loaded by the Habits Cortex app on any platform (iOS, Android, macOS, Windows, Linux).
+              </p>
+              <p className="text-xs text-slate-300 mb-2">
+                Simply download the Habits Cortex app from your app store, then import your .habit file - no build tools or technical setup required.
+              </p>
+              <a
+                href="https://codenteam.com/intersect/habits/dot-habit.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-300 hover:text-blue-200 underline flex items-center gap-1"
+              >
+                Learn more about the .habit format <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {/* FAQ Accordion */}
+            <div className="space-y-2">
+              {/* FAQ 1: Run in App */}
+              <div className="border border-slate-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === 'app' ? null : 'app')}
+                  className="w-full px-4 py-3 bg-slate-800/50 hover:bg-slate-800 flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-medium text-slate-200">How to run it in the app (macOS, Windows, Linux, Android, iOS)?</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === 'app' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === 'app' && (
+                  <div className="px-4 py-3 bg-slate-900/50 text-xs text-slate-300 space-y-2">
+                    <p>1. Download the <strong>Habits Cortex</strong> app from your platform's app store (App Store, Google Play, or desktop downloads).</p>
+                    <p>2. Open the app and click the <strong>"Add Habit"</strong> button.</p>
+                    <p>3. Select your <code className="bg-slate-800 px-1 rounded">.habit</code> file to import it.</p>
+                    <p>Your habit will be ready to use immediately!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 2: CLI in Docker */}
+              <div className="border border-slate-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === 'cli' ? null : 'cli')}
+                  className="w-full px-4 py-3 bg-slate-800/50 hover:bg-slate-800 flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-medium text-slate-200">How to run it as CLI in Docker?</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === 'cli' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === 'cli' && (
+                  <div className="px-4 py-3 bg-slate-900/50 text-xs text-slate-300 space-y-2">
+                    <p>Create a <code className="bg-slate-800 px-1 rounded">docker-compose.yaml</code>:</p>
+                    <pre className="bg-slate-800 p-3 rounded overflow-x-auto text-[11px]">{`services:
+  habit-cli:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./my-habit.habit:/app/my-habit.habit
+    command: npx @ha-bits/cortex execute --config ./my-habit.habit --id workflow-id --input '{"param1": "value"}'`}</pre>
+                    <p>Run:</p>
+                    <pre className="bg-slate-800 p-3 rounded overflow-x-auto text-[11px]">{`docker compose run habit-cli`}</pre>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ 3: Server in Docker */}
+              <div className="border border-slate-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === 'server' ? null : 'server')}
+                  className="w-full px-4 py-3 bg-slate-800/50 hover:bg-slate-800 flex items-center justify-between text-left"
+                >
+                  <span className="text-sm font-medium text-slate-200">How to run it as a server in Docker?</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === 'server' ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === 'server' && (
+                  <div className="px-4 py-3 bg-slate-900/50 text-xs text-slate-300 space-y-2">
+                    <p>Create a <code className="bg-slate-800 px-1 rounded">docker-compose.yaml</code>:</p>
+                    <pre className="bg-slate-800 p-3 rounded overflow-x-auto text-[11px]">{`services:
+  habit-server:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./my-habit.habit:/app/my-habit.habit
+    command: npx @ha-bits/cortex server --config ./my-habit.habit --port 3000
+    ports:
+      - "3000:3000"`}</pre>
+                    <p>Run:</p>
+                    <pre className="bg-slate-800 p-3 rounded overflow-x-auto text-[11px]">{`docker compose up`}</pre>
+                    <p>Your habit server will be available at <code className="bg-slate-800 px-1 rounded">http://localhost:3000</code></p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleGenerateHabit}
+              disabled={habitGenerating}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+            >
+              {habitGenerating ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Generating...</>
+              ) : (
+                <><FileArchive className="w-4 h-4" />Generate .habit File</>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Full-Stack Section */}
         {activeFormat === 'full-stack' && capabilities && (
           <div className="space-y-4">
+            {/* Deprecation Warning */}
+            <div className="p-3 bg-red-900/30 rounded-lg border border-red-700/50">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <h5 className="text-xs font-semibold text-red-300 mb-1 uppercase">Deprecated</h5>
+                  <p className="text-xs text-red-200/90 mb-2">
+                    These export options are deprecated. The recommended approach is to export a .habit file and load it in the Habits Cortex app or run it with the cortex CLI in Docker.
+                  </p>
+                  <a
+                    href="https://codenteam.com/intersect/habits/dot-habit.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-red-300 hover:text-red-200 underline flex items-center gap-1"
+                  >
+                    Learn more about the .habit format <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
             {/* Sub-option Selector */}
             <div className="flex bg-slate-800/50 rounded-lg p-1 border border-slate-700">
               <button
@@ -655,7 +826,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 <Package className="w-4 h-4" />
                 <div className="flex flex-col items-center">
                   <span>Docker</span>
-                  <span className="text-[9px] px-1.5 py-0.5 bg-amber-600/40 text-amber-200 rounded mt-0.5 uppercase font-semibold">Experimental</span>
+                  <span className="text-[9px] px-1.5 py-0.5 bg-red-600/40 text-red-200 rounded mt-0.5 uppercase font-semibold">Deprecated</span>
                 </div>
               </button>
               <button
@@ -669,7 +840,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
                 <FileCode className="w-4 h-4" />
                 <div className="flex flex-col items-center">
                   <span>Executable</span>
-                  <span className="text-[9px] px-1.5 py-0.5 bg-amber-600/40 text-amber-200 rounded mt-0.5 uppercase font-semibold">Experimental</span>
+                  <span className="text-[9px] px-1.5 py-0.5 bg-red-600/40 text-red-200 rounded mt-0.5 uppercase font-semibold">Deprecated</span>
                 </div>
               </button>
             </div>
@@ -991,15 +1162,23 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
         {/* Desktop Section */}
         {activeFormat === 'desktop' && capabilities && (
           <div className="space-y-4">
-            {/* Experimental Warning */}
-            <div className="p-3 bg-amber-900/30 rounded-lg border border-amber-700/50">
+            {/* Deprecation Warning */}
+            <div className="p-3 bg-red-900/30 rounded-lg border border-red-700/50">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <h5 className="text-xs font-semibold text-amber-300 mb-1 uppercase">⚠️ Experimental Feature</h5>
-                  <p className="text-xs text-amber-200/90">
-                    Desktop app generation is currently in experimental stage. Some features may not work as expected. Please report any issues you encounter.
+                  <h5 className="text-xs font-semibold text-red-300 mb-1 uppercase">Deprecated</h5>
+                  <p className="text-xs text-red-200/90 mb-2">
+                    Building custom desktop apps is deprecated. The recommended approach is to export a .habit file and load it in the Habits Cortex app, available for macOS, Windows, and Linux.
                   </p>
+                  <a
+                    href="https://codenteam.com/intersect/habits/dot-habit.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-red-300 hover:text-red-200 underline flex items-center gap-1"
+                  >
+                    Learn more about the .habit format <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
             </div>
@@ -1424,15 +1603,23 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
         {/* Mobile Section */}
         {activeFormat === 'mobile' && capabilities && (
           <div className="space-y-4">
-            {/* Experimental Warning */}
-            <div className="p-3 bg-amber-900/30 rounded-lg border border-amber-700/50">
+            {/* Deprecation Warning */}
+            <div className="p-3 bg-red-900/30 rounded-lg border border-red-700/50">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <h5 className="text-xs font-semibold text-amber-300 mb-1 uppercase">⚠️ Experimental Feature</h5>
-                  <p className="text-xs text-amber-200/90">
-                    Mobile app generation is currently in experimental stage. Some features may not work as expected. Please report any issues you encounter.
+                  <h5 className="text-xs font-semibold text-red-300 mb-1 uppercase">Deprecated</h5>
+                  <p className="text-xs text-red-200/90 mb-2">
+                    Building custom mobile apps is deprecated. The recommended approach is to export a .habit file and load it in the Habits Cortex app, available on iOS and Android app stores.
                   </p>
+                  <a
+                    href="https://codenteam.com/intersect/habits/dot-habit.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-red-300 hover:text-red-200 underline flex items-center gap-1"
+                  >
+                    Learn more about the .habit format <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
             </div>

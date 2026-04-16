@@ -3,6 +3,7 @@ import * as path from '@ha-bits/bindings/path';
 import { ensureModuleReady, getModuleMainFile, getModulePath } from './moduleCloner';
 import { npmInstall, getLocalModulePath } from './utils';
 import { LoggerFactory } from '@ha-bits/core/logger';
+import { defaultModules, type ModuleDefinition, type ModulesConfig } from '@ha-bits/core';
 
 const logger = LoggerFactory.getRoot();
 
@@ -47,16 +48,6 @@ export function isBundledModule(moduleName: string): boolean {
   return bundledModulesRegistry.has(moduleName);
 }
 
-interface ModuleDefinition {
-  framework: string;
-  source: 'github' | 'npm' | 'local' | 'link';
-  repository: string; // GitHub URL for 'github' source, package name for 'npm'/'link' source, module name for 'local' source
-}
-
-interface ModulesConfig {
-  modules: ModuleDefinition[];
-}
-
 /**
  * Infers the module name from the repository URL or npm package name.
  * For GitHub: extracts the last part of the URL (e.g., https://github.com/user/repo.git -> repo)
@@ -79,11 +70,8 @@ export function getModuleName(moduleDefinition: ModuleDefinition): string {
     repoName = parts[parts.length - 1];
     
     return repoName;
-  } else if (moduleDefinition.source === 'npm' || moduleDefinition.source === 'link') {
-    // For npm and link, use the whole package name as the ID/Name
-    return moduleDefinition.repository;
-  } else if (moduleDefinition.source === 'local') {
-    // For local, use the module name as-is
+  } else if (moduleDefinition.source === 'npm') {
+    // For npm, use the whole package name as the ID/Name
     return moduleDefinition.repository;
   } else {
     throw new Error(`Unknown source type: ${moduleDefinition.source}`);
@@ -136,10 +124,18 @@ export function getModuleFromConfig(framework: string, moduleName: string): Modu
 
 export function loadModulesConfig(): ModulesConfig {
   try {
+    // Check if modules.json exists first
+    if (!fs.existsSync(MODULES_CONFIG_PATH)) {
+      // Return default modules from @ha-bits/core - this allows Base UI to work
+      // without a modules.json file (e.g., when running from /tmp via npx)
+      return defaultModules;
+    }
     const configData = fs.readFileSync(MODULES_CONFIG_PATH, 'utf-8');
     return JSON.parse(configData);
   } catch (error: any) {
-    throw new Error(`Failed to load modules.json: ${error.message}`);
+    // If JSON parsing fails, return default modules
+    logger.warn(`Failed to load modules.json: ${error.message}. Using default modules.`);
+    return defaultModules;
   }
 }
 
@@ -196,8 +192,8 @@ export function addModule(moduleDefinition: ModuleDefinition, options: AddModule
   }
   
   // Validate source type
-  if (!['github', 'npm', 'local'].includes(moduleDefinition.source)) {
-    throw new Error(`Invalid source type: ${moduleDefinition.source}. Must be 'github', 'npm', or 'local'`);
+  if (!['github', 'npm'].includes(moduleDefinition.source)) {
+    throw new Error(`Invalid source type: ${moduleDefinition.source}. Must be 'github' or 'npm'`);
   }
   
   if (!options.skipSave) {
@@ -254,34 +250,12 @@ export function isModuleCloned(moduleDefinition: ModuleDefinition): boolean {
   const modulePath = getModulePath(moduleDefinition);
   
   // Check if installed in target location
-  if (fs.existsSync(modulePath)) {
-    return true;
-  }
-  
-  // For local or link source, also check if it exists at the source location
-  if (moduleDefinition.source === 'local' || moduleDefinition.source === 'link') {
-    const moduleName = getModuleName(moduleDefinition);
-    const localPath = getLocalModulePath(moduleDefinition.framework, moduleName);
-    if (localPath && fs.existsSync(localPath)) {
-      return true;
-    }
-  }
-  
-  return false;
+  return fs.existsSync(modulePath);
 }
 
 export function isModuleBuilt(moduleDefinition: ModuleDefinition): boolean {
   // Determine which path to check
-  let modulePath = getModulePath(moduleDefinition);
-  
-  // For local or link source, check source location if target doesn't exist
-  if ((moduleDefinition.source === 'local' || moduleDefinition.source === 'link') && !fs.existsSync(modulePath)) {
-    const moduleName = getModuleName(moduleDefinition);
-    const localPath = getLocalModulePath(moduleDefinition.framework, moduleName);
-    if (localPath) {
-      modulePath = localPath;
-    }
-  }
+  const modulePath = getModulePath(moduleDefinition);
   
   if (!fs.existsSync(modulePath)) {
     return false;

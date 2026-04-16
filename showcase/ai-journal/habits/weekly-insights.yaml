@@ -10,7 +10,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      resource: query
       operation: query
       params:
         collection: "journal_entries"
@@ -24,7 +23,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-intersect"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         intersect:

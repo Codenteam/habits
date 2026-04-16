@@ -255,7 +255,7 @@ export class WorkflowExecutor {
           // Load the bit module to check trigger type
           let bitPiece: any = null;
           const moduleDefinition = { 
-            source: (nodeData.source || 'npm') as 'npm' | 'local' | 'github' | 'link', 
+            source: (nodeData.source || 'npm') as 'npm' | 'github', 
             module: moduleName,
             framework: 'bits' as const,
             repository: moduleName,
@@ -1207,7 +1207,6 @@ export class WorkflowExecutor {
       // Add additional node data to params
       fullParams = {
         ...resolvedParams,
-        ...(node.data.resource && { resource: node.data.resource }),
         ...(node.data.operation && { operation: node.data.operation }),
         ...(resolvedCredentials && { credentials: resolvedCredentials })
       };
@@ -1218,7 +1217,6 @@ export class WorkflowExecutor {
         case 'script':
           nodeResult = await executeScriptModule({
             framework: 'script',
-            source: (node.data.source as 'local' | 'hub' | 'inline') || 'local',
             moduleName: node.data.module || 'unknown',
             params: fullParams,
             script: {

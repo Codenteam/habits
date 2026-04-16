@@ -28,7 +28,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-instagram"
-      resource: createPost
       operation: createPost
       # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
       credentials:
@@ -49,7 +48,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-instagram"
-      resource: createCarousel
       operation: createCarousel
       credentials:
         instagram:

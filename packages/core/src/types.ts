@@ -55,7 +55,7 @@ export interface WorkflowNode {
   data: {
     label: string;
     framework: 'script' | 'bits';
-    source?: 'npm' | 'github' | 'local' | 'hub' | 'inline';
+    source?: 'npm' | 'github' | 'inline';
     module?: string;
     resource?: string;
     operation?: string;

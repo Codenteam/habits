@@ -1,6 +1,6 @@
 {
   "name": "habits-workspace",
-  "version": "1.0.15",
+  "version": "1.5.92",
   "description": "Habits - A modular automation workflow engine with visual builder",
   "private": true,
   "packageManager": "pnpm@9.15.0",

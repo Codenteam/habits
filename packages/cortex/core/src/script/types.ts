@@ -57,7 +57,7 @@ export interface ScriptWorkflow {
 }
 
 export interface ScriptExecutionParams {
-  source: 'local' | 'hub' | 'inline';
+
   framework: 'script';
   moduleName: string;
   params: Record<string, any>;

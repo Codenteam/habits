@@ -14,7 +14,7 @@ nodes:
     type: action
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-local-ai"
       operation: get_system_info
       label: System Info

@@ -380,6 +380,15 @@ async function extractHabitFile(filePath) {
     }
     const bundleJs = await bundleFile.async('string');
     
+    // Get habits-fetch-proxy.js (optional, but needed for direct HabitsBundle execution)
+    // This intercepts /api/* calls and routes them to HabitsBundle.executeWorkflow
+    let fetchProxyJs = null;
+    const fetchProxyFile = zip.file('habits-fetch-proxy.js');
+    if (fetchProxyFile) {
+      fetchProxyJs = await fetchProxyFile.async('string');
+      console.log('[Habits] Found habits-fetch-proxy.js');
+    }
+    
     // Try to get habit name from stack.yaml inside zip (more reliable than file path)
     // File paths on Android are content:// URIs which don't contain the actual filename
     let habitName = 'Unknown';
@@ -443,6 +452,7 @@ async function extractHabitFile(filePath) {
       habitName,
       indexHtml,
       bundleJs,
+      fetchProxyJs,
       files,
       filePath,
       useAutoUi,
@@ -484,6 +494,7 @@ async function importHabitFile(filePath) {
     // Cache the extracted content so we don't need to re-extract
     cachedIndexHtml: extraction.indexHtml,
     cachedBundleJs: extraction.bundleJs,
+    cachedFetchProxyJs: extraction.fetchProxyJs,
     cachedFiles: extraction.files,
     useAutoUi: extraction.useAutoUi || false,
     installedAt: new Date().toISOString(),
@@ -643,6 +654,7 @@ async function importHabitFromBase64(base64Data, habitNameHint = null) {
     filePath: null, // No file path for base64 imports
     cachedIndexHtml: extraction.indexHtml,
     cachedBundleJs: extraction.bundleJs,
+    cachedFetchProxyJs: extraction.fetchProxyJs,
     cachedFiles: extraction.files,
     useAutoUi: extraction.useAutoUi || false,
     installedAt: new Date().toISOString(),
@@ -742,12 +754,13 @@ async function runHabit(habitId) {
   }
   
   try {
-    let indexHtml, bundleJs;
+    let indexHtml, bundleJs, fetchProxyJs;
     
     // Check if we have cached content
     if (habit.cachedIndexHtml && habit.cachedBundleJs) {
       indexHtml = habit.cachedIndexHtml;
       bundleJs = habit.cachedBundleJs;
+      fetchProxyJs = habit.cachedFetchProxyJs;
       console.log('[Habits] Using cached content for:', habit.name);
     } else if (habit.filePath) {
       // Re-extract from file
@@ -763,6 +776,7 @@ async function runHabit(habitId) {
       if (extraction.useAutoUi) {
         habit.useAutoUi = true;
         habit.cachedBundleJs = extraction.bundleJs;
+        habit.cachedFetchProxyJs = extraction.fetchProxyJs;
         habit.cachedFiles = extraction.files;
         console.log('[Habits] Switching to auto-UI mode');
         return runHabitWithForm(habitId);
@@ -770,9 +784,11 @@ async function runHabit(habitId) {
       
       indexHtml = extraction.indexHtml;
       bundleJs = extraction.bundleJs;
+      fetchProxyJs = extraction.fetchProxyJs;
       // Update cache
       habit.cachedIndexHtml = indexHtml;
       habit.cachedBundleJs = bundleJs;
+      habit.cachedFetchProxyJs = fetchProxyJs;
       habit.cachedFiles = extraction.files;
     } else {
       // Legacy support for folder-based habits
@@ -795,6 +811,20 @@ async function runHabit(habitId) {
         htmlContent = bundleScript + '\n' + htmlContent;
       }
       console.log('[Habits] Injected cortex-bundle.js at runtime');
+    }
+    
+    // Inject fetch-proxy.js after cortex-bundle.js (for Tauri to intercept /api/* calls)
+    // This MUST come after cortex-bundle.js since it depends on HabitsBundle being defined
+    if (fetchProxyJs && !htmlContent.includes('id="habits-fetch-proxy"')) {
+      const fetchProxyScript = `<script id="habits-fetch-proxy">\n${fetchProxyJs}\n</script>`;
+      if (htmlContent.includes('</head>')) {
+        htmlContent = htmlContent.replace('</head>', fetchProxyScript + '\n</head>');
+      } else if (htmlContent.includes('<body')) {
+        htmlContent = htmlContent.replace(/<body([^>]*)>/i, fetchProxyScript + '\n<body$1>');
+      } else {
+        htmlContent = fetchProxyScript + '\n' + htmlContent;
+      }
+      console.log('[Habits] Injected habits-fetch-proxy.js at runtime');
     }
     
     console.log('[Habits] HTML prepared, size:', htmlContent.length, 'bytes');
@@ -1240,6 +1270,7 @@ async function runHabitWithForm(habitId, workflowId = null) {
       }
       habit.cachedIndexHtml = extraction.indexHtml;
       habit.cachedBundleJs = extraction.bundleJs;
+      habit.cachedFetchProxyJs = extraction.fetchProxyJs;
       habit.cachedFiles = extraction.files;
     }
 

@@ -37,8 +37,8 @@ async function ensureBitsDepsLinked(modulePath: string, moduleName: string): Pro
 
 export interface ModuleDefinition {
   framework: string;
-  source: 'github' | 'npm' | 'local' | 'link';
-  repository: string; // GitHub URL for 'github' source, package name for 'npm'/'link' source, module name for 'local' source
+  source: 'github' | 'npm';
+  repository: string; // GitHub URL for 'github' source, package name for 'npm' source
   /** 
    * Optional custom npm registry URL for 'npm' source.
    * If not provided, uses HABITS_NPM_REGISTRY_URL environment variable,
@@ -225,93 +225,6 @@ export async function ensureModuleReady(
     const installedPath = await installNpmModule(moduleDefinition, baseDir);
     
     return installedPath;
-  } else if (moduleDefinition.source === 'local') {
-    // Local modules are in the workspace's nodes/{framework} directory
-    // We need to find them and install them to the nodes base path
-    const targetModulePath = getModuleFullPath(moduleDefinition.framework, moduleName);
-    
-    // Check if already installed in target location
-    if (fs.existsSync(targetModulePath)) {
-      console.log(`✓ Local module ${moduleName} already installed at ${targetModulePath}`);
-      // Ensure peer dependencies are available even for existing modules
-      if (moduleDefinition.framework === 'bits') {
-        await ensureBitsDepsLinked(targetModulePath, moduleName);
-      }
-      return targetModulePath;
-    }
-    
-    // Find the local module in the workspace
-    const localSourcePath = getLocalModulePath(moduleDefinition.framework, moduleName);
-    
-    if (!localSourcePath) {
-      throw new Error(
-        `Local module not found: ${moduleName}. ` +
-        `Searched in nodes/${moduleDefinition.framework}/ directory. ` +
-        `You can also set HABITS_LOCAL_NODES_PATH environment variable.`
-      );
-    }
-    
-    console.log(`\n📦 Installing local module: ${moduleName}`);
-    console.log(`   Source: ${localSourcePath}`);
-    console.log(`   Target: ${targetModulePath}`);
-    
-    // Ensure target parent directory exists
-    const targetParentDir = path.dirname(targetModulePath);
-    if (!fs.existsSync(targetParentDir)) {
-      fs.mkdirSync(targetParentDir, { recursive: true });
-    }
-    
-    // Copy the local module to the target location
-    fs.cpSync(localSourcePath, targetModulePath, { recursive: true });
-    
-    // Install dependencies for the module
-    if (fs.existsSync(path.join(targetModulePath, 'package.json'))) {
-      console.log(`📦 Installing dependencies for ${moduleName}...`);
-      try {
-        await npmInstall(undefined, { cwd: targetModulePath, legacyPeerDeps: true, includePeer: true, timeout: 120000 });
-        console.log(`✓ Dependencies installed for ${moduleName}`);
-        
-        // Link peer dependencies based on framework
-        if (moduleDefinition.framework === 'bits') {
-          await ensureBitsDepsLinked(targetModulePath, moduleName);
-        }
-      } catch (error: any) {
-        console.warn(`⚠️  Warning: Failed to install dependencies for ${moduleName}: ${error.message}`);
-        // Still try to link peer dependencies
-        if (moduleDefinition.framework === 'bits') {
-          await ensureBitsDepsLinked(targetModulePath, moduleName);
-        }
-      }
-    } else {
-      // No package.json, but still try to link peer deps
-      if (moduleDefinition.framework === 'bits') {
-        await ensureBitsDepsLinked(targetModulePath, moduleName);
-      }
-    }
-    
-    console.log(`✓ Local module ${moduleName} installed at ${targetModulePath}`);
-    return targetModulePath;
-  } else if (moduleDefinition.source === 'link') {
-    console.log(`\n🔗 Processing linked module: ${moduleName}`);
-    // Use npm link to use a globally linked package
-    const baseDir = getNodesPath(moduleDefinition.framework);
-    const modulePath = path.join(baseDir, moduleName);
-    console.log(`   Base directory: ${baseDir}`);
-    console.log(`   Module path: ${modulePath}`);
-    
-    // Check if already linked/exists
-    if (fs.existsSync(modulePath)) {
-      console.log(`✓ Linked module ${moduleName} already exists at ${modulePath}`);
-      // Ensure peer dependencies are linked even for existing modules
-      if (moduleDefinition.framework === 'bits') {
-        await ensureBitsDepsLinked(modulePath, moduleName);
-      }
-      return modulePath;
-    }
-    
-    const linkedPath = await linkNpmModule(moduleDefinition, baseDir);
-    
-    return linkedPath;
   } else {
     throw new Error(`Unknown source type: ${moduleDefinition.source}`);
   }
@@ -534,99 +447,12 @@ async function installNpmModule(
   }
 }
 
-// Link a globally linked npm module to local directory
-async function linkNpmModule(
-  moduleDefinition: ModuleDefinition,
-  targetDir: string
-): Promise<string> {
-  const { repository: packageName } = moduleDefinition;
-  const name = getModuleName(moduleDefinition);
-  
-  console.log(`\n🔗 linkNpmModule called:`);
-  console.log(`   Package name: ${packageName}`);
-  console.log(`   Module name: ${name}`);
-  console.log(`   Target dir: ${targetDir}`);
-  
-  if (!packageName) {
-    throw new Error(`Module ${name} has no package name`);
-  }
-
-  const modulePath = path.join(targetDir, name);
-  console.log(`   Full module path: ${modulePath}`);
-
-  // Check if already linked
-  if (fs.existsSync(modulePath)) {
-    console.log(`✓ Module ${name} already linked at ${modulePath}`);
-    return modulePath;
-  }
-
-  const prefix = getNodesBasePath();
-  console.log(`🔗 Linking ${name} from global npm link (${packageName}) to ${prefix}...`);
-
-  try {
-    // Create target directory if it doesn't exist
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-
-    // Ensure prefix directory has a package.json (required for npm link)
-    const prefixPackageJson = path.join(prefix, 'package.json');
-    if (!fs.existsSync(prefixPackageJson)) {
-      fs.mkdirSync(prefix, { recursive: true });
-      fs.writeFileSync(prefixPackageJson, JSON.stringify({ 
-        name: 'habits-nodes', 
-        version: '1.0.0', 
-        private: true
-      }, null, 2));
-    }
-
-    // Use npm link to link the globally linked package
-    const linkCommand = `npm link ${packageName}`;
-    console.log(`Executing link command: ${linkCommand}`);
-    
-    const { stdout, stderr } = await execAsync(linkCommand, {
-      cwd: prefix,
-      timeout: 60000 // 1 minute timeout
-    });
-
-    if (stderr && !stderr.includes('npm warn') && !stderr.includes('added')) {
-      console.warn(`Link warnings: ${stderr}`);
-    }
-
-    // Verify the link was created
-    if (!fs.existsSync(modulePath)) {
-      throw new Error(`Package ${packageName} was not linked correctly at ${modulePath}`);
-    }
-
-    // Fix package.json if main entry points to .ts but .js exists
-    await fixPackageJsonMainEntry(modulePath);
-
-    // Link peer dependencies based on framework
-    if (moduleDefinition.framework === 'bits') {
-      await ensureBitsDepsLinked(modulePath, name);
-    }
-
-    console.log(`✓ Successfully linked ${name} at ${modulePath}`);
-    return modulePath;
-  } catch (error: any) {
-    throw new Error(`Failed to link ${name}: ${error.message}`);
-  }
-}
-
 export function getModulePath(moduleDefinition: ModuleDefinition): string {
   // Return the correct path based on source type
   const moduleName = getModuleName(moduleDefinition);
   
   // Get the target path (where modules are installed)
   const targetPath = getModuleFullPath(moduleDefinition.framework, moduleName);
-  
-  // For local or link source, if target doesn't exist, return the source path
-  if ((moduleDefinition.source === 'local' || moduleDefinition.source === 'link') && !fs.existsSync(targetPath)) {
-    const localPath = getLocalModulePath(moduleDefinition.framework, moduleName);
-    if (localPath && fs.existsSync(localPath)) {
-      return localPath;
-    }
-  }
   
   // Check if package.json exists at the target path
   // If not, this might be a content-addressable store structure where the actual package

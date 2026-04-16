@@ -24,7 +24,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-twitter"
-      resource: tweet
       operation: tweet
       # OAuth tokens can be provided directly via credentials (bypasses OAuth callback flow)
       credentials:
@@ -44,7 +43,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-twitter"
-      resource: createThread
       operation: createThread
       credentials:
         twitter:
@@ -63,7 +61,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-twitter"
-      resource: tweetWithMedia
       operation: tweetWithMedia
       credentials:
         twitter:

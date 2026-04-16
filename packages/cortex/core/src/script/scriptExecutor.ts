@@ -610,37 +610,29 @@ export async function executeScriptModule(
   paramsOrModuleName: ScriptExecutionParams | string,
   maybeParams?: Record<string, any>
 ): Promise<ScriptExecutionResult> {
-  let source: 'local' | 'hub' | 'inline';
   let moduleName: string;
   let executionParams: Record<string, any>;
   let inlineScript: ScriptDefinition | undefined;
 
   if (typeof paramsOrModuleName === 'string') {
-    source = 'local';
     moduleName = paramsOrModuleName;
     executionParams = maybeParams || {};
   } else {
-    source = paramsOrModuleName.source;
     moduleName = paramsOrModuleName.moduleName;
     executionParams = paramsOrModuleName.params;
     inlineScript = paramsOrModuleName.script;
   }
 
   logger.log(`\n🌀 Executing Script module: ${moduleName}`);
-  logger.log(`   Source: ${source}`);
 
-  // Load the script
+  // Load the script - use inline if provided, otherwise load from filesystem
   let script: ScriptDefinition | null = null;
 
-  if (source === 'inline' && inlineScript) {
+  if (inlineScript) {
     script = inlineScript;
-  } else if (source === 'local') {
+  } else {
     script = loadLocalScript(moduleName);
-  } else if (source === 'hub') {
-    // TODO: Implement Script Hub integration
-    throw new Error('Script Hub source not yet implemented');
-  }
-
+  } 
   if (!script || !script.content) {
     throw new Error(`Could not load script: ${moduleName}`);
   }
@@ -724,7 +716,6 @@ export async function executeScript(
   options?: { previous_result?: any }
 ): Promise<any> {
   const result = await executeScriptModule({
-    source: 'inline',
     framework: 'script',
     moduleName: 'inline-script',
     params: {

@@ -25,7 +25,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: vision_prompt
       operation: vision_prompt
       credentials:
         openai:
@@ -73,7 +72,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      resource: ask_chatgpt
       operation: ask_chatgpt
       credentials:
         openai:
@@ -130,7 +128,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      resource: insert
       operation: insert
       params:
         collection: "calorie_logs"

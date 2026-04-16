@@ -130,7 +130,7 @@
           "cp -r dist/packages/cortex/ui dist/packages/habits/cortex-ui",
           "cp -r dist/packages/base/ui dist/packages/habits/base-ui",
           "mkdir -p dist/packages/habits/showcase",
-          "cp -r showcase/mixed dist/packages/habits/showcase/mixed",
+          "cp -r showcase/hello-world dist/packages/habits/showcase/hello-world",
           "cp -r showcase/marketing-campaign dist/packages/habits/showcase/marketing-campaign",
           "find dist/packages/habits/showcase -name '.env' -type f -delete",
           "cp packages/habits/app/.npmignore dist/packages/habits/.npmignore",

@@ -12,7 +12,7 @@ nodes:
     type: action
     data:
       framework: bits
-      source: local
+      source: npm
       module: "@ha-bits/bit-email"
       operation: fetchEmails
       params:

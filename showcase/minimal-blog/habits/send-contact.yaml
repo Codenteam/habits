@@ -20,7 +20,6 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-email"
-      resource: sendEmail
       operation: sendEmail
       params:
         smtpHost: "{{habits.env.SMTP_HOST}}"
