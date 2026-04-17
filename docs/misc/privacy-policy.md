@@ -6,7 +6,7 @@ This Privacy Policy describes how Habits ("we," "us," or "our") handles informat
 
 ## Overview
 
-Habits is an open-source project licensed under Apache 2.0. We are committed to protecting your privacy and being transparent about our data practices.
+Habits is an open-source project licensed under AGPL-3.0. We are committed to protecting your privacy and being transparent about our data practices.
 
 ## Information We Do Not Collect
 
@@ -35,7 +35,7 @@ Your workflows may connect to external services (APIs, databases, AI providers).
 
 ## Open Source Transparency
 
-As an Apache 2.0 licensed project:
+As an AGPL-3.0 licensed project:
 - Our source code is publicly available for inspection
 - You can verify our privacy claims by reviewing the codebase
 - Community contributions are welcome and reviewed for security

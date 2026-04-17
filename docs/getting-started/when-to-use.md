@@ -22,8 +22,8 @@ You want to bundle automation with a frontend to create complete web application
 ### Fully Open-Source Stack
 
 You need a 100% open-source solution:
-- Habits (Apache 2.0) + Bits (MIT) = fully open-source
-- No fair-code or AGPL restrictions
+- Habits (AGPL-3.0) + Bits (MIT) = fully open-source
+- Strong copyleft ensures modifications stay open
 - Complete freedom to modify and distribute
 
 ### Combining Bits and Scripts
@@ -42,10 +42,10 @@ You want to combine pre-built integrations with custom logic:
 
 ### License Freedom
 
-You need a fully **Apache 2.0 licensed** runner that you can:
-- Embed in commercial products
-- Distribute to customers without restrictions
-- Modify without source-available obligations
+You need a fully **AGPL-3.0 licensed** runner that you can:
+- Use in commercial products (with source disclosure)
+- Distribute to customers with the same license
+- Modify with source-available obligations
 
 ### Distribution to Customers
 
@@ -92,7 +92,7 @@ All Habits core and Bits are open-source:
 
 | Module Source | License | Distribution Impact |
 |--------------|---------|---------------------|
-| Habits core | Apache 2.0 | No restrictions |
+| Habits core | AGPL-3.0 | Source disclosure required |
 | Habits bits | MIT | No restrictions |
 
 ## Next Steps

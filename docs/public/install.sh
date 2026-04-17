@@ -55,7 +55,7 @@ print_banner() {
     echo " |_|  |_|\\__,_|_.__/|_|\\__|___/"
     echo -e "${NC}"
     echo -e "${BOLD}Lightweight Automation Runner and Builder${NC}"
-    echo -e "Apache 2.0 Licensed | https://codenteam.com/intersect/habits"
+    echo -e "AGPL-3.0 Licensed | https://codenteam.com/intersect/habits"
     echo ""
 }
 

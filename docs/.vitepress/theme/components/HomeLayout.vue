@@ -224,7 +224,7 @@ const hoveredUseCase = ref(null)
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
           <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (Apache 2.0)</p>
+          <p class="hero-tagline">Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (AGPL-3.0)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <div class="hero-secondary-actions">
@@ -329,8 +329,8 @@ const hoveredUseCase = ref(null)
         <div class="bento-card feature-mini apache">
           <span class="feature-emoji">📜</span>
           <div class="feature-text">
-            <strong>Apache 2.0</strong>
-            <span>No fair-code restrictions</span>
+            <strong>AGPL-3.0</strong>
+            <span>Strong copyleft, keeps code open</span>
           </div>
         </div>
         
@@ -399,7 +399,7 @@ const hoveredUseCase = ref(null)
                 <div class="plan-header">
                   <span class="plan-name">Free</span>
                   <span class="plan-price">Open Source</span>
-                  <span class="plan-desc">Apache 2.0 License</span>
+                  <span class="plan-desc">AGPL-3.0 License</span>
                 </div>
               </th>
               <th>
@@ -595,7 +595,7 @@ const hoveredUseCase = ref(null)
         <a :href="withBase('/')">Documentation</a> · 
         By <a href="https://codenteam.com" target="_blank">Codenteam</a>
       </p>
-      <p class="copyright">© 2024-2026 Codenteam. Licensed under Apache 2.0</p>
+      <p class="copyright">© 2024-2026 Codenteam. Licensed under AGPL-3.0</p>
     </footer>
   </div>
 </template>

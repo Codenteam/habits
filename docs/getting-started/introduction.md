@@ -1,6 +1,6 @@
 # Introduction
 
-Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**) — all under Apache 2.0.
+Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**) — all under AGPL-3.0.
 
 ## What Can You Build?
 
@@ -50,8 +50,8 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 
 ## Key Features
 
-- **Native Bits** — Use Habits bits for fully Apache 2.0 licensed integrations with no commercial restrictions
-- **Apache 2.0 License** — Embed in commercial products, distribute without restrictions
+- **Native Bits** — Use Habits bits (MIT licensed) for integrations with no commercial restrictions
+- **AGPL-3.0 License** — Strong copyleft ensures modifications stay open source
 - **Flexible Execution** — Run via CLI, REST API, or with an auto-generated frontend
 - **Dynamic Module Loading** — Install modules from npm, GitHub, or local sources on-the-fly
 - **Lightweight** — Minimal footprint for serverless, edge, and embedded deployments

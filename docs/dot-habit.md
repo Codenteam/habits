@@ -259,7 +259,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 
 <div class="reference-impl-box">
   <h4><component :is="Code" :size="18" /> Reference Implementation</h4>
-  <p>The Cortex runtime is the reference implementation for this specification. Open source under <strong>Apache 2.0</strong> license on GitHub:</p>
+  <p>The Cortex runtime is the reference implementation for this specification. Open source under <strong>AGPL-3.0</strong> license on GitHub:</p>
   <div class="impl-links">
     <a href="https://github.com/Codenteam/habits/tree/main/packages/cortex/server" target="_blank" class="impl-link">
       <component :is="Server" :size="18" />
@@ -1335,7 +1335,7 @@ output:
       </div>
       <div class="card-content">
         <h4>Specification License</h4>
-        <p>This specification is released under the <strong>Apache 2.0 License</strong>. Anyone may implement .habit readers/writers without royalty or restriction.</p>
+        <p>This specification is released under the <strong>AGPL-3.0 License</strong>. Anyone may implement .habit readers/writers without royalty or restriction.</p>
       </div>
     </div>
     <div class="governance-item">
@@ -1365,7 +1365,7 @@ output:
 <p class="appendix-intro">The following sections are non-normative and describe the Cortex reference implementation.</p>
 
 <div class="appendix-source-links">
-  <h4>Source Code (Apache 2.0 · GitHub)</h4>
+  <h4>Source Code (AGPL-3.0 · GitHub)</h4>
   <ul>
     <li><a href="https://github.com/Codenteam/habits/tree/main/packages/cortex/server" target="_blank">packages/cortex/server</a>: Node.js runtime for server, Docker, and serverless deployments</li>
     <li><a href="https://github.com/Codenteam/habits/tree/main/habits-cortex/" target="_blank">habits-cortex/</a>: Tauri application for desktop (macOS, Windows, Linux) and mobile (iOS, Android)</li>

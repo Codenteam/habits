@@ -6,7 +6,7 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs';
 
 export default defineConfig({
   title: 'Habits',
-  description: 'Create Agents, Automations, Full-Stacks, SaaS and Micro-Apps (Apache 2.0).',
+  description: 'Create Agents, Automations, Full-Stacks, SaaS and Micro-Apps (AGPL-3.0).',
   base: '/intersect/habits/',
 
   // Serve static assets from .vitepress/public
@@ -173,7 +173,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: 'Released under the Apache 2.0 License.',
+      message: 'Released under the AGPL-3.0 License.',
       copyright: 'Copyright © 2024-present Habits Team'
     },
 

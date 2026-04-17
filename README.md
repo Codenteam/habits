@@ -1,6 +1,6 @@
 # Habits
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](LICENSE.md)
 [![Node.js](https://img.shields.io/badge/Node.js-24%2B-green.svg)](https://nodejs.org/)
 
 
@@ -9,7 +9,7 @@
 
 Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-Apps. 
 
-Under the hood Habits is a Logic & UI builder (Base, from Basal Ganglia) and decentralized runner (Cortex, as in Frontal Cortex) that you can control, audit, monitor and extend (Apache 2.0)
+Under the hood Habits is a Logic & UI builder (Base, from Basal Ganglia) and decentralized runner (Cortex, as in Frontal Cortex) that you can control, audit, monitor and extend (AGPL-3.0)
 
 https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
 
@@ -63,8 +63,8 @@ Habits is a **lightweight workflows creator, runtime, and packer**, designed for
 
 ## Features
 
-- **Native Bits** - Use Habits bits for fully Apache 2.0 licensed integrations
-- **True Open Source (Apache 2.0)** - Embed in commercial products, distribute without restrictions
+- **Native Bits** - Use Habits bits (MIT licensed) for integrations
+- **Open Source (AGPL-3.0)** - Strong copyleft ensures modifications stay open source
 - **Flexible Execution** - Run via CLI, REST API, or with an auto-generated frontend
 - **Dynamic Module Loading** - Install modules from npm, GitHub, or local sources on-the-fly
 - **Lightweight** - Minimal footprint, perfect for serverless and edge deployments
@@ -209,10 +209,10 @@ npx habits@latest cortex --config ./stack.yaml
 
 | Module Source | License | Safe to Distribute? |
 |--------------|---------|---------------------|
-| Habits core | Apache 2.0 | Yes |
+| Habits core | AGPL-3.0 | Yes (source disclosure required) |
 | Bits modules | MIT | Yes |
 
-Stick to Apache 2.0 or MIT licensed modules for maximum freedom.
+Stick to MIT or permissively licensed modules for bits.
 
 
 ## Development
@@ -253,7 +253,7 @@ Contributions are welcome! Please read the documentation and ensure your changes
 
 ## License
 
-Apache 2.0 - See [LICENSE.md](LICENSE.md) for details.
+AGPL-3.0 - See [LICENSE.md](LICENSE.md) for details.
 
 ---
 

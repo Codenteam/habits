@@ -4,12 +4,12 @@ This document explains the licensing of Habits and its components.
 
 ## Habits Core
 
-Habits is licensed under **Apache 2.0**, a permissive open-source license that allows you to:
+Habits is licensed under **AGPL-3.0** (GNU Affero General Public License v3.0), a strong copyleft license that:
 
-- Use commercially
-- Modify and distribute
-- Use privately
-- Sublicense
+- Allows commercial use
+- Requires source disclosure for modifications
+- Requires network use to provide source (the "network clause")
+- Ensures the software stays open source
 
 ## Habits Bits
 
@@ -17,7 +17,7 @@ All official Habits bits (modules) are licensed under **MIT**, which is fully pe
 
 | Component | License |
 |-----------|---------|
-| Habits Core | Apache 2.0 |
+| Habits Core | AGPL-3.0 |
 | @ha-bits/* packages | MIT |
 
 ## What This Means for You
@@ -25,23 +25,24 @@ All official Habits bits (modules) are licensed under **MIT**, which is fully pe
 ### Commercial Use ✅
 
 You can:
-- Embed Habits in commercial products
+- Use Habits in commercial products
 - Distribute Habits to customers
-- Modify Habits for proprietary use
-- Charge for products built with Habits
+- Charge for services built with Habits
 
-### Attribution Required
+### Source Disclosure Required
 
-Apache 2.0 requires you to:
+AGPL-3.0 requires you to:
 - Include the license notice
 - Provide attribution
+- Make source code available if you distribute modified versions
+- Provide source access to users interacting over a network (AGPL network clause)
 
 ## Dependency Licensing
 
 When adding npm packages to your workflows, always verify their licenses. The workflow's effective license is the most restrictive of all included dependencies.
 
 ::: tip Best Practice
-Stick to Apache 2.0, MIT, or BSD-licensed packages to maintain full commercial freedom.
+Stick to MIT, BSD, or Apache 2.0-licensed packages for bits to maintain permissive licensing for your integrations.
 :::
 
 ## Next Steps

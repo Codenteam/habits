@@ -42,7 +42,7 @@ nodes:
 
 ## Open Source
 
-Habits is **Apache 2.0 licensed**.
+Habits is **AGPL-3.0 licensed**.
 
 ::: tip Node Licensing
 All Habits bits are MIT licensed (fully permissive).
