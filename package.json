@@ -20,7 +20,7 @@
     "habits"
   ],
   "author": "Codenteam",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0",
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@vercel/ncc": "^0.38.4",

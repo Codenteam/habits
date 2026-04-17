@@ -27,7 +27,7 @@
     "low-code"
   ],
   "author": "Codenteam",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/codenteam/habits.git"

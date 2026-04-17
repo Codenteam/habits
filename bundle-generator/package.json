@@ -2,7 +2,7 @@
   "name": "@ha-bits/bundle-generator",
   "version": "1.0.0",
   "description": "Bundle generator for habits workflows",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0",
   "author": "Codenteam",
   "type": "commonjs",
   "main": "generator.js",
