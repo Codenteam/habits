@@ -157,8 +157,17 @@ echo ""
 # npx -y tsx scripts/generate-bits.ts
 # npx -y tsx scripts/update-bits-stats.ts
 cd docs
-# Install d2
-curl -fsSL https://d2lang.com/install.sh | sh -s --
+# Install d2 if needed. Continue if installer fails (e.g. brew lock); docs build will validate requirements.
+if command -v d2 >/dev/null 2>&1; then
+    print_green "✅ d2 is already installed"
+else
+    echo "📐 Installing d2..."
+    if curl -fsSL https://d2lang.com/install.sh | sh -s --; then
+        print_green "✅ d2 installed"
+    else
+        print_yellow "⚠️  Could not install d2 automatically (brew may be busy). Continuing to docs build..."
+    fi
+fi
 # Install npm deps
 pnpm install
 
