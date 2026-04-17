@@ -31,3 +31,5 @@ requirements:
   - Claude API key (via env var)
   - MCP server running (optional)
   - Google Drive credentials (optional)
+
+quickDownload: false

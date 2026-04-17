@@ -35,37 +35,20 @@ function installBits(modules) {
   const bits = modules
     .filter(m => m.framework === 'bits' && m.source === 'npm')
     .map(m => m.repository);
-  
+
   if (bits.length === 0) {
     console.log('No npm bits to install');
     return;
   }
 
-  console.log(`📦 Installing ${bits.length} bits...`);
-  
-  // Check which are already installed
-  const notInstalled = bits.filter(bit => {
-    try {
-      require.resolve(`${bit}/package.json`, { paths: [path.join(__dirname, 'node_modules')] });
-      return false;
-    } catch {
-      return true;
-    }
-  });
-
-  if (notInstalled.length > 0) {
-    console.log(`Installing ${notInstalled.length} missing bits: ${notInstalled.join(', ')}`);
-    try {
-      execSync(`npm install --no-save ${notInstalled.join(' ')}`, {
-        cwd: __dirname,
-        stdio: 'inherit'
-      });
-    } catch (err) {
-      console.error('Failed to install some bits:', err.message);
-      // Continue anyway - some bits might still work
-    }
-  } else {
-    console.log('All bits already installed');
+  console.log(`📦 Ensuring ${bits.length} bits are installed...`);
+  try {
+    execSync(`npm install ${bits.join(' ')}`, {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+  } catch (err) {
+    console.error('Failed to install some bits:', err.message);
   }
 }
 
@@ -260,10 +243,30 @@ async function generateBundleAll(modules, outputPath) {
       target: ['es2020'],
       minify: true,
       sourcemap: false,
+      mainFields: ['main', 'module'],
+      nodePaths: [
+        path.join(__dirname, 'node_modules'),
+        path.join(__dirname, '..', 'node_modules'),
+      ],
       alias: {
         ...bitStubs,
         '@ha-bits/cortex': path.join(__dirname, 'stubs', 'cortex-stub.js'),
+        'tiktoken': path.join(__dirname, 'stubs', 'tiktoken.js'),
       },
+      external: [
+        '@ha-bits/bindings',
+        '@ha-bits/bindings/*',
+        '@ha-bits/core',
+        '@ha-bits/core/*',
+        '@habits/shared',
+        '@habits/shared/*',
+        'tauri-plugin-sms-api',
+        'tauri-plugin-wifi-api',
+        'tauri-plugin-matter-api',
+        'tauri-plugin-system-settings-api',
+        '@tauri-apps/plugin-geolocation',
+      ],
+      loader: { '.wasm': 'file' },
       plugins: [stubRedirectPlugin, nodePolyfillPlugin],
       logLevel: 'warning',
       define: {

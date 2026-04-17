@@ -47,3 +47,5 @@ habits:
   - habits/generate-cover-letter.yaml
   - habits/list-analyses.yaml
   - habits/get-analysis.yaml
+
+quickDownload: true

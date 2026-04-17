@@ -1,5 +1,5 @@
 ---
-layout: comparison
+isComparison: true
 title: Habits vs [Competitor]
 intro: A brief introduction explaining what both tools do and why someone might compare them.
 
@@ -57,17 +57,17 @@ heroBar:
 sections:
   # Three sections highlighting key differences
   # Types: "default", "highlight", "warning"
-  # icon: Use Lucide icon names
+  # icon: Use Lucide icon names (see Icon.vue for available names)
   
   - title: Key Advantage #1
     icon: rocket
     type: highlight
     description: Explain why this matters and how Habits excels here.
     items:
-      - icon: check
+      - icon: cloud
         title: Benefit title
         text: Explanation of the benefit
-      - icon: check
+      - icon: zap
         title: Another benefit
         text: More details
     cta:  # Optional call-to-action
@@ -89,10 +89,10 @@ sections:
     type: default
     description: Third differentiator or use case.
     items:
-      - icon: star
+      - icon: package
         title: Step one
         text: How to get started
-      - icon: star
+      - icon: code
         title: Step two
         text: Next action
 

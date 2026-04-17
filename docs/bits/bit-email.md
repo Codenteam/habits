@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-email`</span>
   <span class="bit-version">v1.0.4</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-email">📥 <span class="download-count">584</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-email">📥 <span class="download-count">597</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">email</span> <span class="bit-category">imap</span> <span class="bit-category">smtp</span> <span class="bit-category">mail</span> <span class="bit-category">nodemailer</span></span>
 </div>
 

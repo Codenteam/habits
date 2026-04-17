@@ -645,6 +645,73 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
 }
 
 /**
+ * Patch iOS project.yml to fix common App Store validation issues.
+ * This function should be called after `tauri ios init` and before building.
+ * 
+ * Fixes:
+ * - ITMS-90171: Prevents libapp.a from being added to Resources
+ * - ITMS-90683: Adds required privacy usage descriptions
+ */
+function patchIOSProject(): void {
+  const projectYmlPath = path.join(TAURI_DIR, 'gen', 'apple', 'project.yml');
+  
+  if (!fs.existsSync(projectYmlPath)) {
+    console.log('warn', 'project.yml not found - skipping iOS project patching');
+    return;
+  }
+  
+  logSection('Patching iOS project.yml');
+  
+  let content = fs.readFileSync(projectYmlPath, 'utf8');
+  let patched = false;
+  
+  // Fix ITMS-90171: Prevent libapp.a from being added to Resources
+  // Add buildPhase: none to Externals source entry
+  if (!content.includes('buildPhase: none')) {
+    const externalsPattern = /(\s+- path: Externals\n)(\s+- path:)/;
+    if (externalsPattern.test(content)) {
+      content = content.replace(
+        externalsPattern,
+        '$1        buildPhase: none\n$2'
+      );
+      console.log('success', 'Added buildPhase: none to Externals (ITMS-90171 fix)');
+      patched = true;
+    }
+  }
+  
+  // Fix ITMS-90683: Add required privacy usage descriptions
+  if (!content.includes('NSLocationWhenInUseUsageDescription')) {
+    const requirementsPattern = /(UIRequiredDeviceCapabilities: \[arm64, metal\])/;
+    if (requirementsPattern.test(content)) {
+      content = content.replace(
+        requirementsPattern,
+        '$1\n        NSLocationWhenInUseUsageDescription: "This app uses your location to provide location-based automation and services."'
+      );
+      console.log('success', 'Added NSLocationWhenInUseUsageDescription (ITMS-90683 fix)');
+      patched = true;
+    }
+  }
+  
+  if (patched) {
+    fs.writeFileSync(projectYmlPath, content);
+    console.log('success', 'project.yml patched successfully');
+    
+    // Regenerate Xcode project if xcodegen is available
+    try {
+      exec('which xcodegen', { silent: true });
+      console.log('step', 'Regenerating Xcode project with xcodegen...');
+      exec(`cd "${path.join(TAURI_DIR, 'gen', 'apple')}" && xcodegen generate --spec project.yml`);
+      console.log('success', 'Xcode project regenerated');
+    } catch {
+      console.log('warn', 'xcodegen not found - Xcode project not regenerated');
+      console.log('info', 'Install with: brew install xcodegen');
+    }
+  } else {
+    console.log('info', 'project.yml already patched');
+  }
+}
+
+/**
  * Build iOS with automatic signing using App Store Connect API.
  * Xcode handles certificate/profile selection automatically.
  * 
@@ -692,6 +759,9 @@ async function buildIOS(): Promise<string[]> {
   console.log('info', `Bundle ID: ${tauriConfig.identifier}`);
   console.log('info', `Version: ${tauriConfig.version}`);
   console.log('info', 'Signing: automatic (App Store Connect API)');
+  
+  // Patch project.yml to fix common App Store validation issues
+  patchIOSProject();
   
   console.log('step', 'Building iOS app...');
   exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });

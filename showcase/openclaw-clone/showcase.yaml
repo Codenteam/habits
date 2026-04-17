@@ -32,3 +32,5 @@ difficulty: advanced
 requirements:
   - OpenAI API key
   - PostgreSQL database
+
+quickDownload: false

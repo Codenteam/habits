@@ -51,17 +51,17 @@
           </thead>
           <tbody>
             <tr v-for="(row, index) in frontmatter.features" :key="index" :class="{ highlight: row.highlight }">
-              <td class="feature-name">
+              <td class="feature-name" data-label="Feature">
                 <Icon v-if="row.icon" :name="row.icon" :size="18" class="feature-icon" />
                 {{ row.name }}
               </td>
-              <td class="feature-value">
+              <td class="feature-value" data-label="Habits">
                 <Icon v-if="row.habits === true" name="check" :size="24" class="check" />
                 <Icon v-else-if="row.habits === false" name="x" :size="24" class="cross" />
                 <span v-else-if="row.habits === 'partial'" class="partial">◐</span>
                 <span v-else class="text-value">{{ row.habits }}</span>
               </td>
-              <td class="feature-value">
+              <td class="feature-value" :data-label="frontmatter.competitor.name">
                 <Icon v-if="row.competitor === true" name="check" :size="24" class="check" />
                 <Icon v-else-if="row.competitor === false" name="x" :size="24" class="cross" />
                 <span v-else-if="row.competitor === 'partial'" class="partial">◐</span>
@@ -97,42 +97,51 @@
       </div>
     </section>
 
-    <!-- Extra Sections -->
-    <section class="extra-sections">
+    <!-- Extra Sections - Alternating Layout -->
+    <section class="extra-sections-alt">
       <div 
         v-for="(section, index) in frontmatter.sections" 
         :key="index"
-        class="extra-section"
-        :class="section.type || 'default'"
+        class="section-row"
+        :class="[section.type || 'default', { 'reverse': index % 2 === 1 }]"
       >
-        <div class="section-icon" v-if="section.icon">
-          <Icon :name="section.icon" :size="40" />
+        <div class="section-content">
+          <div class="section-badge" v-if="section.icon">
+            <Icon :name="section.icon" :size="28" />
+          </div>
+          <h3 class="section-heading">{{ section.title }}</h3>
+          <p class="section-description">{{ section.description }}</p>
+
+          <!-- CTA if provided -->
+          <a v-if="section.cta" :href="withBase(section.cta.link)" class="section-cta">
+            {{ section.cta.text }} <Icon name="arrow-right" :size="16" />
+          </a>
         </div>
-        <h3 class="section-heading">{{ section.title }}</h3>
-        <p class="section-description">{{ section.description }}</p>
-        
-        <!-- List items if provided -->
-        <ul v-if="section.items" class="section-list">
-          <li v-for="(item, i) in section.items" :key="i">
-            <span class="item-icon">
-              <Icon :name="item.icon || 'arrow-right'" :size="18" />
-            </span>
-            <div class="item-content">
-              <strong v-if="item.title">{{ item.title }}</strong>
-              <span>{{ item.text }}</span>
+
+        <div class="section-visual">
+          <!-- Code block if provided -->
+          <div v-if="section.code" class="section-code">
+            <div class="code-header">
+              <span class="code-dot"></span>
+              <span class="code-dot"></span>
+              <span class="code-dot"></span>
             </div>
-          </li>
-        </ul>
-
-        <!-- Code block if provided -->
-        <div v-if="section.code" class="section-code">
-          <pre><code>{{ section.code }}</code></pre>
+            <pre><code>{{ section.code }}</code></pre>
+          </div>
+          
+          <!-- List items on the right side -->
+          <ul v-else-if="section.items?.length" class="section-list">
+            <li v-for="(item, i) in section.items" :key="i">
+              <span class="item-icon">
+                <Icon :name="item.icon || 'check'" :size="18" />
+              </span>
+              <div class="item-content">
+                <strong v-if="item.title">{{ item.title }}</strong>
+                <span>{{ item.text }}</span>
+              </div>
+            </li>
+          </ul>
         </div>
-
-        <!-- CTA if provided -->
-        <a v-if="section.cta" :href="withBase(section.cta.link)" class="section-cta">
-          {{ section.cta.text }} <Icon name="arrow-right" :size="16" />
-        </a>
       </div>
     </section>
 
@@ -153,9 +162,33 @@
 
 <script setup lang="ts">
 import { useData, withBase } from 'vitepress'
+import { onMounted, onUnmounted } from 'vue'
 import Icon from './Icon.vue'
 
 const { frontmatter } = useData()
+
+// Scroll detection for table
+const checkTableScroll = () => {
+  const wrapper = document.querySelector('.table-wrapper') as HTMLElement
+  if (wrapper) {
+    const canScroll = wrapper.scrollWidth > wrapper.clientWidth
+    const isScrolledToEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 10
+    wrapper.classList.toggle('can-scroll', canScroll && !isScrolledToEnd)
+  }
+}
+
+onMounted(() => {
+  checkTableScroll()
+  window.addEventListener('resize', checkTableScroll)
+  const wrapper = document.querySelector('.table-wrapper')
+  wrapper?.addEventListener('scroll', checkTableScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkTableScroll)
+  const wrapper = document.querySelector('.table-wrapper')
+  wrapper?.removeEventListener('scroll', checkTableScroll)
+})
 </script>
 <style>
 .content-container {
@@ -271,6 +304,7 @@ const { frontmatter } = useData()
 /* Comparison Table */
 .comparison-table-section {
   margin-bottom: 64px;
+  position: relative;
 }
 
 .section-title {
@@ -286,12 +320,51 @@ const { frontmatter } = useData()
   border-radius: 16px;
   border: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg-soft);
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.table-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, var(--vp-c-bg-soft) 0%, transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 0 16px 16px 0;
+}
+
+.table-wrapper.can-scroll::after {
+  opacity: 1;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: var(--vp-c-bg-soft);
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-text-3);
 }
 
 .comparison-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  min-width: 500px;
 }
 
 .comparison-table thead {
@@ -385,7 +458,7 @@ const { frontmatter } = useData()
 
 /* Hero Bar */
 .hero-bar {
-  background: linear-gradient(135deg, var(--vp-c-brand-1) 0%, var(--vp-c-brand-2) 100%);
+  background: linear-gradient(135deg, var(--vp-c-brand-2) 0%, var(--vp-c-brand-2) 100%);
   border-radius: 20px;
   padding: 48px 40px;
   margin-bottom: 64px;
@@ -448,76 +521,89 @@ const { frontmatter } = useData()
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Extra Sections */
-.extra-sections {
+/* Extra Sections - Alternating Layout */
+.extra-sections-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  margin-bottom: 80px;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-bottom: 64px;
-}
-
-.extra-section {
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 40px;
+  border-radius: 24px;
   background: var(--vp-c-bg-soft);
-  border-radius: 16px;
-  padding: 32px;
   border: 1px solid var(--vp-c-divider);
-  transition: all 0.3s ease;
 }
 
-.extra-section:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+.section-row.reverse {
+  direction: rtl;
+}
+
+.section-row.reverse > * {
+  direction: ltr;
+}
+
+.section-row.highlight {
+  background: linear-gradient(135deg, rgba(var(--vp-c-brand-1-rgb), 0.08) 0%, rgba(var(--vp-c-brand-2-rgb), 0.03) 100%);
   border-color: var(--vp-c-brand-1);
 }
 
-.extra-section.highlight {
-  background: linear-gradient(135deg, rgba(var(--vp-c-brand-1-rgb), 0.1) 0%, rgba(var(--vp-c-brand-2-rgb), 0.05) 100%);
-  border-color: var(--vp-c-brand-1);
-}
-
-.extra-section.warning {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+.section-row.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%);
   border-color: #f59e0b;
 }
 
-.section-icon {
-  font-size: 2.5rem;
-  margin-bottom: 16px;
+.section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-badge {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--vp-c-brand-1) 0%, var(--vp-c-brand-2) 100%);
+  border-radius: 14px;
+  color: white;
+  box-shadow: 0 8px 24px rgba(var(--vp-c-brand-1-rgb), 0.25);
 }
 
 .section-heading {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--vp-c-text-1);
-  margin-bottom: 12px;
+  margin: 0;
+  line-height: 1.3;
 }
 
 .section-description {
   color: var(--vp-c-text-2);
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.section-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 16px;
-}
-
-.section-list li {
-  display: flex;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--vp-c-divider);
-}
-
-.section-list li:last-child {
-  border-bottom: none;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  margin: 0;
 }
 
 .item-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--vp-c-brand-1-rgb), 0.12);
+  border-radius: 8px;
   color: var(--vp-c-brand-1);
-  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .item-content {
@@ -528,42 +614,102 @@ const { frontmatter } = useData()
 
 .item-content strong {
   color: var(--vp-c-text-1);
+  font-size: 0.95rem;
 }
 
 .item-content span {
   color: var(--vp-c-text-2);
   font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.section-visual {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.section-visual .section-list {
+  width: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-visual .section-list li {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--vp-c-bg);
+  border-radius: 14px;
+  border: 1px solid var(--vp-c-divider);
+  transition: all 0.2s ease;
+}
+
+.section-visual .section-list li:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .section-code {
-  background: var(--vp-c-bg-alt);
-  border-radius: 8px;
-  padding: 16px;
-  overflow-x: auto;
-  margin-bottom: 16px;
+  background: #1a1a2e;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
 }
+
+.code-header {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.code-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.code-dot:nth-child(1) { background: #ff5f57; }
+.code-dot:nth-child(2) { background: #febc2e; }
+.code-dot:nth-child(3) { background: #28c840; }
 
 .section-code pre {
   margin: 0;
+  padding: 20px;
+  overflow-x: auto;
 }
 
 .section-code code {
   font-family: var(--vp-font-family-mono);
-  font-size: 0.85rem;
-  color: var(--vp-c-text-1);
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+  white-space: pre-line;
 }
 
 .section-cta {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   color: var(--vp-c-brand-1);
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  padding: 8px 0;
 }
 
 .section-cta:hover {
   color: var(--vp-c-brand-2);
+  gap: 12px;
 }
 
 /* Bottom Navigation */
@@ -642,9 +788,91 @@ const { frontmatter } = useData()
     height: 60px;
   }
 
-  .comparison-table th,
+  .table-wrapper {
+    overflow: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .table-wrapper::after {
+    display: none;
+  }
+
+  .comparison-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.85rem;
+    display: block;
+  }
+
+  .comparison-table thead {
+    display: none;
+  }
+
+  .comparison-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .comparison-table tr {
+    display: block;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--vp-c-bg-soft);
+  }
+
   .comparison-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     padding: 12px 16px;
+    border-bottom: 1px solid var(--vp-c-divider);
+  }
+
+  .comparison-table tr:last-child td {
+    border-bottom: 1px solid var(--vp-c-divider);
+  }
+
+  .comparison-table tr td:last-child {
+    border-bottom: none;
+  }
+
+  .comparison-table td.feature-name {
+    justify-content: flex-start;
+    background: var(--vp-c-bg-alt);
+    font-weight: 600;
+    border-bottom: 1px solid var(--vp-c-divider);
+  }
+
+  .comparison-table td.feature-value::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--vp-c-text-2);
+    font-weight: 600;
+  }
+
+  .comparison-table td.feature-value .text-value {
+    text-align: right;
+  }
+
+  .table-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .feature-icon {
+    display: none;
+  }
+
+  .table-legend {
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.75rem;
   }
 
   .hero-bar {
@@ -655,8 +883,61 @@ const { frontmatter } = useData()
     font-size: 1.5rem;
   }
 
-  .extra-sections {
+  /* Alternating sections mobile */
+  .extra-sections-alt {
+    gap: 32px;
+  }
+
+  .section-row {
     grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 32px;
+  }
+
+  .section-row.reverse {
+    direction: ltr;
+  }
+
+  .section-badge {
+    width: 48px;
+    height: 48px;
+  }
+
+  .section-heading {
+    font-size: 1.25rem;
+  }
+
+  .section-description {
+    font-size: 0.95rem;
+  }
+
+  .section-visual .section-list li {
+    padding: 12px 14px;
+  }
+
+  .section-visual .section-list {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .comparison-table {
+    min-width: 0;
+    font-size: 0.8rem;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 10px 12px;
+  }
+
+  .text-value {
+    font-size: 0.75rem;
+  }
+
+  .section-row {
+    padding: 20px;
+    gap: 24px;
   }
 }
 </style>

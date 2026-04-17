@@ -32,3 +32,5 @@ difficulty: intermediate
 requirements:
   - OpenAI API key
   - IMAP-enabled email account
+
+quickDownload: false

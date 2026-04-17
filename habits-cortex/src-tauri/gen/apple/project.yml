@@ -32,6 +32,7 @@ targets:
       - path: Sources
       - path: Assets.xcassets
       - path: Externals
+        buildPhase: none
       - path: habits-cortex_iOS
       - path: assets
         buildPhase: resources
@@ -43,6 +44,7 @@ targets:
         LSRequiresIPhoneOS: true
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
+        NSLocationWhenInUseUsageDescription: "This app uses your location to provide location-based automations, activated only in location-based habits."
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
@@ -53,7 +55,7 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 1.0.8
-        CFBundleVersion: "1.0.8"
+        CFBundleVersion: "202604172102"
     entitlements:
       path: habits-cortex_iOS/habits-cortex_iOS.entitlements
     scheme:
@@ -77,6 +79,7 @@ targets:
       - sdk: Metal.framework
       - sdk: MetalKit.framework
       - sdk: QuartzCore.framework
+      - sdk: Accelerate.framework
       - sdk: Security.framework
       - sdk: UIKit.framework
       - sdk: WebKit.framework

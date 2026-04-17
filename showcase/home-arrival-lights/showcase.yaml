@@ -38,3 +38,5 @@ requirements:
   - Mobile device with location services
   - Matter-compatible smart lights
   - Google Home app (Android) or Home app (iOS) configured with lights
+
+quickDownload: false

@@ -30,3 +30,4 @@ requirements:
 habits:
   - habit.yaml
   - habit-env.yaml
+quickDownload: true

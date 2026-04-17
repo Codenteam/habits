@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { useData } from 'vitepress'
 import feather from 'feather-icons'
@@ -8,6 +9,10 @@ import ComparisonLayout from './components/ComparisonLayout.vue'
 const { Layout } = DefaultTheme
 const { frontmatter } = useData()
 
+const isComparison = computed(
+  () => frontmatter.value.isComparison || frontmatter.value.layout === 'comparison'
+)
+
 // Helper to get icon SVG
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 </script>
@@ -16,10 +21,10 @@ const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
   <HomeLayout v-if="frontmatter.layout === 'habits-home'">
     <Content />
   </HomeLayout>
-  
-  <Layout v-else :class="{ 'is-comparison-page': frontmatter.isComparison }">
+
+  <Layout v-else :class="{ 'is-comparison-page': isComparison }">
     <template #doc-before>
-      <ComparisonLayout v-if="frontmatter.isComparison" />
+      <ComparisonLayout v-if="isComparison" />
     </template>
   
     <template #home-features-before>

@@ -42,6 +42,7 @@ interface ShowcaseMetadata {
     video?: string;
   };
   disabled?: boolean; // If true, example is skipped from generation
+  quickDownload?: boolean; // If true, include in public/showcase/index.json for quick download
 }
 
 interface DownloadFile {
@@ -899,6 +900,11 @@ function generateHabitsIndexJson(examples: ExampleData[]): void {
   }> = [];
   
   for (const example of examples) {
+    // Only include if quickDownload is explicitly true
+    if (!example.quickDownload) {
+      continue;
+    }
+    
     const habitFilename = `${example.slug}.habit`;
     const habitPath = join(publicShowcaseDir, example.slug, habitFilename);
     

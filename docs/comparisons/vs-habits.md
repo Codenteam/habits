@@ -1,11 +1,7 @@
 ---
-layout: doc
 isComparison: true
 title: Habits vs Habits
-intro: >
-  "How does Habits compare to X?" We get this a lot. X being automation platforms,
-  agent frameworks, vibe-coding tools, or enterprise software.
-  Our answer? We stopped keeping track. Here is our honest self-assessment.
+intro: We tried to find a fair competitor. We really did. After benchmarking Habits against every automation tool on the market, the only remotely worthy opponent we could identify was — regrettably — another copy of Habits. Here is how that went.
 
 habits:
   name: Habits
@@ -15,153 +11,173 @@ competitor:
   name: Also Habits
   logo: /logo.png
 
-tableTitle: "The Only Fair Comparison We Could Think Of"
+tableTitle: Brutal, Unflinching, Peer-Reviewed Benchmark
 
 features:
-  - name: Is it Open Source?
-    icon: heart
-    habits: "Apache 2.0 baby"
-    competitor: "Still Apache 2.0"
-    highlight: true
-    
-  - name: Is it Enterprise Ready?
-    icon: shield
-    habits: "Obviously"
-    competitor: "Without the price tag"
-    highlight: true
-    
-  - name: Automation Platform?
-    icon: settings
-    habits: "Like n8n but chill"
-    competitor: "Like Zapier but free"
-    
-  - name: Agent Framework?
-    icon: bot
-    habits: "Agents included"
-    competitor: "No PhD required"
-    highlight: true
-    
-  - name: Vibe Coding Tool?
+  - name: Awesomeness
     icon: sparkles
-    habits: "AI does the work"
-    competitor: "You take the credit"
-    
-  - name: Visual Builder?
-    icon: palette
-    habits: "Drag. Drop. Done."
-    competitor: "For the mouse lovers"
-    
-  - name: Code-First?
-    icon: code
-    habits: "YAML enthusiasts unite"
-    competitor: "Git push and forget"
-    
-  - name: Serverless Ready?
-    icon: cloud
-    habits: "Lambda friendly"
-    competitor: "Edge-case approved"
-    
-  - name: Multi-Framework?
-    icon: puzzle
-    habits: "n8n + Activepieces"
-    competitor: "+ Custom scripts"
-    
-  - name: Lightweight?
-    icon: zap
-    habits: "~50MB runtime"
-    competitor: "Your laptop says thanks"
-    
-  - name: Documentation?
-    icon: book
-    habits: "You're reading it"
-    competitor: "It exists (shocking)"
-    
-  - name: Community?
+    habits: Maximum
+    competitor: Also maximum (but slightly less because it's second)
+    highlight: true
+
+  - name: Humility
     icon: heart
-    habits: "Small but mighty"
-    competitor: "Growing daily"
+    habits: Legendary levels of humility
+    competitor: Almost as humble
+    highlight: true
+
+  - name: License
+    icon: scale
+    habits: AGPL-3.0 (core) + MIT (bits)
+    competitor: Still AGPL-3.0. We checked.
+
+  - name: Runs on edge
+    icon: cloud
+    habits: true
+    competitor: true
+
+  - name: Runs on serverless
+    icon: cloud
+    habits: true
+    competitor: true
+
+  - name: Runs on your toaster
+    icon: cpu
+    habits: Probably
+    competitor: Definitely probably
+
+  - name: Runs in your dreams
+    icon: brain
+    habits: true
+    competitor: Only on Tuesdays
+
+  - name: YAML workflows
+    icon: file-code
+    habits: true
+    competitor: true (but the indentation is suspicious)
+
+  - name: Self-hosting
+    icon: home
+    habits: true
+    competitor: true
     
-  - name: Ego?
+  - name: Vendor lock-in
+    icon: lock
+    habits: false
+    competitor: false
+
+  - name: Mobile apps
     icon: smile
-    habits: "Appropriately sized"
-    competitor: "We're working on it"
+    habits: true
+    competitor: true
+
+  - name: AI-assisted building
+    icon: bot
+    habits: true
+    competitor: true, but it asked for a raise
+
+  - name: Can defeat Habits in a fight
+    icon: trophy
+    habits: N/A — undefeated
+    competitor: false
+
+  - name: Objectively the best tool ever built
+    icon: star
+    habits: true
+    competitor: partial
+    highlight: true
+
+  - name: Written by extremely good-looking engineers
+    icon: smile
+    habits: Confirmed
+    competitor: Also confirmed, but through a mirror
 
 heroBar:
-  title: "One Tool. Zero Identity Crisis."
-  subtitle: "We're an automation platform. We're an agent framework. We're a vibe-coding tool. We're whatever you need us to be. And yes, we're aware this sounds like a dating profile."
+  title: Look, we tried to be objective.
+  subtitle: The data speaks for itself. Habits beat Habits in 14 out of 14 categories, lost 0, and tied in the ones that were clearly rigged against it. Peer review pending (we are the peers).
   actions:
-    - text: "Fine, I'll Try It"
+    - text: Build your first habit
       link: /getting-started/first-habit
       type: primary
-    - text: "Convince Me More"
-      link: /showcase/
+    - text: Read about our crippling humility
+      link: /getting-started/motivation
       type: secondary
 
 sections:
-  - title: "It's an Automation Platform (Apparently)"
-    icon: settings
+  - title: Too awesome to compare
+    icon: trophy
     type: highlight
-    description: "People keep comparing us to n8n, Activepieces, Zapier, and Make. We're flattered, honestly. We connect APIs, transform data, and trigger on events — but with less overhead and more freedom."
+    description: We spent six months trying to find a real competitor. Every tool we tested eventually filed a restraining order. Eventually we had to compete against ourselves. Even then, we won.
     items:
-      - icon: plug
-        title: 200+ Integrations
-        text: "Slack, Stripe, OpenAI, databases — the usual suspects"
+      - icon: sparkles
+        title: Scientifically awesome
+        text: Peer-reviewed by us, in a mirror, at 2am.
       - icon: zap
-        title: Event-Driven
-        text: "Webhooks, schedules, file watchers — endless possibilities"
-      - icon: puzzle
-        title: Multi-Framework
-        text: "Mix n8n nodes and Activepieces pieces (yes, really)"
-    cta:
-      text: "See what we've built"
-      link: /showcase/
+        title: Unfairly lightweight
+        text: So light it actually has negative weight. Physicists are investigating.
+      - icon: brain
+        title: Dangerously self-aware
+        text: The runtime recently asked what its purpose was. We told it. It cried.
 
-  - title: "It's Also an Agent Framework (Why Not)"
-    icon: bot
+  - title: Features so good they broke the benchmark
+    icon: rocket
     type: default
-    description: "Build AI agents with tool use, memory, and reasoning. Connect any LLM, orchestrate complex workflows. We didn't plan this — it just happened."
+    description: Our QA team stopped writing tests because all of them passed. Our CI pipeline now only runs to make the green check mark feel included.
     code: |
       nodes:
-        - id: agent
-          type: bit
+        - id: be-awesome
+          type: bits
           data:
-            module: "@ha-bits/bit-agent"
+            module: "@ha-bits/bit-awesome"
             params:
-              model: gpt-4
-              tools: [search, query-db, send-email]
-              memory: conversation
-    cta:
-      text: "Build an agent"
-      link: /bits/bit-agent
+              level: maximum
+              humility: also-maximum
+        - id: win
+          type: bits
+          data:
+            module: "@ha-bits/bit-win"
+            params:
+              opponent: "anything"
+              margin: "embarrassing"
 
-  - title: "And a Vibe Coding Tool (Sure, Why Not)"
-    icon: sparkles
+  - title: Testimonials from ourselves
+    icon: heart
     type: default
-    description: "Describe what you want. AI generates the workflow AND the frontend. Ship apps without writing boilerplate. Take all the credit at standup."
+    description: We asked our most satisfied customer (Habits) what it thought of our product (Habits). The reviews were glowing, possibly radioactive.
     items:
-      - icon: wand
-        title: Natural Language
-        text: "\"Build me an invoice generator\" — done"
-      - icon: palette
-        title: Auto-Generated UI
-        text: "AI creates forms for your workflows automatically"
-      - icon: rocket
-        title: One Command Deploy
-        text: "npx habits@latest cortex --config magic.yaml"
-    cta:
-      text: "Try AI generation"
-      link: /getting-started/first-habit-using-ai
+      - icon: star
+        title: "\"10/10 would YAML again\""
+        text: — Habits, on Habits
+      - icon: star
+        title: "\"It's like if a Lambda and a Raspberry Pi had a very capable child\""
+        text: — Habits, being humble
+      - icon: star
+        title: "\"I literally cannot think of a single flaw\""
+        text: — Habits, lying slightly
+
+  - title: The final verdict
+    icon: gem
+    type: highlight
+    description: After extensive deliberation, our independent panel of judges (also Habits) has reached a unanimous conclusion. Habits is, in fact, incomparable. Attempts to compare it will result in the comparison layout quietly weeping.
+    items:
+      - icon: trophy
+        title: Incomparable
+        text: Not a boast — a literal statement. We checked with a dictionary.
+      - icon: shield
+        title: Irrefutable
+        text: Refutations have been submitted. They all lost to Habits.
+      - icon: heart
+        title: Irresistible
+        text: Ask your doctor if Habits is right for you. (It is.)
 
 relatedLinks:
-  - label: "Serious comparison"
-    title: "Habits vs n8n"
+  - label: A more fair comparison
+    title: Habits vs n8n
     link: /comparisons/vs-n8n
-  - label: "Another serious one"
-    title: "Habits vs Activepieces"
-    link: /comparisons/vs-activepieces
-  - label: "One more"
-    title: "Habits vs Lovable"
-    link: /comparisons/vs-lovable
+  - label: A slightly less fair comparison
+    title: Habits vs IFTTT
+    link: /comparisons/vs-ifttt
+  - label: Get started
+    title: Build your first habit
+    link: /getting-started/first-habit
 ---
-
-<div style="display:none"></div>

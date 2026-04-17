@@ -45,3 +45,5 @@ habits:
   - list-qrs.yaml
   - get-qr.yaml
   - delete-qr.yaml
+
+quickDownload: true

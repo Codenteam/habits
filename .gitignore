@@ -28,6 +28,7 @@ sample-nodes
 nohup.out
 nohup*
 .secrets
+.secrets.*
 tmp
 staging
 certs
@@ -41,6 +42,7 @@ docs/.vitepress/.temp
 # Persist bits-data.json and showcase-data.json (needed by CI)
 docs/public/showcase
 planning
+!docs/public/showcase/index.json
 
 
 # Tauri stuff

@@ -23,3 +23,5 @@ quickstart: |
   2. Open http://localhost:13000 in your browser
   3. Click "Install Model" to download a model (first time only)
   4. Start chatting with your local AI!
+
+quickDownload: false

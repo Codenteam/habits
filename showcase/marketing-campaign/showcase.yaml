@@ -41,3 +41,5 @@ requirements:
 
 habits:
   - habit.yaml
+
+quickDownload: true

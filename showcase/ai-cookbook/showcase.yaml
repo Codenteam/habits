@@ -37,3 +37,5 @@ requirements:
 habits:
   - habits/generate-recipe.yaml
   - habits/list-recipes.yaml
+
+quickDownload: true

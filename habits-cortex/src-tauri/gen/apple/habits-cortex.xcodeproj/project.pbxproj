@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		ACCEL8E110000FW0BLDFILE /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ACCEL8E110000FW0FILEREF /* Accelerate.framework */; };
 		0C203817D8171A0A549052A9 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FEA683A7AFE17737A2E7ED4 /* libapp.a */; };
 		10EA29D56A07F7B3656400C2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3A51BD367D6A92AA023B019 /* UIKit.framework */; };
+		5A9BF9696762431CBB8875EB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAF164A4A3E6B318EF1FC89C /* Accelerate.framework */; };
 		638659CC22CFDBF281DB1233 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 84CE3BAFFAA883C5006E0A86 /* assets */; };
 		79D696E6112CF9FFC2239FA6 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D26664CF9F3C32B84A631F6 /* MetalKit.framework */; };
 		80BCAD8A9F41EA90448416F5 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 56270C6B292D67653FDC0B24 /* QuartzCore.framework */; };
@@ -23,7 +23,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		ACCEL8E110000FW0FILEREF /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		066D3F7E7582A45A40081B76 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0C96191871FF79022FBFBB05 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		0D26664CF9F3C32B84A631F6 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -36,6 +35,7 @@
 		64FE411AAFEFA5948B685B06 /* habits-cortex_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "habits-cortex_iOS.entitlements"; sourceTree = "<group>"; };
 		7B85928E07234C124F9A91FA /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		800053FD82E6AFF53A4B507F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		84728A4E97D8F6B5A06D7065 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		84CE3BAFFAA883C5006E0A86 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		A8FC6E15E9EFF35C15736EC4 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
 		B30F7452BDD9BA9F69DA3F4B /* fs_test_runner.rs */ = {isa = PBXFileReference; path = fs_test_runner.rs; sourceTree = "<group>"; };
@@ -44,6 +44,7 @@
 		E23D509BE02A69732768F807 /* habits-cortex_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "habits-cortex_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EEF9089F8635CEF23840F5F4 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		F3A51BD367D6A92AA023B019 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		FAF164A4A3E6B318EF1FC89C /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,11 +53,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C203817D8171A0A549052A9 /* libapp.a in Frameworks */,
-				ACCEL8E110000FW0BLDFILE /* Accelerate.framework in Frameworks */,
 				E2463ABCAE70DB094F03809C /* CoreGraphics.framework in Frameworks */,
 				A04D7E8B149B2C4DF7E4DC94 /* Metal.framework in Frameworks */,
 				79D696E6112CF9FFC2239FA6 /* MetalKit.framework in Frameworks */,
 				80BCAD8A9F41EA90448416F5 /* QuartzCore.framework in Frameworks */,
+				5A9BF9696762431CBB8875EB /* Accelerate.framework in Frameworks */,
 				BE5B27E30665DFCDD142672F /* Security.framework in Frameworks */,
 				10EA29D56A07F7B3656400C2 /* UIKit.framework in Frameworks */,
 				960EF496494443C0D33C89E3 /* WebKit.framework in Frameworks */,
@@ -69,6 +70,7 @@
 		0C1ACE1AB766B088C2BA29E9 /* Externals */ = {
 			isa = PBXGroup;
 			children = (
+				3DADF3799E21AB470CACB516 /* arm64 */,
 			);
 			path = Externals;
 			sourceTree = "<group>";
@@ -79,6 +81,14 @@
 				D085D0AEA268DAA5CDC62167 /* bindings.h */,
 			);
 			path = bindings;
+			sourceTree = "<group>";
+		};
+		3DADF3799E21AB470CACB516 /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				FB5F2C518FCD07ACDD461608 /* release */,
+			);
+			path = arm64;
 			sourceTree = "<group>";
 		};
 		4536485BF6D47C32C476AC8C /* Products */ = {
@@ -145,9 +155,9 @@
 		F5EEEA5756EE3390906F414C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FAF164A4A3E6B318EF1FC89C /* Accelerate.framework */,
 				7B85928E07234C124F9A91FA /* CoreGraphics.framework */,
 				0FEA683A7AFE17737A2E7ED4 /* libapp.a */,
-				ACCEL8E110000FW0FILEREF /* Accelerate.framework */,
 				C1395CD0ED14FB0953419D6C /* Metal.framework */,
 				0D26664CF9F3C32B84A631F6 /* MetalKit.framework */,
 				56270C6B292D67653FDC0B24 /* QuartzCore.framework */,
@@ -156,6 +166,21 @@
 				1FE5AD5BC89F2050F55E856B /* WebKit.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FB5F2C518FCD07ACDD461608 /* release */ = {
+			isa = PBXGroup;
+			children = (
+				84728A4E97D8F6B5A06D7065 /* libapp.a */,
+			);
+			path = release;
+			sourceTree = "<group>";
+		};
+		"TEMP_B499467C-7E8B-4B4D-83BC-22E5EC138388" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

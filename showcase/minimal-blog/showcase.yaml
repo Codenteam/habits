@@ -32,3 +32,5 @@ difficulty: beginner
 
 requirements:
   - Node.js 18+
+
+quickDownload: false

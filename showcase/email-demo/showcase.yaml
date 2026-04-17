@@ -43,3 +43,5 @@ featured: true
 requirements:
   - Email account with IMAP/SMTP access (Gmail, Outlook, etc.)
   - App password for Gmail users
+
+quickDownload: true
