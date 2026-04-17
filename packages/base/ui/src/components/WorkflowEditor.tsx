@@ -280,6 +280,7 @@ export default function WorkflowEditor() {
 
           {selectedNode && (
             <NodeConfigPanel
+              key={selectedNode.id}
               node={selectedNode}
             />
           )}

@@ -32,8 +32,9 @@ export async function extractBitsSchema(
   }
 
   const auth = piece.auth;
-  const routines = piece.routines();
-  const cues = piece.cues();
+  // routines/cues can be either functions or plain objects depending on the bit framework version
+  const routines = typeof piece.routines === 'function' ? piece.routines() : (piece.routines || {});
+  const cues = typeof piece.cues === 'function' ? piece.cues() : (piece.cues || {});
 
   // Process routines to resolve dynamic options if needed
   for (const key of Object.keys(routines || {})) {

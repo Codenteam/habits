@@ -10,7 +10,8 @@ import * as path from 'path';
 import * as vm from 'vm';
 import { spawn, execSync } from 'child_process';
 import * as os from 'os';
-import * as ts from 'typescript';
+// TypeScript is loaded lazily to avoid requiring it when not needed (e.g., for bits modules)
+import type * as TypeScript from 'typescript';
 import {
   ScriptDefinition,
   ScriptExecutionParams,
@@ -22,6 +23,28 @@ import {
 import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
+
+// Lazy-loaded TypeScript module
+let _ts: typeof TypeScript | null = null;
+
+/**
+ * Get the TypeScript module, loading it lazily if needed.
+ * Throws if TypeScript is not installed.
+ */
+function getTypeScript(): typeof TypeScript {
+  if (!_ts) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      _ts = require('typescript');
+    } catch (error) {
+      throw new Error(
+        'TypeScript is required for script transpilation but is not installed. ' +
+        'Please install it with: npm install typescript'
+      );
+    }
+  }
+  return _ts!;
+}
 
 // ============================================================================
 // Internal State Management
@@ -156,6 +179,9 @@ const wmill = {
  * Convert TypeScript to JavaScript using the TypeScript compiler
  */
 function transpileTypeScript(code: string): string {
+  // Lazily load TypeScript only when needed
+  const ts = getTypeScript();
+  
   // Use TypeScript compiler to transpile
   const result = ts.transpileModule(code, {
     compilerOptions: {
