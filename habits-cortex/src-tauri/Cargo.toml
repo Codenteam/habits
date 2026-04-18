@@ -34,6 +34,7 @@ tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-fs = { version = "2" }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-webdriver = { version = "0.2", optional = true }
 base64 = "0.22"
 
 # Mobile-only dependencies (iOS/Android)
@@ -52,16 +53,13 @@ tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", fe
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 
-# xcap only for desktop debug builds
-[target.'cfg(all(debug_assertions, not(any(target_os = "ios", target_os = "android"))))'.dependencies]
+# xcap only for desktop targets
+[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
 xcap = "0.9"
-
-# webdriver for iOS debug builds
-[target.'cfg(debug_assertions)'.dependencies]
-tauri-plugin-webdriver = { version = "0.2", optional = true }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+debug-webdriver = ["dep:tauri-plugin-webdriver"]
 
 [profile.dev]
 incremental = true

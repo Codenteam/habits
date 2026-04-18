@@ -176,8 +176,8 @@ pub fn run() {
     // Add local-ai plugin on all platforms (desktop/iOS: Metal+Accelerate, Android: CPU-only)
     let builder = builder.plugin(tauri_plugin_local_ai::init());
     
-    // Add webdriver plugin for all debug builds (desktop, iOS, Android)
-    #[cfg(debug_assertions)]
+    // Add webdriver plugin only when debug build and feature are both enabled
+    #[cfg(all(debug_assertions, feature = "debug-webdriver"))]
     let builder = builder.plugin(tauri_plugin_webdriver::init());
     
     // Add mobile-only plugins (iOS/Android)

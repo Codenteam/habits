@@ -6,10 +6,10 @@ description = "Cross-platform AI inference core library using Candle"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Candle core dependencies - use local candle with Metal support
-candle-core = { path = "../candle/candle-core" }
-candle-nn = { path = "../candle/candle-nn" }
-candle-transformers = { path = "../candle/candle-transformers" }
+# Candle core dependencies - use crates.io versions so CI doesn't require a vendored candle directory.
+candle-core = "0.10.2"
+candle-nn = "0.10.2"
+candle-transformers = "0.10.2"
 
 # Tokenization
 tokenizers = { version = "0.22.0", default-features = false, features = ["onig"] }

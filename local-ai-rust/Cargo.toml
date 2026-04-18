@@ -10,10 +10,10 @@ description = "Cross-platform AI demo with text generation, image captioning, an
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Candle core dependencies (using path to local candle workspace)
-candle-core = { path = "candle/candle-core" }
-candle-nn = { path = "candle/candle-nn" }
-candle-transformers = { path = "candle/candle-transformers" }
+# Candle core dependencies (from crates.io)
+candle-core = "0.10.2"
+candle-nn = "0.10.2"
+candle-transformers = "0.10.2"
 
 # Tokenization
 tokenizers = { version = "0.22.0", default-features = false, features = ["onig"] }

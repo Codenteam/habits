@@ -1791,13 +1791,14 @@ name = "local-ai-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "byteorder",
  "candle-core",
  "candle-nn",
  "candle-transformers",
- "gemm 0.19.0",
  "hf-hub",
  "image",
+ "log",
  "rand",
  "serde",
  "serde_json",
