@@ -214,10 +214,8 @@ async function generateBundleAll(modules, outputPath) {
         const moduleName = args.pluginData.moduleName;
         return {
           contents: `
-            import { getPolyfill } from '${polyfillsPath}';
-            const polyfill = getPolyfill('${moduleName}');
-            export default polyfill;
-            export * from '${polyfillsPath}';
+            const { getPolyfill } = require(${JSON.stringify(polyfillsPath)});
+            module.exports = getPolyfill('${moduleName}');
           `,
           loader: 'js',
           resolveDir: __dirname

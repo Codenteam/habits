@@ -45,9 +45,13 @@ tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }
 tauri-plugin-matter = { path = "../tauri-plugin-matter" }
 tauri-plugin-sms = { path = "../tauri-plugin-sms" }
 
-# Desktop + iOS: local-ai with Metal + Accelerate (Apple Silicon / Apple frameworks)
-[target.'cfg(not(target_os = "android"))'.dependencies]
+# Apple targets: local-ai with Metal + Accelerate (Apple frameworks)
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
+
+# Linux/Windows: local-ai with CPU-only inference (no Metal/Accelerate)
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 
 # Android: local-ai with CPU-only inference (no Metal/Accelerate)
 [target.'cfg(target_os = "android")'.dependencies]

@@ -654,6 +654,7 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
  */
 function patchIOSProject(): void {
   const projectYmlPath = path.join(TAURI_DIR, 'gen', 'apple', 'project.yml');
+  const pbxprojPath = path.join(TAURI_DIR, 'gen', 'apple', 'habits-cortex.xcodeproj', 'project.pbxproj');
   
   if (!fs.existsSync(projectYmlPath)) {
     console.log('warn', 'project.yml not found - skipping iOS project patching');
@@ -704,6 +705,18 @@ function patchIOSProject(): void {
       patched = true;
     }
   }
+
+  // Fix Xcode arch placeholder issues in Build Rust Code script.
+  // Some CI/Xcode environments pass an unresolved arch token through ARCHS,
+  // causing tauri ios xcode-script to fail with "{arch} isn't a known arch".
+  if (content.includes('${ARCHS:?}')) {
+    content = content.replace(
+      /\$\{ARCHS:\?\}/g,
+      '${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}'
+    );
+    console.log('success', 'Patched Build Rust Code arch arg in project.yml');
+    patched = true;
+  }
   
   if (patched) {
     fs.writeFileSync(projectYmlPath, content);
@@ -721,6 +734,19 @@ function patchIOSProject(): void {
     }
   } else {
     console.log('info', 'project.yml already patched');
+  }
+
+  // Also patch generated Xcode project directly in case xcodegen is unavailable.
+  if (fs.existsSync(pbxprojPath)) {
+    const pbxprojContent = fs.readFileSync(pbxprojPath, 'utf8');
+    if (pbxprojContent.includes('${ARCHS:?}')) {
+      const patchedPbxproj = pbxprojContent.replace(
+        /\$\{ARCHS:\?\}/g,
+        '${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}'
+      );
+      fs.writeFileSync(pbxprojPath, patchedPbxproj);
+      console.log('success', 'Patched Build Rust Code arch arg in project.pbxproj');
+    }
   }
 }
 
