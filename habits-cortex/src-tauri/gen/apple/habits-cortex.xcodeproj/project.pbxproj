@@ -176,7 +176,7 @@
 			path = release;
 			sourceTree = "<group>";
 		};
-		"TEMP_B499467C-7E8B-4B4D-83BC-22E5EC138388" /* x86_64 */ = {
+		"TEMP_951916E0-C24D-490B-944E-DD02E0308997" /* x86_64 */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -272,7 +272,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+			shellScript = "# Workaround for Tauri CLI 2.10.1 bug with {arch} placeholder\n# The Rust library should be pre-built before running xcodebuild\nTARGET_ARCH=\"${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}\"\nRUST_ARCH=\"aarch64-apple-ios\"\nif [ \"$TARGET_ARCH\" = \"x86_64\" ]; then\n  RUST_ARCH=\"x86_64-apple-ios\"\nfi\n\nSRC_LIB=\"${SRCROOT}/../../target/${RUST_ARCH}/release/libcortex_app_lib.a\"\nDEST_DIR=\"${SRCROOT}/Externals/${TARGET_ARCH}/${CONFIGURATION}\"\nDEST_LIB=\"${DEST_DIR}/libapp.a\"\n\nmkdir -p \"$DEST_DIR\"\n\nif [ -f \"$SRC_LIB\" ]; then\n  echo \"Copying pre-built Rust library from $SRC_LIB to $DEST_LIB\"\n  cp \"$SRC_LIB\" \"$DEST_LIB\"\nelse\n  echo \"Error: Pre-built Rust library not found at $SRC_LIB\"\n  echo \"Please run: cargo build --release --target $RUST_ARCH\"\n  exit 1\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -925,76 +925,34 @@ async function buildIOS(): Promise<string[]> {
   exec('rustup target add aarch64-apple-ios', { ignoreError: true, silent: true });
 
   const applePath = path.join(TAURI_DIR, 'gen', 'apple');
-  const xcodeprojPath = path.join(applePath, 'habits-cortex.xcodeproj');
-  const scheme = 'habits-cortex_iOS';
   const buildDir = path.join(applePath, 'build');
-  const archivePath = path.join(buildDir, `${scheme}.xcarchive`);
   const ipaExportDir = path.join(buildDir, 'arm64');
-  const exportOptionsPath = path.join(applePath, 'ExportOptions.plist');
 
-  // Write an ExportOptions.plist configured for App Store Connect + automatic signing.
+  // Team ID for automatic signing
   const teamId = process.env.APPLE_TEAM_ID || 'S54SCFZ347';
-  const exportOptionsContent = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store-connect</string>
-    <key>destination</key>
-    <string>export</string>
-    <key>signingStyle</key>
-    <string>automatic</string>
-    <key>teamID</key>
-    <string>${teamId}</string>
-    <key>uploadSymbols</key>
-    <true/>
-    <key>stripSwiftSymbols</key>
-    <true/>
-</dict>
-</plist>
-`;
-  fs.writeFileSync(exportOptionsPath, exportOptionsContent);
-  console.log('success', `Wrote ${path.basename(exportOptionsPath)} (method=app-store-connect, signingStyle=automatic, teamID=${teamId})`);
 
   fs.mkdirSync(buildDir, { recursive: true });
-  if (fs.existsSync(archivePath)) {
-    fs.rmSync(archivePath, { recursive: true, force: true });
-  }
 
-  logSection('Archiving iOS app (xcodebuild archive)');
-  const archiveCmd = [
-    'xcodebuild',
-    '-allowProvisioningUpdates',
-    `-authenticationKeyID ${apiKeyId}`,
-    `-authenticationKeyIssuerID ${apiIssuerId}`,
-    `-authenticationKeyPath "${apiKeyPath}"`,
-    `-project "${xcodeprojPath}"`,
-    `-scheme "${scheme}"`,
-    '-configuration Release',
-    '-destination "generic/platform=iOS"',
-    `-archivePath "${archivePath}"`,
-    'CODE_SIGN_STYLE=Automatic',
-    `DEVELOPMENT_TEAM=${teamId}`,
-    'archive',
-  ].join(' ');
-  exec(archiveCmd, { env: buildEnv, cwd: applePath });
-  console.log('success', `Archive created at ${archivePath}`);
+  // Use tauri ios build which properly sets up the server-addr file and environment
+  // before invoking xcodebuild. This avoids the "failed to read missing addr file" panic.
+  logSection('Building iOS app (tauri ios build)');
 
-  logSection('Exporting IPA (xcodebuild -exportArchive)');
+  const tauriBuildEnv: Record<string, string> = {
+    ...buildEnv,
+    // Tauri uses these env vars for iOS automatic signing
+    APPLE_DEVELOPMENT_TEAM: teamId,
+    // CI mode to skip prompts
+    CI: 'true',
+  };
+
+  // Use --ci flag and let tauri handle the xcodebuild invocation
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --ci`, { 
+    env: tauriBuildEnv 
+  });
+  console.log('success', 'iOS build completed');
+
+  // Find the built IPA (tauri places it in gen/apple/build/arm64/)
   fs.mkdirSync(ipaExportDir, { recursive: true });
-  const exportCmd = [
-    'xcodebuild',
-    '-exportArchive',
-    '-allowProvisioningUpdates',
-    `-authenticationKeyID ${apiKeyId}`,
-    `-authenticationKeyIssuerID ${apiIssuerId}`,
-    `-authenticationKeyPath "${apiKeyPath}"`,
-    `-archivePath "${archivePath}"`,
-    `-exportPath "${ipaExportDir}"`,
-    `-exportOptionsPlist "${exportOptionsPath}"`,
-  ].join(' ');
-  exec(exportCmd, { env: buildEnv, cwd: applePath });
-  console.log('success', 'IPA exported');
 
   if (fs.existsSync(ipaExportDir)) {
     const ipas = fs.readdirSync(ipaExportDir).filter(f => f.endsWith('.ipa'));
@@ -1005,7 +963,9 @@ async function buildIOS(): Promise<string[]> {
     }
   }
 
-  const appPath = path.join(archivePath, 'Products', 'Applications', 'Cortex.app');
+  // Also check for .app in archive if present (for debugging/local testing)
+  const archiveDir = path.join(buildDir, 'habits-cortex_iOS.xcarchive');
+  const appPath = path.join(archiveDir, 'Products', 'Applications', 'Cortex.app');
   if (fs.existsSync(appPath)) {
     artifacts.push(appPath);
     console.log('success', 'Found Cortex.app in archive');
