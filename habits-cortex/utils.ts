@@ -267,6 +267,14 @@ export const ENV_VAR_SPECS: EnvVarSpec[] = [
     example: 'ABC123XYZ',
   },
   {
+    name: 'MAC_PROVISIONING_PROFILE_BASE64',
+    description: 'Base64-encoded macOS provisioning profile, used when certs/Habits_Mac.provisionprofile is not already present',
+    required: false,
+    platforms: ['macos'],
+    isBase64: true,
+    example: 'base64 -i Habits_Mac.provisionprofile | tr -d "\\n"',
+  },
+  {
     name: 'APPLE_ID',
     description: 'Apple ID email for notarization (macOS only)',
     required: false,
@@ -586,6 +594,9 @@ export function validateEnvironment(platforms: Platform[]): EnvValidationResult 
   
   for (const spec of relevantSpecs) {
     const value = process.env[spec.name];
+    const isMacProvisioningProfile = spec.name === 'MAC_PROVISIONING_PROFILE_BASE64';
+    const macProvisioningProfilePath = path.join(SCRIPT_DIR, 'certs', 'Habits_Mac.provisionprofile');
+    const hasMacProvisioningProfileFile = isMacProvisioningProfile && fs.existsSync(macProvisioningProfilePath);
     const isSet = value !== undefined && value !== '';
     
     if (isSet) {
@@ -596,6 +607,13 @@ export function validateEnvironment(platforms: Platform[]): EnvValidationResult 
           ? `${c.dim}****${c.reset}`
           : `${c.green}${value!.substring(0, 40)}${value!.length > 40 ? '...' : ''}${c.reset}`;
       logKeyValue(spec.name, displayValue, 'ok');
+    } else if (hasMacProvisioningProfileFile) {
+      result.present.push(spec);
+      logKeyValue(spec.name, `${c.green}${macProvisioningProfilePath}${c.reset}`, 'ok');
+    } else if (isMacProvisioningProfile) {
+      result.missing.push(spec);
+      result.valid = false;
+      logKeyValue(spec.name, `${c.red}NOT SET and certs/Habits_Mac.provisionprofile not found${c.reset}`, 'missing');
     } else if (spec.required) {
       result.missing.push(spec);
       result.valid = false;

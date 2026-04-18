@@ -47,6 +47,7 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          MAC_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}
           # Also set APP_STORE_CONNECT_* aliases for compatibility
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER }}

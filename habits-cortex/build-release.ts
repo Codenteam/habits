@@ -358,20 +358,14 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   
 
 
-  // If there is no certs/Habits_Mac.provisionprofile and there is MAC_PROVISIONING_PROFILE_BASE64 in env
-  const profileTargetPath = path.join('certs', 'Habits_Mac.provisionprofile');
-  if (!fs.existsSync(profileTargetPath) &&hasBase64EnvVar('MAC_PROVISIONING_PROFILE_BASE64')) {
-  const profileDir = path.dirname(profileTargetPath);
-  
-  if (!fs.existsSync(profileDir)) {
-    fs.mkdirSync(profileDir, { recursive: true });
-  }
-  
-  // Decode directly to the expected location (not temp dir)
-  const base64Data = process.env.MAC_PROVISIONING_PROFILE_BASE64!;
-  fs.writeFileSync(profileTargetPath, Buffer.from(base64Data, 'base64'));
-  console.log('success', `Provisioning profile written to ${profileTargetPath}`);
-}
+    const profileTargetPath = path.resolve(TAURI_DIR, '..', 'certs', 'Habits_Mac.provisionprofile');
+    if (hasBase64EnvVar('MAC_PROVISIONING_PROFILE_BASE64')) {
+      fs.mkdirSync(path.dirname(profileTargetPath), { recursive: true });
+
+      const base64Data = process.env.MAC_PROVISIONING_PROFILE_BASE64!;
+      fs.writeFileSync(profileTargetPath, Buffer.from(base64Data, 'base64'));
+      console.log('success', `Provisioning profile written to ${profileTargetPath}`);
+    }
 
   return {
     keychainPath,
@@ -923,6 +917,13 @@ async function buildIOS(): Promise<string[]> {
 
   // Ensure the iOS Rust target is installed before xcodebuild invokes the build script.
   exec('rustup target add aarch64-apple-ios', { ignoreError: true, silent: true });
+
+  // Pre-build the Rust library for iOS before xcodebuild runs.
+  // This is required because the Xcode "Build Rust Code" script expects the library
+  // to already exist (workaround for Tauri CLI 2.10.1 {arch} placeholder bug).
+  logSection('Pre-building Rust library for iOS');
+  exec('cargo build --release --target aarch64-apple-ios', { cwd: TAURI_DIR });
+  console.log('success', 'Rust library built for aarch64-apple-ios');
 
   const applePath = path.join(TAURI_DIR, 'gen', 'apple');
   const buildDir = path.join(applePath, 'build');
