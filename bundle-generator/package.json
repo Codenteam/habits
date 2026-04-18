@@ -12,7 +12,6 @@
   "files": [
     "generator.js",
     "template.js",
-    "node-polyfills.js",
     "cli.js"
   ],
   "scripts": {

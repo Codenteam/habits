@@ -122,8 +122,6 @@ async function generateBundleAll(modules, outputPath) {
     'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster'
   ];
 
-  // Path to polyfills
-  const polyfillsPath = path.join(__dirname, 'node-polyfills.js');
 
   // Create stub redirect plugin
   const stubRedirectPlugin = {
@@ -209,19 +207,7 @@ async function generateBundleAll(modules, outputPath) {
         });
       }
 
-      build.onLoad({ filter: /.*/, namespace: 'node-polyfill' }, (args) => {
-        const moduleName = args.pluginData.moduleName;
-        return {
-          contents: `
-            import { getPolyfill } from '${polyfillsPath}';
-            const polyfill = getPolyfill('${moduleName}');
-            export default polyfill;
-            export * from '${polyfillsPath}';
-          `,
-          loader: 'js',
-          resolveDir: __dirname
-        };
-      });
+
     }
   };
 
