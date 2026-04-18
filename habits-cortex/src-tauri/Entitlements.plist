@@ -11,8 +11,6 @@
     <!-- Required for Mac App Store -->
     <key>com.apple.security.app-sandbox</key>
     <true/>
-    <key>com.apple.security.personal-information.keychain</key>
-    <true/>
     
     <!-- Network access for API calls -->
     <key>com.apple.security.network.client</key>

@@ -55,7 +55,7 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform macos --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          npx tsx build-release.ts --platform macos --output ./release --upload-macos --skip-notarize 2>&1 | npx tsx ../scripts/log-sanitizer.ts
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -159,7 +159,7 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform android --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          npx tsx build-release.ts --platform android --output ./release --upload-android 2>&1 | npx tsx ../scripts/log-sanitizer.ts
       
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4

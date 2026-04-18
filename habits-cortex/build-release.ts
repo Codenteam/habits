@@ -422,7 +422,11 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
   
   console.log('step', `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles app,dmg`, { env: buildEnv });
+  
+  // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
+  // Build both app and dmg for direct distribution
+  const bundles = options.uploadMacos ? 'app' : 'app,dmg';
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles}`, { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
