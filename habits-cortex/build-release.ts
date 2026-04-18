@@ -867,87 +867,152 @@ function setIOSVersions(): void {
 }
 
 /**
- * Build iOS with automatic signing using App Store Connect API.
- * Xcode handles certificate/profile selection automatically.
- * 
+ * Build iOS with cloud signing via App Store Connect API.
+ * Invokes xcodebuild directly with -allowProvisioningUpdates and
+ * -authenticationKey* flags so Xcode fetches/updates profiles from Apple.
+ *
  * Required environment variables:
  * - APP_STORE_CONNECT_API_KEY_ID
  * - APP_STORE_CONNECT_API_ISSUER_ID
  * - APP_STORE_CONNECT_API_KEY_BASE64
  * - IOS_MAC_APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
  * - IOS_MAC_APPLE_CERTIFICATE_PASSWORD
+ * Optional:
+ * - APPLE_TEAM_ID (falls back to DEVELOPMENT_TEAM from project.yml)
  */
 async function buildIOS(): Promise<string[]> {
   logHeader('Building iOS Application');
-  
+
   const artifacts: string[] = [];
-  
-  // Check for required API key credentials
-  const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID && 
-                    process.env.APP_STORE_CONNECT_API_ISSUER_ID && 
+
+  const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID &&
+                    process.env.APP_STORE_CONNECT_API_ISSUER_ID &&
                     hasBase64EnvVar('APP_STORE_CONNECT_API_KEY_BASE64');
-  
+
   if (!hasApiKey) {
     throw new Error('iOS build requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_BASE64');
   }
-  
-  // Setup keychain with Apple Distribution certificate
+
   await setupIOSKeychain();
-  
-  // Decode API key to file
+
+  // Decode API key to AuthKey_<KEY_ID>.p8 (convention used by xcodebuild + altool)
   logSection('Setting up App Store Connect API Key');
-  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', 'AuthKey.p8');
-  
-  console.log('success', `API Key ID: ${process.env.APP_STORE_CONNECT_API_KEY_ID}`);
-  console.log('success', `API Issuer ID: ${process.env.APP_STORE_CONNECT_API_ISSUER_ID}`);
-  
-  // Set environment variables for Tauri's automatic signing
+  const apiKeyId = process.env.APP_STORE_CONNECT_API_KEY_ID!;
+  const apiIssuerId = process.env.APP_STORE_CONNECT_API_ISSUER_ID!;
+  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', `AuthKey_${apiKeyId}.p8`);
+
+  console.log('success', `API Key ID: ${apiKeyId}`);
+  console.log('success', `API Issuer ID: ${apiIssuerId}`);
+  console.log('success', `API Key Path: ${apiKeyPath}`);
+
+  // APPLE_API_* env vars are also consumed by cargo-mobile2 / tauri internals
+  // and by the "Build Rust Code" xcode-script phase.
   const buildEnv: Record<string, string> = {
-    APPLE_API_ISSUER: process.env.APP_STORE_CONNECT_API_ISSUER_ID!,
-    APPLE_API_KEY: process.env.APP_STORE_CONNECT_API_KEY_ID!,
+    APPLE_API_ISSUER: apiIssuerId,
+    APPLE_API_KEY: apiKeyId,
     APPLE_API_KEY_PATH: apiKeyPath,
   };
-  
-  logSection('Building iOS Application');
-  
+
   const tauriConfig = JSON.parse(fs.readFileSync(path.join(TAURI_DIR, 'tauri.conf.json'), 'utf8'));
   console.log('info', `Bundle ID: ${tauriConfig.identifier}`);
   console.log('info', `Version: ${tauriConfig.version}`);
-  console.log('info', 'Signing: automatic (App Store Connect API)');
+  console.log('info', 'Signing: cloud (App Store Connect API + -allowProvisioningUpdates)');
 
-  // Align generated iOS metadata with tauri.conf.json and CI build number.
   setIOSVersions();
-  
-  // Patch project.yml to fix common App Store validation issues
   patchIOSProject();
-  
-  console.log('step', 'Building iOS app...');
-  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });
-  
-  console.log('success', 'iOS build completed');
-  
-  // Find the built IPA
-  const ipaDir = path.join(TAURI_DIR, 'gen', 'apple', 'build', 'arm64');
-  if (fs.existsSync(ipaDir)) {
-    const ipas = fs.readdirSync(ipaDir).filter(f => f.endsWith('.ipa'));
+
+  // Ensure the iOS Rust target is installed before xcodebuild invokes the build script.
+  exec('rustup target add aarch64-apple-ios', { ignoreError: true, silent: true });
+
+  const applePath = path.join(TAURI_DIR, 'gen', 'apple');
+  const xcodeprojPath = path.join(applePath, 'habits-cortex.xcodeproj');
+  const scheme = 'habits-cortex_iOS';
+  const buildDir = path.join(applePath, 'build');
+  const archivePath = path.join(buildDir, `${scheme}.xcarchive`);
+  const ipaExportDir = path.join(buildDir, 'arm64');
+  const exportOptionsPath = path.join(applePath, 'ExportOptions.plist');
+
+  // Write an ExportOptions.plist configured for App Store Connect + automatic signing.
+  const teamId = process.env.APPLE_TEAM_ID || 'S54SCFZ347';
+  const exportOptionsContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>destination</key>
+    <string>export</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>teamID</key>
+    <string>${teamId}</string>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>stripSwiftSymbols</key>
+    <true/>
+</dict>
+</plist>
+`;
+  fs.writeFileSync(exportOptionsPath, exportOptionsContent);
+  console.log('success', `Wrote ${path.basename(exportOptionsPath)} (method=app-store-connect, signingStyle=automatic, teamID=${teamId})`);
+
+  fs.mkdirSync(buildDir, { recursive: true });
+  if (fs.existsSync(archivePath)) {
+    fs.rmSync(archivePath, { recursive: true, force: true });
+  }
+
+  logSection('Archiving iOS app (xcodebuild archive)');
+  const archiveCmd = [
+    'xcodebuild',
+    '-allowProvisioningUpdates',
+    `-authenticationKeyID ${apiKeyId}`,
+    `-authenticationKeyIssuerID ${apiIssuerId}`,
+    `-authenticationKeyPath "${apiKeyPath}"`,
+    `-project "${xcodeprojPath}"`,
+    `-scheme "${scheme}"`,
+    '-configuration Release',
+    '-destination "generic/platform=iOS"',
+    `-archivePath "${archivePath}"`,
+    'CODE_SIGN_STYLE=Automatic',
+    `DEVELOPMENT_TEAM=${teamId}`,
+    'archive',
+  ].join(' ');
+  exec(archiveCmd, { env: buildEnv, cwd: applePath });
+  console.log('success', `Archive created at ${archivePath}`);
+
+  logSection('Exporting IPA (xcodebuild -exportArchive)');
+  fs.mkdirSync(ipaExportDir, { recursive: true });
+  const exportCmd = [
+    'xcodebuild',
+    '-exportArchive',
+    '-allowProvisioningUpdates',
+    `-authenticationKeyID ${apiKeyId}`,
+    `-authenticationKeyIssuerID ${apiIssuerId}`,
+    `-authenticationKeyPath "${apiKeyPath}"`,
+    `-archivePath "${archivePath}"`,
+    `-exportPath "${ipaExportDir}"`,
+    `-exportOptionsPlist "${exportOptionsPath}"`,
+  ].join(' ');
+  exec(exportCmd, { env: buildEnv, cwd: applePath });
+  console.log('success', 'IPA exported');
+
+  if (fs.existsSync(ipaExportDir)) {
+    const ipas = fs.readdirSync(ipaExportDir).filter(f => f.endsWith('.ipa'));
     for (const ipa of ipas) {
-      const ipaPath = path.join(ipaDir, ipa);
+      const ipaPath = path.join(ipaExportDir, ipa);
       artifacts.push(ipaPath);
       console.log('success', `Found IPA: ${ipa}`);
     }
   }
-  
-  // Also check the archive for .app
-  const archiveDir = path.join(TAURI_DIR, 'gen', 'apple', 'build');
-  const xcarchive = path.join(archiveDir, 'habits-cortex_iOS.xcarchive');
-  const appPath = path.join(xcarchive, 'Products', 'Applications', 'Cortex.app');
+
+  const appPath = path.join(archivePath, 'Products', 'Applications', 'Cortex.app');
   if (fs.existsSync(appPath)) {
     artifacts.push(appPath);
     console.log('success', 'Found Cortex.app in archive');
   }
-  
+
   console.log('success', `Built ${artifacts.length} iOS artifact(s)`);
-  
+
   return artifacts;
 }
 
