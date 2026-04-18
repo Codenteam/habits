@@ -85,13 +85,6 @@ jobs:
       - name: Install dependencies
         working-directory: habits-cortex
         run: npm install
-      
-      - name: Clean generated iOS project
-        run: rm -rf habits-cortex/src-tauri/gen/apple
-      
-      - name: Initialize iOS project
-        working-directory: habits-cortex
-        run: npm run tauri -- ios init
 
       - name: Build iOS
         env:
@@ -151,13 +144,6 @@ jobs:
       - name: Install dependencies
         working-directory: habits-cortex
         run: npm install
-      
-      - name: Clean generated Android project
-        run: rm -rf habits-cortex/src-tauri/gen/android
-      
-      - name: Initialize Android project
-        working-directory: habits-cortex
-        run: npm run tauri -- android init
       
       - name: Build Android
         env:
