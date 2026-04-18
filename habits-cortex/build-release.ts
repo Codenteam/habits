@@ -922,7 +922,7 @@ async function buildIOS(): Promise<string[]> {
   patchIOSProject();
   
   console.log('step', 'Building iOS app...');
-  exec(`npm run tauri -- ios build --target aarch64-apple-ios --export-method app-store-connect`, { env: buildEnv });
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });
   
   console.log('success', 'iOS build completed');
   
