@@ -946,6 +946,8 @@ async function buildIOS(): Promise<string[]> {
     ...buildEnv,
     // Tauri uses these env vars for iOS automatic signing
     APPLE_DEVELOPMENT_TEAM: teamId,
+    // Signing identity - must match a certificate in the keychain
+    APPLE_SIGNING_IDENTITY: process.env.APPLE_SIGNING_IDENTITY || '',
     // CI mode to skip prompts
     CI: 'true',
   };

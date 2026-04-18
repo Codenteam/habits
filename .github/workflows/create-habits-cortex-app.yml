@@ -93,6 +93,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
           IOS_MAC_APPLE_CERTIFICATE_BASE64: ${{ secrets.IOS_MAC_APPLE_CERTIFICATE_BASE64 }}
           IOS_MAC_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.IOS_MAC_APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -o pipefail
