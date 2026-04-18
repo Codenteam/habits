@@ -8,7 +8,7 @@ use std::sync::Mutex;
 use tauri::{Manager, Emitter};
 use base64::Engine;
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
 mod automation;
 
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
@@ -177,7 +177,7 @@ pub fn run() {
     let builder = builder.plugin(tauri_plugin_local_ai::init());
     
     // Add webdriver plugin only when debug build and feature are both enabled
-    #[cfg(all(debug_assertions, feature = "debug-webdriver"))]
+    #[cfg(all(debug_assertions, feature = "debug-tools"))]
     let builder = builder.plugin(tauri_plugin_webdriver::init());
     
     // Add mobile-only plugins (iOS/Android)
@@ -209,7 +209,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, _event| {
-            #[cfg(all(debug_assertions, desktop))]
+            #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
             automation::start_automation_server(app_handle.clone());
         });
 }

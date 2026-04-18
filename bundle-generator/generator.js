@@ -176,7 +176,9 @@ function run(stack, workflows, env){
         'crypto', 'url', 'querystring', 'buffer', 'assert', 'zlib', 'net',
         'tls', 'dns', 'child_process', 'readline', 'vm', 'module', 'inspector',
         'process', 'string_decoder', 'tty', 'http2', 'worker_threads',
-        'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster'
+        'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster',
+        // Common subpaths
+        'fs/promises', 'util/types', 'path/posix', 'path/win32', 'stream/promises'
     ];
 
     // Create plugin to redirect relative driver imports to stubs
@@ -262,12 +264,14 @@ function run(stack, workflows, env){
                 };
             });
             
-            // Handle bare Node.js module imports
-            build.onResolve({ filter: new RegExp(`^(${nodeBuiltins.join('|')})$`) }, (args) => {
+            // Handle bare Node.js module imports (including subpaths like fs/promises)
+            build.onResolve({ filter: /^(events|util|stream|path|fs|http|https|os|crypto|url|querystring|buffer|assert|zlib|net|tls|dns|child_process|readline|vm|module|inspector|process|string_decoder|tty|http2|worker_threads|perf_hooks|async_hooks|timers|punycode|constants|cluster)(\/.*)?$/ }, (args) => {
+                // Extract base module name and subpath for polyfill lookup
+                const moduleName = args.path;
                 return {
-                    path: `polyfill:${args.path}`,
+                    path: `polyfill:${moduleName}`,
                     namespace: 'node-polyfill',
-                    pluginData: { moduleName: args.path }
+                    pluginData: { moduleName }
                 };
             });
 

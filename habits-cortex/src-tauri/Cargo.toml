@@ -57,13 +57,13 @@ tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 
-# xcap only for desktop targets
-[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
-xcap = "0.9"
+# xcap only for desktop targets and only when feature-gated
+[target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
+xcap = { version = "0.9", optional = true }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
-debug-webdriver = ["dep:tauri-plugin-webdriver"]
+debug-tools = ["dep:tauri-plugin-webdriver", "dep:xcap"]
 
 [profile.dev]
 incremental = true
