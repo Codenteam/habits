@@ -3,7 +3,6 @@ name: Build Habits Cortex App (Mobile/Desktop)
 on:
   push:
     branches:
-      - 'v*'
       - 'release/*'
   workflow_dispatch:
     inputs:
@@ -270,11 +269,9 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
-            # Extract version from branch name (v* or release/*)
+            # Extract version from branch name (release/*)
             BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            if [[ "$BRANCH_NAME" == v* ]]; then
-              echo "version=${BRANCH_NAME#v}" >> $GITHUB_OUTPUT
-            elif [[ "$BRANCH_NAME" == release/* ]]; then
+            if [[ "$BRANCH_NAME" == release/* ]]; then
               echo "version=${BRANCH_NAME#release/}" >> $GITHUB_OUTPUT
             else
               echo "version=$BRANCH_NAME" >> $GITHUB_OUTPUT

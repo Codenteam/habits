@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "identifier": "com.codenteam-oss.habits",
   "productName": "Cortex",
-  "version": "1.5",
+  "version": "1.5.0",
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",

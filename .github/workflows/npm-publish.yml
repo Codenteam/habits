@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main
-      - 'v*'
       - 'release/**'
     tags:
-      - 'v*'
       - 'release/**'
 
 permissions:

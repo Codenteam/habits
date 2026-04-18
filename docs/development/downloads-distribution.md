@@ -16,7 +16,7 @@ The distribution system manages two types of downloads:
 │                     GitHub Actions CI/CD                     │
 └─────────────────────────────────────────────────────────────┘
            │                                    │
-           │ Push Tag (v*)                      │ Push to main
+           │ Push Tag (v=release/*)                      │ Push to main
            ▼                                    ▼
 ┌──────────────────────────┐      ┌──────────────────────────┐
 │  create-habits-cortex-   │      │     deploy-docs.yml      │
@@ -57,7 +57,7 @@ The distribution system manages two types of downloads:
 **Purpose:** Build and release Cortex app binaries for all platforms
 
 **Triggers:**
-- Tag push matching `v*` (e.g., `v1.0.0`)
+- Tag push matching `release/*` (e.g., `release/1.0.0`)
 - Manual workflow dispatch with version input
 
 **Jobs:**
