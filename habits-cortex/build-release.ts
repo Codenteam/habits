@@ -664,6 +664,19 @@ function patchIOSProject(): void {
   
   let content = fs.readFileSync(projectYmlPath, 'utf8');
   let patched = false;
+
+  // Add Accelerate.framework (required by candle_core)
+  if (!content.includes('sdk: Accelerate.framework')) {
+    const quartzPattern = /(\s+- sdk: QuartzCore\.framework\n)/;
+    if (quartzPattern.test(content)) {
+      content = content.replace(
+        quartzPattern,
+        '$1      - sdk: Accelerate.framework\n'
+      );
+      console.log('success', 'Added Accelerate.framework');
+      patched = true;
+    }
+  }
   
   // Fix ITMS-90171: Prevent libapp.a from being added to Resources
   // Add buildPhase: none to Externals source entry
@@ -708,6 +721,122 @@ function patchIOSProject(): void {
     }
   } else {
     console.log('info', 'project.yml already patched');
+  }
+}
+
+/**
+ * Set Android versionName/versionCode in generated tauri.properties.
+ * versionName comes from tauri.conf.json.
+ * versionCode prefers CI build number and falls back to semver-derived code.
+ */
+function setAndroidVersions(): void {
+  const tauriConfigPath = path.join(TAURI_DIR, 'tauri.conf.json');
+  const tauriPropertiesPath = path.join(TAURI_DIR, 'gen', 'android', 'app', 'tauri.properties');
+
+  if (!fs.existsSync(tauriConfigPath)) {
+    console.log('warn', 'tauri.conf.json not found - skipping Android version update');
+    return;
+  }
+
+  const tauriConfig = JSON.parse(fs.readFileSync(tauriConfigPath, 'utf8')) as { version?: string };
+  const marketingVersion = tauriConfig.version;
+
+  if (!marketingVersion) {
+    console.log('warn', 'No version found in tauri.conf.json - skipping Android version update');
+    return;
+  }
+
+  const ciBuildNumber = process.env.CI_BUILD_NUMBER || process.env.GITHUB_RUN_NUMBER;
+
+  const semverToCode = (version: string): number => {
+    const [majorRaw, minorRaw, patchRaw] = version.split('.');
+    const major = Number.parseInt(majorRaw || '0', 10) || 0;
+    const minor = Number.parseInt(minorRaw || '0', 10) || 0;
+    const patch = Number.parseInt(patchRaw || '0', 10) || 0;
+
+    // 1.0.9 -> 1000009 (major*1_000_000 + minor*1_000 + patch)
+    return major * 1_000_000 + minor * 1_000 + patch;
+  };
+
+  const versionCode = ciBuildNumber
+    ? Number.parseInt(ciBuildNumber, 10)
+    : semverToCode(marketingVersion);
+
+  logSection('Setting Android versions');
+
+  fs.mkdirSync(path.dirname(tauriPropertiesPath), { recursive: true });
+  fs.writeFileSync(
+    tauriPropertiesPath,
+    `tauri.android.versionCode=${versionCode}\n` +
+      `tauri.android.versionName=${marketingVersion}\n`
+  );
+
+  console.log('success', `Android versionName set to ${marketingVersion}`);
+  console.log('success', `Android versionCode set to ${versionCode}`);
+}
+
+/**
+ * Set iOS marketing version and build number in generated files.
+ * Marketing version comes from tauri.conf.json version.
+ * Build number uses CI env vars when available.
+ */
+function setIOSVersions(): void {
+  const tauriConfigPath = path.join(TAURI_DIR, 'tauri.conf.json');
+  const projectYmlPath = path.join(TAURI_DIR, 'gen', 'apple', 'project.yml');
+  const infoPlistPath = path.join(TAURI_DIR, 'gen', 'apple', 'habits-cortex_iOS', 'Info.plist');
+
+  if (!fs.existsSync(tauriConfigPath)) {
+    console.log('warn', 'tauri.conf.json not found - skipping iOS version update');
+    return;
+  }
+
+  if (!fs.existsSync(infoPlistPath)) {
+    console.log('warn', 'Info.plist not found - skipping iOS version update');
+    return;
+  }
+
+  logSection('Setting iOS versions');
+
+  const tauriConfig = JSON.parse(fs.readFileSync(tauriConfigPath, 'utf8')) as { version?: string };
+  const marketingVersion = tauriConfig.version;
+  const buildNumber = process.env.CI_BUILD_NUMBER || process.env.GITHUB_RUN_NUMBER;
+
+  if (!marketingVersion) {
+    console.log('warn', 'No version found in tauri.conf.json - skipping iOS version update');
+    return;
+  }
+
+  // Update CFBundleShortVersionString and CFBundleVersion in Info.plist
+  let plistContent = fs.readFileSync(infoPlistPath, 'utf8');
+  plistContent = plistContent.replace(
+    /(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]*(<\/string>)/,
+    `$1${marketingVersion}$2`
+  );
+
+  if (buildNumber) {
+    plistContent = plistContent.replace(
+      /(<key>CFBundleVersion<\/key>\s*<string>)[^<]*(<\/string>)/,
+      `$1${buildNumber}$2`
+    );
+  }
+
+  fs.writeFileSync(infoPlistPath, plistContent);
+
+  // Update CFBundleVersion in project.yml for generated Xcode settings
+  if (buildNumber && fs.existsSync(projectYmlPath)) {
+    let projectContent = fs.readFileSync(projectYmlPath, 'utf8');
+    projectContent = projectContent.replace(
+      /(CFBundleVersion:\s*)"[^"]*"/,
+      `$1"${buildNumber}"`
+    );
+    fs.writeFileSync(projectYmlPath, projectContent);
+  }
+
+  console.log('success', `iOS marketing version set to ${marketingVersion}`);
+  if (buildNumber) {
+    console.log('success', `iOS build number set to ${buildNumber}`);
+  } else {
+    console.log('info', 'No CI build number found; kept existing CFBundleVersion in project.yml');
   }
 }
 
@@ -759,6 +888,9 @@ async function buildIOS(): Promise<string[]> {
   console.log('info', `Bundle ID: ${tauriConfig.identifier}`);
   console.log('info', `Version: ${tauriConfig.version}`);
   console.log('info', 'Signing: automatic (App Store Connect API)');
+
+  // Align generated iOS metadata with tauri.conf.json and CI build number.
+  setIOSVersions();
   
   // Patch project.yml to fix common App Store validation issues
   patchIOSProject();
@@ -1194,6 +1326,9 @@ async function commitEdit(accessToken: string, packageName: string, editId: stri
 async function buildAndroid(options: CLIOptions): Promise<string[]> {
   logHeader('Building Android Application');
   const artifacts: string[] = [];
+
+  // Align generated Android metadata with tauri.conf.json and CI build number.
+  setAndroidVersions();
   
   // Check if signing credentials are available
   const hasSigningCreds = hasBase64EnvVar('ANDROID_KEYSTORE_BASE64') && 

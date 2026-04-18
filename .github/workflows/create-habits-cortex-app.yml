@@ -90,51 +90,6 @@ jobs:
         working-directory: habits-cortex
         run: npm run tauri -- ios init
 
-      - name: Set iOS build number
-        working-directory: habits-cortex
-        run: |
-          RUN_NUM="${{ github.run_number }}"
-          sed -i '' -E "s/(CFBundleVersion: )\"[^\"]*\"/\1\"${RUN_NUM}\"/" src-tauri/gen/apple/project.yml
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${RUN_NUM}" src-tauri/gen/apple/habits-cortex_iOS/Info.plist
-
-      - name: Patch iOS project.yml
-        working-directory: habits-cortex
-        run: |
-          python3 -c "
-          path = 'src-tauri/gen/apple/project.yml'
-          with open(path) as f:
-              s = f.read()
-          
-          # Add Accelerate.framework (required by candle_core)
-          if 'Accelerate.framework' not in s:
-              s = s.replace(
-                  '      - sdk: QuartzCore.framework\n',
-                  '      - sdk: QuartzCore.framework\n      - sdk: Accelerate.framework\n',
-                  1,
-              )
-          
-          # Prevent libapp.a from being added to Resources (ITMS-90171 fix)
-          # Add buildPhase: none to Externals source entry
-          s = s.replace(
-              '      - path: Externals\n      - path:',
-              '      - path: Externals\n        buildPhase: none\n      - path:',
-              1,
-          )
-          
-          # Add privacy usage descriptions (ITMS-90683 fix)
-          if 'NSLocationWhenInUseUsageDescription' not in s:
-              s = s.replace(
-                  'UIRequiredDeviceCapabilities: [arm64, metal]',
-                  'UIRequiredDeviceCapabilities: [arm64, metal]\n        NSLocationWhenInUseUsageDescription: \"This app uses your location to provide location-based automation and services.\"',
-                  1,
-              )
-          
-          with open(path, 'w') as f:
-              f.write(s)
-          "
-          brew install xcodegen
-          xcodegen generate --spec src-tauri/gen/apple/project.yml --project src-tauri/gen/apple
-
       - name: Build iOS
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
