@@ -165,6 +165,9 @@ function run(stack, workflows, env){
     // Esbuild the generated code to bundle all dependencies into a single file
     const esbuild = require('esbuild');
     const bundledOutputPath = path.join(distDir, 'bundle.js');
+
+    // Path to our Node.js polyfills
+    const polyfillsPath = path.join(__dirname, 'node-polyfills.js');
     
 
     // Node.js built-in modules that need polyfills
@@ -265,6 +268,19 @@ function run(stack, workflows, env){
                     path: `polyfill:${args.path}`,
                     namespace: 'node-polyfill',
                     pluginData: { moduleName: args.path }
+                };
+            });
+
+            // Load the polyfill and extract the right module - use unique path per module
+            build.onLoad({ filter: /^polyfill:/, namespace: 'node-polyfill' }, (args) => {
+                const moduleName = args.pluginData.moduleName;
+                return {
+                    contents: `
+                        const polyfills = require(${JSON.stringify(polyfillsPath)});
+                        module.exports = polyfills['${moduleName}'] || polyfills.events;
+                    `,
+                    loader: 'js',
+                    resolveDir: __dirname
                 };
             });
 
