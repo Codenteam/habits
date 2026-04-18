@@ -49,7 +49,7 @@ tauri-plugin-sms = { path = "../tauri-plugin-sms" }
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
 
-# Linux/Windows: local-ai with CPU-only inference (no Metal/Accelerate)
+# Linux/Windows: loceal-ai with CPU-only inference (no Metal/Accelerate)
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
 
