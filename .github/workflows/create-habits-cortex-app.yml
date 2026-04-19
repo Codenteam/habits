@@ -47,6 +47,7 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          MAC_PROVISIONING_PROFILE_BASE64: ${{ secrets.MAC_PROVISIONING_PROFILE_BASE64 }}
           # Also set APP_STORE_CONNECT_* aliases for compatibility
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER }}
@@ -54,7 +55,7 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform macos --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          npx tsx build-release.ts --platform macos --output ./release --upload-macos --skip-notarize 2>&1 | npx tsx ../scripts/log-sanitizer.ts
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -78,16 +79,12 @@ jobs:
         with:
           node-version: 24
       
+      - name: Install xcodegen
+        run: brew install xcodegen
+      
       - name: Install dependencies
         working-directory: habits-cortex
         run: npm install
-      
-      - name: Clean generated iOS project
-        run: rm -rf habits-cortex/src-tauri/gen/apple
-      
-      - name: Initialize iOS project
-        working-directory: habits-cortex
-        run: npm run tauri -- ios init
 
       - name: Build iOS
         env:
@@ -96,6 +93,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
           IOS_MAC_APPLE_CERTIFICATE_BASE64: ${{ secrets.IOS_MAC_APPLE_CERTIFICATE_BASE64 }}
           IOS_MAC_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.IOS_MAC_APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -o pipefail
@@ -148,13 +146,6 @@ jobs:
         working-directory: habits-cortex
         run: npm install
       
-      - name: Clean generated Android project
-        run: rm -rf habits-cortex/src-tauri/gen/android
-      
-      - name: Initialize Android project
-        working-directory: habits-cortex
-        run: npm run tauri -- android init
-      
       - name: Build Android
         env:
           # Signing (optional - unsigned APK kept if not set)
@@ -169,7 +160,7 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform android --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          npx tsx build-release.ts --platform android --output ./release --upload-android 2>&1 | npx tsx ../scripts/log-sanitizer.ts
       
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -225,7 +216,7 @@ jobs:
       - name: Install Tauri dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev libssl-dev libdbus-1-dev gnome-keyring libsecret-1-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev libssl-dev libdbus-1-dev gnome-keyring libsecret-1-dev libpipewire-0.3-dev
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

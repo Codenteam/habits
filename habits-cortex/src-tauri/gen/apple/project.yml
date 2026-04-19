@@ -84,7 +84,29 @@ targets:
       - sdk: UIKit.framework
       - sdk: WebKit.framework
     preBuildScripts:
-      - script: npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+      - script: |
+          # Workaround for Tauri CLI 2.10.1 bug with {arch} placeholder
+          # The Rust library should be pre-built before running xcodebuild
+          TARGET_ARCH="${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}"
+          RUST_ARCH="aarch64-apple-ios"
+          if [ "$TARGET_ARCH" = "x86_64" ]; then
+            RUST_ARCH="x86_64-apple-ios"
+          fi
+          
+          SRC_LIB="${SRCROOT}/../../target/${RUST_ARCH}/release/libcortex_app_lib.a"
+          DEST_DIR="${SRCROOT}/Externals/${TARGET_ARCH}/${CONFIGURATION}"
+          DEST_LIB="${DEST_DIR}/libapp.a"
+          
+          mkdir -p "$DEST_DIR"
+          
+          if [ -f "$SRC_LIB" ]; then
+            echo "Copying pre-built Rust library from $SRC_LIB to $DEST_LIB"
+            cp "$SRC_LIB" "$DEST_LIB"
+          else
+            echo "Error: Pre-built Rust library not found at $SRC_LIB"
+            echo "Please run: cargo build --release --target $RUST_ARCH"
+            exit 1
+          fi
         name: Build Rust Code
         basedOnDependencyAnalysis: false
         outputFiles:

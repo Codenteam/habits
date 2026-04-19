@@ -1,0 +1,49 @@
+# Test Generate Text Workflow
+id: test-generate-text
+name: Test Generate Text
+description: Test the generate-text action
+
+input:
+  type: object
+  properties:
+    question:
+      type: string
+      description: Question to ask
+      default: "What is 2+2?"
+    modelId:
+      type: string
+      description: Model ID to use
+      default: qwen2-0.5b
+    maxTokens:
+      type: number
+      description: Maximum number of tokens to generate
+      default: 256
+  required:
+    - question
+
+nodes:
+  - id: generate
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: generate-text
+      label: Generate Text
+      isTrigger: false
+      params:
+        prompts:
+          - role: system
+            content: "You are a helpful assistant. Be brief."
+          - role: user
+            content: "{{habits.input.question}}"
+        modelId: "{{habits.input.modelId}}"
+        maxTokens: "{{habits.input.maxTokens}}"
+
+edges: []
+
+output:
+  text: "{{generate.text}}"
+  tokensGenerated: "{{generate.tokensGenerated}}"
+  model: "{{generate.model}}"
+  deviceUsed: "{{generate.deviceUsed}}"

@@ -1,0 +1,38 @@
+{
+  "name": "@local-ai/tauri-plugin",
+  "version": "0.1.0",
+  "description": "Tauri v2 plugin for Local AI inference",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/local-ai-candle"
+  },
+  "license": "MIT OR Apache-2.0",
+  "keywords": [
+    "tauri",
+    "tauri-plugin",
+    "ai",
+    "machine-learning",
+    "inference",
+    "whisper",
+    "stable-diffusion",
+    "llm"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,54 +1,22 @@
 version: "1.0"
-name: "Local AI"
+name: "Test Local AI New"
 
-# Local AI Showcase
-# Demonstrates running AI models locally using bit-local-ai
+bits:
+  - id: localAiNew
+    module: "@ha-bits/bit-local-ai"
 
 workflows:
-  - id: ask-local-ai
-    path: ./habits/ask-local-ai.yaml
+  - id: test-install-model
+    path: ./habits/test-install-model.yaml
     enabled: true
 
-  - id: list-models
-    path: ./habits/list-models.yaml
-    enabled: true
-
-  - id: install-model
-    path: ./habits/install-model.yaml
-    enabled: true
-
-  - id: vision-prompt
-    path: ./habits/vision-prompt.yaml
-    enabled: true
-
-  - id: generate-image
-    path: ./habits/generate-image.yaml
-    enabled: true
-
-  - id: extract-data
-    path: ./habits/extract-data.yaml
-    enabled: true
-
-  - id: transcribe-audio
-    path: ./habits/transcribe-audio.yaml
-    enabled: true
-
-  - id: text-to-speech
-    path: ./habits/text-to-speech.yaml
-    enabled: true
-
-  - id: caption-image
-    path: ./habits/caption-image.yaml
-    enabled: true
-
-  - id: system-info
-    path: ./habits/system-info.yaml
+  - id: test-generate-text
+    path: ./habits/test-generate-text.yaml
     enabled: true
 
 server:
   port: 13000
   host: "0.0.0.0"
-  frontend: ./frontend
   openapi: true
 
 logging:
@@ -56,9 +24,3 @@ logging:
   outputs: [console]
   format: text
   colorize: true
-
-# Tauri app configuration for desktop/mobile
-application:
-  scheme: localai
-  name: Local AI
-  identifier: com.habits.localai

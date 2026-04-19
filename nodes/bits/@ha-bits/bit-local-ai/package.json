@@ -1,10 +1,9 @@
 {
   "name": "@ha-bits/bit-local-ai",
-  "version": "0.1.0",
-  "description": "Local AI inference bit module with OpenAI-compatible interface - text generation, image generation, audio transcription, text-to-speech, and image captioning using local models",
+  "version": "0.0.1",
+  "description": "Simplified local AI bit with model installation and text generation",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "type": "commonjs",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,79 +16,26 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build"
+    "build": "tsc"
   },
   "files": [
-    "dist",
-    "src/stubs",
-    "src/lib/stubs",
-    "package.json",
-    "README.md"
+    "dist"
   ],
-  "keywords": [
-    "bits",
-    "habits",
-    "local-ai",
-    "llm",
-    "whisper",
-    "stable-diffusion",
-    "text-generation",
-    "image-generation",
-    "text-to-speech",
-    "transcription",
-    "offline",
-    "local",
-    "ai"
-  ],
-  "author": "Habits Team",
-  "license": "MIT",
-  "dependencies": {
-    "@ha-bits/bit-ai": ">=1.0.0",
-    "@ha-bits/cortex-core": ">=0.1.0"
+  "peerDependencies": {
+    "@ha-bits/cortex-core": "*"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
-  },
-  "peerDependencies": {
-    "@ha-bits/cortex-core": ">=0.1.0"
-  },
-  "optionalDependencies": {
-    "@local-ai/node": ">=0.1.0"
   },
   "nx": {
     "sourceRoot": "@ha-bits/bit-local-ai/src",
     "projectType": "library",
-    "tags": [
-      "scope:bits",
-      "type:bit",
-      "level:L1"
-    ],
-    "targets": {
-      "build": {
-        "outputs": [
-          "{projectRoot}/dist"
-        ]
-      },
-      "publish-verdaccio": {},
-      "publish-npm": {},
-      "publish-private": {}
-    }
+    "tags": ["scope:bits", "type:bit"]
   },
   "habits": {
     "catalog": true,
-    "featured": true,
-    "replaces": "@ha-bits/bit-ai",
     "stubs": {
-      "@ha-bits/bit-local-ai/driver": "./src/lib/stubs/driver.js"
-    },
-    "tauriPlugins": {
-      "local-ai": {
-        "cargo": "tauri-plugin-local-ai",
-        "init": "tauri_plugin_local_ai::init()"
-      }
+      "@ha-bits/bit-local-ai/driver": "./dist/lib/stubs/driver.js"
     }
   }
 }

@@ -1,126 +1,16 @@
 /**
  * Local AI Driver (Node.js)
- * 
- * Communicates with @local-ai/node native addon for model listing and inference.
+ *
+ * Communicates with @local-ai/node native addon.
  * In Tauri environments, this module is replaced by stubs/driver.ts via package.json habits.stubs.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare const process: any;
 declare const require: (id: string) => any;
-declare const console: { log: (...args: any[]) => void; warn: (...args: any[]) => void };
+declare const console: { log: (...args: any[]) => void; error: (...args: any[]) => void };
 
-import { DeviceType, WhisperTask } from './common/common';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-export { DeviceType, WhisperTask } from './common/common';
-
-export interface TextGenOptions {
-  maxTokens?: number;
-  temperature?: number;
-  seed?: number;
-  device?: DeviceType;
-  customModelPath?: string;
-  customTokenizerPath?: string;
-}
-
-export interface TextGenResult {
-  text: string;
-  tokensGenerated: number;
-  model: string;
-}
-
-export interface CaptionOptions {
-  seed?: number;
-  device?: DeviceType;
-  customModelPath?: string;
-  customTokenizerPath?: string;
-}
-
-export interface CaptionResult {
-  caption: string;
-  tokensGenerated: number;
-  model: string;
-}
-
-export interface ImageGenOptions {
-  width?: number;
-  height?: number;
-  steps?: number;
-  guidanceScale?: number;
-  seed?: number;
-  device?: DeviceType;
-  customBasePath?: string;
-}
-
-export interface ImageGenResult {
-  base64: string;
-  width: number;
-  height: number;
-  steps: number;
-  model: string;
-}
-
-export interface TranscribeOptions {
-  language?: string;
-  task?: WhisperTask;
-  timestamps?: boolean;
-  quantized?: boolean;
-  seed?: number;
-  device?: DeviceType;
-  customModelPath?: string;
-  customTokenizerPath?: string;
-  customConfigPath?: string;
-}
-
-export interface TranscriptionSegment {
-  start: number;
-  end: number;
-  text: string;
-}
-
-export interface TranscribeResult {
-  text: string;
-  segments: TranscriptionSegment[];
-  language: string | null;
-  model: string;
-}
-
-export interface TTSOptions {
-  guidanceScale?: number;
-  temperature?: number;
-  maxTokens?: number;
-  seed?: number;
-  quantized?: boolean;
-  device?: DeviceType;
-  customBasePath?: string;
-}
-
-export interface TTSResult {
-  base64: string;
-  sampleRate: number;
-  durationSeconds: number;
-  model: string;
-}
-
-export interface TextModel {
-  id: string;
-  name: string;
-  path: string;
-  size: number;
-}
-
-export interface ModelsInfo {
-  textModels: TextModel[];
-  captionModels: TextModel[];
-  diffusionModels: TextModel[];
-  whisperModels: TextModel[];
-  ttsModels: TextModel[];
-  modelsDir: string;
-}
+import { ChatMessage, TextGenResult, InstallModelResult, ModelRegistry } from './common/common';
 
 // ============================================================================
 // Node.js Native Addon
@@ -130,12 +20,12 @@ let _nodeAddon: any = null;
 
 function getNodeAddon(): any {
   if (_nodeAddon) return _nodeAddon;
-  
+
   const paths = [
     '@local-ai/node',
     process.env?.LOCAL_AI_NODE_PATH,
   ].filter(Boolean);
-  
+
   for (const modulePath of paths) {
     try {
       _nodeAddon = require(modulePath as string);
@@ -145,334 +35,163 @@ function getNodeAddon(): any {
       // Continue trying
     }
   }
-  
+
   throw new Error(
     '@local-ai/node native addon not available. ' +
     'Install it with: npm install @local-ai/node'
   );
 }
 
-function toNativeDevice(device?: DeviceType): string | undefined {
-  if (!device) return undefined;
-  const map: Record<DeviceType, string> = {
-    [DeviceType.Auto]: 'Auto',
-    [DeviceType.Cpu]: 'Cpu',
-    [DeviceType.Metal]: 'Metal',
-    [DeviceType.Cuda]: 'Cuda',
-  };
-  return map[device] || undefined;
-}
-
 // ============================================================================
-// Model Resolution
+// Helpers
 // ============================================================================
-
-let _modelsCache: ModelsInfo | null = null;
 
 function getModelsBasePath(): string {
   const homeDir = process.env?.HOME || '/tmp';
   return process.env?.LOCAL_AI_MODELS_PATH || `${homeDir}/.habits/models`;
 }
 
-function scanModelDir(basePath: string, category: string): TextModel[] {
+async function downloadFile(url: string, destPath: string): Promise<void> {
   const fs = require('fs');
   const path = require('path');
-  const dir = path.join(basePath, category);
-  const models: TextModel[] = [];
-  
-  if (!fs.existsSync(dir)) return models;
-  
-  const entries = fs.readdirSync(dir);
-  for (const entry of entries) {
-    const entryPath = path.join(dir, entry);
-    if (fs.statSync(entryPath).isDirectory()) {
-      // Look for model.gguf or model.safetensors
-      for (const modelFile of ['model.gguf', 'model.safetensors']) {
-        const modelPath = path.join(entryPath, modelFile);
-        if (fs.existsSync(modelPath)) {
-          const stats = fs.statSync(modelPath);
-          models.push({ id: entry, name: entry, path: modelPath, size: stats.size });
-          break;
-        }
-      }
-    }
+  const https = require('https');
+  const http = require('http');
+
+  // Ensure directory exists
+  const dir = path.dirname(destPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
-  return models;
+
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+
+    const request = (currentUrl: string) => {
+      protocol.get(currentUrl, (response: any) => {
+        // Handle redirects
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          request(response.headers.location);
+          return;
+        }
+
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download: HTTP ${response.statusCode}`));
+          return;
+        }
+
+        const file = fs.createWriteStream(destPath);
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          resolve();
+        });
+        file.on('error', (err: any) => {
+          fs.unlink(destPath, () => {}); // Delete partial file
+          reject(err);
+        });
+      }).on('error', reject);
+    };
+
+    request(url);
+  });
 }
 
+// ============================================================================
+// Install Model
+// ============================================================================
+
 /**
- * List available models
+ * Install a model by ID (downloads all required files)
  */
-export async function listModels(): Promise<ModelsInfo> {
-  if (_modelsCache) return _modelsCache;
-  
+export async function installModel(modelId: string): Promise<InstallModelResult> {
+  const entry = ModelRegistry[modelId];
+  if (!entry) {
+    throw new Error(`Unknown model: ${modelId}. Available: ${Object.keys(ModelRegistry).join(', ')}`);
+  }
+
   const basePath = getModelsBasePath();
-  
-  _modelsCache = {
-    textModels: scanModelDir(basePath, 'text-gen'),
-    captionModels: scanModelDir(basePath, 'caption'),
-    diffusionModels: scanModelDir(basePath, 'diffusion'),
-    whisperModels: scanModelDir(basePath, 'whisper'),
-    ttsModels: scanModelDir(basePath, 'tts'),
+  const modelDir = `${basePath}/${entry.type}/${modelId}`;
+  const downloadedFiles: string[] = [];
+
+  console.log(`[install-model] Installing ${modelId} to ${modelDir}`);
+
+  for (const [filename, url] of Object.entries(entry.files)) {
+    const destPath = `${modelDir}/${filename}`;
+    console.log(`[install-model] Downloading ${filename}...`);
+    await downloadFile(url, destPath);
+    downloadedFiles.push(destPath);
+    console.log(`[install-model] Downloaded ${filename}`);
+  }
+
+  return {
+    success: true,
+    modelId,
+    files: downloadedFiles,
     modelsDir: basePath,
   };
-  return _modelsCache;
 }
 
+// ============================================================================
+// Generate Text
+// ============================================================================
+
 /**
- * Clear the models cache
+ * Generate text from a prompt array
  */
-export function clearModelsCache(): void {
-  _modelsCache = null;
+export async function generateText(
+  prompts: ChatMessage[],
+  modelId: string = 'qwen2-0.5b',
+  maxTokens: number = 256
+): Promise<TextGenResult> {
+  const native = getNodeAddon();
+  const basePath = getModelsBasePath();
+
+  const modelPath = `${basePath}/text-gen/${modelId}/model.gguf`;
+  const tokenizerPath = `${basePath}/text-gen/${modelId}/tokenizer.json`;
+
+  // Build prompt as plain text — the native addon wraps it with ChatML tags
+  // (<|im_start|>user\n...<|im_end|>\n<|im_start|>assistant\n), so we must
+  // NOT add template tags here or the model sees double-wrapped gibberish.
+  const parts: string[] = [];
+  for (const msg of prompts) {
+    parts.push(msg.content);
+  }
+  const fullPrompt = parts.join('\n\n');
+
+  const result = await native.generateText(
+    modelPath,
+    tokenizerPath,
+    fullPrompt,
+    maxTokens,
+    0.7,  // temperature
+    undefined, // seed
+    'cpu'  // device
+  );
+
+  return {
+    text: result.text,
+    tokensGenerated: result.tokensGenerated || result.tokens_generated,
+    model: modelId,
+    deviceUsed: result.deviceUsed || result.device_used || 'cpu',
+  };
 }
 
 /**
- * Get the models base directory
+ * Get the models directory path
  */
 export async function getModelsDir(): Promise<string> {
   return getModelsBasePath();
 }
 
-// ============================================================================
-// Text Generation
-// ============================================================================
-
 /**
- * Generate text using a model ID
+ * Returns true if local-ai is available in this environment.
+ * In Node.js, checks whether the native addon can be loaded.
  */
-export async function generateText(
-  modelId: string,
-  prompt: string,
-  options: TextGenOptions = {}
-): Promise<TextGenResult> {
-  const native = getNodeAddon();
-  const basePath = getModelsBasePath();
-  
-  let modelPath: string;
-  let tokenizerPath: string;
-  
-  if (modelId === 'custom') {
-    if (!options.customModelPath || !options.customTokenizerPath) {
-      throw new Error('Custom model requires customModelPath and customTokenizerPath');
-    }
-    modelPath = options.customModelPath;
-    tokenizerPath = options.customTokenizerPath;
-  } else if (modelId.includes('/') || modelId.endsWith('.gguf')) {
-    modelPath = modelId;
-    const modelDir = modelPath.substring(0, modelPath.lastIndexOf('/'));
-    tokenizerPath = `${modelDir}/tokenizer.json`;
-  } else {
-    modelPath = `${basePath}/text-gen/${modelId}/model.gguf`;
-    tokenizerPath = `${basePath}/text-gen/${modelId}/tokenizer.json`;
+export async function isSupported(): Promise<boolean> {
+  try {
+    getNodeAddon();
+    return true;
+  } catch {
+    return false;
   }
-  
-  const result = await native.generateText(
-    modelPath,
-    tokenizerPath,
-    prompt,
-    options.maxTokens ?? 512,
-    options.temperature ?? 0.7,
-    options.seed,
-    toNativeDevice(options.device)
-  );
-  
-  return {
-    text: result.text,
-    tokensGenerated: result.tokensGenerated || result.tokens_generated,
-    model: modelId,
-  };
-}
-
-// ============================================================================
-// Image Captioning
-// ============================================================================
-
-/**
- * Caption an image (base64 input)
- */
-export async function captionImage(
-  modelId: string,
-  imageBase64: string,
-  options: CaptionOptions = {}
-): Promise<CaptionResult> {
-  const native = getNodeAddon();
-  const basePath = getModelsBasePath();
-  
-  let modelPath: string;
-  let tokenizerPath: string;
-  
-  if (modelId === 'custom') {
-    if (!options.customModelPath || !options.customTokenizerPath) {
-      throw new Error('Custom model requires customModelPath and customTokenizerPath');
-    }
-    modelPath = options.customModelPath;
-    tokenizerPath = options.customTokenizerPath;
-  } else {
-    modelPath = `${basePath}/caption/${modelId}/model.gguf`;
-    tokenizerPath = `${basePath}/caption/${modelId}/tokenizer.json`;
-  }
-  
-  const result = await native.captionImageBase64(
-    imageBase64,
-    modelPath,
-    tokenizerPath,
-    toNativeDevice(options.device)
-  );
-  
-  return {
-    caption: result.caption,
-    tokensGenerated: result.tokensGenerated || result.tokens_generated,
-    model: modelId,
-  };
-}
-
-// ============================================================================
-// Image Generation
-// ============================================================================
-
-/**
- * Generate an image (returns base64)
- */
-export async function generateImage(
-  modelId: string,
-  prompt: string,
-  negativePrompt: string,
-  options: ImageGenOptions = {}
-): Promise<ImageGenResult> {
-  const native = getNodeAddon();
-  const basePath = getModelsBasePath();
-  
-  let modelBasePath: string;
-  if (modelId === 'custom') {
-    if (!options.customBasePath) {
-      throw new Error('Custom model requires customBasePath');
-    }
-    modelBasePath = options.customBasePath;
-  } else {
-    modelBasePath = `${basePath}/diffusion/${modelId}`;
-  }
-  
-  const result = await native.generateImageBase64(
-    prompt,
-    negativePrompt,
-    `${modelBasePath}/unet.safetensors`,
-    `${modelBasePath}/vae.safetensors`,
-    `${modelBasePath}/clip.safetensors`,
-    `${modelBasePath}/tokenizer.json`,
-    options.height ?? 512,
-    options.width ?? 512,
-    options.steps ?? 30,
-    options.guidanceScale ?? 7.5,
-    options.seed,
-    toNativeDevice(options.device)
-  );
-  
-  return {
-    base64: result.base64,
-    width: result.width,
-    height: result.height,
-    steps: result.steps,
-    model: modelId,
-  };
-}
-
-// ============================================================================
-// Audio Transcription
-// ============================================================================
-
-/**
- * Transcribe audio (base64 input)
- */
-export async function transcribeAudio(
-  modelId: string,
-  audioBase64: string,
-  options: TranscribeOptions = {}
-): Promise<TranscribeResult> {
-  const native = getNodeAddon();
-  const basePath = getModelsBasePath();
-  
-  let modelPath: string;
-  let tokenizerPath: string;
-  let configPath: string;
-  
-  if (modelId === 'custom') {
-    if (!options.customModelPath || !options.customTokenizerPath || !options.customConfigPath) {
-      throw new Error('Custom model requires customModelPath, customTokenizerPath, and customConfigPath');
-    }
-    modelPath = options.customModelPath;
-    tokenizerPath = options.customTokenizerPath;
-    configPath = options.customConfigPath;
-  } else {
-    const ext = options.quantized ? '.gguf' : '.safetensors';
-    modelPath = `${basePath}/whisper/${modelId}/model${ext}`;
-    tokenizerPath = `${basePath}/whisper/${modelId}/tokenizer.json`;
-    configPath = `${basePath}/whisper/${modelId}/config.json`;
-  }
-  
-  const result = await native.transcribeAudioBase64(
-    audioBase64,
-    modelPath,
-    tokenizerPath,
-    configPath,
-    options.quantized ?? false,
-    options.language,
-    options.task ?? WhisperTask.Transcribe,
-    options.timestamps ?? false,
-    toNativeDevice(options.device)
-  );
-  
-  return {
-    text: result.text,
-    segments: result.segments || [],
-    language: result.language,
-    model: modelId,
-  };
-}
-
-// ============================================================================
-// Text-to-Speech
-// ============================================================================
-
-/**
- * Synthesize speech (returns base64 WAV)
- */
-export async function synthesizeSpeech(
-  modelId: string,
-  text: string,
-  options: TTSOptions = {}
-): Promise<TTSResult> {
-  const native = getNodeAddon();
-  const basePath = getModelsBasePath();
-  
-  let modelBasePath: string;
-  if (modelId === 'custom') {
-    if (!options.customBasePath) {
-      throw new Error('Custom model requires customBasePath');
-    }
-    modelBasePath = options.customBasePath;
-  } else {
-    modelBasePath = `${basePath}/tts/${modelId}`;
-  }
-  
-  const result = await native.synthesizeSpeechBase64(
-    text,
-    `${modelBasePath}/first_stage.safetensors`,
-    `${modelBasePath}/first_stage_meta.json`,
-    `${modelBasePath}/second_stage.safetensors`,
-    `${modelBasePath}/encodec.safetensors`,
-    `${modelBasePath}/spk_emb.safetensors`,
-    options.quantized ?? false,
-    options.guidanceScale ?? 3.0,
-    options.temperature ?? 1.0,
-    options.maxTokens ?? 2000,
-    options.seed,
-    toNativeDevice(options.device)
-  );
-  
-  return {
-    base64: result.base64,
-    sampleRate: result.sampleRate || result.sample_rate,
-    durationSeconds: result.durationSeconds || result.duration_seconds,
-    model: modelId,
-  };
 }

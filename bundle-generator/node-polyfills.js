@@ -698,8 +698,20 @@ if (typeof module !== 'undefined' && module.exports) {
   };
   
   // Helper function to get a specific polyfill by name
+  // Handles subpaths like 'fs/promises' by navigating the module object
   module.exports.getPolyfill = function(moduleName) {
     const polyfills = module.exports;
+    
+    // Handle subpaths (e.g., 'fs/promises' -> polyfills.fs.promises)
+    if (moduleName.includes('/')) {
+      const parts = moduleName.split('/');
+      let result = polyfills[parts[0]];
+      for (let i = 1; i < parts.length && result; i++) {
+        result = result[parts[i]];
+      }
+      return result || polyfills.events;
+    }
+    
     return polyfills[moduleName] || polyfills.events;
   };
 }

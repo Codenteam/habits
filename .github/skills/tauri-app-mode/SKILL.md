@@ -88,6 +88,9 @@ The tauri-webdriver MCP server provides comprehensive testing capabilities. **Al
 - `mcp_tauri-webdriv_execute_script` - Run JavaScript in app context
 - `mcp_tauri-webdriv_take_screenshot` - Capture screenshot (base64 PNG)
 
+**File Operations:**
+- `mcp_tauri-webdriv_write_app_file` - Upload file to app's data directory (chunked)
+
 **CLI Integration:**
 - `mcp_tauri-webdriv_run_test` - Run habits-test CLI commands
 
@@ -228,3 +231,83 @@ cd habits-cortex && pnpm tauri build --target aarch64-apple-darwin
 - User explicitly says "app mode" or "tauri only"
 - Building device-specific features (Bluetooth, NFC, camera, etc.)
 - User wants offline-capable functionality
+
+## File Upload to App (Chunked Transfer)
+
+WebDriver doesn't natively support `<input type="file">` on WebKit-based Tauri apps. A chunked file transfer system exists to send files to the app's data directory.
+
+### How It Works
+
+1. **MCP Server** ([packages/manage/src/mcp/tauri.ts](packages/manage/src/mcp/tauri.ts#L1676-L1738)):
+   - `write_app_file` tool reads the source file
+   - Splits into **500KB chunks** (512000 bytes)
+   - Each chunk: base64 encode → WebDriver execute_async → Tauri invoke
+   - Uses `append: true` for chunks after the first
+
+2. **Rust Handler** ([habits-cortex/src-tauri/src/lib.rs](habits-cortex/src-tauri/src/lib.rs#L95-L145)):
+   - `write_app_data_file` Tauri command receives chunks
+   - Decodes base64 → writes/appends to file in `appDataDir`
+   - Creates parent directories automatically
+
+### Usage
+
+```typescript
+// Via MCP tool
+mcp_tauri-webdriv_write_app_file({
+  sourcePath: "/local/path/to/file.zip",
+  destPath: "habits/imported/file.zip"  // Relative to appDataDir
+})
+```
+
+### Implementation Reference
+
+**TypeScript (chunking):**
+```typescript
+const chunkSize = 512000; // 500KB
+for (let i = 0; i < totalChunks; i++) {
+  const chunk = fileContent.slice(start, end);
+  const base64Content = chunk.toString('base64');
+  await webdriver('POST', `/session/${sid}/execute/async`, {
+    script: `window.__TAURI__.core.invoke('write_app_data_file', {
+      base64Content: arguments[0],
+      relativePath: arguments[1],
+      append: arguments[2]
+    }).then(done).catch(...)`,
+    args: [base64Content, destPath, i > 0],
+  });
+}
+```
+
+**Rust (receiving):**
+```rust
+#[tauri::command]
+async fn write_app_data_file(
+    app_handle: tauri::AppHandle,
+    base64_content: String,
+    relative_path: String,
+    append: Option<bool>,
+) -> Result<WriteAppDataFileResult, String> {
+    let append_mode = append.unwrap_or(false);
+    let app_data_dir = app_handle.path().app_data_dir()?;
+    let bytes = base64::decode(&base64_content)?;
+    
+    OpenOptions::new()
+        .write(true).create(true)
+        .append(append_mode).truncate(!append_mode)
+        .open(&full_path)?
+        .write_all(&bytes)?;
+}
+```
+
+### When to Use
+
+- Importing habit files (.habit) into the app
+- Uploading test assets (images, data files)
+- Transferring large files that don't fit in single WebDriver script
+- Any file > 500KB needs this chunked approach
+
+### Limitations
+
+- No streaming; full file loaded into memory on MCP server side
+- Base64 encoding adds ~33% overhead per chunk
+- Progress logged every 50 chunks to console

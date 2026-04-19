@@ -696,6 +696,8 @@ dependencies = [
 [[package]]
 name = "candle-core"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bd9895436c1ba5dc1037a19935d084b838db066ff4e15ef7dded020b7c12a4a"
 dependencies = [
  "accelerate-src",
  "byteorder",
@@ -724,6 +726,8 @@ dependencies = [
 [[package]]
 name = "candle-metal-kernels"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b6b5a4cae6b4e1ab0efcee4dc05272d11b374a3d1ba121b3a961e36be54ab60"
 dependencies = [
  "half",
  "objc2",
@@ -737,6 +741,8 @@ dependencies = [
 [[package]]
 name = "candle-nn"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9317a09d6530b758990ed7f625ac69ff43653bc9ee28b0464644ad1169ada87"
 dependencies = [
  "accelerate-src",
  "candle-core",
@@ -754,6 +760,8 @@ dependencies = [
 [[package]]
 name = "candle-transformers"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f59d08c89e9f4af9c464e2f3a8e16199e7cc601e6f34538c2cfbb42b623b1783"
 dependencies = [
  "accelerate-src",
  "byteorder",
@@ -772,6 +780,8 @@ dependencies = [
 [[package]]
 name = "candle-ug"
 version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca0fc3167cbc99c8ec1be618cb620aa21dca95038f118c3579a79370e3dc5f77"
 dependencies = [
  "ug",
  "ug-metal",
@@ -2627,12 +2637,12 @@ dependencies = [
 
 [[package]]
 name = "gio-sys"
-version = "0.22.0"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64729ba2772c080448f9f966dba8f4456beeb100d8c28a865ef8a0f2ef4987e1"
+checksum = "0071fe88dba8e40086c8ff9bbb62622999f49628344b1d1bf490a48a29d80f22"
 dependencies = [
- "glib-sys 0.22.3",
- "gobject-sys 0.22.0",
+ "glib-sys 0.21.5",
+ "gobject-sys 0.21.5",
  "libc",
  "system-deps 7.0.8",
  "windows-sys 0.61.2",
@@ -2683,9 +2693,9 @@ dependencies = [
 
 [[package]]
 name = "glib"
-version = "0.22.4"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02856b71413e175be50eff37fe0aefa53e227054ee3d96196faee8a0823cac80"
+checksum = "16de123c2e6c90ce3b573b7330de19be649080ec612033d397d72da265f1bd8b"
 dependencies = [
  "bitflags 2.11.0",
  "futures-channel",
@@ -2693,10 +2703,10 @@ dependencies = [
  "futures-executor",
  "futures-task",
  "futures-util",
- "gio-sys 0.22.0",
- "glib-macros 0.22.2",
- "glib-sys 0.22.3",
- "gobject-sys 0.22.0",
+ "gio-sys 0.21.5",
+ "glib-macros 0.21.5",
+ "glib-sys 0.21.5",
+ "gobject-sys 0.21.5",
  "libc",
  "memchr",
  "smallvec",
@@ -2718,11 +2728,12 @@ dependencies = [
 
 [[package]]
 name = "glib-macros"
-version = "0.22.2"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bda575994e3689b1bc12f89c3df621ead46ff292623b76b4710a3a5b79be54bb"
+checksum = "cf59b675301228a696fe01c3073974643365080a76cc3ed5bc2cbc466ad87f17"
 dependencies = [
  "heck 0.5.0",
+ "proc-macro-crate 3.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -2740,9 +2751,9 @@ dependencies = [
 
 [[package]]
 name = "glib-sys"
-version = "0.22.3"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1eb23a616a3dbc7fc15bbd26f58756ff0b04c8a894df3f0680cd21011db6a642"
+checksum = "2d95e1a3a19ae464a7286e14af9a90683c64d70c02532d88d87ce95056af3e6c"
 dependencies = [
  "libc",
  "system-deps 7.0.8",
@@ -2767,11 +2778,11 @@ dependencies = [
 
 [[package]]
 name = "gobject-sys"
-version = "0.22.0"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18eda93f09d3778f38255b231b17ef67195013a592c91624a4daf8bead875565"
+checksum = "2dca35da0d19a18f4575f3cb99fe1c9e029a2941af5662f326f738a21edaf294"
 dependencies = [
- "glib-sys 0.22.3",
+ "glib-sys 0.21.5",
  "libc",
  "system-deps 7.0.8",
 ]
@@ -2861,19 +2872,14 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-email",
  "tauri-plugin-fs",
- "tauri-plugin-geolocation",
  "tauri-plugin-http",
  "tauri-plugin-keyring",
  "tauri-plugin-local-ai",
  "tauri-plugin-log",
- "tauri-plugin-matter",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
- "tauri-plugin-sms",
  "tauri-plugin-sql",
- "tauri-plugin-system-settings",
  "tauri-plugin-webdriver",
- "tauri-plugin-wifi",
  "xcap",
 ]
 
@@ -7507,20 +7513,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-geolocation"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0366e51823ad001ff1a47f116cd34ddfea3d94ebeb2309caf42e290dec27e0a6"
-dependencies = [
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-http"
 version = "2.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7602,19 +7594,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-matter"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-opener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7658,19 +7637,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-sms"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-sql"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7691,28 +7657,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-system-settings"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-webdriver"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a130e5cc896b52a87d618b53e1ba025954af7c004b8781a4ddee7298f7b3749a"
 dependencies = [
  "async-trait",
  "axum",
  "base64 0.22.1",
  "block2",
  "cairo-rs",
- "glib 0.22.4",
+ "glib 0.21.5",
  "gtk",
  "javascriptcore-rs",
  "objc2",
@@ -7732,19 +7687,6 @@ dependencies = [
  "webview2-com",
  "windows 0.61.3",
  "windows-core 0.61.2",
-]
-
-[[package]]
-name = "tauri-plugin-wifi"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
 ]
 
 [[package]]

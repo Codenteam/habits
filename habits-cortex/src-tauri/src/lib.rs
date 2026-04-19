@@ -8,7 +8,7 @@ use std::sync::Mutex;
 use tauri::{Manager, Emitter};
 use base64::Engine;
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
 mod automation;
 
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
@@ -176,18 +176,23 @@ pub fn run() {
     // Add local-ai plugin on all platforms (desktop/iOS: Metal+Accelerate, Android: CPU-only)
     let builder = builder.plugin(tauri_plugin_local_ai::init());
     
-    // Add webdriver plugin for all debug builds (desktop, iOS, Android)
-    #[cfg(debug_assertions)]
+    // Add webdriver plugin only when debug build and feature are both enabled
+    #[cfg(all(debug_assertions, feature = "debug-tools"))]
     let builder = builder.plugin(tauri_plugin_webdriver::init());
     
-    // Add mobile-only plugins (iOS/Android)
-    #[cfg(any(target_os = "ios", target_os = "android"))]
-    let builder = builder
-        .plugin(tauri_plugin_geolocation::init())
-        .plugin(tauri_plugin_wifi::init())
-        .plugin(tauri_plugin_system_settings::init())
-        .plugin(tauri_plugin_matter::init())
-        .plugin(tauri_plugin_sms::init());
+    // Mobile-only plugins (iOS/Android) - commented out for initial release
+    // These require permission declarations in Google Play Console:
+    // - wifi: Requires location permission (Android uses location for WiFi scanning)
+    // - matter: Requires Bluetooth + Location for device commissioning
+    // - sms: Requires SMS permission declaration
+    // - system-settings: Has Bluetooth control
+    // #[cfg(any(target_os = "ios", target_os = "android"))]
+    // let builder = builder
+    //     .plugin(tauri_plugin_geolocation::init())
+    //     .plugin(tauri_plugin_wifi::init())
+    //     .plugin(tauri_plugin_matter::init())
+    //     .plugin(tauri_plugin_sms::init())
+    //     .plugin(tauri_plugin_system_settings::init());
     
     builder
         .plugin(tauri_plugin_http::init())
@@ -209,7 +214,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, _event| {
-            #[cfg(all(debug_assertions, desktop))]
+            #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
             automation::start_automation_server(app_handle.clone());
         });
 }

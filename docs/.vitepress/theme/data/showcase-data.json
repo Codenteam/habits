@@ -60,19 +60,6 @@
     "imageCount": 1
   },
   {
-    "slug": "local-ai",
-    "name": "Local AI Chat",
-    "description": "Run AI models locally on your device without cloud services. Uses llama.cpp for efficient CPU/GPU inference.",
-    "tags": [
-      "ai",
-      "developer"
-    ],
-    "difficulty": "intermediate",
-    "featured": true,
-    "thumbnail": "/showcase/local-ai/agent-default.svg",
-    "imageCount": 1
-  },
-  {
     "slug": "marketing-campaign",
     "name": "Marketing Campaign Generator",
     "description": "AI-powered marketing campaign generator that creates expanded prompts, images, posters, and landing pages in parallel using the Intersect AI gateway.",

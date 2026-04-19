@@ -358,20 +358,14 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   
 
 
-  // If there is no certs/Habits_Mac.provisionprofile and there is MAC_PROVISIONING_PROFILE_BASE64 in env
-  const profileTargetPath = path.join('certs', 'Habits_Mac.provisionprofile');
-  if (!fs.existsSync(profileTargetPath) &&hasBase64EnvVar('MAC_PROVISIONING_PROFILE_BASE64')) {
-  const profileDir = path.dirname(profileTargetPath);
-  
-  if (!fs.existsSync(profileDir)) {
-    fs.mkdirSync(profileDir, { recursive: true });
-  }
-  
-  // Decode directly to the expected location (not temp dir)
-  const base64Data = process.env.MAC_PROVISIONING_PROFILE_BASE64!;
-  fs.writeFileSync(profileTargetPath, Buffer.from(base64Data, 'base64'));
-  console.log('success', `Provisioning profile written to ${profileTargetPath}`);
-}
+    const profileTargetPath = path.resolve(TAURI_DIR, '..', 'certs', 'Habits_Mac.provisionprofile');
+    if (hasBase64EnvVar('MAC_PROVISIONING_PROFILE_BASE64')) {
+      fs.mkdirSync(path.dirname(profileTargetPath), { recursive: true });
+
+      const base64Data = process.env.MAC_PROVISIONING_PROFILE_BASE64!;
+      fs.writeFileSync(profileTargetPath, Buffer.from(base64Data, 'base64'));
+      console.log('success', `Provisioning profile written to ${profileTargetPath}`);
+    }
 
   return {
     keychainPath,
@@ -428,7 +422,11 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
   
   console.log('step', `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles app,dmg`, { env: buildEnv });
+  
+  // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
+  // Build both app and dmg for direct distribution
+  const bundles = options.uploadMacos ? 'app' : 'app,dmg';
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles}`, { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
@@ -654,6 +652,7 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
  */
 function patchIOSProject(): void {
   const projectYmlPath = path.join(TAURI_DIR, 'gen', 'apple', 'project.yml');
+  const pbxprojPath = path.join(TAURI_DIR, 'gen', 'apple', 'habits-cortex.xcodeproj', 'project.pbxproj');
   
   if (!fs.existsSync(projectYmlPath)) {
     console.log('warn', 'project.yml not found - skipping iOS project patching');
@@ -704,6 +703,18 @@ function patchIOSProject(): void {
       patched = true;
     }
   }
+
+  // Fix Xcode arch placeholder issues in Build Rust Code script.
+  // Some CI/Xcode environments pass an unresolved arch token through ARCHS,
+  // causing tauri ios xcode-script to fail with "{arch} isn't a known arch".
+  if (content.includes('${ARCHS:?}')) {
+    content = content.replace(
+      /\$\{ARCHS:\?\}/g,
+      '${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}'
+    );
+    console.log('success', 'Patched Build Rust Code arch arg in project.yml');
+    patched = true;
+  }
   
   if (patched) {
     fs.writeFileSync(projectYmlPath, content);
@@ -721,6 +732,19 @@ function patchIOSProject(): void {
     }
   } else {
     console.log('info', 'project.yml already patched');
+  }
+
+  // Also patch generated Xcode project directly in case xcodegen is unavailable.
+  if (fs.existsSync(pbxprojPath)) {
+    const pbxprojContent = fs.readFileSync(pbxprojPath, 'utf8');
+    if (pbxprojContent.includes('${ARCHS:?}')) {
+      const patchedPbxproj = pbxprojContent.replace(
+        /\$\{ARCHS:\?\}/g,
+        '${NATIVE_ARCH_ACTUAL:-${CURRENT_ARCH:-arm64}}'
+      );
+      fs.writeFileSync(pbxprojPath, patchedPbxproj);
+      console.log('success', 'Patched Build Rust Code arch arg in project.pbxproj');
+    }
   }
 }
 
@@ -841,87 +865,121 @@ function setIOSVersions(): void {
 }
 
 /**
- * Build iOS with automatic signing using App Store Connect API.
- * Xcode handles certificate/profile selection automatically.
- * 
+ * Build iOS with cloud signing via App Store Connect API.
+ * Invokes xcodebuild directly with -allowProvisioningUpdates and
+ * -authenticationKey* flags so Xcode fetches/updates profiles from Apple.
+ *
  * Required environment variables:
  * - APP_STORE_CONNECT_API_KEY_ID
  * - APP_STORE_CONNECT_API_ISSUER_ID
  * - APP_STORE_CONNECT_API_KEY_BASE64
  * - IOS_MAC_APPLE_CERTIFICATE_BASE64 (Apple Distribution certificate for signing)
  * - IOS_MAC_APPLE_CERTIFICATE_PASSWORD
+ * Optional:
+ * - APPLE_TEAM_ID (falls back to DEVELOPMENT_TEAM from project.yml)
  */
 async function buildIOS(): Promise<string[]> {
   logHeader('Building iOS Application');
-  
+
   const artifacts: string[] = [];
-  
-  // Check for required API key credentials
-  const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID && 
-                    process.env.APP_STORE_CONNECT_API_ISSUER_ID && 
+
+  const hasApiKey = process.env.APP_STORE_CONNECT_API_KEY_ID &&
+                    process.env.APP_STORE_CONNECT_API_ISSUER_ID &&
                     hasBase64EnvVar('APP_STORE_CONNECT_API_KEY_BASE64');
-  
+
   if (!hasApiKey) {
     throw new Error('iOS build requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_BASE64');
   }
-  
-  // Setup keychain with Apple Distribution certificate
+
   await setupIOSKeychain();
-  
-  // Decode API key to file
+
+  // Decode API key to AuthKey_<KEY_ID>.p8 (convention used by xcodebuild + altool)
   logSection('Setting up App Store Connect API Key');
-  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', 'AuthKey.p8');
-  
-  console.log('success', `API Key ID: ${process.env.APP_STORE_CONNECT_API_KEY_ID}`);
-  console.log('success', `API Issuer ID: ${process.env.APP_STORE_CONNECT_API_ISSUER_ID}`);
-  
-  // Set environment variables for Tauri's automatic signing
+  const apiKeyId = process.env.APP_STORE_CONNECT_API_KEY_ID!;
+  const apiIssuerId = process.env.APP_STORE_CONNECT_API_ISSUER_ID!;
+  const apiKeyPath = decodeBase64ToFile('APP_STORE_CONNECT_API_KEY_BASE64', `AuthKey_${apiKeyId}.p8`);
+
+  console.log('success', `API Key ID: ${apiKeyId}`);
+  console.log('success', `API Issuer ID: ${apiIssuerId}`);
+  console.log('success', `API Key Path: ${apiKeyPath}`);
+
+  // APPLE_API_* env vars are also consumed by cargo-mobile2 / tauri internals
+  // and by the "Build Rust Code" xcode-script phase.
   const buildEnv: Record<string, string> = {
-    APPLE_API_ISSUER: process.env.APP_STORE_CONNECT_API_ISSUER_ID!,
-    APPLE_API_KEY: process.env.APP_STORE_CONNECT_API_KEY_ID!,
+    APPLE_API_ISSUER: apiIssuerId,
+    APPLE_API_KEY: apiKeyId,
     APPLE_API_KEY_PATH: apiKeyPath,
   };
-  
-  logSection('Building iOS Application');
-  
+
   const tauriConfig = JSON.parse(fs.readFileSync(path.join(TAURI_DIR, 'tauri.conf.json'), 'utf8'));
   console.log('info', `Bundle ID: ${tauriConfig.identifier}`);
   console.log('info', `Version: ${tauriConfig.version}`);
-  console.log('info', 'Signing: automatic (App Store Connect API)');
+  console.log('info', 'Signing: cloud (App Store Connect API + -allowProvisioningUpdates)');
 
-  // Align generated iOS metadata with tauri.conf.json and CI build number.
   setIOSVersions();
-  
-  // Patch project.yml to fix common App Store validation issues
   patchIOSProject();
-  
-  console.log('step', 'Building iOS app...');
-  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect`, { env: buildEnv });
-  
+
+  // Ensure the iOS Rust target is installed before xcodebuild invokes the build script.
+  exec('rustup target add aarch64-apple-ios', { ignoreError: true, silent: true });
+
+  // Pre-build the Rust library for iOS before xcodebuild runs.
+  // This is required because the Xcode "Build Rust Code" script expects the library
+  // to already exist (workaround for Tauri CLI 2.10.1 {arch} placeholder bug).
+  logSection('Pre-building Rust library for iOS');
+  exec('cargo build --release --target aarch64-apple-ios', { cwd: TAURI_DIR });
+  console.log('success', 'Rust library built for aarch64-apple-ios');
+
+  const applePath = path.join(TAURI_DIR, 'gen', 'apple');
+  const buildDir = path.join(applePath, 'build');
+  const ipaExportDir = path.join(buildDir, 'arm64');
+
+  // Team ID for automatic signing
+  const teamId = process.env.APPLE_TEAM_ID || 'S54SCFZ347';
+
+  fs.mkdirSync(buildDir, { recursive: true });
+
+  // Use tauri ios build which properly sets up the server-addr file and environment
+  // before invoking xcodebuild. This avoids the "failed to read missing addr file" panic.
+  logSection('Building iOS app (tauri ios build)');
+
+  const tauriBuildEnv: Record<string, string> = {
+    ...buildEnv,
+    // Tauri uses these env vars for iOS automatic signing
+    APPLE_DEVELOPMENT_TEAM: teamId,
+    // Signing identity - must match a certificate in the keychain
+    APPLE_SIGNING_IDENTITY: process.env.APPLE_SIGNING_IDENTITY || '',
+    // CI mode to skip prompts
+    CI: 'true',
+  };
+
+  // Use --ci flag and let tauri handle the xcodebuild invocation
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --ci`, { 
+    env: tauriBuildEnv 
+  });
   console.log('success', 'iOS build completed');
-  
-  // Find the built IPA
-  const ipaDir = path.join(TAURI_DIR, 'gen', 'apple', 'build', 'arm64');
-  if (fs.existsSync(ipaDir)) {
-    const ipas = fs.readdirSync(ipaDir).filter(f => f.endsWith('.ipa'));
+
+  // Find the built IPA (tauri places it in gen/apple/build/arm64/)
+  fs.mkdirSync(ipaExportDir, { recursive: true });
+
+  if (fs.existsSync(ipaExportDir)) {
+    const ipas = fs.readdirSync(ipaExportDir).filter(f => f.endsWith('.ipa'));
     for (const ipa of ipas) {
-      const ipaPath = path.join(ipaDir, ipa);
+      const ipaPath = path.join(ipaExportDir, ipa);
       artifacts.push(ipaPath);
       console.log('success', `Found IPA: ${ipa}`);
     }
   }
-  
-  // Also check the archive for .app
-  const archiveDir = path.join(TAURI_DIR, 'gen', 'apple', 'build');
-  const xcarchive = path.join(archiveDir, 'habits-cortex_iOS.xcarchive');
-  const appPath = path.join(xcarchive, 'Products', 'Applications', 'Cortex.app');
+
+  // Also check for .app in archive if present (for debugging/local testing)
+  const archiveDir = path.join(buildDir, 'habits-cortex_iOS.xcarchive');
+  const appPath = path.join(archiveDir, 'Products', 'Applications', 'Cortex.app');
   if (fs.existsSync(appPath)) {
     artifacts.push(appPath);
     console.log('success', 'Found Cortex.app in archive');
   }
-  
+
   console.log('success', `Built ${artifacts.length} iOS artifact(s)`);
-  
+
   return artifacts;
 }
 

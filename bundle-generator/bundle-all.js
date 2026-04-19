@@ -119,8 +119,13 @@ async function generateBundleAll(modules, outputPath) {
     'crypto', 'url', 'querystring', 'buffer', 'assert', 'zlib', 'net',
     'tls', 'dns', 'child_process', 'readline', 'vm', 'module', 'inspector',
     'process', 'string_decoder', 'tty', 'http2', 'worker_threads',
-    'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster'
+    'perf_hooks', 'async_hooks', 'timers', 'punycode', 'constants', 'cluster',
+    // Common subpaths
+    'fs/promises', 'util/types', 'path/posix', 'path/win32', 'stream/promises'
   ];
+
+  // Path to polyfills
+  const polyfillsPath = path.join(__dirname, 'node-polyfills.js');
 
 
   // Create stub redirect plugin
@@ -197,15 +202,27 @@ async function generateBundleAll(modules, outputPath) {
         };
       });
 
-      for (const builtin of nodeBuiltins) {
-        build.onResolve({ filter: new RegExp(`^${builtin}$`) }, () => {
-          return {
-            path: `polyfill:${builtin}`,
-            namespace: 'node-polyfill',
-            pluginData: { moduleName: builtin }
-          };
-        });
-      }
+      // Handle bare Node.js module imports (including subpaths like fs/promises)
+      build.onResolve({ filter: /^(events|util|stream|path|fs|http|https|os|crypto|url|querystring|buffer|assert|zlib|net|tls|dns|child_process|readline|vm|module|inspector|process|string_decoder|tty|http2|worker_threads|perf_hooks|async_hooks|timers|punycode|constants|cluster)(\/.*)?$/ }, (args) => {
+        const moduleName = args.path;
+        return {
+          path: `polyfill:${moduleName}`,
+          namespace: 'node-polyfill',
+          pluginData: { moduleName }
+        };
+      });
+
+      build.onLoad({ filter: /.*/, namespace: 'node-polyfill' }, (args) => {
+        const moduleName = args.pluginData.moduleName;
+        return {
+          contents: `
+            const { getPolyfill } = require(${JSON.stringify(polyfillsPath)});
+            module.exports = getPolyfill('${moduleName}');
+          `,
+          loader: 'js',
+          resolveDir: __dirname
+        };
+      });
 
 
     }
