@@ -18,7 +18,7 @@ Add to your `src-tauri/Cargo.toml`:
 [dependencies]
 tauri-plugin-local-ai = { path = "../tauri-plugin-local-ai" }
 # Or from git:
-# tauri-plugin-local-ai = { git = "https://github.com/your-org/local-ai-rust" }
+# tauri-plugin-local-ai = { git = "https://github.com/your-org/local-ai-candle" }
 ```
 
 Register the plugin in your `src-tauri/src/lib.rs`:

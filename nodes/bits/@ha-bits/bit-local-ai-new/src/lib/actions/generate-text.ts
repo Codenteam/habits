@@ -38,10 +38,17 @@ export const generateTextAction = createAction({
         options: modelOptions,
       },
     }),
+    maxTokens: Property.Number({
+      displayName: 'Max Tokens',
+      description: 'Maximum number of tokens to generate',
+      required: false,
+      defaultValue: 256,
+    }),
   },
   async run({ propsValue }) {
     const prompts = propsValue.prompts as ChatMessage[];
     const modelId = propsValue.modelId || 'qwen2-0.5b';
+    const maxTokens = propsValue.maxTokens || 256;
 
     console.log('[generate-text] run() called, modelId:', modelId);
 
@@ -66,9 +73,9 @@ export const generateTextAction = createAction({
       }
     }
 
-    console.log('[generate-text] calling generateText() with', prompts.length, 'messages, modelId:', modelId);
+    console.log('[generate-text] calling generateText() with', prompts.length, 'messages, modelId:', modelId, 'maxTokens:', maxTokens);
     try {
-      const result = await generateText(prompts, modelId);
+      const result = await generateText(prompts, modelId, maxTokens);
       console.log('[generate-text] generateText() returned, tokens:', result.tokensGenerated);
       return result;
     } catch (e: unknown) {

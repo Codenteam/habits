@@ -2872,19 +2872,14 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-email",
  "tauri-plugin-fs",
- "tauri-plugin-geolocation",
  "tauri-plugin-http",
  "tauri-plugin-keyring",
  "tauri-plugin-local-ai",
  "tauri-plugin-log",
- "tauri-plugin-matter",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
- "tauri-plugin-sms",
  "tauri-plugin-sql",
- "tauri-plugin-system-settings",
  "tauri-plugin-webdriver",
- "tauri-plugin-wifi",
  "xcap",
 ]
 
@@ -7518,20 +7513,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-geolocation"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0366e51823ad001ff1a47f116cd34ddfea3d94ebeb2309caf42e290dec27e0a6"
-dependencies = [
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-http"
 version = "2.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7613,19 +7594,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-matter"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-opener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7669,19 +7637,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-sms"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "tauri-plugin-sql"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7699,19 +7654,6 @@ dependencies = [
  "time",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "tauri-plugin-system-settings"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -7745,19 +7687,6 @@ dependencies = [
  "webview2-com",
  "windows 0.61.3",
  "windows-core 0.61.2",
-]
-
-[[package]]
-name = "tauri-plugin-wifi"
-version = "0.1.0"
-dependencies = [
- "jni",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
 ]
 
 [[package]]

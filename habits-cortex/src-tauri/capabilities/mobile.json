@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
-  "description": "Mobile-only capabilities (iOS/Android)",
+  "description": "Mobile-only capabilities (iOS/Android) - sensitive plugins disabled for initial release",
   "platforms": ["iOS", "android"],
   "windows": ["main"],
   "webviews": ["main"],
@@ -9,42 +9,5 @@
   "remote": {
     "urls": ["tauri://localhost/*", "tauri://*"]
   },
-  "permissions": [
-    "geolocation:default",
-    "geolocation:allow-check-permissions",
-    "geolocation:allow-request-permissions",
-    "geolocation:allow-get-current-position",
-    "geolocation:allow-watch-position",
-    "geolocation:allow-clear-watch",
-    "wifi:default",
-    "wifi:allow-check-permissions",
-    "wifi:allow-request-permissions",
-    "wifi:allow-get-current-network",
-    "wifi:allow-is-connected",
-    "wifi:allow-list-saved-networks",
-    "system-settings:default",
-    "system-settings:allow-get-bluetooth-state",
-    "system-settings:allow-get-dnd-state",
-    "system-settings:allow-get-ringer-mode",
-    "system-settings:allow-get-volume",
-    "system-settings:allow-set-bluetooth",
-    "system-settings:allow-set-dnd",
-    "system-settings:allow-set-mute",
-    "system-settings:allow-set-ringer-mode",
-    "system-settings:allow-set-volume",
-    "matter:default",
-    "matter:allow-commission-device",
-    "matter:allow-discover-devices",
-    "matter:allow-get-device-state",
-    "matter:allow-get-devices",
-    "matter:allow-remove-device",
-    "matter:allow-set-color",
-    "matter:allow-set-level",
-    "matter:allow-set-on-off",
-    "sms:default",
-    "sms:allow-check-permissions",
-    "sms:allow-request-permissions",
-    "sms:allow-send-sms",
-    "sms:allow-read-sms"
-  ]
+  "permissions": []
 }

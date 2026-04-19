@@ -140,7 +140,8 @@ export async function installModel(modelId: string): Promise<InstallModelResult>
  */
 export async function generateText(
   prompts: ChatMessage[],
-  modelId: string = 'qwen2-0.5b'
+  modelId: string = 'qwen2-0.5b',
+  maxTokens: number = 256
 ): Promise<TextGenResult> {
   const native = getNodeAddon();
   const basePath = getModelsBasePath();
@@ -161,7 +162,7 @@ export async function generateText(
     modelPath,
     tokenizerPath,
     fullPrompt,
-    64,   // maxTokens
+    maxTokens,
     0.7,  // temperature
     undefined, // seed
     'cpu'  // device

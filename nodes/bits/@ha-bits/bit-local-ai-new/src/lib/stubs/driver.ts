@@ -127,9 +127,10 @@ export async function installModel(modelId: string): Promise<InstallModelResult>
  */
 export async function generateText(
   prompts: ChatMessage[],
-  modelId: string = 'qwen2-0.5b'
+  modelId: string = 'qwen2-0.5b',
+  maxTokens: number = 256
 ): Promise<TextGenResult> {
-  console.log('[driver.generateText] called, modelId:', modelId);
+  console.log('[driver.generateText] called, modelId:', modelId, 'maxTokens:', maxTokens);
   const invoke = getInvoke();
 
   // Get models directory
@@ -165,7 +166,7 @@ export async function generateText(
       modelPath,
       tokenizerPath,
       prompt: fullPrompt,
-      maxTokens: 512,
+      maxTokens,
       temperature: 0.7,
       device: 'auto',
     }

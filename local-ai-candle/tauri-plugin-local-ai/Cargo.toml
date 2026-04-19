@@ -5,7 +5,7 @@ edition = "2021"
 description = "Tauri v2 plugin for Local AI inference"
 license = "MIT OR Apache-2.0"
 authors = ["Your Name"]
-repository = "https://github.com/your-org/local-ai-rust"
+repository = "https://github.com/your-org/local-ai-candle"
 links = "tauri-plugin-local-ai"
 
 [package.metadata.docs.rs]

@@ -3,7 +3,7 @@
 # Build them separately with: cargo build -p local-ai-core (etc.)
 
 [package]
-name = "local-ai-rust"
+name = "local-ai-candle"
 version = "0.1.0"
 edition = "2021"
 description = "Cross-platform AI demo with text generation, image captioning, and image generation using Candle"

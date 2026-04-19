@@ -14,6 +14,10 @@ input:
       type: string
       description: Model ID to use
       default: qwen2-0.5b
+    maxTokens:
+      type: number
+      description: Maximum number of tokens to generate
+      default: 256
   required:
     - question
 
@@ -34,6 +38,7 @@ nodes:
           - role: user
             content: "{{habits.input.question}}"
         modelId: "{{habits.input.modelId}}"
+        maxTokens: "{{habits.input.maxTokens}}"
 
 edges: []
 

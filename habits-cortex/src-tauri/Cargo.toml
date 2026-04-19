@@ -39,23 +39,24 @@ base64 = "0.22"
 
 # Mobile-only dependencies (iOS/Android)
 [target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
-tauri-plugin-geolocation = "2"
-tauri-plugin-wifi = { path = "../tauri-plugin-wifi" }
-tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }
-tauri-plugin-matter = { path = "../tauri-plugin-matter" }
-tauri-plugin-sms = { path = "../tauri-plugin-sms" }
+# Commented out for initial release - permissions require Google Play declaration form
+# tauri-plugin-geolocation = "2"  # Requires location permission declaration
+# tauri-plugin-wifi = { path = "../tauri-plugin-wifi" }  # Requires location permission (Android uses location for WiFi scanning)
+# tauri-plugin-system-settings = { path = "../tauri-plugin-system-settings" }  # Has Bluetooth control
+# tauri-plugin-matter = { path = "../tauri-plugin-matter" }  # Requires Bluetooth + Location for device commissioning
+# tauri-plugin-sms = { path = "../tauri-plugin-sms" }  # Requires SMS permission declaration
 
 # Apple targets: local-ai with Metal + Accelerate (Apple frameworks)
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
+tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai", features = ["metal", "accelerate"] }
 
 # Linux/Windows: loceal-ai with CPU-only inference (no Metal/Accelerate)
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
-tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
+tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai" }
 
 # Android: local-ai with CPU-only inference (no Metal/Accelerate)
 [target.'cfg(target_os = "android")'.dependencies]
-tauri-plugin-local-ai = { path = "../../local-ai-rust/tauri-plugin-local-ai" }
+tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai" }
 
 # xcap only for desktop targets and only when feature-gated
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]

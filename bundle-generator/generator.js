@@ -42,13 +42,30 @@ const template = fs.readFileSync(filePath, 'utf8');
 function discoverBitStubs(bits) {
     const aliases = {};
     const dependencies = {};
+    const searchPaths = [
+        path.join(__dirname, 'node_modules'),
+        path.join(__dirname, '../node_modules'),
+        process.cwd(),
+        path.join(process.cwd(), 'node_modules'),
+    ];
     
     for (const bit of bits) {
         try {
-            // Try to resolve the bit's package.json
-            const bitPackagePath = require.resolve(`${bit.module}/package.json`, {
-                paths: [path.join(__dirname, 'node_modules')]
-            });
+            const localPackagePaths = [
+                path.join(__dirname, '../nodes/bits', bit.module, 'package.json'),
+                path.join(process.cwd(), '../nodes/bits', bit.module, 'package.json'),
+                path.join(process.cwd(), 'nodes/bits', bit.module, 'package.json'),
+            ];
+
+            let bitPackagePath = localPackagePaths.find((candidate) => fs.existsSync(candidate));
+
+            // Fall back to installed package resolution
+            if (!bitPackagePath) {
+                bitPackagePath = require.resolve(`${bit.module}/package.json`, {
+                    paths: searchPaths
+                });
+            }
+
             const bitPackage = JSON.parse(fs.readFileSync(bitPackagePath, 'utf8'));
             const bitDir = path.dirname(bitPackagePath);
             

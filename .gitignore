@@ -72,20 +72,20 @@ packages/**/src/**/*.js.map
 packages/**/src/**/*.d.ts.map
 
 
-# local-ai-rust generated files
-local-ai-rust/local-ai-node/*.node
-local-ai-rust/local-ai-node/index.js
-local-ai-rust/local-ai-node/index.d.ts
-local-ai-rust/local-ai-node/dist/
-local-ai-rust/local-ai-node/target/
-local-ai-rust/**/target/
+# local-ai-candle generated files
+local-ai-candle/local-ai-node/*.node
+local-ai-candle/local-ai-node/index.js
+local-ai-candle/local-ai-node/index.d.ts
+local-ai-candle/local-ai-node/dist/
+local-ai-candle/local-ai-node/target/
+local-ai-candle/**/target/
 
 # Tauri plugin local-ai generated files
-local-ai-rust/tauri-plugin-local-ai/guest-js/dist/
-local-ai-rust/tauri-plugin-local-ai/target/
+local-ai-candle/tauri-plugin-local-ai/guest-js/dist/
+local-ai-candle/tauri-plugin-local-ai/target/
 
 # ML model files (large binary files)
-local-ai-rust/models/
+local-ai-candle/models/
 *.gguf
 *.ggml
 *.safetensors
