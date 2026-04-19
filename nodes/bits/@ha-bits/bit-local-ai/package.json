@@ -1,5 +1,5 @@
 {
-  "name": "@ha-bits/bit-local-ai-new",
+  "name": "@ha-bits/bit-local-ai",
   "version": "0.0.1",
   "description": "Simplified local AI bit with model installation and text generation",
   "main": "dist/index.js",
@@ -28,14 +28,14 @@
     "typescript": "^5.0.0"
   },
   "nx": {
-    "sourceRoot": "@ha-bits/bit-local-ai-new/src",
+    "sourceRoot": "@ha-bits/bit-local-ai/src",
     "projectType": "library",
     "tags": ["scope:bits", "type:bit"]
   },
   "habits": {
     "catalog": true,
     "stubs": {
-      "@ha-bits/bit-local-ai-new/driver": "./dist/lib/stubs/driver.js"
+      "@ha-bits/bit-local-ai/driver": "./dist/lib/stubs/driver.js"
     }
   }
 }

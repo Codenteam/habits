@@ -795,8 +795,8 @@
     "downloadsFormatted": "60"
   },
   {
-    "slug": "bit-local-ai-new",
-    "packageName": "@ha-bits/bit-local-ai-new",
+    "slug": "bit-local-ai",
+    "packageName": "@ha-bits/bit-local-ai",
     "name": "Local Ai New",
     "displayName": "Local AI (Simple)",
     "description": "Simple local AI with model installation and text generation",

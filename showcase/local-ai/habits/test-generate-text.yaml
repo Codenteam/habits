@@ -27,7 +27,7 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-local-ai-new"
+      module: "@ha-bits/bit-local-ai"
       operation: generate-text
       label: Generate Text
       isTrigger: false

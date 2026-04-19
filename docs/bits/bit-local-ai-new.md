@@ -16,9 +16,9 @@ onMounted(async () => {
     const res = await fetch(`${base}bits-stats.json`)
     if (res.ok) {
       const data = await res.json()
-      const stats = data.stats['@ha-bits/bit-local-ai-new']
+      const stats = data.stats['@ha-bits/bit-local-ai']
       if (stats) {
-        const el = document.querySelector('[data-package="@ha-bits/bit-local-ai-new"] .download-count')
+        const el = document.querySelector('[data-package="@ha-bits/bit-local-ai"] .download-count')
         if (el) el.textContent = stats.downloadsFormatted
       }
     }
@@ -29,9 +29,9 @@ onMounted(async () => {
 # <component :is="Package" :size="32" class="inline-icon" /> Local AI (Simple)
 
 <div class="bit-meta">
-  <span class="bit-package">`@ha-bits/bit-local-ai-new`</span>
+  <span class="bit-package">`@ha-bits/bit-local-ai`</span>
   <span class="bit-version">v0.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-local-ai-new">📥 <span class="download-count">-</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-local-ai">📥 <span class="download-count">-</span> downloads</span>
   <span class="bit-categories"></span>
 </div>
 
@@ -42,10 +42,10 @@ Simple local AI with model installation and text generation
 ```yaml
 # In your habit YAML
 nodes:
-  - id: my-bit-local-ai-new-node
+  - id: my-bit-local-ai-node
     type: bit
     framework: bits
-    module: "@ha-bits/bit-local-ai-new"
+    module: "@ha-bits/bit-local-ai"
     action: "install-model"
     data:
       # action properties...

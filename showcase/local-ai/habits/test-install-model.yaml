@@ -19,7 +19,7 @@ nodes:
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-local-ai-new"
+      module: "@ha-bits/bit-local-ai"
       operation: install-model
       label: Install Model
       isTrigger: false

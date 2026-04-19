@@ -5,7 +5,7 @@
  */
 
 import { createAction, Property } from '@ha-bits/cortex-core';
-import { generateText, isSupported } from '@ha-bits/bit-local-ai-new/driver';
+import { generateText, isSupported } from '@ha-bits/bit-local-ai/driver';
 import { ChatMessage, ModelRegistry } from '../common/common';
 
 // Build dropdown options from registry

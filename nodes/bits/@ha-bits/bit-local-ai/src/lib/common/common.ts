@@ -1,5 +1,5 @@
 /**
- * Common types and constants for bit-local-ai-new
+ * Common types and constants for bit-local-ai
  */
 
 /**

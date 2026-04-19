@@ -16,7 +16,7 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@ha-bits/bit-local-ai-new/driver": ["./src/lib/driver"]
+      "@ha-bits/bit-local-ai/driver": ["./src/lib/driver"]
     }
   },
   "include": ["src/**/*"],

@@ -1,5 +1,5 @@
 /**
- * bit-local-ai-new
+ * bit-local-ai
  *
  * Simplified local AI bit with model installation and text generation.
  */

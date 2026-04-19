@@ -3,7 +3,7 @@ name: "Test Local AI New"
 
 bits:
   - id: localAiNew
-    module: "@ha-bits/bit-local-ai-new"
+    module: "@ha-bits/bit-local-ai"
 
 workflows:
   - id: test-install-model

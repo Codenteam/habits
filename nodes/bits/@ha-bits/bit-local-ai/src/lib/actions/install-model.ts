@@ -5,7 +5,7 @@
  */
 
 import { createAction, Property } from '@ha-bits/cortex-core';
-import { installModel, isSupported } from '@ha-bits/bit-local-ai-new/driver';
+import { installModel, isSupported } from '@ha-bits/bit-local-ai/driver';
 import { ModelRegistry } from '../common/common';
 
 // Build dropdown options from registry
