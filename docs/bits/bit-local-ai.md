@@ -66,10 +66,6 @@ nodes:
 | **List Models** | List locally available AI models. |
 | **Get System Info** | Get information about the local AI environment (device support, version, etc.). |
 
-## Used In Showcases
-
-- [local-ai](/showcase/local-ai)
-
 <style>
 .bit-meta {
   display: flex;
