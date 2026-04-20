@@ -279,7 +279,9 @@
         const data = await res.json();
 
         if (!res.ok) {
+          showStatus('error', data.message || data.error || 'Failed to submit. Please try again');
           throw new Error(data.message || data.error || 'Request failed');
+          
         }
 
         // The workflow outputs: enriched -> plain score string, hubspot -> sync result
