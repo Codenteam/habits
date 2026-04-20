@@ -1,0 +1,70 @@
+id: enrich-lead
+name: Enrich Lead
+description: >-
+  Takes lead form details (email, name, and other data), sends to OpenAI for
+  scoring and enrichment, then syncs the enriched lead to HubSpot.
+version: "1.0"
+
+nodes:
+  - id: openai-score-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      label: AI Lead Scoring & Enrichment
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        cast: true
+        prompt: |
+          You are a B2B lead scoring assistant. Based on the lead's email domain and
+          company name, evaluate the quality of the lead.
+
+          Score this lead:
+          - Email: {{habits.input.email}}
+          - First Name: {{habits.input.firstName}}
+          - Last Name: {{habits.input.lastName}}
+          - Company: {{habits.input.company}}
+          - Phone: {{habits.input.phone}}
+
+          Analyze the email domain ({{habits.input.email}}) and company name
+          ({{habits.input.company}}) to determine lead score.
+
+          Respond with ONLY a single integer between 0 and 100. No explanation, no JSON, just the number.
+        temperature: 0.3
+        maxTokens: 10
+      
+
+  - id: hubspot-sync
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      label: Sync Lead to HubSpot
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        company: "{{habits.input.company}}"
+        phone: "{{habits.input.phone}}"
+        score: "{{openai-score-lead}}"
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+
+
+edges:
+  - id: e1
+    source: openai-score-lead
+    target: hubspot-sync
+
+output:
+  enriched: "{{openai-score-lead}}"
+  hubspot: "{{hubspot-sync}}"
+  

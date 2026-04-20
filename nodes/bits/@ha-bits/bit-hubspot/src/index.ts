@@ -78,6 +78,34 @@ async function hubspotRequest(
   return response.json();
 }
 
+/**
+ * Ensure a custom property exists on a HubSpot object type.
+ * Does a GET first; if not found (throws), creates it via POST.
+ */
+async function ensureContactProperty(
+  objectType: string,
+  propertyName: string,
+  accessToken: string,
+  propertyDefinition: Record<string, any>
+): Promise<void> {
+  try {
+    await hubspotRequest(
+      `/crm/v3/properties/${objectType}/${propertyName}`,
+      accessToken,
+      'GET'
+    );
+    // Property already exists — nothing to do
+  } catch {
+    // Property not found — create it
+    await hubspotRequest(
+      `/crm/v3/properties/${objectType}`,
+      accessToken,
+      'POST',
+      propertyDefinition
+    );
+  }
+}
+
 const hubspotBit = {
   // Unique identifier for webhook routing: /webhook/v/hubspot
   id: 'hubspot',
@@ -88,13 +116,10 @@ const hubspotBit = {
   replaces: '@ha-bits/bit-crm',
   
   auth: {
-    type: 'OAUTH2' as const,
-    displayName: 'HubSpot OAuth',
-    description: 'Connect your HubSpot account',
-    required: true,
-    authUrl: 'https://app.hubspot.com/oauth/authorize',
-    tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
-    scope: ['crm.objects.contacts.read', 'crm.objects.contacts.write', 'crm.objects.deals.read', 'crm.objects.deals.write'],
+      type: 'SECRET_TEXT' as const,
+      displayName: 'HubSpot Access Token',
+      description: 'Your HubSpot Private App access token (pat-...)',
+      required: true,
   },
   
   actions: {
@@ -868,6 +893,141 @@ const hubspotBit = {
       },
     },
     
+    /**
+     * Create or update a lead (upsert by email)
+     */
+    createOrUpdate: {
+      name: 'createOrUpdate',
+      displayName: 'Create or Update Lead',
+      description: 'Creates a new lead in HubSpot or updates the existing one if the email already exists (upsert by email)',
+      props: {
+        email: {
+          type: 'SHORT_TEXT',
+          displayName: 'Email',
+          description: 'Lead email address (used as unique key)',
+          required: true,
+        },
+        firstName: {
+          type: 'SHORT_TEXT',
+          displayName: 'First Name',
+          description: 'Lead first name',
+          required: false,
+        },
+        lastName: {
+          type: 'SHORT_TEXT',
+          displayName: 'Last Name',
+          description: 'Lead last name',
+          required: false,
+        },
+        company: {
+          type: 'SHORT_TEXT',
+          displayName: 'Company',
+          description: 'Lead company',
+          required: false,
+        },
+        phone: {
+          type: 'SHORT_TEXT',
+          displayName: 'Phone',
+          description: 'Lead phone number',
+          required: false,
+        },
+        score: {
+          type: 'SHORT_TEXT',
+          displayName: 'score',
+          description: 'Numeric score 0-100 from AI enrichment',
+          required: false,
+        },
+      },
+      async run(context: HubSpotContext) {
+        const {
+          email,
+          firstName,
+          lastName,
+          company,
+          phone,
+          score
+        } = context.propsValue;
+
+        const properties: Record<string, string | number> = {
+          email,
+          lifecyclestage: 'lead',
+        };
+        if (firstName) properties.firstname = firstName;
+        if (lastName) properties.lastname = lastName;
+        if (company) properties.company = company;
+        if (phone) properties.phone = phone;
+        if (score != null && score !== '') {
+          properties.score = Number(score);
+        }
+
+        // Ensure the 'score' property exists on contacts before using it
+        await ensureContactProperty('contacts', 'score', context.auth.accessToken, {
+          displayOrder: 4,
+          fieldType: 'number',
+          type: 'number',
+          groupName: 'contactinformation',
+          hasUniqueValue: false,
+          hidden: false,
+          label: 'Score',
+          name: 'score',
+        });
+
+        // Check if contact already exists by email
+        const searchResult = await hubspotRequest(
+          '/crm/v3/objects/contacts/search',
+          context.auth.accessToken,
+          'POST',
+          {
+            filterGroups: [{
+              filters: [{
+                propertyName: 'email',
+                operator: 'EQ',
+                value: email,
+              }],
+            }],
+            limit: 1,
+          }
+        );
+
+        const existing = searchResult.results?.[0];
+        let data: any;
+
+        if (existing) {
+          // Update existing contact
+          data = await hubspotRequest(
+            `/crm/v3/objects/contacts/${existing.id}`,
+            context.auth.accessToken,
+            'PATCH',
+            { properties }
+          );
+          console.log(`🔶 HubSpot: Updated existing lead ${existing.id} - ${email}`);
+        } else {
+          // Create new contact
+          data = await hubspotRequest(
+            '/crm/v3/objects/contacts',
+            context.auth.accessToken,
+            'POST',
+            { properties }
+          );
+          console.log(`🔶 HubSpot: Created new lead ${data.id} - ${email}`);
+        }
+
+        const lead: Lead = {
+          id: data.id,
+          email: data.properties.email,
+          firstName: data.properties.firstname,
+          lastName: data.properties.lastname,
+          company: data.properties.company,
+          phone: data.properties.phone,
+          status: 'lead',
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+        
+        return { success: true, lead };
+      },
+    },
+
     /**
      * Add tags (using custom property)
      */
