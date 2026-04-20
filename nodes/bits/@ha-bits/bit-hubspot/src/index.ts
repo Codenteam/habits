@@ -968,7 +968,7 @@ const hubspotBit = {
           groupName: 'contactinformation',
           hasUniqueValue: false,
           hidden: false,
-          label: 'Score',
+          label: 'Score (1-100)',
           name: 'score',
         });
 
