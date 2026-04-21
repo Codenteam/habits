@@ -59,11 +59,13 @@ async function linkAndBuildBit(bit: { name: string; path: string }): Promise<{ n
     console.log(`  ❌ ${bit.name} (failed to link cortex-core)`);
     return { name: bit.name, success: false, error: 'Failed to link cortex-core' };
   }
+  console.log(`  ✅ Linked cortex-core to ${bit.name}`);
   // Also link @ha-bits/core for TypeScript type resolution (cortex-core re-exports from it)
   if (!run('npm link @ha-bits/core', bit.path)) {
     console.log(`  ❌ ${bit.name} (failed to link core)`);
     return { name: bit.name, success: false, error: 'Failed to link core' };
   }
+  console.log(`  ✅ Linked core to ${bit.name}`);
 
   const pkgPath = path.join(bit.path, 'package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
@@ -75,11 +77,11 @@ async function linkAndBuildBit(bit: { name: string; path: string }): Promise<{ n
 
   try {
     await execAsync('npm run build', { cwd: bit.path });
-    console.log(`  ✅ ${bit.name}`);
+    console.log(`  ✅ ${bit.name} (build succeeded)`);
     return { name: bit.name, success: true };
   } catch (e: any) {
     const error = e.stderr?.toString() || e.stdout?.toString() || e.message;
-    console.log(`  ❌ ${bit.name}`);
+    console.log(`  ❌ ${bit.name} (build failed)`);
     if (error) {
       console.log(`     Error: ${error.split('\n').slice(0, 5).join('\n     ')}`);
     }
