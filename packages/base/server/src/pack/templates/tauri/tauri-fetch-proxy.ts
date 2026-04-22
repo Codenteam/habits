@@ -42,7 +42,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
   var BACKEND_URL = '${backendUrl}'.replace(/\\/$/, ''); // Remove trailing slash
 
   // Store original fetch
-  var originalFetch = window.fetch;
+  var originalFetch = window?.__TAURI__?.http?.fetch ? window?.__TAURI__?.http?.fetch : window.fetch;
 
   /**
    * Parse workflow ID from API path
