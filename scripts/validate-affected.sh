@@ -46,62 +46,68 @@ else
     echo "$AFFECTED" | sed 's/^/  - /'
     echo ""
 
-    # Check if affected publishable packages need version bumps
-    echo "🔢 Checking version requirements for publishable packages..."
-    VERSION_ERRORS=()
-    
-    while IFS= read -r project; do
-        # Skip empty lines
-        [ -z "$project" ] && continue
+    # Check if affected publishable packages need version bumps (only when pushing to main)
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    if [ "$CURRENT_BRANCH" = "main" ]; then
+        echo "🔢 Checking version requirements for publishable packages..."
+        VERSION_ERRORS=()
         
-        # Get project root from nx
-        PROJECT_ROOT=$(pnpm nx show project "$project" --json 2>/dev/null | jq -r '.root // empty' 2>/dev/null || echo "")
+        while IFS= read -r project; do
+            # Skip empty lines
+            [ -z "$project" ] && continue
+            
+            # Get project root from nx
+            PROJECT_ROOT=$(pnpm nx show project "$project" --json 2>/dev/null | jq -r '.root // empty' 2>/dev/null || echo "")
+            
+            if [ -z "$PROJECT_ROOT" ]; then
+                continue
+            fi
+            
+            # Check for package.json in project root
+            PACKAGE_JSON="$PROJECT_ROOT/package.json"
+            if [ ! -f "$PACKAGE_JSON" ]; then
+                continue
+            fi
+            
+            # Get package name and version
+            PKG_NAME=$(jq -r '.name // empty' "$PACKAGE_JSON" 2>/dev/null || echo "")
+            PKG_VERSION=$(jq -r '.version // empty' "$PACKAGE_JSON" 2>/dev/null || echo "")
+            PKG_PRIVATE=$(jq -r '.private // false' "$PACKAGE_JSON" 2>/dev/null || echo "false")
+            
+            # Check if project has a publish target in project.json
+            PROJECT_JSON="$PROJECT_ROOT/project.json"
+            HAS_PUBLISH=$(jq -r '.targets.publish // empty' "$PROJECT_JSON" 2>/dev/null || echo "")
+            
+            # Skip if no publish target, no name, no version, or private
+            if [ -z "$HAS_PUBLISH" ] || [ -z "$PKG_NAME" ] || [ -z "$PKG_VERSION" ] || [ "$PKG_PRIVATE" = "true" ]; then
+                continue
+            fi
+            
+            # Check if version exists on npm
+            if npm view "${PKG_NAME}@${PKG_VERSION}" version >/dev/null 2>&1; then
+                VERSION_ERRORS+=("  - ${PKG_NAME}@${PKG_VERSION} already exists on npm. Bump version in ${PACKAGE_JSON}")
+            else
+                printf "  ${GREEN}✓${NC} ${PKG_NAME}@${PKG_VERSION} (new version)\n"
+            fi
+        done <<< "$AFFECTED"
         
-        if [ -z "$PROJECT_ROOT" ]; then
-            continue
+        if [ ${#VERSION_ERRORS[@]} -gt 0 ]; then
+            echo ""
+            print_red "❌ Version bump required for the following packages:"
+            for err in "${VERSION_ERRORS[@]}"; do
+                print_red "${err}"
+            done
+            echo ""
+            echo "Please bump the version in package.json before pushing."
+            exit 1
         fi
         
-        # Check for package.json in project root
-        PACKAGE_JSON="$PROJECT_ROOT/package.json"
-        if [ ! -f "$PACKAGE_JSON" ]; then
-            continue
-        fi
-        
-        # Get package name and version
-        PKG_NAME=$(jq -r '.name // empty' "$PACKAGE_JSON" 2>/dev/null || echo "")
-        PKG_VERSION=$(jq -r '.version // empty' "$PACKAGE_JSON" 2>/dev/null || echo "")
-        PKG_PRIVATE=$(jq -r '.private // false' "$PACKAGE_JSON" 2>/dev/null || echo "false")
-        
-        # Check if project has a publish target in project.json
-        PROJECT_JSON="$PROJECT_ROOT/project.json"
-        HAS_PUBLISH=$(jq -r '.targets.publish // empty' "$PROJECT_JSON" 2>/dev/null || echo "")
-        
-        # Skip if no publish target, no name, no version, or private
-        if [ -z "$HAS_PUBLISH" ] || [ -z "$PKG_NAME" ] || [ -z "$PKG_VERSION" ] || [ "$PKG_PRIVATE" = "true" ]; then
-            continue
-        fi
-        
-        # Check if version exists on npm
-        if npm view "${PKG_NAME}@${PKG_VERSION}" version >/dev/null 2>&1; then
-            VERSION_ERRORS+=("  - ${PKG_NAME}@${PKG_VERSION} already exists on npm. Bump version in ${PACKAGE_JSON}")
-        else
-            printf "  ${GREEN}✓${NC} ${PKG_NAME}@${PKG_VERSION} (new version)\n"
-        fi
-    done <<< "$AFFECTED"
-    
-    if [ ${#VERSION_ERRORS[@]} -gt 0 ]; then
+        print_green "✅ All publishable packages have valid versions"
         echo ""
-        print_red "❌ Version bump required for the following packages:"
-        for err in "${VERSION_ERRORS[@]}"; do
-            print_red "${err}"
-        done
+    else
+        print_yellow "⚠️  Skipping version check (not on main branch)"
         echo ""
-        echo "Please bump the version in package.json before pushing."
-        exit 1
     fi
-    
-    print_green "✅ All publishable packages have valid versions"
-    echo ""
 
     echo "🔨 Building affected packages..."
     echo ""
