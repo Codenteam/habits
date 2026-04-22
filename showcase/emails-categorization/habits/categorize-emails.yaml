@@ -1,0 +1,74 @@
+id: categorize-emails
+name: Emails Categorizer
+description: Fetch emails from INBOX and categorize each one using OpenAI
+
+nodes:
+  # Node 1: Fetch emails from IMAP
+  - id: fetch
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: fetchEmails
+      params:
+        folder: "INBOX"
+        unreadOnly: true
+        limit: 3
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_IMAP_HOST}}"
+          port: "{{habits.env.HABITS_IMAP_PORT}}"
+          user: "{{habits.env.HABITS_IMAP_USER}}"
+          password: "{{habits.env.HABITS_IMAP_PASSWORD}}"
+
+  # Node 2: Categorize all emails using OpenAI
+  - id: categorize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-5-mini"
+        cast: true
+        prompt: |
+          You are an emails categorizer. Given a list of emails in JSON format, analyze each email and classify it.
+          If the emails list is empty or null, return ONLY this exact string (no JSON, no array): "No unread emails found! Your inbox is clean 🎉"
+          Otherwise, for each email return:
+            - from: sender name/email
+            - subject: email subject
+            - category: one of Work, Newsletter, Finance, Social, Personal, Travel, Spam, Other
+            - priority: one of High, Medium, Low
+            - summary: one concise sentence describing the email content
+          Return ONLY a valid JSON array with objects containing exactly these fields: from, subject, category, priority, summary.
+          Emails data: {{fetch.emails}}
+        maxTokens: 1000
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  # Node 3: Send categorization result to Telegram
+  - id: telegram-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-telegram"
+      operation: sendMessage
+      params:
+        botToken: "{{habits.env.HABITS_TELEGRAM_BOT_TOKEN}}"
+        chatId: "{{habits.env.HABITS_TELEGRAM_CHAT_ID}}"
+        text: "📧 Emails Categorization Report\n\n{{categorize}}"
+
+edges:
+  - source: fetch
+    target: categorize
+  - source: categorize
+    target: telegram-notify
+
+output:
+  emails: "{{fetch}}"
+  categories: "{{categorize}}"
+  telegram: "{{telegram-notify}}"

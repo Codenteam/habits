@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Categorizer - Habits</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .app-header {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .header-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    .controls-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 24px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+      box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+    }
+
+    button.danger:hover {
+      box-shadow: 0 6px 20px rgba(255, 65, 108, 0.4);
+    }
+
+    .status {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+      padding: 12px 16px;
+      background: rgba(102, 126, 234, 0.15);
+      border-radius: 10px;
+      margin-top: 16px;
+      border-left: 3px solid #667eea;
+    }
+
+    .status.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
+    }
+
+    .polling-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .summaries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .summary-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 4px solid #667eea;
+      animation: slideIn 0.3s ease;
+      transition: all 0.2s ease;
+    }
+
+    .summary-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(4px);
+    }
+
+    .summary-card .subject {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      letter-spacing: 0.3px;
+    }
+
+    .summary-card .meta {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 12px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .summary-card .summary-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.6;
+      background: rgba(102, 126, 234, 0.08);
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .summary-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #667eea;
+      margin-bottom: 6px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .empty-state-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 15px;
+    }
+
+    .timestamp-bar {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 16px;
+      text-align: right;
+    }
+
+    .telegram-toast {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(41, 182, 246, 0.15) 0%, rgba(3, 169, 244, 0.1) 100%);
+      border: 1px solid rgba(41, 182, 246, 0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      animation: slideIn 0.35s ease;
+    }
+
+    .telegram-toast.visible {
+      display: flex;
+    }
+
+    .telegram-toast-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .telegram-toast-body {
+      flex: 1;
+    }
+
+    .telegram-toast-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #29b6f6;
+      margin-bottom: 2px;
+    }
+
+    .telegram-toast-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    @media (max-width: 600px) {
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div class="header-content">
+      <div class="app-icon">🤖</div>
+      <div class="header-text">
+        <h1>Emails Categorizer</h1>
+        <p>Fetch emails from your inbox, categorize them, and send the report to Telegram</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="controls-card">
+      <div class="controls-row">
+        <button id="fetchBtn" onclick="fetchOnce()">📬 Fetch &amp; Categorize</button>
+        <button id="pollBtn" class="secondary" onclick="togglePoll()">🔄 Enable Auto-Poll</button>
+      </div>
+      <div id="status" class="status" style="display: none;"></div>
+      <div id="telegramToast" class="telegram-toast">
+        <div class="telegram-toast-icon">✈️</div>
+        <div class="telegram-toast-body">
+          <div class="telegram-toast-title">Sent to Telegram</div>
+          <div class="telegram-toast-sub" id="telegramToastSub">Categorization report delivered successfully</div>
+        </div>
+      </div>
+      <div id="timestamp" class="timestamp-bar" style="display: none;"></div>
+    </div>
+
+    <div id="summariesList" class="summaries-list" id="categoriesList">
+      <div class="empty-state">
+        <div class="empty-state-icon">🗂️</div>
+        <div class="empty-state-text">Click <strong>"Fetch &amp; Categorize"</strong> to retrieve and classify your Emails once,<br>or<br><strong>"Enable Auto-Poll"</strong> to have new emails automatically fetched and categorized every 15 seconds.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    async function fetchOnce() {
+      const fetchBtn = document.getElementById('fetchBtn');
+      const status = document.getElementById('status');
+      const timestamp = document.getElementById('timestamp');
+
+      fetchBtn.disabled = true;
+      document.getElementById('telegramToast').classList.remove('visible');
+      if (!pollInterval) {
+        document.getElementById('summariesList').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <div class="empty-state-text">Fetching and categorizing emails...</div>
+          </div>`;
+      }
+      setStatus('⏳ Fetching emails and categorizing with OpenAI...', false);
+
+      try {
+        const response = await fetch('/api/categorize-emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Request failed');
+        }
+
+        const output = data.output || data;
+        // output.emails = full fetch node result: { emails: [...] }
+        // output.summaries = already-parsed array (cast: true) OR object with .content string
+        const emails = (output.emails && output.emails.emails) || [];
+
+        let categories = [];
+        let noEmailsMessage = null;
+
+        if (Array.isArray(output.categories)) {
+          // cast: true — already a parsed JSON array
+          categories = output.categories;
+        } else if (typeof output.categories === 'string' && output.categories.trim()) {
+          // categories arrived as a raw JSON string — parse it directly
+          try {
+            const cleaned = output.categories.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (Array.isArray(parsed)) categories = parsed;
+            else noEmailsMessage = output.categories;
+          } catch (_) {
+            // AI returned a plain string (e.g. "No unread emails found!")
+            noEmailsMessage = output.categories;
+          }
+        } else {
+          const raw = (output.categories && output.categories.content)
+                   || (output.summaries && output.summaries.content) || '';
+          try {
+            const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (Array.isArray(parsed)) categories = parsed;
+            else if (raw) noEmailsMessage = raw;
+          } catch (_) {
+            if (raw) noEmailsMessage = raw;
+          }
+        }
+
+        renderCategories(emails, categories, noEmailsMessage);
+
+        const now = new Date().toLocaleTimeString();
+        const count = noEmailsMessage ? 0 : emails.length || categories.length;
+        setStatus(noEmailsMessage ? `✅ ${escapeHtml(noEmailsMessage)} • Last updated: ${now}` : `✅ Categorized ${count} email(s) • Last updated: ${now}`, false);
+
+        const toast = document.getElementById('telegramToast');
+        const toastSub = document.getElementById('telegramToastSub');
+        const tg = output.telegram;
+        if (tg && tg.ok) {
+          toastSub.textContent = `Categorization report delivered • msg id: ${tg.result && tg.result.message_id ? tg.result.message_id : '—'}`;
+        } else {
+          toastSub.textContent = 'Categorization report sent to Telegram';
+        }
+        toast.classList.add('visible');
+        timestamp.style.display = 'block';
+        timestamp.textContent = `Date: ${new Date().toLocaleString()}`;
+      } catch (err) {
+        setStatus('❌ Error: ' + escapeHtml(err.message), true);
+      } finally {
+        fetchBtn.disabled = false;
+      }
+    }
+
+    function renderCategories(emails, categories, noEmailsMessage) {
+      const list = document.getElementById('summariesList');
+
+      if (noEmailsMessage || (!emails.length && !categories.length)) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-text">${escapeHtml(noEmailsMessage || 'No emails found in your inbox')}</div>
+          </div>`;
+        return;
+      }
+
+      const categoryColors = {
+        Work:       '#3b82f6',
+        Newsletter: '#8b5cf6',
+        Finance:    '#10b981',
+        Social:     '#ec4899',
+        Personal:   '#f97316',
+        Travel:     '#06b6d4',
+        Spam:       '#ef4444',
+        Other:      '#6b7280',
+      };
+      const priorityColors = {
+        High:   '#ef4444',
+        Medium: '#f59e0b',
+        Low:    '#22c55e',
+      };
+
+      const items = emails.length ? emails.map((email, idx) => {
+        const c = categories[idx] || {};
+        return {
+          from:     email.from    || c.from     || 'Unknown',
+          subject:  email.subject || c.subject  || '(No subject)',
+          date:     email.date    || '',
+          category: c.category   || 'Other',
+          priority: c.priority   || 'Medium',
+          summary:  c.summary    || c.text      || '—',
+        };
+      }) : categories.map(c => ({
+        from:     c.from     || '',
+        subject:  c.subject  || '',
+        date:     '',
+        category: c.category || 'Other',
+        priority: c.priority || 'Medium',
+        summary:  c.summary  || c.text || '—',
+      }));
+
+      list.innerHTML = items.map((item, idx) => {
+        const catColor = categoryColors[item.category] || '#6b7280';
+        const priColor = priorityColors[item.priority] || '#f59e0b';
+        return `
+          <div class="summary-card" style="animation-delay: ${idx * 0.05}s; border-left-color: ${catColor};">
+            <div class="card-badges">
+              <span class="badge" style="background: ${catColor}22; color: ${catColor}; border-color: ${catColor}44;">${escapeHtml(item.category)}</span>
+              <span class="badge" style="background: ${priColor}22; color: ${priColor}; border-color: ${priColor}44;">${escapeHtml(item.priority)} Priority</span>
+            </div>
+            <div class="subject">${escapeHtml(item.subject)}</div>
+            <div class="meta">
+              <span>👤 ${escapeHtml(item.from)}</span>
+              ${item.date ? `<span>📅 ${escapeHtml(new Date(item.date).toLocaleString())}</span>` : ''}
+            </div>
+            <div class="summary-label">AI Summary</div>
+            <div class="summary-text">${escapeHtml(item.summary)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function togglePoll() {
+      const btn = document.getElementById('pollBtn');
+
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        btn.textContent = '🔄 Enable Auto-Poll';
+        btn.className = 'secondary';
+      } else {
+        fetchOnce();
+        pollInterval = setInterval(fetchOnce, 15000);
+        btn.innerHTML = '<span class="polling-indicator"></span>Stop Auto-Poll';
+        btn.className = 'danger';
+      }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.style.display = 'block';
+      el.innerHTML = msg;
+      el.className = 'status' + (isError ? ' error' : '');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = String(text || '');
+      return div.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
