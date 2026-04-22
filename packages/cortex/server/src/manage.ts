@@ -1,22 +1,51 @@
 /**
- * Management Module for Workflow Execution Monitoring
+ * Management & Admin Module for Cortex Server
  * 
- * Provides endpoints at /cortex for:
- * - Monitoring current and past executions
- * - Cancelling specific executions
- * - Viewing execution params, step status, and output
+ * Provides two sets of endpoints:
  * 
- * Enabled/disabled via environment variable only:
- * - HABITS_MANAGE_ENABLED=true (default: false)
+ * 1. Admin Endpoints (/habits-admin) - for multi-habit management:
+ *    - Uploading new .habit files at runtime
+ *    - Getting status of all loaded habits
+ *    - Listing and removing habits
+ *    Authentication: HABITS_ADMIN_SECRET (Bearer token)
  * 
- * Authentication (optional):
- * - HABITS_MANAGE_USERNAME
- * - HABITS_MANAGE_PASSWORD
+ * 2. Manage Endpoints (/manage) - for workflow execution monitoring:
+ *    - Monitoring current and past executions
+ *    - Cancelling specific executions
+ *    - Viewing execution params, step status, and output
+ *    Authentication: Optional Basic auth (HABITS_MANAGE_USERNAME/PASSWORD)
+ *    Enabled via: HABITS_MANAGE_ENABLED=true
  */
+
 import fs from 'fs';
 import path from 'path';
 import express, { Request, Response, NextFunction, Router } from 'express';
+import {
+  WorkflowExecution,
+  WorkflowConfig,
+  LoadedWorkflow,
+  NodeExecutionStatus,
+} from '@habits/shared/types';
+import { getCortexUiDistPath } from '@ha-bits/core/pathUtils';
 
+interface ManagedHabit {
+  stackName: string;
+  workflows: Map<string, unknown>;
+  status: string;
+  frontendPath?: string;
+}
+
+interface HabitManager {
+  getStatus: () => unknown;
+  addHabitFromBuffer: (content: Buffer, filename: string) => Promise<string>;
+  getHabit: (stackName: string) => ManagedHabit | undefined;
+  getAllHabits: () => ManagedHabit[];
+  hasHabit: (stackName: string) => boolean;
+  removeHabit: (stackName: string) => boolean;
+}
+// ============================================================================
+// Shared Utilities
+// ============================================================================
 
 /**
  * Check if running in development mode
@@ -35,16 +64,250 @@ function getViteDevUrl(): string {
   return process.env.HABITS_MANAGE_UI_DEV_URL || 'http://localhost:5174';
 }
 
-import {
-  WorkflowExecution,
-  WorkflowConfig,
-  LoadedWorkflow,
-  NodeExecutionStatus,
-} from '@habits/shared/types';
-import { getCortexUiDistPath } from '@ha-bits/core/pathUtils';
+// ============================================================================
+// Admin Module Types
+// ============================================================================
+
+export interface AdminConfig {
+  /** The HabitManager instance to operate on */
+  habitManager: HabitManager;
+  /** Callback to mount a newly uploaded habit */
+  onHabitUploaded?: (stackName: string) => Promise<void>;
+}
+
+export interface UploadResponse {
+  success: boolean;
+  stackName?: string;
+  basePath?: string;
+  workflows?: number;
+  error?: string;
+  message?: string;
+}
 
 // ============================================================================
-// Types
+// Admin Module - Multi-Habit Management
+// ============================================================================
+
+export class AdminModule {
+  private router: Router;
+  private habitManager: HabitManager;
+  private onHabitUploaded?: (stackName: string) => Promise<void>;
+
+  constructor(config: AdminConfig) {
+    this.router = express.Router();
+    this.habitManager = config.habitManager;
+    this.onHabitUploaded = config.onHabitUploaded;
+    this.setupRoutes();
+  }
+
+  /**
+   * Check if admin module can be enabled (secret is configured)
+   */
+  static isConfigured(): boolean {
+    return !!process.env.HABITS_ADMIN_SECRET;
+  }
+
+  /**
+   * Get the configured secret
+   */
+  private getSecret(): string | undefined {
+    return process.env.HABITS_ADMIN_SECRET;
+  }
+
+  /**
+   * Authentication middleware - validates Bearer token against HABITS_ADMIN_SECRET
+   */
+  private authMiddleware(req: Request, res: Response, next: NextFunction): void {
+    const secret = this.getSecret();
+    
+    // If no secret configured, return 403 with helpful message
+    if (!secret) {
+      res.status(403).json({
+        error: 'Admin endpoints not configured',
+        message: 'Set HABITS_ADMIN_SECRET environment variable to enable admin endpoints',
+      });
+      return;
+    }
+    
+    // Check Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        error: 'Authentication required',
+        message: 'Provide Authorization: Bearer <secret> header',
+      });
+      return;
+    }
+    
+    // Validate the token
+    const providedToken = authHeader.slice(7); // Remove 'Bearer ' prefix
+    
+    if (providedToken !== secret) {
+      res.status(401).json({
+        error: 'Invalid credentials',
+        message: 'The provided secret is incorrect',
+      });
+      return;
+    }
+    
+    next();
+  }
+
+  /**
+   * Setup routes
+   */
+  private setupRoutes(): void {
+    // Apply auth middleware to all routes
+    this.router.use(this.authMiddleware.bind(this));
+    
+    // GET /habits-admin/status - Get status of all habits
+    this.router.get('/status', (req: Request, res: Response) => {
+      const status = this.habitManager.getStatus();
+      res.json(status);
+    });
+    
+    // POST /habits-admin/upload - Upload a new .habit file
+    this.router.post('/upload', express.raw({ 
+      type: ['application/octet-stream', 'application/zip', 'application/x-zip-compressed'],
+      limit: '100mb' 
+    }), async (req: Request, res: Response) => {
+      try {
+        // Get filename from header or query
+        const filename = (req.headers['x-filename'] as string) || 
+                        (req.query.filename as string) || 
+                        `upload-${Date.now()}.habit`;
+        
+        if (!filename.endsWith('.habit')) {
+          res.status(400).json({
+            success: false,
+            error: 'Invalid file type',
+            message: 'Only .habit files are supported. Filename must end with .habit',
+          });
+          return;
+        }
+        
+        // Check if body is a buffer
+        if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+          res.status(400).json({
+            success: false,
+            error: 'No file content',
+            message: 'Send the .habit file as raw binary in the request body',
+          });
+          return;
+        }
+        
+        // Load the habit
+        const stackName = await this.habitManager.addHabitFromBuffer(req.body, filename);
+        
+        // Notify the server to mount the new habit's routes
+        if (this.onHabitUploaded) {
+          await this.onHabitUploaded(stackName);
+        }
+        
+        const habit = this.habitManager.getHabit(stackName);
+        
+        const response: UploadResponse = {
+          success: true,
+          stackName,
+          basePath: `/${stackName}`,
+          workflows: habit?.workflows.size || 0,
+          message: `Habit '${stackName}' uploaded and mounted successfully`,
+        };
+        
+        res.status(201).json(response);
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        
+        const response: UploadResponse = {
+          success: false,
+          error: error.message,
+          message: 'Failed to upload and mount habit',
+        };
+        
+        res.status(500).json(response);
+      }
+    });
+    
+    // GET /habits-admin/habits - List all habits (simpler than status)
+    this.router.get('/habits', (req: Request, res: Response) => {
+      const habits = this.habitManager.getAllHabits();
+      res.json({
+        count: habits.length,
+        habits: habits.map(h => ({
+          name: h.stackName,
+          basePath: `/${h.stackName}`,
+          workflows: h.workflows.size,
+          status: h.status,
+          hasFrontend: !!h.frontendPath,
+        })),
+      });
+    });
+    
+    // DELETE /habits-admin/habit/:stackName - Remove a habit (optional, for completeness)
+    this.router.delete('/habit/:stackName', (req: Request, res: Response) => {
+      const { stackName } = req.params;
+      
+      if (!this.habitManager.hasHabit(stackName)) {
+        res.status(404).json({
+          success: false,
+          error: 'Habit not found',
+          message: `No habit with name '${stackName}' is loaded`,
+        });
+        return;
+      }
+      
+      const removed = this.habitManager.removeHabit(stackName);
+      
+      if (removed) {
+        res.json({
+          success: true,
+          message: `Habit '${stackName}' removed. Note: Routes are still mounted until server restart.`,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to remove habit',
+        });
+      }
+    });
+  }
+
+  /**
+   * Get the Express router
+   */
+  getRouter(): Router {
+    return this.router;
+  }
+}
+
+/**
+ * Setup admin routes on an Express app
+ */
+export function setupAdminRoutes(
+  app: express.Application,
+  habitManager: HabitManager,
+  onHabitUploaded?: (stackName: string) => Promise<void>
+): AdminModule | null {
+  // Only setup if secret is configured
+  if (!AdminModule.isConfigured()) {
+    console.log('ℹ️  Admin endpoints disabled (set HABITS_ADMIN_SECRET to enable)');
+    return null;
+  }
+  
+  const adminModule = new AdminModule({
+    habitManager,
+    onHabitUploaded,
+  });
+  
+  app.use('/habits-admin', adminModule.getRouter());
+  console.log('🔐 Admin endpoints enabled at /habits-admin/ (requires Authorization header)');
+  
+  return adminModule;
+}
+
+// ============================================================================
+// Manage Module Types
 // ============================================================================
 
 export interface ManageConfig {
@@ -89,7 +352,7 @@ export interface TrackedExecution extends WorkflowExecution {
 }
 
 // ============================================================================
-// Management Module
+// Manage Module - Workflow Execution Monitoring
 // ============================================================================
 
 export class ManageModule {

@@ -7,6 +7,7 @@ env/
 venv/
 ENV/
 node_modules/
+/**/node_modules/
 .env.local
 .DS_Store
 *.log
@@ -115,4 +116,4 @@ COMMANDS.md
 .tauri
 .build
 
-packages/manage/*
+packages/manage/forge/*

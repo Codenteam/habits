@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - packages/manage/*
   - packages/*/ui
   - packages/*/server
   - packages/*/core

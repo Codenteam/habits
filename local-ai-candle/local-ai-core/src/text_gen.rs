@@ -1,13 +1,43 @@
-//! Text generation using Qwen2 quantized GGUF models
+//! Text generation using quantized GGUF models (Qwen2, Gemma3, etc.)
 
 use crate::device::DeviceType;
 use crate::error::{LocalAiError, Result};
-use candle_core::{quantized::gguf_file, Device, Tensor};
+use candle_core::quantized::gguf_file;
+use candle_core::quantized::tokenizer::TokenizerFromGguf;
+use candle_core::{Device, Tensor};
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::quantized_qwen2::ModelWeights as Qwen2;
+use candle_transformers::models::quantized_gemma3::ModelWeights as Gemma3;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokenizers::Tokenizer;
+
+/// Supported model types for text generation
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum ModelType {
+    /// Qwen2 models (default)
+    #[default]
+    Qwen2,
+    /// Gemma 3 models
+    Gemma3,
+    /// Llama models (same format as Qwen2 with ChatML)
+    Llama,
+}
+
+/// Wrapper enum to hold different model architectures
+enum ModelWeights {
+    Qwen2(Qwen2),
+    Gemma3(Gemma3),
+}
+
+impl ModelWeights {
+    fn forward(&mut self, input: &Tensor, index_pos: usize) -> candle_core::Result<Tensor> {
+        match self {
+            ModelWeights::Qwen2(m) => m.forward(input, index_pos),
+            ModelWeights::Gemma3(m) => m.forward(input, index_pos),
+        }
+    }
+}
 
 /// Configuration for text generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +58,9 @@ pub struct TextGenConfig {
     /// Device to use
     #[serde(default)]
     pub device: DeviceType,
+    /// Model type (auto-detected if not specified)
+    #[serde(default)]
+    pub model_type: ModelType,
 }
 
 fn default_max_tokens() -> usize {
@@ -115,12 +148,28 @@ pub struct TextGenResult {
 
 /// Text generator using Qwen2
 pub struct TextGenerator {
-    model: Qwen2,
+    model: ModelWeights,
+    model_type: ModelType,
     tos: TokenOutputStream,
     device: Device,
     device_name: String,
     config: TextGenConfig,
     eos_token: u32,
+}
+
+/// Detect model type from GGUF metadata
+fn detect_model_type(ct: &gguf_file::Content) -> ModelType {
+    // Check for model architecture in metadata
+    if ct.metadata.contains_key("gemma3.attention.head_count") 
+        || ct.metadata.contains_key("gemma2.attention.head_count")
+        || ct.metadata.contains_key("gemma.attention.head_count") {
+        return ModelType::Gemma3;
+    }
+    if ct.metadata.contains_key("llama.attention.head_count") {
+        return ModelType::Llama;
+    }
+    // Default to Qwen2
+    ModelType::Qwen2
 }
 
 impl TextGenerator {
@@ -140,21 +189,64 @@ impl TextGenerator {
         let mut file = std::fs::File::open(model_path)?;
         let model_content =
             gguf_file::Content::read(&mut file).map_err(|e| e.with_path(model_path))?;
-        let model = Qwen2::from_gguf(model_content, &mut file, &device)?;
+        
+        // Detect or use specified model type
+        let model_type = if config.model_type != ModelType::Qwen2 {
+            config.model_type
+        } else {
+            detect_model_type(&model_content)
+        };
 
-        // Load tokenizer
-        let tokenizer = Tokenizer::from_file(&config.tokenizer_path)
-            .map_err(|e| LocalAiError::Tokenizer(e.to_string()))?;
+        // Load tokenizer - try from file first, then from GGUF metadata
+        let tokenizer = if Path::new(&config.tokenizer_path).exists() {
+            Tokenizer::from_file(&config.tokenizer_path)
+                .map_err(|e| LocalAiError::Tokenizer(e.to_string()))?
+        } else {
+            // Try to load tokenizer from GGUF file metadata
+            Tokenizer::from_gguf(&model_content)
+                .map_err(|e| LocalAiError::Tokenizer(format!("Failed to load tokenizer from GGUF: {e}")))?
+        };
 
-        let eos_token = *tokenizer
-            .get_vocab(true)
-            .get("<|im_end|>")
-            .unwrap_or(&0);
+        // Get EOS token based on model type
+        let vocab = tokenizer.get_vocab(true);
+        let eos_token = match model_type {
+            ModelType::Gemma3 => {
+                // Gemma uses <end_of_turn> or token ID 107
+                *vocab.get("<end_of_turn>").unwrap_or(&107)
+            }
+            ModelType::Llama => {
+                // Llama uses <|eot_id|> or <|im_end|>
+                *vocab.get("<|eot_id|>")
+                    .or_else(|| vocab.get("<|im_end|>"))
+                    .unwrap_or(&0)
+            }
+            ModelType::Qwen2 => {
+                *vocab.get("<|im_end|>").unwrap_or(&0)
+            }
+        };
+
+        // Re-open file for model loading (file position was moved by Content::read)
+        let mut file = std::fs::File::open(model_path)?;
+        let model_content =
+            gguf_file::Content::read(&mut file).map_err(|e| e.with_path(model_path))?;
+
+        // Load model weights based on type
+        let model = match model_type {
+            ModelType::Gemma3 => {
+                let m = Gemma3::from_gguf(model_content, &mut file, &device)?;
+                ModelWeights::Gemma3(m)
+            }
+            ModelType::Qwen2 | ModelType::Llama => {
+                let m = Qwen2::from_gguf(model_content, &mut file, &device)?;
+                ModelWeights::Qwen2(m)
+            }
+        };
 
         let tos = TokenOutputStream::new(tokenizer);
 
         Ok(Self {
             model,
+            model_type,
             tos,
             device,
             device_name,
@@ -163,13 +255,26 @@ impl TextGenerator {
         })
     }
 
+    /// Format prompt according to model type
+    fn format_prompt(&self, prompt: &str) -> String {
+        match self.model_type {
+            ModelType::Gemma3 => {
+                format!("<start_of_turn>user\n{}<end_of_turn>\n<start_of_turn>model\n", prompt)
+            }
+            ModelType::Llama => {
+                // Llama 3 uses ChatML-like format
+                format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt)
+            }
+            ModelType::Qwen2 => {
+                format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt)
+            }
+        }
+    }
+
     /// Generate text from a prompt
     pub fn generate(&mut self, prompt: &str) -> Result<TextGenResult> {
         // Format prompt
-        let formatted = format!(
-            "<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n",
-            prompt
-        );
+        let formatted = self.format_prompt(prompt);
         let tokens = self
             .tos
             .tokenizer()
@@ -248,10 +353,7 @@ impl TextGenerator {
         F: FnMut(&str),
     {
         // Format prompt
-        let formatted = format!(
-            "<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n",
-            prompt
-        );
+        let formatted = self.format_prompt(prompt);
         let tokens = self
             .tos
             .tokenizer()
@@ -341,6 +443,7 @@ pub fn generate_text(
         temperature,
         seed,
         device,
+        model_type: ModelType::default(),
     };
 
     let mut generator = TextGenerator::new(config)?;

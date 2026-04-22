@@ -86,4 +86,22 @@ export const ModelRegistry: Record<string, ModelRegistryEntry> = {
       'model.gguf': 'https://huggingface.co/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf',
     },
   },
+  'gemma3-1b': {
+    label: 'Gemma 3 1B',
+    type: 'text-gen',
+    size: '~1.0GB',
+    files: {
+      'model.gguf': 'https://huggingface.co/lmstudio-community/gemma-3-1b-it-GGUF/resolve/main/gemma-3-1b-it-Q4_K_M.gguf',
+      'tokenizer.json': 'https://huggingface.co/unsloth/gemma-3-1b-it-bnb-4bit/resolve/main/tokenizer.json',
+    },
+  },
+  'gemma3-4b': {
+    label: 'Gemma 3 4B',
+    type: 'text-gen',
+    size: '~2.5GB',
+    files: {
+      'model.gguf': 'https://huggingface.co/lmstudio-community/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf',
+      'tokenizer.json': 'https://huggingface.co/unsloth/gemma-3-4b-it-bnb-4bit/resolve/main/tokenizer.json',
+    },
+  },
 };
