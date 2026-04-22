@@ -165,7 +165,7 @@ export async function generateText(
     maxTokens,
     0.7,  // temperature
     undefined, // seed
-    'cpu'  // device
+    'Auto'  // device - Auto will use Metal on macOS, CUDA on Linux/Windows with GPU
   );
 
   return {

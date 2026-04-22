@@ -1,0 +1,3 @@
+[submodule "habits-manage"]
+	path = packages/manage
+	url = https://github.com/Codenteam/habits-testing

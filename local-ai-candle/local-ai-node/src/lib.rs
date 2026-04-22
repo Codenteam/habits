@@ -11,7 +11,7 @@ use local_ai_core::{
     device::DeviceType,
     image_caption::{ImageCaptionConfig, ImageCaptionResult, ImageCaptioner},
     image_gen::{ImageGenConfig, ImageGenResult, ImageGenerator},
-    text_gen::{TextGenConfig, TextGenResult, TextGenerator},
+    text_gen::{TextGenConfig, TextGenResult, TextGenerator, ModelType},
     text_to_voice::{TextToVoiceConfig, TextToVoiceResult, VoiceSynthesizer},
     transcribe::{TranscribeConfig, TranscriptionResult, Transcriber, WhisperTask},
 };
@@ -103,6 +103,7 @@ impl JsTextGenerator {
             temperature: config.temperature.unwrap_or(0.7),
             seed: config.seed.unwrap_or(42) as u64,
             device: config.device.map(Into::into).unwrap_or_default(),
+            model_type: ModelType::default(),
         };
 
         let generator = TextGenerator::new(core_config).map_err(convert_error)?;

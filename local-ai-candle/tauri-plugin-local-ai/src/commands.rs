@@ -7,7 +7,7 @@ use local_ai_core::{
     device::DeviceType,
     image_caption::{ImageCaptionConfig, ImageCaptionResult, ImageCaptioner},
     image_gen::{ImageGenBase64Result, ImageGenConfig, ImageGenResult, ImageGenerator},
-    text_gen::{TextGenConfig, TextGenResult, TextGenerator},
+    text_gen::{TextGenConfig, TextGenResult, TextGenerator, ModelType},
     text_to_voice::{TextToVoiceBase64Result, TextToVoiceConfig, TextToVoiceResult, VoiceSynthesizer},
     transcribe::{TranscribeConfig, TranscriptionResult, Transcriber, WhisperTask},
 };
@@ -94,6 +94,7 @@ impl From<JsTextGenConfig> for TextGenConfig {
             temperature: c.temperature,
             seed: c.seed,
             device: c.device.into(),
+            model_type: ModelType::default(),
         }
     }
 }

@@ -17,6 +17,7 @@ import {
   Property,
   StoreScope,
   BitCategory,
+  BitRoutineContext,
 } from '@ha-bits/cortex-core';
 
 // ============================================================================
@@ -368,7 +369,7 @@ export const askAI = createAction({
       defaultValue: [],
     }),
   },
-  async run({ propsValue, store }) {
+  async run({ propsValue, store }: BitRoutineContext) {
     const { model, prompt, systemPrompt, memoryKey } = propsValue;
 
     // Validate memoryKey if provided
@@ -459,7 +460,7 @@ export const askAssistantAI = createAction({
       },
     }),
   },
-  async run({ propsValue, store }) {
+  async run({ propsValue, store }: BitRoutineContext) {
     const { memoryKey } = propsValue;
 
     // Validate memoryKey
@@ -512,7 +513,7 @@ export const listModels = createAction({
       required: false,
     }),
   },
-  async run({ propsValue }) {
+  async run({ propsValue }: BitRoutineContext) {
     const { provider } = propsValue;
 
     let models = [...sampleModels];
@@ -554,7 +555,7 @@ export const installModel = createAction({
       required: false,
     }),
   },
-  async run({ propsValue }) {
+  async run({ propsValue }: BitRoutineContext) {
     const { modelName, destination } = propsValue;
 
     // Return success response

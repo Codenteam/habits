@@ -18,7 +18,7 @@
       "command": "npx",
       "args": [
         "tsx",
-        "${workspaceFolder}/packages/manage/src/mcp/tauri.ts"
+        "${workspaceFolder}/packages/manage/forge/src/mcp/tauri.ts"
       ],
       "env": {
         "WEBDRIVER_PORT": "4445",

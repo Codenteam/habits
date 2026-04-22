@@ -17,7 +17,7 @@ argument-hint: 'Describe the Tauri feature or native capability you need'
 - Never reference `packages/cortex/` code
 
 **ALWAYS DO** in this mode:
-- **Test via Tauri WebDriver MCP tools** (primary testing method): packages/manage/src/mcp/tauri.ts
+- **Test via Tauri WebDriver MCP tools** (primary testing method): packages/manage/forge/src/mcp/tauri.ts
 - Use Tauri `invoke()` for all backend operations
 - Implement native features via Rust commands in `src-tauri/`
 - Edit stubs in bits
@@ -238,7 +238,7 @@ WebDriver doesn't natively support `<input type="file">` on WebKit-based Tauri a
 
 ### How It Works
 
-1. **MCP Server** ([packages/manage/src/mcp/tauri.ts](packages/manage/src/mcp/tauri.ts#L1676-L1738)):
+1. **MCP Server** ([packages/manage/forge/src/mcp/tauri.ts](packages/manage/forge/src/mcp/tauri.ts#L1676-L1738)):
    - `write_app_file` tool reads the source file
    - Splits into **500KB chunks** (512000 bytes)
    - Each chunk: base64 encode → WebDriver execute_async → Tauri invoke
