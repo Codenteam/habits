@@ -14,7 +14,7 @@ nodes:
       params:
         folder: "INBOX"
         unreadOnly: true
-        limit: 3
+        limit: 8
       credentials:
         auth:
           host: "{{habits.env.HABITS_IMAP_HOST}}"
@@ -44,7 +44,7 @@ nodes:
             - summary: one concise sentence describing the email content
           Return ONLY a valid JSON array with objects containing exactly these fields: from, subject, category, priority, summary.
           Emails data: {{fetch.emails}}
-        maxTokens: 1000
+        maxTokens: 2000
       credentials:
         openai:
           apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
