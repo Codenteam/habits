@@ -1,0 +1,38 @@
+id: categorize-single-email
+name: Categorize Single Email
+description: Categorize a single email using OpenAI (called per-item by bit-loop)
+
+nodes:
+  - id: categorize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        prompt: |
+          You are an emails categorizer. Given a single email in JSON format, analyze it and classify it.
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields: from, subject, category, priority, summary.
+            - from: sender name/email
+            - subject: email subject
+            - category: one of Work, Newsletter, Finance, Social, Personal, Travel, Spam, Other
+            - priority: one of High, Medium, Low
+            - summary: one concise sentence describing the email content
+          Email data: {{email}}
+        temperature: 0.3
+        maxTokens: 500
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  from: "{{categorize.from}}"
+  subject: "{{categorize.subject}}"
+  category: "{{categorize.category}}"
+  priority: "{{categorize.priority}}"
+  summary: "{{categorize.summary}}"

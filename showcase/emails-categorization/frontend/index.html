@@ -348,7 +348,7 @@
     <div id="summariesList" class="summaries-list" id="categoriesList">
       <div class="empty-state">
         <div class="empty-state-icon">🗂️</div>
-        <div class="empty-state-text">Click <strong>"Fetch &amp; Categorize"</strong> to retrieve and classify your Emails once,<br>or<br><strong>"Enable Auto-Poll"</strong> to have new emails automatically fetched and categorized every 15 seconds.</div>
+        <div class="empty-state-text">Click <strong>"Fetch &amp; Categorize"</strong> to retrieve and classify your Emails once,<br>or<br><strong>"Enable Auto-Poll"</strong> to have new emails automatically fetched and categorized every 1 minute.</div>
       </div>
     </div>
 
@@ -387,16 +387,28 @@
         }
 
         const output = data.output || data;
-        // output.emails = full fetch node result: { emails: [...] }
-        // output.summaries = already-parsed array (cast: true) OR object with .content string
+        // output.emails = { emails: [...], count, folder } from fetch-emails habit
+        // output.categories = ForEachResult from bit-loop forEach: { totalItems, results: [{output: {from,subject,category,priority,summary}}, ...] }
         const emails = (output.emails && output.emails.emails) || [];
 
         let categories = [];
         let noEmailsMessage = null;
 
         if (Array.isArray(output.categories)) {
-          // cast: true — already a parsed JSON array
+          // legacy: direct array
           categories = output.categories;
+        } else if (output.categories && Array.isArray(output.categories.results)) {
+          // ForEachResult from bit-loop forEach — extract each item's output
+          // cast:true only parses fenced ```json``` blocks; handle raw JSON strings too
+          categories = output.categories.results.map(r => {
+            const out = r && r.output;
+            if (!out) return null;
+            if (typeof out === 'object') return out;
+            try {
+              const cleaned = String(out).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+              return JSON.parse(cleaned);
+            } catch (_) { return null; }
+          }).filter(Boolean);
         } else if (typeof output.categories === 'string' && output.categories.trim()) {
           // categories arrived as a raw JSON string — parse it directly
           try {
@@ -405,7 +417,6 @@
             if (Array.isArray(parsed)) categories = parsed;
             else noEmailsMessage = output.categories;
           } catch (_) {
-            // AI returned a plain string (e.g. "No unread emails found!")
             noEmailsMessage = output.categories;
           }
         } else {
@@ -424,7 +435,7 @@
         renderCategories(emails, categories, noEmailsMessage);
 
         const now = new Date().toLocaleTimeString();
-        const count = noEmailsMessage ? 0 : emails.length || categories.length;
+        const count = noEmailsMessage ? 0 : categories.length || (output.categories && output.categories.totalItems) || 0;
         setStatus(noEmailsMessage ? `✅ ${escapeHtml(noEmailsMessage)} • Last updated: ${now}` : `✅ Categorized ${count} email(s) • Last updated: ${now}`, false);
 
         const toast = document.getElementById('telegramToast');
@@ -522,7 +533,7 @@
         btn.className = 'secondary';
       } else {
         fetchOnce();
-        pollInterval = setInterval(fetchOnce, 15000);
+        pollInterval = setInterval(fetchOnce, 60000);
         btn.innerHTML = '<span class="polling-indicator"></span>Stop Auto-Poll';
         btn.className = 'danger';
       }

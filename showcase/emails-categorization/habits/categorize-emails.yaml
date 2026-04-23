@@ -3,53 +3,64 @@ name: Emails Categorizer
 description: Fetch emails from INBOX and categorize each one using OpenAI
 
 nodes:
-  # Node 1: Fetch emails from IMAP
-  - id: fetch
+  # Node 1: Fetch emails via fetch-emails habit (single call via bit-loop)
+  - id: get-emails
     type: action
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-email"
-      operation: fetchEmails
+      module: "@ha-bits/bit-loop"
+      operation: forEach
       params:
-        folder: "INBOX"
-        unreadOnly: true
-        limit: 8
-      credentials:
-        auth:
-          host: "{{habits.env.HABITS_IMAP_HOST}}"
-          port: "{{habits.env.HABITS_IMAP_PORT}}"
-          user: "{{habits.env.HABITS_IMAP_USER}}"
-          password: "{{habits.env.HABITS_IMAP_PASSWORD}}"
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
 
-  # Node 2: Categorize all emails using OpenAI
+  # Node 2: Categorize each email one-by-one using OpenAI (bit-loop forEach)
   - id: categorize
     type: action
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-openai"
-      operation: ask_chatgpt
+      module: "@ha-bits/bit-loop"
+      operation: forEach
       params:
-        model: "gpt-5-mini"
-        cast: true
-        prompt: |
-          You are an emails categorizer. Given a list of emails in JSON format, analyze each email and classify it.
-          If the emails list is empty or null, return ONLY this exact string (no JSON, no array): "No unread emails found! Your inbox is clean 🎉"
-          Otherwise, for each email return:
-            - from: sender name/email
-            - subject: email subject
-            - category: one of Work, Newsletter, Finance, Social, Personal, Travel, Spam, Other
-            - priority: one of High, Medium, Low
-            - summary: one concise sentence describing the email content
-          Return ONLY a valid JSON array with objects containing exactly these fields: from, subject, category, priority, summary.
-          Emails data: {{fetch.emails}}
-        maxTokens: 2000
-      credentials:
-        openai:
-          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: categorize-single-email
+        inputKey: email
+        delayMs: 200
+        continueOnError: true
+        collectResults: true
 
-  # Node 3: Send categorization result to Telegram
+  # Node 3: Format Telegram message with all email details
+  - id: format-telegram
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        categorizeResult: "{{categorize}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(categorizeResult: any) {
+            const results = categorizeResult?.results ?? [];
+            const total = categorizeResult?.totalItems ?? 0;
+            const success = categorizeResult?.successCount ?? 0;
+            let msg = `📧 Emails Categorization Report\n\n${success} of ${total} emails categorized`;
+            for (const r of results) {
+              const e = r?.output;
+              if (!e) continue;
+              msg += `\n\n📌 ${e.subject ?? '(no subject)'}\n`
+                   + `👤 ${e.from ?? ''}\n`
+                   + `🏷️ ${e.category ?? 'Other'} • ${e.priority ?? 'Medium'} Priority\n`
+                   + `📝 ${e.summary ?? '—'}`;
+            }
+            return msg;
+          }
+
+  # Node 4: Send formatted report to Telegram
   - id: telegram-notify
     type: action
     data:
@@ -60,15 +71,17 @@ nodes:
       params:
         botToken: "{{habits.env.HABITS_TELEGRAM_BOT_TOKEN}}"
         chatId: "{{habits.env.HABITS_TELEGRAM_CHAT_ID}}"
-        text: "📧 Emails Categorization Report\n\n{{categorize}}"
+        text: "{{format-telegram.result}}"
 
 edges:
-  - source: fetch
+  - source: get-emails
     target: categorize
   - source: categorize
+    target: format-telegram
+  - source: format-telegram
     target: telegram-notify
 
 output:
-  emails: "{{fetch}}"
+  emails: "{{get-emails.results[0].output}}"
   categories: "{{categorize}}"
   telegram: "{{telegram-notify}}"

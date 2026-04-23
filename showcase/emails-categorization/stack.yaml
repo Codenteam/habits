@@ -1,6 +1,14 @@
 version: "1.0"
 name: "Emails Categorizer"
 workflows:
+  - id: fetch-emails
+    path: ./habits/fetch-emails.yaml
+    enabled: true
+
+  - id: categorize-single-email
+    path: ./habits/categorize-single-email.yaml
+    enabled: true
+
   - id: categorize-emails
     path: ./habits/categorize-emails.yaml
     enabled: true
