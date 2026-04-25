@@ -31,6 +31,7 @@ log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-sqlite-vec = { path = "../../tauri-plugin-sqlite-vec" }
 tauri-plugin-fs = { version = "2" }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
@@ -58,7 +59,7 @@ tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai" }
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai" }
 
-# xcap only for desktop targets and only when feature-gated
+# Desktop-only dependencies
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
 xcap = { version = "0.9", optional = true }
 

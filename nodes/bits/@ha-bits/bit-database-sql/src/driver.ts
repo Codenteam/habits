@@ -16,6 +16,12 @@ import type {
   IncrementResult,
 } from '@ha-bits/bit-database';
 
+export interface VectorSearchResult {
+  collection: string;
+  results: Array<Record<string, any> & { _id: string; _distance: number }>;
+  count: number;
+}
+
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import BetterSqlite3 from 'better-sqlite3';
 
@@ -36,6 +42,10 @@ function getDatabase(dbPath: string = 'habits-cortex.db'): BetterSQLite3Database
     
     const sqlite = new BetterSqlite3(dbFile);
     sqliteInstances.set(dbPath, sqlite);
+    
+    // Load sqlite-vec extension (registers vec0 module and vec_* functions)
+    const sqliteVec = require('sqlite-vec');
+    sqliteVec.load(sqlite);
     
     const db = drizzle(sqlite);
     databases.set(dbPath, db);
@@ -64,6 +74,12 @@ function getDatabase(dbPath: string = 'habits-cortex.db'): BetterSQLite3Database
       );
       CREATE INDEX IF NOT EXISTS idx_docs_collection ON documents(collection);
       CREATE INDEX IF NOT EXISTS idx_docs_custom_id ON documents(collection, custom_id);
+
+      CREATE TABLE IF NOT EXISTS vec_registry (
+        collection TEXT PRIMARY KEY,
+        dim        INTEGER NOT NULL,
+        next_rowid INTEGER NOT NULL DEFAULT 1
+      );
     `);
     
     console.log(`💾 SQLite Database initialized: ${dbFile}`);
@@ -316,4 +332,153 @@ export async function deleteDoc(params: {
 
   const result = sqlite.prepare('DELETE FROM documents WHERE id = ? OR custom_id = ?').run(docId, String(id));
   return { success: true, deleted: result.changes > 0, collection: String(collection), key: String(id) };
+}
+
+// ============ Vector helpers ============
+
+function validateCollection(name: string): void {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+    throw new Error(`Invalid collection name '${name}': must match /^[A-Za-z_][A-Za-z0-9_]*$/`);
+  }
+}
+
+function ensureVecTables(sqlite: BetterSqlite3.Database, collection: string, dim: number): void {
+  const existing = sqlite.prepare('SELECT dim FROM vec_registry WHERE collection = ?').get(collection) as { dim: number } | undefined;
+
+  if (existing) {
+    if (existing.dim !== dim) {
+      throw new Error(`Vector dim mismatch for '${collection}': expected ${existing.dim}, got ${dim}. Drop the collection to re-dimension.`);
+    }
+    return;
+  }
+
+  sqlite.exec(`CREATE VIRTUAL TABLE vec_${collection} USING vec0(embedding float[${dim}])`);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS vec_meta_${collection} (
+      rowid      INTEGER PRIMARY KEY,
+      custom_id  TEXT NOT NULL,
+      data       TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_vec_meta_${collection}_custom ON vec_meta_${collection}(custom_id);
+  `);
+  sqlite.prepare('INSERT INTO vec_registry (collection, dim, next_rowid) VALUES (?, ?, 1)').run(collection, dim);
+}
+
+function reserveRowid(sqlite: BetterSqlite3.Database, collection: string): number {
+  const row = sqlite.prepare('SELECT next_rowid FROM vec_registry WHERE collection = ?').get(collection) as { next_rowid: number };
+  const rowid = row.next_rowid;
+  sqlite.prepare('UPDATE vec_registry SET next_rowid = next_rowid + 1 WHERE collection = ?').run(collection);
+  return rowid;
+}
+
+// ============ Vector actions ============
+
+export async function vectorInsert(params: {
+  collection: string;
+  document: any;
+  database?: string;
+}): Promise<InsertResult> {
+  const { collection, document, database = 'habits-cortex.db' } = params;
+  validateCollection(collection);
+  const sqlite = getSqlite(String(database));
+
+  let doc = parseValue(document);
+  if (typeof doc !== 'object' || doc === null) doc = { data: doc };
+  const vector: number[] | undefined = Array.isArray(doc.vector) ? doc.vector : undefined;
+  if (!vector) throw new Error('vectorInsert requires document.vector (number[])');
+
+  const dim = vector.length;
+  ensureVecTables(sqlite, collection, dim);
+
+  const customId = generateId();
+  const now = new Date().toISOString();
+  const meta: any = { ...doc, _id: customId };
+  delete meta.vector;
+
+  const insertTx = sqlite.transaction(() => {
+    const rowid = reserveRowid(sqlite, collection);
+    // better-sqlite3 binds JS numbers as SQLITE_FLOAT; sqlite-vec requires SQLITE_INTEGER
+    // for explicit rowid inserts, so we must use BigInt.
+    sqlite.prepare(`INSERT INTO vec_${collection}(rowid, embedding) VALUES (?, ?)`)
+      .run(BigInt(rowid), JSON.stringify(vector));
+    sqlite.prepare(`INSERT INTO vec_meta_${collection} (rowid, custom_id, data, created_at) VALUES (?, ?, ?, ?)`)
+      .run(rowid, customId, JSON.stringify(meta), now);
+    return { rowid };
+  });
+  insertTx();
+
+  return { success: true, id: customId, collection: String(collection), document: { ...meta, vector }, createdAt: now };
+}
+
+export async function vectorSearch(params: {
+  collection: string;
+  vector: any;
+  limit?: number;
+  distance?: string;
+  filter?: any;
+  database?: string;
+}): Promise<VectorSearchResult> {
+  const { collection, vector, limit = 10, distance = 'l2', filter, database = 'habits-cortex.db' } = params;
+  validateCollection(collection);
+  const sqlite = getSqlite(String(database));
+
+  const vec: number[] = typeof vector === 'string' ? JSON.parse(vector) : vector;
+  const filterObj = parseFilter(filter);
+  const k = safeNumber(limit, 10);
+  const over = Object.keys(filterObj).length ? k * 5 : k;
+
+  const rows = (() => {
+    if (distance === 'cosine' || distance === 'l1') {
+      const fn = distance === 'cosine' ? 'vec_distance_cosine' : 'vec_distance_L1';
+      return sqlite.prepare(
+        `SELECT v.rowid AS rowid, ${fn}(v.embedding, ?) AS distance, m.custom_id, m.data, m.created_at
+         FROM vec_${collection} v JOIN vec_meta_${collection} m ON m.rowid = v.rowid
+         ORDER BY distance ASC LIMIT ?`
+      ).all(JSON.stringify(vec), over) as any[];
+    }
+    // MATCH requires LIMIT visible to the vec0 planner — use a subquery so the JOIN
+    // doesn't hide the LIMIT constraint from the virtual table optimizer.
+    return sqlite.prepare(
+      `SELECT v.rowid AS rowid, v.distance AS distance, m.custom_id, m.data, m.created_at
+       FROM (SELECT rowid, distance FROM vec_${collection} WHERE embedding MATCH ? ORDER BY distance LIMIT ?) v
+       JOIN vec_meta_${collection} m ON m.rowid = v.rowid`
+    ).all(JSON.stringify(vec), over) as any[];
+  })();
+
+  const results: any[] = [];
+  for (const r of rows) {
+    const data = parseValue(r.data);
+    let ok = true;
+    for (const [k2, v2] of Object.entries(filterObj)) {
+      if (k2 === '_id') { if (data._id !== v2) { ok = false; break; } }
+      else if (data[k2] !== v2) { ok = false; break; }
+    }
+    if (ok) {
+      results.push({ ...data, _id: data._id, _createdAt: r.created_at, _distance: r.distance });
+      if (results.length >= k) break;
+    }
+  }
+  return { collection: String(collection), results, count: results.length };
+}
+
+export async function vectorDelete(params: {
+  collection: string;
+  id: string;
+  database?: string;
+}): Promise<DeleteResult> {
+  const { collection, id, database = 'habits-cortex.db' } = params;
+  validateCollection(collection);
+  const sqlite = getSqlite(String(database));
+
+  const row = sqlite.prepare(`SELECT rowid FROM vec_meta_${collection} WHERE custom_id = ?`).get(String(id)) as { rowid: number } | undefined;
+  if (!row) return { success: true, deleted: false, collection: String(collection), key: String(id) };
+
+  const deleteTx = sqlite.transaction(() => {
+    sqlite.prepare(`DELETE FROM vec_${collection} WHERE rowid = ?`).run(row.rowid);
+    sqlite.prepare(`DELETE FROM vec_meta_${collection} WHERE rowid = ?`).run(row.rowid);
+  });
+  deleteTx();
+  return { success: true, deleted: true, collection: String(collection), key: String(id) };
 }

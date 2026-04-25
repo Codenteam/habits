@@ -511,10 +511,10 @@
           "markdownDescription": "Denies the voice_synthesizer_synthesize command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`",
+          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-embed`\n- `allow-utilities`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`"
+          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-embed`\n- `allow-utilities`"
         },
         {
           "description": "Allow text generation commands",
@@ -545,6 +545,12 @@
           "type": "string",
           "const": "allow-text-to-voice",
           "markdownDescription": "Allow text-to-voice commands"
+        },
+        {
+          "description": "Allow text embedding commands",
+          "type": "string",
+          "const": "allow-embed",
+          "markdownDescription": "Allow text embedding commands"
         },
         {
           "description": "Allow utility commands",

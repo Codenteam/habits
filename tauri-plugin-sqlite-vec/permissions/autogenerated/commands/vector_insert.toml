@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-vector-insert"
+description = "Enables the vector_insert command without any pre-configured scope."
+commands.allow = ["vector_insert"]
+
+[[permission]]
+identifier = "deny-vector-insert"
+description = "Denies the vector_insert command without any pre-configured scope."
+commands.deny = ["vector_insert"]
