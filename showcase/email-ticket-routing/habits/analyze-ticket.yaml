@@ -1,0 +1,66 @@
+id: analyze-ticket
+name: Analyze Ticket
+description: Analyze a single support email using OpenAI and return structured ticket data
+
+input:
+  - id: email
+    type: object
+    required: true
+    description: The email object to analyze (id, from, to, subject, body, date)
+
+nodes:
+  # Node 1: Send the email to OpenAI for ticket analysis
+  - id: analyze
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        prompt: |
+          You are a support ticket analysis assistant.
+
+          Analyze the following support email and extract structured ticket information.
+
+          RULES:
+          1. Determine the category based on the email content
+          2. Assess priority based on urgency, tone, and keywords
+          3. Detect the customer's sentiment
+          4. Write a professional, empathetic reply draft
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - category: ticket category string (billing, technical, account, feature_request, bug_report, general)
+            - priority: urgency level string (critical, high, medium, low)
+            - sentiment: customer sentiment string (angry, frustrated, neutral, positive)
+            - summary: a brief 1-2 sentence summary of the issue
+            - suggestedReply: a complete, professional reply draft to send back to the customer
+            - actionRequired: boolean — true if immediate human follow-up is needed
+            - department: best department to handle this (engineering, billing, customer_success, sales, product)
+            - tags: array of relevant tag strings
+
+          Email data:
+          {{habits.input.email}}
+        maxTokens: 900
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  emailId: "{{habits.input.email.id}}"
+  from: "{{habits.input.email.from}}"
+  subject: "{{habits.input.email.subject}}"
+  originalBody: "{{habits.input.email.body}}"
+  date: "{{habits.input.email.date}}"
+  category: "{{analyze.category}}"
+  priority: "{{analyze.priority}}"
+  sentiment: "{{analyze.sentiment}}"
+  summary: "{{analyze.summary}}"
+  suggestedReply: "{{analyze.suggestedReply}}"
+  actionRequired: "{{analyze.actionRequired}}"
+  department: "{{analyze.department}}"
+  tags: "{{analyze.tags}}"
