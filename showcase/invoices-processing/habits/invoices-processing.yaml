@@ -1,0 +1,44 @@
+id: invoices-processing
+name: Invoices Processing
+description: Fetch emails from Gmail INBOX and extract PDF invoice details from each one using OpenAI
+
+nodes:
+  # Node 1: Fetch emails via fetch-emails habit (single trigger call via bit-loop)
+  - id: get-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Node 2: Loop each fetched email and send to extract-invoice habit
+  - id: extract-invoices
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: extract-invoice
+        inputKey: email
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: get-emails
+    target: extract-invoices
+
+output:
+  invoices: "{{extract-invoices.results}}"
+  totalEmails: "{{extract-invoices.totalItems}}"
+  processed: "{{extract-invoices.successCount}}"
+  failed: "{{extract-invoices.errorCount}}"

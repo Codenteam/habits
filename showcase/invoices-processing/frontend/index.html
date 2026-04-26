@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Processor - Habits</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #0f2027 50%, #0a1628 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .app-header {
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 2px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px;
+    }
+
+    /* ── Controls card ── */
+    .controls-card {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      margin-bottom: 28px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 32px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      letter-spacing: 0.2px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-primary:disabled {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+      transform: none;
+      cursor: not-allowed;
+    }
+
+    .btn-primary:disabled .spinner {
+      display: inline-block;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status ── */
+    .status {
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      background: rgba(16, 185, 129, 0.12);
+      border-left: 3px solid #10b981;
+      display: none;
+    }
+
+    .status.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stats-bar.visible { display: grid; }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 18px 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #10b981;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Invoice list ── */
+    .invoice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Invoice card ── */
+    .invoice-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(16, 185, 129, 0.18);
+      border-left: 4px solid #10b981;
+      border-radius: 16px;
+      padding: 24px;
+      animation: slideIn 0.3s ease both;
+      transition: background 0.2s ease;
+    }
+
+    .invoice-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .invoice-card.no-invoice {
+      border-left-color: #374151;
+      opacity: 0.6;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .card-vendor {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-vendor span {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
+      margin-left: 8px;
+    }
+
+    .invoice-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .badge-invoice {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-no-invoice {
+      background: rgba(107, 114, 128, 0.15);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+
+    .card-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .meta-item {
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .meta-item-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 4px;
+    }
+
+    .meta-item-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .meta-item-value.amount {
+      font-size: 18px;
+      color: #34d399;
+    }
+
+    /* ── Line items table ── */
+    .line-items-section {
+      margin-top: 16px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #10b981;
+      margin-bottom: 10px;
+    }
+
+    .line-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .line-items-table th {
+      text-align: left;
+      padding: 8px 12px;
+      color: rgba(255,255,255,0.4);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .line-items-table td {
+      padding: 9px 12px;
+      color: rgba(255,255,255,0.8);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .line-items-table tr:last-child td { border-bottom: none; }
+
+    .line-items-table td:last-child,
+    .line-items-table th:last-child {
+      text-align: right;
+    }
+
+    /* ── Notes ── */
+    .notes-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: rgba(16, 185, 129, 0.07);
+      border-radius: 8px;
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.6;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 70px 20px;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    .empty-state-icon { font-size: 60px; margin-bottom: 18px; opacity: 0.5; }
+    .empty-state-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .empty-state-sub { font-size: 14px; line-height: 1.6; }
+
+    .timestamp-bar {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      margin-top: 14px;
+      text-align: right;
+    }
+
+    @media (max-width: 600px) {
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .card-meta-grid { grid-template-columns: 1fr 1fr; }
+      .btn-primary { width: 100%; justify-content: center; }
+      .line-items-table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div class="header-content">
+      <div class="app-icon">🧾</div>
+      <div class="header-text">
+        <h1>Invoice Processor</h1>
+        <p>Scan your Gmail inbox and extract PDF invoice details using AI</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="controls-card">
+      <div class="controls-row">
+        <button class="btn-primary" id="scanBtn" onclick="processInvoices()">
+          <span class="spinner" id="spinner"></span>
+          <span id="btnText">🔍 Scan Inbox for Invoices</span>
+        </button>
+      </div>
+      <div id="status" class="status"></div>
+      <div id="timestamp" class="timestamp-bar" style="display:none;"></div>
+    </div>
+
+    <div id="statsBar" class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Emails Scanned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statFound">0</div>
+        <div class="stat-label">Invoices Found</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statFailed" style="color: #f87171;">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+    </div>
+
+    <div id="invoiceList" class="invoice-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">🧾</div>
+        <div class="empty-state-title">No invoices scanned yet</div>
+        <div class="empty-state-sub">Click <strong>"Scan Inbox for Invoices"</strong> to fetch your unread Gmail emails<br>and extract invoice details from each one using AI.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function processInvoices() {
+      const btn = document.getElementById('scanBtn');
+      const spinner = document.getElementById('spinner');
+      const btnText = document.getElementById('btnText');
+      const status = document.getElementById('status');
+
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+      btnText.textContent = 'Scanning inbox…';
+      setStatus('⏳ Fetching emails and extracting invoice data with AI — this may take a moment…', false);
+
+      document.getElementById('invoiceList').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon" style="animation: spin 1.5s linear infinite; display:inline-block;">⚙️</div>
+          <div class="empty-state-title">Processing your inbox…</div>
+          <div class="empty-state-sub">Fetching emails and running invoice extraction via OpenAI.</div>
+        </div>`;
+
+      try {
+        const response = await fetch('/api/invoices-processing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `Server error ${response.status}`);
+        }
+
+        const output = data.output || data;
+
+        // Parse results from bit-loop forEach output
+        const rawResults = output.invoices || [];
+        const totalEmails = output.totalEmails ?? rawResults.length;
+        const failed      = output.failed ?? 0;
+
+        const invoices = rawResults.map(r => {
+          const out = r && r.output;
+          if (!out) return null;
+          if (typeof out === 'object') return out;
+          try {
+            const cleaned = String(out).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+            return JSON.parse(cleaned);
+          } catch (_) { return null; }
+        }).filter(Boolean);
+
+        const foundCount = invoices.filter(i => i && i.hasInvoice).length;
+
+        // Update stats
+        document.getElementById('statTotal').textContent  = totalEmails;
+        document.getElementById('statFound').textContent  = foundCount;
+        document.getElementById('statFailed').textContent = failed;
+        document.getElementById('statsBar').classList.add('visible');
+
+        renderInvoices(invoices);
+
+        const now = new Date().toLocaleTimeString();
+        setStatus(`✅ Scanned ${totalEmails} email(s) — ${foundCount} invoice(s) extracted • ${now}`, false);
+
+        const ts = document.getElementById('timestamp');
+        ts.style.display = 'block';
+        ts.textContent = `Last run: ${new Date().toLocaleString()}`;
+
+      } catch (err) {
+        setStatus('❌ Error: ' + escapeHtml(err.message), true);
+        document.getElementById('invoiceList').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">Something went wrong</div>
+            <div class="empty-state-sub">${escapeHtml(err.message)}</div>
+          </div>`;
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = '🔍 Scan Inbox for Invoices';
+      }
+    }
+
+    function renderInvoices(invoices) {
+      const list = document.getElementById('invoiceList');
+
+      if (!invoices.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-title">No emails found</div>
+            <div class="empty-state-sub">Your inbox appears to be empty or all emails have already been read.</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = invoices.map((inv, idx) => {
+        if (!inv.hasInvoice) {
+          return `
+            <div class="invoice-card no-invoice" style="animation-delay:${idx * 0.04}s">
+              <div class="card-top">
+                <div class="card-vendor">${escapeHtml(inv.vendorName || inv.vendorEmail || 'Unknown sender')}</div>
+                <span class="invoice-badge badge-no-invoice">✗ No Invoice</span>
+              </div>
+            </div>`;
+        }
+
+        const amount = inv.totalAmount != null
+          ? `${formatCurrency(inv.totalAmount)} ${escapeHtml(inv.currency || '')}`.trim()
+          : '—';
+
+        const metaItems = [
+          { label: 'Invoice #',   value: inv.invoiceNumber || '—' },
+          { label: 'Issue Date',  value: inv.invoiceDate   ? formatDate(inv.invoiceDate) : '—' },
+          { label: 'Due Date',    value: inv.dueDate       ? formatDate(inv.dueDate)     : '—' },
+          { label: 'Customer',    value: inv.customerName  || '—' },
+          { label: 'Vendor Email',value: inv.vendorEmail   || '—' },
+          { label: 'Total Amount',value: amount, isAmount: true },
+        ];
+
+        const lineItemsHtml = inv.lineItems && inv.lineItems.length
+          ? `<div class="line-items-section">
+               <div class="section-label">Line Items</div>
+               <table class="line-items-table">
+                 <thead>
+                   <tr>
+                     <th>Description</th>
+                     <th>Qty</th>
+                     <th>Unit Price</th>
+                     <th>Total</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   ${inv.lineItems.map(li => `
+                     <tr>
+                       <td>${escapeHtml(li.description || '—')}</td>
+                       <td>${escapeHtml(String(li.quantity ?? '—'))}</td>
+                       <td>${li.unitPrice != null ? formatCurrency(li.unitPrice) : '—'}</td>
+                       <td>${li.total      != null ? formatCurrency(li.total)     : '—'}</td>
+                     </tr>`).join('')}
+                 </tbody>
+               </table>
+             </div>`
+          : '';
+
+        const notesHtml = inv.notes
+          ? `<div class="notes-box">📋 ${escapeHtml(inv.notes)}</div>`
+          : '';
+
+        return `
+          <div class="invoice-card" style="animation-delay:${idx * 0.04}s">
+            <div class="card-top">
+              <div class="card-vendor">
+                ${escapeHtml(inv.vendorName || 'Unknown vendor')}
+                <span>${escapeHtml(inv.vendorEmail || '')}</span>
+              </div>
+              <span class="invoice-badge badge-invoice">✓ Invoice</span>
+            </div>
+            <div class="card-meta-grid">
+              ${metaItems.map(m => `
+                <div class="meta-item">
+                  <div class="meta-item-label">${escapeHtml(m.label)}</div>
+                  <div class="meta-item-value${m.isAmount ? ' amount' : ''}">${escapeHtml(String(m.value))}</div>
+                </div>`).join('')}
+            </div>
+            ${lineItemsHtml}
+            ${notesHtml}
+          </div>`;
+      }).join('');
+    }
+
+    function formatCurrency(value) {
+      if (value == null) return '—';
+      return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(str) {
+      try { return new Date(str).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
+      catch (_) { return str; }
+    }
+
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.style.display = 'block';
+      el.innerHTML = msg;
+      el.className = 'status' + (isError ? ' error' : '');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = String(text ?? '');
+      return div.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
