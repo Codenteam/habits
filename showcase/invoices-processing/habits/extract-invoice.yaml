@@ -1,32 +1,29 @@
 id: extract-invoice
 name: Extract Invoice
-description: Extract PDF invoice details from a single email using OpenAI
+description: Extract file invoice details from a single email using OpenAI
 
 nodes:
-  # Node 1: Use OpenAI to extract invoice details from the email (including any PDF attachment content)
   - id: extract
     type: action
     data:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      operation: ask_chatgpt
+      operation: ask_with_file
       params:
-        model: "gpt-5-mini"
+        model: "gpt-4o"
         cast: force
+        fileContent: "{{email.attachments[0].content}}"
+        filename: "{{email.attachments[0].filename}}"
         prompt: |
               You are an invoice extraction assistant.
 
-              You will receive a Gmail email in JSON format that may include:
-              - email body text
-              - attachments (PDF or text content already extracted)
-
-              Your task is to extract invoice/billing information from the attachments.
+              You will receive email metadata and a file attachment.
 
               CRITICAL RULES:
-              1. If attachments exist, ALWAYS prioritize them over email body
-              2. Treat attachment content as a structured invoice document (not email)
-              3. Extract values from labels, tables, and nearby text
+              1. Focus on the file content to find invoice data
+              2. Extract values from labels, tables, and nearby text
+              3. Use the email metadata only for sender/recipient context
 
               Extraction rules:
               - Invoice numbers often appear as: "Invoice #", "Invoice No", "Ref"
@@ -44,7 +41,12 @@ nodes:
                 - currency: currency code e.g. USD, EUR, GBP (or null)
                 - dueDate: payment due date in ISO format YYYY-MM-DD (or null)
                 - notes: any additional payment instructions or important notes (or null)
-              Email data: {{email}}
+
+              Email metadata:
+              From: {{email.from}}
+              To: {{email.to}}
+              Subject: {{email.subject}}
+              Date: {{email.date}}
         maxTokens: 1500
       credentials:
         openai:

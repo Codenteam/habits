@@ -14,7 +14,7 @@ workflows:
     enabled: true
 
 server:
-  port: 13001
+  port: 13000
   host: "0.0.0.0"
   frontend: ./frontend
   openapi: true

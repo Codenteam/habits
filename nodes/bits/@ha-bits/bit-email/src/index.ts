@@ -34,6 +34,7 @@ interface EmailMessage {
     filename: string;
     contentType: string;
     size: number;
+    content?: string; // base64 encoded attachment content
   }>;
 }
 
