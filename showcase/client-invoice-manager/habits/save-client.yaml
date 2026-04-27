@@ -1,0 +1,69 @@
+id: save-client
+name: Save Client
+description: Extract client information from raw text using OpenAI, then save the client to the SQL database
+
+input:
+  - id: text
+    type: string
+    required: true
+    description: Raw text describing the client (name, email, company, address, etc.)
+
+nodes:
+  # Step 1: Extract structured client fields from free-form text using OpenAI
+  - id: extract-client
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        cast: true
+        prompt: |
+          You are a data extraction assistant. Extract client information from the text below.
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+          - name: full name of the client (string, required — use "" if not found)
+          - email: email address (string or "" if not found)
+          - phone: phone number (string or "" if not found)
+          - address: full postal address (string or "" if not found)
+          - company: company or organization name (string or "" if not found)
+          - notes: any other relevant information (string or "" if not found)
+
+          Text:
+          {{habits.input.text}}
+
+  # Step 2: Insert extracted client into the SQL database
+  - id: save-to-db
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: "invoices-clients"
+        document:
+          name: "{{extract-client.name}}"
+          email: "{{extract-client.email}}"
+          phone: "{{extract-client.phone}}"
+          address: "{{extract-client.address}}"
+          company: "{{extract-client.company}}"
+          notes: "{{extract-client.notes}}"
+
+edges:
+  - source: extract-client
+    target: save-to-db
+
+output:
+  id: "{{save-to-db.id}}"
+  name: "{{extract-client.name}}"
+  email: "{{extract-client.email}}"
+  phone: "{{extract-client.phone}}"
+  address: "{{extract-client.address}}"
+  company: "{{extract-client.company}}"
+  notes: "{{extract-client.notes}}"

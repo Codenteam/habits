@@ -1,0 +1,67 @@
+id: extract-invoice
+name: Extract Invoice
+description: Extract file invoice details from a single email using OpenAI
+
+nodes:
+  - id: extract
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_with_file
+      params:
+        model: "gpt-4o"
+        cast: force
+        fileContent: "{{email.attachments[0].content}}"
+        filename: "{{email.attachments[0].filename}}"
+        prompt: |
+              You are an invoice extraction assistant.
+
+              You will receive email metadata and a file attachment.
+
+              CRITICAL RULES:
+              1. Focus on the file content to find invoice data
+              2. Extract values from labels, tables, and nearby text
+              3. Use the email metadata only for sender/recipient context
+
+              Extraction rules:
+              - Invoice numbers often appear as: "Invoice #", "Invoice No", "Ref"
+              - Dates may appear as "Invoice Date", "Date Issued", "Due Date"
+              - Totals may appear as "Total", "Amount Due", "Balance Due"
+
+              Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+                - hasInvoice: boolean — true if this email contains an invoice or billing document
+                - invoiceNumber: the invoice or reference number as a string (or null)
+                - invoiceDate: the invoice date in ISO format YYYY-MM-DD (or null)
+                - vendorName: name of the invoice sender (or null)
+                - vendorEmail: email address of the invoice sender (or null)
+                - customerName: name of the customer or recipient on the invoice (or null)
+                - totalAmount: total amount due as a number (or null)
+                - currency: currency code e.g. USD, EUR, GBP (or null)
+                - dueDate: payment due date in ISO format YYYY-MM-DD (or null)
+                - notes: any additional payment instructions or important notes (or null)
+
+              Email metadata:
+              From: {{email.from}}
+              To: {{email.to}}
+              Subject: {{email.subject}}
+              Date: {{email.date}}
+        maxTokens: 1500
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  hasInvoice: "{{extract.hasInvoice}}"
+  invoiceNumber: "{{extract.invoiceNumber}}"
+  invoiceDate: "{{extract.invoiceDate}}"
+  vendorName: "{{extract.vendorName}}"
+  vendorEmail: "{{extract.vendorEmail}}"
+  customerName: "{{extract.customerName}}"
+  totalAmount: "{{extract.totalAmount}}"
+  currency: "{{extract.currency}}"
+  dueDate: "{{extract.dueDate}}"
+  notes: "{{extract.notes}}"

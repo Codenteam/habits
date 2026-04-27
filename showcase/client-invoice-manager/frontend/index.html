@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Invoice Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #0f2027 50%, #0a1628 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    /* ─── Header ─── */
+    .app-header {
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(99,102,241,0.2);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .app-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(135deg, #818cf8 0%, #a5b4fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-text p { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+    /* ─── Container ─── */
+    .container { max-width: 860px; margin: 0 auto; padding: 32px 20px; }
+
+    /* ─── Tabs ─── */
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 28px;
+    }
+    .tab {
+      flex: 1; padding: 13px 20px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      color: rgba(255,255,255,0.5);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75); }
+    .tab.active {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+    }
+
+    /* ─── Tab panels ─── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ─── Card ─── */
+    .card {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: rgba(255,255,255,0.9); }
+
+    /* ─── Form ─── */
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    textarea, select {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    textarea:focus, select:focus {
+      outline: none;
+      border-color: rgba(99,102,241,0.6);
+    }
+    textarea { min-height: 140px; }
+    select {
+      height: 48px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff60' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    select option { background: #1a1a2e; color: #fff; }
+
+    /* client dropdown row */
+    .dropdown-row { display: flex; gap: 10px; align-items: flex-end; }
+    .dropdown-row select { flex: 1; }
+    .btn-refresh {
+      height: 48px; padding: 0 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.6);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-refresh:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ─── Buttons ─── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      width: 100%; justify-content: center;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.5); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled {
+      background: rgba(255,255,255,0.08);
+      box-shadow: none; transform: none;
+      cursor: not-allowed;
+    }
+
+    /* ─── Spinner ─── */
+    .spinner-wrap { display: none; text-align: center; padding: 32px; }
+    .spinner-wrap.active { display: block; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(99,102,241,0.2);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-label { font-size: 13px; color: rgba(255,255,255,0.45); }
+
+    /* ─── Results ─── */
+    .result-card {
+      display: none;
+      background: rgba(99,102,241,0.07);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 16px;
+    }
+    .result-card.active { display: block; }
+    .result-card.error {
+      background: rgba(239,68,68,0.07);
+      border-color: rgba(239,68,68,0.25);
+    }
+    .result-title {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      color: #818cf8; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .result-title.error { color: #f87171; }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .result-field { }
+    .result-field .field-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 3px;
+    }
+    .result-field .field-value {
+      font-size: 14px; color: rgba(255,255,255,0.85);
+      word-break: break-word;
+    }
+    .result-field .field-value.empty { color: rgba(255,255,255,0.25); font-style: italic; }
+
+    /* invoice summary row */
+    .invoice-totals {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .total-badge {
+      flex: 1; min-width: 120px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .total-badge .badge-value { font-size: 22px; font-weight: 800; color: #a5b4fc; }
+    .total-badge .badge-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; text-transform: uppercase; }
+    .total-badge.highlight .badge-value { color: #6366f1; font-size: 26px; }
+
+    /* drive link */
+    .drive-link-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 8px;
+      color: #a5b4fc; font-size: 14px; font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-top: 14px;
+      margin-right: 10px;
+    }
+    .drive-link-btn:hover { background: rgba(99,102,241,0.25); color: #fff; }
+
+    .download-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 8px;
+      color: #34d399; font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 14px;
+      text-decoration: none;
+    }
+    .download-btn:hover { background: rgba(16,185,129,0.22); color: #fff; }
+
+    .error-message { font-size: 14px; color: #fca5a5; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-content">
+      <div class="app-icon">🧾</div>
+      <div class="header-text">
+        <h1>Client Invoice Manager</h1>
+        <p>Save clients with AI extraction · Generate PDF invoices · Upload to Google Drive</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Tab buttons -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('clients')">👤 Add Client</button>
+      <button class="tab" onclick="switchTab('invoices')">📄 Generate Invoice</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 1 — Add Client
+    ══════════════════════════════════════════════ -->
+    <div id="tab-clients" class="tab-panel active">
+      <div class="card">
+        <h2>Add a New Client</h2>
+
+        <div class="form-group">
+          <label for="client-text">Client Information</label>
+          <textarea
+            id="client-text"
+            placeholder="Paste any text about your client — name, email, phone, company, address, notes...&#10;&#10;Example:&#10;John Doe from Acme Corp. Email: john@acme.com, Phone: +1 555-0100&#10;Address: 42 Market Street, New York, NY 10001&#10;Notes: Preferred payment by wire transfer."
+          ></textarea>
+        </div>
+
+        <button class="btn-primary" id="btn-save-client" onclick="saveClient()">
+          <span>✨</span> Extract &amp; Save Client
+        </button>
+      </div>
+
+      <!-- Spinner -->
+      <div class="spinner-wrap" id="client-spinner">
+        <div class="spinner"></div>
+        <div class="spinner-label">Extracting client data with AI…</div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-card" id="client-result">
+        <div class="result-title" id="client-result-title">✓ Client Saved</div>
+        <div class="result-grid" id="client-result-grid"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 2 — Generate Invoice
+    ══════════════════════════════════════════════ -->
+    <div id="tab-invoices" class="tab-panel">
+      <div class="card">
+        <h2>Generate an Invoice</h2>
+
+        <div class="form-group">
+          <label for="invoice-text">Invoice Details</label>
+          <textarea
+            id="invoice-text"
+            placeholder="Describe the invoice details...&#10;&#10;Example:&#10;Project Name&#10;Total payment: $120&#10;Tax: 10%&#10;DueDate: YYYY-MM-DD."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="client-select">Select Client</label>
+          <div class="dropdown-row">
+            <select id="client-select">
+              <option value="">— Loading clients… —</option>
+            </select>
+            <button class="btn-refresh" title="Refresh client list" onclick="loadClients()">↻</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btn-gen-invoice" onclick="generateInvoice()">
+          <span>🚀</span> Generate Invoice
+        </button>
+      </div>
+
+      <!-- Spinner -->
+      <div class="spinner-wrap" id="invoice-spinner">
+        <div class="spinner"></div>
+        <div class="spinner-label">Generating invoice with AI and uploading to Google Drive…</div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-card" id="invoice-result">
+        <div class="result-title" id="invoice-result-title">✓ Invoice Created</div>
+        <div id="invoice-result-body"></div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <script>
+    // ── Tab switching ──────────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      event.currentTarget.classList.add('active');
+      if (name === 'invoices') loadClients();
+    }
+
+    // ── Utility: show/hide spinner + disable button ────────────────
+    function setLoading(spinnerId, btnId, loading) {
+      document.getElementById(spinnerId).classList.toggle('active', loading);
+      document.getElementById(btnId).disabled = loading;
+    }
+
+    function showResult(resultId, titleId, isError, title, content) {
+      const card = document.getElementById(resultId);
+      const titleEl = document.getElementById(titleId);
+      card.classList.add('active');
+      card.classList.toggle('error', isError);
+      titleEl.className = 'result-title' + (isError ? ' error' : '');
+      titleEl.textContent = title;
+      if (typeof content === 'string') {
+        // plain HTML string (invoice body or error)
+        const body = document.getElementById(resultId.replace('-result', '-result-body')) ||
+                     document.getElementById(resultId + '-grid');
+        if (body) body.innerHTML = content;
+      }
+    }
+
+    // ── Field rendering helper ─────────────────────────────────────
+    function fieldHTML(label, value) {
+      const empty = !value || value === 'null' || value === 'undefined';
+      return `<div class="result-field">
+        <div class="field-label">${label}</div>
+        <div class="field-value${empty ? ' empty' : ''}">${empty ? '—' : escapeHtml(String(value))}</div>
+      </div>`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function fmtDate(val) {
+      if (!val || val === 'null' || val === 'undefined') return '—';
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return val; // already formatted string
+    }
+
+    // ── TAB 1: Save Client ─────────────────────────────────────────
+    async function saveClient() {
+      const text = document.getElementById('client-text').value.trim();
+      if (!text) { alert('Please enter some client information.'); return; }
+
+      const resultCard = document.getElementById('client-result');
+      resultCard.classList.remove('active');
+
+      setLoading('client-spinner', 'btn-save-client', true);
+      try {
+        const res = await fetch('/api/save-client', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Server error');
+
+        const output = data.output ?? data;
+        const grid = document.getElementById('client-result-grid');
+        grid.innerHTML =
+          fieldHTML('Name', output.name) +
+          fieldHTML('Email', output.email) +
+          fieldHTML('Phone', output.phone) +
+          fieldHTML('Company', output.company) +
+          fieldHTML('Address', output.address) +
+          fieldHTML('Notes', output.notes);
+
+        document.getElementById('client-result-title').textContent = '✓ Client Saved';
+        resultCard.classList.remove('error');
+        resultCard.classList.add('active');
+      } catch (err) {
+        document.getElementById('client-result-title').textContent = '✗ Error';
+        document.getElementById('client-result-grid').innerHTML =
+          `<p class="error-message">${escapeHtml(err.message)}</p>`;
+        resultCard.classList.add('active', 'error');
+      } finally {
+        setLoading('client-spinner', 'btn-save-client', false);
+      }
+    }
+
+    // ── TAB 2: Load clients into dropdown ──────────────────────────
+    async function loadClients() {
+      const select = document.getElementById('client-select');
+      select.innerHTML = '<option value="">— Loading… —</option>';
+      try {
+        const res = await fetch('/api/list-clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        const clients = (data.output ?? data).clients ?? [];
+        if (!clients.length) {
+          select.innerHTML = '<option value="">No clients yet</option>';
+          return;
+        }
+        select.innerHTML = '<option value="">Select a client</option>' +
+          clients.map(c => {
+            const label = [c.name, c.company].filter(Boolean).join(' / ');
+            return `<option value="${escapeHtml(c._id ?? c.id ?? '')}">${escapeHtml(label)}</option>`;
+          }).join('');
+      } catch {
+        select.innerHTML = '<option value="">Failed to load clients</option>';
+      }
+    }
+
+    // ── TAB 2: Generate Invoice ────────────────────────────────────
+    async function generateInvoice() {
+      const invoiceText = document.getElementById('invoice-text').value.trim();
+      const clientId = document.getElementById('client-select').value;
+
+      if (!invoiceText) { alert('Please describe the invoice details.'); return; }
+      if (!clientId) { alert('Please select a client.'); return; }
+
+      const invoiceDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const resultCard = document.getElementById('invoice-result');
+      resultCard.classList.remove('active');
+
+      setLoading('invoice-spinner', 'btn-gen-invoice', true);
+      try {
+        const res = await fetch('/api/generate-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoiceText, clientId, invoiceDate }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Server error');
+
+        const out = data.output ?? data;
+        const currency = out.currency || '$';
+        const fmt = v => (v != null && v !== 'null') ? `${currency}${Number(v).toFixed(2)}` : '—';
+
+        let html = `
+          <div class="invoice-totals">
+            <div class="total-badge"><div class="badge-value">${escapeHtml(fmtDate(out.invoiceDate))}</div><div class="badge-label">Invoice Date</div></div>
+            <div class="total-badge"><div class="badge-value">${escapeHtml(fmtDate(out.dueDate))}</div><div class="badge-label">Due Date</div></div>
+            <div class="total-badge highlight"><div class="badge-value">${fmt(out.total)}</div><div class="badge-label">Total</div></div>
+          </div>
+          <div class="result-grid">
+            ${fieldHTML('Client', out.clientName)}
+            ${fieldHTML('Company', out.clientCompany)}
+            ${fieldHTML('Subtotal', fmt(out.subtotal))}
+            ${fieldHTML('Tax', fmt(out.totalTax))}
+          </div>`;
+
+        if (out.driveLink && out.driveLink !== 'null') {
+          html += `<a class="drive-link-btn" href="${escapeHtml(out.driveLink)}" target="_blank" rel="noopener">
+            📂 Open in Google Drive
+          </a>`;
+        }
+
+        if (out.pdfBase64 && out.pdfBase64 !== 'null') {
+          html += `<a class="download-btn" href="data:application/pdf;base64,${out.pdfBase64}" download="${escapeHtml(out.invoiceId || 'invoice')}.pdf">
+            ⬇ Download PDF
+          </a>`;
+        }
+
+        document.getElementById('invoice-result-body').innerHTML = html;
+        document.getElementById('invoice-result-title').textContent = '✓ Invoice Generated';
+        resultCard.classList.remove('error');
+        resultCard.classList.add('active');
+      } catch (err) {
+        document.getElementById('invoice-result-title').textContent = '✗ Error';
+        document.getElementById('invoice-result-body').innerHTML =
+          `<p class="error-message">${escapeHtml(err.message)}</p>`;
+        resultCard.classList.add('active', 'error');
+      } finally {
+        setLoading('invoice-spinner', 'btn-gen-invoice', false);
+      }
+    }
+
+    // ── Init ───────────────────────────────────────────────────────
+    loadClients();
+  </script>
+</body>
+</html>
