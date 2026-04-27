@@ -389,7 +389,7 @@
       <div class="app-icon">🧾</div>
       <div class="header-text">
         <h1>Invoice Processor</h1>
-        <p>Scan your Gmail inbox and extract PDF invoice details using AI</p>
+        <p>Scan your Gmail inbox and extract attached invoice details using AI and upload them to Google Sheets.</p>
       </div>
     </div>
   </div>
@@ -488,7 +488,7 @@
         renderInvoices(invoices);
 
         const now = new Date().toLocaleTimeString();
-        setStatus(`✅ Scanned ${totalEmails} email(s) — ${foundCount} invoice(s) extracted • ${now}`, false);
+        setStatus(`✅ Scanned ${totalEmails} email(s) — ${foundCount} invoice(s) extracted and uploaded to Google sheet • ${now}`, false);
 
         const ts = document.getElementById('timestamp');
         ts.style.display = 'block';
