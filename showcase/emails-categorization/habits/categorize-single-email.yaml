@@ -23,7 +23,7 @@ nodes:
             - summary: one concise sentence describing the email content
           Email data: {{email}}
         temperature: 0.3
-        maxTokens: 500
+        maxTokens: 1000
       credentials:
         openai:
           apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
