@@ -119,7 +119,7 @@ const googleSheetsBit = {
   runtime: 'all',
   
   auth: {
-    type: 'OAUTH2',
+    type: 'CUSTOM',
     displayName: 'Google Account',
     description: 'Google account with Sheets access',
     required: true,
@@ -142,7 +142,7 @@ const googleSheetsBit = {
         accessToken: {
           type: 'SECRET_TEXT',
           displayName: 'Access Token',
-          description: 'Google OAuth access token',
+          description: 'Google OAuth2 access token',
           required: true,
         },
         spreadsheetId: {
@@ -222,7 +222,7 @@ const googleSheetsBit = {
         accessToken: {
           type: 'SECRET_TEXT',
           displayName: 'Access Token',
-          description: 'Google OAuth access token',
+          description: 'Google OAuth2 access token',
           required: true,
         },
         spreadsheetId: {
@@ -275,7 +275,7 @@ const googleSheetsBit = {
         accessToken: {
           type: 'SECRET_TEXT',
           displayName: 'Access Token',
-          description: 'Google OAuth access token',
+          description: 'Google OAuth2 access token',
           required: true,
         },
         spreadsheetId: {
@@ -352,7 +352,7 @@ const googleSheetsBit = {
         accessToken: {
           type: 'SECRET_TEXT',
           displayName: 'Access Token',
-          description: 'Google OAuth access token',
+          description: 'Google OAuth2 access token',
           required: true,
         },
         spreadsheetId: {
@@ -404,7 +404,7 @@ const googleSheetsBit = {
         accessToken: {
           type: 'SECRET_TEXT',
           displayName: 'Access Token',
-          description: 'Google OAuth access token',
+          description: 'Google OAuth2 access token',
           required: true,
         },
         spreadsheetId: {
@@ -445,6 +445,8 @@ const googleSheetsBit = {
       },
     },
   },
+
+  triggers: {},
 };
 
 export default googleSheetsBit;

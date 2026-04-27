@@ -33,12 +33,32 @@ nodes:
         continueOnError: true
         collectResults: true
 
+  # Node 3: Save each extracted invoice row to Google Sheets
+  - id: save-to-sheets
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{extract-invoices.results}}"
+        habitId: save-invoice-to-sheets
+        inputKey: invoice
+        delayMs: 200
+        continueOnError: true
+        collectResults: true
+
 edges:
   - source: get-emails
     target: extract-invoices
+  - source: extract-invoices
+    target: save-to-sheets
 
 output:
   invoices: "{{extract-invoices.results}}"
   totalEmails: "{{extract-invoices.totalItems}}"
   processed: "{{extract-invoices.successCount}}"
   failed: "{{extract-invoices.errorCount}}"
+  sheetsSaved: "{{save-to-sheets.successCount}}"
+  sheetsFailed: "{{save-to-sheets.errorCount}}"
