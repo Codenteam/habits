@@ -10,8 +10,10 @@ nodes:
       source: npm
       module: "@ha-bits/bit-google-sheets"
       operation: appendRow
+      auth:
+        clientId: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_SECRET}}"
       params:
-        accessToken: "{{habits.env.HABITS_GOOGLE_ACCESS_TOKEN}}"
         spreadsheetId: "{{habits.env.HABITS_GOOGLE_SPREADSHEET_ID}}"
         sheetName: "Invoices"
         values:

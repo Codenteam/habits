@@ -9,7 +9,8 @@ This workflow fetches emails, extracts invoice data via OpenAI, and saves result
 Copy `.env.example` to `.env` and fill in the values.
 
 ```env
-HABITS_GOOGLE_ACCESS_TOKEN=...
+HABITS_GOOGLE_SHEETS_CLIENT_ID=...
+HABITS_GOOGLE_SHEETS_CLIENT_SECRET=...
 HABITS_GOOGLE_SPREADSHEET_ID=...
 ```
 
@@ -29,9 +30,7 @@ HABITS_GOOGLE_SPREADSHEET_ID=...
 
 ---
 
-## Getting `HABITS_GOOGLE_ACCESS_TOKEN`
-
-The access token is a short-lived OAuth2 token that authorizes the workflow to write to your Google Sheet.
+## Getting `HABITS_GOOGLE_SHEETS_CLIENT_ID` and `HABITS_GOOGLE_SHEETS_CLIENT_SECRET`
 
 ### Step 1 — Enable the Google Sheets API
 
@@ -40,25 +39,51 @@ The access token is a short-lived OAuth2 token that authorizes the workflow to w
 3. Navigate to **APIs & Services → Library**.
 4. Search for **Google Sheets API** and click **Enable**.
 
-### Step 2 — Generate an Access Token via OAuth Playground
+### Step 2 — Configure the OAuth Consent Screen
 
-The easiest way to get a token without setting up a full OAuth app:
+Before creating credentials, Google requires an app to be configured (Skip from 1 to 4 if already app created before):
 
-1. Go to [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/).
-2. In the left panel under **Step 1 — Select & authorize APIs**, find and expand:
-   ```
-   Google Sheets API v4
-   ```
-   Select the scope:
-   ```
-   https://www.googleapis.com/auth/spreadsheets
-   ```
-3. Click **Authorize APIs** and sign in with the Google account that owns the spreadsheet.
-4. In **Step 2 — Exchange authorization code for tokens**, click **Exchange authorization code for tokens**.
-5. Copy the **Access token** value.
-6. Set it as `HABITS_GOOGLE_ACCESS_TOKEN` in `.env`.
+1. Navigate to **APIs & Services → OAuth consent screen**.
+2. Choose Audience **Create**.
+3. Fill in the required fields:
+   - **App name**: any name (e.g. `Invoices Processing`)
+   - **User support email**: your Google account email
+   - **Developer contact email**: your Google account email
+4. Click **Save and Continue** .
+5. On the **Test users** step, click **Add users** and add the Google account email that:
+   - owns the spreadsheet, **and**
+   - you will log in with during the OAuth redirect
+6. Click **Save and Continue**, then **Back to Dashboard**.
 
-> **Note:** Access tokens expire after **1 hour**. When the workflow returns a `401` error, repeat Step 2 to get a fresh token.
+> **Why test users?** While the app is in "Testing" mode (not published), only explicitly added test users can authorize it.
+
+### Step 3 — Create OAuth 2.0 Credentials
+
+1. Navigate to **APIs & Services → Credentials**.
+2. Click **+ Create Credentials → OAuth client ID**.
+3. Set **Application type** to **Web application**.
+4. Give it a name (e.g. `Invoices Processing Web Client`).
+5. Under **Authorized redirect URIs**, click **Add URI** and enter:
+   ```
+   http://localhost:13000/oauth/bit-google-sheets/callback
+   ```
+6. Click **Create**.
+7. Copy the **Client ID** and **Client Secret** from the dialog.
+8. Paste them into `.env`:
+   ```env
+   HABITS_GOOGLE_SHEETS_CLIENT_ID=your-client-id
+   HABITS_GOOGLE_SHEETS_CLIENT_SECRET=your-client-secret
+   ```
+
+### Step 4 — Authorize via OAuth on First Run
+
+When you start the server , it will print a URL to the console:
+
+```
+Visit to authorize
+```
+
+Open that URL in your browser, sign in with the Google account you added as a test user, and grant access.
 
 ## Sheet Headers (Recommended)
 
