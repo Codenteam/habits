@@ -38,6 +38,7 @@ A Habits workflow that saves client data with AI extraction, generates PDF invoi
    HABITS_GOOGLE_DRIVE_CLIENT_ID=<your client id>
    HABITS_GOOGLE_DRIVE_CLIENT_SECRET=<your client secret>
    ```
+   > **If the Client Secret is not visible in the dialog**, click **OK** to close it, then find your client in the **Clients** list on the same page, click on its name to open it, and copy the **Client Secret** from the bottom-right of the client details page.
 9. Since the app is in **Testing** mode, only explicitly added users can authorize it. Go to **Audience** in the left sidebar, scroll to **Test users**, click **+ Add Users**, and add the Google account email you will use when authorizing — this must be the same account that owns the Google Drive folder where invoices will be uploaded
 
 > **Note:** While the app is in *Testing* mode, only the test users you added can authorize it. You can publish the app later if needed.

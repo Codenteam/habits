@@ -67,9 +67,9 @@ Before creating credentials, Google requires an app to be configured (Skip from 
    ```
    http://localhost:13000/oauth/bit-google-sheets/callback
    ```
-6. Click **Create**.
-7. Copy the **Client ID** and **Client Secret** from the dialog.
-8. Paste them into `.env`:
+6. Click **Create** — a dialog will show the created client, open it and copy the **Client ID** and **Client Secret** into your `.env` file.
+   > **If the Client Secret is not visible in the dialog**, click **OK** to close it, then find your client in the **Clients** list on the same page, click on its name to open it, and copy the **Client Secret** from the bottom-right of the client details page.
+7. Paste them into `.env`:
    ```env
    HABITS_GOOGLE_SHEETS_CLIENT_ID=your-client-id
    HABITS_GOOGLE_SHEETS_CLIENT_SECRET=your-client-secret
