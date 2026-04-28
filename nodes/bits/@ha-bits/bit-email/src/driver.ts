@@ -49,6 +49,7 @@ export interface FetchEmailsOptions {
   folder?: string;
   limit?: number;
   unreadOnly?: boolean;
+  attachmentsOnly?: boolean;
 }
 
 export interface SendEmailOptions {
@@ -107,7 +108,7 @@ export async function fetchImapEmails(
   config: ImapConfig,
   options: FetchEmailsOptions = {}
 ): Promise<EmailMessage[]> {
-  const { folder = 'INBOX', limit = 10, unreadOnly = true } = options;
+  const { folder = 'INBOX', limit = 10, unreadOnly = true, attachmentsOnly = false } = options;
   
   log('info', `Connecting to IMAP ${config.host}:${config.port} as ${config.user}...`);
   log('info', `Fetching from ${folder}, limit: ${limit}, unreadOnly: ${unreadOnly}`);
@@ -260,8 +261,13 @@ export async function fetchImapEmails(
     log('info', 'Disconnected from IMAP server');
   }
 
-  log('info', `Fetched ${emails.length} email(s)`);
-  return emails;
+  const result = attachmentsOnly ? emails.filter(e => e.attachments && e.attachments.length > 0) : emails;
+  if (attachmentsOnly) {
+    log('info', `Filtered to ${result.length} email(s) with attachments (from ${emails.length} total)`);
+  } else {
+    log('info', `Fetched ${emails.length} email(s)`);
+  }
+  return result;
 }
 
 // Internal type that includes the MIME part section number for downloading

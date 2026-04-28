@@ -14,6 +14,7 @@ nodes:
         folder: "INBOX"
         unreadOnly: true
         limit: 10
+        attachmentsOnly: true
       credentials:
         auth:
           host: "{{habits.env.HABITS_IMAP_HOST}}"
