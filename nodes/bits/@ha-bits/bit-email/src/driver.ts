@@ -209,29 +209,39 @@ export async function fetchImapEmails(
             extractAttachmentParts(message.bodyStructure, attachmentParts);
           }
 
-          // Download each attachment's content as base64
+          // Build attachments list — download content only when attachmentsOnly is true
           const attachments: Array<{ filename: string; contentType: string; size: number; content?: string }> = [];
-          for (const part of attachmentParts) {
-            let content: string | undefined;
-            try {
-              const dl = await client.download(String(uid), part.part, { uid: true });
-              if (dl && dl.content) {
-                const chunks: Buffer[] = [];
-                for await (const chunk of dl.content) {
-                  chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+          if (attachmentsOnly) {
+            for (const part of attachmentParts) {
+              let content: string | undefined;
+              try {
+                const dl = await client.download(String(uid), part.part, { uid: true });
+                if (dl && dl.content) {
+                  const chunks: Buffer[] = [];
+                  for await (const chunk of dl.content) {
+                    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                  }
+                  content = Buffer.concat(chunks).toString('base64');
+                  log('debug', `Downloaded attachment ${part.filename} (${chunks.length} chunks, ${content.length} base64 chars)`);
                 }
-                content = Buffer.concat(chunks).toString('base64');
-                log('debug', `Downloaded attachment ${part.filename} (${chunks.length} chunks, ${content.length} base64 chars)`);
+              } catch (dlErr) {
+                log('warn', `Failed to download attachment ${part.filename}: ${dlErr}`);
               }
-            } catch (dlErr) {
-              log('warn', `Failed to download attachment ${part.filename}: ${dlErr}`);
+              attachments.push({
+                filename: part.filename,
+                contentType: part.contentType,
+                size: part.size,
+                content,
+              });
             }
-            attachments.push({
-              filename: part.filename,
-              contentType: part.contentType,
-              size: part.size,
-              content,
-            });
+          } else {
+            for (const part of attachmentParts) {
+              attachments.push({
+                filename: part.filename,
+                contentType: part.contentType,
+                size: part.size,
+              });
+            }
           }
 
           if (attachments.length > 0) {
