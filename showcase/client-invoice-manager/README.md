@@ -56,4 +56,4 @@ A Habits workflow that saves client data with AI extraction, generates PDF invoi
                                           This is your Folder ID
    ```
 4. Copy the folder ID from the URL
-5. Fill .env with clientId and clientsecret and googledrive folder id like in .env.example and HABITS_INVOICE_SELLER_COMPANY for # your company or product name to appear on the invoice
+5. Fill .env with clientId and clientsecret and googledrive folder id like in .env.example 

@@ -15,6 +15,10 @@ input:
     type: string
     required: true
     description: Today's date passed from the frontend in "Month Day, Year" format (e.g. "April 27, 2026")
+  - id: customer
+    type: string
+    required: true
+    description: Your company or name that appears as the bill-to on the invoice (e.g. "Acme Corp")
 
 nodes:
   # Step 1: Fetch client from database
@@ -109,7 +113,7 @@ nodes:
             
         customer:
           lines:
-            - "{{habits.env.HABITS_INVOICE_SELLER_COMPANY}}"
+            - "{{habits.input.customer}}"
           
         items: "{{extract-invoice-data.items}}"
         itemColumns:
