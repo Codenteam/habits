@@ -42,7 +42,8 @@ nodes:
       operation: sendEmail
       params:
         to: "{{resolve-smtp.result.user}}"
-        from: "{{analyzedTicket.output.from}}"
+        from: "{{analyzedTicket.output.customerName}} via {{analyzedTicket.output.routeCategory}} <{{analyzedTicket.output.from}}>"
+        replyTo: "{{analyzedTicket.output.from}}"
         subject: "[{{analyzedTicket.output.routeCategory}}] {{analyzedTicket.output.subject}}"
         body: "{{analyzedTicket.output.cleanBody}}"
       credentials:

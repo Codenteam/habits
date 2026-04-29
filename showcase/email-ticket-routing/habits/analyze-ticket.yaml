@@ -42,6 +42,7 @@ nodes:
             - priority:      one of (high, medium, low) based on urgency and business impact
             - suggestedReply: a short, professional auto-reply to send back to the customer
             - cleanBody:     the plain text body of the email, with all MIME headers, boundaries, HTML parts, and encoding artifacts removed. Return only the readable message text.
+            - customerName:  the sender's display name extracted from the From header, or their email address if no display name is present.
         maxTokens: 700
       credentials:
         openai:
@@ -64,3 +65,4 @@ output:
   priority: "{{analyze.priority}}"
   suggestedReply: "{{analyze.suggestedReply}}"
   cleanBody: "{{analyze.cleanBody}}"
+  customerName: "{{analyze.customerName}}"
