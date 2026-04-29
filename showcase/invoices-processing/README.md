@@ -32,25 +32,38 @@ HABITS_GOOGLE_SPREADSHEET_ID=...
 
 ## Getting `HABITS_GOOGLE_SHEETS_CLIENT_ID` and `HABITS_GOOGLE_SHEETS_CLIENT_SECRET`
 
-### Step 1 — Enable the Google Sheets API
+## Step 1 — Create a Google Cloud Project & Enable the API
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Select or create a project.
-3. Navigate to **APIs & Services → Library**.
-4. Search for **Google Sheets API** and click **Enable**.
+### 1.1 Create a new project ( If first time)
+
+- If it's your first time opening Google Cloud Console, Google may require you to enable two-step verification, so make sure to enable it.
+
+1. Go to [https://console.cloud.google.com](https://console.cloud.google.com)
+2. Click the project dropdown at the top → **New Project**
+3. Give it a name (e.g. `Invoices Processing`) and click **Create**
+4. Make sure the new project is selected in the dropdown
+
+### Step 1.2 — Enable the Google Sheets API
+
+1. In the left sidebar go to **APIs & Services → Library**
+2. Search for **Google Sheets API** and click **Enable**.
 
 ### Step 2 — Configure the OAuth Consent Screen
 
 Before creating credentials, Google requires an app to be configured (Skip from 1 to 4 if already app created before):
 
+- You can check if app created or not from the **Branding** tab
+
 1. Navigate to **APIs & Services → OAuth consent screen**.
-2. Choose Audience **Create**.
+2. Click **Get start**
 3. Fill in the required fields:
    - **App name**: any name (e.g. `Invoices Processing`)
    - **User support email**: your Google account email
    - **Developer contact email**: your Google account email
-4. Click **Save and Continue** .
-5. On the **Test users** step, click **Add users** and add the Google account email that:
+   - For audience choose **external**
+   - Fill contact info email
+4. Click **Create** .
+5. Then click on Audience tab and on **Test users** part, click **Add users** and add the Google account email that:
    - owns the spreadsheet, **and**
    - you will log in with during the OAuth redirect
 6. Click **Save and Continue**, then **Back to Dashboard**.
