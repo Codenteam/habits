@@ -9,6 +9,10 @@ workflows:
     path: ./habits/extract-invoice.yaml
     enabled: true
 
+  - id: extract-invoice-attachment
+    path: ./habits/extract-invoice-attachment.yaml
+    enabled: true
+
   - id: save-invoice-to-sheets
     path: ./habits/save-invoice-to-sheets.yaml
     enabled: true
