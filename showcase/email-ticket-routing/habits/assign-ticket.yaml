@@ -1,0 +1,67 @@
+id: assign-ticket
+name: Assign Ticket
+description: Assign the analyzed ticket to the correct team inbox based on the OpenAI-classified route category
+
+
+nodes:
+  # Node 1: Resolve the correct SMTP credentials from env based on routeCategory
+  # Reads habits.env directly inside the script and returns the matching set so Node 2 only needs one bit-email call
+  - id: resolve-smtp
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Resolve SMTP Credentials
+      params:
+        category: "{{analyzedTicket.output.routeCategory}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(
+            category: string,
+          ) {
+            const credentials: Record<string, { user: string; password: string }> = {
+              support:  { user: "{{habits.env.HABITS_SMTP_SUPPORT_USER}}",  password: "{{habits.env.HABITS_SMTP_SUPPORT_PASSWORD}}"  },
+              sales:    { user: "{{habits.env.HABITS_SMTP_SALES_USER}}",    password: "{{habits.env.HABITS_SMTP_SALES_PASSWORD}}"    },
+              billing:  { user: "{{habits.env.HABITS_SMTP_BILLING_USER}}",  password: "{{habits.env.HABITS_SMTP_BILLING_PASSWORD}}"  },
+              feedback: { user: "{{habits.env.HABITS_SMTP_FEEDBACK_USER}}", password: "{{habits.env.HABITS_SMTP_FEEDBACK_PASSWORD}}" },
+              spam:     { user: "{{habits.env.HABITS_SMTP_SPAM_USER}}",     password: "{{habits.env.HABITS_SMTP_SPAM_PASSWORD}}"     },
+              urgent:   { user: "{{habits.env.HABITS_SMTP_URGENT_USER}}",   password: "{{habits.env.HABITS_SMTP_URGENT_PASSWORD}}"   },
+            };
+            const inbox = credentials[category] ?? credentials['support'];
+            return { user: inbox.user, password: inbox.password };
+          }
+
+  # Node 2: Send the reply from the resolved inbox using its specific SMTP credentials
+  - id: send
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        to: "{{resolve-smtp.result.user}}"
+        from: "{{analyzedTicket.output.from}}"
+        subject: "[{{analyzedTicket.output.routeCategory}}] {{analyzedTicket.output.subject}}"
+        body: "{{analyzedTicket.output.cleanBody}}"
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{resolve-smtp.result.user}}"
+          password: "{{resolve-smtp.result.password}}"
+
+edges:
+  - source: resolve-smtp
+    target: send
+
+output:
+  success: true
+  sentFrom: "{{analyzedTicket.output.from}}"
+  sentTo: "{{resolve-smtp.result.user}}"
+  subject: "[{{analyzedTicket.output.routeCategory}}] {{analyzedTicket.output.subject}}"
+  routeCategory: "{{analyzedTicket.output.routeCategory}}"
+  confidence: "{{analyzedTicket.output.confidence}}"
+  priority: "{{analyzedTicket.output.priority}}"
+  summary: "{{analyzedTicket.output.summary}}"

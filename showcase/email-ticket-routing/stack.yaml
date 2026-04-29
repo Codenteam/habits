@@ -1,6 +1,6 @@
 version: "1.0"
 name: "Email Ticket Routing"
-description: "Fetch support emails from Gmail, analyze each with AI, and auto-reply with a suggested response"
+description: "Fetch support emails from Gmail, analyze each with AI, and route tickets to the right team"
 
 workflows:
   - id: fetch-emails
@@ -11,8 +11,8 @@ workflows:
     path: ./habits/analyze-ticket.yaml
     enabled: true
 
-  - id: send-reply
-    path: ./habits/send-reply.yaml
+  - id: assign-ticket
+    path: ./habits/assign-ticket.yaml
     enabled: true
 
   - id: ticket-routing

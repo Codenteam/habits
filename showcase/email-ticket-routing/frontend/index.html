@@ -136,7 +136,7 @@
 
     .stats {
       display: none;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
       margin-top: 24px;
     }
@@ -244,24 +244,19 @@
     <div class="header">
       <span class="icon">📬</span>
       <h1>Email Ticket Routing</h1>
-      <p class="subtitle">Fetch support emails, analyze each with AI, and auto-reply with a suggested response.</p>
+      <p class="subtitle">Fetch support emails, analyze each with AI, and route tickets to the right team.</p>
     </div>
 
     <div class="card">
       <div class="pipeline">
-        <div class="step" id="step-fetch">
-          <span class="dot"></span>
-          Fetch Emails
-        </div>
-        <span class="arrow">→</span>
         <div class="step" id="step-analyze">
           <span class="dot"></span>
-          AI Analysis
+          Analyze Emails
         </div>
         <span class="arrow">→</span>
-        <div class="step" id="step-reply">
+        <div class="step" id="step-assign">
           <span class="dot"></span>
-          Send Replies
+          Assign Tickets
         </div>
       </div>
 
@@ -277,16 +272,12 @@
 
       <div class="stats" id="stats">
         <div class="stat-card">
-          <div class="stat-value" id="stat-fetched">0</div>
-          <div class="stat-label">Emails Fetched</div>
-        </div>
-        <div class="stat-card">
           <div class="stat-value" id="stat-analyzed">0</div>
-          <div class="stat-label">Tickets Analyzed</div>
+          <div class="stat-label">Emails Analyzed</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="stat-replied">0</div>
-          <div class="stat-label">Replies Sent</div>
+          <div class="stat-value" id="stat-assigned">0</div>
+          <div class="stat-label">Assign Tickets</div>
         </div>
       </div>
 
@@ -299,9 +290,8 @@
 
   <script>
     const steps = {
-      fetch: document.getElementById('step-fetch'),
       analyze: document.getElementById('step-analyze'),
-      reply: document.getElementById('step-reply'),
+      assign: document.getElementById('step-assign'),
     };
 
     function setStep(name, state) {
@@ -341,8 +331,8 @@
       hideStatus();
       resetSteps();
 
-      setStep('fetch', 'active');
-      setStatus('Fetching unread emails from Gmail…');
+      setStep('analyze', 'active');
+      setStatus('Fetching and analyzing support emails…');
 
       try {
         const res = await fetch('/api/ticket-routing', {
@@ -357,17 +347,14 @@
           throw new Error(data?.message || data?.error || `Server error ${res.status}`);
         }
 
-        setStep('fetch', 'done');
         setStep('analyze', 'done');
-        setStep('reply', 'done');
+        setStep('assign', 'done');
 
-        const fetched = data?.emailsFetched ?? data?.output?.emailsFetched ?? 0;
-        const analyzed = data?.ticketsAnalyzed ?? data?.output?.ticketsAnalyzed ?? 0;
-        const replied = data?.repliesSent ?? data?.output?.repliesSent ?? 0;
+        const analyzed = data?.ticketsAnalyzed ?? data?.output?.ticketsAnalyzed ?? data?.emailsFetched ?? data?.output?.emailsFetched ?? 0;
+        const assigned = data?.ticketsAssigned ?? data?.output?.ticketsAssigned ?? data?.repliesSent ?? data?.output?.repliesSent ?? 0;
 
-        document.getElementById('stat-fetched').textContent = fetched;
         document.getElementById('stat-analyzed').textContent = analyzed;
-        document.getElementById('stat-replied').textContent = replied;
+        document.getElementById('stat-assigned').textContent = assigned;
         document.getElementById('stats').className = 'stats visible';
 
         const results = data?.results ?? data?.output?.results ?? [];
@@ -391,12 +378,11 @@
           document.getElementById('results-detail').className = 'results-detail visible';
         }
 
-        setStatus(`Done — ${fetched} email(s) processed, ${replied} repl${replied === 1 ? 'y' : 'ies'} sent.`, 'success');
+        setStatus(`Done — ${analyzed} email(s) analyzed, ${assigned} ticket${assigned === 1 ? '' : 's'} assigned.`, 'success');
 
       } catch (err) {
-        setStep('fetch', 'error');
         setStep('analyze', 'error');
-        setStep('reply', 'error');
+        setStep('assign', 'error');
         setStatus('Error: ' + err.message, 'error');
       } finally {
         btn.disabled = false;

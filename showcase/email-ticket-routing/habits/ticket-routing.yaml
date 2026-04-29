@@ -4,7 +4,7 @@ description: >
   Orchestrates the full support ticket pipeline:
   1. Fetches unread emails from Gmail via IMAP
   2. Analyzes each email as a support ticket using OpenAI
-  3. Sends an AI-generated reply to each ticket sender via SMTP
+  3. Assigns each analyzed ticket to the correct team inbox via SMTP
 
 nodes:
   # Node 1: Fetch all unread emails via the fetch-emails sub-habit
@@ -39,9 +39,9 @@ nodes:
         continueOnError: true
         collectResults: true
 
-  # Node 3: Send an AI-generated reply to each analyzed ticket sender
-  # Iterates over analyze-tickets results — one send-reply call per analyzed ticket
-  - id: send-replies
+  # Node 3: Assign each analyzed ticket to the correct team inbox
+  # Iterates over analyze-tickets results — one assign-ticket call per analyzed ticket
+  - id: assign-tickets
     type: action
     data:
       framework: bits
@@ -50,7 +50,7 @@ nodes:
       operation: forEach
       params:
         items: "{{analyze-tickets.results}}"
-        habitId: send-reply
+        habitId: assign-ticket
         inputKey: analyzedTicket
         delayMs: 500
         continueOnError: true
@@ -60,10 +60,10 @@ edges:
   - source: get-emails
     target: analyze-tickets
   - source: analyze-tickets
-    target: send-replies
+    target: assign-tickets
 
 output:
   emailsFetched: "{{get-emails.results[0].output.count}}"
   ticketsAnalyzed: "{{analyze-tickets.successCount}}"
-  repliesSent: "{{send-replies.successCount}}"
-  results: "{{send-replies.results}}"
+  ticketsAssigned: "{{assign-tickets.successCount}}"
+  results: "{{assign-tickets.results}}"
