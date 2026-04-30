@@ -66,14 +66,13 @@ nodes:
           {
             "invoiceId": "INV-YYYYMMDD-NNN (generate a unique ID using today's date)",
             "dueDate": "Month Day, Year format (e.g. April 27, 2026) — extract from invoice text if a due date is mentioned; otherwise use today's date",
-            "currency": "$",
+            "currency": "currency symbol extracted from the invoice text (e.g. '$', '€', '£'); default to '$' if not mentioned",
             "items": [
               {
                 "Description": "clear description of the item or service",
-                "Qty": 1,
-                "Unit Price": 0.00,
+                "Price": 0.00,
                 "Tax": 0.00,
-                "Price": 0.00
+                "Currency": "same as invoice-level currency symbol"
               }
             ],
             "notes": "any additional notes or payment instructions (or "" if none)"
@@ -83,6 +82,7 @@ nodes:
           - Extract every line item from the invoice description.
           - Calculate Price = Qty * Unit Price only (do NOT add Tax into Price — the invoice engine adds Tax separately to compute the total).
           - Default Tax to 0 if not mentioned.
+          - Set Currency in each item to the same currency symbol as the invoice-level currency.
           - dueDate: extract from the invoice text if a due date is mentioned; otherwise use today's date. Format as Month Day, Year (e.g. April 27, 2026).
           - Generate a random 3-digit suffix for the invoice ID (e.g. INV-20260427-042).
           - Return valid JSON only — no extra text.
@@ -118,10 +118,9 @@ nodes:
         items: "{{extract-invoice-data.items}}"
         itemColumns:
           - "Description"
-          - "Qty"
-          - "Unit Price"
-          - "Tax"
+          - "Currency"
           - "Price"
+          - "Tax"
         taxColumn: "Tax"
         priceColumn: "Price"
         notes: "{{extract-invoice-data.notes}}"
