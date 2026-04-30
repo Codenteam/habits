@@ -27,6 +27,14 @@ nodes:
           - spam:     unsolicited, irrelevant, or abusive emails
           - urgent:   critical outages, security incidents, SLA breaches, data loss
 
+          ROUTING INBOXES (match the category to pick the correct userEmail):
+          - support:  {{habits.env.HABITS_SMTP_SUPPORT_USER}}
+          - sales:    {{habits.env.HABITS_SMTP_SALES_USER}}
+          - billing:  {{habits.env.HABITS_SMTP_BILLING_USER}}
+          - feedback: {{habits.env.HABITS_SMTP_FEEDBACK_USER}}
+          - spam:     {{habits.env.HABITS_SMTP_SPAM_USER}}
+          - urgent:   {{habits.env.HABITS_SMTP_URGENT_USER}}
+
           INCOMING EMAIL:
           - Date:    {{email.date}}
           - From:    {{email.from}}
@@ -43,6 +51,7 @@ nodes:
             - suggestedReply: a short, professional auto-reply to send back to the customer
             - cleanBody:     the plain text body of the email, with all MIME headers, boundaries, HTML parts, and encoding artifacts removed. Return only the readable message text.
             - customerName:  the sender's display name extracted from the From header, or their email address if no display name is present.
+            - userEmail:     the exact email address from ROUTING INBOXES that matches the selected category.
         maxTokens: 700
       credentials:
         openai:
@@ -58,7 +67,6 @@ output:
   subject: "{{email.subject}}"
   originalBody: "{{email.body}}"
   date: "{{email.date}}"
-  # OpenAI classification results
   routeCategory: "{{analyze.category}}"
   confidence: "{{analyze.confidence}}"
   summary: "{{analyze.summary}}"
@@ -66,3 +74,4 @@ output:
   suggestedReply: "{{analyze.suggestedReply}}"
   cleanBody: "{{analyze.cleanBody}}"
   customerName: "{{analyze.customerName}}"
+  userEmail: "{{analyze.userEmail}}"

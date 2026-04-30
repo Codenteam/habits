@@ -235,7 +235,9 @@
 
     @media (max-width: 500px) {
       .stats.visible { grid-template-columns: 1fr; }
-      .pipeline { display: none; }
+      .pipeline { flex-direction: column; align-items: center; gap: 6px; }
+      .pipeline .arrow { transform: rotate(90deg); display: inline-block; }
+      .step { width: 100%; justify-content: center; }
     }
   </style>
 </head>

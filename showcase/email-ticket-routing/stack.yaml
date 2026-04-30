@@ -15,6 +15,14 @@ workflows:
     path: ./habits/assign-ticket.yaml
     enabled: true
 
+  - id: route-category
+    path: ./habits/route-category.yaml
+    enabled: true
+
+  - id: send-email
+    path: ./habits/send-email.yaml
+    enabled: true
+
   - id: ticket-routing
     path: ./habits/ticket-routing.yaml
     enabled: true
