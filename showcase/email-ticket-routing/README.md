@@ -51,7 +51,7 @@ cp .env.example .env
 | Variable | Description |
 |---|---|
 | `HABITS_GMAIL_IMAP_HOST` | IMAP host — `imap.gmail.com` |
-| `HABITS_GMAIL_IMAP_PORT` | IMAP port — `993` (SSL) |
+| `HABITS_GMAIL_IMAP_PORT` | IMAP port — `993` |
 | `HABITS_GMAIL_IMAP_USER` | Full Gmail address to read from |
 | `HABITS_GMAIL_IMAP_APP_PASSWORD` | App Password for the IMAP account |
 | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI analysis |
