@@ -191,7 +191,8 @@
       background: #0f172a;
       border: 1px solid #334155;
       border-radius: 10px;
-      padding: 14px 16px;
+      padding: 14px 110px 14px 16px;
+      position: relative;
     }
 
     .ticket-item .ticket-from {
@@ -208,7 +209,9 @@
     }
 
     .ticket-item .ticket-category {
-      display: inline-block;
+      position: absolute;
+      top: 12px;
+      right: 14px;
       font-size: 0.75rem;
       padding: 3px 10px;
       border-radius: 20px;
@@ -364,9 +367,9 @@
           const list = document.getElementById('ticket-list');
           results.forEach(item => {
             const out = item?.output ?? item ?? {};
-            const from = out.from ?? out.email?.from ?? '';
+            const from = out.from ?? out.sentFrom ?? out.email?.from ?? '';
             const subject = out.subject ?? out.email?.subject ?? '(no subject)';
-            const category = out.category ?? out.analysis?.category ?? '';
+            const category = out.category ?? out.routeCategory ?? out.analysis?.category ?? '';
 
             const el = document.createElement('div');
             el.className = 'ticket-item';
