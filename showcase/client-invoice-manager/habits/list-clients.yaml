@@ -1,0 +1,21 @@
+id: list-clients
+name: List Clients
+description: Retrieve all saved clients from the SQL database
+
+nodes:
+  - id: query-clients
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: "invoices-clients"
+        limit: 1000
+
+edges: []
+
+output:
+  clients: "{{query-clients.results}}"
+  total: "{{query-clients.count}}"

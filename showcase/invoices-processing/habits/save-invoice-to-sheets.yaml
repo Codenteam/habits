@@ -1,0 +1,34 @@
+id: save-invoice-to-sheets
+name: Save Invoice to Google Sheets
+description: Append a single extracted invoice result row to a Google Sheet
+
+nodes:
+  - id: append-row
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: appendRow
+      auth:
+        clientId: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.HABITS_GOOGLE_SPREADSHEET_ID}}"
+        sheetName: "Invoices"
+        values:
+          - "{{invoice.output.invoiceNumber}}"
+          - "{{invoice.output.invoiceDate}}"
+          - "{{invoice.output.vendorName}}"
+          - "{{invoice.output.vendorEmail}}"
+          - "{{invoice.output.customerName}}"
+          - "{{invoice.output.totalAmount}}"
+          - "{{invoice.output.currency}}"
+          - "{{invoice.output.dueDate}}"
+          - "{{invoice.output.notes}}"
+
+edges: []
+
+output:
+  success: "{{append-row.success}}"
+  updatedRange: "{{append-row.updatedRange}}"

@@ -34,6 +34,7 @@ interface EmailMessage {
     filename: string;
     contentType: string;
     size: number;
+    content?: string; // base64 encoded attachment content
   }>;
 }
 
@@ -147,9 +148,16 @@ const emailBit = {
           required: false,
           defaultValue: 10,
         },
+        attachmentsOnly: {
+          type: 'CHECKBOX',
+          displayName: 'Attachments Only',
+          description: 'Only return emails that have at least one attachment',
+          required: false,
+          defaultValue: false,
+        },
       },
       async run(context: EmailContext) {
-        const { folder = 'INBOX', unreadOnly = false, limit = 10 } = context.propsValue;
+        const { folder = 'INBOX', unreadOnly = false, limit = 10, attachmentsOnly = false } = context.propsValue;
         
         const auth = context.auth || {};
         const { host, user, password } = auth;
@@ -161,7 +169,7 @@ const emailBit = {
         
         const emails = await driver.fetchImapEmails(
           { host, port: Number(port), user, password },
-          { folder: String(folder), limit: Number(limit), unreadOnly: Boolean(unreadOnly) }
+          { folder: String(folder), limit: Number(limit), unreadOnly: Boolean(unreadOnly), attachmentsOnly: Boolean(attachmentsOnly) }
         );
         
         console.log(`📧 Fetch Emails: Retrieved ${emails.length} email(s) from ${folder}`);
