@@ -117,4 +117,16 @@ echo "=== IMAGE TO TEXT ==="
   --image generated.png
 
 echo ""
+
+# ============================================================================
+# 4. Text Embeddings (BERT / sentence-transformers)
+# ============================================================================
+echo "=== TEXT EMBEDDINGS ==="
+./target/release/local-ai embed \
+  --model "sentence-transformers/all-MiniLM-L6-v2" \
+  --text "This is a test sentence." \
+  --text "This is a completely different sentence about cats." \
+  --format stats
+
+echo ""
 echo "Done!"

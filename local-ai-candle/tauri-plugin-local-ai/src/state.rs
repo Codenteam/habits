@@ -2,6 +2,7 @@
 
 use crate::error::{Error, Result};
 use local_ai_core::{
+    embed::TextEmbedder,
     image_caption::ImageCaptioner,
     image_gen::ImageGenerator,
     text_gen::TextGenerator,
@@ -25,6 +26,7 @@ pub struct LocalAiState {
     image_generators: RwLock<HashMap<InstanceId, Arc<ImageGenerator>>>,
     transcribers: RwLock<HashMap<InstanceId, Arc<RwLock<Transcriber>>>>,
     voice_synthesizers: RwLock<HashMap<InstanceId, Arc<RwLock<VoiceSynthesizer>>>>,
+    text_embedders: RwLock<HashMap<InstanceId, Arc<TextEmbedder>>>,
 }
 
 impl Default for LocalAiState {
@@ -49,6 +51,7 @@ impl LocalAiState {
             image_generators: RwLock::new(HashMap::new()),
             transcribers: RwLock::new(HashMap::new()),
             voice_synthesizers: RwLock::new(HashMap::new()),
+            text_embedders: RwLock::new(HashMap::new()),
         }
     }
 
@@ -198,6 +201,33 @@ impl LocalAiState {
         synthesizers
             .remove(id)
             .ok_or_else(|| Error::InstanceNotFound(format!("VoiceSynthesizer: {}", id)))?;
+        Ok(())
+    }
+
+    // ========================================================================
+    // Text Embedder
+    // ========================================================================
+
+    pub async fn add_text_embedder(&self, embedder: TextEmbedder) -> InstanceId {
+        let id = Self::generate_id();
+        let mut embedders = self.text_embedders.write().await;
+        embedders.insert(id.clone(), Arc::new(embedder));
+        id
+    }
+
+    pub async fn get_text_embedder(&self, id: &str) -> Result<Arc<TextEmbedder>> {
+        let embedders = self.text_embedders.read().await;
+        embedders
+            .get(id)
+            .cloned()
+            .ok_or_else(|| Error::InstanceNotFound(format!("TextEmbedder: {}", id)))
+    }
+
+    pub async fn remove_text_embedder(&self, id: &str) -> Result<()> {
+        let mut embedders = self.text_embedders.write().await;
+        embedders
+            .remove(id)
+            .ok_or_else(|| Error::InstanceNotFound(format!("TextEmbedder: {}", id)))?;
         Ok(())
     }
 }

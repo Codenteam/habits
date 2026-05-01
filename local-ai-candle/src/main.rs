@@ -242,6 +242,33 @@ enum Commands {
         seed: u64,
     },
 
+    /// Generate text embeddings (candle_embed + Hugging Face BERT-family models)
+    Embed {
+        /// One or more input texts to embed (pass --text multiple times for a batch)
+        #[arg(long, short = 't', required = true)]
+        text: Vec<String>,
+
+        /// Hugging Face model id (e.g. sentence-transformers/all-MiniLM-L6-v2)
+        #[arg(long, default_value = "sentence-transformers/all-MiniLM-L6-v2")]
+        model: String,
+
+        /// Model revision (branch/tag/commit on HF)
+        #[arg(long, default_value = "main")]
+        revision: String,
+
+        /// Disable L2 normalization of output embeddings
+        #[arg(long)]
+        no_normalize: bool,
+
+        /// Disable mean pooling (use CLS token instead)
+        #[arg(long)]
+        no_mean_pool: bool,
+
+        /// Output format: vector | stats
+        #[arg(long, default_value = "stats")]
+        format: EmbedFormat,
+    },
+
     /// Generate speech from text (MetaVoice)
     TextToVoice {
         /// Text prompt to synthesize
@@ -298,6 +325,14 @@ enum Commands {
 enum WhisperTask {
     Transcribe,
     Translate,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum EmbedFormat {
+    /// Print the full embedding vector(s)
+    Vector,
+    /// Print dimensions + first 8 values + L2 norm
+    Stats,
 }
 
 // ============================================================================
@@ -540,6 +575,9 @@ fn transcribe_audio(
         )?;
         WhisperModel::Quantized(m::quantized_model::Whisper::load(&vb, config.clone())?)
     } else {
+        // SAFETY: The caller provides a local file path. We assume the file is not
+        // modified while the model is loaded. This is a standard pattern in candle
+        // examples and is safe for single-process, offline inference tooling.
         let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model_path.clone()], m::DTYPE, device)? };
         WhisperModel::Normal(m::model::Whisper::load(&vb, config.clone())?)
     };
@@ -696,11 +734,14 @@ fn synthesize_speech(
         )?;
         MetaVoiceTransformer::Quantized(qtransformer::Model::new(&first_stage_config, vb)?)
     } else {
+        // SAFETY: The caller provides a local file path. We assume the file is not
+        // modified while the model is loaded. This is safe for single-process inference.
         let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[first_stage_path.clone()], dtype, device)? };
         MetaVoiceTransformer::Normal(transformer::Model::new(&first_stage_config, vb)?)
     };
 
     // Load second stage model
+    // SAFETY: Local file path; not modified during inference.
     let second_stage_vb = unsafe { 
         VarBuilder::from_mmaped_safetensors(&[second_stage_path.clone()], dtype, device)? 
     };
@@ -713,6 +754,7 @@ fn synthesize_speech(
     } else {
         device
     };
+    // SAFETY: Local file path; not modified during inference.
     let encodec_vb = unsafe { 
         VarBuilder::from_mmaped_safetensors(&[encodec_path.clone()], dtype, encodec_device)? 
     };
@@ -1138,6 +1180,112 @@ fn generate_image(
 }
 
 // ============================================================================
+// Text Embeddings (BERT via candle-transformers, compatible with sentence-transformers models)
+// ============================================================================
+
+/// Download model files from HF hub then delegate embedding to local_ai_core.
+/// Keeping the download step here avoids adding hf-hub as a dependency of the
+/// core library, while eliminating the previously duplicated pooling/normalization
+/// logic (now lives exclusively in local_ai_core::embed).
+fn embed_texts(
+    texts: &[String],
+    model: &str,
+    revision: &str,
+    normalize: bool,
+    mean_pool: bool,
+    format: EmbedFormat,
+    cpu: bool,
+    _device: &Device,
+) -> Result<()> {
+    use hf_hub::{api::sync::Api, Repo, RepoType};
+
+    println!("Loading embedding model '{model}' (rev {revision})...");
+
+    let repo = Repo::with_revision(model.to_string(), RepoType::Model, revision.to_string());
+    let api = Api::new()?.repo(repo);
+
+    let config_path = api.get("config.json")?;
+    let tokenizer_path = api.get("tokenizer.json")?;
+    let weights_path = match api.get("model.safetensors") {
+        Ok(p) => p,
+        Err(_) => api
+            .get("pytorch_model.bin")
+            .map_err(|e| anyhow::anyhow!("No model.safetensors or pytorch_model.bin found: {e}"))?,
+    };
+
+    let device_type = if cpu {
+        local_ai_core::device::DeviceType::Cpu
+    } else {
+        local_ai_core::device::DeviceType::Auto
+    };
+
+    let text_refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+    let result = local_ai_core::embed::embed_texts(
+        weights_path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("non-UTF-8 model path"))?,
+        tokenizer_path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("non-UTF-8 tokenizer path"))?,
+        config_path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("non-UTF-8 config path"))?,
+        &text_refs,
+        normalize,
+        mean_pool,
+        device_type,
+    )
+    .map_err(|e| anyhow::anyhow!("{e}"))?;
+
+    println!(
+        "Loaded: dims={}, device={}",
+        result.dimensions, result.device_used
+    );
+
+    for (i, (text, v)) in texts.iter().zip(result.embeddings.iter()).enumerate() {
+        let norm = v.iter().map(|x| x * x).sum::<f32>().sqrt();
+        match format {
+            EmbedFormat::Vector => {
+                println!("[{i}] {:?}", v);
+            }
+            EmbedFormat::Stats => {
+                let preview: Vec<f32> = v.iter().take(8).copied().collect();
+                println!(
+                    "[{i}] text={:?} dims={} norm={:.4} first8={:?}",
+                    truncate_for_log(text, 60),
+                    v.len(),
+                    norm,
+                    preview
+                );
+            }
+        }
+    }
+
+    // Sanity-check: different texts should produce different embeddings.
+    if result.embeddings.len() >= 2 {
+        let a = &result.embeddings[0];
+        let b = &result.embeddings[1];
+        let dot: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
+        let na: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let nb: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let cos = dot / (na * nb).max(1e-12);
+        println!("Cosine similarity (text0 vs text1): {:.4}", cos);
+    }
+
+    Ok(())
+}
+
+fn truncate_for_log(s: &str, n: usize) -> String {
+    if s.chars().count() <= n {
+        s.to_string()
+    } else {
+        let mut t: String = s.chars().take(n).collect();
+        t.push_str("...");
+        t
+    }
+}
+
+// ============================================================================
 // Main
 // ============================================================================
 
@@ -1214,6 +1362,25 @@ fn main() -> Result<()> {
                 task,
                 timestamps,
                 seed,
+                &device,
+            )?;
+        }
+        Commands::Embed {
+            text,
+            model,
+            revision,
+            no_normalize,
+            no_mean_pool,
+            format,
+        } => {
+            embed_texts(
+                &text,
+                &model,
+                &revision,
+                !no_normalize,
+                !no_mean_pool,
+                format,
+                cli.cpu,
                 &device,
             )?;
         }

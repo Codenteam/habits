@@ -1,0 +1,70 @@
+id: seed-words
+name: Seed Word Vectors
+description: Insert king, queen, man, mice with predefined 4D semantic vectors (royalty / male / human / rodent)
+
+nodes:
+  - id: insert-king
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "words"
+        document:
+          text: "king"
+          category: "royal"
+          vector: [1.0, 1.0, 1.0, 0.0]
+
+  - id: insert-queen
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "words"
+        document:
+          text: "queen"
+          category: "royal"
+          vector: [1.0, 0.0, 1.0, 0.0]
+
+  - id: insert-man
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "words"
+        document:
+          text: "man"
+          category: "human"
+          vector: [0.0, 1.0, 1.0, 0.0]
+
+  - id: insert-mice
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "words"
+        document:
+          text: "mice"
+          category: "animal"
+          vector: [0.0, 0.0, 0.0, 1.0]
+
+edges:
+  - source: insert-king
+    target: insert-queen
+  - source: insert-queen
+    target: insert-man
+  - source: insert-man
+    target: insert-mice
+
+output: "{{insert-mice}}"

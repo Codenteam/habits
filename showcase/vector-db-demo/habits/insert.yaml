@@ -1,0 +1,81 @@
+id: vector-insert
+name: Vector Insert
+description: Insert a document with a vector embedding into the vector store
+
+nodes:
+  # Generate 384D embedding from text using local-ai (when extractVector is true)
+  - id: embed-text
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: embed-text
+      label: Embed Text
+      isTrigger: false
+      params:
+        texts: ["{{habits.input.text}}"]
+        modelId: "all-minilm-l6-v2"
+        normalize: true
+        meanPool: true
+    condition: "{{habits.input.extractVector}} == true"
+
+  # Insert into items collection (4D vectors - existing behavior)
+  - id: insert-4d
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "items"
+        document:
+          text: "{{habits.input.text}}"
+          tag: "{{habits.input.tag}}"
+          vector: "{{habits.input.vector}}"
+    condition: "{{habits.input.extractVector}} != true"
+
+  # Insert into embeddings collection (384D vectors - new behavior)
+  - id: insert-384d
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "embeddings"
+        document:
+          text: "{{habits.input.text}}"
+          tag: "{{habits.input.tag}}"
+          category: "{{habits.input.category}}"
+          vector: "{{embed-text.embeddings[0]}}"
+    condition: "{{habits.input.extractVector}} == true"
+
+output: "{{habits.input.extractVector ? insert-384d : insert-4d}}"
+
+input:
+  - id: text
+    type: string
+    displayName: "Text"
+    default: "hello world"
+  - id: tag
+    type: string
+    displayName: "Tag"
+    default: "general"
+  - id: category
+    type: string
+    displayName: "Category"
+    required: false
+    description: "Optional category for 384D embeddings"
+  - id: vector
+    type: array
+    displayName: "Vector (4-dim)"
+    default: [1, 0, 0, 0]
+    description: "Used when extractVector is false"
+  - id: extractVector
+    type: boolean
+    displayName: "Extract Vector from Text"
+    default: false
+    description: "Generate 384D embedding using local-ai (uses 'embeddings' collection)"

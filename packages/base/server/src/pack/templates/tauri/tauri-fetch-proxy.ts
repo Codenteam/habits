@@ -295,6 +295,33 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
     var apiInfo = parseApiPath(url);
     
     if (apiInfo.isApiCall) {
+      // Guard: ensure required components are present before intercepting
+      var _isTauri = typeof window.__TAURI__ !== 'undefined';
+      var _hasBundle = typeof window.HabitsBundle !== 'undefined';
+
+      if (!_isTauri || !_hasBundle) {
+        var _missing = !_isTauri ? 'window.__TAURI__' : 'window.HabitsBundle';
+        var _expected = MODE === 'full'
+          ? 'direct HabitsBundle execution (no server)'
+          : 'Tauri API proxy to backend (' + BACKEND_URL + ')';
+        var _msg = 'Although mode is set to "' + MODE + '" expecting ' + _expected +
+          ', converting request to pass-through because ' + _missing + ' is not defined.';
+
+        if (!_isTauri) {
+          // Running in a regular browser — small warning
+          console.warn('[Habits] ' + _msg + ' (This is expected in a browser environment.)');
+        } else {
+          // Inside Tauri but HabitsBundle is missing — serious misconfiguration
+          console.error('');
+          console.error('══════════════════════════════════════════════════════════════');
+          console.error('  [Habits] ERROR: ' + _msg);
+          console.error('  Ensure cortex-bundle.js is loaded before this script.');
+          console.error('══════════════════════════════════════════════════════════════');
+          console.error('');
+        }
+        return originalFetch.call(this, input, init);
+      }
+
       // FULL mode: Execute workflow directly as function
       if (MODE === 'full') {
         console.log('[Habits] Direct execution:', method, url, apiInfo.isStream ? '(streaming)' : '');

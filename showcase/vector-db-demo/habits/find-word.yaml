@@ -1,0 +1,65 @@
+id: find-word
+name: Find Similar Word
+description: Type a word and find the closest seeded words by vector similarity. Try "mouse" to find "mice".
+
+nodes:
+  - id: map-vector
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Map Word to Vector
+      params:
+        word: "{{habits.input.word}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(word: string) {
+            // 4D semantic space: [royalty, male, human, rodent]
+            const vectors: Record<string, number[]> = {
+              king:     [1.0, 1.0, 1.0, 0.0],
+              queen:    [1.0, 0.0, 1.0, 0.0],
+              man:      [0.0, 1.0, 1.0, 0.0],
+              woman:    [0.0, 0.0, 1.0, 0.0],
+              mice:     [0.0, 0.0, 0.0, 1.0],
+              mouse:    [0.0, 0.0, 0.0, 1.0],
+              rat:      [0.0, 0.0, 0.0, 0.8],
+              boy:      [0.0, 1.0, 0.8, 0.0],
+              girl:     [0.0, 0.0, 0.8, 0.0],
+              prince:   [0.8, 1.0, 1.0, 0.0],
+              princess: [0.8, 0.0, 1.0, 0.0],
+              lord:     [0.9, 1.0, 1.0, 0.0],
+              lady:     [0.9, 0.0, 1.0, 0.0],
+            };
+            const key = word.toLowerCase().trim();
+            const vector = vectors[key];
+            if (!vector) {
+              throw new Error(`Unknown word: "${word}". Try: ${Object.keys(vectors).join(', ')}`);
+            }
+            return vector;
+          }
+
+  - id: do-search
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorSearch
+      params:
+        collection: "words"
+        vector: "{{map-vector.result}}"
+        limit: 4
+        distance: "l2"
+
+edges:
+  - source: map-vector
+    target: do-search
+
+output: "{{do-search}}"
+
+input:
+  - id: word
+    type: string
+    displayName: "Word (e.g. mouse, woman, prince)"
+    default: "mouse"

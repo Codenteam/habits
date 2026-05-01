@@ -1,0 +1,10 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Default permissions for tauri-plugin-sqlite-vec"
+permissions = [
+  "allow-ensure-tables",
+  "allow-vector-insert",
+  "allow-vector-search",
+  "allow-vector-delete",
+]

@@ -6525,6 +6525,132 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
+          "description": "Default permissions for tauri-plugin-lancedb — read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`",
+          "type": "string",
+          "const": "lancedb:default",
+          "markdownDescription": "Default permissions for tauri-plugin-lancedb — read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`"
+        },
+        {
+          "description": "Enables the add command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-add",
+          "markdownDescription": "Enables the add command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-connect",
+          "markdownDescription": "Enables the connect command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_index command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-create-index",
+          "markdownDescription": "Enables the create_index command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the create_table command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-create-table",
+          "markdownDescription": "Enables the create_table command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-delete",
+          "markdownDescription": "Enables the delete command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the merge_insert command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-merge-insert",
+          "markdownDescription": "Enables the merge_insert command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the query command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-query",
+          "markdownDescription": "Enables the query command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the search command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-search",
+          "markdownDescription": "Enables the search command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the table_names command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-table-names",
+          "markdownDescription": "Enables the table_names command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the update command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:allow-update",
+          "markdownDescription": "Enables the update command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the add command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-add",
+          "markdownDescription": "Denies the add command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the connect command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-connect",
+          "markdownDescription": "Denies the connect command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_index command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-create-index",
+          "markdownDescription": "Denies the create_index command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the create_table command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-create-table",
+          "markdownDescription": "Denies the create_table command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-delete",
+          "markdownDescription": "Denies the delete command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the merge_insert command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-merge-insert",
+          "markdownDescription": "Denies the merge_insert command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the query command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-query",
+          "markdownDescription": "Denies the query command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the search command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-search",
+          "markdownDescription": "Denies the search command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the table_names command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-table-names",
+          "markdownDescription": "Denies the table_names command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the update command without any pre-configured scope.",
+          "type": "string",
+          "const": "lancedb:deny-update",
+          "markdownDescription": "Denies the update command without any pre-configured scope."
+        },
+        {
           "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`",
           "type": "string",
           "const": "local-ai:default",

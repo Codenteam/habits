@@ -1,0 +1,23 @@
+id: vector-delete
+name: Vector Delete
+description: Delete a document from the vector store by its ID
+
+nodes:
+  - id: do-delete
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorDelete
+      params:
+        collection: "items"
+        id: "{{habits.input.id}}"
+
+output: "{{do-delete}}"
+
+input:
+  - id: id
+    type: string
+    displayName: "Document ID (_id)"
+    default: ""

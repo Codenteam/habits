@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare const window: any;
 
-import { ChatMessage, TextGenResult, InstallModelResult, ModelRegistry } from '../common/common';
+import { ChatMessage, TextGenResult, InstallModelResult, EmbedResult, ModelRegistry } from '../common/common';
 
 // ============================================================================
 // Tauri Invoke Helper
@@ -176,6 +176,52 @@ export async function generateText(
   return {
     text: result.text,
     tokensGenerated: result.tokens_generated,
+    model: modelId,
+    deviceUsed: result.device_used,
+  };
+}
+
+// ============================================================================
+// Embed Text
+// ============================================================================
+
+/**
+ * Embed a batch of texts using a local BERT-family model
+ */
+export async function embedText(
+  texts: string[],
+  modelId: string = 'all-minilm-l6-v2',
+  normalize: boolean = true,
+  meanPool: boolean = true
+): Promise<EmbedResult> {
+  const invoke = getInvoke();
+  const modelsDir = await invoke<string>('plugin:local-ai|ensure_models_dir');
+
+  const modelPath = `${modelsDir}/embedding/${modelId}/model.safetensors`;
+  const tokenizerPath = `${modelsDir}/embedding/${modelId}/tokenizer.json`;
+  const configPath = `${modelsDir}/embedding/${modelId}/config.json`;
+
+  // Tauri command uses serde(rename_all = "camelCase") on JsDeviceType, so the
+  // variant "Auto" serialises as the JSON string "auto" (lowercase). This is
+  // intentionally different from the Node.js N-API driver which passes the
+  // variant name "Auto" (title-case) directly to the native addon.
+  const result = await invoke<{
+    embeddings: number[][];
+    dimensions: number;
+    device_used: string;
+  }>('plugin:local-ai|embed_texts', {
+    modelPath,
+    tokenizerPath,
+    configPath,
+    texts,
+    normalize,
+    meanPool,
+    device: 'auto', // "auto" matches JsDeviceType::Auto via serde rename_all = "camelCase"
+  });
+
+  return {
+    embeddings: result.embeddings,
+    dimensions: result.dimensions,
     model: modelId,
     deviceUsed: result.device_used,
   };

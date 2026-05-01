@@ -1,0 +1,53 @@
+id: vector-search-with-extract
+name: Vector Search (with Extract)
+description: Search for similar documents using text query converted to vector
+
+nodes:
+  # Generate 384D embedding from search query using local-ai
+  - id: embed-query
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: embed-text
+      label: Embed Query
+      isTrigger: false
+      params:
+        texts: ["{{habits.input.query}}"]
+        modelId: "all-minilm-l6-v2"
+        normalize: true
+        meanPool: true
+
+  # Search the embeddings collection using the extracted vector
+  - id: do-search
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorSearch
+      params:
+        collection: "embeddings"
+        vector: "{{embed-query.embeddings[0]}}"
+        limit: "{{habits.input.limit}}"
+        distance: "{{habits.input.distance}}"
+
+output: "{{do-search}}"
+
+input:
+  - id: query
+    type: string
+    displayName: "Search Query"
+    required: true
+    description: "Text to search for - will be converted to 384D vector"
+  - id: limit
+    type: number
+    displayName: "Max Results"
+    default: 5
+  - id: distance
+    type: string
+    displayName: "Distance Metric"
+    default: "cosine"
+    options: ["l2", "cosine", "l1"]
+    description: "Similarity metric for vector search"

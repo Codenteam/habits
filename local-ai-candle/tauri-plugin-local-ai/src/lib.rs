@@ -47,6 +47,10 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::synthesize_speech_base64,
             commands::create_voice_synthesizer,
             commands::voice_synthesizer_synthesize,
+            // Text embeddings
+            commands::embed_texts,
+            commands::create_text_embedder,
+            commands::text_embedder_embed,
             // Utilities
             commands::get_version,
             commands::has_metal_support,

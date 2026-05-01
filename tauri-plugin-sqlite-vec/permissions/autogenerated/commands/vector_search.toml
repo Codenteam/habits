@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-vector-search"
+description = "Enables the vector_search command without any pre-configured scope."
+commands.allow = ["vector_search"]
+
+[[permission]]
+identifier = "deny-vector-search"
+description = "Denies the vector_search command without any pre-configured scope."
+commands.deny = ["vector_search"]
