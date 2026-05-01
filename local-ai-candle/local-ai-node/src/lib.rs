@@ -9,6 +9,7 @@ use tokio::sync::Mutex;
 
 use local_ai_core::{
     device::DeviceType,
+    embed::{EmbedConfig, EmbedResult, TextEmbedder},
     image_caption::{ImageCaptionConfig, ImageCaptionResult, ImageCaptioner},
     image_gen::{ImageGenConfig, ImageGenResult, ImageGenerator},
     text_gen::{TextGenConfig, TextGenResult, TextGenerator, ModelType},
@@ -849,6 +850,114 @@ pub fn transcribe_audio_base64(
     // Delete temp file
     let _ = fs::remove_file(&temp_path);
     
+    Ok(result.into())
+}
+
+// ============================================================================
+// Text Embeddings
+// ============================================================================
+
+#[napi(object)]
+#[derive(Clone)]
+pub struct JsEmbedConfig {
+    /// Path to the safetensors model file
+    pub model_path: String,
+    /// Path to tokenizer.json
+    pub tokenizer_path: String,
+    /// Path to config.json
+    pub config_path: String,
+    /// L2-normalize output vectors (default true)
+    pub normalize: Option<bool>,
+    /// Mean-pool over tokens; false = use CLS token (default true)
+    pub mean_pool: Option<bool>,
+    /// Device to use
+    pub device: Option<JsDeviceType>,
+}
+
+#[napi(object)]
+pub struct JsEmbedResult {
+    /// One vector per input text
+    pub embeddings: Vec<Vec<f64>>,
+    /// Vector dimensionality
+    pub dimensions: u32,
+    /// Device used for inference (cpu, metal, cuda)
+    pub device_used: String,
+}
+
+impl From<EmbedResult> for JsEmbedResult {
+    fn from(r: EmbedResult) -> Self {
+        JsEmbedResult {
+            embeddings: r
+                .embeddings
+                .into_iter()
+                .map(|v| v.into_iter().map(|x| x as f64).collect())
+                .collect(),
+            dimensions: r.dimensions as u32,
+            device_used: r.device_used,
+        }
+    }
+}
+
+/// Text embedder class for Node.js (keeps the model loaded between calls)
+#[napi]
+pub struct JsTextEmbedder {
+    inner: Arc<TextEmbedder>,
+}
+
+#[napi]
+impl JsTextEmbedder {
+    #[napi(factory)]
+    pub fn new(config: JsEmbedConfig) -> Result<JsTextEmbedder> {
+        let core_config = EmbedConfig {
+            model_path: config.model_path,
+            tokenizer_path: config.tokenizer_path,
+            config_path: config.config_path,
+            normalize: config.normalize.unwrap_or(true),
+            mean_pool: config.mean_pool.unwrap_or(true),
+            device: config.device.map(Into::into).unwrap_or_default(),
+        };
+        let embedder = TextEmbedder::new(core_config).map_err(convert_error)?;
+        Ok(JsTextEmbedder {
+            inner: Arc::new(embedder),
+        })
+    }
+
+    #[napi]
+    pub async fn embed(&self, texts: Vec<String>) -> Result<JsEmbedResult> {
+        let embedder = self.inner.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+            embedder.embed(&refs)
+        })
+        .await
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?
+        .map_err(convert_error)?;
+        Ok(result.into())
+    }
+}
+
+/// Embed a batch of texts (simple function, builds an embedder per call)
+#[napi]
+pub fn embed_texts(
+    model_path: String,
+    tokenizer_path: String,
+    config_path: String,
+    texts: Vec<String>,
+    normalize: Option<bool>,
+    mean_pool: Option<bool>,
+    device: Option<JsDeviceType>,
+) -> Result<JsEmbedResult> {
+    let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+    let result = local_ai_core::embed::embed_texts(
+        &model_path,
+        &tokenizer_path,
+        &config_path,
+        &refs,
+        normalize.unwrap_or(true),
+        mean_pool.unwrap_or(true),
+        device.map(Into::into).unwrap_or_default(),
+    )
+    .map_err(convert_error)?;
     Ok(result.into())
 }
 

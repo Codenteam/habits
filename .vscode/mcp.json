@@ -4,25 +4,22 @@
       "command": "npx",
       "args": [
         "-y",
-        "@anthropic-ai/mcp-chrome-devtools@latest"
+        "chrome-devtools-mcp@latest"
       ]
     },
-    "wdio-mcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@wdio/mcp"
-      ]
-    },
-    "habits-manage-tauri-mcp": {
+    "habits-mcp": {
       "command": "npx",
       "args": [
         "tsx",
-        "${workspaceFolder}/packages/manage/forge/src/mcp/tauri.ts"
+        "${workspaceFolder}/packages/manage/forge/src/mcp/habits-mcp.ts"
       ],
       "env": {
         "WEBDRIVER_PORT": "4445",
         "WEBDRIVER_HOST": "127.0.0.1",
+        "MANAGE_ADMIN_URL": "http://localhost:8080",
+        "MANAGE_PDNS_API_URL": "http://localhost:8081",
+        "MANAGE_PDNS_SERVER_ID": "localhost",
+        "MANAGE_ROOT_DOMAIN": "habits.local",
         "WORKSPACE_ROOT": "${workspaceFolder}"
       }
     }

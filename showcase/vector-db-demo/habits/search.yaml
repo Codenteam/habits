@@ -1,0 +1,33 @@
+id: vector-search
+name: Vector Search
+description: Search for similar documents using vector similarity
+
+nodes:
+  - id: do-search
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorSearch
+      params:
+        collection: "items"
+        vector: "{{habits.input.vector}}"
+        limit: "{{habits.input.limit}}"
+        distance: "{{habits.input.distance}}"
+
+output: "{{do-search}}"
+
+input:
+  - id: vector
+    type: array
+    displayName: "Query Vector (4-dim)"
+    default: [1, 0, 0, 0]
+  - id: limit
+    type: number
+    displayName: "Max Results"
+    default: 5
+  - id: distance
+    type: string
+    displayName: "Distance Metric (l2 | cosine | l1)"
+    default: "l2"

@@ -50,6 +50,15 @@ commands.allow = [
 ]
 
 [[permission]]
+identifier = "allow-embed"
+description = "Allow text embedding commands"
+commands.allow = [
+  "embed_texts",
+  "create_text_embedder",
+  "text_embedder_embed"
+]
+
+[[permission]]
 identifier = "allow-utilities"
 description = "Allow utility commands"
 commands.allow = [
@@ -69,5 +78,6 @@ permissions = [
   "allow-image-gen",
   "allow-transcribe",
   "allow-text-to-voice",
+  "allow-embed",
   "allow-utilities"
 ]

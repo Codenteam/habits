@@ -171,8 +171,9 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_keyring::init())
         .plugin(tauri_plugin_email::init())
-        .plugin(tauri_plugin_shell::init());
-    
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_sqlite_vec::init());
+
     // Add local-ai plugin on all platforms (desktop/iOS: Metal+Accelerate, Android: CPU-only)
     let builder = builder.plugin(tauri_plugin_local_ai::init());
     

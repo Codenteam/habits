@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/cortex",
-  "version": "1.5.123",
+  "version": "1.5.124",
   "description": "Cortex - Habits Workflow Executor CLI",
   "main": "./server/main.cjs",
   "bin": {

@@ -5,6 +5,7 @@
 
 pub mod audio;
 pub mod device;
+pub mod embed;
 pub mod error;
 pub mod image_caption;
 pub mod image_gen;

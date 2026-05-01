@@ -47,8 +47,7 @@
       "timestampUrl": ""
     },
     "iOS": {
-      "minimumSystemVersion": "14.0",
-      "developmentTeam": "S54SCFZ347"
+      "minimumSystemVersion": "14.0"
     },
     "android": {
       "minSdkVersion": 27

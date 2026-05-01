@@ -34,7 +34,8 @@
   "dependencies": {
     "drizzle-orm": "^0.35.0",
     "better-sqlite3": "^11.0.0",
-    "@ha-bits/bit-database": "^1.0.0"
+    "@ha-bits/bit-database": "^1.0.0",
+    "sqlite-vec": "^0.1.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -78,6 +79,17 @@
           "sql:allow-load",
           "sql:allow-execute",
           "sql:allow-select"
+        ]
+      },
+      "sqlite-vec": {
+        "cargo": "tauri-plugin-sqlite-vec = { path = \"../../../../tauri-plugin-sqlite-vec\" }",
+        "init": "tauri_plugin_sqlite_vec::init()",
+        "permissions": [
+          "sqlite-vec:default",
+          "sqlite-vec:allow-ensure-tables",
+          "sqlite-vec:allow-vector-insert",
+          "sqlite-vec:allow-vector-search",
+          "sqlite-vec:allow-vector-delete"
         ]
       }
     }
