@@ -1,401 +1,441 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello World Demo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          animation: {
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'float': 'float 6s ease-in-out infinite',
-            'glow': 'glow 2s ease-in-out infinite alternate',
-            'shimmer': 'shimmer 2s linear infinite',
-            'scan': 'scan 2s linear infinite',
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes glow {
-      from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1); }
-      to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.2); }
-    }
-    @keyframes glow-green {
-      from { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1); }
-      to { box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(34, 197, 94, 0.2); }
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-    @keyframes scan {
-      0% { transform: translateY(-100%); opacity: 0; }
-      50% { opacity: 1; }
-      100% { transform: translateY(100%); opacity: 0; }
-    }
-    @keyframes grid-pulse {
-      0%, 100% { opacity: 0.03; }
-      50% { opacity: 0.08; }
-    }
-    @keyframes particle-float {
-      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
-      25% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
-      50% { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
-      75% { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
-    }
-    .bg-grid {
-      background-image: 
-        linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      animation: grid-pulse 4s ease-in-out infinite;
-    }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-    .neon-border {
-      position: relative;
-    }
-    .neon-border::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 1rem;
-      padding: 2px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
-      background-size: 300% 300%;
-      animation: gradient-rotate 4s linear infinite;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      opacity: 0.6;
-    }
-    @keyframes gradient-rotate {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .input-glow:focus {
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2);
-    }
-    .btn-glow {
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    .btn-glow::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s ease;
-    }
-    .btn-glow:hover::before {
-      left: 100%;
-    }
-    .btn-glow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
-    }
-    .btn-glow:active {
-      transform: translateY(0);
-    }
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(59, 130, 246, 0.6);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .typing-cursor::after {
-      content: '|';
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    .result-reveal {
-      animation: reveal 0.5s ease-out forwards;
-    }
-    @keyframes reveal {
-      from { 
-        opacity: 0; 
-        transform: translateY(20px) scale(0.95);
-        filter: blur(10px);
-      }
-      to { 
-        opacity: 1; 
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-    }
-    .tab-indicator {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .status-pulse {
-      animation: status-glow 1.5s ease-in-out infinite;
-    }
-    @keyframes status-glow {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
-    }
-    .loading-dots::after {
-      content: '';
-      animation: dots 1.5s steps(4, end) infinite;
-    }
-    @keyframes dots {
-      0% { content: ''; }
-      25% { content: '.'; }
-      50% { content: '..'; }
-      75% { content: '...'; }
-      100% { content: ''; }
-    }
-    .hex-pattern {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.02'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-  </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Hello World Demo</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script>
+ tailwind.config = {
+ darkMode: 'class',
+ theme: {
+ extend: {
+ animation: {
+ 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+ 'float': 'float 6s ease-in-out infinite',
+ 'glow': 'glow 2s ease-in-out infinite alternate',
+ 'shimmer': 'shimmer 2s linear infinite',
+ 'scan': 'scan 2s linear infinite',
+ }
+ }
+ }
+ }
+ </script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ @keyframes float {
+ 0%, 100% { transform: translateY(0px); }
+ 50% { transform: translateY(-10px); }
+ }
+ @keyframes glow {
+ from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1); }
+ to { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.2); }
+ }
+ @keyframes glow-green {
+ from { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1); }
+ to { box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(34, 197, 94, 0.2); }
+ }
+ @keyframes shimmer {
+ 0% { background-position: -200% 0; }
+ 100% { background-position: 200% 0; }
+ }
+ @keyframes scan {
+ 0% { transform: translateY(-100%); opacity: 0; }
+ 50% { opacity: 1; }
+ 100% { transform: translateY(100%); opacity: 0; }
+ }
+ @keyframes grid-pulse {
+ 0%, 100% { opacity: 0.03; }
+ 50% { opacity: 0.08; }
+ }
+ @keyframes particle-float {
+ 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+ 25% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+ 50% { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+ 75% { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
+ }
+ .bg-grid {
+ background-image: 
+ linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+ var(--ha-accent-blue);
+ background-size: 40px 40px;
+ animation: grid-pulse 4s ease-in-out infinite;
+ }
+ .glass-card {
+ background: rgba(15, 23, 42, 0.8);
+ backdrop-filter: blur(20px);
+ border: 1px solid rgba(59, 130, 246, 0.2);
+ }
+ .neon-border {
+ position: relative;
+ }
+ .neon-border::before {
+ content: '';
+ position: absolute;
+ inset: -2px;
+ border-radius: 1rem;
+ padding: 2px;
+ background: var(--ha-accent-blue);
+ background-size: 300% 300%;
+ animation: gradient-rotate 4s linear infinite;
+ -webkit-mask: linear-gradient(var(--ha-bg-base) 0 0) content-box, linear-gradient(var(--ha-bg-base) 0 0);
+ mask: linear-gradient(var(--ha-bg-base) 0 0) content-box, linear-gradient(var(--ha-bg-base) 0 0);
+ -webkit-mask-composite: xor;
+ mask-composite: exclude;
+ opacity: 0.6;
+ }
+ @keyframes gradient-rotate {
+ 0% { background-position: 0% 50%; }
+ 50% { background-position: 100% 50%; }
+ 100% { background-position: 0% 50%; }
+ }
+ .input-glow:focus {
+ box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2);
+ }
+ .btn-glow {
+ position: relative;
+ overflow: hidden;
+ transition: all 0.3s ease;
+ }
+ .btn-glow::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: -100%;
+ width: 100%;
+ height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+ transition: left 0.5s ease;
+ }
+ .btn-glow:hover::before {
+ left: 100%;
+ }
+ .btn-glow:hover {
+ transform: translateY(-2px);
+ box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+ }
+ .btn-glow:active {
+ transform: translateY(0);
+ }
+ .particle {
+ position: absolute;
+ width: 4px;
+ height: 4px;
+ background: rgba(59, 130, 246, 0.6);
+ border-radius: 50%;
+ pointer-events: none;
+ }
+ .typing-cursor::after {
+ content: '|';
+ animation: blink 1s step-end infinite;
+ }
+ @keyframes blink {
+ 0%, 100% { opacity: 1; }
+ 50% { opacity: 0; }
+ }
+ .result-reveal {
+ animation: reveal 0.5s ease-out forwards;
+ }
+ @keyframes reveal {
+ from { 
+ opacity: 0; 
+ transform: translateY(20px) scale(0.95);
+ filter: blur(10px);
+ }
+ to { 
+ opacity: 1; 
+ transform: translateY(0) scale(1);
+ filter: blur(0);
+ }
+ }
+ .tab-indicator {
+ transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+ }
+ .status-pulse {
+ animation: status-glow 1.5s ease-in-out infinite;
+ }
+ @keyframes status-glow {
+ 0%, 100% { opacity: 0.7; }
+ 50% { opacity: 1; }
+ }
+ .loading-dots::after {
+ content: '';
+ animation: dots 1.5s steps(4, end) infinite;
+ }
+ @keyframes dots {
+ 0% { content: ''; }
+ 25% { content: '.'; }
+ 50% { content: '..'; }
+ 75% { content: '...'; }
+ 100% { content: ''; }
+ }
+ .hex-pattern {
+ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.02'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+ }
+ </style>
 </head>
 <body class="bg-slate-950 min-h-screen flex items-center justify-center p-4 font-sans overflow-hidden">
-  <!-- Animated background -->
-  <div class="fixed inset-0 bg-grid hex-pattern"></div>
-  <div class="fixed inset-0 bg-gradient-to-br from-blue-950/30 via-slate-950 to-purple-950/30"></div>
-  
-  <!-- Floating particles -->
-  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
-  
-  <!-- Ambient glow orbs -->
-  <div class="fixed top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
-  <div class="fixed bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 1.5s;"></div>
-  
-  <!-- Main card -->
-  <div class="relative z-10 animate-float" style="animation-duration: 8s;">
-    <div class="glass-card neon-border rounded-2xl p-8 max-w-md w-full">
-      <!-- Scan line effect -->
-      <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-        <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent animate-scan"></div>
-      </div>
-      
-      <!-- Header -->
-      <div class="text-center mb-8 relative">
-        <div class="inline-block">
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent animate-pulse-slow">
-            Hello Worldhe beginning
-          </h1>
-          <div class="h-0.5 mt-2 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-        </div>
-        <p class="text-slate-400 mt-3 text-sm tracking-wide">
-          <span class="text-cyan-400/80">@ha-bits</span>/bit-hello-world
-        </p>
-      </div>
-      
-      <!-- Mode selector tabs -->
-      <div class="relative flex mb-6 bg-slate-800/50 rounded-xl p-1 border border-slate-700/50">
-        <div id="tabSlider" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-blue-600 rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30"></div>
-        <button id="tabInput" onclick="setMode('input')" class="relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10">
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Input
-          </span>
-        </button>
-        <button id="tabEnv" onclick="setMode('env')" class="relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10">
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
-            </svg>
-            Key
-          </span>
-        </button>
-      </div>
-      
-      <!-- Hints -->
-      <div id="hintInput" class="relative overflow-hidden bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6 transition-all duration-500">
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-cyan-500/5 to-blue-500/5"></div>
-        <p class="relative text-slate-300 text-sm text-center flex items-center justify-center gap-2">
-          <span class="text-xl">💡</span>
-          <span>Try <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">"hello"</code> and <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">"world"</code></span>
-        </p>
-      </div>
-      
-      <div id="hintEnv" class="relative overflow-hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 hidden transition-all duration-500">
-        <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-emerald-500/5"></div>
-        <p class="relative text-slate-300 text-sm text-center flex items-center justify-center gap-2">
-          <span class="text-xl">🌿</span>
-          <span>Param1 from <code class="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-300 font-mono">PARAM1</code> env</span>
-        </p>
-      </div>
-      
-      <!-- Input fields -->
-      <div id="param1Container" class="mb-4 transition-all duration-500">
-        <label for="param1" class="block text-slate-300 text-sm mb-2 font-medium tracking-wide">
-          Parameter 1
-        </label>
-        <div class="relative group">
-          <input type="text" id="param1" placeholder="Enter first parameter" value="hello" 
-            class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all duration-300 input-glow font-mono">
-          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-        </div>
-      </div>
-      
-      <div class="mb-6">
-        <label for="param2" class="block text-slate-300 text-sm mb-2 font-medium tracking-wide">
-          Parameter 2
-        </label>
-        <div class="relative group">
-          <input type="text" id="param2" placeholder="Enter second parameter" value="world" 
-            class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all duration-300 input-glow font-mono">
-          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-        </div>
-      </div>
-      
-      <!-- Submit button -->
-      <button id="runBtn" onclick="runWorkflow()" 
-        class="btn-glow w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-900 shadow-lg shadow-blue-500/25">
-        <span class="flex items-center justify-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-          <span id="btnText">Execute</span>
-        </span>
-      </button>
-      
-      <!-- Status -->
-      <div id="status" class="mt-5 p-4 rounded-xl text-sm text-center hidden transition-all duration-500"></div>
-      
-      <!-- Result -->
-      <div id="result" class="mt-5 hidden">
-        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-600/30 rounded-xl p-6">
-          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"></div>
-          <div class="text-center">
-            <p class="text-slate-400 text-xs uppercase tracking-widest mb-2">Response</p>
-            <div id="resultMessage" class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <!-- Animated background -->
+ <div class="fixed inset-0 bg-grid hex-pattern"></div>
+ <div class="fixed inset-0 bg-gradient-to-br from-blue-950/30 via-slate-950 to-purple-950/30"></div>
+ 
+ <!-- Floating particles -->
+ <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+ 
+ <!-- Ambient glow orbs -->
+ <div class="fixed top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+ <div class="fixed bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+ 
+ <!-- Main card -->
+ <div class="relative z-10 animate-float" style="animation-duration: 8s;">
+ <div class="glass-card neon-border rounded-2xl p-8 max-w-md w-full">
+ <!-- Scan line effect -->
+ <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+ <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent animate-scan"></div>
+ </div>
+ 
+ <!-- Header -->
+ <div class="text-center mb-8 relative">
+ <div class="inline-block">
+ <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent animate-pulse-slow">
+ Hello World
+ </h1>
+ <div class="h-0.5 mt-2 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
+ </div>
+ <p class="text-slate-400 mt-3 text-sm tracking-wide">
+ <span class="text-cyan-400/80">@ha-bits</span>/bit-hello-world
+ </p>
+ </div>
+ 
+ <!-- Mode selector tabs -->
+ <div class="relative flex mb-6 bg-slate-800/50 rounded-xl p-1 border border-slate-700/50">
+ <div id="tabSlider" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-blue-600 rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30"></div>
+ <button id="tabInput" onclick="setMode('input')" class="relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+ </svg>
+ Input
+ </span>
+ </button>
+ <button id="tabEnv" onclick="setMode('env')" class="relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+ </svg>
+ Key
+ </span>
+ </button>
+ </div>
+ 
+ <!-- Hints -->
+ <div id="hintInput" class="relative overflow-hidden bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6 transition-all duration-500">
+ <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-cyan-500/5 to-blue-500/5"></div>
+ <p class="relative text-slate-300 text-sm text-center flex items-center justify-center gap-2">
+ <span class="text-xl"></span>
+ <span>Try <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">"hello"</code> and <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">"world"</code></span>
+ </p>
+ </div>
+ 
+ <div id="hintEnv" class="relative overflow-hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 hidden transition-all duration-500">
+ <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-emerald-500/5"></div>
+ <p class="relative text-slate-300 text-sm text-center flex items-center justify-center gap-2">
+ <span class="text-xl"></span>
+ <span>Param1 from <code class="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-300 font-mono">PARAM1</code> env</span>
+ </p>
+ </div>
+ 
+ <!-- Input fields -->
+ <div id="param1Container" class="mb-4 transition-all duration-500">
+ <label for="param1" class="block text-slate-300 text-sm mb-2 font-medium tracking-wide">
+ Parameter 1
+ </label>
+ <div class="relative group">
+ <input type="text" id="param1" placeholder="Enter first parameter" value="hello" 
+ class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all duration-300 input-glow font-mono">
+ <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+ </div>
+ </div>
+ 
+ <div class="mb-6">
+ <label for="param2" class="block text-slate-300 text-sm mb-2 font-medium tracking-wide">
+ Parameter 2
+ </label>
+ <div class="relative group">
+ <input type="text" id="param2" placeholder="Enter second parameter" value="world" 
+ class="w-full px-4 py-3.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all duration-300 input-glow font-mono">
+ <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+ </div>
+ </div>
+ 
+ <!-- Submit button -->
+ <button id="runBtn" onclick="runWorkflow()" 
+ class="btn-glow w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-900 shadow-lg shadow-blue-500/25">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ <span id="btnText">Execute</span>
+ </span>
+ </button>
+ 
+ <!-- Status -->
+ <div id="status" class="mt-5 p-4 rounded-xl text-sm text-center hidden transition-all duration-500"></div>
+ 
+ <!-- Result -->
+ <div id="result" class="mt-5 hidden">
+ <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-600/30 rounded-xl p-6">
+ <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"></div>
+ <div class="text-center">
+ <p class="text-slate-400 text-xs uppercase tracking-widest mb-2">Response</p>
+ <div id="resultMessage" class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent"></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script>
-    // Create floating particles
-    function createParticles() {
-      const container = document.getElementById('particles');
-      for (let i = 0; i < 30; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.top = Math.random() * 100 + '%';
-        particle.style.animationDuration = (3 + Math.random() * 4) + 's';
-        particle.style.animationDelay = Math.random() * 2 + 's';
-        particle.style.animation = `particle-float ${3 + Math.random() * 4}s ease-in-out infinite`;
-        particle.style.animationDelay = `${Math.random() * 2}s`;
-        container.appendChild(particle);
-      }
-    }
-    createParticles();
+ <script>
+ // Create floating particles
+ function createParticles() {
+ const container = document.getElementById('particles');
+ for (let i = 0; i < 30; i++) {
+ const particle = document.createElement('div');
+ particle.className = 'particle';
+ particle.style.left = Math.random() * 100 + '%';
+ particle.style.top = Math.random() * 100 + '%';
+ particle.style.animationDuration = (3 + Math.random() * 4) + 's';
+ particle.style.animationDelay = Math.random() * 2 + 's';
+ particle.style.animation = `particle-float ${3 + Math.random() * 4}s ease-in-out infinite`;
+ particle.style.animationDelay = `${Math.random() * 2}s`;
+ container.appendChild(particle);
+ }
+ }
+ createParticles();
 
-    let currentMode = 'input';
-    
-    function setMode(mode) {
-      currentMode = mode;
-      const tabInput = document.getElementById('tabInput');
-      const tabEnv = document.getElementById('tabEnv');
-      const tabSlider = document.getElementById('tabSlider');
-      const param1Container = document.getElementById('param1Container');
-      const hintInput = document.getElementById('hintInput');
-      const hintEnv = document.getElementById('hintEnv');
-      
-      if (mode === 'input') {
-        tabSlider.style.left = '4px';
-        tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] bg-blue-600 rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30';
-        tabInput.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10';
-        tabEnv.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10';
-        param1Container.classList.remove('hidden');
-        param1Container.style.opacity = '1';
-        param1Container.style.transform = 'translateY(0)';
-        hintInput.classList.remove('hidden');
-        hintEnv.classList.add('hidden');
-      } else {
-        tabSlider.style.left = 'calc(50% + 0px)';
-        tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] bg-emerald-600 rounded-lg transition-all duration-300 shadow-lg shadow-emerald-500/30';
-        tabEnv.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10';
-        tabInput.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10';
-        param1Container.classList.add('hidden');
-        hintInput.classList.add('hidden');
-        hintEnv.classList.remove('hidden');
-      }
-    }
-    
-    async function runWorkflow() {
-      const btn = document.getElementById('runBtn');
-      const btnText = document.getElementById('btnText');
-      const status = document.getElementById('status');
-      const result = document.getElementById('result');
-      const resultMessage = document.getElementById('resultMessage');
-      
-      const param1 = document.getElementById('param1').value;
-      const param2 = document.getElementById('param2').value;
-      
-      btn.disabled = true;
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
-      btnText.innerHTML = '<span class="loading-dots">Processing</span>';
-      
-      status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-slate-800/50 border border-slate-600/30 text-slate-300 status-pulse';
-      status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Executing...</span>';
-      result.className = 'mt-5 hidden';
-      
-      // Choose endpoint based on mode
-      const endpoint = currentMode === 'input' ? '/api/hello-world' : '/api/hello-world-env';
-      const body = currentMode === 'input' ? { param1, param2 } : { param2 };
-      
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body)
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-          status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
-          status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Completed successfully!</span>';
-          
-          result.className = 'mt-5 block result-reveal';
-          const message = data.output?.message || data.message || data.output || JSON.stringify(data);
-          resultMessage.textContent = message['greeting'].value;
-        } else {
-          throw new Error(data.message || 'Request failed');
-        }
-      } catch (error) {
-        status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-red-500/10 border border-red-500/30 text-red-300';
-        status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' + error.message + '</span>';
-      } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btnText.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Execute</span>';
-      }
-    }
-  </script>
+ let currentMode = 'input';
+ 
+ function setMode(mode) {
+ currentMode = mode;
+ const tabInput = document.getElementById('tabInput');
+ const tabEnv = document.getElementById('tabEnv');
+ const tabSlider = document.getElementById('tabSlider');
+ const param1Container = document.getElementById('param1Container');
+ const hintInput = document.getElementById('hintInput');
+ const hintEnv = document.getElementById('hintEnv');
+ 
+ if (mode === 'input') {
+ tabSlider.style.left = '4px';
+ tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] bg-blue-600 rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30';
+ tabInput.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10';
+ tabEnv.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10';
+ param1Container.classList.remove('hidden');
+ param1Container.style.opacity = '1';
+ param1Container.style.transform = 'translateY(0)';
+ hintInput.classList.remove('hidden');
+ hintEnv.classList.add('hidden');
+ } else {
+ tabSlider.style.left = 'calc(50% + 0px)';
+ tabSlider.className = 'absolute top-1 bottom-1 w-[calc(50%-4px)] bg-emerald-600 rounded-lg transition-all duration-300 shadow-lg shadow-emerald-500/30';
+ tabEnv.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-white z-10';
+ tabInput.className = 'relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 text-slate-400 hover:text-slate-200 z-10';
+ param1Container.classList.add('hidden');
+ hintInput.classList.add('hidden');
+ hintEnv.classList.remove('hidden');
+ }
+ }
+ 
+ async function runWorkflow() {
+ const btn = document.getElementById('runBtn');
+ const btnText = document.getElementById('btnText');
+ const status = document.getElementById('status');
+ const result = document.getElementById('result');
+ const resultMessage = document.getElementById('resultMessage');
+ 
+ const param1 = document.getElementById('param1').value;
+ const param2 = document.getElementById('param2').value;
+ 
+ btn.disabled = true;
+ btn.classList.add('opacity-75', 'cursor-not-allowed');
+ btnText.innerHTML = '<span class="loading-dots">Processing</span>';
+ 
+ status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-slate-800/50 border border-slate-600/30 text-slate-300 status-pulse';
+ status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Executing...</span>';
+ result.className = 'mt-5 hidden';
+ 
+ // Choose endpoint based on mode
+ const endpoint = currentMode === 'input' ? '/api/hello-world' : '/api/hello-world-env';
+ const body = currentMode === 'input' ? { param1, param2 } : { param2 };
+ 
+ try {
+ const response = await fetch(endpoint, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json'
+ },
+ body: JSON.stringify(body)
+ });
+ 
+ const data = await response.json();
+ 
+ if (response.ok) {
+ status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
+ status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Completed successfully!</span>';
+ 
+ result.className = 'mt-5 block result-reveal';
+ const message = data.output?.message || data.message || data.output || JSON.stringify(data);
+ resultMessage.textContent = message['greeting'].value;
+ } else {
+ throw new Error(data.message || 'Request failed');
+ }
+ } catch (error) {
+ status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-red-500/10 border border-red-500/30 text-red-300';
+ status.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' + error.message + '</span>';
+ } finally {
+ btn.disabled = false;
+ btn.classList.remove('opacity-75', 'cursor-not-allowed');
+ btnText.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Execute</span>';
+ }
+ }
+ </script>
 </body>
 </html>

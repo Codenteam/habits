@@ -37,6 +37,7 @@ tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-webdriver = { version = "0.2", optional = true }
 base64 = "0.22"
+tauri-plugin-deep-link = "2"
 
 # Mobile-only dependencies (iOS/Android)
 [target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
@@ -66,6 +67,9 @@ xcap = { version = "0.9", optional = true }
 [features]
 custom-protocol = ["tauri/custom-protocol"]
 debug-tools = ["dep:tauri-plugin-webdriver", "dep:xcap"]
+# When enabled: hides "Add from Device", redirects "Browse Showcase" to local built-in habits.
+# Must be set for iOS App Store and macOS App Store (Mac App Store) builds.
+no-external-habits = []
 
 [profile.dev]
 incremental = true

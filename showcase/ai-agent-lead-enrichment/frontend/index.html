@@ -1,329 +1,369 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Lead Enrichment</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          animation: {
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'float': 'float 8s ease-in-out infinite',
-            'scan': 'scan 2.5s linear infinite',
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-    }
-    @keyframes scan {
-      0% { transform: translateY(-100%); opacity: 0; }
-      50% { opacity: 1; }
-      100% { transform: translateY(100%); opacity: 0; }
-    }
-    @keyframes gradient-rotate {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(16px) scale(0.97); filter: blur(6px); }
-      to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    }
-    @keyframes score-fill {
-      from { width: 0%; }
-    }
-    @keyframes grid-pulse {
-      0%, 100% { opacity: 0.03; }
-      50% { opacity: 0.07; }
-    }
-    @keyframes particle-float {
-      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
-      25% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
-      50% { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
-      75% { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
-    }
-    .bg-grid {
-      background-image:
-        linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
-      background-size: 40px 40px;
-      animation: grid-pulse 4s ease-in-out infinite;
-    }
-    .glass-card {
-      background: rgba(10, 10, 20, 0.85);
-      backdrop-filter: blur(24px);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-    .neon-border {
-      position: relative;
-    }
-    .neon-border::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 1.25rem;
-      padding: 2px;
-      background: linear-gradient(135deg, #8b5cf6, #06b6d4, #a855f7, #8b5cf6);
-      background-size: 300% 300%;
-      animation: gradient-rotate 5s linear infinite;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      opacity: 0.55;
-    }
-    .input-glow:focus {
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35), 0 0 18px rgba(139, 92, 246, 0.15);
-    }
-    .btn-glow {
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    .btn-glow::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-      transition: left 0.5s ease;
-    }
-    .btn-glow:hover::before { left: 100%; }
-    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4); }
-    .btn-glow:active { transform: translateY(0); }
-    .particle {
-      position: absolute;
-      width: 3px; height: 3px;
-      background: rgba(139, 92, 246, 0.5);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .result-reveal { animation: reveal 0.5s ease-out forwards; }
-    .score-bar { animation: score-fill 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both; }
-    .status-pulse { animation: status-glow 1.5s ease-in-out infinite; }
-    @keyframes status-glow {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
-    }
-  </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>AI Lead Enrichment</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script>
+ tailwind.config = {
+ darkMode: 'class',
+ theme: {
+ extend: {
+ animation: {
+ 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+ 'float': 'float 8s ease-in-out infinite',
+ 'scan': 'scan 2.5s linear infinite',
+ }
+ }
+ }
+ }
+ </script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ @keyframes float {
+ 0%, 100% { transform: translateY(0px); }
+ 50% { transform: translateY(-8px); }
+ }
+ @keyframes scan {
+ 0% { transform: translateY(-100%); opacity: 0; }
+ 50% { opacity: 1; }
+ 100% { transform: translateY(100%); opacity: 0; }
+ }
+ @keyframes gradient-rotate {
+ 0% { background-position: 0% 50%; }
+ 50% { background-position: 100% 50%; }
+ 100% { background-position: 0% 50%; }
+ }
+ @keyframes reveal {
+ from { opacity: 0; transform: translateY(16px) scale(0.97); filter: blur(6px); }
+ to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+ }
+ @keyframes score-fill {
+ from { width: 0%; }
+ }
+ @keyframes grid-pulse {
+ 0%, 100% { opacity: 0.03; }
+ 50% { opacity: 0.07; }
+ }
+ @keyframes particle-float {
+ 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+ 25% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+ 50% { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+ 75% { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
+ }
+ .bg-grid {
+ background-image:
+ linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
+ linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+ background-size: 40px 40px;
+ animation: grid-pulse 4s ease-in-out infinite;
+ }
+ .glass-card {
+ background: rgba(10, 10, 20, 0.85);
+ backdrop-filter: blur(24px);
+ border: 1px solid rgba(139, 92, 246, 0.2);
+ }
+ .neon-border {
+ position: relative;
+ }
+ .neon-border::before {
+ content: '';
+ position: absolute;
+ inset: -2px;
+ border-radius: 1.25rem;
+ padding: 2px;
+ background: var(--ha-accent-purple);
+ background-size: 300% 300%;
+ animation: gradient-rotate 5s linear infinite;
+ -webkit-mask: linear-gradient(var(--ha-bg-base) 0 0) content-box, linear-gradient(var(--ha-bg-base) 0 0);
+ mask: linear-gradient(var(--ha-bg-base) 0 0) content-box, linear-gradient(var(--ha-bg-base) 0 0);
+ -webkit-mask-composite: xor;
+ mask-composite: exclude;
+ opacity: 0.55;
+ }
+ .input-glow:focus {
+ box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35), 0 0 18px rgba(139, 92, 246, 0.15);
+ }
+ .btn-glow {
+ position: relative;
+ overflow: hidden;
+ transition: all 0.3s ease;
+ }
+ .btn-glow::before {
+ content: '';
+ position: absolute;
+ top: 0; left: -100%;
+ width: 100%; height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+ transition: left 0.5s ease;
+ }
+ .btn-glow:hover::before { left: 100%; }
+ .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4); }
+ .btn-glow:active { transform: translateY(0); }
+ .particle {
+ position: absolute;
+ width: 3px; height: 3px;
+ background: rgba(139, 92, 246, 0.5);
+ border-radius: 50%;
+ pointer-events: none;
+ }
+ .result-reveal { animation: reveal 0.5s ease-out forwards; }
+ .score-bar { animation: score-fill 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both; }
+ .status-pulse { animation: status-glow 1.5s ease-in-out infinite; }
+ @keyframes status-glow {
+ 0%, 100% { opacity: 0.7; }
+ 50% { opacity: 1; }
+ }
+ </style>
 </head>
 <body class="bg-slate-950 min-h-screen flex items-center justify-center p-4 font-sans">
 
-  <!-- Background -->
-  <div class="fixed inset-0 bg-grid"></div>
-  <div class="fixed inset-0 bg-gradient-to-br from-violet-950/25 via-slate-950 to-cyan-950/20"></div>
-  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
-  <div class="fixed top-1/4 left-1/4 w-96 h-96 bg-violet-500/8 rounded-full blur-3xl animate-pulse-slow"></div>
-  <div class="fixed bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl animate-pulse-slow" style="animation-delay:2s;"></div>
+ <!-- Background -->
+ <div class="fixed inset-0 bg-grid"></div>
+ <div class="fixed inset-0 bg-gradient-to-br from-violet-950/25 via-slate-950 to-cyan-950/20"></div>
+ <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+ <div class="fixed top-1/4 left-1/4 w-96 h-96 bg-violet-500/8 rounded-full blur-3xl animate-pulse-slow"></div>
+ <div class="fixed bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl animate-pulse-slow" style="animation-delay:2s;"></div>
 
-  <!-- Card -->
-  <div class="relative z-10 w-full max-w-lg animate-float">
-    <div class="glass-card neon-border rounded-2xl p-8">
+ <!-- Card -->
+ <div class="relative z-10 w-full max-w-lg animate-float">
+ <div class="glass-card neon-border rounded-2xl p-8">
 
-      <!-- Scan line -->
-      <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-        <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent animate-scan"></div>
-      </div>
+ <!-- Scan line -->
+ <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+ <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent animate-scan"></div>
+ </div>
 
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
-          Contact Form
-        </h1>
-        <div class="h-px mt-2 bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"></div>
-        <p class="text-slate-500 mt-2 text-xs tracking-wider uppercase">Powered by Habits</p>
-      </div>
+ <!-- Header -->
+ <div class="text-center mb-8">
+ <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+ Contact Form
+ </h1>
+ <div class="h-px mt-2 bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"></div>
+ <p class="text-slate-500 mt-2 text-xs tracking-wider uppercase">Powered by Habits</p>
+ </div>
 
-      <!-- Form -->
-      <form id="leadForm" onsubmit="submitLead(event)" novalidate>
+ <!-- Form -->
+ <form id="leadForm" onsubmit="submitLead(event)" novalidate>
 
-        <!-- Row: First + Last -->
-        <div class="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">First Name</label>
-            <div class="relative group">
-              <input type="text" id="firstName" placeholder="John"
-                class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
-            </div>
-          </div>
-          <div>
-            <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Last Name</label>
-            <div class="relative group">
-              <input type="text" id="lastName" placeholder="Doe"
-                class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
-            </div>
-          </div>
-        </div>
+ <!-- Row: First + Last -->
+ <div class="grid grid-cols-2 gap-3 mb-3">
+ <div>
+ <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">First Name</label>
+ <div class="relative group">
+ <input type="text" id="firstName" placeholder="John"
+ class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
+ </div>
+ </div>
+ <div>
+ <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Last Name</label>
+ <div class="relative group">
+ <input type="text" id="lastName" placeholder="Doe"
+ class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
+ </div>
+ </div>
+ </div>
 
-        <!-- Email -->
-        <div class="mb-3">
-          <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
-            Email <span class="text-violet-400">*</span>
-          </label>
-          <div class="relative">
-            <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <input type="email" id="email" placeholder="john@acme.com" required
-              class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
-          </div>
-        </div>
+ <!-- Email -->
+ <div class="mb-3">
+ <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+ Email <span class="text-violet-400">*</span>
+ </label>
+ <div class="relative">
+ <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+ </svg>
+ </div>
+ <input type="email" id="email" placeholder="john@acme.com" required
+ class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
+ </div>
+ </div>
 
-        <!-- Company -->
-        <div class="mb-3">
-          <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Company</label>
-          <div class="relative">
-            <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-            <input type="text" id="company" placeholder="Acme Inc"
-              class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
-          </div>
-        </div>
+ <!-- Company -->
+ <div class="mb-3">
+ <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Company</label>
+ <div class="relative">
+ <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+ </svg>
+ </div>
+ <input type="text" id="company" placeholder="Acme Inc"
+ class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
+ </div>
+ </div>
 
-        <!-- Phone -->
-        <div class="mb-6">
-          <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Phone</label>
-          <div class="relative">
-            <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-              </svg>
-            </div>
-            <input type="tel" id="phone" placeholder="+1 555 000 0000"
-              class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
-          </div>
-        </div>
+ <!-- Phone -->
+ <div class="mb-6">
+ <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Phone</label>
+ <div class="relative">
+ <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+ </svg>
+ </div>
+ <input type="tel" id="phone" placeholder="+1 555 000 0000"
+ class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/60 transition-all duration-300 input-glow text-sm">
+ </div>
+ </div>
 
-        <!-- Submit -->
-        <button type="submit" id="runBtn"
-          class="btn-glow w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-2 focus:ring-offset-slate-950 shadow-lg shadow-violet-500/20">
-          <span id="btnContent" class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Submit
-          </span>
-        </button>
+ <!-- Submit -->
+ <button type="submit" id="runBtn"
+ class="btn-glow w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-2 focus:ring-offset-slate-950 shadow-lg shadow-violet-500/20">
+ <span id="btnContent" class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ Submit
+ </span>
+ </button>
 
-      </form>
+ </form>
 
-      <!-- Status -->
-      <div id="status" class="mt-4 hidden"></div>
+ <!-- Status -->
+ <div id="status" class="mt-4 hidden"></div>
 
-    </div>
-  </div>
+ </div>
+ </div>
 
-  <script>
-    // Particles
-    (function() {
-      const c = document.getElementById('particles');
-      for (let i = 0; i < 25; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation:particle-float ${3+Math.random()*4}s ease-in-out infinite;animation-delay:${Math.random()*3}s`;
-        c.appendChild(p);
-      }
-    })();
+ <script>
+ // Particles
+ (function() {
+ const c = document.getElementById('particles');
+ for (let i = 0; i < 25; i++) {
+ const p = document.createElement('div');
+ p.className = 'particle';
+ p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation:particle-float ${3+Math.random()*4}s ease-in-out infinite;animation-delay:${Math.random()*3}s`;
+ c.appendChild(p);
+ }
+ })();
 
-    async function submitLead(e) {
-      e.preventDefault();
+ async function submitLead(e) {
+ e.preventDefault();
 
-      const email = document.getElementById('email').value.trim();
-      if (!email) {
-        showStatus('error', 'Email is required.');
-        return;
-      }
+ const email = document.getElementById('email').value.trim();
+ if (!email) {
+ showStatus('error', 'Email is required.');
+ return;
+ }
 
-      const payload = {
-        email,
-        firstName: document.getElementById('firstName').value.trim(),
-        lastName:  document.getElementById('lastName').value.trim(),
-        company:   document.getElementById('company').value.trim(),
-        phone:     document.getElementById('phone').value.trim(),
-      };
+ const payload = {
+ email,
+ firstName: document.getElementById('firstName').value.trim(),
+ lastName: document.getElementById('lastName').value.trim(),
+ company: document.getElementById('company').value.trim(),
+ phone: document.getElementById('phone').value.trim(),
+ };
 
-      const btn = document.getElementById('runBtn');
-      const btnContent = document.getElementById('btnContent');
-      btn.disabled = true;
-      btn.classList.add('opacity-70', 'cursor-not-allowed');
-      btnContent.innerHTML = `
-        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        Submitting...`;
+ const btn = document.getElementById('runBtn');
+ const btnContent = document.getElementById('btnContent');
+ btn.disabled = true;
+ btn.classList.add('opacity-70', 'cursor-not-allowed');
+ btnContent.innerHTML = `
+ <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+ <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+ <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+ </svg>
+ Submitting...`;
 
-      showStatus('loading', 'Processing your submission...');
+ showStatus('loading', 'Processing your submission...');
 
-      try {
-        const res = await fetch('/api/enrich-lead', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+ try {
+ const res = await fetch('/api/enrich-lead', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload),
+ });
 
-        const data = await res.json();
+ const data = await res.json();
 
-        if (!res.ok) {
-          showStatus('error', data.message || data.error || 'Failed to submit. Please try again');
-          throw new Error(data.message || data.error || 'Request failed');
-          
-        }
+ if (!res.ok) {
+ showStatus('error', data.message || data.error || 'Failed to submit. Please try again');
+ throw new Error(data.message || data.error || 'Request failed');
+ 
+ }
 
-        // The workflow outputs: enriched -> plain score string, hubspot -> sync result
-        showStatus('success', 'Submitted successfully.');
+ // The workflow outputs: enriched -> plain score string, hubspot -> sync result
+ showStatus('success', 'Submitted successfully.');
 
-      } catch (err) {
-        showStatus('error', err.message || 'Failed to submit. Please try again');
-      } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-70', 'cursor-not-allowed');
-        btnContent.innerHTML = `
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-          </svg>
-          Submit`;
-      }
-    }
+ } catch (err) {
+ showStatus('error', err.message || 'Failed to submit. Please try again');
+ } finally {
+ btn.disabled = false;
+ btn.classList.remove('opacity-70', 'cursor-not-allowed');
+ btnContent.innerHTML = `
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ Submit`;
+ }
+ }
 
-    function showStatus(type, msg) {
-      const el = document.getElementById('status');
-      const styles = {
-        loading: 'bg-slate-800/50 border-slate-600/30 text-slate-300 status-pulse',
-        success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
-        error:   'bg-red-500/10 border-red-500/30 text-red-300',
-      };
-      const icons = {
-        loading: `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`,
-        success: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
-        error:   `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
-      };
-      el.className = `p-3 rounded-xl text-sm border flex items-center gap-2 ${styles[type]}`;
-      el.innerHTML = `${icons[type]}<span>${msg}</span>`;
-      el.classList.remove('hidden');
-    }
+ function showStatus(type, msg) {
+ const el = document.getElementById('status');
+ const styles = {
+ loading: 'bg-slate-800/50 border-slate-600/30 text-slate-300 status-pulse',
+ success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+ error: 'bg-red-500/10 border-red-500/30 text-red-300',
+ };
+ const icons = {
+ loading: `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`,
+ success: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
+ error: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
+ };
+ el.className = `p-3 rounded-xl text-sm border flex items-center gap-2 ${styles[type]}`;
+ el.innerHTML = `${icons[type]}<span>${msg}</span>`;
+ el.classList.remove('hidden');
+ }
 
-    function escHtml(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-  </script>
+ function escHtml(str) {
+ return String(str ?? '')
+ .replace(/&/g, '&amp;')
+ .replace(/</g, '&lt;')
+ .replace(/>/g, '&gt;')
+ .replace(/"/g, '&quot;');
+ }
+ </script>
 </body>
 </html>

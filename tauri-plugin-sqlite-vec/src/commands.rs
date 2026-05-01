@@ -1,8 +1,7 @@
 use crate::state::VecConnectionRegistry;
 use crate::Result;
-use rusqlite::{Connection, OptionalExtension};
+use rusqlite::OptionalExtension;
 use serde_json::Value;
-use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager, Runtime, State};
 
 fn validate_collection(name: &str) -> Result<()> {

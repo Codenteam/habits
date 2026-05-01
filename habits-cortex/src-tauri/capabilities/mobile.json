@@ -2,12 +2,24 @@
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
   "description": "Mobile-only capabilities (iOS/Android) - sensitive plugins disabled for initial release",
-  "platforms": ["iOS", "android"],
-  "windows": ["main"],
-  "webviews": ["main"],
+  "platforms": [
+    "iOS",
+    "android"
+  ],
+  "windows": [
+    "main"
+  ],
+  "webviews": [
+    "main"
+  ],
   "local": true,
   "remote": {
-    "urls": ["tauri://localhost/*", "tauri://*"]
+    "urls": [
+      "tauri://localhost/*",
+      "tauri://*"
+    ]
   },
-  "permissions": []
+  "permissions": [
+    "deep-link:default"
+  ]
 }

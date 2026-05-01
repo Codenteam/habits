@@ -1,1544 +1,1584 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0a0a12">
-  <title>Invoice Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root {
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --stripe-purple: #635bff;
-      --stripe-cyan: #00d4ff;
-      --neon-green: #00ff88;
-      --neon-pink: #ff0080;
-    }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ <meta name="theme-color" content="var(--ha-bg-base)">
+ <title>Invoice Hub</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ :root {
+ --safe-top: env(safe-area-inset-top, 0px);
+ --safe-bottom: env(safe-area-inset-bottom, 0px);
+ --stripe-purple: var(--ha-accent-purple);
+ --stripe-cyan: var(--ha-accent-cyan);
+ --neon-green: var(--ha-status-success);
+ --neon-pink: var(--ha-status-error);
+ }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+ * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ -webkit-tap-highlight-color: transparent;
+ }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+ html, body {
+ height: 100%;
+ overflow: hidden;
+ }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a12;
-      color: #ffffff;
-    }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-base);
+ color: var(--ha-bg-base);
+ }
 
-    /* Animations */
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(99, 91, 255, 0.3); }
-      50% { box-shadow: 0 0 40px rgba(99, 91, 255, 0.6); }
-    }
+ /* Animations */
+ @keyframes glow {
+ 0%, 100% { box-shadow: 0 0 20px rgba(99, 91, 255, 0.3); }
+ 50% { box-shadow: 0 0 40px rgba(99, 91, 255, 0.6); }
+ }
 
-    @keyframes pulse-ring {
-      0% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
+ @keyframes pulse-ring {
+ 0% { transform: scale(1); opacity: 1; }
+ 100% { transform: scale(1.5); opacity: 0; }
+ }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
+ @keyframes float {
+ 0%, 100% { transform: translateY(0); }
+ 50% { transform: translateY(-4px); }
+ }
 
-    @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
-    }
+ @keyframes scan {
+ 0% { top: 0; }
+ 100% { top: 100%; }
+ }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+ @keyframes fadeUp {
+ from { opacity: 0; transform: translateY(20px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
 
-    .animate-glow { animation: glow 2s ease-in-out infinite; }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-    .animate-fade-up { animation: fadeUp 0.4s ease-out forwards; }
+ .animate-glow { animation: glow 2s ease-in-out infinite; }
+ .animate-float { animation: float 3s ease-in-out infinite; }
+ .animate-fade-up { animation: fadeUp 0.4s ease-out forwards; }
 
-    /* App Shell */
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bottom);
-      background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a12 70%);
-    }
+ /* App Shell */
+ .app {
+ display: flex;
+ flex-direction: column;
+ height: 100%;
+ padding-top: var(--safe-top);
+ padding-bottom: var(--safe-bottom);
+ background: radial-gradient(ellipse at top, var(--ha-bg-base) 0%, var(--ha-bg-base) 70%);
+ }
 
-    /* Header */
-    .header {
-      padding: 16px 20px;
-      background: rgba(10, 10, 18, 0.9);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(99, 91, 255, 0.2);
-      position: relative;
-      z-index: 50;
-    }
+ /* Header */
+ .header {
+ padding: 16px 20px;
+ background: rgba(10, 10, 18, 0.9);
+ backdrop-filter: blur(20px);
+ border-bottom: 1px solid rgba(99, 91, 255, 0.2);
+ position: relative;
+ z-index: 50;
+ }
 
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--stripe-purple), var(--stripe-cyan), transparent);
-    }
+ .header::after {
+ content: '';
+ position: absolute;
+ bottom: 0;
+ left: 0;
+ right: 0;
+ height: 1px;
+ background: linear-gradient(90deg, transparent, var(--stripe-purple), var(--stripe-cyan), transparent);
+ }
 
-    /* Main Content */
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 20px;
-      padding-bottom: 100px;
-    }
+ /* Main Content */
+ .main-content {
+ flex: 1;
+ overflow-y: auto;
+ -webkit-overflow-scrolling: touch;
+ padding: 20px;
+ padding-bottom: 100px;
+ }
 
-    /* Cards */
-    .card {
-      background: rgba(26, 26, 46, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(99, 91, 255, 0.15);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-    }
+ /* Cards */
+ .card {
+ background: rgba(26, 26, 46, 0.6);
+ backdrop-filter: blur(10px);
+ border: 1px solid rgba(99, 91, 255, 0.15);
+ border-radius: 20px;
+ padding: 20px;
+ margin-bottom: 16px;
+ position: relative;
+ overflow: hidden;
+ }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(99, 91, 255, 0.5), transparent);
-    }
+ .card::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ height: 1px;
+ background: linear-gradient(90deg, transparent, rgba(99, 91, 255, 0.5), transparent);
+ }
 
-    .card-glow {
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(99, 91, 255, 0.05) 0%, transparent 60%);
-      pointer-events: none;
-    }
+ .card-glow {
+ position: absolute;
+ top: -50%;
+ left: -50%;
+ width: 200%;
+ height: 200%;
+ background: radial-gradient(circle, rgba(99, 91, 255, 0.05) 0%, transparent 60%);
+ pointer-events: none;
+ }
 
-    /* Status Indicator */
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      position: relative;
-    }
+ /* Status Indicator */
+ .status-dot {
+ width: 10px;
+ height: 10px;
+ border-radius: 50%;
+ position: relative;
+ }
 
-    .status-dot.online {
-      background: var(--neon-green);
-      box-shadow: 0 0 10px var(--neon-green);
-    }
+ .status-dot.online {
+ background: var(--neon-green);
+ box-shadow: 0 0 10px var(--neon-green);
+ }
 
-    .status-dot.online::after {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      border: 2px solid var(--neon-green);
-      animation: pulse-ring 2s ease-out infinite;
-    }
+ .status-dot.online::after {
+ content: '';
+ position: absolute;
+ inset: -4px;
+ border-radius: 50%;
+ border: 2px solid var(--neon-green);
+ animation: pulse-ring 2s ease-out infinite;
+ }
 
-    .status-dot.offline {
-      background: #ff4444;
-      box-shadow: 0 0 10px #ff4444;
-    }
+ .status-dot.offline {
+ background: var(--ha-danger);
+ box-shadow: 0 0 10px var(--ha-danger);
+ }
 
-    /* Tab Bar */
-    .tab-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 12px 20px calc(12px + var(--safe-bottom));
-      background: rgba(10, 10, 18, 0.95);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(99, 91, 255, 0.2);
-      display: flex;
-      justify-content: space-around;
-      z-index: 100;
-    }
+ /* Tab Bar */
+ .tab-bar {
+ position: fixed;
+ bottom: 0;
+ left: 0;
+ right: 0;
+ padding: 12px 20px calc(12px + var(--safe-bottom));
+ background: rgba(10, 10, 18, 0.95);
+ backdrop-filter: blur(20px);
+ border-top: 1px solid rgba(99, 91, 255, 0.2);
+ display: flex;
+ justify-content: space-around;
+ z-index: 100;
+ }
 
-    .tab-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 8px 16px;
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s;
-      border-radius: 12px;
-    }
+ .tab-btn {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ gap: 4px;
+ padding: 8px 16px;
+ background: none;
+ border: none;
+ color: rgba(255, 255, 255, 0.4);
+ font-size: 10px;
+ font-weight: 500;
+ cursor: pointer;
+ transition: all 0.3s;
+ border-radius: 12px;
+ }
 
-    .tab-btn svg {
-      width: 24px;
-      height: 24px;
-      transition: all 0.3s;
-    }
+ .tab-btn svg {
+ width: 24px;
+ height: 24px;
+ transition: all 0.3s;
+ }
 
-    .tab-btn.active {
-      color: var(--stripe-cyan);
-    }
+ .tab-btn.active {
+ color: var(--stripe-cyan);
+ }
 
-    .tab-btn.active svg {
-      filter: drop-shadow(0 0 8px var(--stripe-cyan));
-    }
+ .tab-btn.active svg {
+ filter: drop-shadow(0 0 8px var(--stripe-cyan));
+ }
 
-    /* Screens */
-    .screen {
-      display: none;
-    }
+ /* Screens */
+ .screen {
+ display: none;
+ }
 
-    .screen.active {
-      display: block;
-      animation: fadeUp 0.3s ease-out;
-    }
+ .screen.active {
+ display: block;
+ animation: fadeUp 0.3s ease-out;
+ }
 
-    /* Form Inputs */
-    .input-group {
-      margin-bottom: 16px;
-    }
+ /* Form Inputs */
+ .input-group {
+ margin-bottom: 16px;
+ }
 
-    .input-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
+ .input-label {
+ display: block;
+ font-size: 12px;
+ font-weight: 600;
+ color: rgba(255, 255, 255, 0.5);
+ text-transform: uppercase;
+ letter-spacing: 1px;
+ margin-bottom: 8px;
+ }
 
-    .input-field {
-      width: 100%;
-      padding: 14px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(99, 91, 255, 0.2);
-      border-radius: 12px;
-      font-size: 16px;
-      color: #fff;
-      transition: all 0.3s;
-    }
+ .input-field {
+ width: 100%;
+ padding: 14px 16px;
+ background: rgba(255, 255, 255, 0.05);
+ border: 1px solid rgba(99, 91, 255, 0.2);
+ border-radius: 12px;
+ font-size: 16px;
+ color: var(--ha-bg-base);
+ transition: all 0.3s;
+ }
 
-    .input-field:focus {
-      outline: none;
-      border-color: var(--stripe-purple);
-      box-shadow: 0 0 20px rgba(99, 91, 255, 0.2);
-    }
+ .input-field:focus {
+ outline: none;
+ border-color: var(--stripe-purple);
+ box-shadow: 0 0 20px rgba(99, 91, 255, 0.2);
+ }
 
-    .input-field::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
+ .input-field::placeholder {
+ color: rgba(255, 255, 255, 0.3);
+ }
 
-    /* Buttons */
-    .btn-primary {
-      width: 100%;
-      padding: 16px 24px;
-      background: linear-gradient(135deg, var(--stripe-purple), #7c3aed);
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
+ /* Buttons */
+ .btn-primary {
+ width: 100%;
+ padding: 16px 24px;
+ background: var(--ha-accent-purple);
+ border: none;
+ border-radius: 14px;
+ font-size: 16px;
+ font-weight: 600;
+ color: var(--ha-bg-base);
+ cursor: pointer;
+ transition: all 0.3s;
+ position: relative;
+ overflow: hidden;
+ }
 
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
-    }
+ .btn-primary::before {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: -100%;
+ width: 100%;
+ height: 100%;
+ background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+ transition: left 0.5s;
+ }
 
-    .btn-primary:hover::before {
-      left: 100%;
-    }
+ .btn-primary:hover::before {
+ left: 100%;
+ }
 
-    .btn-primary:active {
-      transform: scale(0.98);
-    }
+ .btn-primary:active {
+ transform: scale(0.98);
+ }
 
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+ .btn-primary:disabled {
+ opacity: 0.5;
+ cursor: not-allowed;
+ }
 
-    /* Upload Zone */
-    .upload-zone {
-      border: 2px dashed rgba(99, 91, 255, 0.3);
-      border-radius: 16px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
+ /* Upload Zone */
+ .upload-zone {
+ border: 2px dashed rgba(99, 91, 255, 0.3);
+ border-radius: 16px;
+ padding: 40px 20px;
+ text-align: center;
+ cursor: pointer;
+ transition: all 0.3s;
+ position: relative;
+ overflow: hidden;
+ }
 
-    .upload-zone:hover {
-      border-color: var(--stripe-purple);
-      background: rgba(99, 91, 255, 0.05);
-    }
+ .upload-zone:hover {
+ border-color: var(--stripe-purple);
+ background: rgba(99, 91, 255, 0.05);
+ }
 
-    .upload-zone.dragover {
-      border-color: var(--stripe-cyan);
-      background: rgba(0, 212, 255, 0.1);
-    }
+ .upload-zone.dragover {
+ border-color: var(--stripe-cyan);
+ background: rgba(0, 212, 255, 0.1);
+ }
 
-    .upload-zone.has-file {
-      border-color: var(--neon-green);
-      background: rgba(0, 255, 136, 0.05);
-    }
+ .upload-zone.has-file {
+ border-color: var(--neon-green);
+ background: rgba(0, 255, 136, 0.05);
+ }
 
-    .upload-zone input { display: none; }
+ .upload-zone input { display: none; }
 
-    /* Payment List */
-    .payment-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 14px;
-      margin-bottom: 10px;
-      transition: all 0.3s;
-    }
+ /* Payment List */
+ .payment-item {
+ display: flex;
+ align-items: center;
+ gap: 14px;
+ padding: 16px;
+ background: rgba(255, 255, 255, 0.02);
+ border-radius: 14px;
+ margin-bottom: 10px;
+ transition: all 0.3s;
+ }
 
-    .payment-item:hover {
-      background: rgba(99, 91, 255, 0.1);
-    }
+ .payment-item:hover {
+ background: rgba(99, 91, 255, 0.1);
+ }
 
-    .payment-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--stripe-purple), #7c3aed);
-    }
+ .payment-icon {
+ width: 44px;
+ height: 44px;
+ border-radius: 12px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: var(--ha-accent-purple);
+ }
 
-    .payment-amount {
-      font-size: 18px;
-      font-weight: 700;
-      font-family: 'SF Mono', monospace;
-    }
+ .payment-amount {
+ font-size: 18px;
+ font-weight: 700;
+ font-family: 'SF Mono', monospace;
+ }
 
-    /* Result Card */
-    .result-card {
-      background: rgba(0, 255, 136, 0.1);
-      border: 1px solid rgba(0, 255, 136, 0.3);
-      border-radius: 16px;
-      padding: 20px;
-      margin-top: 20px;
-    }
+ /* Result Card */
+ .result-card {
+ background: rgba(0, 255, 136, 0.1);
+ border: 1px solid rgba(0, 255, 136, 0.3);
+ border-radius: 16px;
+ padding: 20px;
+ margin-top: 20px;
+ }
 
-    .result-card.error {
-      background: rgba(255, 68, 68, 0.1);
-      border-color: rgba(255, 68, 68, 0.3);
-    }
+ .result-card.error {
+ background: rgba(255, 68, 68, 0.1);
+ border-color: rgba(255, 68, 68, 0.3);
+ }
 
-    /* Loading Spinner */
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(99, 91, 255, 0.2);
-      border-top-color: var(--stripe-cyan);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+ /* Loading Spinner */
+ .spinner {
+ width: 40px;
+ height: 40px;
+ border: 3px solid rgba(99, 91, 255, 0.2);
+ border-top-color: var(--stripe-cyan);
+ border-radius: 50%;
+ animation: spin 1s linear infinite;
+ }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+ @keyframes spin {
+ to { transform: rotate(360deg); }
+ }
 
-    /* Invoice Preview */
-    .invoice-preview {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      color: #1a1a2e;
-      margin-top: 16px;
-    }
+ /* Invoice Preview */
+ .invoice-preview {
+ background: var(--ha-bg-base);
+ border-radius: 12px;
+ padding: 20px;
+ color: var(--ha-bg-base);
+ margin-top: 16px;
+ }
 
-    /* Scrollbar */
-    .main-content::-webkit-scrollbar {
-      width: 4px;
-    }
+ /* Scrollbar */
+ .main-content::-webkit-scrollbar {
+ width: 4px;
+ }
 
-    .main-content::-webkit-scrollbar-track {
-      background: transparent;
-    }
+ .main-content::-webkit-scrollbar-track {
+ background: transparent;
+ }
 
-    .main-content::-webkit-scrollbar-thumb {
-      background: rgba(99, 91, 255, 0.3);
-      border-radius: 2px;
-    }
-  </style>
+ .main-content::-webkit-scrollbar-thumb {
+ background: rgba(99, 91, 255, 0.3);
+ border-radius: 2px;
+ }
+ </style>
 </head>
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">Invoice Hub</h1>
-          <p class="text-xs text-gray-500 mt-1">Stripe → Google Drive</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 border border-purple-500/20">
-            <div class="status-dot online" id="statusDot"></div>
-            <span class="text-xs font-medium text-green-400" id="statusText">Connected</span>
-          </div>
-        </div>
-      </div>
-    </header>
+ <div class="app">
+ <!-- Header -->
+ <header class="header">
+ <div class="flex items-center justify-between">
+ <div>
+ <h1 class="text-xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">Invoice Hub</h1>
+ <p class="text-xs text-gray-500 mt-1">Stripe → Google Drive</p>
+ </div>
+ <div class="flex items-center gap-3">
+ <div class="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 border border-purple-500/20">
+ <div class="status-dot online" id="statusDot"></div>
+ <span class="text-xs font-medium text-green-400" id="statusText">Connected</span>
+ </div>
+ </div>
+ </div>
+ </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Dashboard Screen -->
-      <div class="screen active" id="dashboardScreen">
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="card animate-fade-up" style="animation-delay: 0.1s">
-            <div class="card-glow"></div>
-            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Total Revenue</div>
-            <div class="text-2xl font-bold font-mono text-white" id="totalRevenue">$0</div>
-            <div class="text-xs text-cyan-400 mt-1">All time</div>
-          </div>
-          <div class="card animate-fade-up" style="animation-delay: 0.2s">
-            <div class="card-glow"></div>
-            <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Invoices</div>
-            <div class="text-2xl font-bold font-mono text-white" id="totalInvoices">0</div>
-            <div class="text-xs text-cyan-400 mt-1">Total count</div>
-          </div>
-        </div>
+ <!-- Main Content -->
+ <main class="main-content">
+ <!-- Dashboard Screen -->
+ <div class="screen active" id="dashboardScreen">
+ <!-- Stats Row -->
+ <div class="grid grid-cols-2 gap-4 mb-6">
+ <div class="card animate-fade-up" style="animation-delay: 0.1s">
+ <div class="card-glow"></div>
+ <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Total Revenue</div>
+ <div class="text-2xl font-bold font-mono text-white" id="totalRevenue">$0</div>
+ <div class="text-xs text-cyan-400 mt-1">All time</div>
+ </div>
+ <div class="card animate-fade-up" style="animation-delay: 0.2s">
+ <div class="card-glow"></div>
+ <div class="text-xs text-gray-500 uppercase tracking-wider mb-2">Invoices</div>
+ <div class="text-2xl font-bold font-mono text-white" id="totalInvoices">0</div>
+ <div class="text-xs text-cyan-400 mt-1">Total count</div>
+ </div>
+ </div>
 
-        <!-- Recent Payments -->
-        <div class="card animate-fade-up" style="animation-delay: 0.3s">
-          <div class="card-glow"></div>
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Recent Invoices</h2>
-          
-          <div class="space-y-2" id="recentPayments">
-            <!-- Loading state -->
-            <div id="dashboardLoading" class="text-center py-8">
-              <div class="spinner mx-auto mb-3"></div>
-              <p class="text-sm text-gray-500">Loading data...</p>
-            </div>
-            <!-- Empty state -->
-            <div id="dashboardEmpty" class="hidden text-center py-8">
-              <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <p class="text-gray-500">No invoices yet</p>
-              <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
-            </div>
-            <!-- Payment items will be inserted here -->
-          </div>
-        </div>
+ <!-- Recent Payments -->
+ <div class="card animate-fade-up" style="animation-delay: 0.3s">
+ <div class="card-glow"></div>
+ <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Recent Invoices</h2>
+ 
+ <div class="space-y-2" id="recentPayments">
+ <!-- Loading state -->
+ <div id="dashboardLoading" class="text-center py-8">
+ <div class="spinner mx-auto mb-3"></div>
+ <p class="text-sm text-gray-500">Loading data...</p>
+ </div>
+ <!-- Empty state -->
+ <div id="dashboardEmpty" class="hidden text-center py-8">
+ <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ <p class="text-gray-500">No invoices yet</p>
+ <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
+ </div>
+ <!-- Payment items will be inserted here -->
+ </div>
+ </div>
 
-        <!-- Quick Actions -->
-        <div class="card animate-fade-up" style="animation-delay: 0.4s">
-          <div class="card-glow"></div>
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h2>
-          <div class="grid grid-cols-3 gap-3">
-            <button onclick="showScreen('createScreen')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-purple-500/20 hover:bg-purple-500/10 transition-all">
-              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              <span class="text-xs font-medium">Create Invoice</span>
-            </button>
-            <button onclick="showScreen('scanScreen')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-cyan-500/20 hover:bg-cyan-500/10 transition-all">
-              <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              <span class="text-xs font-medium">Scan Receipt</span>
-            </button>
-          </div>
-        </div>
-      </div>
+ <!-- Quick Actions -->
+ <div class="card animate-fade-up" style="animation-delay: 0.4s">
+ <div class="card-glow"></div>
+ <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h2>
+ <div class="grid grid-cols-3 gap-3">
+ <button onclick="showScreen('createScreen')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-purple-500/20 hover:bg-purple-500/10 transition-all">
+ <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+ </svg>
+ <span class="text-xs font-medium">Create Invoice</span>
+ </button>
+ <button onclick="showScreen('scanScreen')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-cyan-500/20 hover:bg-cyan-500/10 transition-all">
+ <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+ </svg>
+ <span class="text-xs font-medium">Scan Receipt</span>
+ </button>
+ </div>
+ </div>
+ </div>
 
-      <!-- Create Invoice Screen -->
-      <div class="screen" id="createScreen">
-        <div class="flex items-center gap-3 mb-6">
-          <button onclick="showScreen('dashboardScreen')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h2 class="text-xl font-bold">Create Invoice</h2>
-        </div>
+ <!-- Create Invoice Screen -->
+ <div class="screen" id="createScreen">
+ <div class="flex items-center gap-3 mb-6">
+ <button onclick="showScreen('dashboardScreen')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+ </svg>
+ </button>
+ <h2 class="text-xl font-bold">Create Invoice</h2>
+ </div>
 
-        <form id="invoiceForm" class="card">
-          <div class="card-glow"></div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div class="input-group">
-              <label class="input-label">Invoice #</label>
-              <input type="text" class="input-field" name="invoiceNumber" placeholder="INV-001" required>
-            </div>
-            <div class="input-group">
-              <label class="input-label">Date</label>
-              <input type="date" class="input-field" name="date" required>
-            </div>
-          </div>
+ <form id="invoiceForm" class="card">
+ <div class="card-glow"></div>
+ 
+ <div class="grid grid-cols-2 gap-4">
+ <div class="input-group">
+ <label class="input-label">Invoice #</label>
+ <input type="text" class="input-field" name="invoiceNumber" placeholder="INV-001" required>
+ </div>
+ <div class="input-group">
+ <label class="input-label">Date</label>
+ <input type="date" class="input-field" name="date" required>
+ </div>
+ </div>
 
-          <div class="input-group">
-            <label class="input-label">Customer Name</label>
-            <input type="text" class="input-field" name="customerName" placeholder="John Smith" required>
-          </div>
+ <div class="input-group">
+ <label class="input-label">Customer Name</label>
+ <input type="text" class="input-field" name="customerName" placeholder="John Smith" required>
+ </div>
 
-          <div class="input-group">
-            <label class="input-label">Customer Email</label>
-            <input type="email" class="input-field" name="customerEmail" placeholder="john@example.com">
-          </div>
+ <div class="input-group">
+ <label class="input-label">Customer Email</label>
+ <input type="email" class="input-field" name="customerEmail" placeholder="john@example.com">
+ </div>
 
-          <div class="input-group">
-            <label class="input-label">Description</label>
-            <textarea class="input-field" name="description" rows="2" placeholder="Services rendered..." required></textarea>
-          </div>
+ <div class="input-group">
+ <label class="input-label">Description</label>
+ <textarea class="input-field" name="description" rows="2" placeholder="Services rendered..." required></textarea>
+ </div>
 
-          <div class="grid grid-cols-3 gap-4">
-            <div class="input-group">
-              <label class="input-label">Amount</label>
-              <input type="number" class="input-field" name="amount" placeholder="100" step="0.01" required>
-            </div>
-            <div class="input-group">
-              <label class="input-label">VAT</label>
-              <input type="number" class="input-field" name="vat" placeholder="20" step="0.01">
-            </div>
-            <div class="input-group">
-              <label class="input-label">Total</label>
-              <input type="number" class="input-field" name="total" placeholder="120" step="0.01" required>
-            </div>
-          </div>
+ <div class="grid grid-cols-3 gap-4">
+ <div class="input-group">
+ <label class="input-label">Amount</label>
+ <input type="number" class="input-field" name="amount" placeholder="100" step="0.01" required>
+ </div>
+ <div class="input-group">
+ <label class="input-label">VAT</label>
+ <input type="number" class="input-field" name="vat" placeholder="20" step="0.01">
+ </div>
+ <div class="input-group">
+ <label class="input-label">Total</label>
+ <input type="number" class="input-field" name="total" placeholder="120" step="0.01" required>
+ </div>
+ </div>
 
-          <div class="input-group">
-            <label class="input-label">Currency</label>
-            <select class="input-field" name="currency">
-              <option value="$">USD ($)</option>
-              <option value="€">EUR (€)</option>
-              <option value="£">GBP (£)</option>
-            </select>
-          </div>
+ <div class="input-group">
+ <label class="input-label">Currency</label>
+ <select class="input-field" name="currency">
+ <option value="$">USD ($)</option>
+ <option value="€">EUR (€)</option>
+ <option value="£">GBP (£)</option>
+ </select>
+ </div>
 
-          <button type="submit" class="btn-primary mt-4" id="createBtn">
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              Generate Invoice PDF
-            </span>
-          </button>
-        </form>
+ <button type="submit" class="btn-primary mt-4" id="createBtn">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ Generate Invoice PDF
+ </span>
+ </button>
+ </form>
 
-        <div id="createResult" class="hidden"></div>
-      </div>
+ <div id="createResult" class="hidden"></div>
+ </div>
 
-      <!-- Scan/OCR Screen -->
-      <div class="screen" id="scanScreen">
-        <div class="flex items-center gap-3 mb-6">
-          <button onclick="showScreen('dashboardScreen')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-          <h2 class="text-xl font-bold">Scan Document</h2>
-        </div>
+ <!-- Scan/OCR Screen -->
+ <div class="screen" id="scanScreen">
+ <div class="flex items-center gap-3 mb-6">
+ <button onclick="showScreen('dashboardScreen')" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+ </svg>
+ </button>
+ <h2 class="text-xl font-bold">Scan Document</h2>
+ </div>
 
-        <div class="card">
-          <div class="card-glow"></div>
-          
-          <!-- Mode Toggle -->
-          <div class="flex rounded-xl bg-white/5 p-1 mb-6">
-            <button class="flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all scan-mode active" data-mode="ocr">
-              Image OCR
-            </button>
-            <button class="flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all scan-mode" data-mode="pdf">
-              PDF Extract
-            </button>
-          </div>
+ <div class="card">
+ <div class="card-glow"></div>
+ 
+ <!-- Mode Toggle -->
+ <div class="flex rounded-xl bg-white/5 p-1 mb-6">
+ <button class="flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all scan-mode active" data-mode="ocr">
+ Image OCR
+ </button>
+ <button class="flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all scan-mode" data-mode="pdf">
+ PDF Extract
+ </button>
+ </div>
 
-          <div class="upload-zone" id="uploadZone">
-            <input type="file" id="fileInput" accept="image/*,application/pdf">
-            <div id="uploadPrompt">
-              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-              </div>
-              <p class="text-base font-medium mb-1">Tap to upload</p>
-              <p class="text-sm text-gray-500">or drag and drop</p>
-            </div>
-            <div id="filePreview" class="hidden">
-              <div class="flex items-center gap-3 justify-center">
-                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span id="fileName" class="font-medium"></span>
-              </div>
-              <button type="button" id="removeFile" class="mt-3 text-sm text-red-400">Remove</button>
-            </div>
-          </div>
+ <div class="upload-zone" id="uploadZone">
+ <input type="file" id="fileInput" accept="image/*,application/pdf">
+ <div id="uploadPrompt">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
+ <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+ </svg>
+ </div>
+ <p class="text-base font-medium mb-1">Tap to upload</p>
+ <p class="text-sm text-gray-500">or drag and drop</p>
+ </div>
+ <div id="filePreview" class="hidden">
+ <div class="flex items-center gap-3 justify-center">
+ <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <span id="fileName" class="font-medium"></span>
+ </div>
+ <button type="button" id="removeFile" class="mt-3 text-sm text-red-400">Remove</button>
+ </div>
+ </div>
 
-          <button type="button" class="btn-primary mt-6" id="processBtn" disabled>
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-              </svg>
-              Process Document
-            </span>
-          </button>
-        </div>
+ <button type="button" class="btn-primary mt-6" id="processBtn" disabled>
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+ </svg>
+ Process Document
+ </span>
+ </button>
+ </div>
 
-        <div id="scanResult" class="hidden"></div>
-      </div>
+ <div id="scanResult" class="hidden"></div>
+ </div>
 
-      <!-- History Screen -->
-      <div class="screen" id="historyScreen">
-        <h2 class="text-xl font-bold mb-6">Invoice History</h2>
-        
-        <div class="card">
-          <div class="card-glow"></div>
-          <div id="invoicesList" class="space-y-3">
-            <!-- Loading state -->
-            <div id="invoicesLoading" class="text-center py-8">
-              <div class="spinner mx-auto mb-3"></div>
-              <p class="text-sm text-gray-500">Loading invoices...</p>
-            </div>
-            <!-- Empty state -->
-            <div id="invoicesEmpty" class="hidden text-center py-8">
-              <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <p class="text-gray-500">No invoices yet</p>
-              <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
-            </div>
-            <!-- Invoice items will be inserted here -->
-          </div>
-        </div>
-      </div>
+ <!-- History Screen -->
+ <div class="screen" id="historyScreen">
+ <h2 class="text-xl font-bold mb-6">Invoice History</h2>
+ 
+ <div class="card">
+ <div class="card-glow"></div>
+ <div id="invoicesList" class="space-y-3">
+ <!-- Loading state -->
+ <div id="invoicesLoading" class="text-center py-8">
+ <div class="spinner mx-auto mb-3"></div>
+ <p class="text-sm text-gray-500">Loading invoices...</p>
+ </div>
+ <!-- Empty state -->
+ <div id="invoicesEmpty" class="hidden text-center py-8">
+ <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ <p class="text-gray-500">No invoices yet</p>
+ <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
+ </div>
+ <!-- Invoice items will be inserted here -->
+ </div>
+ </div>
+ </div>
 
-      <!-- Settings Screen -->
-      <div class="screen" id="settingsScreen">
-        <h2 class="text-xl font-bold mb-6">Settings</h2>
-        
-        <div class="card">
-          <div class="card-glow"></div>
-          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Connections</h3>
-          
-          <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="font-medium">Stripe</div>
-                  <div class="text-xs text-green-400">Connected</div>
-                </div>
-              </div>
-              <div class="status-dot online"></div>
-            </div>
+ <!-- Settings Screen -->
+ <div class="screen" id="settingsScreen">
+ <h2 class="text-xl font-bold mb-6">Settings</h2>
+ 
+ <div class="card">
+ <div class="card-glow"></div>
+ <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Connections</h3>
+ 
+ <div class="space-y-4">
+ <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+ <div class="flex items-center gap-3">
+ <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+ <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+ <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+ </svg>
+ </div>
+ <div>
+ <div class="font-medium">Stripe</div>
+ <div class="text-xs text-green-400">Connected</div>
+ </div>
+ </div>
+ <div class="status-dot online"></div>
+ </div>
 
-            <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);">
-                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="font-medium">Google Drive</div>
-                  <div class="text-xs text-green-400">Connected</div>
-                </div>
-              </div>
-              <div class="status-dot online"></div>
-            </div>
-          </div>
-        </div>
+ <div class="flex items-center justify-between p-4 rounded-xl bg-white/5">
+ <div class="flex items-center gap-3">
+ <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--ha-accent-blue), var(--ha-status-success), #fbbc05, var(--ha-status-error));">
+ <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+ <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+ </svg>
+ </div>
+ <div>
+ <div class="font-medium">Google Drive</div>
+ <div class="text-xs text-green-400">Connected</div>
+ </div>
+ </div>
+ <div class="status-dot online"></div>
+ </div>
+ </div>
+ </div>
 
-        <div class="card mt-4">
-          <div class="card-glow"></div>
-          <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Invoice Defaults</h3>
-          
-          <div class="input-group">
-            <label class="input-label">Company Name</label>
-            <input type="text" class="input-field" placeholder="Your Company Name">
-          </div>
-          
-          <div class="input-group">
-            <label class="input-label">Default Currency</label>
-            <select class="input-field">
-              <option value="$">USD ($)</option>
-              <option value="€">EUR (€)</option>
-              <option value="£">GBP (£)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </main>
+ <div class="card mt-4">
+ <div class="card-glow"></div>
+ <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Invoice Defaults</h3>
+ 
+ <div class="input-group">
+ <label class="input-label">Company Name</label>
+ <input type="text" class="input-field" placeholder="Your Company Name">
+ </div>
+ 
+ <div class="input-group">
+ <label class="input-label">Default Currency</label>
+ <select class="input-field">
+ <option value="$">USD ($)</option>
+ <option value="€">EUR (€)</option>
+ <option value="£">GBP (£)</option>
+ </select>
+ </div>
+ </div>
+ </div>
+ </main>
 
-    <!-- Tab Bar -->
-    <nav class="tab-bar">
-      <button class="tab-btn active" data-screen="dashboardScreen">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-        </svg>
-        Home
-      </button>
-      <button class="tab-btn" data-screen="createScreen">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Create
-      </button>
-      <button class="tab-btn" data-screen="scanScreen">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        Scan
-      </button>
-      <button class="tab-btn" data-screen="historyScreen">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        History
-      </button>
-      <button class="tab-btn" data-screen="settingsScreen">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        Settings
-      </button>
-    </nav>
-  </div>
+ <!-- Tab Bar -->
+ <nav class="tab-bar">
+ <button class="tab-btn active" data-screen="dashboardScreen">
+ <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+ </svg>
+ Home
+ </button>
+ <button class="tab-btn" data-screen="createScreen">
+ <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+ </svg>
+ Create
+ </button>
+ <button class="tab-btn" data-screen="scanScreen">
+ <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+ </svg>
+ Scan
+ </button>
+ <button class="tab-btn" data-screen="historyScreen">
+ <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ History
+ </button>
+ <button class="tab-btn" data-screen="settingsScreen">
+ <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+ </svg>
+ Settings
+ </button>
+ </nav>
+ </div>
 
-  <!-- Wise SCA Modal -->
-  <div id="wiseScaModal" class="fixed inset-0 z-[200] hidden">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeWiseScaModal()"></div>
-    <div class="absolute inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-[#1a1a2e] rounded-2xl border border-purple-500/20 overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-4 border-b border-white/10 flex items-center justify-between">
-        <h3 class="text-lg font-bold">Wise Payments</h3>
-        <button onclick="closeWiseScaModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="p-4 overflow-y-auto flex-1" id="wiseScaContent">
-        <!-- Step 1: Initiate -->
-        <div id="wiseScaStep1" class="sca-step">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #9fe870, #5ed35e);">
-              <svg class="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold mb-2">Fetch Wise Payments</h4>
-            <p class="text-sm text-gray-400">Connect to your Wise Business account to fetch recent incoming payments.</p>
-          </div>
-          <button onclick="wiseScaInitiate()" class="btn-primary" id="wiseScaInitiateBtn">
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-              Connect to Wise
-            </span>
-          </button>
-        </div>
+ <!-- Wise SCA Modal -->
+ <div id="wiseScaModal" class="fixed inset-0 z-[200] hidden">
+ <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeWiseScaModal()"></div>
+ <div class="absolute inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-[var(--ha-bg-base)] rounded-2xl border border-purple-500/20 overflow-hidden flex flex-col max-h-[90vh]">
+ <div class="p-4 border-b border-white/10 flex items-center justify-between">
+ <h3 class="text-lg font-bold">Wise Payments</h3>
+ <button onclick="closeWiseScaModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+ </svg>
+ </button>
+ </div>
+ <div class="p-4 overflow-y-auto flex-1" id="wiseScaContent">
+ <!-- Step 1: Initiate -->
+ <div id="wiseScaStep1" class="sca-step">
+ <div class="text-center mb-6">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, var(--ha-status-success), var(--ha-status-success));">
+ <svg class="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+ <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+ </svg>
+ </div>
+ <h4 class="text-lg font-semibold mb-2">Fetch Wise Payments</h4>
+ <p class="text-sm text-gray-400">Connect to your Wise Business account to fetch recent incoming payments.</p>
+ </div>
+ <button onclick="wiseScaInitiate()" class="btn-primary" id="wiseScaInitiateBtn">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ Connect to Wise
+ </span>
+ </button>
+ </div>
 
-        <!-- Step 2: Enter SMS Code -->
-        <div id="wiseScaStep2" class="sca-step hidden">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
-              <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold mb-2">Enter SMS Code</h4>
-            <p class="text-sm text-gray-400">We sent a verification code to your registered phone number.</p>
-          </div>
-          <div class="input-group">
-            <label class="input-label">SMS Code</label>
-            <input type="text" class="input-field text-center text-2xl tracking-widest" id="wiseScaSmsCode" placeholder="• • • • • •" maxlength="6" inputmode="numeric" pattern="[0-9]*">
-          </div>
-          <button onclick="wiseScaVerify()" class="btn-primary" id="wiseScaVerifyBtn">
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Verify Code
-            </span>
-          </button>
-          <button onclick="wiseScaTriggerSms()" class="w-full mt-3 py-2 text-sm text-cyan-400 hover:text-cyan-300">
-            Resend SMS Code
-          </button>
-        </div>
+ <!-- Step 2: Enter SMS Code -->
+ <div id="wiseScaStep2" class="sca-step hidden">
+ <div class="text-center mb-6">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
+ <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+ </svg>
+ </div>
+ <h4 class="text-lg font-semibold mb-2">Enter SMS Code</h4>
+ <p class="text-sm text-gray-400">We sent a verification code to your registered phone number.</p>
+ </div>
+ <div class="input-group">
+ <label class="input-label">SMS Code</label>
+ <input type="text" class="input-field text-center text-2xl tracking-widest" id="wiseScaSmsCode" placeholder="• • • • • •" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+ </div>
+ <button onclick="wiseScaVerify()" class="btn-primary" id="wiseScaVerifyBtn">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ Verify Code
+ </span>
+ </button>
+ <button onclick="wiseScaTriggerSms()" class="w-full mt-3 py-2 text-sm text-cyan-400 hover:text-cyan-300">
+ Resend SMS Code
+ </button>
+ </div>
 
-        <!-- Step Push: Approve in Wise App -->
-        <div id="wiseScaPush" class="sca-step hidden">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center animate-pulse">
-              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold mb-2">Approve in Wise App</h4>
-            <p class="text-sm text-gray-400 mb-4">Your account requires push notification verification. Please approve the request in your Wise mobile app.</p>
-            <div class="bg-gray-800/50 rounded-lg p-3 mb-4">
-              <p class="text-xs text-gray-500">
-                <span class="text-green-400">1.</span> Open the Wise app on your phone<br>
-                <span class="text-green-400">2.</span> You should see a verification request<br>
-                <span class="text-green-400">3.</span> Approve the request<br>
-                <span class="text-green-400">4.</span> Click "Check Status" below
-              </p>
-            </div>
-          </div>
-          <button onclick="wiseScaVerify()" class="btn-primary" id="wiseScaPushVerifyBtn">
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              Check Status
-            </span>
-          </button>
-          <button onclick="wiseScaReset()" class="w-full mt-3 py-2 text-sm text-gray-400 hover:text-gray-300">
-            Start Over
-          </button>
-        </div>
+ <!-- Step Push: Approve in Wise App -->
+ <div id="wiseScaPush" class="sca-step hidden">
+ <div class="text-center mb-6">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center animate-pulse">
+ <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+ </svg>
+ </div>
+ <h4 class="text-lg font-semibold mb-2">Approve in Wise App</h4>
+ <p class="text-sm text-gray-400 mb-4">Your account requires push notification verification. Please approve the request in your Wise mobile app.</p>
+ <div class="bg-gray-800/50 rounded-lg p-3 mb-4">
+ <p class="text-xs text-gray-500">
+ <span class="text-green-400">1.</span> Open the Wise app on your phone<br>
+ <span class="text-green-400">2.</span> You should see a verification request<br>
+ <span class="text-green-400">3.</span> Approve the request<br>
+ <span class="text-green-400">4.</span> Click "Check Status" below
+ </p>
+ </div>
+ </div>
+ <button onclick="wiseScaVerify()" class="btn-primary" id="wiseScaPushVerifyBtn">
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+ </svg>
+ Check Status
+ </span>
+ </button>
+ <button onclick="wiseScaReset()" class="w-full mt-3 py-2 text-sm text-gray-400 hover:text-gray-300">
+ Start Over
+ </button>
+ </div>
 
-        <!-- Step 3: Results -->
-        <div id="wiseScaStep3" class="sca-step hidden">
-          <div class="text-center mb-4">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold mb-2">Incoming Payments</h4>
-          </div>
-          <div id="wiseScaTransactions" class="space-y-2 max-h-64 overflow-y-auto">
-            <!-- Transactions will be inserted here -->
-          </div>
-          <button onclick="closeWiseScaModal()" class="btn-primary mt-4">
-            Done
-          </button>
-        </div>
+ <!-- Step 3: Results -->
+ <div id="wiseScaStep3" class="sca-step hidden">
+ <div class="text-center mb-4">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+ <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ </div>
+ <h4 class="text-lg font-semibold mb-2">Incoming Payments</h4>
+ </div>
+ <div id="wiseScaTransactions" class="space-y-2 max-h-64 overflow-y-auto">
+ <!-- Transactions will be inserted here -->
+ </div>
+ <button onclick="closeWiseScaModal()" class="btn-primary mt-4">
+ Done
+ </button>
+ </div>
 
-        <!-- Error State -->
-        <div id="wiseScaError" class="sca-step hidden">
-          <div class="text-center">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-              <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold mb-2 text-red-400">Error</h4>
-            <p class="text-sm text-gray-400 mb-4" id="wiseScaErrorMessage">Something went wrong</p>
-            <button onclick="wiseScaReset()" class="btn-primary">
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <!-- Error State -->
+ <div id="wiseScaError" class="sca-step hidden">
+ <div class="text-center">
+ <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+ <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ </div>
+ <h4 class="text-lg font-semibold mb-2 text-red-400">Error</h4>
+ <p class="text-sm text-gray-400 mb-4" id="wiseScaErrorMessage">Something went wrong</p>
+ <button onclick="wiseScaReset()" class="btn-primary">
+ Try Again
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script>
-    // Screen Navigation
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(screenId).classList.add('active');
-      document.querySelector(`[data-screen="${screenId}"]`)?.classList.add('active');
-      
-      // Load invoices when history screen is shown
-      if (screenId === 'historyScreen') {
-        loadInvoices();
-      }
-      
-      // Load dashboard data when dashboard screen is shown
-      if (screenId === 'dashboardScreen') {
-        loadDashboard();
-      }
-    }
+ <script>
+ // Screen Navigation
+ function showScreen(screenId) {
+ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+ document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+ 
+ document.getElementById(screenId).classList.add('active');
+ document.querySelector(`[data-screen="${screenId}"]`)?.classList.add('active');
+ 
+ // Load invoices when history screen is shown
+ if (screenId === 'historyScreen') {
+ loadInvoices();
+ }
+ 
+ // Load dashboard data when dashboard screen is shown
+ if (screenId === 'dashboardScreen') {
+ loadDashboard();
+ }
+ }
 
-    // Load dashboard data
-    async function loadDashboard() {
-      const loadingEl = document.getElementById('dashboardLoading');
-      const emptyEl = document.getElementById('dashboardEmpty');
-      const recentPayments = document.getElementById('recentPayments');
-      
-      loadingEl.classList.remove('hidden');
-      emptyEl.classList.add('hidden');
-      
-      // Remove previous payment items
-      recentPayments.querySelectorAll('.payment-item').forEach(el => el.remove());
-      
-      try {
-        const response = await fetch('/api/list-invoices', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        
-        const data = await response.json();
-        loadingEl.classList.add('hidden');
-        
-        if (response.ok && data.status === 'completed') {
-          const invoices = data.output?.invoices || [];
-          
-          // Update stats
-          document.getElementById('totalInvoices').textContent = invoices.length;
-          
-          // Calculate total revenue (sum all totals, group by currency for display)
-          const totalByCurrency = {};
-          invoices.forEach(inv => {
-            const currency = inv.currency || '$';
-            const amount = parseFloat(inv.total) || 0;
-            totalByCurrency[currency] = (totalByCurrency[currency] || 0) + amount;
-          });
-          
-          // Display total (show first currency or combined)
-          const currencies = Object.keys(totalByCurrency);
-          if (currencies.length === 0) {
-            document.getElementById('totalRevenue').textContent = '$0';
-          } else if (currencies.length === 1) {
-            document.getElementById('totalRevenue').textContent = `${currencies[0]}${totalByCurrency[currencies[0]].toFixed(2)}`;
-          } else {
-            // Multiple currencies - show primary or sum with currency indicators
-            const parts = currencies.map(c => `${c}${totalByCurrency[c].toFixed(0)}`);
-            document.getElementById('totalRevenue').textContent = parts.join(' / ');
-          }
-          
-          if (invoices.length === 0) {
-            emptyEl.classList.remove('hidden');
-            return;
-          }
-          
-          // Show recent invoices (last 5)
-          const recent = invoices.slice(-5).reverse();
-          recent.forEach(inv => {
-            const source = inv.source || 'manual';
-            const isWise = source.toLowerCase().includes('wise');
-            const isStripe = source.toLowerCase().includes('stripe');
-            
-            let iconBg = 'background: linear-gradient(135deg, var(--stripe-purple), #7c3aed);';
-            let iconSvg = `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>`;
-            
-            if (isWise) {
-              iconBg = 'background: linear-gradient(135deg, #9fe870, #5ed35e);';
-              iconSvg = `<svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>`;
-            } else if (isStripe) {
-              iconBg = 'background: linear-gradient(135deg, #635bff, #7c3aed);';
-              iconSvg = `<svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
-              </svg>`;
-            }
-            
-            const item = document.createElement('div');
-            item.className = 'payment-item';
-            item.innerHTML = `
-              <div class="payment-icon" style="${iconBg}">
-                ${iconSvg}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium truncate">${inv.customerName || inv.invoiceNumber || 'Invoice'}</div>
-                <div class="text-xs text-gray-500">${inv.date || 'N/A'} • ${source}</div>
-              </div>
-              <div class="text-right">
-                <div class="payment-amount text-green-400">+${inv.currency || '$'}${inv.total || 0}</div>
-                <div class="text-xs text-gray-500">${inv.invoiceNumber || ''}</div>
-              </div>
-            `;
-            recentPayments.appendChild(item);
-          });
-        } else {
-          emptyEl.classList.remove('hidden');
-        }
-      } catch (error) {
-        loadingEl.classList.add('hidden');
-        emptyEl.innerHTML = `
-          <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <p class="text-gray-500">No invoices yet</p>
-          <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
-        `;
-        emptyEl.classList.remove('hidden');
-      }
-    }
+ // Load dashboard data
+ async function loadDashboard() {
+ const loadingEl = document.getElementById('dashboardLoading');
+ const emptyEl = document.getElementById('dashboardEmpty');
+ const recentPayments = document.getElementById('recentPayments');
+ 
+ loadingEl.classList.remove('hidden');
+ emptyEl.classList.add('hidden');
+ 
+ // Remove previous payment items
+ recentPayments.querySelectorAll('.payment-item').forEach(el => el.remove());
+ 
+ try {
+ const response = await fetch('/api/list-invoices', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({})
+ });
+ 
+ const data = await response.json();
+ loadingEl.classList.add('hidden');
+ 
+ if (response.ok && data.status === 'completed') {
+ const invoices = data.output?.invoices || [];
+ 
+ // Update stats
+ document.getElementById('totalInvoices').textContent = invoices.length;
+ 
+ // Calculate total revenue (sum all totals, group by currency for display)
+ const totalByCurrency = {};
+ invoices.forEach(inv => {
+ const currency = inv.currency || '$';
+ const amount = parseFloat(inv.total) || 0;
+ totalByCurrency[currency] = (totalByCurrency[currency] || 0) + amount;
+ });
+ 
+ // Display total (show first currency or combined)
+ const currencies = Object.keys(totalByCurrency);
+ if (currencies.length === 0) {
+ document.getElementById('totalRevenue').textContent = '$0';
+ } else if (currencies.length === 1) {
+ document.getElementById('totalRevenue').textContent = `${currencies[0]}${totalByCurrency[currencies[0]].toFixed(2)}`;
+ } else {
+ // Multiple currencies - show primary or sum with currency indicators
+ const parts = currencies.map(c => `${c}${totalByCurrency[c].toFixed(0)}`);
+ document.getElementById('totalRevenue').textContent = parts.join(' / ');
+ }
+ 
+ if (invoices.length === 0) {
+ emptyEl.classList.remove('hidden');
+ return;
+ }
+ 
+ // Show recent invoices (last 5)
+ const recent = invoices.slice(-5).reverse();
+ recent.forEach(inv => {
+ const source = inv.source || 'manual';
+ const isWise = source.toLowerCase().includes('wise');
+ const isStripe = source.toLowerCase().includes('stripe');
+ 
+ let iconBg = 'background: var(--ha-accent-purple);';
+ let iconSvg = `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>`;
+ 
+ if (isWise) {
+ iconBg = 'background: linear-gradient(135deg, var(--ha-status-success), var(--ha-status-success));';
+ iconSvg = `<svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+ <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+ </svg>`;
+ } else if (isStripe) {
+ iconBg = 'background: linear-gradient(135deg, var(--ha-accent-purple), var(--ha-accent-purple));';
+ iconSvg = `<svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+ <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+ </svg>`;
+ }
+ 
+ const item = document.createElement('div');
+ item.className = 'payment-item';
+ item.innerHTML = `
+ <div class="payment-icon" style="${iconBg}">
+ ${iconSvg}
+ </div>
+ <div class="flex-1 min-w-0">
+ <div class="font-medium truncate">${inv.customerName || inv.invoiceNumber || 'Invoice'}</div>
+ <div class="text-xs text-gray-500">${inv.date || 'N/A'} • ${source}</div>
+ </div>
+ <div class="text-right">
+ <div class="payment-amount text-green-400">+${inv.currency || '$'}${inv.total || 0}</div>
+ <div class="text-xs text-gray-500">${inv.invoiceNumber || ''}</div>
+ </div>
+ `;
+ recentPayments.appendChild(item);
+ });
+ } else {
+ emptyEl.classList.remove('hidden');
+ }
+ } catch (error) {
+ loadingEl.classList.add('hidden');
+ emptyEl.innerHTML = `
+ <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ <p class="text-gray-500">No invoices yet</p>
+ <button onclick="showScreen('createScreen')" class="mt-3 text-sm text-purple-400">Create your first invoice</button>
+ `;
+ emptyEl.classList.remove('hidden');
+ }
+ }
 
-    // Load invoices from API
-    async function loadInvoices() {
-      const invoicesList = document.getElementById('invoicesList');
-      const loadingEl = document.getElementById('invoicesLoading');
-      const emptyEl = document.getElementById('invoicesEmpty');
-      
-      loadingEl.classList.remove('hidden');
-      emptyEl.classList.add('hidden');
-      
-      // Remove previous invoice items (keep loading and empty states)
-      invoicesList.querySelectorAll('.invoice-item').forEach(el => el.remove());
-      
-      try {
-        const response = await fetch('/api/list-invoices', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        
-        const data = await response.json();
-        loadingEl.classList.add('hidden');
-        
-        if (response.ok && data.status === 'completed') {
-          const invoices = data.output?.invoices || [];
-          
-          if (invoices.length === 0) {
-            emptyEl.classList.remove('hidden');
-            return;
-          }
-          
-          // Render invoices
-          invoices.reverse().forEach(inv => {
-            const item = document.createElement('div');
-            item.className = 'payment-item invoice-item';
-            item.innerHTML = `
-              <div class="payment-icon" style="background: linear-gradient(135deg, #00d4ff, #00ff88);">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="font-medium">${inv.invoiceNumber || inv._id}</div>
-                <div class="text-xs text-gray-500">${inv.date || 'N/A'} • ${inv.customerName || 'Unknown'}</div>
-              </div>
-              <div class="text-right">
-                <div class="font-mono font-bold text-cyan-400">${inv.currency || '$'}${inv.total || 0}</div>
-                ${inv.pdfBase64 ? `<a href="data:application/pdf;base64,${inv.pdfBase64}" download="Invoice-${inv.invoiceNumber || inv._id}.pdf" class="text-xs text-purple-400">Download PDF</a>` : `<span class="text-xs text-gray-500">${inv.source || 'manual'}</span>`}
-              </div>
-            `;
-            invoicesList.appendChild(item);
-          });
-        } else {
-          emptyEl.classList.remove('hidden');
-        }
-      } catch (error) {
-        loadingEl.classList.add('hidden');
-        emptyEl.innerHTML = `
-          <svg class="w-12 h-12 mx-auto mb-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p class="text-red-400">Failed to load invoices</p>
-          <button onclick="loadInvoices()" class="mt-3 text-sm text-purple-400">Try again</button>
-        `;
-        emptyEl.classList.remove('hidden');
-      }
-    }
+ // Load invoices from API
+ async function loadInvoices() {
+ const invoicesList = document.getElementById('invoicesList');
+ const loadingEl = document.getElementById('invoicesLoading');
+ const emptyEl = document.getElementById('invoicesEmpty');
+ 
+ loadingEl.classList.remove('hidden');
+ emptyEl.classList.add('hidden');
+ 
+ // Remove previous invoice items (keep loading and empty states)
+ invoicesList.querySelectorAll('.invoice-item').forEach(el => el.remove());
+ 
+ try {
+ const response = await fetch('/api/list-invoices', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({})
+ });
+ 
+ const data = await response.json();
+ loadingEl.classList.add('hidden');
+ 
+ if (response.ok && data.status === 'completed') {
+ const invoices = data.output?.invoices || [];
+ 
+ if (invoices.length === 0) {
+ emptyEl.classList.remove('hidden');
+ return;
+ }
+ 
+ // Render invoices
+ invoices.reverse().forEach(inv => {
+ const item = document.createElement('div');
+ item.className = 'payment-item invoice-item';
+ item.innerHTML = `
+ <div class="payment-icon" style="background: linear-gradient(135deg, var(--ha-accent-cyan), var(--ha-status-success));">
+ <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ </div>
+ <div class="flex-1 min-w-0">
+ <div class="font-medium">${inv.invoiceNumber || inv._id}</div>
+ <div class="text-xs text-gray-500">${inv.date || 'N/A'} • ${inv.customerName || 'Unknown'}</div>
+ </div>
+ <div class="text-right">
+ <div class="font-mono font-bold text-cyan-400">${inv.currency || '$'}${inv.total || 0}</div>
+ ${inv.pdfBase64 ? `<a href="data:application/pdf;base64,${inv.pdfBase64}" download="Invoice-${inv.invoiceNumber || inv._id}.pdf" class="text-xs text-purple-400">Download PDF</a>` : `<span class="text-xs text-gray-500">${inv.source || 'manual'}</span>`}
+ </div>
+ `;
+ invoicesList.appendChild(item);
+ });
+ } else {
+ emptyEl.classList.remove('hidden');
+ }
+ } catch (error) {
+ loadingEl.classList.add('hidden');
+ emptyEl.innerHTML = `
+ <svg class="w-12 h-12 mx-auto mb-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <p class="text-red-400">Failed to load invoices</p>
+ <button onclick="loadInvoices()" class="mt-3 text-sm text-purple-400">Try again</button>
+ `;
+ emptyEl.classList.remove('hidden');
+ }
+ }
 
-    // Tab Bar Navigation
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        showScreen(btn.dataset.screen);
-      });
-    });
+ // Tab Bar Navigation
+ document.querySelectorAll('.tab-btn').forEach(btn => {
+ btn.addEventListener('click', () => {
+ showScreen(btn.dataset.screen);
+ });
+ });
 
-    // Scan Mode Toggle
-    document.querySelectorAll('.scan-mode').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.scan-mode').forEach(b => b.classList.remove('active', 'bg-purple-600', 'text-white'));
-        btn.classList.add('active', 'bg-purple-600', 'text-white');
-        
-        const mode = btn.dataset.mode;
-        const fileInput = document.getElementById('fileInput');
-        fileInput.accept = mode === 'pdf' ? 'application/pdf' : 'image/*';
-      });
-    });
+ // Scan Mode Toggle
+ document.querySelectorAll('.scan-mode').forEach(btn => {
+ btn.addEventListener('click', () => {
+ document.querySelectorAll('.scan-mode').forEach(b => b.classList.remove('active', 'bg-purple-600', 'text-white'));
+ btn.classList.add('active', 'bg-purple-600', 'text-white');
+ 
+ const mode = btn.dataset.mode;
+ const fileInput = document.getElementById('fileInput');
+ fileInput.accept = mode === 'pdf' ? 'application/pdf' : 'image/*';
+ });
+ });
 
-    // File Upload
-    const uploadZone = document.getElementById('uploadZone');
-    const fileInput = document.getElementById('fileInput');
-    const uploadPrompt = document.getElementById('uploadPrompt');
-    const filePreview = document.getElementById('filePreview');
-    const fileName = document.getElementById('fileName');
-    const removeFile = document.getElementById('removeFile');
-    const processBtn = document.getElementById('processBtn');
-    
-    let selectedFile = null;
+ // File Upload
+ const uploadZone = document.getElementById('uploadZone');
+ const fileInput = document.getElementById('fileInput');
+ const uploadPrompt = document.getElementById('uploadPrompt');
+ const filePreview = document.getElementById('filePreview');
+ const fileName = document.getElementById('fileName');
+ const removeFile = document.getElementById('removeFile');
+ const processBtn = document.getElementById('processBtn');
+ 
+ let selectedFile = null;
 
-    uploadZone.addEventListener('click', () => fileInput.click());
-    
-    uploadZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadZone.classList.add('dragover');
-    });
-    
-    uploadZone.addEventListener('dragleave', () => {
-      uploadZone.classList.remove('dragover');
-    });
-    
-    uploadZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadZone.classList.remove('dragover');
-      handleFile(e.dataTransfer.files[0]);
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-      handleFile(e.target.files[0]);
-    });
-    
-    function handleFile(file) {
-      if (!file) return;
-      selectedFile = file;
-      fileName.textContent = file.name;
-      uploadPrompt.classList.add('hidden');
-      filePreview.classList.remove('hidden');
-      uploadZone.classList.add('has-file');
-      processBtn.disabled = false;
-    }
-    
-    removeFile.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectedFile = null;
-      fileInput.value = '';
-      uploadPrompt.classList.remove('hidden');
-      filePreview.classList.add('hidden');
-      uploadZone.classList.remove('has-file');
-      processBtn.disabled = true;
-    });
+ uploadZone.addEventListener('click', () => fileInput.click());
+ 
+ uploadZone.addEventListener('dragover', (e) => {
+ e.preventDefault();
+ uploadZone.classList.add('dragover');
+ });
+ 
+ uploadZone.addEventListener('dragleave', () => {
+ uploadZone.classList.remove('dragover');
+ });
+ 
+ uploadZone.addEventListener('drop', (e) => {
+ e.preventDefault();
+ uploadZone.classList.remove('dragover');
+ handleFile(e.dataTransfer.files[0]);
+ });
+ 
+ fileInput.addEventListener('change', (e) => {
+ handleFile(e.target.files[0]);
+ });
+ 
+ function handleFile(file) {
+ if (!file) return;
+ selectedFile = file;
+ fileName.textContent = file.name;
+ uploadPrompt.classList.add('hidden');
+ filePreview.classList.remove('hidden');
+ uploadZone.classList.add('has-file');
+ processBtn.disabled = false;
+ }
+ 
+ removeFile.addEventListener('click', (e) => {
+ e.stopPropagation();
+ selectedFile = null;
+ fileInput.value = '';
+ uploadPrompt.classList.remove('hidden');
+ filePreview.classList.add('hidden');
+ uploadZone.classList.remove('has-file');
+ processBtn.disabled = true;
+ });
 
-    // Process Document
-    processBtn.addEventListener('click', async () => {
-      if (!selectedFile) return;
-      
-      const scanResult = document.getElementById('scanResult');
-      const activeMode = document.querySelector('.scan-mode.active').dataset.mode;
-      
-      processBtn.disabled = true;
-      processBtn.innerHTML = '<span class="spinner mx-auto"></span>';
-      
-      try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const base64 = e.target.result.split(',')[1];
-          const endpoint = activeMode === 'pdf' ? '/api/extract-pdf' : '/api/process-ocr';
-          
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              source: base64,
-              sourceType: 'base64',
-              language: 'eng'
-            })
-          });
-          
-          const data = await response.json();
-          
-          if (response.ok && data.status === 'completed') {
-            scanResult.innerHTML = `
-              <div class="result-card">
-                <div class="flex items-center gap-2 mb-3">
-                  <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <span class="font-semibold text-green-400">Extraction Complete</span>
-                </div>
-                <pre class="text-sm text-gray-300 whitespace-pre-wrap overflow-auto max-h-64">${JSON.stringify(data.output?.result || data.output, null, 2)}</pre>
-              </div>
-            `;
-          } else {
-            throw new Error(data.error || 'Processing failed');
-          }
-          
-          scanResult.classList.remove('hidden');
-        };
-        reader.readAsDataURL(selectedFile);
-      } catch (error) {
-        scanResult.innerHTML = `
-          <div class="result-card error">
-            <div class="flex items-center gap-2 mb-2">
-              <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span class="font-semibold text-red-400">Error</span>
-            </div>
-            <p class="text-sm text-gray-400">${error.message}</p>
-          </div>
-        `;
-        scanResult.classList.remove('hidden');
-      } finally {
-        processBtn.disabled = false;
-        processBtn.innerHTML = `
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-            Process Document
-          </span>
-        `;
-      }
-    });
+ // Process Document
+ processBtn.addEventListener('click', async () => {
+ if (!selectedFile) return;
+ 
+ const scanResult = document.getElementById('scanResult');
+ const activeMode = document.querySelector('.scan-mode.active').dataset.mode;
+ 
+ processBtn.disabled = true;
+ processBtn.innerHTML = '<span class="spinner mx-auto"></span>';
+ 
+ try {
+ const reader = new FileReader();
+ reader.onload = async (e) => {
+ const base64 = e.target.result.split(',')[1];
+ const endpoint = activeMode === 'pdf' ? '/api/extract-pdf' : '/api/process-ocr';
+ 
+ const response = await fetch(endpoint, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ source: base64,
+ sourceType: 'base64',
+ language: 'eng'
+ })
+ });
+ 
+ const data = await response.json();
+ 
+ if (response.ok && data.status === 'completed') {
+ scanResult.innerHTML = `
+ <div class="result-card">
+ <div class="flex items-center gap-2 mb-3">
+ <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <span class="font-semibold text-green-400">Extraction Complete</span>
+ </div>
+ <pre class="text-sm text-gray-300 whitespace-pre-wrap overflow-auto max-h-64">${JSON.stringify(data.output?.result || data.output, null, 2)}</pre>
+ </div>
+ `;
+ } else {
+ throw new Error(data.error || 'Processing failed');
+ }
+ 
+ scanResult.classList.remove('hidden');
+ };
+ reader.readAsDataURL(selectedFile);
+ } catch (error) {
+ scanResult.innerHTML = `
+ <div class="result-card error">
+ <div class="flex items-center gap-2 mb-2">
+ <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <span class="font-semibold text-red-400">Error</span>
+ </div>
+ <p class="text-sm text-gray-400">${error.message}</p>
+ </div>
+ `;
+ scanResult.classList.remove('hidden');
+ } finally {
+ processBtn.disabled = false;
+ processBtn.innerHTML = `
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+ </svg>
+ Process Document
+ </span>
+ `;
+ }
+ });
 
-    // Create Invoice Form
-    const invoiceForm = document.getElementById('invoiceForm');
-    const createBtn = document.getElementById('createBtn');
-    const createResult = document.getElementById('createResult');
-    
-    // Set default date
-    document.querySelector('[name="date"]').valueAsDate = new Date();
-    
-    invoiceForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const formData = new FormData(invoiceForm);
-      const data = Object.fromEntries(formData.entries());
-      
-      createBtn.disabled = true;
-      createBtn.innerHTML = '<span class="spinner mx-auto"></span>';
-      
-      try {
-        const response = await fetch('/api/manual-invoice', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            invoiceNumber: data.invoiceNumber,
-            date: data.date,
-            customerName: data.customerName,
-            customerEmail: data.customerEmail || '',
-            customerAddress: '',
-            description: data.description,
-            notes: '',
-            amount: parseFloat(data.amount),
-            vat: parseFloat(data.vat) || 0,
-            total: parseFloat(data.total),
-            currency: data.currency
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.status === 'completed') {
-          createResult.innerHTML = `
-            <div class="result-card">
-              <div class="flex items-center gap-2 mb-3">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="font-semibold text-green-400">Invoice Created!</span>
-              </div>
-              <p class="text-sm text-gray-300 mb-3">Invoice ${data.invoiceNumber} has been generated and saved.</p>
-              ${result.output?.invoice?.base64 ? `
-                <a href="data:application/pdf;base64,${result.output.invoice.base64}" download="Invoice-${data.invoiceNumber}.pdf" 
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                  </svg>
-                  Download PDF
-                </a>
-              ` : ''}
-            </div>
-          `;
-          invoiceForm.reset();
-          document.querySelector('[name="date"]').valueAsDate = new Date();
-        } else {
-          throw new Error(result.error || 'Failed to create invoice');
-        }
-        
-        createResult.classList.remove('hidden');
-      } catch (error) {
-        createResult.innerHTML = `
-          <div class="result-card error">
-            <div class="flex items-center gap-2 mb-2">
-              <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span class="font-semibold text-red-400">Error</span>
-            </div>
-            <p class="text-sm text-gray-400">${error.message}</p>
-          </div>
-        `;
-        createResult.classList.remove('hidden');
-      } finally {
-        createBtn.disabled = false;
-        createBtn.innerHTML = `
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Generate Invoice PDF
-          </span>
-        `;
-      }
-    });
+ // Create Invoice Form
+ const invoiceForm = document.getElementById('invoiceForm');
+ const createBtn = document.getElementById('createBtn');
+ const createResult = document.getElementById('createResult');
+ 
+ // Set default date
+ document.querySelector('[name="date"]').valueAsDate = new Date();
+ 
+ invoiceForm.addEventListener('submit', async (e) => {
+ e.preventDefault();
+ 
+ const formData = new FormData(invoiceForm);
+ const data = Object.fromEntries(formData.entries());
+ 
+ createBtn.disabled = true;
+ createBtn.innerHTML = '<span class="spinner mx-auto"></span>';
+ 
+ try {
+ const response = await fetch('/api/manual-invoice', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ invoiceNumber: data.invoiceNumber,
+ date: data.date,
+ customerName: data.customerName,
+ customerEmail: data.customerEmail || '',
+ customerAddress: '',
+ description: data.description,
+ notes: '',
+ amount: parseFloat(data.amount),
+ vat: parseFloat(data.vat) || 0,
+ total: parseFloat(data.total),
+ currency: data.currency
+ })
+ });
+ 
+ const result = await response.json();
+ 
+ if (response.ok && result.status === 'completed') {
+ createResult.innerHTML = `
+ <div class="result-card">
+ <div class="flex items-center gap-2 mb-3">
+ <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <span class="font-semibold text-green-400">Invoice Created!</span>
+ </div>
+ <p class="text-sm text-gray-300 mb-3">Invoice ${data.invoiceNumber} has been generated and saved.</p>
+ ${result.output?.invoice?.base64 ? `
+ <a href="data:application/pdf;base64,${result.output.invoice.base64}" download="Invoice-${data.invoiceNumber}.pdf" 
+ class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+ </svg>
+ Download PDF
+ </a>
+ ` : ''}
+ </div>
+ `;
+ invoiceForm.reset();
+ document.querySelector('[name="date"]').valueAsDate = new Date();
+ } else {
+ throw new Error(result.error || 'Failed to create invoice');
+ }
+ 
+ createResult.classList.remove('hidden');
+ } catch (error) {
+ createResult.innerHTML = `
+ <div class="result-card error">
+ <div class="flex items-center gap-2 mb-2">
+ <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ <span class="font-semibold text-red-400">Error</span>
+ </div>
+ <p class="text-sm text-gray-400">${error.message}</p>
+ </div>
+ `;
+ createResult.classList.remove('hidden');
+ } finally {
+ createBtn.disabled = false;
+ createBtn.innerHTML = `
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+ </svg>
+ Generate Invoice PDF
+ </span>
+ `;
+ }
+ });
 
-    // Initialize active scan mode styling
-    document.querySelector('.scan-mode.active').classList.add('bg-purple-600', 'text-white');
-    
-    // Load dashboard data on page load
-    loadDashboard();
+ // Initialize active scan mode styling
+ document.querySelector('.scan-mode.active').classList.add('bg-purple-600', 'text-white');
+ 
+ // Load dashboard data on page load
+ loadDashboard();
 
-    // =====================================================
-    // Wise SCA Modal Functions
-    // =====================================================
-    
-    let wiseScaOtt = null;
-    let wiseScaProfileId = null;
-    let wiseScaCurrency = 'USD';
+ // =====================================================
+ // Wise SCA Modal Functions
+ // =====================================================
+ 
+ let wiseScaOtt = null;
+ let wiseScaProfileId = null;
+ let wiseScaCurrency = 'USD';
 
-    function openWiseScaModal() {
-      document.getElementById('wiseScaModal').classList.remove('hidden');
-      wiseScaReset();
-    }
+ function openWiseScaModal() {
+ document.getElementById('wiseScaModal').classList.remove('hidden');
+ wiseScaReset();
+ }
 
-    function closeWiseScaModal() {
-      document.getElementById('wiseScaModal').classList.add('hidden');
-      wiseScaReset();
-    }
+ function closeWiseScaModal() {
+ document.getElementById('wiseScaModal').classList.add('hidden');
+ wiseScaReset();
+ }
 
-    function wiseScaShowStep(stepId) {
-      document.querySelectorAll('.sca-step').forEach(s => s.classList.add('hidden'));
-      document.getElementById(stepId).classList.remove('hidden');
-    }
+ function wiseScaShowStep(stepId) {
+ document.querySelectorAll('.sca-step').forEach(s => s.classList.add('hidden'));
+ document.getElementById(stepId).classList.remove('hidden');
+ }
 
-    function wiseScaReset() {
-      wiseScaOtt = null;
-      wiseScaShowStep('wiseScaStep1');
-      document.getElementById('wiseScaSmsCode').value = '';
-      document.getElementById('wiseScaTransactions').innerHTML = '';
-    }
+ function wiseScaReset() {
+ wiseScaOtt = null;
+ wiseScaShowStep('wiseScaStep1');
+ document.getElementById('wiseScaSmsCode').value = '';
+ document.getElementById('wiseScaTransactions').innerHTML = '';
+ }
 
-    function wiseScaShowError(message) {
-      document.getElementById('wiseScaErrorMessage').textContent = message;
-      wiseScaShowStep('wiseScaError');
-    }
+ function wiseScaShowError(message) {
+ document.getElementById('wiseScaErrorMessage').textContent = message;
+ wiseScaShowStep('wiseScaError');
+ }
 
-    async function wiseScaInitiate() {
-      const btn = document.getElementById('wiseScaInitiateBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner mx-auto"></span>';
+ async function wiseScaInitiate() {
+ const btn = document.getElementById('wiseScaInitiateBtn');
+ btn.disabled = true;
+ btn.innerHTML = '<span class="spinner mx-auto"></span>';
 
-      try {
-        // Get profile ID and currency from env (configured in .env)
-        const response = await fetch('/api/wise-sca', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            step: 'initiate',
-            profileId: wiseScaProfileId || '44381840', // Default from .env
-            currency: wiseScaCurrency
-          })
-        });
+ try {
+ // Get profile ID and currency from env (configured in .env)
+ const response = await fetch('/api/wise-sca', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ step: 'initiate',
+ profileId: wiseScaProfileId || '44381840', // Default from .env
+ currency: wiseScaCurrency
+ })
+ });
 
-        const data = await response.json();
-        console.log('Wise SCA initiate response:', data);
-        
-        if (data.status === 'completed' && data.nodeResults?.[0]?.output) {
-          const result = data.nodeResults[0].output;
-          
-          if (result.requiresSca) {
-            // SCA required - store OTT
-            wiseScaOtt = result.ott;
-            wiseScaBalanceId = result.balanceId;
-            
-            if (result.authMethod === 'sms' && result.smsSent) {
-              // SMS sent successfully - show code entry
-              wiseScaShowStep('wiseScaStep2');
-            } else {
-              // Push notification flow - show waiting screen
-              wiseScaShowStep('wiseScaPush');
-            }
-          } else {
-            // No SCA required - show transactions directly
-            wiseScaShowTransactions(result.transactions || []);
-          }
-        } else if (data.error) {
-          throw new Error(data.error);
-        } else {
-          throw new Error('Failed to connect to Wise');
-        }
-      } catch (error) {
-        console.error('Wise SCA initiate error:', error);
-        wiseScaShowError(error.message || 'Failed to connect to Wise');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Connect to Wise
-          </span>
-        `;
-      }
-    }
+ const data = await response.json();
+ console.log('Wise SCA initiate response:', data);
+ 
+ if (data.status === 'completed' && data.nodeResults?.[0]?.output) {
+ const result = data.nodeResults[0].output;
+ 
+ if (result.requiresSca) {
+ // SCA required - store OTT
+ wiseScaOtt = result.ott;
+ wiseScaBalanceId = result.balanceId;
+ 
+ if (result.authMethod === 'sms' && result.smsSent) {
+ // SMS sent successfully - show code entry
+ wiseScaShowStep('wiseScaStep2');
+ } else {
+ // Push notification flow - show waiting screen
+ wiseScaShowStep('wiseScaPush');
+ }
+ } else {
+ // No SCA required - show transactions directly
+ wiseScaShowTransactions(result.transactions || []);
+ }
+ } else if (data.error) {
+ throw new Error(data.error);
+ } else {
+ throw new Error('Failed to connect to Wise');
+ }
+ } catch (error) {
+ console.error('Wise SCA initiate error:', error);
+ wiseScaShowError(error.message || 'Failed to connect to Wise');
+ } finally {
+ btn.disabled = false;
+ btn.innerHTML = `
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ Connect to Wise
+ </span>
+ `;
+ }
+ }
 
-    async function wiseScaTriggerSms() {
-      if (!wiseScaOtt) {
-        wiseScaShowError('No OTT available. Please start over.');
-        return;
-      }
+ async function wiseScaTriggerSms() {
+ if (!wiseScaOtt) {
+ wiseScaShowError('No OTT available. Please start over.');
+ return;
+ }
 
-      try {
-        const response = await fetch('/api/wise-sca', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            step: 'trigger-sms',
-            ott: wiseScaOtt
-          })
-        });
+ try {
+ const response = await fetch('/api/wise-sca', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ step: 'trigger-sms',
+ ott: wiseScaOtt
+ })
+ });
 
-        const data = await response.json();
-        
-        if (data.status === 'completed' && data.nodeResults?.[0]?.output?.triggered) {
-          wiseScaShowStep('wiseScaStep2');
-        } else {
-          throw new Error(data.error || 'Failed to send SMS');
-        }
-      } catch (error) {
-        console.error('Wise SCA trigger SMS error:', error);
-        wiseScaShowError(error.message || 'Failed to send SMS verification code');
-      }
-    }
+ const data = await response.json();
+ 
+ if (data.status === 'completed' && data.nodeResults?.[0]?.output?.triggered) {
+ wiseScaShowStep('wiseScaStep2');
+ } else {
+ throw new Error(data.error || 'Failed to send SMS');
+ }
+ } catch (error) {
+ console.error('Wise SCA trigger SMS error:', error);
+ wiseScaShowError(error.message || 'Failed to send SMS verification code');
+ }
+ }
 
-    async function wiseScaVerify() {
-      const smsCode = document.getElementById('wiseScaSmsCode')?.value?.trim() || '';
-      
-      // For push flow, smsCode is optional
+ async function wiseScaVerify() {
+ const smsCode = document.getElementById('wiseScaSmsCode')?.value?.trim() || '';
+ 
+ // For push flow, smsCode is optional
 
-      if (!wiseScaOtt) {
-        wiseScaShowError('No OTT available. Please start over.');
-        return;
-      }
+ if (!wiseScaOtt) {
+ wiseScaShowError('No OTT available. Please start over.');
+ return;
+ }
 
-      const btn = document.getElementById('wiseScaVerifyBtn') || document.getElementById('wiseScaPushVerifyBtn');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner mx-auto"></span>';
-      }
+ const btn = document.getElementById('wiseScaVerifyBtn') || document.getElementById('wiseScaPushVerifyBtn');
+ if (btn) {
+ btn.disabled = true;
+ btn.innerHTML = '<span class="spinner mx-auto"></span>';
+ }
 
-      try {
-        // Verify - pass profile info for balance statement retry
-        const verifyResponse = await fetch('/api/wise-sca', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            step: 'verify',
-            ott: wiseScaOtt,
-            smsCode: smsCode || undefined,
-            profileId: wiseScaProfileId || '44381840',
-            currency: wiseScaCurrency
-          })
-        });
+ try {
+ // Verify - pass profile info for balance statement retry
+ const verifyResponse = await fetch('/api/wise-sca', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ step: 'verify',
+ ott: wiseScaOtt,
+ smsCode: smsCode || undefined,
+ profileId: wiseScaProfileId || '44381840',
+ currency: wiseScaCurrency
+ })
+ });
 
-        const verifyData = await verifyResponse.json();
-        console.log('Wise SCA verify response:', verifyData);
-        
-        if (verifyData.status === 'completed') {
-          const result = verifyData.nodeResults?.[0]?.output;
-          
-          if (result?.verified) {
-            // SCA cleared! Show transactions
-            wiseScaShowTransactions(result.transactions || []);
-            wiseScaShowStep('wiseScaStep3');
-          } else if (result?.approvalResult === 'REJECTED') {
-            // Still waiting for approval
-            wiseScaOtt = result.ott || wiseScaOtt; // Update OTT if changed
-            throw new Error(result.message || 'SCA not yet approved. Please approve in the Wise app and try again.');
-          } else {
-            throw new Error(result?.message || result?.error?.message || 'Verification failed');
-          }
-        } else {
-          throw new Error(verifyData.error || 'Verification failed');
-        }
-      } catch (error) {
-        console.error('Wise SCA verify error:', error);
-        wiseScaShowError(error.message || 'SMS verification failed');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `
-          <span class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Verify Code
-          </span>
-        `;
-      }
-    }
+ const verifyData = await verifyResponse.json();
+ console.log('Wise SCA verify response:', verifyData);
+ 
+ if (verifyData.status === 'completed') {
+ const result = verifyData.nodeResults?.[0]?.output;
+ 
+ if (result?.verified) {
+ // SCA cleared! Show transactions
+ wiseScaShowTransactions(result.transactions || []);
+ wiseScaShowStep('wiseScaStep3');
+ } else if (result?.approvalResult === 'REJECTED') {
+ // Still waiting for approval
+ wiseScaOtt = result.ott || wiseScaOtt; // Update OTT if changed
+ throw new Error(result.message || 'SCA not yet approved. Please approve in the Wise app and try again.');
+ } else {
+ throw new Error(result?.message || result?.error?.message || 'Verification failed');
+ }
+ } else {
+ throw new Error(verifyData.error || 'Verification failed');
+ }
+ } catch (error) {
+ console.error('Wise SCA verify error:', error);
+ wiseScaShowError(error.message || 'SMS verification failed');
+ } finally {
+ btn.disabled = false;
+ btn.innerHTML = `
+ <span class="flex items-center justify-center gap-2">
+ <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ Verify Code
+ </span>
+ `;
+ }
+ }
 
-    function wiseScaShowTransactions(transactions) {
-      const transactionsEl = document.getElementById('wiseScaTransactions');
-      
-      if (!transactions || transactions.length === 0) {
-        transactionsEl.innerHTML = `
-          <div class="text-center py-4 text-gray-400">
-            <p>No recent incoming payments found</p>
-          </div>
-        `;
-      } else {
-        transactionsEl.innerHTML = transactions.map(tx => `
-          <div class="payment-item">
-            <div class="payment-icon" style="background: linear-gradient(135deg, #9fe870, #5ed35e);">
-              <svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">${tx.senderName || tx.description || 'Incoming Payment'}</div>
-              <div class="text-xs text-gray-500">${tx.date || ''} • ${tx.reference || ''}</div>
-            </div>
-            <div class="text-right">
-              <div class="payment-amount text-green-400">+${tx.currency || ''}${tx.amount || 0}</div>
-            </div>
-          </div>
-        `).join('');
-      }
-      
-      wiseScaShowStep('wiseScaStep3');
-    }
-  </script>
+ function wiseScaShowTransactions(transactions) {
+ const transactionsEl = document.getElementById('wiseScaTransactions');
+ 
+ if (!transactions || transactions.length === 0) {
+ transactionsEl.innerHTML = `
+ <div class="text-center py-4 text-gray-400">
+ <p>No recent incoming payments found</p>
+ </div>
+ `;
+ } else {
+ transactionsEl.innerHTML = transactions.map(tx => `
+ <div class="payment-item">
+ <div class="payment-icon" style="background: linear-gradient(135deg, var(--ha-status-success), var(--ha-status-success));">
+ <svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+ <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+ </svg>
+ </div>
+ <div class="flex-1 min-w-0">
+ <div class="font-medium truncate">${tx.senderName || tx.description || 'Incoming Payment'}</div>
+ <div class="text-xs text-gray-500">${tx.date || ''} • ${tx.reference || ''}</div>
+ </div>
+ <div class="text-right">
+ <div class="payment-amount text-green-400">+${tx.currency || ''}${tx.amount || 0}</div>
+ </div>
+ </div>
+ `).join('');
+ }
+ 
+ wiseScaShowStep('wiseScaStep3');
+ }
+ </script>
 </body>
 </html>

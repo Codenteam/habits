@@ -1,0 +1,275 @@
+<!-- automation-pack: Ecosystem hub visualization — no text, icons only -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #080b14;
+    width: 1600px;
+    height: 900px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Dot grid background */
+  .bg-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  /* Radial glow from center */
+  .bg-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, rgba(59,130,246,0.06) 45%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* SVG overlay: orbit rings + connection lines */
+  .svg-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Center hub */
+  .center-hub {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    background: rgba(139,92,246,0.22);
+    border: 2px solid rgba(139,92,246,0.75);
+    box-shadow:
+      0 0 0 12px rgba(139,92,246,0.06),
+      0 0 60px rgba(139,92,246,0.55),
+      0 0 120px rgba(139,92,246,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  /* Pulse rings */
+  @keyframes pulse-out {
+    0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.55; }
+    100% { transform: translate(-50%, -50%) scale(2.1); opacity: 0; }
+  }
+
+  .pulse {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(139,92,246,0.5);
+    animation: pulse-out 3s ease-out infinite;
+    pointer-events: none;
+    z-index: 9;
+  }
+  .pulse-2 { animation-delay: 1.5s; }
+
+  /* Icon nodes */
+  .node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(10,14,26,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  /* Inner ring: 66×66 */
+  .node.inner {
+    width: 66px;
+    height: 66px;
+    border: 1.5px solid rgba(255,255,255,0.18);
+  }
+  .node.inner i { font-size: 32px; }
+
+  /* Outer ring: 54×54 */
+  .node.outer {
+    width: 54px;
+    height: 54px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .node.outer i { font-size: 26px; }
+
+  /* Glow variants */
+  .glow-blue   { box-shadow: 0 0 18px rgba(59,130,246,0.5);   border-color: rgba(59,130,246,0.5) !important; }
+  .glow-green  { box-shadow: 0 0 18px rgba(16,185,129,0.5);   border-color: rgba(16,185,129,0.5) !important; }
+  .glow-violet { box-shadow: 0 0 18px rgba(139,92,246,0.5);   border-color: rgba(139,92,246,0.5) !important; }
+  .glow-orange { box-shadow: 0 0 18px rgba(249,115,22,0.5);   border-color: rgba(249,115,22,0.5) !important; }
+  .glow-cyan   { box-shadow: 0 0 18px rgba(6,182,212,0.5);    border-color: rgba(6,182,212,0.5)  !important; }
+  .glow-pink   { box-shadow: 0 0 18px rgba(236,72,153,0.5);   border-color: rgba(236,72,153,0.5) !important; }
+  .glow-red    { box-shadow: 0 0 18px rgba(239,68,68,0.5);    border-color: rgba(239,68,68,0.5)  !important; }
+  .glow-yellow { box-shadow: 0 0 18px rgba(234,179,8,0.5);    border-color: rgba(234,179,8,0.5)  !important; }
+
+  /* Override monochrome icons for dark bg */
+  .devicon-github-original  { color: rgba(210,218,226,0.9) !important; }
+  .devicon-rust-original    { color: #CE422B !important; }
+  .devicon-ansible-plain    { color: #EE0000 !important; }
+</style>
+</head>
+<body>
+  <div class="bg-dots"></div>
+  <div class="bg-glow"></div>
+
+  <!--
+    Canvas: 1600 × 900, center at (800, 450).
+    Inner ring r=185: 8 nodes every 45°.
+    Outer ring r=330: 16 nodes every 22.5°.
+
+    Inner coords (cx+r·cos θ, cy+r·sin θ):
+      0°   → (985, 450)
+      45°  → (931, 581)
+      90°  → (800, 635)
+      135° → (669, 581)
+      180° → (615, 450)
+      225° → (669, 319)
+      270° → (800, 265)
+      315° → (931, 319)
+
+    Outer coords (r=330):
+      0°     → (1130, 450)
+      22.5°  → (1105, 576)
+      45°    → (1033, 683)
+      67.5°  → (926, 756)
+      90°    → (800, 780)
+      112.5° → (674, 756)
+      135°   → (567, 683)
+      157.5° → (495, 576)
+      180°   → (470, 450)
+      202.5° → (495, 324)
+      225°   → (567, 217)
+      247.5° → (674, 144)
+      270°   → (800, 120)
+      292.5° → (926, 144)
+      315°   → (1033, 217)
+      337.5° → (1105, 324)
+  -->
+
+  <svg class="svg-overlay" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Gradient along each line: strong near center, fades at icon -->
+      <radialGradient id="rg" cx="800" cy="450" r="350" gradientUnits="userSpaceOnUse">
+        <stop offset="0%"   stop-color="rgba(139,92,246,0.45)"/>
+        <stop offset="55%"  stop-color="rgba(139,92,246,0.15)"/>
+        <stop offset="100%" stop-color="rgba(139,92,246,0.02)"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Orbit rings (dashed, very subtle) -->
+    <circle cx="800" cy="450" r="185" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="5,10"/>
+    <circle cx="800" cy="450" r="330" fill="none" stroke="rgba(255,255,255,0.035)" stroke-width="1" stroke-dasharray="5,12"/>
+
+    <!-- Inner ring spokes -->
+    <line x1="800" y1="450" x2="985"  y2="450" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="931"  y2="581" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="800"  y2="635" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="669"  y2="581" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="615"  y2="450" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="669"  y2="319" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="800"  y2="265" stroke="url(#rg)" stroke-width="1.5"/>
+    <line x1="800" y1="450" x2="931"  y2="319" stroke="url(#rg)" stroke-width="1.5"/>
+
+    <!-- Outer ring spokes -->
+    <line x1="800" y1="450" x2="1130" y2="450" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="1105" y2="576" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="1033" y2="683" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="926"  y2="756" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="800"  y2="780" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="674"  y2="756" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="567"  y2="683" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="495"  y2="576" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="470"  y2="450" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="495"  y2="324" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="567"  y2="217" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="674"  y2="144" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="800"  y2="120" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="926"  y2="144" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="1033" y2="217" stroke="url(#rg)" stroke-width="1"/>
+    <line x1="800" y1="450" x2="1105" y2="324" stroke="url(#rg)" stroke-width="1"/>
+  </svg>
+
+  <!-- Pulse rings -->
+  <div class="pulse"></div>
+  <div class="pulse pulse-2"></div>
+
+  <!-- Center hub -->
+  <div class="center-hub">
+    <img src="https://codenteam.com/intersect/habits/logo.png">
+  </div>
+
+  <!-- ── Inner ring (r=185) ── -->
+  <!-- 0°  → (985, 450) Docker -->
+  <div class="node inner glow-blue"   style="left:985px; top:450px"><i class="devicon-docker-plain colored"></i></div>
+  <!-- 45° → (931, 581) Node.js -->
+  <div class="node inner glow-green"  style="left:931px; top:581px"><i class="devicon-nodejs-plain colored"></i></div>
+  <!-- 90° → (800, 635) Slack -->
+  <div class="node inner glow-green"  style="left:800px; top:635px"><i class="devicon-slack-plain colored"></i></div>
+  <!-- 135° → (669, 581) MongoDB -->
+  <div class="node inner glow-green"  style="left:669px; top:581px"><i class="devicon-mongodb-plain colored"></i></div>
+  <!-- 180° → (615, 450) AWS -->
+  <div class="node inner glow-orange" style="left:615px; top:450px"><i class="devicon-amazonwebservices-plain colored"></i></div>
+  <!-- 225° → (669, 319) Firebase -->
+  <div class="node inner glow-orange" style="left:669px; top:319px"><i class="devicon-firebase-plain colored"></i></div>
+  <!-- 270° → (800, 265) Kubernetes -->
+  <div class="node inner glow-blue"   style="left:800px; top:265px"><i class="devicon-kubernetes-plain colored"></i></div>
+  <!-- 315° → (931, 319) Redis -->
+  <div class="node inner glow-red"    style="left:931px; top:319px"><i class="devicon-redis-plain colored"></i></div>
+
+  <!-- ── Outer ring (r=330) ── -->
+  <!-- 0°     → (1130, 450) Azure -->
+  <div class="node outer glow-blue"   style="left:1130px; top:450px"><i class="devicon-azure-plain colored"></i></div>
+  <!-- 22.5°  → (1105, 576) Google Cloud -->
+  <div class="node outer glow-blue"   style="left:1105px; top:576px"><i class="devicon-googlecloud-plain colored"></i></div>
+  <!-- 45°    → (1033, 683) GitLab -->
+  <div class="node outer glow-orange" style="left:1033px; top:683px"><i class="devicon-gitlab-plain colored"></i></div>
+  <!-- 67.5°  → (926, 756) Jenkins -->
+  <div class="node outer"             style="left:926px;  top:756px"><i class="devicon-jenkins-line"></i></div>
+  <!-- 90°    → (800, 780) Terraform -->
+  <div class="node outer glow-violet" style="left:800px;  top:780px"><i class="devicon-terraform-plain colored"></i></div>
+  <!-- 112.5° → (674, 756) PostgreSQL -->
+  <div class="node outer glow-blue"   style="left:674px;  top:756px"><i class="devicon-postgresql-plain colored"></i></div>
+  <!-- 135°   → (567, 683) Elasticsearch -->
+  <div class="node outer glow-yellow" style="left:567px;  top:683px"><i class="devicon-elasticsearch-plain colored"></i></div>
+  <!-- 157.5° → (495, 576) Jira -->
+  <div class="node outer glow-blue"   style="left:495px;  top:576px"><i class="devicon-jira-plain colored"></i></div>
+  <!-- 180°   → (470, 450) Supabase -->
+  <div class="node outer glow-green"  style="left:470px;  top:450px"><i class="devicon-supabase-plain colored"></i></div>
+  <!-- 202.5° → (495, 324) Discord -->
+  <div class="node outer glow-violet" style="left:495px;  top:324px"><i class="devicon-discordjs-plain colored"></i></div>
+  <!-- 225°   → (567, 217) Cloudflare -->
+  <div class="node outer glow-orange" style="left:567px;  top:217px"><i class="devicon-cloudflare-plain colored"></i></div>
+  <!-- 247.5° → (674, 144) RabbitMQ -->
+  <div class="node outer glow-orange" style="left:674px;  top:144px"><i class="devicon-rabbitmq-original colored"></i></div>
+  <!-- 270°   → (800, 120) Grafana -->
+  <div class="node outer glow-orange" style="left:800px;  top:120px"><i class="devicon-grafana-plain colored"></i></div>
+  <!-- 292.5° → (926, 144) CircleCI -->
+  <div class="node outer glow-green"  style="left:926px;  top:144px"><i class="devicon-circleci-plain colored"></i></div>
+  <!-- 315°   → (1033, 217) Netlify -->
+  <div class="node outer glow-green"  style="left:1033px; top:217px"><i class="devicon-netlify-plain colored"></i></div>
+  <!-- 337.5° → (1105, 324) Datadog -->
+  <div class="node outer glow-violet" style="left:1105px; top:324px"><i class="devicon-datadog-original colored"></i></div>
+</body>
+</html>

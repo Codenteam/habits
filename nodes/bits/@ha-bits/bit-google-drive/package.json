@@ -19,13 +19,13 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "googleapis": "^140.0.0",
-    "google-auth-library": "^9.0.0",
-    "@ha-bits/bit-file-hosting": "file:../bit-file-hosting"
+    "@googleapis/drive": "^20.1.0",
+    "@ha-bits/bit-file-hosting": "file:../bit-file-hosting",
+    "google-auth-library": "^9.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   },
   "files": [
     "dist"

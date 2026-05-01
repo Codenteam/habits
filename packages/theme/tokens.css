@@ -1,0 +1,115 @@
+/**
+ * @ha-bits/theme — Shared CSS Design Tokens
+ *
+ * Single source of truth for all ha-bits UIs.
+ * Import at the top of each app's main CSS file:
+ *
+ *   @import "@ha-bits/theme";                   (Node.js / bundled apps)
+ *   @import "../../../theme/tokens.css";         (relative path fallback)
+ *   <link rel="stylesheet" href="tokens.css">    (static / Tauri apps)
+ *
+ * All tokens use the --ha-* prefix to avoid collisions.
+ */
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────────────────── */
+  /* Deepest layer: canvas, page background */
+  --ha-bg-base:     #0f172a; /* slate-900  */
+  /* Mid layer: sidebars, toolbars, panels */
+  --ha-bg-surface:  #1e293b; /* slate-800  */
+  /* Elevated layer: inputs, buttons, hover targets */
+  --ha-bg-elevated: #334155; /* slate-700  */
+  /* Hover state on elevated items */
+  --ha-bg-hover:    #475569; /* slate-600  */
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --ha-border:      #334155; /* slate-700  – universal divider        */
+  --ha-border-subtle: #1e293b; /* slate-800 – very subtle separator   */
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --ha-text-primary:  #ffffff;  /* headings, active labels             */
+  --ha-text-body:     #cbd5e1;  /* slate-300 – body copy               */
+  --ha-text-muted:    #94a3b8;  /* slate-400 – secondary / labels      */
+  --ha-text-disabled: #64748b;  /* slate-500 – disabled / empty states */
+
+  /* ── Accent Colors ───────────────────────────────────────────────────── */
+  /* Primary action (buttons, active tabs, links) */
+  --ha-accent-blue:    #3b82f6; /* blue-500  */
+  --ha-accent-blue-hover: #2563eb; /* blue-600 */
+  /* Secondary links / sky highlights */
+  --ha-accent-sky:     #38bdf8; /* sky-400   */
+  /* Bits / success nodes */
+  --ha-accent-emerald: #34d399; /* emerald-400 */
+  --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15); /* tinted bg */
+  /* Script / cyan nodes */
+  --ha-accent-cyan:    #22d3ee; /* cyan-400  */
+  --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);    /* tinted bg */
+  /* AI features */
+  --ha-accent-purple:  #c084fc; /* purple-400 */
+  --ha-accent-purple-dim: rgba(192, 132, 252, 0.15); /* tinted bg */
+
+  /* ── Status Colors ───────────────────────────────────────────────────── */
+  --ha-status-running:   #fbbf24; /* amber-400  */
+  --ha-status-running-dim: rgba(251, 191, 36, 0.15);
+  --ha-status-success:   #4ade80; /* green-400  */
+  --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+  --ha-status-error:     #f87171; /* red-400    */
+  --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+  --ha-status-cancelled: #94a3b8; /* slate-400  */
+  --ha-status-cancelled-dim: rgba(148, 163, 184, 0.15);
+  --ha-status-pending:   #60a5fa; /* blue-400   */
+  --ha-status-pending-dim: rgba(96, 165, 250, 0.15);
+  --ha-status-skipped:   #a78bfa; /* violet-400 */
+  --ha-status-skipped-dim: rgba(167, 139, 250, 0.15);
+
+  /* ── Warning / Danger ───────────────────────────────────────────────── */
+  --ha-warn:   #f59e0b; /* amber-500 */
+  --ha-danger: #ef4444; /* red-500   */
+  --ha-danger-hover: #dc2626; /* red-600 */
+  --ha-danger-surface: #7f1d1d; /* red-900 */
+
+  /* ── Border Radius ──────────────────────────────────────────────────── */
+  --ha-radius-sm: 4px;   /* small chips, badges             */
+  --ha-radius-md: 6px;   /* buttons, inputs (dominant)      */
+  --ha-radius-lg: 8px;   /* cards, panels, modals           */
+  --ha-radius-xl: 12px;  /* large modals, floating surfaces */
+  --ha-radius-pill: 9999px; /* handles, pills               */
+
+  /* ── Shadows ────────────────────────────────────────────────────────── */
+  --ha-shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --ha-shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --ha-font-sans: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+                  'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --ha-font-mono: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+
+  /* ── Scrollbar ──────────────────────────────────────────────────────── */
+  --ha-scrollbar-track: #1e293b; /* slate-800 */
+  --ha-scrollbar-thumb: #475569; /* slate-600 */
+  --ha-scrollbar-thumb-hover: #64748b; /* slate-500 */
+}
+
+/* ── Global Scrollbar Styles ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ha-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ha-scrollbar-thumb);
+  border-radius: var(--ha-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ha-scrollbar-thumb-hover);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ha-scrollbar-thumb) var(--ha-scrollbar-track);
+}

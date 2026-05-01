@@ -1,0 +1,100 @@
+[
+  {
+    "slug": "ai-cookbook",
+    "name": "AI Cookbook",
+    "description": "Generate personalized recipes from your available ingredients with AI-powered recipe creation and beautiful food photography.",
+    "habitFile": "ai-cookbook.habit",
+    "thumbnail": "ai-cookbook-thumb.png",
+    "tags": [
+      "ai",
+      "creative",
+      "frontend",
+      "health"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "slug": "ai-journal",
+    "name": "AI Journal",
+    "description": "Your personal AI-powered journaling companion that analyzes entries, tracks mood patterns, and provides compassionate weekly insights.",
+    "habitFile": "ai-journal.habit",
+    "thumbnail": "ai-journal-thumb.png",
+    "tags": [
+      "ai",
+      "health",
+      "productivity",
+      "frontend"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "slug": "email-demo",
+    "name": "Email Send & Receive Demo",
+    "description": "Complete email workflow demonstration with IMAP polling and SMTP sending capabilities.",
+    "habitFile": "email-demo.habit",
+    "thumbnail": "email-demo-thumb.webp",
+    "tags": [
+      "email",
+      "imap",
+      "smtp",
+      "automation",
+      "communication"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "slug": "hello-world",
+    "name": "Hello World Habit",
+    "description": "Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.",
+    "habitFile": "hello-world.habit",
+    "thumbnail": "hello-world-thumb.webp",
+    "tags": [
+      "frontend",
+      "backend",
+      "creative"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "slug": "marketing-campaign",
+    "name": "Marketing Campaign Generator",
+    "description": "AI-powered marketing campaign generator that creates expanded prompts, images, posters, and landing pages in parallel using the Intersect AI gateway.",
+    "habitFile": "marketing-campaign.habit",
+    "thumbnail": "marketing-campaign-thumb.webp",
+    "tags": [
+      "ai",
+      "creative",
+      "frontend",
+      "automation"
+    ],
+    "difficulty": "intermediate"
+  },
+  {
+    "slug": "qr-database",
+    "name": "QR Code Manager",
+    "description": "Full-stack QR code application with generation, scanning, and persistent database storage. Includes a futuristic mobile-friendly frontend for managing your QR code library.",
+    "habitFile": "qr-database.habit",
+    "thumbnail": "qr-database-thumb.webp",
+    "tags": [
+      "database",
+      "frontend",
+      "utility",
+      "full-stack"
+    ],
+    "difficulty": "beginner"
+  },
+  {
+    "slug": "resume-analyzer",
+    "name": "Resume Analyzer",
+    "description": "AI-powered resume analysis tool that evaluates ATS compatibility, provides job match scores, generates improved summaries, and prepares interview questions.",
+    "habitFile": "resume-analyzer.habit",
+    "thumbnail": "resume-analyzer-thumb.webp",
+    "tags": [
+      "ai",
+      "frontend",
+      "database",
+      "vision"
+    ],
+    "difficulty": "intermediate"
+  }
+]

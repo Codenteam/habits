@@ -402,6 +402,12 @@ class WorkflowExecutorServer {
             console.warn(`   ⚠️ Module ${moduleName} has no 'id' field - skipping webhook registration`);
             continue;
           }
+
+          // Skip app-only bits in server mode
+          if (bitPiece.runtime === 'app') {
+            console.log(`   ⏭️ Skipping app-only bit: ${moduleName}`);
+            continue;
+          }
           
           // Get the trigger definition
           const triggers = typeof bitPiece.triggers === 'function' ? bitPiece.triggers() : bitPiece.triggers;

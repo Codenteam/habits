@@ -4,6 +4,6 @@ fn main() {
     if target_os == "ios" || target_os == "macos" {
         println!("cargo:rustc-link-lib=framework=Accelerate");
     }
-    
+
     tauri_build::build()
 }

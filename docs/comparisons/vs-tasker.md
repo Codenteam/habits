@@ -1,7 +1,7 @@
 ---
 isComparison: true
 title: Habits vs Tasker
-intro: Tasker is the long-standing king of on-device Android automation — powerful, but locked to a single platform and a proprietary profile format. Habits is a cross-platform, open-source automation runtime that spans mobile, desktop, server, serverless, and edge, with workflows stored as portable YAML.
+intro: Tasker is the long-standing king of on-device Android automation, powerful, but locked to a single platform and a proprietary profile format. Habits is a cross-platform, open-source automation runtime that spans mobile, desktop, server, serverless, and edge, with workflows stored as portable YAML.
 
 habits:
   name: Habits
@@ -92,7 +92,7 @@ features:
 
 heroBar:
   title: Automation that isn't trapped on one phone
-  subtitle: Tasker is unbeatable for Android-only routines. Habits is what you pick when the same automation needs to run on your phone, your laptop, a Lambda, and a Raspberry Pi — with the same YAML file.
+  subtitle: Tasker is unbeatable for Android-only routines. Habits is what you pick when the same automation needs to run on your phone, your laptop, a Lambda, and a Raspberry Pi, with the same YAML file.
   actions:
     - text: Build your first habit
       link: /getting-started/first-habit
@@ -105,7 +105,7 @@ sections:
   - title: One workflow, every surface
     icon: rocket
     type: highlight
-    description: Tasker routines live and die inside the Android app. Habits workflows are plain YAML that the same runtime can execute on mobile, desktop, server, or edge — write once, run anywhere JavaScript runs.
+    description: Tasker routines live and die inside the Android app. Habits workflows are plain YAML that the same runtime can execute on mobile, desktop, server, or edge, write once, run anywhere JavaScript runs.
     items:
       - icon: globe
         title: Cross-platform
@@ -115,12 +115,12 @@ sections:
         text: YAML diffs cleanly in git, unlike Tasker's exported XML.
       - icon: link
         title: Share as code
-        text: Distribute habits via npm, GitHub, or a plain file — no vendor platform in between.
+        text: Distribute habits via npm, GitHub, or a plain file, no vendor platform in between.
 
   - title: Real integrations, not just intents
     icon: plug
     type: default
-    description: Tasker shines at poking Android intents and device sensors. Habits ships 200+ bits for the API-driven world — databases, LLMs, HTTP, webhooks, email, queues — so your automations can reach beyond the device.
+    description: Tasker shines at poking Android intents and device sensors. Habits ships 200+ bits for the API-driven world, databases, LLMs, HTTP, webhooks, email, queues, so your automations can reach beyond the device.
     code: |
       nodes:
         - id: trigger
@@ -136,11 +136,11 @@ sections:
   - title: Open-source, forever
     icon: unlock
     type: default
-    description: Tasker is a paid, closed-source app with a single maintainer bus factor. Habits is AGPL-3.0 with MIT bits — forkable, auditable, and free to ship inside your own product.
+    description: Tasker is a paid, closed-source app with a single maintainer bus factor. Habits is AGPL-3.0 with MIT bits, forkable, auditable, and free to ship inside your own product.
     items:
       - icon: unlock
         title: No lock-in
-        text: If you don't like how Habits runs something, change it — the source is yours.
+        text: If you don't like how Habits runs something, change it, the source is yours.
       - icon: shield
         title: Auditable security
         text: Every bit is MIT-licensed source you can read and review.

@@ -6525,10 +6525,10 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for tauri-plugin-lancedb — read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`",
+          "description": "Default permissions for tauri-plugin-lancedb, read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`",
           "type": "string",
           "const": "lancedb:default",
-          "markdownDescription": "Default permissions for tauri-plugin-lancedb — read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`"
+          "markdownDescription": "Default permissions for tauri-plugin-lancedb, read + write on local databases\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-table-names`\n- `allow-create-table`\n- `allow-add`\n- `allow-merge-insert`\n- `allow-query`\n- `allow-update`\n- `allow-delete`\n- `allow-search`\n- `allow-create-index`"
         },
         {
           "description": "Enables the add command without any pre-configured scope.",

@@ -15,7 +15,7 @@ interface GitHubContext {
 }
 
 /**
- * Trigger context — mirrors BitsTriggerContext from cortex framework.
+ * Trigger context, mirrors BitsTriggerContext from cortex framework.
  * Keeping a local interface so the bit has no runtime dependency on cortex.
  */
 interface GitHubTriggerContext {
@@ -782,7 +782,7 @@ const githubBit = {
 
   triggers: {
     /**
-     * Webhook trigger — receives GitHub webhook `pull_request` events.
+     * Webhook trigger, receives GitHub webhook `pull_request` events.
      *
      * To use this trigger, configure a GitHub repository webhook:
      *   Payload URL  →  <your-server>/webhook/<workflowId>/<nodeId>
@@ -823,11 +823,11 @@ const githubBit = {
       },
 
       /**
-       * onEnable — nothing to register server-side; the user points
+       * onEnable, nothing to register server-side; the user points
        * the GitHub webhook at the generated URL manually.
        */
       async onEnable(_context: GitHubTriggerContext): Promise<void> {
-        // No-op — webhook URL is provided by the cortex server.
+        // No-op, webhook URL is provided by the cortex server.
       },
 
       async onDisable(_context: GitHubTriggerContext): Promise<void> {
@@ -835,7 +835,7 @@ const githubBit = {
       },
 
       /**
-       * run — called when the webhook fires.
+       * run, called when the webhook fires.
        * `context.payload` is the raw GitHub webhook JSON body.
        */
       async run(context: GitHubTriggerContext): Promise<any[]> {
@@ -864,7 +864,7 @@ const githubBit = {
       },
 
       /**
-       * test — returns sample data so the UI can display the schema.
+       * test, returns sample data so the UI can display the schema.
        */
       async test(_context: GitHubTriggerContext): Promise<any[]> {
         return [{
@@ -900,7 +900,7 @@ const githubBit = {
     },
 
     /**
-     * Polling trigger — periodically checks for new pull requests.
+     * Polling trigger, periodically checks for new pull requests.
      *
      * Uses the in-memory store to remember the most-recent PR number
      * so that only genuinely new PRs are returned on each poll cycle.

@@ -675,12 +675,44 @@ export class WorkflowExecutor {
           });
 
           try {
+            // Check if this is a streaming trigger node being re-invoked with a pre-filled payload
+            const isStreamingTriggerNode = context.__streamingTrigger &&
+                                           context.__streamingNodeId === nodeId &&
+                                           (node.type === 'trigger' || (node.data as any)?.isTrigger);
+
             // Check if this is a polling trigger node being executed from cron
-            const isPollingTriggerNode = context.__pollingTrigger && 
+            const isPollingTriggerNode = context.__pollingTrigger &&
                                          context.__pollingNodeId === nodeId &&
                                          (node.type === 'trigger' || (node.data as any)?.isTrigger);
             
-            if (isPollingTriggerNode) {
+            if (isStreamingTriggerNode) {
+              // Use the pre-filled payload passed by the streaming trigger's onEnable callback
+              this.logger.log(`🎙️ Using streaming trigger payload for node: ${nodeId}`);
+              const streamingData = context['habits.input'];
+
+              const scannedResult = await scanInputForSecurity(streamingData, securityConfig, this.logger);
+
+              context[`${nodeId}`] = scannedResult;
+              context[nodeId] = scannedResult;
+              context.previous_result = scannedResult;
+
+              this.updateNodeStatus(execution, nodeId, 'completed', {
+                result: scannedResult,
+                startTime: new Date(),
+                endTime: new Date(),
+                duration: 0
+              });
+
+              emitStreamEvent({
+                type: 'node_completed',
+                nodeId,
+                nodeName: node.data.label,
+                status: 'completed',
+                result: scannedResult,
+                duration: 0
+              });
+            }
+            else if (isPollingTriggerNode) {
               // Use the pre-fetched polling data from habits.input
               this.logger.log(`⏰ Using pre-fetched polling data for trigger node: ${nodeId}`);
               const pollingData = context['habits.input'];

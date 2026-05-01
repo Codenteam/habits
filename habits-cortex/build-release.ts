@@ -131,7 +131,7 @@ async function main(): Promise<void> {
     
     // Generate icons before building any platform
     logSection('Generating icons');
-    exec('npm run tauri -- icon');
+    // exec('npm run tauri -- icon');
     console.log('success', 'Icons generated');
     
     // Build each platform
@@ -286,11 +286,15 @@ async function setupMacOS(options: CLIOptions): Promise<MacOSContext> {
   if (loginKeychainPath) {
     console.log('step', 'Using existing login keychain...');
     keychainPath = loginKeychainPath;
-    keychainPassword = ''; // Login keychain should already be unlocked
+    keychainPassword = process.env.KEYCHAIN_PASSWORD || ''; // Use env password if provided
     isTemporaryKeychain = false;
     
-    // Ensure login keychain is unlocked (user may be prompted)
-    exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    // Unlock the login keychain: use password from env if available, otherwise prompt
+    if (keychainPassword) {
+      exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`, { ignoreError: true });
+    } else {
+      exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    }
     
     // Make sure login keychain is in the search list
     const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
@@ -426,7 +430,8 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
   // Build both app and dmg for direct distribution
   const bundles = options.uploadMacos ? 'app' : 'app,dmg';
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles}`, { env: buildEnv });
+  // Always use no-external-habits for App Store / direct-distribution macOS builds
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits`, { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
@@ -581,11 +586,15 @@ async function setupIOSKeychain(): Promise<{ keychainPath: string; keychainPassw
   if (loginKeychainPath) {
     console.log('step', 'Using existing login keychain...');
     keychainPath = loginKeychainPath;
-    keychainPassword = ''; // Login keychain should already be unlocked
+    keychainPassword = process.env.KEYCHAIN_PASSWORD || ''; // Use env password if provided
     isTemporaryKeychain = false;
     
-    // Ensure login keychain is unlocked (user may be prompted)
-    exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    // Unlock the login keychain: use password from env if available, otherwise prompt
+    if (keychainPassword) {
+      exec(`security unlock-keychain -p "${keychainPassword}" "${keychainPath}"`, { ignoreError: true });
+    } else {
+      exec(`security unlock-keychain "${keychainPath}"`, { ignoreError: true });
+    }
     
     // Make sure login keychain is in the search list and is the default
     const existingKeychains = execCapture('security list-keychains -d user').trim().split('\n').map(k => k.trim().replace(/"/g, ''));
@@ -823,31 +832,22 @@ function setIOSVersions(): void {
 
   const tauriConfig = JSON.parse(fs.readFileSync(tauriConfigPath, 'utf8')) as { version?: string };
   const marketingVersion = tauriConfig.version;
-  const buildNumber = process.env.CI_BUILD_NUMBER || process.env.GITHUB_RUN_NUMBER;
+
+  // Use CI build number when available; otherwise generate a timestamp (YYYYMMDDHHmmSS)
+  // so every local build gets a unique, strictly-increasing build number.
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const buildNumber = process.env.CI_BUILD_NUMBER || process.env.GITHUB_RUN_NUMBER || timestamp;
 
   if (!marketingVersion) {
     console.log('warn', 'No version found in tauri.conf.json - skipping iOS version update');
     return;
   }
 
-  // Update CFBundleShortVersionString and CFBundleVersion in Info.plist
-  let plistContent = fs.readFileSync(infoPlistPath, 'utf8');
-  plistContent = plistContent.replace(
-    /(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]*(<\/string>)/,
-    `$1${marketingVersion}$2`
-  );
-
-  if (buildNumber) {
-    plistContent = plistContent.replace(
-      /(<key>CFBundleVersion<\/key>\s*<string>)[^<]*(<\/string>)/,
-      `$1${buildNumber}$2`
-    );
-  }
-
-  fs.writeFileSync(infoPlistPath, plistContent);
-
+ 
   // Update CFBundleVersion in project.yml for generated Xcode settings
-  if (buildNumber && fs.existsSync(projectYmlPath)) {
+  if (fs.existsSync(projectYmlPath)) {
     let projectContent = fs.readFileSync(projectYmlPath, 'utf8');
     projectContent = projectContent.replace(
       /(CFBundleVersion:\s*)"[^"]*"/,
@@ -857,11 +857,7 @@ function setIOSVersions(): void {
   }
 
   console.log('success', `iOS marketing version set to ${marketingVersion}`);
-  if (buildNumber) {
-    console.log('success', `iOS build number set to ${buildNumber}`);
-  } else {
-    console.log('info', 'No CI build number found; kept existing CFBundleVersion in project.yml');
-  }
+  console.log('success', `iOS build number set to ${buildNumber}${process.env.CI_BUILD_NUMBER || process.env.GITHUB_RUN_NUMBER ? '' : ' (timestamp)'}`);
 }
 
 /**
@@ -925,8 +921,10 @@ async function buildIOS(): Promise<string[]> {
   // Pre-build the Rust library for iOS before xcodebuild runs.
   // This is required because the Xcode "Build Rust Code" script expects the library
   // to already exist (workaround for Tauri CLI 2.10.1 {arch} placeholder bug).
+  // IMPORTANT: Must include custom-protocol (required to serve tauri://localhost in production)
+  // and no-external-habits (required for App Store builds).
   logSection('Pre-building Rust library for iOS');
-  exec('cargo build --release --target aarch64-apple-ios', { cwd: TAURI_DIR });
+  exec('cargo build --release --target aarch64-apple-ios --features custom-protocol,no-external-habits', { cwd: TAURI_DIR });
   console.log('success', 'Rust library built for aarch64-apple-ios');
 
   const applePath = path.join(TAURI_DIR, 'gen', 'apple');
@@ -953,7 +951,7 @@ async function buildIOS(): Promise<string[]> {
   };
 
   // Use --ci flag and let tauri handle the xcodebuild invocation
-  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --ci`, { 
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --ci --features no-external-habits`, { 
     env: tauriBuildEnv 
   });
   console.log('success', 'iOS build completed');

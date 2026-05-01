@@ -1,21 +1,58 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { withBase, useData } from 'vitepress'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
 import BitsCard from './BitsCard.vue'
 import HabitFlowSection1 from './HabitFlowSection1.vue'
+import GetStartedSection from './GetStartedSection.vue'
+import WhoAreYou from './WhoAreYou/Variant11.vue'
+import RunEverywhere from './RunEverywhere/Variant31.vue'
+import HomeConnection from './HomeConnection/Variant12.vue'
+
 import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
 import bitsData from '../data/bits-data.json'
 
-const { isDark } = useData()
+const { isDark, frontmatter } = useData()
+
+const whoAreYouComponent = WhoAreYou
+const runEverywhereComponent = RunEverywhere
+const connectionComponent = HomeConnection
+
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 
 function toggleTheme() {
   isDark.value = !isDark.value
 }
+
+const showSectionNav = ref(false)
+
+function scrollToBuildAnything() {
+  document.getElementById('build-anything-section')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function scrollToGetStarted() {
+  document.getElementById('explore-section')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+let runEverywhereObserver = null
+
+onMounted(() => {
+  const section = document.getElementById('run-everywhere-section')
+  if (section) {
+    runEverywhereObserver = new IntersectionObserver(
+      ([entry]) => { showSectionNav.value = entry.isIntersecting },
+      { threshold: 0.05 }
+    )
+    runEverywhereObserver.observe(section)
+  }
+})
+
+onUnmounted(() => {
+  runEverywhereObserver?.disconnect()
+})
 
 // Parse CSS gradient string to extract colors
 function parseGradient(gradientStr) {
@@ -182,10 +219,85 @@ const useCases = ref([
 
 const activeUseCase = ref(null)
 const hoveredUseCase = ref(null)
+
+const activeToolIndex = ref(0)
+
+const toolsData = [
+  {
+    name: 'Base',
+    tagline: 'Visual drag-and-drop habit builder',
+    description: 'Design, test, and export workflows visually. Connect bits with a node graph, browse the template library, manage modules, and pack a habit into a standalone binary, all from the browser.',
+    icon: 'edit-3',
+    link: '/tools/base',
+    screenshot: '/images/base.webp',
+  },
+  {
+    name: 'Cortex Server',
+    tagline: 'Node.js runtime, run habits as REST APIs',
+    description: 'The execution engine behind every habit. Exposes each workflow as a REST endpoint, generates OpenAPI docs automatically, and runs anywhere Node.js does, local, Docker, or cloud.',
+    icon: 'server',
+    link: '/tools/cortex-server',
+    screenshot: '/images/cortex.webp',
+  },
+  {
+    name: 'Desktop App',
+    tagline: 'macOS, Windows & Linux native app',
+    description: 'A Tauri-packaged Cortex that runs natively on your desktop. Includes a built-in Mirror receiver, secure keychain storage, and offline execution, no server required.',
+    icon: 'monitor',
+    link: '/tools/desktop-app',
+    screenshot: '/images/cortex-app/home.webp',
+  },
+  {
+    name: 'Mobile App',
+    tagline: 'iOS & Android with device-native bits',
+    description: 'Run habits on your phone with access to WiFi scanning, SMS, GPS, smart home (Matter), and on-device AI. Fully offline-capable with a built-in Mirror receiver.',
+    icon: 'smartphone',
+    link: '/tools/mobile-app',
+    screenshot: '/images/open-habit-android.webp',
+  },
+  {
+    name: 'Admin',
+    tagline: 'Multi-Cortex orchestrator with habit library',
+    description: 'Manage multiple Cortex instances from one UI. Each habit gets its own subdomain. Browse and install habits from the library, manage users, and enable system services like Mirror and Base.',
+    icon: 'layout',
+    link: '/tools/admin',
+    screenshot: '/images/admin.webp',
+  },
+  {
+    name: 'Mirror',
+    tagline: 'Habit Transfer',
+    description: 'Transfer .habit files directly between devices with a 6-character pairing code. No file data passes through the server, pure WebRTC DataChannel from sender to receiver.',
+    icon: 'share-2',
+    link: '/tools/mirror',
+    screenshot: '/images/mirror.svg',
+  },
+]
+
+const recipesData = [
+  { title: 'Company Automation Hub', tagline: 'For IT/ops teams deploying shared workflows', icon: 'briefcase', link: '/recipes/company-hub' },
+  { title: 'Customer SaaS Platform', tagline: 'For SaaS founders with per-customer Cortex', icon: 'users', link: '/recipes/customer-saas' },
+  { title: 'AI Agent Orchestration', tagline: 'For platform teams running 24/7 AI agents', icon: 'cpu', link: '/recipes/ai-agents' },
+  { title: 'White-Label App Distribution', tagline: 'For agencies shipping branded native apps', icon: 'package', link: '/recipes/white-label' },
+  { title: 'Personal Device Workflows', tagline: 'For power users with phone automations', icon: 'smartphone', link: '/recipes/personal-device' },
+  { title: 'Offline Field Operations', tagline: 'For field teams with no connectivity', icon: 'wifi-off', link: '/recipes/offline-field' },
+  { title: 'Content & Marketing Automation', tagline: 'For teams automating posts and newsletters', icon: 'send', link: '/recipes/content-marketing' },
+  { title: 'Developer CI/CD Pipelines', tagline: 'For dev teams using habits as a CI runner', icon: 'git-merge', link: '/recipes/developer-cicd' },
+  { title: 'Multi-Tenant Habit Marketplace', tagline: 'For platforms hosting a habit store', icon: 'grid', link: '/recipes/habit-marketplace' },
+  { title: 'Data Privacy / On-Prem AI', tagline: 'For regulated industries with zero-cloud AI', icon: 'shield', link: '/recipes/on-prem-ai' },
+]
 </script>
 
 <template>
-  <div class="home-layout">
+  <div class="home-layout home-canvas">
+    <!-- Unified animated backdrop for the entire home page -->
+    <div class="home-canvas-bg" aria-hidden="true">
+      <div class="home-orb home-orb-a"></div>
+      <div class="home-orb home-orb-b"></div>
+      <div class="home-orb home-orb-c"></div>
+      <div class="home-orb home-orb-d"></div>
+      <div class="home-grid"></div>
+    </div>
+
     <!-- Header with theme toggle and GitHub -->
     <header class="home-header">
       <div class="header-content">
@@ -215,7 +327,7 @@ const hoveredUseCase = ref(null)
       </div>
     </header>
 
-    <!-- Hero Section with Quick Start -->
+    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-bg"></div>
       <div class="hero-container">
@@ -223,26 +335,27 @@ const hoveredUseCase = ref(null)
         <div class="hero-left">
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
-          <p class="hero-text">Agents, Automations, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">Logic & UI builder and decentralized runner that you can control, audit, monitor and extend (AGPL-3.0)</p>
+          <p class="hero-text">Next-gen Automations, Agents, Full-Stacks, SaaS and Micro-Apps</p>
+          <p class="hero-tagline">Logic &amp; UI builder and decentralized runner that you can control, audit, monitor and extend (Free and Open-Source)</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <div class="hero-secondary-actions">
               <a :href="withBase('/getting-started/first-habit-using-ai')" class="action-btn alt">Use AI</a>
               <a :href="withBase('/getting-started/first-habit-mixed')" class="action-btn alt">Use Code</a>
               <a :href="withBase('/getting-started/introduction')" class="action-btn alt">Introduction</a>
+              <a :href="withBase('/recipes/')" class="action-btn alt">Recipes</a>
             </div>
           </div>
         </div>
-        
+
         <!-- Right: Quick Start -->
         <div class="hero-right">
           <div class="quick-start-card">
             <h3>Get Started in Seconds (Create, Run and Pack Habits)</h3>
             <div class="tabs">
               <div class="tab-headers">
-                <button 
-                  v-for="(tab, index) in tabs" 
+                <button
+                  v-for="(tab, index) in tabs"
                   :key="index"
                   :class="['tab-btn', { active: activeTab === index }]"
                   @click="activeTab = index"
@@ -251,8 +364,8 @@ const hoveredUseCase = ref(null)
                 </button>
               </div>
               <div class="tab-content">
-                <div 
-                  v-if="highlightedCode[activeTab]" 
+                <div
+                  v-if="highlightedCode[activeTab]"
                   class="highlighted-code"
                   v-html="highlightedCode[activeTab]"
                 ></div>
@@ -264,15 +377,54 @@ const hoveredUseCase = ref(null)
       </div>
     </section>
 
+    <!-- Quote -->
+    <div class="hero-quote-band">
+      <div class="qi1-line"></div>
+      <blockquote class="hero-quote">
+        <p>All our life, is a mass of habits.</p>
+        <footer>— William James</footer>
+      </blockquote>
+      <div class="qi1-line"></div>
+    </div>
 
     <!-- Habit Flow Section -->
-    <div class="node-love-text-banner">
-      <span>Because people</span> <span class="love">love</span> <span>building with nodes</span>
+    <div id="build-anything-section">
+      <HabitFlowSection1 />
     </div>
-    <HabitFlowSection1 />
+
+    <!-- Run Everywhere Section (variant injected via frontmatter) -->
+    <div id="run-everywhere-section" v-if="runEverywhereComponent">
+      <component :is="connectionComponent" />
+      <component :is="runEverywhereComponent" />
+    </div>
+
+    <!-- Sticky nav arrows shown while run-everywhere section is in view -->
+    <Teleport to="body">
+      <div v-if="runEverywhereComponent && showSectionNav" class="section-nav-arrows">
+        <button
+          class="section-nav-arrow section-nav-arrow--up"
+          @click="scrollToBuildAnything"
+          aria-label="Scroll to Build Anything section"
+        >
+          <span v-html="icon('chevron-up')"></span>
+        </button>
+        <button
+          class="section-nav-arrow section-nav-arrow--down"
+          @click="scrollToGetStarted"
+          aria-label="Scroll to Get Started section"
+        >
+          <span v-html="icon('chevron-down')"></span>
+        </button>
+      </div>
+    </Teleport>
+
+    <!-- Who Are You Section (variant injected via frontmatter) -->
+    <div v-if="whoAreYouComponent" id="who-are-you-section">
+      <component :is="whoAreYouComponent" />
+    </div>
 
     <!-- Platform Overview - Combined Section -->
-    <section class="platform-section">
+    <section class="platform-section" id="explore-section">
       <div class="platform-header">
         <h2>Everything You Need</h2>
         <p>From visual building to full-stack deployment, all in one platform</p>
@@ -352,11 +504,55 @@ const hoveredUseCase = ref(null)
       </div>
     </section>
 
+    <!-- Tools Section -->
+    <section class="tools-section" id="tools-section">
+      <div class="tools-header">
+        <h2>Tools</h2>
+        <p>Everything in the Habits ecosystem, pick what fits your deployment</p>
+      </div>
+      <div class="tools-panel">
+        <!-- Left: stacked name list -->
+        <div class="tools-tab-list">
+          <button
+            v-for="(tool, i) in toolsData"
+            :key="tool.name"
+            class="tools-tab-item"
+            :class="{ 'tools-tab-item--active': activeToolIndex === i }"
+            @click="activeToolIndex = i"
+          >
+            <span class="tools-tab-icon" v-html="icon(tool.icon)"></span>
+            <div class="tools-tab-text">
+              <span class="tools-tab-name">{{ tool.name }}</span>
+              <span class="tools-tab-tagline">{{ tool.tagline }}</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Right: active tool detail -->
+        <div class="tools-detail">
+          <div class="tools-detail-screenshot">
+            <img
+              :src="withBase(toolsData[activeToolIndex].screenshot)"
+              :alt="toolsData[activeToolIndex].name + ' screenshot'"
+              :class="['tools-detail-img', toolsData[activeToolIndex].screenshot.endsWith('.svg') ? 'tools-detail-img--svg' : '']"
+            />
+          </div>
+          <div class="tools-detail-body">
+            <h3 class="tools-detail-name">{{ toolsData[activeToolIndex].name }}</h3>
+            <p class="tools-detail-tagline">{{ toolsData[activeToolIndex].tagline }}</p>
+            <p class="tools-detail-desc">{{ toolsData[activeToolIndex].description }}</p>
+            <a :href="withBase(toolsData[activeToolIndex].link)" class="tools-detail-cta">
+              Learn more <span v-html="icon('arrow-right')"></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Showcase Section -->
-    <section class="showcase-section">
+    <section class="showcase-section" id="showcase-section">
       <div class="showcase-header">
-        <h2>Featured Showcase</h2>
+        <h2>Featured <span class="section-accent">Showcase</span></h2>
         <p>Habits you can run, customize, and learn from</p>
         <a :href="withBase('/showcase/')" class="view-all-link">View All →</a>
       </div>
@@ -366,7 +562,7 @@ const hoveredUseCase = ref(null)
     </section>
 
     <!-- Featured Bits Section -->
-    <section class="bits-section" v-if="featuredBits.length > 0">
+    <section class="bits-section" id="bits-section" v-if="featuredBits.length > 0">
       <div class="bits-header">
         <h2>Featured Bits</h2>
         <p>Pre-built integrations for AI, databases, messaging, and more</p>
@@ -380,15 +576,15 @@ const hoveredUseCase = ref(null)
     <!-- Screenshots Gallery -->
     <section class="screenshots-section">
       <div class="screenshots-header">
-        <h2>Screenshots</h2>
+        <h2><span class="section-accent">Screenshots</span></h2>
       </div>
       <ScreenshotGallery :screenshots="screenshots" layout="grid" />
     </section>
 
     <!-- Pricing Table -->
-    <section class="pricing-section">
+    <section class="pricing-section" id="pricing-section">
       <div class="pricing-header">
-        <h2>Options</h2>
+        <h2><span class="section-accent">Options</span></h2>
       </div>
       <div class="pricing-table">
         <table>
@@ -603,21 +799,66 @@ const hoveredUseCase = ref(null)
 <style scoped>
 .home-layout {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/* Run Everywhere Section Navigation Arrows */
+.section-nav-arrows {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1000;
+}
+
+.section-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-1);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.section-nav-arrow:hover {
+  background: var(--vp-c-brand-soft);
+  border-color: var(--vp-c-brand-1);
+  transform: scale(1.1);
+}
+
+.section-nav-arrow :deep(.feather-icon) {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: currentColor;
+}
+
+@media (max-width: 768px) {
+  .section-nav-arrows {
+    right: 0.75rem;
+  }
 }
 
 /* Header */
 .home-header {
-  position: sticky;
+  /* position: sticky; */
   top: 0;
   z-index: 100;
-  background: var(--vp-c-bg);
-  border-bottom: 1px solid var(--vp-c-divider);
-  backdrop-filter: blur(8px);
+  background: var(--home-surface-glass);
+  border-bottom: 1px solid var(--home-border-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur-soft));
+  backdrop-filter: blur(var(--home-blur-soft));
 }
 
 .header-content {
-  max-width: 1280px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
   padding: 12px 24px;
   display: flex;
@@ -694,53 +935,15 @@ const hoveredUseCase = ref(null)
 .hero-container {
   max-width: 1280px;
   margin: 0 auto;
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 64px;
   align-items: center;
-  width: 100%;
 }
 
 .hero-left {
   text-align: left;
-}
-
-.hero-logo {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 20px;
-}
-
-.hero-name {
-  font-size: 4rem;
-  font-weight: 700;
-  background: -webkit-linear-gradient(120deg, #5865F2 30%, #38bdf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 8px;
-  line-height: 1.1;
-}
-
-.hero-text {
-  font-size: 2rem;
-  line-height: 2rem;
-  font-weight: 600;
-  color: var(--vp-c-text-1);
-  margin: 0 0 12px;
-}
-
-.hero-tagline {
-  font-size: 1.1rem;
-  color: var(--vp-c-text-2);
-  margin: 0 0 28px;
-  max-width: 450px;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .hero-secondary-actions {
@@ -753,12 +956,54 @@ const hoveredUseCase = ref(null)
     gap: 8px;
     width: 100%;
   }
-  
   .hero-secondary-actions .action-btn {
     flex: 1;
     padding: 10px 12px;
     font-size: 0.85rem;
   }
+}
+
+.hero-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+.hero-name {
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  font-weight: 700;
+  background: -webkit-linear-gradient(120deg, #5865F2 30%, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 10px;
+  line-height: 1.1;
+}
+
+.hero-text {
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin: 0 0 12px;
+  max-width: 680px;
+}
+
+.hero-tagline {
+  font-size: 1.05rem;
+  color: var(--vp-c-text-2);
+  margin: 0 0 32px;
+  max-width: 560px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-actions-centered {
+  justify-content: center;
 }
 
 .action-btn {
@@ -789,6 +1034,50 @@ const hoveredUseCase = ref(null)
 .action-btn.alt:hover {
   border-color: #5865F2;
   color: #5865F2;
+}
+
+/* Quote band below hero */
+.hero-quote-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 24px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.hero-quote-band .qi1-line {
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--home-brand-1, #8b5cf6), transparent);
+  opacity: 0.6;
+}
+
+.hero-quote {
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-align: center;
+}
+
+.hero-quote p {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--vp-c-text-1);
+  margin: 0 0 12px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+.hero-quote footer {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--home-brand-1, #8b5cf6);
+  opacity: 0.85;
 }
 
 /* Quick Start Card in Hero */
@@ -944,10 +1233,360 @@ const hoveredUseCase = ref(null)
   }
 }
 
+/* Shared section heading accent */
+.section-accent {
+  background: var(--home-brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Tools Section */
+.tools-section {
+  padding: 60px 24px;
+  max-width: var(--home-section-max-w);
+  margin: 0 auto;
+}
+
+.tools-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.tools-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--vp-c-text-1);
+}
+
+.tools-header p {
+  font-size: 1.1rem;
+  color: var(--vp-c-text-2);
+  margin: 0;
+}
+
+.tools-panel {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 480px;
+}
+
+/* Left tab list */
+.tools-tab-list {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+}
+
+.tools-tab-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid var(--vp-c-divider);
+  transition: background 0.15s;
+  color: var(--vp-c-text-1);
+}
+
+.tools-tab-item:last-child {
+  border-bottom: none;
+}
+
+.tools-tab-item:hover {
+  background: var(--vp-c-bg-elv);
+}
+
+.tools-tab-item--active {
+  background: var(--vp-c-bg);
+  border-right: 2px solid #5865F2;
+  margin-right: -1px;
+}
+
+.tools-tab-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--vp-c-default-soft);
+  color: var(--vp-c-text-2);
+  margin-top: 2px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.tools-tab-item--active .tools-tab-icon {
+  color: #5865F2;
+  background: color-mix(in srgb, #5865F2 12%, transparent);
+}
+
+.tools-tab-icon :deep(.feather-icon) {
+  width: 17px;
+  height: 17px;
+}
+
+.tools-tab-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tools-tab-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  line-height: 1.3;
+}
+
+.tools-tab-tagline {
+  font-size: 0.78rem;
+  color: var(--vp-c-text-3);
+  line-height: 1.4;
+}
+
+.tools-tab-item--active .tools-tab-name {
+  color: #5865F2;
+}
+
+/* Right detail panel */
+.tools-detail {
+  display: flex;
+  flex-direction: column;
+  background: var(--vp-c-bg);
+}
+
+.tools-detail-screenshot {
+  flex: 1;
+  overflow: hidden;
+  background: var(--vp-c-bg-soft);
+  border-bottom: 1px solid var(--vp-c-divider);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  max-height: 340px;
+}
+
+.tools-detail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top;
+  display: block;
+}
+
+.tools-detail-img--svg {
+  object-fit: contain;
+  padding: 16px;
+}
+
+.tools-detail-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tools-detail-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--vp-c-text-1);
+}
+
+.tools-detail-tagline {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #5865F2;
+  margin: 0;
+}
+
+.tools-detail-desc {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--vp-c-text-2);
+  margin: 0;
+}
+
+.tools-detail-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #5865F2;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: gap 0.2s;
+}
+
+.tools-detail-cta:hover {
+  gap: 10px;
+}
+
+.tools-detail-cta :deep(.feather-icon) {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 768px) {
+  .tools-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .tools-tab-list {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--vp-c-divider);
+    scrollbar-width: none;
+  }
+
+  .tools-tab-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tools-tab-item {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-bottom: none;
+    border-right: 1px solid var(--vp-c-divider);
+    min-width: 100px;
+    text-align: center;
+  }
+
+  .tools-tab-item:last-child {
+    border-right: none;
+  }
+
+  .tools-tab-item--active {
+    border-right: 1px solid var(--vp-c-divider);
+    border-bottom: 2px solid #5865F2;
+    margin-right: 0;
+    margin-bottom: -1px;
+  }
+
+  .tools-tab-tagline {
+    display: none;
+  }
+
+  .tools-detail-screenshot {
+    min-height: 200px;
+  }
+}
+
+/* Recipes Section */
+.recipes-section {
+  padding: 60px 24px;
+  max-width: var(--home-section-max-w);
+  margin: 0 auto;
+}
+
+.recipes-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.recipes-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--vp-c-text-1);
+}
+
+.recipes-header p {
+  font-size: 1.1rem;
+  color: var(--vp-c-text-2);
+  margin: 0 0 16px;
+}
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .recipes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recipe-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.recipe-card:hover {
+  border-color: #5865F2;
+  background: var(--vp-c-bg-elv);
+}
+
+.recipe-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--vp-c-default-soft);
+  color: #5865F2;
+}
+
+.recipe-icon :deep(.feather-icon) {
+  width: 18px;
+  height: 18px;
+}
+
+.recipe-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.recipe-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.recipe-tagline {
+  font-size: 0.8rem;
+  color: var(--vp-c-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Showcase Section */
 .showcase-section {
   padding: 60px 24px;
-  max-width: 1200px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
 }
 
@@ -972,13 +1611,13 @@ const hoveredUseCase = ref(null)
 .view-all-link {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #5865F2;
+  color: var(--home-brand-1);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .view-all-link:hover {
-  color: #4752c4;
+  color: var(--home-brand-2);
 }
 
 .showcase-row {
@@ -1006,11 +1645,13 @@ const hoveredUseCase = ref(null)
 /* Bits Section */
 .bits-section {
   padding: 60px 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  background: var(--vp-c-bg-soft);
-  border-radius: 24px;
-  margin-top: 20px;
+  max-width: var(--home-section-max-w);
+  margin: 20px auto 0;
+  /* background: var(--home-surface-glass); */
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  /* border: 1px solid var(--home-border-glass); */
+  border-radius: var(--home-radius-xl);
 }
 
 .bits-header {
@@ -1618,7 +2259,7 @@ const hoveredUseCase = ref(null)
 /* Platform Overview - Bento Grid */
 .platform-section {
   padding: 60px 24px;
-  max-width: 1200px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
 }
 
@@ -1648,16 +2289,18 @@ const hoveredUseCase = ref(null)
 }
 
 .bento-card {
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 16px;
+  background: var(--home-surface-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-lg);
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .bento-card:hover {
-  border-color: rgba(88, 101, 242, 0.3);
-  box-shadow: 0 8px 24px rgba(88, 101, 242, 0.1);
+  border-color: color-mix(in srgb, var(--home-brand-1) 35%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--home-brand-1) 12%, transparent);
 }
 
 /* Video Card - spans 6 columns */
@@ -1665,8 +2308,10 @@ const hoveredUseCase = ref(null)
   grid-column: span 6;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-color: rgba(88, 101, 242, 0.2);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--home-brand-1) 18%, var(--vp-c-bg)) 0%,
+    color-mix(in srgb, var(--home-brand-2) 14%, var(--vp-c-bg)) 100%);
+  border-color: color-mix(in srgb, var(--home-brand-1) 25%, transparent);
 }
 
 .video-wrapper {
@@ -1943,7 +2588,7 @@ const hoveredUseCase = ref(null)
 /* Screenshots Section */
 .screenshots-section {
   padding: 60px 24px;
-  max-width: 1200px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
 }
 
@@ -1962,7 +2607,7 @@ const hoveredUseCase = ref(null)
 /* Pricing Section */
 .pricing-section {
   padding: 60px 24px;
-  max-width: 1000px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
 }
 
@@ -1979,7 +2624,12 @@ const hoveredUseCase = ref(null)
 }
 
 .pricing-table {
-  overflow-x: visible;
+  /* background: var(--home-surface-glass); */
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  /* backdrop-filter: blur(var(--home-blur)); */
+  /* border: 1px solid var(--home-border-glass); */
+  border-radius: var(--home-radius-lg);
+  overflow: hidden;
 }
 
 .pricing-table table {
@@ -2064,7 +2714,7 @@ const hoveredUseCase = ref(null)
 .pricing-table td {
   padding: 1rem;
   text-align: center;
-  border: 1px solid var(--vp-c-divider);
+  border: 1px solid var(--home-border-glass);
 }
 
 .pricing-table th:first-child,
@@ -2074,7 +2724,7 @@ const hoveredUseCase = ref(null)
 }
 
 .pricing-table thead th {
-  background: var(--vp-c-bg-soft);
+  background: color-mix(in srgb, var(--home-brand-1) 8%, var(--home-surface-glass));
 }
 
 .plan-header {
@@ -2091,7 +2741,7 @@ const hoveredUseCase = ref(null)
 .plan-price {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #5865F2;
+  color: var(--home-brand-1);
 }
 
 .plan-desc {
@@ -2100,11 +2750,11 @@ const hoveredUseCase = ref(null)
 }
 
 .plan-header.enterprise .plan-price {
-  color: #38bdf8;
+  color: var(--home-brand-2);
 }
 
 .pricing-table tbody tr:hover {
-  background: var(--vp-c-bg-soft);
+  background: color-mix(in srgb, var(--home-brand-1) 5%, transparent);
 }
 
 .pricing-table tbody tr.highlight td:first-child {
@@ -2157,24 +2807,26 @@ const hoveredUseCase = ref(null)
 }
 
 .cta-button.free {
-  background: #5865F2;
+  background: var(--home-brand-gradient);
   color: white;
 }
 
 .cta-button.enterprise {
-  background: var(--vp-c-bg-soft);
+  background: var(--home-surface-glass);
   color: var(--vp-c-text-1);
-  border: 2px solid #5865F2;
+  border: 2px solid color-mix(in srgb, var(--home-brand-1) 50%, transparent);
 }
 
 /* Testimonials Section */
 .testimonials-section {
   padding: 60px 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  background: var(--vp-c-bg-soft);
-  border-radius: 24px;
-  margin-top: 40px;
+  max-width: var(--home-section-max-w);
+  margin: 40px auto 0;
+  background: var(--home-surface-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-xl);
 }
 
 .testimonials-header {
@@ -2190,12 +2842,12 @@ const hoveredUseCase = ref(null)
 }
 
 .complaining {
-  background: linear-gradient(135deg, #f43f5e, #f59e0b);
+  background: var(--home-brand-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-decoration: line-through;
-  text-decoration-color: var(--vp-c-text-3);
+  text-decoration-color: var(--home-brand-1);
 }
 
 .testimonials-subtitle {
@@ -2212,9 +2864,11 @@ const hoveredUseCase = ref(null)
 }
 
 .testimonial-card {
-  background: var(--vp-c-bg);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
+  background: var(--home-surface-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-md);
   padding: 16px;
   transition: all 0.3s ease;
   position: relative;
@@ -2236,8 +2890,8 @@ const hoveredUseCase = ref(null)
 
 .testimonial-card:hover {
   transform: translateY(-4px) rotate(-1deg);
-  box-shadow: 0 12px 30px rgba(244, 63, 94, 0.15);
-  border-color: rgba(244, 63, 94, 0.3);
+  box-shadow: var(--home-shadow-2);
+  border-color: color-mix(in srgb, var(--home-brand-1) 40%, transparent);
 }
 
 .testimonial-stars {
@@ -2262,7 +2916,7 @@ const hoveredUseCase = ref(null)
   flex-direction: column;
   gap: 2px;
   padding-top: 10px;
-  border-top: 1px solid var(--vp-c-divider);
+  border-top: 1px solid var(--home-border-glass);
 }
 
 .author-name {
@@ -2320,11 +2974,12 @@ const hoveredUseCase = ref(null)
 }
 
 .home-footer a {
-  color: #5865F2;
+  color: var(--home-brand-1);
   text-decoration: none;
 }
 
 .home-footer a:hover {
+  color: var(--home-brand-2);
   text-decoration: underline;
 }
 

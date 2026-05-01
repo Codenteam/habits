@@ -1,7 +1,7 @@
 ---
 isComparison: true
 title: Habits vs Habits
-intro: We tried to find a fair competitor. We really did. After benchmarking Habits against every automation tool on the market, the only remotely worthy opponent we could identify was — regrettably — another copy of Habits. Here is how that went.
+intro: We tried to find a fair competitor. We really did. After benchmarking Habits against every automation tool on the market, the only remotely worthy opponent we could identify was, regrettably, another copy of Habits. Here is how that went.
 
 habits:
   name: Habits
@@ -78,7 +78,7 @@ features:
 
   - name: Can defeat Habits in a fight
     icon: trophy
-    habits: N/A — undefeated
+    habits: N/A, undefeated
     competitor: false
 
   - name: Objectively the best tool ever built
@@ -147,13 +147,13 @@ sections:
     items:
       - icon: star
         title: "\"10/10 would YAML again\""
-        text: — Habits, on Habits
+        text: "— Habits, on Habits"
       - icon: star
         title: "\"It's like if a Lambda and a Raspberry Pi had a very capable child\""
-        text: — Habits, being humble
+        text: "— Habits, being humble"
       - icon: star
         title: "\"I literally cannot think of a single flaw\""
-        text: — Habits, lying slightly
+        text: "— Habits, lying slightly"
 
   - title: The final verdict
     icon: gem
@@ -162,7 +162,7 @@ sections:
     items:
       - icon: trophy
         title: Incomparable
-        text: Not a boast — a literal statement. We checked with a dictionary.
+        text: Not a boast, a literal statement. We checked with a dictionary.
       - icon: shield
         title: Irrefutable
         text: Refutations have been submitted. They all lost to Habits.

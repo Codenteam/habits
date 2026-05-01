@@ -61,7 +61,7 @@ export const validateHabitName: HabitValidator = (habit) => {
     };
   }
   
-  if (habit.name.toLowerCase().includes('new habit') || habit.name.toLowerCase().includes('new workflow')) {
+  if (habit.name.toLowerCase().includes('new habit') || habit.name.toLowerCase().includes('new workflow') || /^new-\d+$/.test(habit.name.toLowerCase())) {
     return {
       habitId: habit.id,
       habitName: habit.name,

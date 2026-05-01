@@ -149,7 +149,7 @@ export async function generateText(
   const modelPath = `${basePath}/text-gen/${modelId}/model.gguf`;
   const tokenizerPath = `${basePath}/text-gen/${modelId}/tokenizer.json`;
 
-  // Build prompt as plain text — the native addon wraps it with ChatML tags
+  // Build prompt as plain text, the native addon wraps it with ChatML tags
   // (<|im_start|>user\n...<|im_end|>\n<|im_start|>assistant\n), so we must
   // NOT add template tags here or the model sees double-wrapped gibberish.
   const parts: string[] = [];

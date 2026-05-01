@@ -9,8 +9,8 @@ HABITS_OPENAI_API_KEY=your_openai_api_key_here
 HABITS_HUBSPOT_ACCESS_TOKEN=your_hubspot_access_token_here
 ```
 
-- `HABITS_OPENAI_API_KEY` — your OpenAI API key, used for AI-powered lead scoring and enrichment.
-- `HABITS_HUBSPOT_ACCESS_TOKEN` — your HubSpot private app token (see section 1 below for how to generate it).
+- `HABITS_OPENAI_API_KEY`, your OpenAI API key, used for AI-powered lead scoring and enrichment.
+- `HABITS_HUBSPOT_ACCESS_TOKEN`, your HubSpot private app token (see section 1 below for how to generate it).
 
 ---
 
@@ -51,6 +51,6 @@ After a contact record is saved and enriched, the **Score (1-100)** property may
 
 1. Open the **Contacts** table in HubSpot.
 2. Click **"Add column"** (usually found at the far right of the table header).
-3. Search for and select the **Score** property — it should already exist in the property list after any submission happened.
+3. Search for and select the **Score** property, it should already exist in the property list after any submission happened.
 
 The Score column will now appear in the table for all enriched contacts.

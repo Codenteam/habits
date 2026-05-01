@@ -10,6 +10,7 @@
   "scripts": {
     "r": "tsx scripts/dev.ts",
     "d": "tsx scripts/tui.tsx",
+    "cmd": "tsx packages/manage/forge/src/mcp/commands.ts",
     "docs:dev": "pnpm nx dev @ha-bits/habit-viewer & cd docs && pnpm dev",
     "prepare": "husky",
     "validate:affected": "bash scripts/validate-affected.sh"

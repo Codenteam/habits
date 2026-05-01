@@ -129,13 +129,14 @@ const navigateToExample = () => {
 <style scoped>
 .showcase-card {
   position: relative;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: var(--home-surface-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  border-radius: var(--home-radius-lg);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid var(--vp-c-divider);
+  border: 1px solid var(--home-border-glass);
 }
 
 /* Gradient border effect */
@@ -143,9 +144,9 @@ const navigateToExample = () => {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--home-radius-lg);
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(14, 165, 233, 0.4) 50%, rgba(168, 85, 247, 0.4) 100%);
+  background: var(--home-brand-gradient);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -162,13 +163,12 @@ const navigateToExample = () => {
 
 .showcase-card:hover {
   transform: translateY(-4px);
-  box-shadow: 
-    0 20px 40px -15px rgba(0, 0, 0, 0.2),
-    0 0 20px rgba(99, 102, 241, 0.1);
+  box-shadow: var(--home-shadow-2);
+  border-color: color-mix(in srgb, var(--home-brand-1) 35%, transparent);
 }
 
 .showcase-card.featured {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: color-mix(in srgb, var(--home-brand-1) 30%, transparent);
 }
 
 /* Featured Badge - matches BitsCard style */

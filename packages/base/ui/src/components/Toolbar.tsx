@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon } from 'lucide-react';
+import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
 import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle } from '../store/slices/workflowSlice';
@@ -11,6 +11,7 @@ import OpenModal from './OpenModal';
 import NewWorkflowModal from './NewWorkflowModal';
 import ServePopup from './ServePopup';
 import ShareLinkModal from './ShareLinkModal';
+import SendHabitModal from './SendHabitModal';
 import GenerateModal from './GenerateModal';
 import ValidationModal from './ValidationModal';
 import Dialog from './Dialog';
@@ -36,6 +37,7 @@ export default function Toolbar() {
   const [showServePopup, setShowServePopup] = useState(false);
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
   const [shareHabitYaml, setShareHabitYaml] = useState<string>('');
+  const [showSendHabitModal, setShowSendHabitModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
   
@@ -374,6 +376,19 @@ export default function Toolbar() {
           </div>
         </div>
 
+        {/* Send via Express Habit Sharing */}
+        <div className="relative group">
+          <button
+            onClick={() => setShowSendHabitModal(true)}
+            className="flex items-center justify-center w-9 h-9 text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-md transition-colors cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            Send Habit (P2P)
+          </div>
+        </div>
+
         <div className="w-px h-8 bg-slate-600 mx-2" />
 
         {/* Server URL when running */}
@@ -517,6 +532,25 @@ export default function Toolbar() {
         isOpen={showShareLinkModal}
         onClose={() => setShowShareLinkModal(false)}
         habitYaml={shareHabitYaml}
+      />
+
+      {/* Send Habit Modal */}
+      <SendHabitModal
+        isOpen={showSendHabitModal}
+        onClose={() => setShowSendHabitModal(false)}
+        habitName={activeHabit?.name || 'habit'}
+        getHabitBlob={async () => {
+          const state = store.getState();
+          const bundle = selectExportBundle(state);
+          return api.exportHabit({
+            habits: habits.map((h: any) => ({ ...h })),
+            stackYaml: bundle.stackYaml,
+            habitFiles: bundle.habitFiles,
+            stackName: state.workflow.stackName,
+            envContent: bundle.envFile,
+            frontendHtml: bundle.frontendHtml,
+          });
+        }}
       />
 
       {/* Generate with AI Modal */}

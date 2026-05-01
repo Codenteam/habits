@@ -156,8 +156,8 @@ interface WorkflowState {
 }
 
 const createDefaultHabit = (): Habit => ({
-  id: generateUUID(),
-  name: 'New Habit',
+  id: 'new-1',
+  name: 'new-1',
   description: '',
   nodes: [],
   edges: [],
@@ -725,9 +725,23 @@ export const workflowSlice = createSlice({
     
     // Add a new habit to the stack
     addHabit: (state, action: PayloadAction<Partial<Habit> | undefined>) => {
+      const payload = action.payload;
+
+      // Generate new-N name/id if none provided
+      let nameOverride: Partial<Habit> = {};
+      if (!payload?.name && !payload?.id) {
+        const maxN = state.habits.reduce((max, h) => {
+          const match = h.id.match(/^new-(\d+)$/);
+          return match ? Math.max(max, parseInt(match[1], 10)) : max;
+        }, 0);
+        const counter = maxN + 1;
+        nameOverride = { name: `new-${counter}`, id: `new-${counter}` };
+      }
+
       const newHabit: Habit = {
         ...createDefaultHabit(),
-        ...action.payload,
+        ...nameOverride,
+        ...payload,
       };
       state.habits.push(newHabit);
       state.activeHabitId = newHabit.id;

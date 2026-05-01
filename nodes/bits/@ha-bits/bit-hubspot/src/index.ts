@@ -94,9 +94,9 @@ async function ensureContactProperty(
       accessToken,
       'GET'
     );
-    // Property already exists — nothing to do
+    // Property already exists, nothing to do
   } catch {
-    // Property not found — create it
+    // Property not found, create it
     await hubspotRequest(
       `/crm/v3/properties/${objectType}`,
       accessToken,

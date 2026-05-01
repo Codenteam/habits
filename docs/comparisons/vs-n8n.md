@@ -1,7 +1,7 @@
 ---
 isComparison: true
 title: Habits vs n8n
-intro: Both Habits and n8n are self-hostable workflow automation tools. Habits is a lightweight, AGPL-3.0 runtime built for edge, serverless, and embedded deployments — while n8n is a full-featured, fair-code licensed platform with a managed cloud offering.
+intro: Both Habits and n8n are self-hostable workflow automation tools. Habits is a lightweight, AGPL-3.0 runtime built for edge, serverless, and embedded deployments, while n8n is a full-featured, fair-code licensed platform with a managed cloud offering.
 
 habits:
   name: Habits
@@ -92,7 +92,7 @@ features:
 
 heroBar:
   title: Lightweight, portable, and fully open-source
-  subtitle: When your automation needs to ship on Lambda, a container, an IoT device, or inside a product you distribute — Habits was built for those constraints, not retrofitted into them.
+  subtitle: When your automation needs to ship on Lambda, a container, an IoT device, or inside a product you distribute, Habits was built for those constraints, not retrofitted into them.
   actions:
     - text: Build your first habit
       link: /getting-started/first-habit
@@ -105,14 +105,14 @@ sections:
   - title: Ship automation anywhere
     icon: rocket
     type: highlight
-    description: Habits runs as a tiny runtime that fits where n8n's full server won't — serverless functions, edge workers, embedded devices, and packaged desktop apps.
+    description: Habits runs as a tiny runtime that fits where n8n's full server won't, serverless functions, edge workers, embedded devices, and packaged desktop apps.
     items:
       - icon: cloud
         title: Serverless-friendly
         text: Execute habits on AWS Lambda, Cloudflare Workers, or Vercel Edge without a persistent server.
       - icon: package
         title: Pack to a standalone app
-        text: Bundle a workflow with a frontend and ship it as a product — no central server required.
+        text: Bundle a workflow with a frontend and ship it as a product, no central server required.
       - icon: smile
         title: Mobile runtime
         text: Run habits inside mobile apps for on-device automations that never touch a cloud.
@@ -123,7 +123,7 @@ sections:
   - title: YAML-first, git-native
     icon: file-code
     type: default
-    description: Habits workflows are plain YAML files. Diff them in pull requests, review them in CI, and roll them back with git — the same flow your code already uses.
+    description: Habits workflows are plain YAML files. Diff them in pull requests, review them in CI, and roll them back with git, the same flow your code already uses.
     code: |
       nodes:
         - id: fetch
@@ -139,11 +139,11 @@ sections:
   - title: Fully open-source stack
     icon: unlock
     type: default
-    description: Habits core is AGPL-3.0 and every bit is MIT. No "fair-code" clauses, no commercial usage restrictions on the integrations themselves — modify, redistribute, and embed freely under the standard OSS rules.
+    description: Habits core is AGPL-3.0 and every bit is MIT. No "fair-code" clauses, no commercial usage restrictions on the integrations themselves, modify, redistribute, and embed freely under the standard OSS rules.
     items:
       - icon: shield
         title: AGPL-3.0 core
-        text: Strong copyleft for the runtime — modifications stay open.
+        text: Strong copyleft for the runtime, modifications stay open.
       - icon: unlock
         title: MIT bits
         text: Every integration is permissively licensed so you can reuse them anywhere.

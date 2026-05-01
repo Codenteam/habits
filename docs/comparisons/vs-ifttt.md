@@ -1,7 +1,7 @@
 ---
 isComparison: true
 title: Habits vs IFTTT
-intro: IFTTT is a consumer-focused cloud service for connecting apps and smart-home devices through simple "if this, then that" applets. Habits is a developer-grade, self-hostable automation runtime — open-source, scriptable, and capable of logic far beyond one-trigger-one-action.
+intro: IFTTT is a consumer-focused cloud service for connecting apps and smart-home devices through simple "if this, then that" applets. Habits is a developer-grade, self-hostable automation runtime, open-source, scriptable, and capable of logic far beyond one-trigger-one-action.
 
 habits:
   name: Habits
@@ -100,7 +100,7 @@ sections:
   - title: Your data, your runtime
     icon: shield
     type: highlight
-    description: IFTTT routes every trigger and action through its cloud. Habits executes on infrastructure you own — a VPS, a container, a serverless function, or an edge device — so sensitive data never leaves your boundary.
+    description: IFTTT routes every trigger and action through its cloud. Habits executes on infrastructure you own, a VPS, a container, a serverless function, or an edge device, so sensitive data never leaves your boundary.
     items:
       - icon: home
         title: Self-host anywhere
@@ -110,12 +110,12 @@ sections:
         text: First-class guardrails for redacting sensitive fields before they hit third-party APIs.
       - icon: unlock
         title: No vendor lock-in
-        text: Workflows are YAML files — portable across machines and providers.
+        text: Workflows are YAML files, portable across machines and providers.
 
   - title: Real logic, not just applets
     icon: brain
     type: default
-    description: IFTTT applets are one-trigger-one-chain. Habits gives you conditional branches, loops, retries, parallel nodes, and inline scripts — the full shape of a real automation.
+    description: IFTTT applets are one-trigger-one-chain. Habits gives you conditional branches, loops, retries, parallel nodes, and inline scripts, the full shape of a real automation.
     code: |
       nodes:
         - id: new-email
@@ -138,7 +138,7 @@ sections:
   - title: Free and open-source
     icon: unlock
     type: default
-    description: No Pro tier, no applet cap, no per-action pricing. Habits core is AGPL-3.0 and every integration (bit) is MIT — use it personally, commercially, or ship it inside a product.
+    description: No Pro tier, no applet cap, no per-action pricing. Habits core is AGPL-3.0 and every integration (bit) is MIT, use it personally, commercially, or ship it inside a product.
     items:
       - icon: zap
         title: Unlimited workflows

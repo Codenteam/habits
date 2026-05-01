@@ -1,0 +1,190 @@
+/* ===============================================
+   HOME PAGE DESIGN TOKENS
+   Single source of truth for the unified
+   futuristic-glass home aesthetic.
+   Theme-aware: :root = light, .dark = dark.
+   =============================================== */
+
+/* Shared app design tokens */
+@import "../../../packages/theme/tokens.css";
+
+:root {
+  /* Brand — aligned to app accent palette (blue/indigo, no pink) */
+  --home-brand-1: #6366f1;      /* indigo-500 */
+  --home-brand-2: var(--ha-accent-sky);   /* sky-400 */
+  --home-brand-3: var(--ha-accent-purple); /* purple-400 */
+  --home-brand-gradient: linear-gradient(135deg, #6366f1 0%, var(--ha-accent-blue) 60%, var(--ha-accent-sky) 100%);
+  --home-brand-gradient-2: linear-gradient(135deg, #6366f1, var(--ha-accent-sky));
+
+  /* Curated accent palette */
+  --home-accent-1: #6366f1;     /* indigo */
+  --home-accent-2: var(--ha-accent-sky);    /* cyan */
+  --home-accent-3: var(--ha-accent-emerald); /* green */
+  --home-accent-4: var(--ha-warn);           /* amber */
+  --home-accent-5: var(--ha-accent-purple);  /* purple */
+  --home-accent-6: var(--ha-accent-cyan);    /* teal/cyan */
+  --home-accent-7: #818cf8;     /* indigo-400 */
+
+  /* Surfaces, light mode: soft white-tinted glass over page bg */
+  --home-bg-base: var(--vp-c-bg);
+  --home-surface-glass: rgba(255, 255, 255, 0.55);
+  --home-surface-glass-strong: rgba(255, 255, 255, 0.78);
+  --home-surface-sunken: rgba(15, 23, 42, 0.04);
+
+  /* Borders */
+  --home-border-glass: rgba(15, 23, 42, 0.08);
+  --home-border-strong: rgba(15, 23, 42, 0.16);
+
+  /* Text helpers (in addition to VitePress's --vp-c-text-*) */
+  --home-text-soft: rgba(15, 23, 42, 0.62);
+  --home-text-faint: rgba(15, 23, 42, 0.40);
+
+  /* Component specifics */
+  --home-track: rgba(15, 23, 42, 0.08);
+  --home-step-bg: rgba(15, 23, 42, 0.04);
+  --home-code-bg: rgba(15, 23, 42, 0.06);
+  --home-code-fg: rgba(15, 23, 42, 0.78);
+
+  /* Effects */
+  --home-blur: 20px;
+  --home-blur-soft: 10px;
+  --home-glow-brand: 0 0 24px rgba(139, 92, 246, 0.30);
+  --home-shadow-1: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --home-shadow-2: 0 8px 32px rgba(15, 23, 42, 0.10);
+
+  /* Backdrop orbs — blue/indigo/emerald palette matching app */
+  --home-orb-1: rgba(99, 102, 241, 0.18);   /* indigo */
+  --home-orb-2: rgba(56, 189, 248, 0.14);   /* sky */
+  --home-orb-3: rgba(59, 130, 246, 0.12);   /* blue */
+  --home-orb-4: rgba(34, 211, 238, 0.10);   /* cyan */
+  --home-grid-line: rgba(99, 102, 241, 0.05);
+
+  /* Type */
+  --home-font-display: var(--vp-font-family-base, system-ui, -apple-system, sans-serif);
+  --home-font-body:    var(--vp-font-family-base, system-ui, -apple-system, sans-serif);
+  --home-font-mono:    var(--vp-font-family-mono, ui-monospace, 'SF Mono', Monaco, Menlo, monospace);
+
+  /* Radius */
+  --home-radius-sm: 8px;
+  --home-radius-md: 12px;
+  --home-radius-lg: 16px;
+  --home-radius-xl: 24px;
+  --home-radius-pill: 999px;
+
+  /* Section rhythm */
+  --home-section-py: 96px;
+  --home-section-py-tight: 72px;
+  --home-section-max-w: 1200px;
+}
+
+.dark {
+  /* Surfaces, dark mode: low-alpha white over near-black */
+  --home-surface-glass: rgba(255, 255, 255, 0.03);
+  --home-surface-glass-strong: rgba(255, 255, 255, 0.06);
+  --home-surface-sunken: rgba(0, 0, 0, 0.25);
+
+  /* Borders */
+  --home-border-glass: rgba(255, 255, 255, 0.08);
+  --home-border-strong: rgba(255, 255, 255, 0.20);
+
+  /* Text helpers */
+  --home-text-soft: rgba(255, 255, 255, 0.62);
+  --home-text-faint: rgba(255, 255, 255, 0.38);
+
+  /* Component specifics */
+  --home-track: rgba(255, 255, 255, 0.07);
+  --home-step-bg: rgba(0, 0, 0, 0.25);
+  --home-code-bg: rgba(0, 0, 0, 0.40);
+  --home-code-fg: rgba(255, 255, 255, 0.82);
+
+  /* Effects (slightly stronger glow + shadow on dark) */
+  --home-glow-brand: 0 0 28px rgba(99, 102, 241, 0.45);
+  --home-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --home-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.50);
+
+  /* Backdrop orbs — same hues as light, similar strength */
+  --home-orb-1: rgba(99, 102, 241, 0.20);
+  --home-orb-2: rgba(56, 189, 248, 0.14);
+  --home-orb-3: rgba(59, 130, 246, 0.13);
+  --home-orb-4: rgba(34, 211, 238, 0.10);
+  --home-grid-line: rgba(99, 102, 241, 0.04);
+}
+
+/* ===============================================
+   PAGE CANVAS, shared animated backdrop
+   Used inside HomeLayout.vue's .home-canvas wrapper.
+   =============================================== */
+
+.home-canvas {
+  position: relative;
+  isolation: isolate;
+  background: var(--home-bg-base);
+}
+
+.home-canvas-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.home-canvas-bg .home-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+}
+
+.home-canvas-bg .home-orb-a { width: 520px; height: 520px; left: 6%;  top: 4%;
+  background: radial-gradient(circle, var(--home-orb-1), transparent 70%); }
+.home-canvas-bg .home-orb-b { width: 420px; height: 420px; right: 4%; top: 28%;
+  background: radial-gradient(circle, var(--home-orb-2), transparent 70%); }
+.home-canvas-bg .home-orb-c { width: 380px; height: 380px; left: 18%; top: 58%;
+  background: radial-gradient(circle, var(--home-orb-3), transparent 70%); }
+.home-canvas-bg .home-orb-d { width: 460px; height: 460px; right: 12%; top: 82%;
+  background: radial-gradient(circle, var(--home-orb-4), transparent 70%); }
+
+.home-canvas-bg .home-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--home-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--home-grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.85), transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.85), transparent 75%);
+}
+
+/* Sections sit on the canvas */
+.home-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===============================================
+   SHARED SECTION FRAME
+   Apply .home-section to any section wrapper.
+   =============================================== */
+.home-section {
+  max-width: var(--home-section-max-w);
+  margin: 0 auto;
+  padding: var(--home-section-py) 24px;
+}
+.home-section--tight { padding-block: var(--home-section-py-tight); }
+
+/* Glass card frame (.home-section--glass), wraps a section's content
+   so it sits on the canvas as a translucent panel. */
+.home-section--glass > .home-section-inner {
+  background: var(--home-surface-glass);
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  backdrop-filter: blur(var(--home-blur));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-xl);
+  padding: 48px;
+}
+
+@media (max-width: 768px) {
+  :root { --home-section-py: 64px; --home-section-py-tight: 48px; }
+  .home-section--glass > .home-section-inner { padding: 28px; border-radius: var(--home-radius-lg); }
+}

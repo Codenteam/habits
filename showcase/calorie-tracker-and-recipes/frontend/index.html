@@ -1,688 +1,728 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Calorie Tracker</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: #fff; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
-        .subtitle { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 30px; }
-        
-        /* Tab Navigation */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .tab {
-            flex: 1;
-            padding: 15px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #2d2d44;
-            color: #a0a0a0;
-        }
-        .tab:hover { background: #3d3d5c; }
-        .tab.active { background: #4ade80; color: #1a1a2e; }
-        
-        .card {
-            background: #1a1a2e;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        .card h2 { color: #fff; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #a0a0a0; font-weight: 500; }
-        .label-hint { font-size: 0.85rem; color: #707070; margin-top: 4px; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #2d2d44;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: #12121f;
-            color: #fff;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #4ade80; }
-        textarea { min-height: 100px; resize: vertical; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        
-        /* Image Upload */
-        .image-upload {
-            border: 2px dashed #3d3d5c;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #12121f;
-        }
-        .image-upload:hover { border-color: #4ade80; background: #1a1a30; }
-        .image-upload.has-image { padding: 10px; }
-        .image-upload input { display: none; }
-        .image-upload .icon { font-size: 3rem; margin-bottom: 10px; }
-        .image-upload p { color: #a0a0a0; }
-        .preview-image {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            object-fit: contain;
-        }
-        
-        button.submit {
-            background: #4ade80;
-            color: #1a1a2e;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(74, 222, 128, 0.4); }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        
-        .loading { display: none; text-align: center; padding: 40px; color: #a0a0a0; }
-        .loading.active { display: block; }
-        .spinner {
-            width: 50px; height: 50px;
-            border: 4px solid #2d2d44;
-            border-top-color: #4ade80;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Results Styles */
-        .results-container { display: none; }
-        .results-container.active { display: block; }
-        
-        /* Calorie Results */
-        .calorie-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        .calorie-stat {
-            text-align: center;
-            padding: 20px;
-            background: #12121f;
-            border-radius: 12px;
-        }
-        .calorie-stat .value { font-size: 2rem; font-weight: 700; color: #4ade80; }
-        .calorie-stat .label { font-size: 0.85rem; color: #a0a0a0; margin-top: 5px; }
-        .calorie-stat.main { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-        .calorie-stat.main .value { color: #1a1a2e; }
-        .calorie-stat.main .label { color: #1a1a2e; }
-        
-        .food-items { margin-bottom: 25px; }
-        .food-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: #12121f;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-        .food-item .name { font-weight: 500; flex: 1; }
-        .food-item .portion { color: #a0a0a0; margin: 0 15px; }
-        .food-item .calories { font-weight: 600; color: #4ade80; }
-        
-        .health-notes {
-            background: #12121f;
-            border-radius: 12px;
-            padding: 20px;
-        }
-        .health-notes h4 { color: #4ade80; margin-bottom: 15px; }
-        .health-notes ul { list-style: none; }
-        .health-notes li { padding: 8px 0; color: #a0a0a0; border-bottom: 1px solid #2d2d44; }
-        .health-notes li:last-child { border: none; }
-        
-        /* Recipe Results */
-        .recipe-header {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        .recipe-image {
-            width: 100%;
-            border-radius: 12px;
-            object-fit: cover;
-            aspect-ratio: 1;
-        }
-        .recipe-image-placeholder {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #2d2d44;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-        }
-        .recipe-info h2 { color: #4ade80; font-size: 1.8rem; margin-bottom: 10px; }
-        .recipe-info p { color: #a0a0a0; line-height: 1.6; margin-bottom: 15px; }
-        .recipe-meta { display: flex; flex-wrap: wrap; gap: 15px; }
-        .meta-item {
-            background: #12121f;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            color: #a0a0a0;
-        }
-        .meta-item strong { color: #4ade80; }
-        
-        .section { margin-bottom: 30px; }
-        .section h3 {
-            color: #fff;
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #4ade80;
-        }
-        
-        .ingredients-list { display: grid; gap: 10px; }
-        .ingredient {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: #12121f;
-            border-radius: 8px;
-            color: #e0e0e0;
-        }
-        .ingredient-amount { font-weight: 600; color: #4ade80; margin-right: 12px; min-width: 80px; }
-        .ingredient-calories { margin-left: auto; font-size: 0.85rem; color: #a0a0a0; }
-        .ingredient.user-provided { border-left: 3px solid #4ade80; }
-        
-        .instructions-list { counter-reset: step; }
-        .instruction {
-            display: flex;
-            gap: 15px;
-            padding: 15px;
-            background: #12121f;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-        .step-number {
-            width: 36px; height: 36px;
-            background: #4ade80;
-            color: #1a1a2e;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-        
-        .calorie-adjustments {
-            background: #12121f;
-            border-radius: 12px;
-            padding: 20px;
-        }
-        .calorie-adjustments h4 { color: #4ade80; margin-bottom: 15px; }
-        .adjustment {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #2d2d44;
-            color: #a0a0a0;
-        }
-        .adjustment:last-child { border: none; }
-        .adjustment .savings { color: #fbbf24; font-weight: 500; }
-        
-        .error-message {
-            background: #7f1d1d;
-            color: #fecaca;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .error-message.active { display: block; }
-        
-        button.new-btn {
-            background: #3d3d5c;
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        button.new-btn:hover { background: #4d4d6c; }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .recipe-header { grid-template-columns: 1fr; }
-            .calorie-summary { grid-template-columns: repeat(2, 1fr); }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>AI Calorie Tracker</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-base);
+ min-height: 100vh;
+ padding: 20px;
+ }
+ .container { max-width: 900px; margin: 0 auto; }
+ h1 { color: var(--ha-bg-base); text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+ .subtitle { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 30px; }
+ 
+ /* Tab Navigation */
+ .tabs {
+ display: flex;
+ gap: 10px;
+ margin-bottom: 20px;
+ }
+ .tab {
+ flex: 1;
+ padding: 15px 20px;
+ border: none;
+ border-radius: 12px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s;
+ background: var(--ha-bg-elevated);
+ color: var(--ha-text-muted);
+ }
+ .tab:hover { background: var(--ha-bg-elevated); }
+ .tab.active { background: var(--ha-status-success); color: var(--ha-bg-base); }
+ 
+ .card {
+ background: var(--ha-bg-base);
+ border-radius: 16px;
+ padding: 30px;
+ margin-bottom: 20px;
+ box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+ }
+ .card h2 { color: var(--ha-bg-base); margin-bottom: 20px; }
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-text-muted); font-weight: 500; }
+ .label-hint { font-size: 0.85rem; color: var(--ha-text-disabled); margin-top: 4px; }
+ input, select, textarea {
+ width: 100%;
+ padding: 12px 16px;
+ border: 2px solid var(--ha-bg-elevated);
+ border-radius: 8px;
+ font-size: 1rem;
+ background: var(--ha-bg-surface);
+ color: var(--ha-bg-base);
+ }
+ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ha-status-success); }
+ textarea { min-height: 100px; resize: vertical; }
+ .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+ 
+ /* Image Upload */
+ .image-upload {
+ border: 2px dashed var(--ha-bg-elevated);
+ border-radius: 12px;
+ padding: 40px;
+ text-align: center;
+ cursor: pointer;
+ transition: all 0.3s;
+ background: var(--ha-bg-surface);
+ }
+ .image-upload:hover { border-color: var(--ha-status-success); background: #1a1a30; }
+ .image-upload.has-image { padding: 10px; }
+ .image-upload input { display: none; }
+ .image-upload .icon { font-size: 3rem; margin-bottom: 10px; }
+ .image-upload p { color: var(--ha-text-muted); }
+ .preview-image {
+ max-width: 100%;
+ max-height: 300px;
+ border-radius: 8px;
+ object-fit: contain;
+ }
+ 
+ button.submit {
+ background: var(--ha-status-success);
+ color: var(--ha-bg-base);
+ border: none;
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(74, 222, 128, 0.4); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+ 
+ .loading { display: none; text-align: center; padding: 40px; color: var(--ha-text-muted); }
+ .loading.active { display: block; }
+ .spinner {
+ width: 50px; height: 50px;
+ border: 4px solid var(--ha-bg-elevated);
+ border-top-color: var(--ha-status-success);
+ border-radius: 50%;
+ animation: spin 1s linear infinite;
+ margin: 0 auto 20px;
+ }
+ @keyframes spin { to { transform: rotate(360deg); } }
+ 
+ /* Results Styles */
+ .results-container { display: none; }
+ .results-container.active { display: block; }
+ 
+ /* Calorie Results */
+ .calorie-summary {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+ gap: 15px;
+ margin-bottom: 25px;
+ }
+ .calorie-stat {
+ text-align: center;
+ padding: 20px;
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ }
+ .calorie-stat .value { font-size: 2rem; font-weight: 700; color: var(--ha-status-success); }
+ .calorie-stat .label { font-size: 0.85rem; color: var(--ha-text-muted); margin-top: 5px; }
+ .calorie-stat.main { background: var(--ha-status-success); }
+ .calorie-stat.main .value { color: var(--ha-bg-base); }
+ .calorie-stat.main .label { color: var(--ha-bg-base); }
+ 
+ .food-items { margin-bottom: 25px; }
+ .food-item {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ padding: 15px;
+ background: var(--ha-bg-surface);
+ border-radius: 8px;
+ margin-bottom: 10px;
+ color: var(--ha-text-body);
+ }
+ .food-item .name { font-weight: 500; flex: 1; }
+ .food-item .portion { color: var(--ha-text-muted); margin: 0 15px; }
+ .food-item .calories { font-weight: 600; color: var(--ha-status-success); }
+ 
+ .health-notes {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 20px;
+ }
+ .health-notes h4 { color: var(--ha-status-success); margin-bottom: 15px; }
+ .health-notes ul { list-style: none; }
+ .health-notes li { padding: 8px 0; color: var(--ha-text-muted); border-bottom: 1px solid var(--ha-bg-elevated); }
+ .health-notes li:last-child { border: none; }
+ 
+ /* Recipe Results */
+ .recipe-header {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 30px;
+ margin-bottom: 30px;
+ }
+ .recipe-image {
+ width: 100%;
+ border-radius: 12px;
+ object-fit: cover;
+ aspect-ratio: 1;
+ }
+ .recipe-image-placeholder {
+ width: 100%;
+ aspect-ratio: 1;
+ background: var(--ha-bg-elevated);
+ border-radius: 12px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 4rem;
+ }
+ .recipe-info h2 { color: var(--ha-status-success); font-size: 1.8rem; margin-bottom: 10px; }
+ .recipe-info p { color: var(--ha-text-muted); line-height: 1.6; margin-bottom: 15px; }
+ .recipe-meta { display: flex; flex-wrap: wrap; gap: 15px; }
+ .meta-item {
+ background: var(--ha-bg-surface);
+ padding: 10px 15px;
+ border-radius: 8px;
+ font-size: 0.9rem;
+ color: var(--ha-text-muted);
+ }
+ .meta-item strong { color: var(--ha-status-success); }
+ 
+ .section { margin-bottom: 30px; }
+ .section h3 {
+ color: var(--ha-bg-base);
+ font-size: 1.3rem;
+ margin-bottom: 15px;
+ padding-bottom: 10px;
+ border-bottom: 2px solid var(--ha-status-success);
+ }
+ 
+ .ingredients-list { display: grid; gap: 10px; }
+ .ingredient {
+ display: flex;
+ align-items: center;
+ padding: 12px;
+ background: var(--ha-bg-surface);
+ border-radius: 8px;
+ color: var(--ha-text-body);
+ }
+ .ingredient-amount { font-weight: 600; color: var(--ha-status-success); margin-right: 12px; min-width: 80px; }
+ .ingredient-calories { margin-left: auto; font-size: 0.85rem; color: var(--ha-text-muted); }
+ .ingredient.user-provided { border-left: 3px solid var(--ha-status-success); }
+ 
+ .instructions-list { counter-reset: step; }
+ .instruction {
+ display: flex;
+ gap: 15px;
+ padding: 15px;
+ background: var(--ha-bg-surface);
+ border-radius: 8px;
+ margin-bottom: 10px;
+ color: var(--ha-text-body);
+ }
+ .step-number {
+ width: 36px; height: 36px;
+ background: var(--ha-status-success);
+ color: var(--ha-bg-base);
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: 600;
+ flex-shrink: 0;
+ }
+ 
+ .calorie-adjustments {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 20px;
+ }
+ .calorie-adjustments h4 { color: var(--ha-status-success); margin-bottom: 15px; }
+ .adjustment {
+ display: flex;
+ justify-content: space-between;
+ padding: 10px 0;
+ border-bottom: 1px solid var(--ha-bg-elevated);
+ color: var(--ha-text-muted);
+ }
+ .adjustment:last-child { border: none; }
+ .adjustment .savings { color: var(--ha-warn); font-weight: 500; }
+ 
+ .error-message {
+ background: var(--ha-danger-surface);
+ color: var(--ha-status-error-dim);
+ padding: 15px;
+ border-radius: 8px;
+ margin-bottom: 20px;
+ display: none;
+ }
+ .error-message.active { display: block; }
+ 
+ button.new-btn {
+ background: var(--ha-bg-elevated);
+ color: var(--ha-bg-base);
+ border: none;
+ padding: 12px 24px;
+ border-radius: 8px;
+ font-size: 1rem;
+ cursor: pointer;
+ margin-top: 20px;
+ }
+ button.new-btn:hover { background: var(--ha-bg-elevated); }
+ 
+ /* Responsive */
+ @media (max-width: 768px) {
+ .form-row { grid-template-columns: 1fr; }
+ .recipe-header { grid-template-columns: 1fr; }
+ .calorie-summary { grid-template-columns: repeat(2, 1fr); }
+ }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🍎 AI Calorie Tracker</h1>
-        <p class="subtitle">Count calories from photos or generate calorie-conscious recipes</p>
-        
-        <div class="tabs">
-            <button class="tab active" data-tab="count">📷 Count Calories</button>
-            <button class="tab" data-tab="recipe">🍳 Generate Recipe</button>
-        </div>
-        
-        <!-- Count Calories Tab -->
-        <div id="count-tab" class="tab-content">
-            <div class="card" id="count-form-card">
-                <h2>Analyze Your Meal</h2>
-                <div class="error-message" id="count-error"></div>
-                
-                <div class="form-group">
-                    <label>Food Photo</label>
-                    <div class="image-upload" id="image-upload">
-                        <input type="file" id="food-image" accept="image/*">
-                        <div class="icon">📸</div>
-                        <p>Click or drag to upload a photo of your meal</p>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Or paste an image URL</label>
-                    <input type="url" id="image-url" placeholder="https://example.com/food-image.jpg">
-                </div>
-                
-                <div class="form-group">
-                    <label>Notes (optional)</label>
-                    <input type="text" id="meal-notes" placeholder="e.g., homemade, restaurant portion, light sauce">
-                </div>
-                
-                <button class="submit" id="count-submit">Analyze & Count Calories</button>
-            </div>
-            
-            <div class="loading" id="count-loading">
-                <div class="spinner"></div>
-                <p>Analyzing your meal...</p>
-            </div>
-            
-            <div class="results-container" id="count-results">
-                <div class="card">
-                    <h2>Calorie Analysis</h2>
-                    <div class="calorie-summary" id="calorie-summary"></div>
-                    <div class="section">
-                        <h3>Food Items Detected</h3>
-                        <div class="food-items" id="food-items"></div>
-                    </div>
-                    <div class="health-notes" id="health-notes"></div>
-                    <button class="new-btn" id="count-new">Analyze Another Meal</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Generate Recipe Tab -->
-        <div id="recipe-tab" class="tab-content" style="display: none;">
-            <div class="card" id="recipe-form-card">
-                <h2>Create a Calorie-Conscious Recipe</h2>
-                <p class="label-hint" style="margin-bottom: 20px; color: #a0a0a0;">
-                    Provide ingredients, a calorie target, or both!
-                </p>
-                <div class="error-message" id="recipe-error"></div>
-                
-                <div class="form-group">
-                    <label>Available Ingredients</label>
-                    <textarea id="ingredients" placeholder="chicken breast, broccoli, garlic, olive oil, lemon..."></textarea>
-                    <p class="label-hint">Comma-separated list of what you have</p>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Target Calories (per serving)</label>
-                        <input type="number" id="target-calories" placeholder="e.g., 450" min="100" max="2000">
-                    </div>
-                    <div class="form-group">
-                        <label>Servings</label>
-                        <input type="number" id="servings" placeholder="2" min="1" max="12" value="2">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Dietary Restrictions</label>
-                    <input type="text" id="dietary-restrictions" placeholder="vegetarian, gluten-free, keto...">
-                </div>
-                
-                <button class="submit" id="recipe-submit">Generate Recipe</button>
-            </div>
-            
-            <div class="loading" id="recipe-loading">
-                <div class="spinner"></div>
-                <p>Creating your perfect recipe...</p>
-            </div>
-            
-            <div class="results-container" id="recipe-results">
-                <div class="card">
-                    <div class="recipe-header">
-                        <div id="recipe-image-container">
-                            <div class="recipe-image-placeholder">🍽️</div>
-                        </div>
-                        <div class="recipe-info" id="recipe-info"></div>
-                    </div>
-                    
-                    <div class="section">
-                        <h3>Ingredients</h3>
-                        <div class="ingredients-list" id="recipe-ingredients"></div>
-                    </div>
-                    
-                    <div class="section">
-                        <h3>Instructions</h3>
-                        <div class="instructions-list" id="recipe-instructions"></div>
-                    </div>
-                    
-                    <div class="calorie-adjustments" id="calorie-adjustments"></div>
-                    
-                    <button class="new-btn" id="recipe-new">Create Another Recipe</button>
-                </div>
-            </div>
-        </div>
-    </div>
+ <div class="container">
+ <h1> AI Calorie Tracker</h1>
+ <p class="subtitle">Count calories from photos or generate calorie-conscious recipes</p>
+ 
+ <div class="tabs">
+ <button class="tab active" data-tab="count"> Count Calories</button>
+ <button class="tab" data-tab="recipe"> Generate Recipe</button>
+ </div>
+ 
+ <!-- Count Calories Tab -->
+ <div id="count-tab" class="tab-content">
+ <div class="card" id="count-form-card">
+ <h2>Analyze Your Meal</h2>
+ <div class="error-message" id="count-error"></div>
+ 
+ <div class="form-group">
+ <label>Food Photo</label>
+ <div class="image-upload" id="image-upload">
+ <input type="file" id="food-image" accept="image/*">
+ <div class="icon"></div>
+ <p>Click or drag to upload a photo of your meal</p>
+ </div>
+ </div>
+ 
+ <div class="form-group">
+ <label>Or paste an image URL</label>
+ <input type="url" id="image-url" placeholder="https://example.com/food-image.jpg">
+ </div>
+ 
+ <div class="form-group">
+ <label>Notes (optional)</label>
+ <input type="text" id="meal-notes" placeholder="e.g., homemade, restaurant portion, light sauce">
+ </div>
+ 
+ <button class="submit" id="count-submit">Analyze & Count Calories</button>
+ </div>
+ 
+ <div class="loading" id="count-loading">
+ <div class="spinner"></div>
+ <p>Analyzing your meal...</p>
+ </div>
+ 
+ <div class="results-container" id="count-results">
+ <div class="card">
+ <h2>Calorie Analysis</h2>
+ <div class="calorie-summary" id="calorie-summary"></div>
+ <div class="section">
+ <h3>Food Items Detected</h3>
+ <div class="food-items" id="food-items"></div>
+ </div>
+ <div class="health-notes" id="health-notes"></div>
+ <button class="new-btn" id="count-new">Analyze Another Meal</button>
+ </div>
+ </div>
+ </div>
+ 
+ <!-- Generate Recipe Tab -->
+ <div id="recipe-tab" class="tab-content" style="display: none;">
+ <div class="card" id="recipe-form-card">
+ <h2>Create a Calorie-Conscious Recipe</h2>
+ <p class="label-hint" style="margin-bottom: 20px; color: var(--ha-text-muted);">
+ Provide ingredients, a calorie target, or both!
+ </p>
+ <div class="error-message" id="recipe-error"></div>
+ 
+ <div class="form-group">
+ <label>Available Ingredients</label>
+ <textarea id="ingredients" placeholder="chicken breast, broccoli, garlic, olive oil, lemon..."></textarea>
+ <p class="label-hint">Comma-separated list of what you have</p>
+ </div>
+ 
+ <div class="form-row">
+ <div class="form-group">
+ <label>Target Calories (per serving)</label>
+ <input type="number" id="target-calories" placeholder="e.g., 450" min="100" max="2000">
+ </div>
+ <div class="form-group">
+ <label>Servings</label>
+ <input type="number" id="servings" placeholder="2" min="1" max="12" value="2">
+ </div>
+ </div>
+ 
+ <div class="form-group">
+ <label>Dietary Restrictions</label>
+ <input type="text" id="dietary-restrictions" placeholder="vegetarian, gluten-free, keto...">
+ </div>
+ 
+ <button class="submit" id="recipe-submit">Generate Recipe</button>
+ </div>
+ 
+ <div class="loading" id="recipe-loading">
+ <div class="spinner"></div>
+ <p>Creating your perfect recipe...</p>
+ </div>
+ 
+ <div class="results-container" id="recipe-results">
+ <div class="card">
+ <div class="recipe-header">
+ <div id="recipe-image-container">
+ <div class="recipe-image-placeholder"></div>
+ </div>
+ <div class="recipe-info" id="recipe-info"></div>
+ </div>
+ 
+ <div class="section">
+ <h3>Ingredients</h3>
+ <div class="ingredients-list" id="recipe-ingredients"></div>
+ </div>
+ 
+ <div class="section">
+ <h3>Instructions</h3>
+ <div class="instructions-list" id="recipe-instructions"></div>
+ </div>
+ 
+ <div class="calorie-adjustments" id="calorie-adjustments"></div>
+ 
+ <button class="new-btn" id="recipe-new">Create Another Recipe</button>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <script type="text/javascript">
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-                document.getElementById(tab.dataset.tab + '-tab').style.display = 'block';
-            });
-        });
+ <script type="text/javascript">
+ // Tab switching
+ document.querySelectorAll('.tab').forEach(tab => {
+ tab.addEventListener('click', () => {
+ document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+ tab.classList.add('active');
+ 
+ document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+ document.getElementById(tab.dataset.tab + '-tab').style.display = 'block';
+ });
+ });
 
-        // Image upload handling
-        const imageUpload = document.getElementById('image-upload');
-        const fileInput = document.getElementById('food-image');
-        let uploadedImageBase64 = null;
+ // Image upload handling
+ const imageUpload = document.getElementById('image-upload');
+ const fileInput = document.getElementById('food-image');
+ let uploadedImageBase64 = null;
 
-        imageUpload.addEventListener('click', () => fileInput.click());
-        imageUpload.addEventListener('dragover', e => { e.preventDefault(); imageUpload.style.borderColor = '#4ade80'; });
-        imageUpload.addEventListener('dragleave', () => { imageUpload.style.borderColor = '#3d3d5c'; });
-        imageUpload.addEventListener('drop', e => {
-            e.preventDefault();
-            imageUpload.style.borderColor = '#3d3d5c';
-            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-        });
+ imageUpload.addEventListener('click', () => fileInput.click());
+ imageUpload.addEventListener('dragover', e => { e.preventDefault(); imageUpload.style.borderColor = 'var(--ha-status-success)'; });
+ imageUpload.addEventListener('dragleave', () => { imageUpload.style.borderColor = 'var(--ha-bg-elevated)'; });
+ imageUpload.addEventListener('drop', e => {
+ e.preventDefault();
+ imageUpload.style.borderColor = 'var(--ha-bg-elevated)';
+ if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+ });
 
-        fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+ fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
 
-        function handleFile(file) {
-            if (!file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                uploadedImageBase64 = e.target.result.split(',')[1];
-                imageUpload.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Preview">`;
-                imageUpload.classList.add('has-image');
-            };
-            reader.readAsDataURL(file);
-        }
+ function handleFile(file) {
+ if (!file.type.startsWith('image/')) return;
+ const reader = new FileReader();
+ reader.onload = e => {
+ uploadedImageBase64 = e.target.result.split(',')[1];
+ imageUpload.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Preview">`;
+ imageUpload.classList.add('has-image');
+ };
+ reader.readAsDataURL(file);
+ }
 
-        // Count Calories Submit
-        document.getElementById('count-submit').addEventListener('click', async () => {
-            const imageUrl = document.getElementById('image-url').value;
-            const notes = document.getElementById('meal-notes').value;
+ // Count Calories Submit
+ document.getElementById('count-submit').addEventListener('click', async () => {
+ const imageUrl = document.getElementById('image-url').value;
+ const notes = document.getElementById('meal-notes').value;
 
-            if (!uploadedImageBase64 && !imageUrl) {
-                showError('count-error', 'Please upload an image or provide an image URL');
-                return;
-            }
+ if (!uploadedImageBase64 && !imageUrl) {
+ showError('count-error', 'Please upload an image or provide an image URL');
+ return;
+ }
 
-            showLoading('count');
-            try {
-                const payload = { notes };
-                if (uploadedImageBase64) payload.imageBase64 = uploadedImageBase64;
-                if (imageUrl) payload.imageUrl = imageUrl;
+ showLoading('count');
+ try {
+ const payload = { notes };
+ if (uploadedImageBase64) payload.imageBase64 = uploadedImageBase64;
+ if (imageUrl) payload.imageUrl = imageUrl;
 
-                const response = await fetch('/api/count-calories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+ const response = await fetch('/api/count-calories', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload)
+ });
 
-                if (!response.ok) throw new Error('Failed to analyze meal');
-                const result = await response.json();
-                const data = result.output;
-                displayCalorieResults(data);
-            } catch (error) {
-                showError('count-error', error.message);
-                hideLoading('count');
-            }
-        });
+ if (!response.ok) throw new Error('Failed to analyze meal');
+ const result = await response.json();
+ const data = result.output;
+ displayCalorieResults(data);
+ } catch (error) {
+ showError('count-error', error.message);
+ hideLoading('count');
+ }
+ });
 
-        function displayCalorieResults(data) {
-            hideLoading('count');
-            const calories = data.calories || {};
-            const foodItems = data.foodItems || {};
-            const totals = calories.totals || {};
-            const items = calories.items || [];
+ function displayCalorieResults(data) {
+ hideLoading('count');
+ const calories = data.calories || {};
+ const foodItems = data.foodItems || {};
+ const totals = calories.totals || {};
+ const items = calories.items || [];
 
-            // Summary
-            document.getElementById('calorie-summary').innerHTML = `
-                <div class="calorie-stat main">
-                    <div class="value">${totals.calories || 0}</div>
-                    <div class="label">Total Calories</div>
-                </div>
-                <div class="calorie-stat">
-                    <div class="value">${totals.protein || '0g'}</div>
-                    <div class="label">Protein</div>
-                </div>
-                <div class="calorie-stat">
-                    <div class="value">${totals.carbs || '0g'}</div>
-                    <div class="label">Carbs</div>
-                </div>
-                <div class="calorie-stat">
-                    <div class="value">${totals.fat || '0g'}</div>
-                    <div class="label">Fat</div>
-                </div>
-                <div class="calorie-stat">
-                    <div class="value">${totals.fiber || '0g'}</div>
-                    <div class="label">Fiber</div>
-                </div>
-            `;
+ // Summary
+ document.getElementById('calorie-summary').innerHTML = `
+ <div class="calorie-stat main">
+ <div class="value">${totals.calories || 0}</div>
+ <div class="label">Total Calories</div>
+ </div>
+ <div class="calorie-stat">
+ <div class="value">${totals.protein || '0g'}</div>
+ <div class="label">Protein</div>
+ </div>
+ <div class="calorie-stat">
+ <div class="value">${totals.carbs || '0g'}</div>
+ <div class="label">Carbs</div>
+ </div>
+ <div class="calorie-stat">
+ <div class="value">${totals.fat || '0g'}</div>
+ <div class="label">Fat</div>
+ </div>
+ <div class="calorie-stat">
+ <div class="value">${totals.fiber || '0g'}</div>
+ <div class="label">Fiber</div>
+ </div>
+ `;
 
-            // Food items
-            document.getElementById('food-items').innerHTML = items.map(item => `
-                <div class="food-item">
-                    <span class="name">${item.name}</span>
-                    <span class="portion">${item.portion}</span>
-                    <span class="calories">${item.caloriesPerPortion} cal</span>
-                </div>
-            `).join('');
+ // Food items
+ document.getElementById('food-items').innerHTML = items.map(item => `
+ <div class="food-item">
+ <span class="name">${item.name}</span>
+ <span class="portion">${item.portion}</span>
+ <span class="calories">${item.caloriesPerPortion} cal</span>
+ </div>
+ `).join('');
 
-            // Health notes
-            const healthNotes = calories.healthNotes || [];
-            const recommendations = calories.recommendations || [];
-            document.getElementById('health-notes').innerHTML = `
-                <h4>💡 Health Insights</h4>
-                <ul>
-                    ${healthNotes.map(note => `<li>✓ ${note}</li>`).join('')}
-                    ${recommendations.map(rec => `<li>→ ${rec}</li>`).join('')}
-                </ul>
-            `;
+ // Health notes
+ const healthNotes = calories.healthNotes || [];
+ const recommendations = calories.recommendations || [];
+ document.getElementById('health-notes').innerHTML = `
+ <h4> Health Insights</h4>
+ <ul>
+ ${healthNotes.map(note => `<li> ${note}</li>`).join('')}
+ ${recommendations.map(rec => `<li>→ ${rec}</li>`).join('')}
+ </ul>
+ `;
 
-            document.getElementById('count-form-card').style.display = 'none';
-            document.getElementById('count-results').classList.add('active');
-        }
+ document.getElementById('count-form-card').style.display = 'none';
+ document.getElementById('count-results').classList.add('active');
+ }
 
-        // Generate Recipe Submit
-        document.getElementById('recipe-submit').addEventListener('click', async () => {
-            const ingredients = document.getElementById('ingredients').value;
-            const targetCalories = document.getElementById('target-calories').value;
-            const servings = document.getElementById('servings').value;
-            const dietaryRestrictions = document.getElementById('dietary-restrictions').value;
+ // Generate Recipe Submit
+ document.getElementById('recipe-submit').addEventListener('click', async () => {
+ const ingredients = document.getElementById('ingredients').value;
+ const targetCalories = document.getElementById('target-calories').value;
+ const servings = document.getElementById('servings').value;
+ const dietaryRestrictions = document.getElementById('dietary-restrictions').value;
 
-            if (!ingredients && !targetCalories) {
-                showError('recipe-error', 'Please provide either ingredients or a target calorie count');
-                return;
-            }
+ if (!ingredients && !targetCalories) {
+ showError('recipe-error', 'Please provide either ingredients or a target calorie count');
+ return;
+ }
 
-            showLoading('recipe');
-            try {
-                const payload = {
-                    ingredients: ingredients || undefined,
-                    targetCalories: targetCalories ? parseInt(targetCalories) : undefined,
-                    servings: servings ? parseInt(servings) : 2,
-                    dietaryRestrictions: dietaryRestrictions || undefined
-                };
+ showLoading('recipe');
+ try {
+ const payload = {
+ ingredients: ingredients || undefined,
+ targetCalories: targetCalories ? parseInt(targetCalories) : undefined,
+ servings: servings ? parseInt(servings) : 2,
+ dietaryRestrictions: dietaryRestrictions || undefined
+ };
 
-                const response = await fetch('/api/recipe-by-calories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+ const response = await fetch('/api/recipe-by-calories', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload)
+ });
 
-                if (!response.ok) throw new Error('Failed to generate recipe');
-                const result = await response.json();
-                const data = result.output;
-                displayRecipeResults(data);
-            } catch (error) {
-                showError('recipe-error', error.message);
-                hideLoading('recipe');
-            }
-        });
+ if (!response.ok) throw new Error('Failed to generate recipe');
+ const result = await response.json();
+ const data = result.output;
+ displayRecipeResults(data);
+ } catch (error) {
+ showError('recipe-error', error.message);
+ hideLoading('recipe');
+ }
+ });
 
-        function displayRecipeResults(data) {
-            hideLoading('recipe');
-            const recipe = data.recipe || {};
-            const images = data.image.data;
+ function displayRecipeResults(data) {
+ hideLoading('recipe');
+ const recipe = data.recipe || {};
+ const images = data.image.data;
 
-            // Image
-            const imageContainer = document.getElementById('recipe-image-container');
-            imageContainer.innerHTML = '';
-            for (const image of images) {
-            if (image && image.url) {
-                imageContainer.innerHTML += `<img src="${image.url}" class="recipe-image" alt="${recipe.title}">`;
-            } else if (image && image.base64) {
-                imageContainer.innerHTML += `<img src="data:image/png;base64,${image.base64}" class="recipe-image" alt="${recipe.title}">`;
-            }
-        }
+ // Image
+ const imageContainer = document.getElementById('recipe-image-container');
+ imageContainer.innerHTML = '';
+ for (const image of images) {
+ if (image && image.url) {
+ imageContainer.innerHTML += `<img src="${image.url}" class="recipe-image" alt="${recipe.title}">`;
+ } else if (image && image.base64) {
+ imageContainer.innerHTML += `<img src="data:image/png;base64,${image.base64}" class="recipe-image" alt="${recipe.title}">`;
+ }
+ }
 
-            // Info
-            document.getElementById('recipe-info').innerHTML = `
-                <h2>${recipe.title || 'Your Recipe'}</h2>
-                <p>${recipe.description || ''}</p>
-                <div class="recipe-meta">
-                    <div class="meta-item"><strong>${recipe.caloriesPerServing || 0}</strong> cal/serving</div>
-                    <div class="meta-item"><strong>${recipe.servings || 2}</strong> servings</div>
-                    <div class="meta-item"><strong>${recipe.prepTime || '?'}</strong> prep</div>
-                    <div class="meta-item"><strong>${recipe.cookTime || '?'}</strong> cook</div>
-                    <div class="meta-item"><strong>${recipe.difficulty || 'easy'}</strong></div>
-                </div>
-            `;
+ // Info
+ document.getElementById('recipe-info').innerHTML = `
+ <h2>${recipe.title || 'Your Recipe'}</h2>
+ <p>${recipe.description || ''}</p>
+ <div class="recipe-meta">
+ <div class="meta-item"><strong>${recipe.caloriesPerServing || 0}</strong> cal/serving</div>
+ <div class="meta-item"><strong>${recipe.servings || 2}</strong> servings</div>
+ <div class="meta-item"><strong>${recipe.prepTime || '?'}</strong> prep</div>
+ <div class="meta-item"><strong>${recipe.cookTime || '?'}</strong> cook</div>
+ <div class="meta-item"><strong>${recipe.difficulty || 'easy'}</strong></div>
+ </div>
+ `;
 
-            // Ingredients
-            const ingredients = recipe.ingredients || [];
-            document.getElementById('recipe-ingredients').innerHTML = ingredients.map(ing => `
-                <div class="ingredient ${ing.isFromUserList ? 'user-provided' : ''}">
-                    <span class="ingredient-amount">${ing.amount}</span>
-                    <span>${ing.item}${ing.notes ? ` (${ing.notes})` : ''}</span>
-                    <span class="ingredient-calories">${ing.calories || 0} cal</span>
-                </div>
-            `).join('');
+ // Ingredients
+ const ingredients = recipe.ingredients || [];
+ document.getElementById('recipe-ingredients').innerHTML = ingredients.map(ing => `
+ <div class="ingredient ${ing.isFromUserList ? 'user-provided' : ''}">
+ <span class="ingredient-amount">${ing.amount}</span>
+ <span>${ing.item}${ing.notes ? ` (${ing.notes})` : ''}</span>
+ <span class="ingredient-calories">${ing.calories || 0} cal</span>
+ </div>
+ `).join('');
 
-            // Instructions
-            const instructions = recipe.instructions || [];
-            document.getElementById('recipe-instructions').innerHTML = instructions.map(inst => `
-                <div class="instruction">
-                    <div class="step-number">${inst.step}</div>
-                    <div class="step-content">${inst.instruction}</div>
-                </div>
-            `).join('');
+ // Instructions
+ const instructions = recipe.instructions || [];
+ document.getElementById('recipe-instructions').innerHTML = instructions.map(inst => `
+ <div class="instruction">
+ <div class="step-number">${inst.step}</div>
+ <div class="step-content">${inst.instruction}</div>
+ </div>
+ `).join('');
 
-            // Calorie adjustments
-            const adjustments = recipe.calorieAdjustments || [];
-            if (adjustments.length > 0) {
-                document.getElementById('calorie-adjustments').innerHTML = `
-                    <h4>💡 Want to Reduce Calories?</h4>
-                    ${adjustments.map(adj => `
-                        <div class="adjustment">
-                            <span>${adj.change}</span>
-                            <span class="savings">-${adj.caloriesSaved} cal</span>
-                        </div>
-                    `).join('')}
-                `;
-                document.getElementById('calorie-adjustments').style.display = 'block';
-            } else {
-                document.getElementById('calorie-adjustments').style.display = 'none';
-            }
+ // Calorie adjustments
+ const adjustments = recipe.calorieAdjustments || [];
+ if (adjustments.length > 0) {
+ document.getElementById('calorie-adjustments').innerHTML = `
+ <h4> Want to Reduce Calories?</h4>
+ ${adjustments.map(adj => `
+ <div class="adjustment">
+ <span>${adj.change}</span>
+ <span class="savings">-${adj.caloriesSaved} cal</span>
+ </div>
+ `).join('')}
+ `;
+ document.getElementById('calorie-adjustments').style.display = 'block';
+ } else {
+ document.getElementById('calorie-adjustments').style.display = 'none';
+ }
 
-            document.getElementById('recipe-form-card').style.display = 'none';
-            document.getElementById('recipe-results').classList.add('active');
-        }
+ document.getElementById('recipe-form-card').style.display = 'none';
+ document.getElementById('recipe-results').classList.add('active');
+ }
 
-        // Utility functions
-        function showError(elementId, message) {
-            const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.classList.add('active');
-            setTimeout(() => el.classList.remove('active'), 5000);
-        }
+ // Utility functions
+ function showError(elementId, message) {
+ const el = document.getElementById(elementId);
+ el.textContent = message;
+ el.classList.add('active');
+ setTimeout(() => el.classList.remove('active'), 5000);
+ }
 
-        function showLoading(type) {
-            document.getElementById(type + '-form-card').style.display = 'none';
-            document.getElementById(type + '-loading').classList.add('active');
-            document.getElementById(type + '-error').classList.remove('active');
-        }
+ function showLoading(type) {
+ document.getElementById(type + '-form-card').style.display = 'none';
+ document.getElementById(type + '-loading').classList.add('active');
+ document.getElementById(type + '-error').classList.remove('active');
+ }
 
-        function hideLoading(type) {
-            document.getElementById(type + '-loading').classList.remove('active');
-        }
+ function hideLoading(type) {
+ document.getElementById(type + '-loading').classList.remove('active');
+ }
 
-        // Reset buttons
-        document.getElementById('count-new').addEventListener('click', () => {
-            document.getElementById('count-results').classList.remove('active');
-            document.getElementById('count-form-card').style.display = 'block';
-            document.getElementById('image-url').value = '';
-            document.getElementById('meal-notes').value = '';
-            uploadedImageBase64 = null;
-            imageUpload.innerHTML = `
-                <input type="file" id="food-image" accept="image/*">
-                <div class="icon">📸</div>
-                <p>Click or drag to upload a photo of your meal</p>
-            `;
-            imageUpload.classList.remove('has-image');
-            document.getElementById('food-image').addEventListener('change', () => {
-                if (document.getElementById('food-image').files.length) 
-                    handleFile(document.getElementById('food-image').files[0]);
-            });
-        });
+ // Reset buttons
+ document.getElementById('count-new').addEventListener('click', () => {
+ document.getElementById('count-results').classList.remove('active');
+ document.getElementById('count-form-card').style.display = 'block';
+ document.getElementById('image-url').value = '';
+ document.getElementById('meal-notes').value = '';
+ uploadedImageBase64 = null;
+ imageUpload.innerHTML = `
+ <input type="file" id="food-image" accept="image/*">
+ <div class="icon"></div>
+ <p>Click or drag to upload a photo of your meal</p>
+ `;
+ imageUpload.classList.remove('has-image');
+ document.getElementById('food-image').addEventListener('change', () => {
+ if (document.getElementById('food-image').files.length) 
+ handleFile(document.getElementById('food-image').files[0]);
+ });
+ });
 
-        document.getElementById('recipe-new').addEventListener('click', () => {
-            document.getElementById('recipe-results').classList.remove('active');
-            document.getElementById('recipe-form-card').style.display = 'block';
-            document.getElementById('ingredients').value = '';
-            document.getElementById('target-calories').value = '';
-            document.getElementById('servings').value = '2';
-            document.getElementById('dietary-restrictions').value = '';
-        });
-    </script>
+ document.getElementById('recipe-new').addEventListener('click', () => {
+ document.getElementById('recipe-results').classList.remove('active');
+ document.getElementById('recipe-form-card').style.display = 'block';
+ document.getElementById('ingredients').value = '';
+ document.getElementById('target-calories').value = '';
+ document.getElementById('servings').value = '2';
+ document.getElementById('dietary-restrictions').value = '';
+ });
+ </script>
 </body>
 </html>

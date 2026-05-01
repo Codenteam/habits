@@ -1,359 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calorie Calculator - Analyze Your Food</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .animate-fadeIn {
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        .animate-pulse-slow {
-            animation: pulse 2s ease-in-out infinite;
-        }
-        
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-        
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
-        
-        .preview-container {
-            max-height: 400px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .preview-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Calorie Calculator - Analyze Your Food</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+ 
+ @keyframes pulse {
+ 0%, 100% { opacity: 1; }
+ 50% { opacity: 0.5; }
+ }
+ 
+ .animate-fadeIn {
+ animation: fadeIn 0.3s ease-out;
+ }
+ 
+ .animate-pulse-slow {
+ animation: pulse 2s ease-in-out infinite;
+ }
+ 
+ .glass-morphism {
+ background: var(--ha-bg-surface);
+ border: 1px solid var(--ha-border);
+ }
+ 
+ .gradient-bg {
+ background: var(--ha-bg-base);
+ }
+ 
+ .file-input-wrapper {
+ position: relative;
+ overflow: hidden;
+ display: inline-block;
+ }
+ 
+ .file-input-wrapper input[type=file] {
+ position: absolute;
+ left: -9999px;
+ }
+ 
+ .preview-container {
+ max-height: 400px;
+ overflow: hidden;
+ position: relative;
+ }
+ 
+ .preview-container img {
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ }
+ </style>
 </head>
 <body class="min-h-screen bg-gray-900 text-white">
-    <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
-        <div class="w-full max-w-2xl">
-            <!-- Header -->
-            <div class="text-center mb-8 animate-fadeIn">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">Calorie Calculator</h1>
-                <p class="text-xl text-gray-200">Upload a photo of your food to analyze its nutritional content</p>
-            </div>
+ <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+ <div class="w-full max-w-2xl">
+ <!-- Header -->
+ <div class="text-center mb-8 animate-fadeIn">
+ <h1 class="text-4xl md:text-5xl font-bold mb-4">Calorie Calculator</h1>
+ <p class="text-xl text-gray-200">Upload a photo of your food to analyze its nutritional content</p>
+ </div>
 
-            <!-- Main Form Container -->
-            <div class="glass-morphism rounded-2xl shadow-2xl p-8 animate-fadeIn">
-                <form id="calorieForm" class="space-y-6">
-                    <!-- File Upload Area -->
-                    <div class="space-y-4">
-                        <label class="block text-lg font-medium text-gray-100">
-                            Food Image
-                        </label>
-                        
-                        <!-- Drag and Drop Zone -->
-                        <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-xl p-8 text-center transition-all duration-300 hover:border-white hover:bg-white/5 cursor-pointer">
-                            <div class="file-input-wrapper">
-                                <input 
-                                    type="file" 
-                                    id="imageInput" 
-                                    accept="image/*" 
-                                    required
-                                    class="hidden"
-                                />
-                                <div id="uploadPrompt" class="space-y-4">
-                                    <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                    <div>
-                                        <p class="text-lg">Drop your image here, or <span class="text-blue-300 font-semibold">browse</span></p>
-                                        <p class="text-sm text-gray-400 mt-1">Supports JPG, PNG, GIF up to 10MB</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Image Preview -->
-                                <div id="imagePreview" class="hidden">
-                                    <div class="preview-container rounded-lg overflow-hidden">
-                                        <img id="previewImg" src="" alt="Preview" />
-                                    </div>
-                                    <button type="button" id="removeImage" class="mt-4 text-red-400 hover:text-red-300 transition-colors">
-                                        Remove image
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Error Message -->
-                        <p id="imageError" class="hidden text-red-400 text-sm mt-2 animate-fadeIn"></p>
-                    </div>
+ <!-- Main Form Container -->
+ <div class="glass-morphism rounded-2xl shadow-2xl p-8 animate-fadeIn">
+ <form id="calorieForm" class="space-y-6">
+ <!-- File Upload Area -->
+ <div class="space-y-4">
+ <label class="block text-lg font-medium text-gray-100">
+ Food Image
+ </label>
+ 
+ <!-- Drag and Drop Zone -->
+ <div id="dropZone" class="border-2 border-dashed border-gray-400 rounded-xl p-8 text-center transition-all duration-300 hover:border-white hover:bg-white/5 cursor-pointer">
+ <div class="file-input-wrapper">
+ <input 
+ type="file" 
+ id="imageInput" 
+ accept="image/*" 
+ required
+ class="hidden"
+ />
+ <div id="uploadPrompt" class="space-y-4">
+ <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+ </svg>
+ <div>
+ <p class="text-lg">Drop your image here, or <span class="text-blue-300 font-semibold">browse</span></p>
+ <p class="text-sm text-gray-400 mt-1">Supports JPG, PNG, GIF up to 10MB</p>
+ </div>
+ </div>
+ 
+ <!-- Image Preview -->
+ <div id="imagePreview" class="hidden">
+ <div class="preview-container rounded-lg overflow-hidden">
+ <img id="previewImg" src="" alt="Preview" />
+ </div>
+ <button type="button" id="removeImage" class="mt-4 text-red-400 hover:text-red-300 transition-colors">
+ Remove image
+ </button>
+ </div>
+ </div>
+ </div>
+ 
+ <!-- Error Message -->
+ <p id="imageError" class="hidden text-red-400 text-sm mt-2 animate-fadeIn"></p>
+ </div>
 
-                    <!-- Submit Button -->
-                    <button 
-                        type="submit" 
-                        id="submitBtn"
-                        class="w-full bg-white text-purple-700 font-bold py-4 px-6 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-white/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                        Analyze Calories
-                    </button>
-                </form>
+ <!-- Submit Button -->
+ <button 
+ type="submit" 
+ id="submitBtn"
+ class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl focus:outline-none transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+ >
+ Analyze Calories
+ </button>
+ </form>
 
-                <!-- Loading State -->
-                <div id="loadingState" class="hidden mt-8 text-center animate-fadeIn">
-                    <div class="inline-flex items-center space-x-3">
-                        <div class="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <p class="text-lg">Analyzing your food...</p>
-                    </div>
-                </div>
+ <!-- Loading State -->
+ <div id="loadingState" class="hidden mt-8 text-center animate-fadeIn">
+ <div class="inline-flex items-center space-x-3">
+ <div class="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+ <p class="text-lg">Analyzing your food...</p>
+ </div>
+ </div>
 
-                <!-- Success Result -->
-                <div id="successResult" class="hidden mt-8 glass-morphism rounded-xl p-6 animate-fadeIn">
-                    <div class="flex items-start space-x-3 mb-4">
-                        <svg class="w-6 h-6 text-green-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold mb-2">Analysis Complete</h3>
-                            <div id="analysisContent" class="text-gray-200 space-y-2"></div>
-                        </div>
-                    </div>
-                    <button 
-                        id="analyzeAnother" 
-                        class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300"
-                    >
-                        Analyze Another Image
-                    </button>
-                </div>
+ <!-- Success Result -->
+ <div id="successResult" class="hidden mt-8 glass-morphism rounded-xl p-6 animate-fadeIn">
+ <div class="flex items-start space-x-3 mb-4">
+ <svg class="w-6 h-6 text-green-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+ </svg>
+ <div class="flex-1">
+ <h3 class="text-lg font-semibold mb-2">Analysis Complete</h3>
+ <div id="analysisContent" class="text-gray-200 space-y-2"></div>
+ </div>
+ </div>
+ <button 
+ id="analyzeAnother" 
+ class="mt-4 w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300"
+ >
+ Analyze Another Image
+ </button>
+ </div>
 
-                <!-- Error Result -->
-                <div id="errorResult" class="hidden mt-8 glass-morphism rounded-xl p-6 border-red-500/50 animate-fadeIn">
-                    <div class="flex items-start space-x-3">
-                        <svg class="w-6 h-6 text-red-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <h3 class="text-lg font-semibold mb-1">Analysis Failed</h3>
-                            <p id="errorMessage" class="text-gray-300"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+ <!-- Error Result -->
+ <div id="errorResult" class="hidden mt-8 glass-morphism rounded-xl p-6 border-red-500/50 animate-fadeIn">
+ <div class="flex items-start space-x-3">
+ <svg class="w-6 h-6 text-red-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+ </svg>
+ <div>
+ <h3 class="text-lg font-semibold mb-1">Analysis Failed</h3>
+ <p id="errorMessage" class="text-gray-300"></p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <script>
-        // DOM Elements
-        const form = document.getElementById('calorieForm');
-        const imageInput = document.getElementById('imageInput');
-        const dropZone = document.getElementById('dropZone');
-        const uploadPrompt = document.getElementById('uploadPrompt');
-        const imagePreview = document.getElementById('imagePreview');
-        const previewImg = document.getElementById('previewImg');
-        const removeImageBtn = document.getElementById('removeImage');
-        const submitBtn = document.getElementById('submitBtn');
-        const imageError = document.getElementById('imageError');
-        const loadingState = document.getElementById('loadingState');
-        const successResult = document.getElementById('successResult');
-        const errorResult = document.getElementById('errorResult');
-        const analysisContent = document.getElementById('analysisContent');
-        const errorMessage = document.getElementById('errorMessage');
-        const analyzeAnotherBtn = document.getElementById('analyzeAnother');
+ <script>
+ // DOM Elements
+ const form = document.getElementById('calorieForm');
+ const imageInput = document.getElementById('imageInput');
+ const dropZone = document.getElementById('dropZone');
+ const uploadPrompt = document.getElementById('uploadPrompt');
+ const imagePreview = document.getElementById('imagePreview');
+ const previewImg = document.getElementById('previewImg');
+ const removeImageBtn = document.getElementById('removeImage');
+ const submitBtn = document.getElementById('submitBtn');
+ const imageError = document.getElementById('imageError');
+ const loadingState = document.getElementById('loadingState');
+ const successResult = document.getElementById('successResult');
+ const errorResult = document.getElementById('errorResult');
+ const analysisContent = document.getElementById('analysisContent');
+ const errorMessage = document.getElementById('errorMessage');
+ const analyzeAnotherBtn = document.getElementById('analyzeAnother');
 
-        let selectedFile = null;
-        let base64Image = null;
+ let selectedFile = null;
+ let base64Image = null;
 
-        // File handling
-        function handleFile(file) {
-            imageError.classList.add('hidden');
-            
-            if (!file) return;
-            
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                showImageError('Please select a valid image file');
-                return;
-            }
-            
-            // Validate file size (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                showImageError('Image size must be less than 10MB');
-                return;
-            }
-            
-            selectedFile = file;
-            
-            // Read and display preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                base64Image = e.target.result;
-                previewImg.src = e.target.result;
-                uploadPrompt.classList.add('hidden');
-                imagePreview.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
+ // File handling
+ function handleFile(file) {
+ imageError.classList.add('hidden');
+ 
+ if (!file) return;
+ 
+ // Validate file type
+ if (!file.type.startsWith('image/')) {
+ showImageError('Please select a valid image file');
+ return;
+ }
+ 
+ // Validate file size (10MB)
+ if (file.size > 10 * 1024 * 1024) {
+ showImageError('Image size must be less than 10MB');
+ return;
+ }
+ 
+ selectedFile = file;
+ 
+ // Read and display preview
+ const reader = new FileReader();
+ reader.onload = (e) => {
+ base64Image = e.target.result;
+ previewImg.src = e.target.result;
+ uploadPrompt.classList.add('hidden');
+ imagePreview.classList.remove('hidden');
+ };
+ reader.readAsDataURL(file);
+ }
 
-        // Show image error
-        function showImageError(message) {
-            imageError.textContent = message;
-            imageError.classList.remove('hidden');
-        }
+ // Show image error
+ function showImageError(message) {
+ imageError.textContent = message;
+ imageError.classList.remove('hidden');
+ }
 
-        // Image input change handler
-        imageInput.addEventListener('change', (e) => {
-            handleFile(e.target.files[0]);
-        });
+ // Image input change handler
+ imageInput.addEventListener('change', (e) => {
+ handleFile(e.target.files[0]);
+ });
 
-        // Click on drop zone
-        dropZone.addEventListener('click', () => {
-            imageInput.click();
-        });
+ // Click on drop zone
+ dropZone.addEventListener('click', () => {
+ imageInput.click();
+ });
 
-        // Drag and drop handlers
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-white', 'bg-white/10');
-        });
+ // Drag and drop handlers
+ dropZone.addEventListener('dragover', (e) => {
+ e.preventDefault();
+ dropZone.classList.add('border-white', 'bg-white/10');
+ });
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-white', 'bg-white/10');
-        });
+ dropZone.addEventListener('dragleave', () => {
+ dropZone.classList.remove('border-white', 'bg-white/10');
+ });
 
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-white', 'bg-white/10');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        });
+ dropZone.addEventListener('drop', (e) => {
+ e.preventDefault();
+ dropZone.classList.remove('border-white', 'bg-white/10');
+ 
+ const files = e.dataTransfer.files;
+ if (files.length > 0) {
+ handleFile(files[0]);
+ }
+ });
 
-        // Remove image
-        removeImageBtn.addEventListener('click', () => {
-            selectedFile = null;
-            base64Image = null;
-            imageInput.value = '';
-            uploadPrompt.classList.remove('hidden');
-            imagePreview.classList.add('hidden');
-            imageError.classList.add('hidden');
-        });
+ // Remove image
+ removeImageBtn.addEventListener('click', () => {
+ selectedFile = null;
+ base64Image = null;
+ imageInput.value = '';
+ uploadPrompt.classList.remove('hidden');
+ imagePreview.classList.add('hidden');
+ imageError.classList.add('hidden');
+ });
 
-        // Reset form
-        function resetForm() {
-            form.reset();
-            selectedFile = null;
-            base64Image = null;
-            uploadPrompt.classList.remove('hidden');
-            imagePreview.classList.add('hidden');
-            imageError.classList.add('hidden');
-            loadingState.classList.add('hidden');
-            successResult.classList.add('hidden');
-            errorResult.classList.add('hidden');
-            submitBtn.disabled = false;
-        }
+ // Reset form
+ function resetForm() {
+ form.reset();
+ selectedFile = null;
+ base64Image = null;
+ uploadPrompt.classList.remove('hidden');
+ imagePreview.classList.add('hidden');
+ imageError.classList.add('hidden');
+ loadingState.classList.add('hidden');
+ successResult.classList.add('hidden');
+ errorResult.classList.add('hidden');
+ submitBtn.disabled = false;
+ }
 
-        // Analyze another button
-        analyzeAnotherBtn.addEventListener('click', resetForm);
+ // Analyze another button
+ analyzeAnotherBtn.addEventListener('click', resetForm);
 
-        // Form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (!base64Image) {
-                showImageError('Please select an image');
-                return;
-            }
-            
-            // Hide previous results
-            successResult.classList.add('hidden');
-            errorResult.classList.add('hidden');
-            imageError.classList.add('hidden');
-            
-            // Show loading state
-            loadingState.classList.remove('hidden');
-            submitBtn.disabled = true;
-            
-            try {
-                // Extract base64 data without the data URL prefix
-                const base64Data = base64Image.split(',')[1];
-                
-                const response = await fetch('/api/calculate-calories-in-images', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        imageBase64: base64Data
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.status === 'completed') {
-                    // Show success result
-                    displayAnalysis(data.output.analysis);
-                    loadingState.classList.add('hidden');
-                    successResult.classList.remove('hidden');
-                } else {
-                    throw new Error('Analysis failed');
-                }
-            } catch (error) {
-                // Show error result
-                loadingState.classList.add('hidden');
-                errorMessage.textContent = 'Unable to analyze the image. Please try again with a different image.';
-                errorResult.classList.remove('hidden');
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
+ // Form submission
+ form.addEventListener('submit', async (e) => {
+ e.preventDefault();
+ 
+ if (!base64Image) {
+ showImageError('Please select an image');
+ return;
+ }
+ 
+ // Hide previous results
+ successResult.classList.add('hidden');
+ errorResult.classList.add('hidden');
+ imageError.classList.add('hidden');
+ 
+ // Show loading state
+ loadingState.classList.remove('hidden');
+ submitBtn.disabled = true;
+ 
+ try {
+ // Extract base64 data without the data URL prefix
+ const base64Data = base64Image.split(',')[1];
+ 
+ const response = await fetch('/api/calculate-calories-in-images', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({
+ imageBase64: base64Data
+ })
+ });
+ 
+ const data = await response.json();
+ 
+ if (response.ok && data.status === 'completed') {
+ // Show success result
+ displayAnalysis(data.output.analysis);
+ loadingState.classList.add('hidden');
+ successResult.classList.remove('hidden');
+ } else {
+ throw new Error('Analysis failed');
+ }
+ } catch (error) {
+ // Show error result
+ loadingState.classList.add('hidden');
+ errorMessage.textContent = 'Unable to analyze the image. Please try again with a different image.';
+ errorResult.classList.remove('hidden');
+ } finally {
+ submitBtn.disabled = false;
+ }
+ });
 
-        // Display analysis results
-        function displayAnalysis(analysis) {
-            // Parse and format the analysis text
-            const lines = analysis.split('\n').filter(line => line.trim());
-            analysisContent.innerHTML = '';
-            
-            lines.forEach(line => {
-                const p = document.createElement('p');
-                p.className = 'py-1';
-                
-                // Format the line for better readability
-                if (line.includes(':')) {
-                    const [label, value] = line.split(':');
-                    p.innerHTML = `<span class="font-medium">${label}:</span> ${value}`;
-                } else {
-                    p.textContent = line;
-                }
-                
-                analysisContent.appendChild(p);
-            });
-        }
-    </script>
+ // Display analysis results
+ function displayAnalysis(analysis) {
+ // Parse and format the analysis text
+ const lines = analysis.split('\n').filter(line => line.trim());
+ analysisContent.innerHTML = '';
+ 
+ lines.forEach(line => {
+ const p = document.createElement('p');
+ p.className = 'py-1';
+ 
+ // Format the line for better readability
+ if (line.includes(':')) {
+ const [label, value] = line.split(':');
+ p.innerHTML = `<span class="font-medium">${label}:</span> ${value}`;
+ } else {
+ p.textContent = line;
+ }
+ 
+ analysisContent.appendChild(p);
+ });
+ }
+ </script>
 </body>
 </html>

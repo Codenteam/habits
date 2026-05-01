@@ -1,492 +1,534 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Bug Reporter</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f1f5f9;
-            min-height: 100vh;
-        }
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 60px;
-            height: 100vh;
-            background: #1e293b;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-        }
-        .sidebar-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1.2rem;
-        }
-        .sidebar-icon:hover { background: rgba(255,255,255,0.2); }
-        .sidebar-icon.active { background: #dc2626; }
-        
-        .main { margin-left: 60px; padding: 30px; }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .header h1 { color: #1e293b; font-size: 1.8rem; }
-        
-        .stats { display: flex; gap: 15px; margin-bottom: 30px; }
-        .stat {
-            background: white;
-            border-radius: 12px;
-            padding: 20px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .stat-value { font-size: 2rem; font-weight: 700; }
-        .stat-value.critical { color: #dc2626; }
-        .stat-value.high { color: #f59e0b; }
-        .stat-value.open { color: #3b82f6; }
-        .stat-label { color: #64748b; font-size: 0.85rem; }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .card h2 { color: #1e293b; margin-bottom: 25px; font-size: 1.2rem; }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #475569; font-weight: 500; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: #3b82f6; }
-        textarea { min-height: 120px; resize: vertical; }
-        
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        button.submit {
-            background: #dc2626;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { background: #b91c1c; }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        .view-content { display: none; }
-        .view-content.active { display: block; }
-        
-        .enhanced-report { margin-top: 25px; }
-        .report-header {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
-        }
-        .report-header h3 { margin-bottom: 10px; }
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-right: 8px;
-        }
-        .badge.critical { background: #fee2e2; color: #dc2626; }
-        .badge.high { background: #fef3c7; color: #b45309; }
-        .badge.medium { background: #dbeafe; color: #1d4ed8; }
-        .badge.low { background: #d1fae5; color: #059669; }
-        .badge.P0 { background: #dc2626; color: white; }
-        .badge.P1 { background: #f59e0b; color: white; }
-        .badge.P2 { background: #3b82f6; color: white; }
-        
-        .report-body { padding: 25px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; }
-        .report-section { margin-bottom: 20px; }
-        .report-section h4 { color: #475569; margin-bottom: 10px; font-size: 0.9rem; }
-        .report-section ol { padding-left: 20px; }
-        .report-section li { margin-bottom: 8px; color: #334155; }
-        
-        .code-block {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 15px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.9rem;
-        }
-        
-        .bug-list { display: flex; flex-direction: column; gap: 10px; }
-        .bug-item {
-            display: grid;
-            grid-template-columns: auto 1fr auto auto;
-            gap: 15px;
-            align-items: center;
-            padding: 18px 20px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .bug-item:hover { border-color: #3b82f6; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .bug-id { font-weight: 600; color: #dc2626; }
-        .bug-title { font-weight: 500; }
-        .bug-meta { color: #64748b; font-size: 0.85rem; }
-        
-        .analysis-section {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 15px;
-        }
-        .analysis-section h4 { color: #dc2626; margin-bottom: 15px; }
-        
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main { margin-left: 0; }
-            .row { grid-template-columns: 1fr; }
-            .stats { flex-wrap: wrap; }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>AI Bug Reporter</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-base);
+ min-height: 100vh;
+ }
+ .sidebar {
+ position: fixed;
+ left: 0;
+ top: 0;
+ width: 60px;
+ height: 100vh;
+ background: var(--ha-bg-surface);
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ padding: 20px 0;
+ }
+ .sidebar-icon {
+ width: 40px;
+ height: 40px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: rgba(255,255,255,0.1);
+ border-radius: 10px;
+ margin-bottom: 15px;
+ cursor: pointer;
+ transition: all 0.2s;
+ font-size: 1.2rem;
+ }
+ .sidebar-icon:hover { background: rgba(255,255,255,0.2); }
+ .sidebar-icon.active { background: var(--ha-danger-hover); }
+ 
+ .main { margin-left: 60px; padding: 30px; }
+ 
+ .header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 30px;
+ }
+ .header h1 { color: var(--ha-text-primary); font-size: 1.8rem; }
+ 
+ .stats { display: flex; gap: 15px; margin-bottom: 30px; }
+ .stat {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 20px 30px;
+ box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+ }
+ .stat-value { font-size: 2rem; font-weight: 700; }
+ .stat-value.critical { color: var(--ha-danger-hover); }
+ .stat-value.high { color: var(--ha-warn); }
+ .stat-value.open { color: var(--ha-accent-blue); }
+ .stat-label { color: var(--ha-text-disabled); font-size: 0.85rem; }
+ 
+ .card {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 30px;
+ box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+ margin-bottom: 20px;
+ }
+ .card h2 { color: var(--ha-text-primary); margin-bottom: 25px; font-size: 1.2rem; }
+ 
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-text-body); font-weight: 500; }
+ input, select, textarea {
+ width: 100%;
+ padding: 12px 15px;
+ border: 2px solid var(--ha-border);
+ border-radius: 8px;
+ font-size: 1rem;
+ background: var(--ha-bg-elevated);
+ color: var(--ha-text-primary);
+ }
+ input:focus, textarea:focus { outline: none; border-color: var(--ha-accent-blue); }
+ textarea { min-height: 120px; resize: vertical; }
+ 
+ .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+ 
+ button.submit {
+ background: var(--ha-danger-hover);
+ color: white;
+ border: none;
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { background: var(--ha-danger-hover); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; }
+ 
+ .view-content { display: none; }
+ .view-content.active { display: block; }
+ 
+ .enhanced-report { margin-top: 25px; }
+ .report-header {
+ background: var(--ha-bg-elevated);
+ color: white;
+ padding: 20px;
+ border-radius: 12px 12px 0 0;
+ }
+ .report-header h3 { margin-bottom: 10px; }
+ .badge {
+ display: inline-block;
+ padding: 4px 12px;
+ border-radius: 20px;
+ font-size: 0.75rem;
+ font-weight: 600;
+ margin-right: 8px;
+ }
+ .badge.critical { background: var(--ha-status-error-dim); color: var(--ha-danger-hover); }
+ .badge.high { background: var(--ha-status-running-dim, rgba(251,191,36,0.15)); color: var(--ha-warn); }
+ .badge.medium { background: rgba(59, 130, 246, 0.15); color: var(--ha-accent-blue-hover); }
+ .badge.low { background: var(--ha-status-success-dim); color: var(--ha-accent-emerald); }
+ .badge.P0 { background: var(--ha-danger-hover); color: white; }
+ .badge.P1 { background: var(--ha-warn); color: white; }
+ .badge.P2 { background: var(--ha-accent-blue); color: white; }
+ 
+ .report-body { padding: 25px; border: 1px solid var(--ha-border); border-top: none; border-radius: 0 0 12px 12px; }
+ .report-section { margin-bottom: 20px; }
+ .report-section h4 { color: var(--ha-text-body); margin-bottom: 10px; font-size: 0.9rem; }
+ .report-section ol { padding-left: 20px; }
+ .report-section li { margin-bottom: 8px; color: var(--ha-text-body); }
+ 
+ .code-block {
+ background: var(--ha-bg-base);
+ border: 1px solid var(--ha-border);
+ border-radius: 6px;
+ padding: 15px;
+ font-family: 'Monaco', 'Menlo', monospace;
+ font-size: 0.9rem;
+ }
+ 
+ .bug-list { display: flex; flex-direction: column; gap: 10px; }
+ .bug-item {
+ display: grid;
+ grid-template-columns: auto 1fr auto auto;
+ gap: 15px;
+ align-items: center;
+ padding: 18px 20px;
+ background: var(--ha-bg-surface);
+ border-radius: 8px;
+ border: 1px solid var(--ha-border);
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .bug-item:hover { border-color: var(--ha-accent-blue); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+ .bug-id { font-weight: 600; color: var(--ha-danger-hover); }
+ .bug-title { font-weight: 500; }
+ .bug-meta { color: var(--ha-text-disabled); font-size: 0.85rem; }
+ 
+ .analysis-section {
+ background: var(--ha-bg-base);
+ border-radius: 8px;
+ padding: 20px;
+ margin-top: 15px;
+ }
+ .analysis-section h4 { color: var(--ha-danger-hover); margin-bottom: 15px; }
+ 
+ @media (max-width: 768px) {
+ .sidebar { display: none; }
+ .main { margin-left: 0; }
+ .row { grid-template-columns: 1fr; }
+ .stats { flex-wrap: wrap; }
+ }
+ </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="sidebar-icon active" onclick="switchView('report')" title="Report Bug">🐛</div>
-        <div class="sidebar-icon" onclick="switchView('list')" title="Bug List">📋</div>
-        <div class="sidebar-icon" onclick="switchView('screenshot')" title="Screenshot Analysis">📷</div>
-    </div>
+ <div class="sidebar">
+ <div class="sidebar-icon active" onclick="switchView('report')" title="Report Bug"></div>
+ <div class="sidebar-icon" onclick="switchView('list')" title="Bug List"></div>
+ <div class="sidebar-icon" onclick="switchView('screenshot')" title="Screenshot Analysis"></div>
+ </div>
 
-    <div class="main">
-        <div class="header">
-            <h1>🐛 AI Bug Reporter</h1>
-        </div>
+ <div class="main">
+ <div class="header">
+ <h1> AI Bug Reporter</h1>
+ </div>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value open" id="stat-open">-</div>
-                <div class="stat-label">Open Bugs</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value critical" id="stat-critical">-</div>
-                <div class="stat-label">Critical</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value high" id="stat-high">-</div>
-                <div class="stat-label">High Priority</div>
-            </div>
-        </div>
+ <div class="stats">
+ <div class="stat">
+ <div class="stat-value open" id="stat-open">-</div>
+ <div class="stat-label">Open Bugs</div>
+ </div>
+ <div class="stat">
+ <div class="stat-value critical" id="stat-critical">-</div>
+ <div class="stat-label">Critical</div>
+ </div>
+ <div class="stat">
+ <div class="stat-value high" id="stat-high">-</div>
+ <div class="stat-label">High Priority</div>
+ </div>
+ </div>
 
-        <!-- Report View -->
-        <div id="report-view" class="view-content active">
-            <div class="card">
-                <h2>Report a Bug</h2>
-                <form id="bug-form">
-                    <div class="form-group">
-                        <label>Bug Title</label>
-                        <input type="text" id="title" placeholder="Brief description of the issue" required>
-                    </div>
+ <!-- Report View -->
+ <div id="report-view" class="view-content active">
+ <div class="card">
+ <h2>Report a Bug</h2>
+ <form id="bug-form">
+ <div class="form-group">
+ <label>Bug Title</label>
+ <input type="text" id="title" placeholder="Brief description of the issue" required>
+ </div>
 
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="description" placeholder="Describe what happened..." required></textarea>
-                    </div>
+ <div class="form-group">
+ <label>Description</label>
+ <textarea id="description" placeholder="Describe what happened..." required></textarea>
+ </div>
 
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Steps to Reproduce</label>
-                            <textarea id="steps" placeholder="1. Go to...\n2. Click on...\n3. See error"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Expected vs Actual</label>
-                            <textarea id="expected" placeholder="Expected: ...\nActual: ..."></textarea>
-                        </div>
-                    </div>
+ <div class="row">
+ <div class="form-group">
+ <label>Steps to Reproduce</label>
+ <textarea id="steps" placeholder="1. Go to...\n2. Click on...\n3. See error"></textarea>
+ </div>
+ <div class="form-group">
+ <label>Expected vs Actual</label>
+ <textarea id="expected" placeholder="Expected: ...\nActual: ..."></textarea>
+ </div>
+ </div>
 
-                    <div class="form-group">
-                        <label>Environment</label>
-                        <input type="text" id="environment" placeholder="Browser, OS, app version...">
-                    </div>
+ <div class="form-group">
+ <label>Environment</label>
+ <input type="text" id="environment" placeholder="Browser, OS, app version...">
+ </div>
 
-                    <button type="submit" class="submit" id="submit-btn">🐛 Submit Bug Report</button>
-                </form>
-            </div>
+ <button type="submit" class="submit" id="submit-btn"> Submit Bug Report</button>
+ </form>
+ </div>
 
-            <div id="enhanced-result" style="display: none;"></div>
-        </div>
+ <div id="enhanced-result" style="display: none;"></div>
+ </div>
 
-        <!-- List View -->
-        <div id="list-view" class="view-content">
-            <div class="card">
-                <h2>Bug Reports</h2>
-                <div class="bug-list" id="bug-list">
-                    <p style="color: #64748b;">Loading bugs...</p>
-                </div>
-            </div>
-        </div>
+ <!-- List View -->
+ <div id="list-view" class="view-content">
+ <div class="card">
+ <h2>Bug Reports</h2>
+ <div class="bug-list" id="bug-list">
+ <p style="color: var(--ha-text-disabled);">Loading bugs...</p>
+ </div>
+ </div>
+ </div>
 
-        <!-- Screenshot View -->
-        <div id="screenshot-view" class="view-content">
-            <div class="card">
-                <h2>📷 Analyze Screenshot</h2>
-                <form id="screenshot-form">
-                    <div class="form-group">
-                        <label>Screenshot URL</label>
-                        <input type="url" id="screenshot-url" placeholder="Paste image URL..." required>
-                    </div>
-                    <div class="form-group">
-                        <label>Additional Context (optional)</label>
-                        <textarea id="screenshot-context" placeholder="Any additional context about the bug..."></textarea>
-                    </div>
-                    <button type="submit" class="submit" id="screenshot-btn">🔍 Analyze Screenshot</button>
-                </form>
-            </div>
+ <!-- Screenshot View -->
+ <div id="screenshot-view" class="view-content">
+ <div class="card">
+ <h2> Analyze Screenshot</h2>
+ <form id="screenshot-form">
+ <div class="form-group">
+ <label>Screenshot URL</label>
+ <input type="url" id="screenshot-url" placeholder="Paste image URL..." required>
+ </div>
+ <div class="form-group">
+ <label>Additional Context (optional)</label>
+ <textarea id="screenshot-context" placeholder="Any additional context about the bug..."></textarea>
+ </div>
+ <button type="submit" class="submit" id="screenshot-btn"> Analyze Screenshot</button>
+ </form>
+ </div>
 
-            <div id="screenshot-result" style="display: none;"></div>
-        </div>
-    </div>
+ <div id="screenshot-result" style="display: none;"></div>
+ </div>
+ </div>
 
-    <script>
-        function switchView(view) {
-            document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
-            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
-            document.querySelector(`[onclick="switchView('${view}')"]`).classList.add('active');
-            document.getElementById(`${view}-view`).classList.add('active');
-            
-            if (view === 'list') loadBugs();
-        }
+ <script>
+ function switchView(view) {
+ document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+ document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+ document.querySelector(`[onclick="switchView('${view}')"]`).classList.add('active');
+ document.getElementById(`${view}-view`).classList.add('active');
+ 
+ if (view === 'list') loadBugs();
+ }
 
-        function parseJSON(data) {
-            if (typeof data === 'object') return data;
-            try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
-            catch { return null; }
-        }
+ function parseJSON(data) {
+ if (typeof data === 'object') return data;
+ try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
+ catch { return null; }
+ }
 
-        // Bug form submission
-        document.getElementById('bug-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.textContent = '🔄 Analyzing...';
+ // Bug form submission
+ document.getElementById('bug-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const btn = document.getElementById('submit-btn');
+ btn.disabled = true;
+ btn.textContent = ' Analyzing...';
 
-            try {
-                const response = await fetch('/api/report-bug', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: document.getElementById('title').value,
-                        description: document.getElementById('description').value,
-                        stepsToReproduce: document.getElementById('steps').value,
-                        expectedBehavior: document.getElementById('expected').value,
-                        environment: document.getElementById('environment').value
-                    })
-                });
-                const data = await response.json();
-                displayEnhancedReport(data);
-                document.getElementById('bug-form').reset();
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🐛 Submit Bug Report';
-            }
-        });
+ try {
+ const response = await fetch('/api/report-bug', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ title: document.getElementById('title').value,
+ description: document.getElementById('description').value,
+ stepsToReproduce: document.getElementById('steps').value,
+ expectedBehavior: document.getElementById('expected').value,
+ environment: document.getElementById('environment').value
+ })
+ });
+ const data = await response.json();
+ displayEnhancedReport(data);
+ document.getElementById('bug-form').reset();
+ } catch (error) {
+ alert('Error: ' + error.message);
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Submit Bug Report';
+ }
+ });
 
-        function displayEnhancedReport(data) {
-            const container = document.getElementById('enhanced-result');
-            container.style.display = 'block';
+ function displayEnhancedReport(data) {
+ const container = document.getElementById('enhanced-result');
+ container.style.display = 'block';
 
-            const enhanced = parseJSON(data.enhanced);
-            const analysis = parseJSON(data.analysis);
+ const enhanced = parseJSON(data.enhanced);
+ const analysis = parseJSON(data.analysis);
 
-            if (!enhanced) {
-                container.innerHTML = '<div class="card"><p>Error parsing response</p></div>';
-                return;
-            }
+ if (!enhanced) {
+ container.innerHTML = '<div class="card"><p>Error parsing response</p></div>';
+ return;
+ }
 
-            container.innerHTML = `
-                <div class="enhanced-report">
-                    <div class="report-header">
-                        <h3>${enhanced.enhancedTitle || 'Bug Report'}</h3>
-                        <div>
-                            <span class="badge ${enhanced.severity}">${enhanced.severity || 'medium'}</span>
-                            <span class="badge ${enhanced.priority}">${enhanced.priority || 'P2'}</span>
-                            <span class="badge">${enhanced.category || 'Bug'}</span>
-                        </div>
-                    </div>
-                    <div class="report-body">
-                        <div class="report-section">
-                            <h4>📝 Summary</h4>
-                            <p>${enhanced.summary || ''}</p>
-                        </div>
+ container.innerHTML = `
+ <div class="enhanced-report">
+ <div class="report-header">
+ <h3>${enhanced.enhancedTitle || 'Bug Report'}</h3>
+ <div>
+ <span class="badge ${enhanced.severity}">${enhanced.severity || 'medium'}</span>
+ <span class="badge ${enhanced.priority}">${enhanced.priority || 'P2'}</span>
+ <span class="badge">${enhanced.category || 'Bug'}</span>
+ </div>
+ </div>
+ <div class="report-body">
+ <div class="report-section">
+ <h4> Summary</h4>
+ <p>${enhanced.summary || ''}</p>
+ </div>
 
-                        <div class="report-section">
-                            <h4>🔄 Steps to Reproduce</h4>
-                            <ol>
-                                ${(enhanced.stepsToReproduce || []).map(s => `<li>${s}</li>`).join('')}
-                            </ol>
-                        </div>
+ <div class="report-section">
+ <h4> Steps to Reproduce</h4>
+ <ol>
+ ${(enhanced.stepsToReproduce || []).map(s => `<li>${s}</li>`).join('')}
+ </ol>
+ </div>
 
-                        <div class="row">
-                            <div class="report-section">
-                                <h4>✅ Expected Behavior</h4>
-                                <p>${enhanced.expectedBehavior || 'N/A'}</p>
-                            </div>
-                            <div class="report-section">
-                                <h4>❌ Actual Behavior</h4>
-                                <p>${enhanced.actualBehavior || 'N/A'}</p>
-                            </div>
-                        </div>
+ <div class="row">
+ <div class="report-section">
+ <h4> Expected Behavior</h4>
+ <p>${enhanced.expectedBehavior || 'N/A'}</p>
+ </div>
+ <div class="report-section">
+ <h4> Actual Behavior</h4>
+ <p>${enhanced.actualBehavior || 'N/A'}</p>
+ </div>
+ </div>
 
-                        <div class="report-section">
-                            <h4>🔧 Technical Analysis</h4>
-                            <div class="code-block">
-                                <p><strong>Possible Cause:</strong> ${enhanced.possibleCause || 'Unknown'}</p>
-                                <p><strong>Suggested Area:</strong> ${enhanced.suggestedArea || 'Unknown'}</p>
-                            </div>
-                        </div>
+ <div class="report-section">
+ <h4> Technical Analysis</h4>
+ <div class="code-block">
+ <p><strong>Possible Cause:</strong> ${enhanced.possibleCause || 'Unknown'}</p>
+ <p><strong>Suggested Area:</strong> ${enhanced.suggestedArea || 'Unknown'}</p>
+ </div>
+ </div>
 
-                        <div class="report-section">
-                            <h4>✔️ Acceptance Criteria</h4>
-                            <ul>
-                                ${(enhanced.acceptanceCriteria || []).map(c => `<li>${c}</li>`).join('')}
-                            </ul>
-                        </div>
+ <div class="report-section">
+ <h4> Acceptance Criteria</h4>
+ <ul>
+ ${(enhanced.acceptanceCriteria || []).map(c => `<li>${c}</li>`).join('')}
+ </ul>
+ </div>
 
-                        ${analysis ? `
-                            <div class="analysis-section">
-                                <h4>🔍 Additional Analysis</h4>
-                                <p><strong>Impact:</strong> ${analysis.potentialImpact?.users || 'Unknown'}</p>
-                                <p><strong>Workaround:</strong> ${analysis.workaround || 'None available'}</p>
-                                ${analysis.questions?.length > 0 ? `
-                                    <p><strong>Questions:</strong></p>
-                                    <ul>${analysis.questions.map(q => `<li>${q}</li>`).join('')}</ul>
-                                ` : ''}
-                            </div>
-                        ` : ''}
+ ${analysis ? `
+ <div class="analysis-section">
+ <h4> Additional Analysis</h4>
+ <p><strong>Impact:</strong> ${analysis.potentialImpact?.users || 'Unknown'}</p>
+ <p><strong>Workaround:</strong> ${analysis.workaround || 'None available'}</p>
+ ${analysis.questions?.length > 0 ? `
+ <p><strong>Questions:</strong></p>
+ <ul>${analysis.questions.map(q => `<li>${q}</li>`).join('')}</ul>
+ ` : ''}
+ </div>
+ ` : ''}
 
-                        <div class="report-section">
-                            <h4>🏷️ Labels</h4>
-                            ${(enhanced.labels || []).map(l => `<span class="badge">${l}</span>`).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+ <div class="report-section">
+ <h4> Labels</h4>
+ ${(enhanced.labels || []).map(l => `<span class="badge">${l}</span>`).join('')}
+ </div>
+ </div>
+ </div>
+ `;
+ }
 
-        async function loadBugs() {
-            try {
-                const response = await fetch('/api/list-bugs', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ limit: 20 })
-                });
-                const data = await response.json();
-                displayBugList(data.bugs || []);
-            } catch (e) {
-                console.error(e);
-            }
-        }
+ async function loadBugs() {
+ try {
+ const response = await fetch('/api/list-bugs', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ limit: 20 })
+ });
+ const data = await response.json();
+ displayBugList(data.bugs || []);
+ } catch (e) {
+ console.error(e);
+ }
+ }
 
-        function displayBugList(bugs) {
-            const html = bugs.length === 0 
-                ? '<p style="color: #64748b;">No bugs reported yet</p>'
-                : bugs.map(b => {
-                    const enhanced = parseJSON(b.enhanced);
-                    const severity = enhanced?.severity || 'medium';
-                    const priority = enhanced?.priority || 'P2';
-                    return `
-                        <div class="bug-item">
-                            <span class="bug-id">#${b.id?.slice(-6) || 'N/A'}</span>
-                            <div>
-                                <div class="bug-title">${enhanced?.enhancedTitle || b.originalTitle}</div>
-                                <div class="bug-meta">${enhanced?.category || 'Bug'}</div>
-                            </div>
-                            <span class="badge ${severity}">${severity}</span>
-                            <span class="badge ${priority}">${priority}</span>
-                        </div>
-                    `;
-                }).join('');
+ function displayBugList(bugs) {
+ const html = bugs.length === 0 
+ ? '<p style="color: var(--ha-text-disabled);">No bugs reported yet</p>'
+ : bugs.map(b => {
+ const enhanced = parseJSON(b.enhanced);
+ const severity = enhanced?.severity || 'medium';
+ const priority = enhanced?.priority || 'P2';
+ return `
+ <div class="bug-item">
+ <span class="bug-id">#${b.id?.slice(-6) || 'N/A'}</span>
+ <div>
+ <div class="bug-title">${enhanced?.enhancedTitle || b.originalTitle}</div>
+ <div class="bug-meta">${enhanced?.category || 'Bug'}</div>
+ </div>
+ <span class="badge ${severity}">${severity}</span>
+ <span class="badge ${priority}">${priority}</span>
+ </div>
+ `;
+ }).join('');
 
-            document.getElementById('bug-list').innerHTML = html;
+ document.getElementById('bug-list').innerHTML = html;
 
-            // Update stats
-            const critical = bugs.filter(b => parseJSON(b.enhanced)?.severity === 'critical').length;
-            const high = bugs.filter(b => parseJSON(b.enhanced)?.severity === 'high').length;
-            document.getElementById('stat-open').textContent = bugs.length;
-            document.getElementById('stat-critical').textContent = critical;
-            document.getElementById('stat-high').textContent = high;
-        }
+ // Update stats
+ const critical = bugs.filter(b => parseJSON(b.enhanced)?.severity === 'critical').length;
+ const high = bugs.filter(b => parseJSON(b.enhanced)?.severity === 'high').length;
+ document.getElementById('stat-open').textContent = bugs.length;
+ document.getElementById('stat-critical').textContent = critical;
+ document.getElementById('stat-high').textContent = high;
+ }
 
-        // Screenshot form
-        document.getElementById('screenshot-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('screenshot-btn');
-            btn.disabled = true;
-            btn.textContent = '🔍 Analyzing...';
+ // Screenshot form
+ document.getElementById('screenshot-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const btn = document.getElementById('screenshot-btn');
+ btn.disabled = true;
+ btn.textContent = ' Analyzing...';
 
-            try {
-                const response = await fetch('/api/analyze-screenshot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrls: [document.getElementById('screenshot-url').value],
-                        context: document.getElementById('screenshot-context').value
-                    })
-                });
-                const data = await response.json();
-                const analysis = parseJSON(data.analysis);
-                
-                document.getElementById('screenshot-result').style.display = 'block';
-                document.getElementById('screenshot-result').innerHTML = `
-                    <div class="card">
-                        <h2>Screenshot Analysis</h2>
-                        ${analysis ? `
-                            <h3>${analysis.suggestedTitle || 'Bug Detected'}</h3>
-                            <p><span class="badge ${analysis.severity}">${analysis.severity}</span></p>
-                            <p><strong>Issue:</strong> ${analysis.observedIssue || 'N/A'}</p>
-                            <p><strong>Category:</strong> ${analysis.category}</p>
-                            <p><strong>Description:</strong> ${analysis.description}</p>
-                            ${analysis.errorMessages?.length > 0 ? `<p><strong>Error Messages:</strong> ${analysis.errorMessages.join(', ')}</p>` : ''}
-                        ` : `<pre>${JSON.stringify(data.analysis, null, 2)}</pre>`}
-                    </div>
-                `;
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🔍 Analyze Screenshot';
-            }
-        });
+ try {
+ const response = await fetch('/api/analyze-screenshot', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ imageUrls: [document.getElementById('screenshot-url').value],
+ context: document.getElementById('screenshot-context').value
+ })
+ });
+ const data = await response.json();
+ const analysis = parseJSON(data.analysis);
+ 
+ document.getElementById('screenshot-result').style.display = 'block';
+ document.getElementById('screenshot-result').innerHTML = `
+ <div class="card">
+ <h2>Screenshot Analysis</h2>
+ ${analysis ? `
+ <h3>${analysis.suggestedTitle || 'Bug Detected'}</h3>
+ <p><span class="badge ${analysis.severity}">${analysis.severity}</span></p>
+ <p><strong>Issue:</strong> ${analysis.observedIssue || 'N/A'}</p>
+ <p><strong>Category:</strong> ${analysis.category}</p>
+ <p><strong>Description:</strong> ${analysis.description}</p>
+ ${analysis.errorMessages?.length > 0 ? `<p><strong>Error Messages:</strong> ${analysis.errorMessages.join(', ')}</p>` : ''}
+ ` : `<pre>${JSON.stringify(data.analysis, null, 2)}</pre>`}
+ </div>
+ `;
+ } catch (error) {
+ alert('Error: ' + error.message);
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Analyze Screenshot';
+ }
+ });
 
-        // Load bugs on init
-        loadBugs();
-    </script>
+ // Load bugs on init
+ loadBugs();
+ </script>
 </body>
 </html>

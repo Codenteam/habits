@@ -194,6 +194,10 @@ function mapTriggerType(type: string | undefined): BitsTriggerType {
       return BitsTriggerType.WEBHOOK;
     case 'APP_WEBHOOK':
       return BitsTriggerType.APP_WEBHOOK;
+    case 'STREAMING':
+      return BitsTriggerType.STREAMING;
+    case 'CUSTOM':
+      return BitsTriggerType.CUSTOM;
     default:
       return BitsTriggerType.POLLING;
   }
@@ -498,6 +502,43 @@ const _cueHelperImpl = {
         return runResult;
       }
 
+      case BitsTriggerType.STREAMING: {
+        logger.log(`Streaming trigger flow: onEnable (events pushed via run)`);
+
+        // Streaming triggers set up their stream in onEnable (e.g., open mic,
+        // connect websocket). Events are pushed to run() individually as they
+        // arrive — no immediate run call.
+        const onEnableResult = await this.executeTrigger({
+          moduleDefinition,
+          triggerName,
+          input,
+          hookType: TriggerHookType.ON_ENABLE,
+          trigger,
+          payload,
+          webhookUrl,
+          isTest: false,
+          store: triggerStore,
+          executor,
+          workflowId,
+          nodeId,
+        });
+
+        if (!onEnableResult.success) {
+          return onEnableResult;
+        }
+
+        logger.log(`  ✅ Streaming trigger onEnable completed`);
+        if (onEnableResult.listeners && onEnableResult.listeners.length > 0) {
+          logger.log(`  👂 Listeners: ${onEnableResult.listeners.length}`);
+        }
+
+        return {
+          success: true,
+          message: `Streaming trigger ${triggerName} enabled`,
+          output: [],
+        };
+      }
+
       case BitsTriggerType.WEBHOOK: {
         logger.log(`Webhook trigger`);
 
@@ -513,6 +554,43 @@ const _cueHelperImpl = {
           workflowId,
           nodeId,
         });
+      }
+
+      case BitsTriggerType.CUSTOM: {
+        logger.log(`Custom trigger - calling onEnable for lifecycle setup`);
+
+        // For custom triggers, call onEnable to let the trigger set up its own lifecycle
+        // (e.g., start microphone listening, register device sensors).
+        // The trigger manages its own event emission via the app event bus.
+        const onEnableResult = await this.executeTrigger({
+          moduleDefinition,
+          triggerName,
+          input,
+          hookType: TriggerHookType.ON_ENABLE,
+          trigger,
+          payload,
+          webhookUrl,
+          isTest: false,
+          store: triggerStore,
+          executor,
+          workflowId,
+          nodeId,
+        });
+
+        if (!onEnableResult.success) {
+          return onEnableResult;
+        }
+
+        logger.log(`  ✅ Custom trigger onEnable completed`);
+        if (onEnableResult.listeners && onEnableResult.listeners.length > 0) {
+          logger.log(`  👂 Listeners: ${onEnableResult.listeners.length}`);
+        }
+
+        return {
+          success: true,
+          message: `Custom trigger ${triggerName} enabled`,
+          output: [],
+        };
       }
 
       default: {
@@ -535,6 +613,8 @@ const _cueHelperImpl = {
       onPollingTrigger?: (triggerName: string, trigger: BitsTrigger) => void;
       onWebhookTrigger?: (triggerName: string, trigger: BitsTrigger) => void;
       onAppWebhookTrigger?: (triggerName: string, trigger: BitsTrigger) => void;
+      onStreamingTrigger?: (triggerName: string, trigger: BitsTrigger) => void;
+      onCustomTrigger?: (triggerName: string, trigger: BitsTrigger) => void;
       onTriggerResult?: (triggerName: string, result: TriggerExecutionResult) => void;
       input?: Record<string, any>;
     }
@@ -591,6 +671,20 @@ const _cueHelperImpl = {
           }
           break;
 
+        case BitsTriggerType.STREAMING:
+          logger.log(`  → Setting up streaming trigger`);
+          if (options?.onStreamingTrigger) {
+            options.onStreamingTrigger(triggerName, trigger);
+          }
+          break;
+
+        case BitsTriggerType.CUSTOM:
+          logger.log(`  → Setting up custom trigger`);
+          if (options?.onCustomTrigger) {
+            options.onCustomTrigger(triggerName, trigger);
+          }
+          break;
+
         default:
           logger.warn(`  ⚠️ Unknown trigger type: ${triggerType}`);
       }
@@ -611,7 +705,7 @@ const _cueHelperImpl = {
   isBitsTrigger(node: any): boolean {
     return (
       node.data?.framework === 'bits' &&
-      (node.data?.triggerType === 'polling' || node.data?.triggerType === 'webhook')
+      (node.data?.triggerType === 'polling' || node.data?.triggerType === 'webhook' || node.data?.triggerType === 'streaming' || node.data?.triggerType === 'custom')
     );
   },
 

@@ -1160,10 +1160,22 @@
                         "markdownDescription": "Enables the size command without any pre-configured scope."
                       },
                       {
+                        "description": "Enables the start_accessing_security_scoped_resource command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "fs:allow-start-accessing-security-scoped-resource",
+                        "markdownDescription": "Enables the start_accessing_security_scoped_resource command without any pre-configured scope."
+                      },
+                      {
                         "description": "Enables the stat command without any pre-configured scope.",
                         "type": "string",
                         "const": "fs:allow-stat",
                         "markdownDescription": "Enables the stat command without any pre-configured scope."
+                      },
+                      {
+                        "description": "Enables the stop_accessing_security_scoped_resource command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "fs:allow-stop-accessing-security-scoped-resource",
+                        "markdownDescription": "Enables the stop_accessing_security_scoped_resource command without any pre-configured scope."
                       },
                       {
                         "description": "Enables the truncate command without any pre-configured scope.",
@@ -1316,10 +1328,22 @@
                         "markdownDescription": "Denies the size command without any pre-configured scope."
                       },
                       {
+                        "description": "Denies the start_accessing_security_scoped_resource command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "fs:deny-start-accessing-security-scoped-resource",
+                        "markdownDescription": "Denies the start_accessing_security_scoped_resource command without any pre-configured scope."
+                      },
+                      {
                         "description": "Denies the stat command without any pre-configured scope.",
                         "type": "string",
                         "const": "fs:deny-stat",
                         "markdownDescription": "Denies the stat command without any pre-configured scope."
+                      },
+                      {
+                        "description": "Denies the stop_accessing_security_scoped_resource command without any pre-configured scope.",
+                        "type": "string",
+                        "const": "fs:deny-stop-accessing-security-scoped-resource",
+                        "markdownDescription": "Denies the stop_accessing_security_scoped_resource command without any pre-configured scope."
                       },
                       {
                         "description": "Denies the truncate command without any pre-configured scope.",
@@ -4461,22 +4485,76 @@
           "markdownDescription": "Denies the unminimize command without any pre-configured scope."
         },
         {
-          "description": "This permission set configures the types of dialogs\navailable from the dialog plugin.\n\n#### Granted Permissions\n\nAll dialog types are enabled.\n\n\n\n#### This default permission set includes:\n\n- `allow-ask`\n- `allow-confirm`\n- `allow-message`\n- `allow-save`\n- `allow-open`",
+          "description": "Allows reading the opened deep link via the get_current command\n#### This default permission set includes:\n\n- `allow-get-current`",
+          "type": "string",
+          "const": "deep-link:default",
+          "markdownDescription": "Allows reading the opened deep link via the get_current command\n#### This default permission set includes:\n\n- `allow-get-current`"
+        },
+        {
+          "description": "Enables the get_current command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:allow-get-current",
+          "markdownDescription": "Enables the get_current command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:allow-is-registered",
+          "markdownDescription": "Enables the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:allow-register",
+          "markdownDescription": "Enables the register command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:allow-unregister",
+          "markdownDescription": "Enables the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_current command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:deny-get-current",
+          "markdownDescription": "Denies the get_current command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:deny-is-registered",
+          "markdownDescription": "Denies the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:deny-register",
+          "markdownDescription": "Denies the register command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "deep-link:deny-unregister",
+          "markdownDescription": "Denies the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "This permission set configures the types of dialogs\navailable from the dialog plugin.\n\n#### Granted Permissions\n\nAll dialog types are enabled.\n\n\n\n#### This default permission set includes:\n\n- `allow-message`\n- `allow-save`\n- `allow-open`",
           "type": "string",
           "const": "dialog:default",
-          "markdownDescription": "This permission set configures the types of dialogs\navailable from the dialog plugin.\n\n#### Granted Permissions\n\nAll dialog types are enabled.\n\n\n\n#### This default permission set includes:\n\n- `allow-ask`\n- `allow-confirm`\n- `allow-message`\n- `allow-save`\n- `allow-open`"
+          "markdownDescription": "This permission set configures the types of dialogs\navailable from the dialog plugin.\n\n#### Granted Permissions\n\nAll dialog types are enabled.\n\n\n\n#### This default permission set includes:\n\n- `allow-message`\n- `allow-save`\n- `allow-open`"
         },
         {
-          "description": "Enables the ask command without any pre-configured scope.",
+          "description": "Enables the ask command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `allow-message` and will be removed in v3)",
           "type": "string",
           "const": "dialog:allow-ask",
-          "markdownDescription": "Enables the ask command without any pre-configured scope."
+          "markdownDescription": "Enables the ask command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `allow-message` and will be removed in v3)"
         },
         {
-          "description": "Enables the confirm command without any pre-configured scope.",
+          "description": "Enables the confirm command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `allow-message` and will be removed in v3)",
           "type": "string",
           "const": "dialog:allow-confirm",
-          "markdownDescription": "Enables the confirm command without any pre-configured scope."
+          "markdownDescription": "Enables the confirm command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `allow-message` and will be removed in v3)"
         },
         {
           "description": "Enables the message command without any pre-configured scope.",
@@ -4497,16 +4575,16 @@
           "markdownDescription": "Enables the save command without any pre-configured scope."
         },
         {
-          "description": "Denies the ask command without any pre-configured scope.",
+          "description": "Denies the ask command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `deny-message` and will be removed in v3)",
           "type": "string",
           "const": "dialog:deny-ask",
-          "markdownDescription": "Denies the ask command without any pre-configured scope."
+          "markdownDescription": "Denies the ask command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `deny-message` and will be removed in v3)"
         },
         {
-          "description": "Denies the confirm command without any pre-configured scope.",
+          "description": "Denies the confirm command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `deny-message` and will be removed in v3)",
           "type": "string",
           "const": "dialog:deny-confirm",
-          "markdownDescription": "Denies the confirm command without any pre-configured scope."
+          "markdownDescription": "Denies the confirm command without any pre-configured scope. (**DEPRECATED**: This is now an alias to `deny-message` and will be removed in v3)"
         },
         {
           "description": "Denies the message command without any pre-configured scope.",
@@ -5649,10 +5727,22 @@
           "markdownDescription": "Enables the size command without any pre-configured scope."
         },
         {
+          "description": "Enables the start_accessing_security_scoped_resource command without any pre-configured scope.",
+          "type": "string",
+          "const": "fs:allow-start-accessing-security-scoped-resource",
+          "markdownDescription": "Enables the start_accessing_security_scoped_resource command without any pre-configured scope."
+        },
+        {
           "description": "Enables the stat command without any pre-configured scope.",
           "type": "string",
           "const": "fs:allow-stat",
           "markdownDescription": "Enables the stat command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the stop_accessing_security_scoped_resource command without any pre-configured scope.",
+          "type": "string",
+          "const": "fs:allow-stop-accessing-security-scoped-resource",
+          "markdownDescription": "Enables the stop_accessing_security_scoped_resource command without any pre-configured scope."
         },
         {
           "description": "Enables the truncate command without any pre-configured scope.",
@@ -5805,10 +5895,22 @@
           "markdownDescription": "Denies the size command without any pre-configured scope."
         },
         {
+          "description": "Denies the start_accessing_security_scoped_resource command without any pre-configured scope.",
+          "type": "string",
+          "const": "fs:deny-start-accessing-security-scoped-resource",
+          "markdownDescription": "Denies the start_accessing_security_scoped_resource command without any pre-configured scope."
+        },
+        {
           "description": "Denies the stat command without any pre-configured scope.",
           "type": "string",
           "const": "fs:deny-stat",
           "markdownDescription": "Denies the stat command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the stop_accessing_security_scoped_resource command without any pre-configured scope.",
+          "type": "string",
+          "const": "fs:deny-stop-accessing-security-scoped-resource",
+          "markdownDescription": "Denies the stop_accessing_security_scoped_resource command without any pre-configured scope."
         },
         {
           "description": "Denies the truncate command without any pre-configured scope.",
@@ -6525,10 +6627,10 @@
           "markdownDescription": "Denies the set_secret command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`",
+          "description": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-embed`\n- `allow-utilities`",
           "type": "string",
           "const": "local-ai:default",
-          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-utilities`"
+          "markdownDescription": "Default permissions for Local AI plugin - allows all AI operations\n#### This default permission set includes:\n\n- `allow-generate-text`\n- `allow-image-caption`\n- `allow-image-gen`\n- `allow-transcribe`\n- `allow-text-to-voice`\n- `allow-embed`\n- `allow-utilities`"
         },
         {
           "description": "Enables the caption_image command without any pre-configured scope.",
@@ -6565,6 +6667,12 @@
           "type": "string",
           "const": "local-ai:allow-create-voice-synthesizer",
           "markdownDescription": "Enables the create_voice_synthesizer command without any pre-configured scope."
+        },
+        {
+          "description": "Allow text embedding commands",
+          "type": "string",
+          "const": "local-ai:allow-embed",
+          "markdownDescription": "Allow text embedding commands"
         },
         {
           "description": "Enables the generate_image command without any pre-configured scope.",
@@ -6961,6 +7069,60 @@
           "type": "string",
           "const": "sql:deny-select",
           "markdownDescription": "Denies the select command without any pre-configured scope."
+        },
+        {
+          "description": "Default permissions for tauri-plugin-sqlite-vec\n#### This default permission set includes:\n\n- `allow-ensure-tables`\n- `allow-vector-insert`\n- `allow-vector-search`\n- `allow-vector-delete`",
+          "type": "string",
+          "const": "sqlite-vec:default",
+          "markdownDescription": "Default permissions for tauri-plugin-sqlite-vec\n#### This default permission set includes:\n\n- `allow-ensure-tables`\n- `allow-vector-insert`\n- `allow-vector-search`\n- `allow-vector-delete`"
+        },
+        {
+          "description": "Enables the ensure_tables command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:allow-ensure-tables",
+          "markdownDescription": "Enables the ensure_tables command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the vector_delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:allow-vector-delete",
+          "markdownDescription": "Enables the vector_delete command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the vector_insert command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:allow-vector-insert",
+          "markdownDescription": "Enables the vector_insert command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the vector_search command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:allow-vector-search",
+          "markdownDescription": "Enables the vector_search command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the ensure_tables command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:deny-ensure-tables",
+          "markdownDescription": "Denies the ensure_tables command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the vector_delete command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:deny-vector-delete",
+          "markdownDescription": "Denies the vector_delete command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the vector_insert command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:deny-vector-insert",
+          "markdownDescription": "Denies the vector_insert command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the vector_search command without any pre-configured scope.",
+          "type": "string",
+          "const": "sqlite-vec:deny-vector-search",
+          "markdownDescription": "Denies the vector_search command without any pre-configured scope."
         }
       ]
     },

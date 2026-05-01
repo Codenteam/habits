@@ -1,185 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home Arrival Lights - Demo UI</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #0f172a; }
-  </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Home Arrival Lights - Demo UI</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ body { background-color: var(--ha-bg-base); }
+ </style>
 </head>
 <body class="min-h-screen text-white p-4">
-  <div class="max-w-md mx-auto">
-    <!-- Header -->
-    <div class="text-center mb-8 pt-8">
-      <div class="text-6xl mb-4">🏠</div>
-      <h1 class="text-2xl font-bold">Home Arrival Lights</h1>
-      <p class="text-slate-400 mt-2">Automatic light control based on location</p>
-    </div>
+ <div class="max-w-md mx-auto">
+ <!-- Header -->
+ <div class="text-center mb-8 pt-8">
+ <div class="text-6xl mb-4"></div>
+ <h1 class="text-2xl font-bold">Home Arrival Lights</h1>
+ <p class="text-slate-400 mt-2">Automatic light control based on location</p>
+ </div>
 
-    <!-- Status Card -->
-    <div class="bg-slate-800 rounded-2xl p-6 mb-4">
-      <div class="flex items-center justify-between mb-4">
-        <span class="text-slate-400">Location Status</span>
-        <span id="location-status" class="text-amber-400">● Monitoring</span>
-      </div>
-      <div class="flex items-center justify-between mb-4">
-        <span class="text-slate-400">Home Geofence</span>
-        <span id="geofence-status" class="text-slate-300">Outside</span>
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-slate-400">Lights</span>
-        <span id="lights-status" class="text-slate-300">Off</span>
-      </div>
-    </div>
+ <!-- Status Card -->
+ <div class="bg-slate-800 rounded-2xl p-6 mb-4">
+ <div class="flex items-center justify-between mb-4">
+ <span class="text-slate-400">Location Status</span>
+ <span id="location-status" class="text-amber-400"> Monitoring</span>
+ </div>
+ <div class="flex items-center justify-between mb-4">
+ <span class="text-slate-400">Home Geofence</span>
+ <span id="geofence-status" class="text-slate-300">Outside</span>
+ </div>
+ <div class="flex items-center justify-between">
+ <span class="text-slate-400">Lights</span>
+ <span id="lights-status" class="text-slate-300">Off</span>
+ </div>
+ </div>
 
-    <!-- Configuration -->
-    <div class="bg-slate-800 rounded-2xl p-6 mb-4">
-      <h2 class="font-semibold mb-4">Configuration</h2>
-      
-      <div class="space-y-4">
-        <div>
-          <label class="text-slate-400 text-sm">Home Latitude</label>
-          <input type="number" id="latitude" value="37.7749" step="0.0001" 
-                 class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
-        </div>
-        <div>
-          <label class="text-slate-400 text-sm">Home Longitude</label>
-          <input type="number" id="longitude" value="-122.4194" step="0.0001"
-                 class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
-        </div>
-        <div>
-          <label class="text-slate-400 text-sm">Geofence Radius (m)</label>
-          <input type="number" id="radius" value="100" 
-                 class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
-        </div>
-        <div>
-          <label class="text-slate-400 text-sm">Brightness (%)</label>
-          <input type="range" id="brightness" value="75" min="0" max="100"
-                 class="w-full mt-1">
-          <div class="text-right text-slate-400 text-sm"><span id="brightness-value">75</span>%</div>
-        </div>
-      </div>
-    </div>
+ <!-- Configuration -->
+ <div class="bg-slate-800 rounded-2xl p-6 mb-4">
+ <h2 class="font-semibold mb-4">Configuration</h2>
+ 
+ <div class="space-y-4">
+ <div>
+ <label class="text-slate-400 text-sm">Home Latitude</label>
+ <input type="number" id="latitude" value="37.7749" step="0.0001" 
+ class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
+ </div>
+ <div>
+ <label class="text-slate-400 text-sm">Home Longitude</label>
+ <input type="number" id="longitude" value="-122.4194" step="0.0001"
+ class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
+ </div>
+ <div>
+ <label class="text-slate-400 text-sm">Geofence Radius (m)</label>
+ <input type="number" id="radius" value="100" 
+ class="w-full bg-slate-700 rounded-lg px-4 py-2 mt-1 text-white">
+ </div>
+ <div>
+ <label class="text-slate-400 text-sm">Brightness (%)</label>
+ <input type="range" id="brightness" value="75" min="0" max="100"
+ class="w-full mt-1">
+ <div class="text-right text-slate-400 text-sm"><span id="brightness-value">75</span>%</div>
+ </div>
+ </div>
+ </div>
 
-    <!-- Actions -->
-    <div class="space-y-3">
-      <button onclick="simulateArrival()" 
-              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition">
-        🏠 Simulate Arrival (Lights On)
-      </button>
-      <button onclick="simulateDeparture()" 
-              class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition">
-        🚗 Simulate Departure (Lights Off)
-      </button>
-      <button onclick="getCurrentLocation()"
-              class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition">
-        📍 Use Current Location as Home
-      </button>
-    </div>
+ <!-- Actions -->
+ <div class="space-y-3">
+ <button onclick="simulateArrival()" 
+ class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+ Simulate Arrival (Lights On)
+ </button>
+ <button onclick="simulateDeparture()" 
+ class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+ Simulate Departure (Lights Off)
+ </button>
+ <button onclick="getCurrentLocation()"
+ class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 px-6 rounded-xl transition">
+ Use Current Location as Home
+ </button>
+ </div>
 
-    <!-- Log -->
-    <div class="bg-slate-800 rounded-2xl p-6 mt-4">
-      <h2 class="font-semibold mb-4">Activity Log</h2>
-      <div id="log" class="text-sm text-slate-400 space-y-2 max-h-48 overflow-y-auto">
-        <div>Ready to monitor location...</div>
-      </div>
-    </div>
-  </div>
+ <!-- Log -->
+ <div class="bg-slate-800 rounded-2xl p-6 mt-4">
+ <h2 class="font-semibold mb-4">Activity Log</h2>
+ <div id="log" class="text-sm text-slate-400 space-y-2 max-h-48 overflow-y-auto">
+ <div>Ready to monitor location...</div>
+ </div>
+ </div>
+ </div>
 
-  <script>
-    const brightnessSlider = document.getElementById('brightness');
-    const brightnessValue = document.getElementById('brightness-value');
-    brightnessSlider.addEventListener('input', () => {
-      brightnessValue.textContent = brightnessSlider.value;
-    });
+ <script>
+ const brightnessSlider = document.getElementById('brightness');
+ const brightnessValue = document.getElementById('brightness-value');
+ brightnessSlider.addEventListener('input', () => {
+ brightnessValue.textContent = brightnessSlider.value;
+ });
 
-    function log(message) {
-      const logDiv = document.getElementById('log');
-      const time = new Date().toLocaleTimeString();
-      const entry = document.createElement('div');
-      entry.textContent = `[${time}] ${message}`;
-      logDiv.insertBefore(entry, logDiv.firstChild);
-    }
+ function log(message) {
+ const logDiv = document.getElementById('log');
+ const time = new Date().toLocaleTimeString();
+ const entry = document.createElement('div');
+ entry.textContent = `[${time}] ${message}`;
+ logDiv.insertBefore(entry, logDiv.firstChild);
+ }
 
-    async function simulateArrival() {
-      document.getElementById('geofence-status').textContent = 'Inside';
-      document.getElementById('geofence-status').className = 'text-green-400';
-      document.getElementById('lights-status').textContent = 'On (' + brightnessSlider.value + '%)';
-      document.getElementById('lights-status').className = 'text-amber-400';
-      
-      log('📍 Entered home geofence');
-      log('💡 Turning on lights...');
-      
-      // Call the workflow
-      try {
-        const response = await fetch('/api/home-arrival-lights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            config: {
-              home_latitude: parseFloat(document.getElementById('latitude').value),
-              home_longitude: parseFloat(document.getElementById('longitude').value),
-              geofence_radius: parseInt(document.getElementById('radius').value),
-              brightness: parseInt(brightnessSlider.value)
-            }
-          })
-        });
-        const data = await response.json();
-        log('✅ Lights turned on: ' + JSON.stringify(data.result?.successful || 0) + ' devices');
-      } catch (e) {
-        log('⚠️ Demo mode - workflow call simulated');
-      }
-    }
+ async function simulateArrival() {
+ document.getElementById('geofence-status').textContent = 'Inside';
+ document.getElementById('geofence-status').className = 'text-green-400';
+ document.getElementById('lights-status').textContent = 'On (' + brightnessSlider.value + '%)';
+ document.getElementById('lights-status').className = 'text-amber-400';
+ 
+ log(' Entered home geofence');
+ log(' Turning on lights...');
+ 
+ // Call the workflow
+ try {
+ const response = await fetch('/api/home-arrival-lights', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ config: {
+ home_latitude: parseFloat(document.getElementById('latitude').value),
+ home_longitude: parseFloat(document.getElementById('longitude').value),
+ geofence_radius: parseInt(document.getElementById('radius').value),
+ brightness: parseInt(brightnessSlider.value)
+ }
+ })
+ });
+ const data = await response.json();
+ log(' Lights turned on: ' + JSON.stringify(data.result?.successful || 0) + ' devices');
+ } catch (e) {
+ log(' Demo mode - workflow call simulated');
+ }
+ }
 
-    async function simulateDeparture() {
-      document.getElementById('geofence-status').textContent = 'Outside';
-      document.getElementById('geofence-status').className = 'text-slate-300';
-      document.getElementById('lights-status').textContent = 'Off';
-      document.getElementById('lights-status').className = 'text-slate-300';
-      
-      log('📍 Exited home geofence');
-      log('💡 Turning off lights...');
-      
-      // Call the workflow
-      try {
-        const response = await fetch('/api/home-departure-lights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            config: {
-              home_latitude: parseFloat(document.getElementById('latitude').value),
-              home_longitude: parseFloat(document.getElementById('longitude').value),
-              geofence_radius: parseInt(document.getElementById('radius').value)
-            }
-          })
-        });
-        const data = await response.json();
-        log('✅ Lights turned off');
-      } catch (e) {
-        log('⚠️ Demo mode - workflow call simulated');
-      }
-    }
+ async function simulateDeparture() {
+ document.getElementById('geofence-status').textContent = 'Outside';
+ document.getElementById('geofence-status').className = 'text-slate-300';
+ document.getElementById('lights-status').textContent = 'Off';
+ document.getElementById('lights-status').className = 'text-slate-300';
+ 
+ log(' Exited home geofence');
+ log(' Turning off lights...');
+ 
+ // Call the workflow
+ try {
+ const response = await fetch('/api/home-departure-lights', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ config: {
+ home_latitude: parseFloat(document.getElementById('latitude').value),
+ home_longitude: parseFloat(document.getElementById('longitude').value),
+ geofence_radius: parseInt(document.getElementById('radius').value)
+ }
+ })
+ });
+ const data = await response.json();
+ log(' Lights turned off');
+ } catch (e) {
+ log(' Demo mode - workflow call simulated');
+ }
+ }
 
-    function getCurrentLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
-            document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
-            log('📍 Home location set to current position');
-          },
-          (error) => {
-            log('❌ Could not get location: ' + error.message);
-          }
-        );
-      } else {
-        log('❌ Geolocation not supported');
-      }
-    }
+ function getCurrentLocation() {
+ if (navigator.geolocation) {
+ navigator.geolocation.getCurrentPosition(
+ (position) => {
+ document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+ document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+ log(' Home location set to current position');
+ },
+ (error) => {
+ log(' Could not get location: ' + error.message);
+ }
+ );
+ } else {
+ log(' Geolocation not supported');
+ }
+ }
 
-    log('🏠 Home Arrival Lights ready');
-  </script>
+ log('Home Arrival Lights ready');
+ </script>
 </body>
 </html>

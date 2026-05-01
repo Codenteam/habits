@@ -1,0 +1,51 @@
+id: voice-capture
+name: Voice Capture & Save
+description: Listens for voice commands, logs them, and saves to SQL database
+
+nodes:
+  - id: listen
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-voice"
+      operation: voice_command
+      triggerType: streaming
+      params:
+        silenceTimeout: 1500
+        wakeWords: ""
+        language: "en-US"
+        continuous: true
+
+  - id: log-it
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "Voice Command"
+        message: "{{habits.input}}"
+
+  - id: save-it
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: voice_commands
+        document: "{{habits.input}}"
+        database: voice-demo.db
+
+edges:
+  - source: listen
+    target: log-it
+  - source: log-it
+    target: save-it
+
+output:
+  logged: "{{log-it}}"
+  saved: "{{save-it}}"

@@ -9,7 +9,6 @@
 - [ ] Browse [Examples Index](/showcase/index.md) - see what's possible
 
 ### If you want to understand Habits in-depth
-- [ ] Read [Variables](/deep-dive/variables.md) - learn how to pass data between nodes
 - [ ] Read [Habit Schema](/deep-dive/habit-schema.md) - full schema reference
 - [ ] Read [Creating Habits](/deep-dive/creating.md) - advanced creation techniques
 - [ ] Read [Running Habits](/deep-dive/running.md) - different modes and options
@@ -33,5 +32,6 @@
 
 ### If you have specific questions
 - [ ] Check [Security Documentation](/security/index.md) - security best practices
+- [ ] Read [Variables](/extra-reading/variables.md) - learn how to pass data between nodes
 - [ ] Browse Extra Reading in `docs/extra-reading/` folder
 - [ ] Browse Misc documentation in `docs/misc/` folder

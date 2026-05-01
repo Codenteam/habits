@@ -185,7 +185,23 @@ function run(stack, workflows, env){
 
     // Path to our Node.js polyfills
     const polyfillsPath = path.join(__dirname, 'node-polyfills.js');
-    
+
+    // Resolve @ha-bits/cortex-core path - works both when installed via npm and in local monorepo dev
+    let cortexCorePath;
+    try {
+        cortexCorePath = require.resolve('@ha-bits/cortex-core', {
+            paths: [path.join(__dirname, 'node_modules'), __dirname]
+        });
+    } catch (e) {
+        // Fallback to monorepo dist path for local development
+        cortexCorePath = path.join(__dirname, '../dist/packages/cortex/core/index.cjs');
+    }
+
+    // @ha-bits/core is private (source-only), only available in local monorepo dev
+    const coreMonorepoPath = path.join(__dirname, '../dist/packages/core/src/index.js');
+    const coreAlias = fs.existsSync(coreMonorepoPath) ? { '@ha-bits/core': coreMonorepoPath } : {};
+
+
 
     // Node.js built-in modules that need polyfills
     const nodeBuiltins = [
@@ -355,11 +371,11 @@ if (typeof globalThis.process === 'undefined') {
         // Alias @ha-bits packages to local node_modules
         // Bit stubs are discovered from package.json habits.stubs field
         alias: {
-            '@ha-bits/cortex-core': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
+            '@ha-bits/cortex-core': cortexCorePath,
             // @ha-bits/cortex (full package) should resolve to cortex-core for bundling
-            '@ha-bits/cortex': path.join(__dirname, '../dist/packages/cortex/core/index.cjs'),
-            // Include @ha-bits/core for LoggerFactory etc. used by cortex-core
-            '@ha-bits/core': path.join(__dirname, '../dist/packages/core/src/index.js'),
+            '@ha-bits/cortex': cortexCorePath,
+            // @ha-bits/core is private; only available in monorepo dev (spread empty object if not found)
+            ...coreAlias,
             // Stub native packages that can't run in browser
             'tiktoken': path.join(__dirname, 'stubs/tiktoken.js'),
             // Always include bit-database-sql driver stub for polling store deduplication

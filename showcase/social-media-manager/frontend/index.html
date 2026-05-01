@@ -1,361 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Media Manager</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #ff9ff3 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .subtitle { color: white; text-align: center; margin-bottom: 30px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        }
-        .card h2 { color: #ff6b6b; margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; }
-        input, select, textarea {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #f0f0f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #ff6b6b; }
-        textarea { resize: vertical; min-height: 100px; }
-        
-        .tone-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .tone-btn {
-            padding: 10px 20px;
-            border: 2px solid #f0f0f0;
-            background: white;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tone-btn:hover { border-color: #ff6b6b; }
-        .tone-btn.active { border-color: #ff6b6b; background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); color: white; }
-        
-        button.submit {
-            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        
-        .loading { display: none; text-align: center; padding: 60px; }
-        .loading.active { display: block; }
-        .bounce { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        .bounce span {
-            width: 20px; height: 20px;
-            border-radius: 50%;
-            animation: bounce 0.6s ease-in-out infinite alternate;
-        }
-        .bounce span:nth-child(1) { background: #ff6b6b; animation-delay: 0s; }
-        .bounce span:nth-child(2) { background: #feca57; animation-delay: 0.1s; }
-        .bounce span:nth-child(3) { background: #ff9ff3; animation-delay: 0.2s; }
-        @keyframes bounce { to { transform: translateY(-20px); } }
-        
-        .results { display: none; }
-        .results.active { display: block; }
-        
-        .platform-tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; }
-        .platform-tab {
-            padding: 12px 24px;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .platform-tab:hover { background: #eee; }
-        .platform-tab.active { background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); color: white; }
-        
-        .platform-content { display: none; }
-        .platform-content.active { display: block; }
-        
-        .content-section {
-            background: #fafafa;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-        .content-section h3 { color: #ff6b6b; margin-bottom: 15px; }
-        .content-section pre { white-space: pre-wrap; line-height: 1.8; color: #444; }
-        .copy-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-        }
-        
-        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .history-card {
-            background: linear-gradient(135deg, #fff5f5 0%, #fffbf0 100%);
-            border-radius: 16px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-        }
-        .history-card:hover { transform: translateY(-5px); border-color: #ff6b6b; }
-        .history-card .topic { font-weight: 600; color: #333; }
-        .history-card .meta { font-size: 0.85rem; color: #888; margin-top: 8px; }
-        .history-card .platforms { display: flex; gap: 5px; margin-top: 10px; }
-        .history-card .platform-icon { font-size: 1.2rem; }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Social Media Manager</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-elevated);
+ min-height: 100vh;
+ padding: 20px;
+ }
+ .container { max-width: 1000px; margin: 0 auto; }
+ h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+ .subtitle { color: white; text-align: center; margin-bottom: 30px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+ .card {
+ background: white;
+ border-radius: 20px;
+ padding: 30px;
+ margin-bottom: 20px;
+ box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+ }
+ .card h2 { color: var(--ha-status-error); margin-bottom: 25px; }
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-text-disabled); font-weight: 600; }
+ input, select, textarea {
+ width: 100%;
+ padding: 14px 18px;
+ border: 2px solid var(--ha-text-body);
+ border-radius: 12px;
+ font-size: 1rem;
+ transition: all 0.2s;
+ }
+ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ha-status-error); }
+ textarea { resize: vertical; min-height: 100px; }
+ 
+ .tone-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+ .tone-btn {
+ padding: 10px 20px;
+ border: 2px solid var(--ha-text-body);
+ background: white;
+ border-radius: 25px;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .tone-btn:hover { border-color: var(--ha-status-error); }
+ .tone-btn.active { border-color: var(--ha-status-error); background: var(--ha-status-error); color: white; }
+ 
+ button.submit {
+ background: var(--ha-status-error);
+ color: white;
+ border: none;
+ padding: 16px 32px;
+ border-radius: 12px;
+ font-size: 1.1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+ 
+ .loading { display: none; text-align: center; padding: 60px; }
+ .loading.active { display: block; }
+ .bounce { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+ .bounce span {
+ width: 20px; height: 20px;
+ border-radius: 50%;
+ animation: bounce 0.6s ease-in-out infinite alternate;
+ }
+ .bounce span:nth-child(1) { background: var(--ha-status-error); animation-delay: 0s; }
+ .bounce span:nth-child(2) { background: var(--ha-warn); animation-delay: 0.1s; }
+ .bounce span:nth-child(3) { background: var(--ha-accent-purple); animation-delay: 0.2s; }
+ @keyframes bounce { to { transform: translateY(-20px); } }
+ 
+ .results { display: none; }
+ .results.active { display: block; }
+ 
+ .platform-tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; }
+ .platform-tab {
+ padding: 12px 24px;
+ background: var(--ha-bg-surface);
+ border: none;
+ border-radius: 25px;
+ cursor: pointer;
+ white-space: nowrap;
+ transition: all 0.2s;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ }
+ .platform-tab:hover { background: var(--ha-bg-surface); }
+ .platform-tab.active { background: var(--ha-status-error); color: white; }
+ 
+ .platform-content { display: none; }
+ .platform-content.active { display: block; }
+ 
+ .content-section {
+ background: var(--ha-text-primary);
+ border-radius: 16px;
+ padding: 25px;
+ margin-bottom: 15px;
+ position: relative;
+ }
+ .content-section h3 { color: var(--ha-status-error); margin-bottom: 15px; }
+ .content-section pre { white-space: pre-wrap; line-height: 1.8; color: var(--ha-bg-hover); }
+ .copy-btn {
+ position: absolute;
+ top: 20px;
+ right: 20px;
+ padding: 8px 16px;
+ background: var(--ha-status-error);
+ border: none;
+ border-radius: 8px;
+ color: white;
+ cursor: pointer;
+ }
+ 
+ .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+ .history-card {
+ background: linear-gradient(135deg, var(--ha-status-error-dim) 0%, #fffbf0 100%);
+ border-radius: 16px;
+ padding: 20px;
+ cursor: pointer;
+ transition: all 0.2s;
+ border: 2px solid transparent;
+ }
+ .history-card:hover { transform: translateY(-5px); border-color: var(--ha-status-error); }
+ .history-card .topic { font-weight: 600; color: var(--ha-bg-elevated); }
+ .history-card .meta { font-size: 0.85rem; color: var(--ha-text-muted); margin-top: 8px; }
+ .history-card .platforms { display: flex; gap: 5px; margin-top: 10px; }
+ .history-card .platform-icon { font-size: 1.2rem; }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📱 Social Media Manager</h1>
-        <p class="subtitle">Generate content for all platforms in one click</p>
+ <div class="container">
+ <h1> Social Media Manager</h1>
+ <p class="subtitle">Generate content for all platforms in one click</p>
 
-        <div class="card" id="create-section">
-            <h2>Create Content</h2>
-            <form id="content-form">
-                <div class="form-group">
-                    <label>What's your content about? *</label>
-                    <textarea id="topic" required placeholder="Enter your content idea, announcement, or topic..."></textarea>
-                </div>
+ <div class="card" id="create-section">
+ <h2>Create Content</h2>
+ <form id="content-form">
+ <div class="form-group">
+ <label>What's your content about? *</label>
+ <textarea id="topic" required placeholder="Enter your content idea, announcement, or topic..."></textarea>
+ </div>
 
-                <div class="form-group">
-                    <label>Brand Name</label>
-                    <input type="text" id="brand" placeholder="Your brand or company name">
-                </div>
+ <div class="form-group">
+ <label>Brand Name</label>
+ <input type="text" id="brand" placeholder="Your brand or company name">
+ </div>
 
-                <div class="form-group">
-                    <label>Content Tone</label>
-                    <div class="tone-grid">
-                        <div class="tone-btn" data-tone="professional">💼 Professional</div>
-                        <div class="tone-btn active" data-tone="casual">😊 Casual</div>
-                        <div class="tone-btn" data-tone="humorous">😄 Humorous</div>
-                        <div class="tone-btn" data-tone="inspirational">✨ Inspirational</div>
-                        <div class="tone-btn" data-tone="educational">📚 Educational</div>
-                    </div>
-                </div>
+ <div class="form-group">
+ <label>Content Tone</label>
+ <div class="tone-grid">
+ <div class="tone-btn" data-tone="professional"> Professional</div>
+ <div class="tone-btn active" data-tone="casual"> Casual</div>
+ <div class="tone-btn" data-tone="humorous"> Humorous</div>
+ <div class="tone-btn" data-tone="inspirational"> Inspirational</div>
+ <div class="tone-btn" data-tone="educational"> Educational</div>
+ </div>
+ </div>
 
-                <button type="submit" class="submit" id="submitBtn">✨ Generate Content</button>
-            </form>
-        </div>
+ <button type="submit" class="submit" id="submitBtn"> Generate Content</button>
+ </form>
+ </div>
 
-        <div class="loading" id="loading">
-            <div class="bounce">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <p style="color: #666;">Creating your social content...</p>
-        </div>
+ <div class="loading" id="loading">
+ <div class="bounce">
+ <span></span>
+ <span></span>
+ <span></span>
+ </div>
+ <p style="color: var(--ha-text-disabled);">Creating your social content...</p>
+ </div>
 
-        <div class="results" id="results">
-            <div class="card">
-                <button onclick="backToCreate()" style="margin-bottom: 20px; background: #6c757d; padding: 10px 20px; border: none; border-radius: 10px; color: white; cursor: pointer;">← Create More</button>
+ <div class="results" id="results">
+ <div class="card">
+ <button onclick="backToCreate()" style="margin-bottom: 20px; background: var(--ha-text-disabled); padding: 10px 20px; border: none; border-radius: 10px; color: white; cursor: pointer;">← Create More</button>
 
-                <div class="platform-tabs">
-                    <button class="platform-tab active" onclick="showPlatform('twitter')">🐦 Twitter/X</button>
-                    <button class="platform-tab" onclick="showPlatform('linkedin')">💼 LinkedIn</button>
-                    <button class="platform-tab" onclick="showPlatform('instagram')">📸 Instagram</button>
-                    <button class="platform-tab" onclick="showPlatform('facebook')">📘 Facebook</button>
-                    <button class="platform-tab" onclick="showPlatform('image')">🖼️ Images</button>
-                </div>
+ <div class="platform-tabs">
+ <button class="platform-tab active" onclick="showPlatform('twitter')"> Twitter/X</button>
+ <button class="platform-tab" onclick="showPlatform('linkedin')"> LinkedIn</button>
+ <button class="platform-tab" onclick="showPlatform('instagram')"> Instagram</button>
+ <button class="platform-tab" onclick="showPlatform('facebook')"> Facebook</button>
+ <button class="platform-tab" onclick="showPlatform('image')"> Images</button>
+ </div>
 
-                <div id="twitter-content" class="platform-content active">
-                    <div class="content-section">
-                        <h3>🐦 Twitter/X Content</h3>
-                        <button class="copy-btn" onclick="copyContent('twitter-text')">Copy</button>
-                        <pre id="twitter-text"></pre>
-                    </div>
-                </div>
+ <div id="twitter-content" class="platform-content active">
+ <div class="content-section">
+ <h3> Twitter/X Content</h3>
+ <button class="copy-btn" onclick="copyContent('twitter-text')">Copy</button>
+ <pre id="twitter-text"></pre>
+ </div>
+ </div>
 
-                <div id="linkedin-content" class="platform-content">
-                    <div class="content-section">
-                        <h3>💼 LinkedIn Post</h3>
-                        <button class="copy-btn" onclick="copyContent('linkedin-text')">Copy</button>
-                        <pre id="linkedin-text"></pre>
-                    </div>
-                </div>
+ <div id="linkedin-content" class="platform-content">
+ <div class="content-section">
+ <h3> LinkedIn Post</h3>
+ <button class="copy-btn" onclick="copyContent('linkedin-text')">Copy</button>
+ <pre id="linkedin-text"></pre>
+ </div>
+ </div>
 
-                <div id="instagram-content" class="platform-content">
-                    <div class="content-section">
-                        <h3>📸 Instagram Content</h3>
-                        <button class="copy-btn" onclick="copyContent('instagram-text')">Copy</button>
-                        <pre id="instagram-text"></pre>
-                    </div>
-                </div>
+ <div id="instagram-content" class="platform-content">
+ <div class="content-section">
+ <h3> Instagram Content</h3>
+ <button class="copy-btn" onclick="copyContent('instagram-text')">Copy</button>
+ <pre id="instagram-text"></pre>
+ </div>
+ </div>
 
-                <div id="facebook-content" class="platform-content">
-                    <div class="content-section">
-                        <h3>📘 Facebook Post</h3>
-                        <button class="copy-btn" onclick="copyContent('facebook-text')">Copy</button>
-                        <pre id="facebook-text"></pre>
-                    </div>
-                </div>
+ <div id="facebook-content" class="platform-content">
+ <div class="content-section">
+ <h3> Facebook Post</h3>
+ <button class="copy-btn" onclick="copyContent('facebook-text')">Copy</button>
+ <pre id="facebook-text"></pre>
+ </div>
+ </div>
 
-                <div id="image-content" class="platform-content">
-                    <div class="content-section">
-                        <h3>🖼️ Image Prompts</h3>
-                        <button class="copy-btn" onclick="copyContent('image-text')">Copy</button>
-                        <pre id="image-text"></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <div id="image-content" class="platform-content">
+ <div class="content-section">
+ <h3> Image Prompts</h3>
+ <button class="copy-btn" onclick="copyContent('image-text')">Copy</button>
+ <pre id="image-text"></pre>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <div class="card" id="history-section">
-            <h2>Recent Content</h2>
-            <div class="history-grid" id="history-grid">
-                <p style="color: #888; grid-column: 1/-1; text-align: center;">Loading...</p>
-            </div>
-        </div>
-    </div>
+ <div class="card" id="history-section">
+ <h2>Recent Content</h2>
+ <div class="history-grid" id="history-grid">
+ <p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">Loading...</p>
+ </div>
+ </div>
+ </div>
 
-    <script>
-        let selectedTone = 'casual';
+ <script>
+ let selectedTone = 'casual';
 
-        // Tone selection
-        document.querySelectorAll('.tone-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedTone = btn.dataset.tone;
-            });
-        });
+ // Tone selection
+ document.querySelectorAll('.tone-btn').forEach(btn => {
+ btn.addEventListener('click', () => {
+ document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+ btn.classList.add('active');
+ selectedTone = btn.dataset.tone;
+ });
+ });
 
-        // Form submission
-        document.getElementById('content-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+ // Form submission
+ document.getElementById('content-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
 
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
+ const submitBtn = document.getElementById('submitBtn');
+ const loading = document.getElementById('loading');
 
-            submitBtn.disabled = true;
-            loading.classList.add('active');
-            document.getElementById('create-section').style.display = 'none';
-            document.getElementById('history-section').style.display = 'none';
+ submitBtn.disabled = true;
+ loading.classList.add('active');
+ document.getElementById('create-section').style.display = 'none';
+ document.getElementById('history-section').style.display = 'none';
 
-            try {
-                const response = await fetch('/api/generate-content', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        topic: document.getElementById('topic').value,
-                        brand: document.getElementById('brand').value || undefined,
-                        tone: selectedTone
-                    })
-                });
+ try {
+ const response = await fetch('/api/generate-content', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ topic: document.getElementById('topic').value,
+ brand: document.getElementById('brand').value || undefined,
+ tone: selectedTone
+ })
+ });
 
-                const data = await response.json();
-                displayResults(data);
-                loadHistory();
-            } catch (error) {
-                alert('Error: ' + error.message);
-                document.getElementById('create-section').style.display = 'block';
-                document.getElementById('history-section').style.display = 'block';
-            } finally {
-                submitBtn.disabled = false;
-                loading.classList.remove('active');
-            }
-        });
+ const data = await response.json();
+ displayResults(data);
+ loadHistory();
+ } catch (error) {
+ alert('Error: ' + error.message);
+ document.getElementById('create-section').style.display = 'block';
+ document.getElementById('history-section').style.display = 'block';
+ } finally {
+ submitBtn.disabled = false;
+ loading.classList.remove('active');
+ }
+ });
 
-        function displayResults(data) {
-            document.getElementById('results').classList.add('active');
-            document.getElementById('twitter-text').textContent = data.twitter || '';
-            document.getElementById('linkedin-text').textContent = data.linkedin || '';
-            document.getElementById('instagram-text').textContent = data.instagram || '';
-            document.getElementById('facebook-text').textContent = data.facebook || '';
-            
-            const imagePrompt = typeof data.imagePrompt === 'string' ? data.imagePrompt : JSON.stringify(data.imagePrompt, null, 2);
-            document.getElementById('image-text').textContent = imagePrompt || '';
-        }
+ function displayResults(data) {
+ document.getElementById('results').classList.add('active');
+ document.getElementById('twitter-text').textContent = data.twitter || '';
+ document.getElementById('linkedin-text').textContent = data.linkedin || '';
+ document.getElementById('instagram-text').textContent = data.instagram || '';
+ document.getElementById('facebook-text').textContent = data.facebook || '';
+ 
+ const imagePrompt = typeof data.imagePrompt === 'string' ? data.imagePrompt : JSON.stringify(data.imagePrompt, null, 2);
+ document.getElementById('image-text').textContent = imagePrompt || '';
+ }
 
-        function showPlatform(platform) {
-            document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.platform-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[onclick="showPlatform('${platform}')"]`).classList.add('active');
-            document.getElementById(`${platform}-content`).classList.add('active');
-        }
+ function showPlatform(platform) {
+ document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+ document.querySelectorAll('.platform-content').forEach(c => c.classList.remove('active'));
+ document.querySelector(`[onclick="showPlatform('${platform}')"]`).classList.add('active');
+ document.getElementById(`${platform}-content`).classList.add('active');
+ }
 
-        function copyContent(id) {
-            navigator.clipboard.writeText(document.getElementById(id).textContent);
-            alert('Copied to clipboard!');
-        }
+ function copyContent(id) {
+ navigator.clipboard.writeText(document.getElementById(id).textContent);
+ alert('Copied to clipboard!');
+ }
 
-        function backToCreate() {
-            document.getElementById('results').classList.remove('active');
-            document.getElementById('create-section').style.display = 'block';
-            document.getElementById('history-section').style.display = 'block';
-        }
+ function backToCreate() {
+ document.getElementById('results').classList.remove('active');
+ document.getElementById('create-section').style.display = 'block';
+ document.getElementById('history-section').style.display = 'block';
+ }
 
-        async function loadHistory() {
-            const grid = document.getElementById('history-grid');
-            try {
-                const response = await fetch('/api/list-content?limit=9');
-                const data = await response.json();
+ async function loadHistory() {
+ const grid = document.getElementById('history-grid');
+ try {
+ const response = await fetch('/api/list-content?limit=9');
+ const data = await response.json();
 
-                if (data.content?.length > 0) {
-                    grid.innerHTML = data.content.map(c => `
-                        <div class="history-card" onclick="viewContent('${c._id}')">
-                            <div class="topic">${(c.topic || '').substring(0, 60)}...</div>
-                            <div class="meta">${c.brand || 'No brand'} • ${c.tone || 'casual'}</div>
-                            <div class="platforms">
-                                <span class="platform-icon">🐦</span>
-                                <span class="platform-icon">💼</span>
-                                <span class="platform-icon">📸</span>
-                                <span class="platform-icon">📘</span>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">No content yet</p>';
-                }
-            } catch (error) {
-                grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">Error loading history</p>';
-            }
-        }
+ if (data.content?.length > 0) {
+ grid.innerHTML = data.content.map(c => `
+ <div class="history-card" onclick="viewContent('${c._id}')">
+ <div class="topic">${(c.topic || '').substring(0, 60)}...</div>
+ <div class="meta">${c.brand || 'No brand'} • ${c.tone || 'casual'}</div>
+ <div class="platforms">
+ <span class="platform-icon"></span>
+ <span class="platform-icon"></span>
+ <span class="platform-icon"></span>
+ <span class="platform-icon"></span>
+ </div>
+ </div>
+ `).join('');
+ } else {
+ grid.innerHTML = '<p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">No content yet</p>';
+ }
+ } catch (error) {
+ grid.innerHTML = '<p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">Error loading history</p>';
+ }
+ }
 
-        async function viewContent(id) {
-            try {
-                const response = await fetch(`/api/get-content?id=${id}`);
-                const data = await response.json();
-                if (data.content) {
-                    displayResults(data.content);
-                }
-            } catch (error) {
-                alert('Error loading content');
-            }
-        }
+ async function viewContent(id) {
+ try {
+ const response = await fetch(`/api/get-content?id=${id}`);
+ const data = await response.json();
+ if (data.content) {
+ displayResults(data.content);
+ }
+ } catch (error) {
+ alert('Error loading content');
+ }
+ }
 
-        loadHistory();
-    </script>
+ loadHistory();
+ </script>
 </body>
 </html>

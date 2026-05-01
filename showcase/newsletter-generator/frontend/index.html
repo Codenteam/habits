@@ -1,370 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Newsletter Generator</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 30px;
-        }
-        .container { max-width: 1100px; margin: 0 auto; }
-        h1 { color: #1a202c; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
-        .subtitle { color: #64748b; text-align: center; margin-bottom: 40px; }
-        
-        .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 30px; }
-        
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-        .card h2 { color: #1a202c; margin-bottom: 25px; font-size: 1.3rem; }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #374151; font-weight: 500; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 1rem;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #6366f1; }
-        textarea { resize: vertical; min-height: 80px; }
-        
-        .tags-input {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 10px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            min-height: 50px;
-        }
-        .tag {
-            background: #e0e7ff;
-            color: #4338ca;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .tag-remove { cursor: pointer; font-weight: bold; }
-        .tag-input-field { border: none; outline: none; flex: 1; min-width: 100px; }
-        
-        button.submit {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        
-        .preview-area {
-            background: #fafafa;
-            border-radius: 12px;
-            min-height: 600px;
-            overflow: hidden;
-        }
-        
-        .email-preview {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            font-family: Georgia, serif;
-        }
-        .email-header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .email-header h1 { color: white; font-size: 2rem; text-shadow: none; }
-        .email-body { padding: 30px; }
-        .email-intro { font-size: 1.1rem; line-height: 1.7; margin-bottom: 30px; }
-        
-        .article-card {
-            background: #f8fafc;
-            border-left: 4px solid #6366f1;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 0 8px 8px 0;
-        }
-        .article-card h3 { color: #1e293b; margin-bottom: 10px; font-family: -apple-system, sans-serif; }
-        .article-card p { color: #475569; line-height: 1.6; }
-        .article-card .takeaway {
-            background: #dbeafe;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-            color: #1e40af;
-        }
-        
-        .tips-section { background: #fef3c7; border-radius: 12px; padding: 25px; margin: 25px 0; }
-        .tips-section h3 { color: #92400e; margin-bottom: 15px; }
-        .tip-item { display: flex; gap: 10px; margin-bottom: 12px; }
-        .tip-emoji { font-size: 1.2rem; }
-        .tip-text strong { color: #92400e; }
-        
-        .email-footer {
-            background: #1e293b;
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        .email-footer p { margin-bottom: 10px; }
-        
-        .subject-lines { margin-top: 20px; }
-        .subject-option {
-            padding: 12px 15px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .subject-option:hover { background: #e2e8f0; }
-        .subject-option.selected { background: #dbeafe; border: 2px solid #3b82f6; }
-        .style-badge { font-size: 0.75rem; padding: 3px 8px; background: #e2e8f0; border-radius: 10px; }
-        
-        .loading { text-align: center; padding: 60px; color: #6366f1; }
-        
-        @media (max-width: 900px) {
-            .main-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Newsletter Generator</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-surface);
+ min-height: 100vh;
+ padding: 30px;
+ }
+ .container { max-width: 1100px; margin: 0 auto; }
+ h1 { color: var(--ha-bg-surface); text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+ .subtitle { color: var(--ha-text-disabled); text-align: center; margin-bottom: 40px; }
+ 
+ .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 30px; }
+ 
+ .card {
+ background: white;
+ border-radius: 16px;
+ padding: 30px;
+ box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+ }
+ .card h2 { color: var(--ha-bg-surface); margin-bottom: 25px; font-size: 1.3rem; }
+ 
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-bg-elevated); font-weight: 500; }
+ input, select, textarea {
+ width: 100%;
+ padding: 12px 15px;
+ border: 2px solid var(--ha-bg-elevated);
+ border-radius: 10px;
+ font-size: 1rem;
+ }
+ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ha-accent-purple); }
+ textarea { resize: vertical; min-height: 80px; }
+ 
+ .tags-input {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 8px;
+ padding: 10px;
+ border: 2px solid var(--ha-bg-elevated);
+ border-radius: 10px;
+ min-height: 50px;
+ }
+ .tag {
+ background: var(--ha-accent-purple-dim);
+ color: var(--ha-accent-purple);
+ padding: 6px 12px;
+ border-radius: 20px;
+ font-size: 0.9rem;
+ display: flex;
+ align-items: center;
+ gap: 5px;
+ }
+ .tag-remove { cursor: pointer; font-weight: bold; }
+ .tag-input-field { border: none; outline: none; flex: 1; min-width: 100px; }
+ 
+ button.submit {
+ background: var(--ha-accent-purple);
+ color: white;
+ border: none;
+ padding: 14px 28px;
+ border-radius: 10px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+ 
+ .preview-area {
+ background: var(--ha-text-primary);
+ border-radius: 12px;
+ min-height: 600px;
+ overflow: hidden;
+ }
+ 
+ .email-preview {
+ max-width: 600px;
+ margin: 0 auto;
+ background: white;
+ font-family: Georgia, serif;
+ }
+ .email-header {
+ background: var(--ha-accent-purple);
+ color: white;
+ padding: 40px 30px;
+ text-align: center;
+ }
+ .email-header h1 { color: white; font-size: 2rem; text-shadow: none; }
+ .email-body { padding: 30px; }
+ .email-intro { font-size: 1.1rem; line-height: 1.7; margin-bottom: 30px; }
+ 
+ .article-card {
+ background: var(--ha-bg-base);
+ border-left: 4px solid var(--ha-accent-purple);
+ padding: 20px;
+ margin-bottom: 20px;
+ border-radius: 0 8px 8px 0;
+ }
+ .article-card h3 { color: var(--ha-bg-surface); margin-bottom: 10px; font-family: -apple-system, sans-serif; }
+ .article-card p { color: var(--ha-bg-hover); line-height: 1.6; }
+ .article-card .takeaway {
+ background: rgba(59, 130, 246, 0.15);
+ padding: 10px 15px;
+ border-radius: 6px;
+ margin-top: 10px;
+ font-size: 0.9rem;
+ color: var(--ha-accent-blue-hover);
+ }
+ 
+ .tips-section { background: var(--ha-status-running-dim, rgba(251,191,36,0.15)); border-radius: 12px; padding: 25px; margin: 25px 0; }
+ .tips-section h3 { color: var(--ha-warn); margin-bottom: 15px; }
+ .tip-item { display: flex; gap: 10px; margin-bottom: 12px; }
+ .tip-emoji { font-size: 1.2rem; }
+ .tip-text strong { color: var(--ha-warn); }
+ 
+ .email-footer {
+ background: var(--ha-bg-surface);
+ color: white;
+ padding: 30px;
+ text-align: center;
+ }
+ .email-footer p { margin-bottom: 10px; }
+ 
+ .subject-lines { margin-top: 20px; }
+ .subject-option {
+ padding: 12px 15px;
+ background: var(--ha-text-body);
+ border-radius: 8px;
+ margin-bottom: 8px;
+ cursor: pointer;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+ .subject-option:hover { background: var(--ha-text-body); }
+ .subject-option.selected { background: rgba(59, 130, 246, 0.15); border: 2px solid var(--ha-accent-blue); }
+ .style-badge { font-size: 0.75rem; padding: 3px 8px; background: var(--ha-text-body); border-radius: 10px; }
+ 
+ .loading { text-align: center; padding: 60px; color: var(--ha-accent-purple); }
+ 
+ @media (max-width: 900px) {
+ .main-grid { grid-template-columns: 1fr; }
+ }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📰 Newsletter Generator</h1>
-        <p class="subtitle">Create engaging newsletters with AI</p>
+ <div class="container">
+ <h1> Newsletter Generator</h1>
+ <p class="subtitle">Create engaging newsletters with AI</p>
 
-        <div class="main-grid">
-            <div class="card">
-                <h2>Newsletter Settings</h2>
-                <form id="newsletter-form">
-                    <div class="form-group">
-                        <label>Newsletter Title</label>
-                        <input type="text" id="title" placeholder="e.g., TechWeekly, Marketing Pulse" required>
-                    </div>
+ <div class="main-grid">
+ <div class="card">
+ <h2>Newsletter Settings</h2>
+ <form id="newsletter-form">
+ <div class="form-group">
+ <label>Newsletter Title</label>
+ <input type="text" id="title" placeholder="e.g., TechWeekly, Marketing Pulse" required>
+ </div>
 
-                    <div class="form-group">
-                        <label>Target Audience</label>
-                        <input type="text" id="audience" placeholder="e.g., Startup founders, Marketing professionals" required>
-                    </div>
+ <div class="form-group">
+ <label>Target Audience</label>
+ <input type="text" id="audience" placeholder="e.g., Startup founders, Marketing professionals" required>
+ </div>
 
-                    <div class="form-group">
-                        <label>Topics (press Enter to add)</label>
-                        <div class="tags-input" id="topics-container">
-                            <input type="text" class="tag-input-field" id="topic-input" placeholder="Add topics...">
-                        </div>
-                    </div>
+ <div class="form-group">
+ <label>Topics (press Enter to add)</label>
+ <div class="tags-input" id="topics-container">
+ <input type="text" class="tag-input-field" id="topic-input" placeholder="Add topics...">
+ </div>
+ </div>
 
-                    <div class="form-group">
-                        <label>Tone</label>
-                        <select id="tone">
-                            <option value="professional">Professional</option>
-                            <option value="friendly" selected>Friendly</option>
-                            <option value="casual">Casual</option>
-                            <option value="authoritative">Authoritative</option>
-                        </select>
-                    </div>
+ <div class="form-group">
+ <label>Tone</label>
+ <select id="tone">
+ <option value="professional">Professional</option>
+ <option value="friendly" selected>Friendly</option>
+ <option value="casual">Casual</option>
+ <option value="authoritative">Authoritative</option>
+ </select>
+ </div>
 
-                    <div class="form-group">
-                        <label>Additional Content (optional)</label>
-                        <textarea id="articles" placeholder="Paste article URLs or key points to include..."></textarea>
-                    </div>
+ <div class="form-group">
+ <label>Additional Content (optional)</label>
+ <textarea id="articles" placeholder="Paste article URLs or key points to include..."></textarea>
+ </div>
 
-                    <button type="submit" class="submit" id="generate-btn">✨ Generate Newsletter</button>
-                </form>
+ <button type="submit" class="submit" id="generate-btn"> Generate Newsletter</button>
+ </form>
 
-                <div class="subject-lines" id="subject-lines" style="display: none;">
-                    <h3>📧 Subject Line Options</h3>
-                    <div id="subjects-list"></div>
-                </div>
-            </div>
+ <div class="subject-lines" id="subject-lines" style="display: none;">
+ <h3> Subject Line Options</h3>
+ <div id="subjects-list"></div>
+ </div>
+ </div>
 
-            <div class="card preview-area" id="preview-area">
-                <div style="padding: 60px; text-align: center; color: #94a3b8;">
-                    <p style="font-size: 4rem; margin-bottom: 20px;">📰</p>
-                    <p>Your newsletter preview will appear here</p>
-                </div>
-            </div>
-        </div>
-    </div>
+ <div class="card preview-area" id="preview-area">
+ <div style="padding: 60px; text-align: center; color: var(--ha-text-muted);">
+ <p style="font-size: 4rem; margin-bottom: 20px;"></p>
+ <p>Your newsletter preview will appear here</p>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <script>
-        let topics = [];
+ <script>
+ let topics = [];
 
-        // Topics input handling
-        const topicInput = document.getElementById('topic-input');
-        const topicsContainer = document.getElementById('topics-container');
+ // Topics input handling
+ const topicInput = document.getElementById('topic-input');
+ const topicsContainer = document.getElementById('topics-container');
 
-        topicInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const topic = topicInput.value.trim();
-                if (topic && !topics.includes(topic)) {
-                    topics.push(topic);
-                    renderTopics();
-                }
-                topicInput.value = '';
-            }
-        });
+ topicInput.addEventListener('keypress', (e) => {
+ if (e.key === 'Enter') {
+ e.preventDefault();
+ const topic = topicInput.value.trim();
+ if (topic && !topics.includes(topic)) {
+ topics.push(topic);
+ renderTopics();
+ }
+ topicInput.value = '';
+ }
+ });
 
-        function renderTopics() {
-            const tags = topics.map((t, i) => `
-                <div class="tag">
-                    ${t}
-                    <span class="tag-remove" onclick="removeTopic(${i})">×</span>
-                </div>
-            `).join('');
-            topicsContainer.innerHTML = tags + `<input type="text" class="tag-input-field" id="topic-input" placeholder="Add topics...">`;
-            document.getElementById('topic-input').addEventListener('keypress', arguments.callee);
-        }
+ function renderTopics() {
+ const tags = topics.map((t, i) => `
+ <div class="tag">
+ ${t}
+ <span class="tag-remove" onclick="removeTopic(${i})">×</span>
+ </div>
+ `).join('');
+ topicsContainer.innerHTML = tags + `<input type="text" class="tag-input-field" id="topic-input" placeholder="Add topics...">`;
+ document.getElementById('topic-input').addEventListener('keypress', arguments.callee);
+ }
 
-        function removeTopic(index) {
-            topics.splice(index, 1);
-            renderTopics();
-        }
+ function removeTopic(index) {
+ topics.splice(index, 1);
+ renderTopics();
+ }
 
-        // Form submission
-        document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            if (topics.length === 0) {
-                alert('Please add at least one topic');
-                return;
-            }
+ // Form submission
+ document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ 
+ if (topics.length === 0) {
+ alert('Please add at least one topic');
+ return;
+ }
 
-            const btn = document.getElementById('generate-btn');
-            btn.disabled = true;
-            btn.textContent = '⏳ Generating...';
+ const btn = document.getElementById('generate-btn');
+ btn.disabled = true;
+ btn.textContent = ' Generating...';
 
-            document.getElementById('preview-area').innerHTML = `
-                <div class="loading">
-                    <p style="font-size: 3rem; margin-bottom: 20px;">✍️</p>
-                    <p>Crafting your newsletter...</p>
-                </div>
-            `;
+ document.getElementById('preview-area').innerHTML = `
+ <div class="loading">
+ <p style="font-size: 3rem; margin-bottom: 20px;"></p>
+ <p>Crafting your newsletter...</p>
+ </div>
+ `;
 
-            try {
-                const response = await fetch('/api/generate-newsletter', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: document.getElementById('title').value,
-                        audience: document.getElementById('audience').value,
-                        topics: topics,
-                        tone: document.getElementById('tone').value,
-                        articles: document.getElementById('articles').value.split('\n').filter(a => a.trim())
-                    })
-                });
+ try {
+ const response = await fetch('/api/generate-newsletter', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ title: document.getElementById('title').value,
+ audience: document.getElementById('audience').value,
+ topics: topics,
+ tone: document.getElementById('tone').value,
+ articles: document.getElementById('articles').value.split('\n').filter(a => a.trim())
+ })
+ });
 
-                const data = await response.json();
-                displayNewsletter(data);
-            } catch (error) {
-                alert('Error: ' + error.message);
-                document.getElementById('preview-area').innerHTML = `<div class="loading"><p>Error generating newsletter</p></div>`;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '✨ Generate Newsletter';
-            }
-        });
+ const data = await response.json();
+ displayNewsletter(data);
+ } catch (error) {
+ alert('Error: ' + error.message);
+ document.getElementById('preview-area').innerHTML = `<div class="loading"><p>Error generating newsletter</p></div>`;
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Generate Newsletter';
+ }
+ });
 
-        function parseJSON(data) {
-            if (typeof data === 'object') return data;
-            try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
-            catch { return null; }
-        }
+ function parseJSON(data) {
+ if (typeof data === 'object') return data;
+ try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
+ catch { return null; }
+ }
 
-        function displayNewsletter(data) {
-            const title = document.getElementById('title').value;
-            const articles = parseJSON(data.articles);
-            const tips = parseJSON(data.tips);
-            const subjects = parseJSON(data.subjectLines);
+ function displayNewsletter(data) {
+ const title = document.getElementById('title').value;
+ const articles = parseJSON(data.articles);
+ const tips = parseJSON(data.tips);
+ const subjects = parseJSON(data.subjectLines);
 
-            // Display subject lines
-            if (subjects?.subjects) {
-                document.getElementById('subject-lines').style.display = 'block';
-                document.getElementById('subjects-list').innerHTML = subjects.subjects.map((s, i) => `
-                    <div class="subject-option" onclick="selectSubject(this)">
-                        <span>${s.line}</span>
-                        <span class="style-badge">${s.style}</span>
-                    </div>
-                `).join('');
-            }
+ // Display subject lines
+ if (subjects?.subjects) {
+ document.getElementById('subject-lines').style.display = 'block';
+ document.getElementById('subjects-list').innerHTML = subjects.subjects.map((s, i) => `
+ <div class="subject-option" onclick="selectSubject(this)">
+ <span>${s.line}</span>
+ <span class="style-badge">${s.style}</span>
+ </div>
+ `).join('');
+ }
 
-            // Build email preview
-            let articlesHtml = '';
-            if (articles?.articles) {
-                articlesHtml = articles.articles.map(a => `
-                    <div class="article-card">
-                        <h3>${a.headline}</h3>
-                        <p>${a.summary}</p>
-                        <div class="takeaway">💡 ${a.keyTakeaway}</div>
-                    </div>
-                `).join('');
-            }
+ // Build email preview
+ let articlesHtml = '';
+ if (articles?.articles) {
+ articlesHtml = articles.articles.map(a => `
+ <div class="article-card">
+ <h3>${a.headline}</h3>
+ <p>${a.summary}</p>
+ <div class="takeaway"> ${a.keyTakeaway}</div>
+ </div>
+ `).join('');
+ }
 
-            let tipsHtml = '';
-            if (tips?.tips) {
-                tipsHtml = `
-                    <div class="tips-section">
-                        <h3>${tips.sectionTitle || '⚡ Quick Tips'}</h3>
-                        ${tips.tips.map(t => `
-                            <div class="tip-item">
-                                <span class="tip-emoji">${t.emoji}</span>
-                                <span class="tip-text"><strong>${t.title}</strong> - ${t.description}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
+ let tipsHtml = '';
+ if (tips?.tips) {
+ tipsHtml = `
+ <div class="tips-section">
+ <h3>${tips.sectionTitle || ' Quick Tips'}</h3>
+ ${tips.tips.map(t => `
+ <div class="tip-item">
+ <span class="tip-emoji">${t.emoji}</span>
+ <span class="tip-text"><strong>${t.title}</strong> - ${t.description}</span>
+ </div>
+ `).join('')}
+ </div>
+ `;
+ }
 
-            document.getElementById('preview-area').innerHTML = `
-                <div class="email-preview">
-                    <div class="email-header">
-                        <h1>${title}</h1>
-                    </div>
-                    <div class="email-body">
-                        <div class="email-intro">${data.intro || ''}</div>
-                        ${articlesHtml}
-                        ${tipsHtml}
-                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                            ${data.closing || ''}
-                        </div>
-                    </div>
-                    <div class="email-footer">
-                        <p>Thanks for reading ${title}!</p>
-                        <p style="font-size: 0.85rem; color: #94a3b8;">Generated with AI Newsletter Generator</p>
-                    </div>
-                </div>
-            `;
-        }
+ document.getElementById('preview-area').innerHTML = `
+ <div class="email-preview">
+ <div class="email-header">
+ <h1>${title}</h1>
+ </div>
+ <div class="email-body">
+ <div class="email-intro">${data.intro || ''}</div>
+ ${articlesHtml}
+ ${tipsHtml}
+ <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--ha-bg-elevated);">
+ ${data.closing || ''}
+ </div>
+ </div>
+ <div class="email-footer">
+ <p>Thanks for reading ${title}!</p>
+ <p style="font-size: 0.85rem; color: var(--ha-text-muted);">Generated with AI Newsletter Generator</p>
+ </div>
+ </div>
+ `;
+ }
 
-        function selectSubject(el) {
-            document.querySelectorAll('.subject-option').forEach(s => s.classList.remove('selected'));
-            el.classList.add('selected');
-        }
-    </script>
+ function selectSubject(el) {
+ document.querySelectorAll('.subject-option').forEach(s => s.classList.remove('selected'));
+ el.classList.add('selected');
+ }
+ </script>
 </body>
 </html>

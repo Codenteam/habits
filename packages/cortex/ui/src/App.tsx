@@ -92,7 +92,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>🔧 Habits Management <span>Execution Monitor</span></h1>
+      <h1>Habits Management <span>Execution Monitor</span></h1>
       
       {/* Stats */}
       <div className="stats">

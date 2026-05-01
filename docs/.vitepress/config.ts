@@ -8,6 +8,7 @@ export default defineConfig({
   title: 'Habits',
   description: 'Create Agents, Automations, Full-Stacks, SaaS and Micro-Apps (AGPL-3.0).',
   base: '/intersect/habits/',
+  cleanUrls: true,
 
   // Serve static assets from .vitepress/public
   vite: {
@@ -30,6 +31,13 @@ export default defineConfig({
       md.renderer.rules.fence = (...args) => {
         const result = fence(...args)
         // Inject v-pre into the code tag instead of wrapping with div
+        return result.replace(/<code/, '<code v-pre')
+      }
+
+      // Also prevent Vue interpolation in inline code spans
+      const code_inline = md.renderer.rules.code_inline!
+      md.renderer.rules.code_inline = (...args) => {
+        const result = code_inline(...args)
         return result.replace(/<code/, '<code v-pre')
       }
             configureDiagramsPlugin(md, {
@@ -87,12 +95,33 @@ export default defineConfig({
         ]
       },      
       {
-        text: 'Deep Dive',
+        text: 'Tools',
+        items: [
+          { text: 'Overview', link: '/tools/' },
+          { text: 'Base (Visual Builder)', link: '/tools/base' },
+          { text: 'Cortex Server', link: '/tools/cortex-server' },
+          { text: 'Desktop App', link: '/tools/desktop-app' },
+          { text: 'Mobile App', link: '/tools/mobile-app' },
+          { text: 'Admin', link: '/tools/admin' },
+          { text: 'Mirror', link: '/tools/mirror' },
+        ]
+      },
+      {
+        text: 'Recipes',
+        items: [
+          { text: 'Overview', link: '/recipes/' },
+          { text: 'Company Automations Hub', link: '/recipes/company-hub' },
+          { text: 'No-Code Automation Builder', link: '/recipes/no-code-automation' },
+          { text: 'Native Apps (Mobile & Desktop)', link: '/recipes/native-apps' },
+          { text: 'Build for Customers', link: '/recipes/build-for-customers' },
+        ]
+      },
+      {
+        text: 'Create, Run, Pack',
         items: [
           { text: 'Creating Habits (Base)', link: '/deep-dive/creating' },
           { text: 'Running Habits (Cortex)', link: '/deep-dive/running' },
           { text: 'Packing and Distributing Habits', link: '/deep-dive/pack-distribute' },
-          { text: 'Evaluating Variables', link: '/deep-dive/variables.md' },
 
 
         ]
@@ -136,7 +165,7 @@ export default defineConfig({
           { text: 'Habit Viewer', link: '/misc/habit-viewer' },
                     { text: 'Licensing & Compatibility', link: '/extra-reading/licensing' },
           { text: 'Psychological Background', link: '/extra-reading/neuroscience' },
-          
+          { text: 'Evaluating Variables', link: '/extra-reading/variables' },
 
         ]
       },

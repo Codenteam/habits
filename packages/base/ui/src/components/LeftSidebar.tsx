@@ -171,7 +171,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   };
 
   const handleAddHabit = () => {
-    dispatch(addHabit({ name: `Habit ${habits.length + 1}` }));
+    dispatch(addHabit());
   };
 
   const handleSelectHabit = (habitId: string) => {

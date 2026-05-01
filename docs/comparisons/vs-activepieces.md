@@ -1,7 +1,7 @@
 ---
 isComparison: true
 title: Habits vs ActivePieces
-intro: ActivePieces is an open-source Zapier alternative built around a "pieces" ecosystem and a hosted/self-hosted server. Habits is a lightweight, embeddable runtime that runs the same automations on edge, serverless, CLI, mobile, and even packaged apps — with workflows stored as plain YAML.
+intro: ActivePieces is an open-source Zapier alternative built around a "pieces" ecosystem and a hosted/self-hosted server. Habits is a lightweight, embeddable runtime that runs the same automations on edge, serverless, CLI, mobile, and even packaged apps, with workflows stored as plain YAML.
 
 habits:
   name: Habits
@@ -86,7 +86,7 @@ features:
     competitor: Full server stack
 
 heroBar:
-  title: The same automations — without the server
+  title: The same automations, without the server
   subtitle: "ActivePieces needs a running server to execute. Habits runs Everywhere: a Lambda, a container, a phone, or a CLI in your CI pipeline."
   actions:
     - text: Build your first habit
@@ -107,7 +107,7 @@ sections:
         text: Drop the Cortex runtime into any Node/Deno process and execute habits in-line.
       - icon: monitor
         title: CLI-first
-        text: "`habits execute --config ./stack.yaml` — run automations from scripts, cron, or CI."
+        text: "`habits execute --config ./stack.yaml`, run automations from scripts, cron, or CI."
       - icon: zap
         title: No server required
         text: Habits doesn't need a long-running process or a database to execute a workflow.
@@ -115,7 +115,7 @@ sections:
   - title: Git-native workflows
     icon: git-branch
     type: default
-    description: ActivePieces stores flows in its database. Habits stores them as YAML alongside your code — reviewable in PRs, version-controlled, and diffable.
+    description: ActivePieces stores flows in its database. Habits stores them as YAML alongside your code, reviewable in PRs, version-controlled, and diffable.
     code: |
       nodes:
         - id: on-webhook
@@ -134,11 +134,11 @@ sections:
   - title: Bits and scripts, together
     icon: puzzle
     type: default
-    description: Mix pre-built Habits bits with inline Deno/TypeScript scripts in one workflow — no need to author a new "piece" every time you have one-off logic.
+    description: Mix pre-built Habits bits with inline Deno/TypeScript scripts in one workflow, no need to author a new "piece" every time you have one-off logic.
     items:
       - icon: package
         title: 200+ bits
-        text: Pre-built, MIT-licensed integrations — gradually being published to public npm.
+        text: Pre-built, MIT-licensed integrations, gradually being published to public npm.
       - icon: code
         title: Inline scripts
         text: Drop custom TypeScript into a workflow without packaging it as a separate module.

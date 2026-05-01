@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "identifier": "com.codenteam-oss.habits",
   "productName": "Cortex",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
@@ -28,7 +28,7 @@
       }
     ],
     "resources": [],
-    "copyright": "2024 Habits",
+    "copyright": "2026 Habits",
     "category": "DeveloperTool",
     "shortDescription": "Run habit workflows locally",
     "longDescription": "Cortex - Import and run habit workflows on desktop and mobile",
@@ -63,8 +63,7 @@
         "resizable": true,
         "fullscreen": false,
         "decorations": true,
-        "transparent": false,
-        "devtools": true
+        "transparent": false
       }
     ],
     "security": {
@@ -77,5 +76,12 @@
       }
     }
   },
-  "plugins": {}
+  "plugins": {
+    "mobile": [
+        {
+          "scheme": ["habits-cortex"],
+          "appLink": false
+        }
+      ]
+  }
 }

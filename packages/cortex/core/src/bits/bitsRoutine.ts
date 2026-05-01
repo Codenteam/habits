@@ -130,6 +130,10 @@ export enum BitsCueType {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',
   APP_WEBHOOK = 'APP_WEBHOOK',
+  /** Streaming cue type for triggers that continuously receive real-time events (e.g., microphone, websocket, device sensors). Follows POLLING-like lifecycle: onEnable → run (per event) → onDisable. */
+  STREAMING = 'STREAMING',
+  /** Custom cue type for triggers that manage their own lifecycle entirely (e.g., continuous microphone listening, device sensors) */
+  CUSTOM = 'CUSTOM',
 }
 
 /** @deprecated Use BitsCueType instead */
@@ -353,6 +357,7 @@ export function extractBitsPieceFromModule(loadedModule: any): BitsPiece {
     displayName: piece.displayName || 'Unknown Piece',
     description: piece.description,
     logoUrl: piece.logoUrl,
+    runtime: piece.runtime,
     auth: piece.auth,
     routines: getRoutines,
     cues: getCues,

@@ -1,681 +1,721 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claw - Your Personal AI Assistant</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    :root {
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #12121a;
-      --bg-tertiary: #1a1a25;
-      --accent-red: #ff4757;
-      --accent-orange: #ff6b35;
-      --accent-purple: #a855f7;
-      --text-primary: #ffffff;
-      --text-secondary: #a1a1aa;
-      --text-muted: #71717a;
-      --border-color: #27272a;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* Header */
-    header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    
-    .logo-icon {
-      font-size: 2rem;
-    }
-    
-    .logo-text {
-      font-size: 1.5rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    nav {
-      display: flex;
-      gap: 1rem;
-    }
-    
-    nav a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: all 0.2s;
-    }
-    
-    nav a:hover, nav a.active {
-      color: var(--text-primary);
-      background: var(--bg-tertiary);
-    }
-    
-    /* Main Container */
-    .container {
-      flex: 1;
-      display: flex;
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    
-    /* Sidebar */
-    .sidebar {
-      width: 280px;
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border-color);
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    
-    .sidebar h3 {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
-    
-    .skill-list {
-      list-style: none;
-    }
-    
-    .skill-list li {
-      padding: 0.75rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    
-    .skill-list li:hover {
-      background: var(--bg-tertiary);
-    }
-    
-    .skill-icon {
-      font-size: 1.25rem;
-    }
-    
-    .skill-name {
-      font-size: 0.875rem;
-    }
-    
-    /* Chat Area */
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-primary);
-    }
-    
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-    
-    .message {
-      display: flex;
-      gap: 1rem;
-      max-width: 80%;
-    }
-    
-    .message.user {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
-    
-    .message-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-    }
-    
-    .message.assistant .message-avatar {
-      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
-    }
-    
-    .message.user .message-avatar {
-      background: var(--accent-purple);
-    }
-    
-    .message-content {
-      background: var(--bg-secondary);
-      padding: 1rem 1.25rem;
-      border-radius: 16px;
-      line-height: 1.6;
-    }
-    
-    .message.user .message-content {
-      background: var(--accent-purple);
-    }
-    
-    /* Chat Input */
-    .chat-input-container {
-      padding: 1.5rem 2rem;
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border-color);
-    }
-    
-    .chat-input-wrapper {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-    
-    .chat-input {
-      flex: 1;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      color: var(--text-primary);
-      font-size: 1rem;
-      resize: none;
-      min-height: 52px;
-      max-height: 200px;
-    }
-    
-    .chat-input:focus {
-      outline: none;
-      border-color: var(--accent-red);
-    }
-    
-    .chat-input::placeholder {
-      color: var(--text-muted);
-    }
-    
-    .send-button {
-      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
-      border: none;
-      border-radius: 12px;
-      padding: 0.875rem 1.5rem;
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .send-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(255, 71, 87, 0.4);
-    }
-    
-    .send-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    
-    /* Status Bar */
-    .status-bar {
-      padding: 0.75rem 2rem;
-      background: var(--bg-tertiary);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.875rem;
-    }
-    
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-    }
-    
-    .status-dot.offline {
-      background: var(--accent-red);
-    }
-    
-    /* Welcome Message */
-    .welcome-message {
-      text-align: center;
-      padding: 4rem 2rem;
-    }
-    
-    .welcome-icon {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .welcome-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .welcome-subtitle {
-      color: var(--text-secondary);
-      font-size: 1.125rem;
-      max-width: 500px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-    
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    
-    .quick-action {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.25rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-    
-    .quick-action:hover {
-      border-color: var(--accent-red);
-      transform: translateY(-2px);
-    }
-    
-    .quick-action-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .quick-action-title {
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-    
-    .quick-action-desc {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Claw - Your Personal AI Assistant</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ }
+ 
+ :root {
+ --bg-primary: var(--ha-bg-base);
+ --bg-secondary: var(--ha-bg-base);
+ --bg-tertiary: var(--ha-bg-base);
+ --accent-red: var(--ha-danger);
+ --accent-orange: var(--ha-warn);
+ --accent-purple: var(--ha-accent-purple);
+ --text-primary: var(--ha-bg-base);
+ --text-secondary: var(--ha-text-muted);
+ --text-muted: var(--ha-text-muted);
+ --border-color: var(--ha-bg-surface);
+ }
+ 
+ body {
+ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+ background: var(--bg-primary);
+ color: var(--text-primary);
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ }
+ 
+ /* Header */
+ header {
+ background: var(--bg-secondary);
+ border-bottom: 1px solid var(--border-color);
+ padding: 1rem 2rem;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+ 
+ .logo {
+ display: flex;
+ align-items: center;
+ gap: 0.75rem;
+ }
+ 
+ .logo-icon {
+ font-size: 2rem;
+ }
+ 
+ .logo-text {
+ font-size: 1.5rem;
+ font-weight: 700;
+ background: var(--ha-danger);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ }
+ 
+ nav {
+ display: flex;
+ gap: 1rem;
+ }
+ 
+ nav a {
+ color: var(--text-secondary);
+ text-decoration: none;
+ padding: 0.5rem 1rem;
+ border-radius: 8px;
+ transition: all 0.2s;
+ }
+ 
+ nav a:hover, nav a.active {
+ color: var(--text-primary);
+ background: var(--bg-tertiary);
+ }
+ 
+ /* Main Container */
+ .container {
+ flex: 1;
+ display: flex;
+ max-width: 1400px;
+ margin: 0 auto;
+ width: 100%;
+ }
+ 
+ /* Sidebar */
+ .sidebar {
+ width: 280px;
+ background: var(--bg-secondary);
+ border-right: 1px solid var(--border-color);
+ padding: 1.5rem;
+ display: flex;
+ flex-direction: column;
+ gap: 1rem;
+ }
+ 
+ .sidebar h3 {
+ font-size: 0.875rem;
+ color: var(--text-muted);
+ text-transform: uppercase;
+ letter-spacing: 0.05em;
+ margin-bottom: 0.5rem;
+ }
+ 
+ .skill-list {
+ list-style: none;
+ }
+ 
+ .skill-list li {
+ padding: 0.75rem;
+ border-radius: 8px;
+ cursor: pointer;
+ transition: background 0.2s;
+ display: flex;
+ align-items: center;
+ gap: 0.75rem;
+ }
+ 
+ .skill-list li:hover {
+ background: var(--bg-tertiary);
+ }
+ 
+ .skill-icon {
+ font-size: 1.25rem;
+ }
+ 
+ .skill-name {
+ font-size: 0.875rem;
+ }
+ 
+ /* Chat Area */
+ .chat-container {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ background: var(--bg-primary);
+ }
+ 
+ .chat-messages {
+ flex: 1;
+ overflow-y: auto;
+ padding: 2rem;
+ display: flex;
+ flex-direction: column;
+ gap: 1.5rem;
+ }
+ 
+ .message {
+ display: flex;
+ gap: 1rem;
+ max-width: 80%;
+ }
+ 
+ .message.user {
+ align-self: flex-end;
+ flex-direction: row-reverse;
+ }
+ 
+ .message-avatar {
+ width: 40px;
+ height: 40px;
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-size: 1.25rem;
+ flex-shrink: 0;
+ }
+ 
+ .message.assistant .message-avatar {
+ background: var(--ha-danger);
+ }
+ 
+ .message.user .message-avatar {
+ background: var(--accent-purple);
+ }
+ 
+ .message-content {
+ background: var(--bg-secondary);
+ padding: 1rem 1.25rem;
+ border-radius: 16px;
+ line-height: 1.6;
+ }
+ 
+ .message.user .message-content {
+ background: var(--accent-purple);
+ }
+ 
+ /* Chat Input */
+ .chat-input-container {
+ padding: 1.5rem 2rem;
+ background: var(--bg-secondary);
+ border-top: 1px solid var(--border-color);
+ }
+ 
+ .chat-input-wrapper {
+ display: flex;
+ gap: 1rem;
+ align-items: flex-end;
+ }
+ 
+ .chat-input {
+ flex: 1;
+ background: var(--bg-primary);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ padding: 1rem 1.25rem;
+ color: var(--text-primary);
+ font-size: 1rem;
+ resize: none;
+ min-height: 52px;
+ max-height: 200px;
+ }
+ 
+ .chat-input:focus {
+ outline: none;
+ border-color: var(--accent-red);
+ }
+ 
+ .chat-input::placeholder {
+ color: var(--text-muted);
+ }
+ 
+ .send-button {
+ background: var(--ha-danger);
+ border: none;
+ border-radius: 12px;
+ padding: 0.875rem 1.5rem;
+ color: white;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: transform 0.2s, box-shadow 0.2s;
+ }
+ 
+ .send-button:hover {
+ transform: translateY(-2px);
+ box-shadow: 0 4px 20px rgba(255, 71, 87, 0.4);
+ }
+ 
+ .send-button:disabled {
+ opacity: 0.5;
+ cursor: not-allowed;
+ transform: none;
+ box-shadow: none;
+ }
+ 
+ /* Status Bar */
+ .status-bar {
+ padding: 0.75rem 2rem;
+ background: var(--bg-tertiary);
+ border-top: 1px solid var(--border-color);
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ font-size: 0.875rem;
+ }
+ 
+ .status-indicator {
+ display: flex;
+ align-items: center;
+ gap: 0.5rem;
+ }
+ 
+ .status-dot {
+ width: 8px;
+ height: 8px;
+ border-radius: 50%;
+ background: var(--ha-status-success);
+ }
+ 
+ .status-dot.offline {
+ background: var(--accent-red);
+ }
+ 
+ /* Welcome Message */
+ .welcome-message {
+ text-align: center;
+ padding: 4rem 2rem;
+ }
+ 
+ .welcome-icon {
+ font-size: 4rem;
+ margin-bottom: 1.5rem;
+ }
+ 
+ .welcome-title {
+ font-size: 2rem;
+ font-weight: 700;
+ margin-bottom: 1rem;
+ background: var(--ha-danger);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ }
+ 
+ .welcome-subtitle {
+ color: var(--text-secondary);
+ font-size: 1.125rem;
+ max-width: 500px;
+ margin: 0 auto;
+ line-height: 1.6;
+ }
+ 
+ .quick-actions {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ gap: 1rem;
+ margin-top: 2rem;
+ max-width: 800px;
+ margin-left: auto;
+ margin-right: auto;
+ }
+ 
+ .quick-action {
+ background: var(--bg-secondary);
+ border: 1px solid var(--border-color);
+ border-radius: 12px;
+ padding: 1.25rem;
+ cursor: pointer;
+ transition: all 0.2s;
+ text-align: left;
+ }
+ 
+ .quick-action:hover {
+ border-color: var(--accent-red);
+ transform: translateY(-2px);
+ }
+ 
+ .quick-action-icon {
+ font-size: 1.5rem;
+ margin-bottom: 0.5rem;
+ }
+ 
+ .quick-action-title {
+ font-weight: 600;
+ margin-bottom: 0.25rem;
+ }
+ 
+ .quick-action-desc {
+ font-size: 0.875rem;
+ color: var(--text-muted);
+ }
 
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+ /* Animations */
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
 
-    .message {
-      animation: fadeIn 0.3s ease;
-    }
+ .message {
+ animation: fadeIn 0.3s ease;
+ }
 
-    /* Typing indicator */
-    .typing-indicator {
-      display: flex;
-      gap: 4px;
-      padding: 0.5rem 0;
-    }
+ /* Typing indicator */
+ .typing-indicator {
+ display: flex;
+ gap: 4px;
+ padding: 0.5rem 0;
+ }
 
-    .typing-indicator span {
-      width: 8px;
-      height: 8px;
-      background: var(--text-muted);
-      border-radius: 50%;
-      animation: typing 1.4s infinite;
-    }
+ .typing-indicator span {
+ width: 8px;
+ height: 8px;
+ background: var(--text-muted);
+ border-radius: 50%;
+ animation: typing 1.4s infinite;
+ }
 
-    .typing-indicator span:nth-child(2) {
-      animation-delay: 0.2s;
-    }
+ .typing-indicator span:nth-child(2) {
+ animation-delay: 0.2s;
+ }
 
-    .typing-indicator span:nth-child(3) {
-      animation-delay: 0.4s;
-    }
+ .typing-indicator span:nth-child(3) {
+ animation-delay: 0.4s;
+ }
 
-    @keyframes typing {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-4px); }
-    }
-  </style>
+ @keyframes typing {
+ 0%, 60%, 100% { transform: translateY(0); }
+ 30% { transform: translateY(-4px); }
+ }
+ </style>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <span class="logo-icon">🦞</span>
-      <span class="logo-text">Claw</span>
-    </div>
-    <nav>
-      <a href="/" class="active">Chat</a>
-      <a href="/dashboard.html">Dashboard</a>
-      <a href="/memories.html">Memories</a>
-      <a href="/tasks.html">Tasks</a>
-    </nav>
-  </header>
-  
-  <div class="container">
-    <aside class="sidebar">
-      <div>
-        <h3>Skills</h3>
-        <ul class="skill-list">
-          <li onclick="insertPrompt('Send a message via Telegram to ')">
-            <span class="skill-icon">📱</span>
-            <span class="skill-name">Telegram</span>
-          </li>
-          <li onclick="insertPrompt('Send a WhatsApp message to ')">
-            <span class="skill-icon">💬</span>
-            <span class="skill-name">WhatsApp</span>
-          </li>
-          <li onclick="insertPrompt('Send a Slack message to #')">
-            <span class="skill-icon">🔔</span>
-            <span class="skill-name">Slack</span>
-          </li>
-          <li onclick="insertPrompt('Send an email to ')">
-            <span class="skill-icon">📧</span>
-            <span class="skill-name">Email</span>
-          </li>
-          <li onclick="insertPrompt('Create a task: ')">
-            <span class="skill-icon">✅</span>
-            <span class="skill-name">Tasks</span>
-          </li>
-          <li onclick="insertPrompt('Remember that ')">
-            <span class="skill-icon">🧠</span>
-            <span class="skill-name">Memory</span>
-          </li>
-          <li onclick="insertPrompt('Summarize this webpage: ')">
-            <span class="skill-icon">🌐</span>
-            <span class="skill-name">Web Browse</span>
-          </li>
-          <li onclick="insertPrompt('Summarize: ')">
-            <span class="skill-icon">📝</span>
-            <span class="skill-name">Summarize</span>
-          </li>
-        </ul>
-      </div>
-      
-      <div style="margin-top: auto;">
-        <h3>Integrations</h3>
-        <ul class="skill-list">
-          <li>
-            <span class="skill-icon">⚡</span>
-            <span class="skill-name" style="color: #22c55e;">Connected</span>
-          </li>
-        </ul>
-      </div>
-    </aside>
-    
-    <main class="chat-container">
-      <div class="chat-messages" id="chatMessages">
-        <div class="welcome-message">
-          <div class="welcome-icon">🦞</div>
-          <h1 class="welcome-title">Hi, I'm Claw!</h1>
-          <p class="welcome-subtitle">
-            Your personal AI assistant that actually does things. I can send messages, 
-            manage your tasks, remember important info, and much more.
-          </p>
-          
-          <div class="quick-actions">
-            <div class="quick-action" onclick="insertPrompt('What can you help me with?')">
-              <div class="quick-action-icon">🤔</div>
-              <div class="quick-action-title">What can you do?</div>
-              <div class="quick-action-desc">Discover my capabilities</div>
-            </div>
-            <div class="quick-action" onclick="insertPrompt('Create a task to ')">
-              <div class="quick-action-icon">✅</div>
-              <div class="quick-action-title">Create a task</div>
-              <div class="quick-action-desc">Add to your todo list</div>
-            </div>
-            <div class="quick-action" onclick="insertPrompt('Remember that my ')">
-              <div class="quick-action-icon">🧠</div>
-              <div class="quick-action-title">Save to memory</div>
-              <div class="quick-action-desc">I'll remember it forever</div>
-            </div>
-            <div class="quick-action" onclick="triggerHeartbeat()">
-              <div class="quick-action-icon">💓</div>
-              <div class="quick-action-title">Daily briefing</div>
-              <div class="quick-action-desc">Get your status update</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="chat-input-container">
-        <div class="chat-input-wrapper">
-          <textarea 
-            class="chat-input" 
-            id="chatInput" 
-            placeholder="Ask me anything... I can send messages, create tasks, browse the web, and more!"
-            rows="1"
-            onkeydown="handleKeyDown(event)"
-          ></textarea>
-          <button class="send-button" id="sendButton" onclick="sendMessage()">
-            Send
-          </button>
-        </div>
-      </div>
-      
-      <div class="status-bar">
-        <div class="status-indicator">
-          <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Connected</span>
-        </div>
-        <div>
-          Powered by Habits
-        </div>
-      </div>
-    </main>
-  </div>
-  
-  <script>
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    const sendButton = document.getElementById('sendButton');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    
-    let userId = localStorage.getItem('clawUserId');
-    if (!userId) {
-      userId = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('clawUserId', userId);
-    }
-    
-    let isFirstMessage = true;
-    
-    function insertPrompt(text) {
-      chatInput.value = text;
-      chatInput.focus();
-    }
-    
-    function handleKeyDown(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
-    }
-    
-    function addMessage(content, isUser = false) {
-      // Remove welcome message on first real message
-      if (isFirstMessage) {
-        const welcome = chatMessages.querySelector('.welcome-message');
-        if (welcome) {
-          welcome.remove();
-        }
-        isFirstMessage = false;
-      }
-      
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-      
-      messageDiv.innerHTML = `
-        <div class="message-avatar">${isUser ? '👤' : '🦞'}</div>
-        <div class="message-content">${content}</div>
-      `;
-      
-      chatMessages.appendChild(messageDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      
-      return messageDiv;
-    }
-    
-    function addTypingIndicator() {
-      const typing = document.createElement('div');
-      typing.className = 'message assistant';
-      typing.id = 'typingIndicator';
-      typing.innerHTML = `
-        <div class="message-avatar">🦞</div>
-        <div class="message-content">
-          <div class="typing-indicator">
-            <span></span><span></span><span></span>
-          </div>
-        </div>
-      `;
-      chatMessages.appendChild(typing);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-    
-    function removeTypingIndicator() {
-      const typing = document.getElementById('typingIndicator');
-      if (typing) {
-        typing.remove();
-      }
-    }
-    
-    async function sendMessage() {
-      const message = chatInput.value.trim();
-      if (!message) return;
-      
-      chatInput.value = '';
-      addMessage(message, true);
-      
-      sendButton.disabled = true;
-      statusDot.classList.add('offline');
-      statusText.textContent = 'Processing...';
-      
-      addTypingIndicator();
-      
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              message: message,
-              userId: userId,
-              channel: 'web'
-          })
-        });
-        
-        removeTypingIndicator();
-        
-        if (!response.ok) {
-          throw new Error('Failed to get response');
-        }
-        
-        const data = await response.json();
-        addMessage(data.output?.response || data.response || 'Sorry, I encountered an issue processing your request.');
-        
-      } catch (error) {
-        removeTypingIndicator();
-        addMessage('Sorry, I encountered an error. Please try again.');
-        console.error('Chat error:', error);
-      }
-      
-      sendButton.disabled = false;
-      statusDot.classList.remove('offline');
-      statusText.textContent = 'Connected';
-    }
-    
-    async function triggerHeartbeat() {
-      sendButton.disabled = true;
-      statusDot.classList.add('offline');
-      statusText.textContent = 'Getting briefing...';
-      
-      addTypingIndicator();
-      
-      try {
-        const response = await fetch('/api/heartbeat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              userId: userId,
-              channel: 'web'
-          })
-        });
-        
-        removeTypingIndicator();
-        
-        if (!response.ok) {
-          throw new Error('Failed to get heartbeat');
-        }
-        
-        const data = await response.json();
-        addMessage(data.output?.message || data.message || 'Everything looks good! No pending tasks at the moment.');
-        
-      } catch (error) {
-        removeTypingIndicator();
-        addMessage('I couldn\'t fetch your briefing right now. Let me know if you need anything!');
-        console.error('Heartbeat error:', error);
-      }
-      
-      sendButton.disabled = false;
-      statusDot.classList.remove('offline');
-      statusText.textContent = 'Connected';
-    }
-    
-    // Auto-resize textarea
-    chatInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
-    });
-  </script>
+ <header>
+ <div class="logo">
+ <span class="logo-icon"></span>
+ <span class="logo-text">Claw</span>
+ </div>
+ <nav>
+ <a href="/" class="active">Chat</a>
+ <a href="/dashboard.html">Dashboard</a>
+ <a href="/memories.html">Memories</a>
+ <a href="/tasks.html">Tasks</a>
+ </nav>
+ </header>
+ 
+ <div class="container">
+ <aside class="sidebar">
+ <div>
+ <h3>Skills</h3>
+ <ul class="skill-list">
+ <li onclick="insertPrompt('Send a message via Telegram to ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Telegram</span>
+ </li>
+ <li onclick="insertPrompt('Send a WhatsApp message to ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">WhatsApp</span>
+ </li>
+ <li onclick="insertPrompt('Send a Slack message to #')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Slack</span>
+ </li>
+ <li onclick="insertPrompt('Send an email to ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Email</span>
+ </li>
+ <li onclick="insertPrompt('Create a task: ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Tasks</span>
+ </li>
+ <li onclick="insertPrompt('Remember that ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Memory</span>
+ </li>
+ <li onclick="insertPrompt('Summarize this webpage: ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Web Browse</span>
+ </li>
+ <li onclick="insertPrompt('Summarize: ')">
+ <span class="skill-icon"></span>
+ <span class="skill-name">Summarize</span>
+ </li>
+ </ul>
+ </div>
+ 
+ <div style="margin-top: auto;">
+ <h3>Integrations</h3>
+ <ul class="skill-list">
+ <li>
+ <span class="skill-icon"></span>
+ <span class="skill-name" style="color: var(--ha-status-success);">Connected</span>
+ </li>
+ </ul>
+ </div>
+ </aside>
+ 
+ <main class="chat-container">
+ <div class="chat-messages" id="chatMessages">
+ <div class="welcome-message">
+ <div class="welcome-icon"></div>
+ <h1 class="welcome-title">Hi, I'm Claw!</h1>
+ <p class="welcome-subtitle">
+ Your personal AI assistant that actually does things. I can send messages, 
+ manage your tasks, remember important info, and much more.
+ </p>
+ 
+ <div class="quick-actions">
+ <div class="quick-action" onclick="insertPrompt('What can you help me with?')">
+ <div class="quick-action-icon"></div>
+ <div class="quick-action-title">What can you do?</div>
+ <div class="quick-action-desc">Discover my capabilities</div>
+ </div>
+ <div class="quick-action" onclick="insertPrompt('Create a task to ')">
+ <div class="quick-action-icon"></div>
+ <div class="quick-action-title">Create a task</div>
+ <div class="quick-action-desc">Add to your todo list</div>
+ </div>
+ <div class="quick-action" onclick="insertPrompt('Remember that my ')">
+ <div class="quick-action-icon"></div>
+ <div class="quick-action-title">Save to memory</div>
+ <div class="quick-action-desc">I'll remember it forever</div>
+ </div>
+ <div class="quick-action" onclick="triggerHeartbeat()">
+ <div class="quick-action-icon"></div>
+ <div class="quick-action-title">Daily briefing</div>
+ <div class="quick-action-desc">Get your status update</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ 
+ <div class="chat-input-container">
+ <div class="chat-input-wrapper">
+ <textarea 
+ class="chat-input" 
+ id="chatInput" 
+ placeholder="Ask me anything... I can send messages, create tasks, browse the web, and more!"
+ rows="1"
+ onkeydown="handleKeyDown(event)"
+ ></textarea>
+ <button class="send-button" id="sendButton" onclick="sendMessage()">
+ Send
+ </button>
+ </div>
+ </div>
+ 
+ <div class="status-bar">
+ <div class="status-indicator">
+ <span class="status-dot" id="statusDot"></span>
+ <span id="statusText">Connected</span>
+ </div>
+ <div>
+ Powered by Habits
+ </div>
+ </div>
+ </main>
+ </div>
+ 
+ <script>
+ const chatMessages = document.getElementById('chatMessages');
+ const chatInput = document.getElementById('chatInput');
+ const sendButton = document.getElementById('sendButton');
+ const statusDot = document.getElementById('statusDot');
+ const statusText = document.getElementById('statusText');
+ 
+ let userId = localStorage.getItem('clawUserId');
+ if (!userId) {
+ userId = 'user_' + Math.random().toString(36).substr(2, 9);
+ localStorage.setItem('clawUserId', userId);
+ }
+ 
+ let isFirstMessage = true;
+ 
+ function insertPrompt(text) {
+ chatInput.value = text;
+ chatInput.focus();
+ }
+ 
+ function handleKeyDown(event) {
+ if (event.key === 'Enter' && !event.shiftKey) {
+ event.preventDefault();
+ sendMessage();
+ }
+ }
+ 
+ function addMessage(content, isUser = false) {
+ // Remove welcome message on first real message
+ if (isFirstMessage) {
+ const welcome = chatMessages.querySelector('.welcome-message');
+ if (welcome) {
+ welcome.remove();
+ }
+ isFirstMessage = false;
+ }
+ 
+ const messageDiv = document.createElement('div');
+ messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+ 
+ messageDiv.innerHTML = `
+ <div class="message-avatar">${isUser ? '' : ''}</div>
+ <div class="message-content">${content}</div>
+ `;
+ 
+ chatMessages.appendChild(messageDiv);
+ chatMessages.scrollTop = chatMessages.scrollHeight;
+ 
+ return messageDiv;
+ }
+ 
+ function addTypingIndicator() {
+ const typing = document.createElement('div');
+ typing.className = 'message assistant';
+ typing.id = 'typingIndicator';
+ typing.innerHTML = `
+ <div class="message-avatar"></div>
+ <div class="message-content">
+ <div class="typing-indicator">
+ <span></span><span></span><span></span>
+ </div>
+ </div>
+ `;
+ chatMessages.appendChild(typing);
+ chatMessages.scrollTop = chatMessages.scrollHeight;
+ }
+ 
+ function removeTypingIndicator() {
+ const typing = document.getElementById('typingIndicator');
+ if (typing) {
+ typing.remove();
+ }
+ }
+ 
+ async function sendMessage() {
+ const message = chatInput.value.trim();
+ if (!message) return;
+ 
+ chatInput.value = '';
+ addMessage(message, true);
+ 
+ sendButton.disabled = true;
+ statusDot.classList.add('offline');
+ statusText.textContent = 'Processing...';
+ 
+ addTypingIndicator();
+ 
+ try {
+ const response = await fetch('/api/chat', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({
+ message: message,
+ userId: userId,
+ channel: 'web'
+ })
+ });
+ 
+ removeTypingIndicator();
+ 
+ if (!response.ok) {
+ throw new Error('Failed to get response');
+ }
+ 
+ const data = await response.json();
+ addMessage(data.output?.response || data.response || 'Sorry, I encountered an issue processing your request.');
+ 
+ } catch (error) {
+ removeTypingIndicator();
+ addMessage('Sorry, I encountered an error. Please try again.');
+ console.error('Chat error:', error);
+ }
+ 
+ sendButton.disabled = false;
+ statusDot.classList.remove('offline');
+ statusText.textContent = 'Connected';
+ }
+ 
+ async function triggerHeartbeat() {
+ sendButton.disabled = true;
+ statusDot.classList.add('offline');
+ statusText.textContent = 'Getting briefing...';
+ 
+ addTypingIndicator();
+ 
+ try {
+ const response = await fetch('/api/heartbeat', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({
+ userId: userId,
+ channel: 'web'
+ })
+ });
+ 
+ removeTypingIndicator();
+ 
+ if (!response.ok) {
+ throw new Error('Failed to get heartbeat');
+ }
+ 
+ const data = await response.json();
+ addMessage(data.output?.message || data.message || 'Everything looks good! No pending tasks at the moment.');
+ 
+ } catch (error) {
+ removeTypingIndicator();
+ addMessage('I couldn\'t fetch your briefing right now. Let me know if you need anything!');
+ console.error('Heartbeat error:', error);
+ }
+ 
+ sendButton.disabled = false;
+ statusDot.classList.remove('offline');
+ statusText.textContent = 'Connected';
+ }
+ 
+ // Auto-resize textarea
+ chatInput.addEventListener('input', function() {
+ this.style.height = 'auto';
+ this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+ });
+ </script>
 </body>
 </html>

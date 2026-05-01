@@ -1,521 +1,561 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Journal - Your Mindful Companion</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Georgia', serif;
-            background: #0f0f1a;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; font-weight: 400; }
-        .subtitle { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 30px; font-style: italic; }
-        .card {
-            background: #1a1a2e;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        .card h2 { color: #fff; margin-bottom: 20px; font-weight: 400; }
-        .greeting {
-            text-align: center;
-            padding: 20px;
-            background: #12121f;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .greeting h3 { color: #a78bfa; font-weight: 400; margin-bottom: 5px; }
-        .greeting p { color: #a0a0a0; font-style: italic; }
-        .journal-textarea {
-            width: 100%;
-            min-height: 250px;
-            padding: 20px;
-            border: 2px solid #2d2d44;
-            border-radius: 12px;
-            font-family: 'Georgia', serif;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            resize: vertical;
-            transition: border-color 0.3s;
-            background: #12121f;
-            color: #e0e0e0;
-        }
-        .journal-textarea:focus {
-            outline: none;
-            border-color: #a78bfa;
-        }
-        .journal-textarea::placeholder {
-            color: #606060;
-            font-style: italic;
-        }
-        .word-count {
-            text-align: right;
-            font-size: 0.85rem;
-            color: #707070;
-            margin-top: 5px;
-        }
-        button.submit {
-            background: #a78bfa;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            transition: all 0.2s;
-            font-family: 'Georgia', serif;
-        }
-        button.submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(167, 139, 250, 0.4); }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .loading { display: none; text-align: center; padding: 40px; color: #a0a0a0; }
-        .loading.active { display: block; }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid #2d2d44;
-            border-top-color: #a78bfa;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>AI Journal - Your Mindful Companion</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: 'Georgia', serif;
+ background: var(--ha-bg-base);
+ min-height: 100vh;
+ padding: 20px;
+ }
+ .container { max-width: 800px; margin: 0 auto; }
+ h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; font-weight: 400; }
+ .subtitle { color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 30px; font-style: italic; }
+ .card {
+ background: var(--ha-bg-base);
+ border-radius: 16px;
+ padding: 30px;
+ margin-bottom: 20px;
+ box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+ }
+ .card h2 { color: var(--ha-bg-base); margin-bottom: 20px; font-weight: 400; }
+ .greeting {
+ text-align: center;
+ padding: 20px;
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ margin-bottom: 20px;
+ }
+ .greeting h3 { color: var(--ha-status-skipped); font-weight: 400; margin-bottom: 5px; }
+ .greeting p { color: var(--ha-text-muted); font-style: italic; }
+ .journal-textarea {
+ width: 100%;
+ min-height: 250px;
+ padding: 20px;
+ border: 2px solid var(--ha-bg-elevated);
+ border-radius: 12px;
+ font-family: 'Georgia', serif;
+ font-size: 1.1rem;
+ line-height: 1.8;
+ resize: vertical;
+ transition: border-color 0.3s;
+ background: var(--ha-bg-surface);
+ color: var(--ha-text-body);
+ }
+ .journal-textarea:focus {
+ outline: none;
+ border-color: var(--ha-status-skipped);
+ }
+ .journal-textarea::placeholder {
+ color: var(--ha-text-disabled);
+ font-style: italic;
+ }
+ .word-count {
+ text-align: right;
+ font-size: 0.85rem;
+ color: var(--ha-text-disabled);
+ margin-top: 5px;
+ }
+ button.submit {
+ background: var(--ha-status-skipped);
+ color: white;
+ border: none;
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-size: 1rem;
+ cursor: pointer;
+ width: 100%;
+ margin-top: 15px;
+ transition: all 0.2s;
+ font-family: 'Georgia', serif;
+ }
+ button.submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(167, 139, 250, 0.4); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+ .loading { display: none; text-align: center; padding: 40px; color: var(--ha-text-muted); }
+ .loading.active { display: block; }
+ .spinner {
+ width: 40px; height: 40px;
+ border: 3px solid var(--ha-bg-elevated);
+ border-top-color: var(--ha-status-skipped);
+ border-radius: 50%;
+ animation: spin 1s linear infinite;
+ margin: 0 auto 20px;
+ }
+ @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Response styles */
-        .response-container { display: none; }
-        .response-container.active { display: block; }
-        .mood-card {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            background: #12121f;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .mood-score {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: white;
-        }
-        .mood-score .number { font-size: 2rem; line-height: 1; }
-        .mood-score .label { font-size: 0.7rem; opacity: 0.9; }
-        .mood-info h4 { color: #fff; margin-bottom: 5px; }
-        .mood-info p { color: #a0a0a0; font-size: 0.9rem; }
-        .emotion-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-        .emotion-tag {
-            background: #2d2d44;
-            color: #a78bfa;
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-        }
-        .ai-response {
-            background: #12121f;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-left: 4px solid #a78bfa;
-        }
-        .ai-response p { line-height: 1.8; color: #c0c0c0; margin-bottom: 15px; }
-        .ai-response p:last-child { margin-bottom: 0; }
-        .reflection-prompts {
-            background: #2d2d44;
-            border-radius: 12px;
-            padding: 20px;
-        }
-        .reflection-prompts h4 { color: #fbbf24; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .prompt-item {
-            padding: 12px;
-            background: #1a1a2e;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            color: #c0c0c0;
-            font-style: italic;
-        }
+ /* Response styles */
+ .response-container { display: none; }
+ .response-container.active { display: block; }
+ .mood-card {
+ display: flex;
+ align-items: center;
+ gap: 20px;
+ padding: 20px;
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ margin-bottom: 20px;
+ }
+ .mood-score {
+ width: 80px; height: 80px;
+ border-radius: 50%;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ font-weight: 600;
+ color: white;
+ }
+ .mood-score .number { font-size: 2rem; line-height: 1; }
+ .mood-score .label { font-size: 0.7rem; opacity: 0.9; }
+ .mood-info h4 { color: var(--ha-bg-base); margin-bottom: 5px; }
+ .mood-info p { color: var(--ha-text-muted); font-size: 0.9rem; }
+ .emotion-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+ .emotion-tag {
+ background: var(--ha-bg-elevated);
+ color: var(--ha-status-skipped);
+ padding: 4px 12px;
+ border-radius: 15px;
+ font-size: 0.85rem;
+ }
+ .ai-response {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 25px;
+ margin-bottom: 20px;
+ border-left: 4px solid var(--ha-status-skipped);
+ }
+ .ai-response p { line-height: 1.8; color: var(--ha-text-body); margin-bottom: 15px; }
+ .ai-response p:last-child { margin-bottom: 0; }
+ .reflection-prompts {
+ background: var(--ha-bg-elevated);
+ border-radius: 12px;
+ padding: 20px;
+ }
+ .reflection-prompts h4 { color: var(--ha-warn); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+ .prompt-item {
+ padding: 12px;
+ background: var(--ha-bg-base);
+ border-radius: 8px;
+ margin-bottom: 10px;
+ color: var(--ha-text-body);
+ font-style: italic;
+ }
 
-        /* History styles */
-        .entries-list { display: flex; flex-direction: column; gap: 15px; }
-        .entry-item {
-            background: #12121f;
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-left: 4px solid #2d2d44;
-        }
-        .entry-item:hover { background: #1a1a2e; border-left-color: #a78bfa; }
-        .entry-date { font-size: 0.85rem; color: #707070; margin-bottom: 8px; }
-        .entry-preview { color: #c0c0c0; line-height: 1.6; }
-        .entry-mood {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            color: white;
-            margin-right: 8px;
-        }
+ /* History styles */
+ .entries-list { display: flex; flex-direction: column; gap: 15px; }
+ .entry-item {
+ background: var(--ha-bg-surface);
+ border-radius: 12px;
+ padding: 20px;
+ cursor: pointer;
+ transition: all 0.2s;
+ border-left: 4px solid var(--ha-bg-elevated);
+ }
+ .entry-item:hover { background: var(--ha-bg-base); border-left-color: var(--ha-status-skipped); }
+ .entry-date { font-size: 0.85rem; color: var(--ha-text-disabled); margin-bottom: 8px; }
+ .entry-preview { color: var(--ha-text-body); line-height: 1.6; }
+ .entry-mood {
+ display: inline-block;
+ padding: 4px 10px;
+ border-radius: 12px;
+ font-size: 0.8rem;
+ color: white;
+ margin-right: 8px;
+ }
 
-        /* Weekly insights */
-        .insights-card {
-            background: #a78bfa;
-            color: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-        .insights-card h3 { margin-bottom: 15px; font-weight: 400; }
-        .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .insight-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
-        .insight-item h5 { font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px; }
-        .insight-item p { font-size: 1.1rem; }
+ /* Weekly insights */
+ .insights-card {
+ background: var(--ha-status-skipped);
+ color: white;
+ border-radius: 16px;
+ padding: 25px;
+ margin-bottom: 20px;
+ }
+ .insights-card h3 { margin-bottom: 15px; font-weight: 400; }
+ .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+ .insight-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; }
+ .insight-item h5 { font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px; }
+ .insight-item p { font-size: 1.1rem; }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab {
-            flex: 1;
-            padding: 12px;
-            background: #2d2d44;
-            border: none;
-            border-radius: 8px;
-            color: #a0a0a0;
-            cursor: pointer;
-            font-family: 'Georgia', serif;
-            transition: all 0.2s;
-        }
-        .tab.active { background: #a78bfa; color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+ .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+ .tab {
+ flex: 1;
+ padding: 12px;
+ background: var(--ha-bg-elevated);
+ border: none;
+ border-radius: 8px;
+ color: var(--ha-text-muted);
+ cursor: pointer;
+ font-family: 'Georgia', serif;
+ transition: all 0.2s;
+ }
+ .tab.active { background: var(--ha-status-skipped); color: white; }
+ .tab-content { display: none; }
+ .tab-content.active { display: block; }
 
-        @media (max-width: 768px) {
-            .insights-grid { grid-template-columns: 1fr; }
-            .mood-card { flex-direction: column; text-align: center; }
-        }
-    </style>
+ @media (max-width: 768px) {
+ .insights-grid { grid-template-columns: 1fr; }
+ .mood-card { flex-direction: column; text-align: center; }
+ }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <h1>✨ AI Journal</h1>
-        <p class="subtitle">Your mindful companion for daily reflection</p>
+ <div class="container">
+ <h1> AI Journal</h1>
+ <p class="subtitle">Your mindful companion for daily reflection</p>
 
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('write')">Write</button>
-            <button class="tab" onclick="showTab('history')">History</button>
-            <button class="tab" onclick="showTab('insights')">Insights</button>
-        </div>
+ <div class="tabs">
+ <button class="tab active" onclick="showTab('write')">Write</button>
+ <button class="tab" onclick="showTab('history')">History</button>
+ <button class="tab" onclick="showTab('insights')">Insights</button>
+ </div>
 
-        <!-- Write Tab -->
-        <div id="write-tab" class="tab-content active">
-            <div class="card" id="write-section">
-                <div class="greeting">
-                    <h3 id="greeting-text">Good morning</h3>
-                    <p id="prompt-text">How are you feeling today?</p>
-                </div>
-                <form id="journal-form">
-                    <textarea class="journal-textarea" id="content" placeholder="Start writing... What's on your mind today? How are you feeling? What happened?"></textarea>
-                    <div class="word-count"><span id="wordCount">0</span> words</div>
-                    <button type="submit" class="submit" id="submitBtn">Save Entry ✨</button>
-                </form>
-            </div>
+ <!-- Write Tab -->
+ <div id="write-tab" class="tab-content active">
+ <div class="card" id="write-section">
+ <div class="greeting">
+ <h3 id="greeting-text">Good morning</h3>
+ <p id="prompt-text">How are you feeling today?</p>
+ </div>
+ <form id="journal-form">
+ <textarea class="journal-textarea" id="content" placeholder="Start writing... What's on your mind today? How are you feeling? What happened?"></textarea>
+ <div class="word-count"><span id="wordCount">0</span> words</div>
+ <button type="submit" class="submit" id="submitBtn">Save Entry </button>
+ </form>
+ </div>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p style="color: #666;">Reflecting on your thoughts...</p>
-            </div>
+ <div class="loading" id="loading">
+ <div class="spinner"></div>
+ <p style="color: var(--ha-text-disabled);">Reflecting on your thoughts...</p>
+ </div>
 
-            <div class="response-container" id="response-section">
-                <div class="card">
-                    <button onclick="newEntry()" style="margin-bottom: 20px; background: #6c757d; padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer;">← Write Another Entry</button>
-                    
-                    <div class="mood-card">
-                        <div class="mood-score" id="mood-score">
-                            <span class="number">7</span>
-                            <span class="label">mood</span>
-                        </div>
-                        <div class="mood-info">
-                            <h4 id="primary-emotion">Feeling content</h4>
-                            <p id="energy-level">Energy: Medium</p>
-                            <div class="emotion-tags" id="emotion-tags"></div>
-                        </div>
-                    </div>
+ <div class="response-container" id="response-section">
+ <div class="card">
+ <button onclick="newEntry()" style="margin-bottom: 20px; background: var(--ha-text-disabled); padding: 10px 20px; border: none; border-radius: 8px; color: white; cursor: pointer;">← Write Another Entry</button>
+ 
+ <div class="mood-card">
+ <div class="mood-score" id="mood-score">
+ <span class="number">7</span>
+ <span class="label">mood</span>
+ </div>
+ <div class="mood-info">
+ <h4 id="primary-emotion">Feeling content</h4>
+ <p id="energy-level">Energy: Medium</p>
+ <div class="emotion-tags" id="emotion-tags"></div>
+ </div>
+ </div>
 
-                    <div class="ai-response" id="ai-response">
-                        <p>Loading...</p>
-                    </div>
+ <div class="ai-response" id="ai-response">
+ <p>Loading...</p>
+ </div>
 
-                    <div class="reflection-prompts" id="reflection-section">
-                        <h4>💭 Questions to Consider</h4>
-                        <div id="reflection-prompts"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <div class="reflection-prompts" id="reflection-section">
+ <h4> Questions to Consider</h4>
+ <div id="reflection-prompts"></div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <!-- History Tab -->
-        <div id="history-tab" class="tab-content">
-            <div class="card">
-                <h2>Your Journal Entries</h2>
-                <div class="entries-list" id="entries-list">
-                    <p style="color: #888; text-align: center;">Loading...</p>
-                </div>
-            </div>
-        </div>
+ <!-- History Tab -->
+ <div id="history-tab" class="tab-content">
+ <div class="card">
+ <h2>Your Journal Entries</h2>
+ <div class="entries-list" id="entries-list">
+ <p style="color: var(--ha-text-muted); text-align: center;">Loading...</p>
+ </div>
+ </div>
+ </div>
 
-        <!-- Insights Tab -->
-        <div id="insights-tab" class="tab-content">
-            <div id="insights-container">
-                <div class="card">
-                    <h2>Weekly Insights</h2>
-                    <button onclick="loadInsights()" class="submit" style="margin-bottom: 20px;">Generate Weekly Insights</button>
-                    <div id="insights-content"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+ <!-- Insights Tab -->
+ <div id="insights-tab" class="tab-content">
+ <div id="insights-container">
+ <div class="card">
+ <h2>Weekly Insights</h2>
+ <button onclick="loadInsights()" class="submit" style="margin-bottom: 20px;">Generate Weekly Insights</button>
+ <div id="insights-content"></div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <script>
-        // Set greeting based on time
-        const hour = new Date().getHours();
-        const greetings = {
-            morning: { text: 'Good morning', prompt: 'How did you sleep? What are you looking forward to today?' },
-            afternoon: { text: 'Good afternoon', prompt: 'How is your day going so far?' },
-            evening: { text: 'Good evening', prompt: 'How was your day? What moments stood out?' },
-            night: { text: 'Good night', prompt: 'Time to reflect. What are you grateful for today?' }
-        };
-        
-        let greeting = greetings.morning;
-        if (hour >= 12 && hour < 17) greeting = greetings.afternoon;
-        else if (hour >= 17 && hour < 21) greeting = greetings.evening;
-        else if (hour >= 21 || hour < 5) greeting = greetings.night;
-        
-        document.getElementById('greeting-text').textContent = greeting.text;
-        document.getElementById('prompt-text').textContent = greeting.prompt;
+ <script>
+ // Set greeting based on time
+ const hour = new Date().getHours();
+ const greetings = {
+ morning: { text: 'Good morning', prompt: 'How did you sleep? What are you looking forward to today?' },
+ afternoon: { text: 'Good afternoon', prompt: 'How is your day going so far?' },
+ evening: { text: 'Good evening', prompt: 'How was your day? What moments stood out?' },
+ night: { text: 'Good night', prompt: 'Time to reflect. What are you grateful for today?' }
+ };
+ 
+ let greeting = greetings.morning;
+ if (hour >= 12 && hour < 17) greeting = greetings.afternoon;
+ else if (hour >= 17 && hour < 21) greeting = greetings.evening;
+ else if (hour >= 21 || hour < 5) greeting = greetings.night;
+ 
+ document.getElementById('greeting-text').textContent = greeting.text;
+ document.getElementById('prompt-text').textContent = greeting.prompt;
 
-        // Word count
-        const contentArea = document.getElementById('content');
-        contentArea.addEventListener('input', () => {
-            const words = contentArea.value.trim().split(/\s+/).filter(w => w).length;
-            document.getElementById('wordCount').textContent = words;
-        });
+ // Word count
+ const contentArea = document.getElementById('content');
+ contentArea.addEventListener('input', () => {
+ const words = contentArea.value.trim().split(/\s+/).filter(w => w).length;
+ document.getElementById('wordCount').textContent = words;
+ });
 
-        // Tab switching
-        function showTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`${tab}-tab`).classList.add('active');
-            
-            if (tab === 'history') loadHistory();
-        }
+ // Tab switching
+ function showTab(tab) {
+ document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+ document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+ document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+ document.getElementById(`${tab}-tab`).classList.add('active');
+ 
+ if (tab === 'history') loadHistory();
+ }
 
-        // Form submission
-        document.getElementById('journal-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const content = contentArea.value.trim();
-            if (!content) {
-                alert('Please write something first');
-                return;
-            }
+ // Form submission
+ document.getElementById('journal-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ 
+ const content = contentArea.value.trim();
+ if (!content) {
+ alert('Please write something first');
+ return;
+ }
 
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
-            
-            submitBtn.disabled = true;
-            loading.classList.add('active');
-            document.getElementById('write-section').style.display = 'none';
+ const submitBtn = document.getElementById('submitBtn');
+ const loading = document.getElementById('loading');
+ 
+ submitBtn.disabled = true;
+ loading.classList.add('active');
+ document.getElementById('write-section').style.display = 'none';
 
-            try {
-                const response = await fetch('/api/save-entry', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content })
-                });
+ try {
+ const response = await fetch('/api/save-entry', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ content })
+ });
 
-                const result = await response.json();
-                const data = result.output;
-                displayResponse(data);
-            } catch (error) {
-                alert('Error: ' + error.message);
-                document.getElementById('write-section').style.display = 'block';
-            } finally {
-                submitBtn.disabled = false;
-                loading.classList.remove('active');
-            }
-        });
+ const result = await response.json();
+ const data = result.output;
+ displayResponse(data);
+ } catch (error) {
+ alert('Error: ' + error.message);
+ document.getElementById('write-section').style.display = 'block';
+ } finally {
+ submitBtn.disabled = false;
+ loading.classList.remove('active');
+ }
+ });
 
-        function parseJSON(data) {
-            if (typeof data === 'object') return data;
-            try {
-                return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
-            } catch { return data; }
-        }
+ function parseJSON(data) {
+ if (typeof data === 'object') return data;
+ try {
+ return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+ } catch { return data; }
+ }
 
-        function getMoodColor(score) {
-            if (score >= 8) return '#4CAF50';
-            if (score >= 6) return '#8BC34A';
-            if (score >= 4) return '#FFC107';
-            if (score >= 2) return '#FF9800';
-            return '#f44336';
-        }
+ function getMoodColor(score) {
+ if (score >= 8) return 'var(--ha-status-success)';
+ if (score >= 6) return 'var(--ha-status-success)';
+ if (score >= 4) return 'var(--ha-warn)';
+ if (score >= 2) return 'var(--ha-warn)';
+ return 'var(--ha-danger)';
+ }
 
-        function displayResponse(data) {
-            document.getElementById('response-section').classList.add('active');
+ function displayResponse(data) {
+ document.getElementById('response-section').classList.add('active');
 
-            const mood = parseJSON(data.mood);
-            const themes = parseJSON(data.themes);
-            const prompts = parseJSON(data.reflectionPrompts);
+ const mood = parseJSON(data.mood);
+ const themes = parseJSON(data.themes);
+ const prompts = parseJSON(data.reflectionPrompts);
 
-            // Mood display
-            const moodScore = mood?.moodScore || 5;
-            const scoreEl = document.getElementById('mood-score');
-            scoreEl.style.background = getMoodColor(moodScore);
-            scoreEl.querySelector('.number').textContent = moodScore;
+ // Mood display
+ const moodScore = mood?.moodScore || 5;
+ const scoreEl = document.getElementById('mood-score');
+ scoreEl.style.background = getMoodColor(moodScore);
+ scoreEl.querySelector('.number').textContent = moodScore;
 
-            document.getElementById('primary-emotion').textContent = 
-                `Feeling ${mood?.primaryEmotion || 'reflective'}`;
-            document.getElementById('energy-level').textContent = 
-                `Energy: ${mood?.energyLevel || 'medium'}`;
+ document.getElementById('primary-emotion').textContent = 
+ `Feeling ${mood?.primaryEmotion || 'reflective'}`;
+ document.getElementById('energy-level').textContent = 
+ `Energy: ${mood?.energyLevel || 'medium'}`;
 
-            // Emotion tags
-            const emotions = mood?.secondaryEmotions || [];
-            document.getElementById('emotion-tags').innerHTML = emotions.map(e =>
-                `<span class="emotion-tag">${e}</span>`
-            ).join('');
+ // Emotion tags
+ const emotions = mood?.secondaryEmotions || [];
+ document.getElementById('emotion-tags').innerHTML = emotions.map(e =>
+ `<span class="emotion-tag">${e}</span>`
+ ).join('');
 
-            // AI Response
-            const responseText = data.response || 'Thank you for sharing.';
-            document.getElementById('ai-response').innerHTML = responseText.split('\n\n').map(p =>
-                `<p>${p}</p>`
-            ).join('');
+ // AI Response
+ const responseText = data.response || 'Thank you for sharing.';
+ document.getElementById('ai-response').innerHTML = responseText.split('\n\n').map(p =>
+ `<p>${p}</p>`
+ ).join('');
 
-            // Reflection prompts
-            const promptsList = prompts?.prompts || [];
-            document.getElementById('reflection-prompts').innerHTML = promptsList.map(p =>
-                `<div class="prompt-item">${p}</div>`
-            ).join('');
-        }
+ // Reflection prompts
+ const promptsList = prompts?.prompts || [];
+ document.getElementById('reflection-prompts').innerHTML = promptsList.map(p =>
+ `<div class="prompt-item">${p}</div>`
+ ).join('');
+ }
 
-        function newEntry() {
-            document.getElementById('response-section').classList.remove('active');
-            document.getElementById('write-section').style.display = 'block';
-            contentArea.value = '';
-            document.getElementById('wordCount').textContent = '0';
-        }
+ function newEntry() {
+ document.getElementById('response-section').classList.remove('active');
+ document.getElementById('write-section').style.display = 'block';
+ contentArea.value = '';
+ document.getElementById('wordCount').textContent = '0';
+ }
 
-        async function loadHistory() {
-            const list = document.getElementById('entries-list');
-            try {
-                const response = await fetch('/api/get-entries', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ limit: 20 })
-                });
-                const result = await response.json();
-                const data = result.output;
-                if (data.entries?.length > 0) {
-                    list.innerHTML = data.entries.map(entry => {
-                        const mood = parseJSON(entry.mood);
-                        const moodScore = mood?.moodScore || 5;
-                        const preview = entry.content.substring(0, 150) + (entry.content.length > 150 ? '...' : '');
-                        const date = new Date(entry.createdAt).toLocaleDateString('en-US', {
-                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                        });
-                        
-                        return `
-                            <div class="entry-item" onclick="viewEntry('${entry._id}')" style="border-left-color: ${getMoodColor(moodScore)}">
-                                <div class="entry-date">
-                                    <span class="entry-mood" style="background: ${getMoodColor(moodScore)}">${moodScore}/10</span>
-                                    ${date}
-                                </div>
-                                <div class="entry-preview">${preview}</div>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    list.innerHTML = '<p style="color: #888; text-align: center;">No entries yet. Start journaling!</p>';
-                }
-            } catch (error) {
-                list.innerHTML = '<p style="color: #888; text-align: center;">Error loading entries</p>';
-            }
-        }
+ async function loadHistory() {
+ const list = document.getElementById('entries-list');
+ try {
+ const response = await fetch('/api/get-entries', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ limit: 20 })
+ });
+ const result = await response.json();
+ const data = result.output;
+ if (data.entries?.length > 0) {
+ list.innerHTML = data.entries.map(entry => {
+ const mood = parseJSON(entry.mood);
+ const moodScore = mood?.moodScore || 5;
+ const preview = entry.content.substring(0, 150) + (entry.content.length > 150 ? '...' : '');
+ const date = new Date(entry.createdAt).toLocaleDateString('en-US', {
+ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+ });
+ 
+ return `
+ <div class="entry-item" onclick="viewEntry('${entry._id}')" style="border-left-color: ${getMoodColor(moodScore)}">
+ <div class="entry-date">
+ <span class="entry-mood" style="background: ${getMoodColor(moodScore)}">${moodScore}/10</span>
+ ${date}
+ </div>
+ <div class="entry-preview">${preview}</div>
+ </div>
+ `;
+ }).join('');
+ } else {
+ list.innerHTML = '<p style="color: var(--ha-text-muted); text-align: center;">No entries yet. Start journaling!</p>';
+ }
+ } catch (error) {
+ list.innerHTML = '<p style="color: var(--ha-text-muted); text-align: center;">Error loading entries</p>';
+ }
+ }
 
-        async function viewEntry(id) {
-            try {
-                const response = await fetch(`/api/get-entry?id=${id}`);
-                const data = await response.json();
-                if (data.entry) {
-                    showTab('write');
-                    contentArea.value = data.entry.content;
-                    displayResponse(data.entry);
-                }
-            } catch (error) {
-                alert('Error loading entry');
-            }
-        }
+ async function viewEntry(id) {
+ try {
+ const response = await fetch(`/api/get-entry?id=${id}`);
+ const data = await response.json();
+ if (data.entry) {
+ showTab('write');
+ contentArea.value = data.entry.content;
+ displayResponse(data.entry);
+ }
+ } catch (error) {
+ alert('Error loading entry');
+ }
+ }
 
-        async function loadInsights() {
-            const container = document.getElementById('insights-content');
-            container.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div><p style="text-align:center;color:#888;">Analyzing your week...</p>';
-            
-            try {
-                const response = await fetch('/api/weekly-insights', { method: 'POST' });
-                
-                const result = await response.json();
-                const data = result.output;
-                const insights = parseJSON(data.insights);
-                
-                container.innerHTML = `
-                    <div class="insights-card">
-                        <h3>Your Week at a Glance</h3>
-                        <div class="insights-grid">
-                            <div class="insight-item">
-                                <h5>Mood Trend</h5>
-                                <p>${insights?.moodTrend || 'Stable'} 📈</p>
-                            </div>
-                            <div class="insight-item">
-                                <h5>Average Mood</h5>
-                                <p>${insights?.averageMood || '-'}/10</p>
-                            </div>
-                            <div class="insight-item">
-                                <h5>Dominant Themes</h5>
-                                <p>${(insights?.dominantThemes || []).join(', ') || '-'}</p>
-                            </div>
-                            <div class="insight-item">
-                                <h5>Focus for Next Week</h5>
-                                <p>${insights?.suggestedFocus || '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="background: #e8f5e9; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="color: #2e7d32; margin-bottom: 10px;">✨ Positive Patterns</h4>
-                        <ul style="padding-left: 20px; color: #2e7d32;">
-                            ${(insights?.positivePatterns || []).map(p => `<li>${p}</li>`).join('')}
-                        </ul>
-                    </div>
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 15px;">
-                        <h4 style="color: #666; margin-bottom: 10px;">💬 Summary</h4>
-                        <p style="line-height: 1.8; color: #444;">${insights?.weekSummary || 'Keep journaling to see insights!'}</p>
-                    </div>
-                    <div style="background: #fff3e0; padding: 20px; border-radius: 12px;">
-                        <h4 style="color: #f57c00; margin-bottom: 10px;">💪 Encouragement</h4>
-                        <p style="line-height: 1.8; color: #555; font-style: italic;">${insights?.encouragement || ''}</p>
-                    </div>
-                `;
-            } catch (error) {
-                container.innerHTML = '<p style="color: #888; text-align: center;">Error loading insights. Write more entries first!</p>';
-            }
-        }
-    </script>
+ async function loadInsights() {
+ const container = document.getElementById('insights-content');
+ container.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div><p style="text-align:center;color:var(--ha-text-muted);">Analyzing your week...</p>';
+ 
+ try {
+ const response = await fetch('/api/weekly-insights', { method: 'POST' });
+ 
+ const result = await response.json();
+ const data = result.output;
+ const insights = parseJSON(data.insights);
+ 
+ container.innerHTML = `
+ <div class="insights-card">
+ <h3>Your Week at a Glance</h3>
+ <div class="insights-grid">
+ <div class="insight-item">
+ <h5>Mood Trend</h5>
+ <p>${insights?.moodTrend || 'Stable'} </p>
+ </div>
+ <div class="insight-item">
+ <h5>Average Mood</h5>
+ <p>${insights?.averageMood || '-'}/10</p>
+ </div>
+ <div class="insight-item">
+ <h5>Dominant Themes</h5>
+ <p>${(insights?.dominantThemes || []).join(', ') || '-'}</p>
+ </div>
+ <div class="insight-item">
+ <h5>Focus for Next Week</h5>
+ <p>${insights?.suggestedFocus || '-'}</p>
+ </div>
+ </div>
+ </div>
+ <div style="background: var(--ha-status-success-dim); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+ <h4 style="color: var(--ha-status-success); margin-bottom: 10px;"> Positive Patterns</h4>
+ <ul style="padding-left: 20px; color: var(--ha-status-success);">
+ ${(insights?.positivePatterns || []).map(p => `<li>${p}</li>`).join('')}
+ </ul>
+ </div>
+ <div style="background: var(--ha-bg-surface); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+ <h4 style="color: var(--ha-text-disabled); margin-bottom: 10px;"> Summary</h4>
+ <p style="line-height: 1.8; color: var(--ha-bg-hover);">${insights?.weekSummary || 'Keep journaling to see insights!'}</p>
+ </div>
+ <div style="background: var(--ha-bg-surface); padding: 20px; border-radius: 12px;">
+ <h4 style="color: var(--ha-warn); margin-bottom: 10px;"> Encouragement</h4>
+ <p style="line-height: 1.8; color: var(--ha-text-disabled); font-style: italic;">${insights?.encouragement || ''}</p>
+ </div>
+ `;
+ } catch (error) {
+ container.innerHTML = '<p style="color: var(--ha-text-muted); text-align: center;">Error loading insights. Write more entries first!</p>';
+ }
+ }
+ </script>
 </body>
 </html>

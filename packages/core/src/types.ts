@@ -79,7 +79,7 @@ export interface WorkflowNode {
       path?: string;
     };
     // Trigger-specific properties
-    triggerType?: 'webhook' | 'polling' | 'schedule' | 'app_webhook';
+    triggerType?: 'webhook' | 'polling' | 'schedule' | 'app_webhook' | 'streaming' | 'custom';
     triggerSettings?: {
       authType?: 'none' | 'header' | 'query_param';
       authFields?: Record<string, any>;

@@ -1,13 +1,13 @@
-# Plan — add `sqlite-vec` vector search to `@ha-bits/bit-database-sql`
+# Plan, add `sqlite-vec` vector search to `@ha-bits/bit-database-sql`
 
-Additive change. Keep every existing action, prop, and return shape unchanged — just wire the [`sqlite-vec`](https://github.com/asg017/sqlite-vec) extension into the driver and expose three new vector-native actions.
+Additive change. Keep every existing action, prop, and return shape unchanged, just wire the [`sqlite-vec`](https://github.com/asg017/sqlite-vec) extension into the driver and expose three new vector-native actions.
 
 Target environments (unchanged from the bit today):
 
 | Environment | Backend |
 |---|---|
 | Node.js | `better-sqlite3` + `sqlite-vec` npm package (prebuilt `.dylib`/`.so`/`.dll`) loaded at connect time |
-| Browser/Tauri | new **`tauri-plugin-sqlite-vec`** (in scope) — a companion plugin that opens the same DB file and exposes vector-only commands |
+| Browser/Tauri | new **`tauri-plugin-sqlite-vec`** (in scope), a companion plugin that opens the same DB file and exposes vector-only commands |
 
 The existing `tauri-plugin-sql` stays wired and untouched for every non-vector action. The Tauri stub adds a second invoke surface (`plugin:sqlite-vec|*`) only for the three new actions.
 
@@ -20,27 +20,27 @@ The existing `tauri-plugin-sql` stays wired and untouched for every non-vector a
 - Vector dimensionality is **locked at virtual-table creation time** (same constraint as LanceDB).
 - Query syntax is plain SQL: `SELECT rowid, distance FROM vec_items WHERE embedding MATCH ? ORDER BY distance LIMIT ?`.
 - Distance metrics via function form: `vec_distance_cosine(a, b)`, `vec_distance_L2(a, b)`, `vec_distance_L1(a, b)`. The `MATCH` operator uses L2 by default.
-- Supports `float32`, `int8`, and `bit` vectors. Default to `float32` — the others are optimizations for later.
+- Supports `float32`, `int8`, and `bit` vectors. Default to `float32`, the others are optimizations for later.
 - Metadata filtering is done with a standard SQL join against a neighbour table keyed on `rowid`.
 
 **Why this vs. swapping to LanceDB**: no new driver, no new serialization layer, reuses the existing `kv_store` / `documents` tables, keeps the bit's "one file on disk" story.
 
 ---
 
-## 2. Schema additions — one new pair of tables per collection
+## 2. Schema additions, one new pair of tables per collection
 
 Do **not** modify the existing `kv_store` or `documents` tables. Add two new tables, created lazily on first vector insert into a given collection:
 
-### 2.1 `vec_<collection>` — the virtual table
+### 2.1 `vec_<collection>`, the virtual table
 ```sql
 CREATE VIRTUAL TABLE vec_<collection> USING vec0(
   embedding float[<dim>]
 );
 ```
-- `<dim>` is captured from the first vector inserted into that collection and baked into the table name suffix isn't needed — dim lives only in the `USING vec0(...)` DDL. The driver caches `(collection → dim)` in-memory after first insert and validates later inserts against it.
+- `<dim>` is captured from the first vector inserted into that collection and baked into the table name suffix isn't needed, dim lives only in the `USING vec0(...)` DDL. The driver caches `(collection → dim)` in-memory after first insert and validates later inserts against it.
 - `rowid` is the join key. The driver assigns `rowid = <monotonic counter per collection>` stored in a third helper table (§2.3).
 
-### 2.2 `vec_meta_<collection>` — metadata sidecar
+### 2.2 `vec_meta_<collection>`, metadata sidecar
 Parallel to the existing `documents` table, but keyed by the virtual table's `rowid`:
 ```sql
 CREATE TABLE IF NOT EXISTS vec_meta_<collection> (
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS vec_meta_<collection> (
 CREATE INDEX IF NOT EXISTS idx_vec_meta_<collection>_custom ON vec_meta_<collection>(custom_id);
 ```
 
-### 2.3 `vec_registry` — one-row-per-collection state
+### 2.3 `vec_registry`, one-row-per-collection state
 ```sql
 CREATE TABLE IF NOT EXISTS vec_registry (
   collection TEXT PRIMARY KEY,
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS vec_registry (
   next_rowid INTEGER NOT NULL DEFAULT 1
 );
 ```
-- `dim` — the locked dimensionality.
-- `next_rowid` — advanced on each insert inside a transaction; avoids colliding with any rowids the user might have loaded via raw SQL.
+- `dim`, the locked dimensionality.
+- `next_rowid`, advanced on each insert inside a transaction; avoids colliding with any rowids the user might have loaded via raw SQL.
 
 > **Rationale for the sidecar pattern**: `vec0` virtual tables cannot hold arbitrary columns efficiently (they can, via "auxiliary columns", but metadata filtering through them is awkward). A plain table joined on `rowid` is the idiomatic sqlite-vec pattern and keeps the query path a single SQL statement.
 
@@ -91,7 +91,7 @@ Existing `insert` / `query` / `deleteDoc` stay. Callers who want vector semantic
 
 ---
 
-## 4. Node.js driver changes — [`src/driver.ts`](src/driver.ts)
+## 4. Node.js driver changes, [`src/driver.ts`](src/driver.ts)
 
 ### 4.1 Dependency
 
@@ -104,7 +104,7 @@ The `sqlite-vec` npm package ships prebuilt loadable binaries for macOS (x64, ar
 
 ### 4.2 Load the extension on connect
 
-In `getDatabase(dbPath)` — the existing init function at [`src/driver.ts:26-72`](src/driver.ts#L26-L72) — add one call right after `new BetterSqlite3(dbFile)` and **before** the `sqlite.exec(...)` DDL block:
+In `getDatabase(dbPath)`, the existing init function at [`src/driver.ts:26-72`](src/driver.ts#L26-L72), add one call right after `new BetterSqlite3(dbFile)` and **before** the `sqlite.exec(...)` DDL block:
 
 ```ts
 const sqliteVec = require('sqlite-vec');
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS vec_registry (
 );
 ```
 
-The per-collection `vec_<collection>` and `vec_meta_<collection>` tables are created lazily — see §4.4.
+The per-collection `vec_<collection>` and `vec_meta_<collection>` tables are created lazily, see §4.4.
 
 ### 4.3 Helpers
 
@@ -159,14 +159,14 @@ function reserveRowid(sqlite: BetterSqlite3.Database, collection: string): numbe
 }
 
 function validateCollection(name: string): void {
-  // vec_<collection> is table DDL — must be a safe identifier
+  // vec_<collection> is table DDL, must be a safe identifier
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
     throw new Error(`Invalid collection name '${name}': must match /^[A-Za-z_][A-Za-z0-9_]*$/`);
   }
 }
 ```
 
-> **Why `validateCollection` matters**: table names are interpolated into DDL — they can't use bind parameters. Any collection name that doesn't match a SQL-identifier pattern is a SQL-injection vector. Reject at the driver boundary, not at the bit's prop layer (the bit doesn't know about the DDL path). All three new actions must call this.
+> **Why `validateCollection` matters**: table names are interpolated into DDL, they can't use bind parameters. Any collection name that doesn't match a SQL-identifier pattern is a SQL-injection vector. Reject at the driver boundary, not at the bit's prop layer (the bit doesn't know about the DDL path). All three new actions must call this.
 
 ### 4.4 Action implementations
 
@@ -281,7 +281,7 @@ export async function vectorDelete(params: {
 
 ---
 
-## 5. `src/index.ts` — three action entries
+## 5. `src/index.ts`, three action entries
 
 Add below the existing `deleteDoc` action in [`src/index.ts:159-171`](src/index.ts#L159-L171):
 
@@ -345,7 +345,7 @@ export interface VectorSearchResult {
 
 ---
 
-## 6. Tauri side — companion plugin `tauri-plugin-sqlite-vec`
+## 6. Tauri side, companion plugin `tauri-plugin-sqlite-vec`
 
 `tauri-plugin-sql` (currently wired in [`package.json`](package.json) under `habits.tauriPlugins.sql`) does **not** expose a way to load SQLite extensions, and its bundled `libsqlite3-sys` doesn't ship with sqlite-vec linked in. Rather than fork it, add a small sibling plugin that:
 
@@ -430,7 +430,7 @@ permissions = [
 ]
 ```
 
-### 6.5 `src/state.rs` — connection pool
+### 6.5 `src/state.rs`, connection pool
 
 One `rusqlite::Connection` per absolute DB path, behind `tokio::sync::Mutex` (rusqlite isn't `Sync`):
 
@@ -471,9 +471,9 @@ impl VecConnectionRegistry {
 }
 ```
 
-> Check the `sqlite-vec` crate's current API — at time of writing it provides a helper like `sqlite3_vec_init` that takes a raw SQLite handle. If the helper name differs, adapt the block above. The key goal: statically register the extension without a loadable `.dylib`/`.so`/`.dll` sitting on disk.
+> Check the `sqlite-vec` crate's current API, at time of writing it provides a helper like `sqlite3_vec_init` that takes a raw SQLite handle. If the helper name differs, adapt the block above. The key goal: statically register the extension without a loadable `.dylib`/`.so`/`.dll` sitting on disk.
 
-### 6.6 `src/commands.rs` — four commands
+### 6.6 `src/commands.rs`, four commands
 
 Same JSON shape as what the Node driver exports, so the JS stub doesn't need per-platform branching beyond the invoke name. Each command resolves the DB path by joining `app.path().app_data_dir()` with the user-supplied `database` string (exactly how the existing `tauri-plugin-sql` stub does it), then delegates to a `spawn_blocking` that runs the same SQL the Node driver does in §4.4.
 
@@ -515,7 +515,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
 
 ### 6.8 Hook into the bit's manifest
 
-Update [`package.json`](package.json) `habits.tauriPlugins` — **add** the new entry, don't touch the existing `sql` entry:
+Update [`package.json`](package.json) `habits.tauriPlugins`, **add** the new entry, don't touch the existing `sql` entry:
 
 ```jsonc
 "tauriPlugins": {
@@ -538,9 +538,9 @@ Path dep while developing; flip to a `version = "0.1"` string once published.
 
 ---
 
-## 7. Tauri stub changes — [`src/stubs/tauri-driver.js`](src/stubs/tauri-driver.js)
+## 7. Tauri stub changes, [`src/stubs/tauri-driver.js`](src/stubs/tauri-driver.js)
 
-Append three new functions to the stub and extend `module.exports`. **Do not touch** the existing `store` / `get` / `del` / `list` / `insert` / `update` / `query` / `increment` implementations — they keep using `plugin:sql|*`.
+Append three new functions to the stub and extend `module.exports`. **Do not touch** the existing `store` / `get` / `del` / `list` / `insert` / `update` / `query` / `increment` implementations, they keep using `plugin:sql|*`.
 
 ```js
 async function vectorInsert(params) {
@@ -619,13 +619,13 @@ module.exports = {
 };
 ```
 
-The stub's return shapes match the Node driver's word-for-word — that's the contract the pipeline tests enforce.
+The stub's return shapes match the Node driver's word-for-word, that's the contract the pipeline tests enforce.
 
 ---
 
 ## 8. Testing
 
-### 8.1 Node.js — unit-style smoke test
+### 8.1 Node.js, unit-style smoke test
 
 From [`bit-database-sql/`](.):
 
@@ -634,7 +634,7 @@ npm install           # picks up sqlite-vec
 npm run build
 node -e "(async () => {
   const d = require('./dist/driver');
-  // Dim 4 vectors — contrived but deterministic.
+  // Dim 4 vectors, contrived but deterministic.
   await d.vectorInsert({ collection: 'docs', document: { text: 'apple',  tag: 'fruit',  vector: [1, 0, 0, 0] } });
   await d.vectorInsert({ collection: 'docs', document: { text: 'banana', tag: 'fruit',  vector: [0.95, 0.1, 0, 0] } });
   await d.vectorInsert({ collection: 'docs', document: { text: 'car',    tag: 'object', vector: [0, 0, 1, 0] } });
@@ -657,11 +657,11 @@ Assertions the smoke test is checking:
 - Extension loads without throwing (`sqliteVec.load(sqlite)` in §4.2).
 - Virtual table is created with the right dim on first insert.
 - Second insert with the same dim **reuses** the table; an attempt with a different dim **throws** (add a fourth `vectorInsert` with `vector: [1,1,1]` and expect the mismatch error).
-- `vec_distance_cosine` and `MATCH` (L2) both return results — validates that `sqlite-vec` registered both the `vec0` module and the distance functions.
+- `vec_distance_cosine` and `MATCH` (L2) both return results, validates that `sqlite-vec` registered both the `vec0` module and the distance functions.
 - Metadata filter is applied client-side after over-fetching (query with `filter: { tag: 'object' }` returns only `car`).
 - `vectorDelete` removes from both `vec_<collection>` and `vec_meta_<collection>` (verify by re-searching and expecting `count = 2`).
 
-### 8.2 Node.js — regression: existing actions still work
+### 8.2 Node.js, regression: existing actions still work
 
 Same session, same DB file, as the final step of the smoke test:
 ```js
@@ -672,7 +672,7 @@ console.log(await d.query({ collection: 'users', limit: 10 }));
 ```
 Expected: identical output to a pre-change build. Adding sqlite-vec must not disturb the existing `kv_store` / `documents` flows.
 
-### 8.3 Tauri — end-to-end via pack pipeline
+### 8.3 Tauri, end-to-end via pack pipeline
 
 1. In a sandbox app that depends on `@ha-bits/bit-database-sql`, add both manifest plugins by upgrading to the new bit version (once published). Confirm the desktop pack discovers both `sql` and `sqlite-vec` entries via [`discoverTauriPlugins`](../../../../packages/base/server/src/pack/bundle-generator-wrapper.ts#L140) at build time. Output log should show: `Found 2 Tauri plugin(s): sql, sqlite-vec`.
 
@@ -713,17 +713,17 @@ Expected: identical output to a pre-change build. Adding sqlite-vec must not dis
              params: { collection: "kv", key: "x" } }
    ```
 
-   Expected outputs — each compared against what the Node smoke test produced for the same inputs:
+   Expected outputs, each compared against what the Node smoke test produced for the same inputs:
    - `search.results[0].text === 'apple'` and `search.count === 2`.
    - `regression-get.value === 42`.
 
 6. Inspect the DB file inside `{appDataDir}/` (use `sqlite3` CLI or DB Browser):
    - `SELECT name FROM sqlite_master WHERE type IN ('table','view');` should list `kv_store`, `documents`, `vec_registry`, `vec_docs`, `vec_meta_docs`, plus a handful of `vec_docs_*` shadow tables that `vec0` manages internally.
-   - `PRAGMA journal_mode;` returns `wal` — confirms §6.5's WAL switch took effect and the two plugins are cohabiting safely.
+   - `PRAGMA journal_mode;` returns `wal`, confirms §6.5's WAL switch took effect and the two plugins are cohabiting safely.
 
-7. **Cohabitation sanity check**: from the workflow, `store` something under a key, then from the same workflow `vectorInsert` and `vectorSearch`. Both must succeed inside the same session — this catches the case where `tauri-plugin-sql` holds a write lock that starves `tauri-plugin-sqlite-vec` (shouldn't happen under WAL, but verify).
+7. **Cohabitation sanity check**: from the workflow, `store` something under a key, then from the same workflow `vectorInsert` and `vectorSearch`. Both must succeed inside the same session, this catches the case where `tauri-plugin-sql` holds a write lock that starves `tauri-plugin-sqlite-vec` (shouldn't happen under WAL, but verify).
 
-### 8.4 Mobile — runtime probe
+### 8.4 Mobile, runtime probe
 
 The sqlite-vec path is gated desktop-only in §6.2. On Android/iOS, calling any of the three new actions must surface a clean `Error::Unsupported` (or equivalent JSON-serialized error the stub propagates), **not** a panic. Mobile-runtime probe: ship the sandbox app to an emulator, call `vectorSearch`, confirm the workflow step fails with a human-readable error rather than crashing the webview.
 
@@ -732,12 +732,12 @@ The sqlite-vec path is gated desktop-only in §6.2. On Android/iOS, calling any 
 ## 9. Gotchas
 
 1. **Dim lock-in**. Changing a collection's vector dim requires dropping `vec_<collection>`, `vec_meta_<collection>`, and the `vec_registry` row. Driver will surface an explicit mismatch error (§4.3); document this in the README.
-2. **Collection-name injection surface**. `vec_<collection>` and `vec_meta_<collection>` are DDL-interpolated. `validateCollection` is the only defense — a missing call is a SQL-injection hole. Test it with `'"; DROP TABLE kv_store; --'` and expect a thrown error.
+2. **Collection-name injection surface**. `vec_<collection>` and `vec_meta_<collection>` are DDL-interpolated. `validateCollection` is the only defense, a missing call is a SQL-injection hole. Test it with `'"; DROP TABLE kv_store; --'` and expect a thrown error.
 3. **WAL required for Tauri cohabitation**. Both plugins open the same file. Without WAL, the second connection's writer will contend with the first. The Rust plugin sets WAL at open time (§6.5); the Node driver inherits whatever SQLite default applies (SQLite switches to WAL once any connection opts in, then persists). Belt-and-braces: set `PRAGMA journal_mode=WAL;` in the Node init too.
-4. **`MATCH` defaults to L2**, not cosine. Users asking for cosine must pass `distance: 'cosine'` — then the driver switches to the function form (ORDER BY `vec_distance_cosine(...)`). This is why the three metrics branch in §4.4.
-5. **Over-fetch factor for filtered search**. `k * 5` is arbitrary and wrong for highly selective filters. Revisit if real workloads show filters eliminating >80% of neighbors — a better strategy is iterative fetch-until-limit or pushing filters into the join WHERE.
+4. **`MATCH` defaults to L2**, not cosine. Users asking for cosine must pass `distance: 'cosine'`, then the driver switches to the function form (ORDER BY `vec_distance_cosine(...)`). This is why the three metrics branch in §4.4.
+5. **Over-fetch factor for filtered search**. `k * 5` is arbitrary and wrong for highly selective filters. Revisit if real workloads show filters eliminating >80% of neighbors, a better strategy is iterative fetch-until-limit or pushing filters into the join WHERE.
 6. **`sqlite-vec` version coupling**. The npm package and the Rust crate release independently. Pin both to the same minor version in `package.json` and `Cargo.toml` respectively, and bump them together.
-7. **Shadow tables from `vec0`**. The virtual table backs itself with several real tables (`vec_<collection>_chunks`, `_rowids`, etc.). Listing tables from user SQL will show these — document it so users don't panic and `DROP` them.
+7. **Shadow tables from `vec0`**. The virtual table backs itself with several real tables (`vec_<collection>_chunks`, `_rowids`, etc.). Listing tables from user SQL will show these, document it so users don't panic and `DROP` them.
 
 ---
 

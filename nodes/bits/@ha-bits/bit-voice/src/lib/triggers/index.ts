@@ -1,0 +1,1 @@
+export { voiceCommand } from './voice-command';

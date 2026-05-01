@@ -12,12 +12,9 @@ serde_json = "1"
 thiserror  = "2"
 tokio      = { version = "1", features = ["rt-multi-thread", "sync"] }
 tracing    = "0.1"
+# Desktop + iOS. sqlite-vec is pure C and builds on all Apple targets.
+rusqlite   = { version = "0.31", features = ["bundled"] }
+sqlite-vec = "0.1"
 
 [build-dependencies]
 tauri-plugin = { version = "2.5.3", features = ["build"] }
-
-# Desktop only. sqlite-vec builds fine on Android (pure C, no SIMD lock-in)
-# but keep parity with tauri-plugin-sql which is desktop-primary.
-[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
-rusqlite   = { version = "0.31", features = ["bundled"] }
-sqlite-vec = "0.1"

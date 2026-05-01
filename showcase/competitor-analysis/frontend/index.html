@@ -1,491 +1,532 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competitor Analysis Dashboard</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            min-height: 100vh;
-            color: #e2e8f0;
-        }
-        .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
-            padding: 30px;
-        }
-        .header h1 { font-size: 1.8rem; margin-bottom: 8px; }
-        .header p { opacity: 0.8; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 30px; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
-        .tab {
-            padding: 12px 24px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #94a3b8;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tab:hover { border-color: #4f46e5; color: white; }
-        .tab.active { background: #4f46e5; border-color: #4f46e5; color: white; }
-        
-        .card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-        .card h2 { color: white; margin-bottom: 20px; font-size: 1.2rem; }
-        
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #94a3b8; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #4f46e5; }
-        textarea { min-height: 100px; }
-        
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        button.submit {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { transform: translateY(-2px); }
-        button.submit:disabled { opacity: 0.6; transform: none; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .swot-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .swot-box {
-            background: #0f172a;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        .swot-box.strengths { border-left: 4px solid #22c55e; }
-        .swot-box.weaknesses { border-left: 4px solid #ef4444; }
-        .swot-box.opportunities { border-left: 4px solid #3b82f6; }
-        .swot-box.threats { border-left: 4px solid #f59e0b; }
-        .swot-box h3 { font-size: 0.9rem; margin-bottom: 12px; }
-        .swot-item { 
-            background: #1e293b; 
-            padding: 10px 12px; 
-            border-radius: 6px; 
-            margin-bottom: 8px; 
-            font-size: 0.9rem;
-        }
-        
-        .intel-section { margin-top: 25px; }
-        .intel-section h3 { color: #6366f1; margin-bottom: 15px; }
-        .battlecard {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-        .battlecard h4 { color: #22c55e; margin-bottom: 10px; }
-        .battlecard ul { padding-left: 20px; }
-        .battlecard li { margin-bottom: 8px; }
-        
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .comparison-table th, .comparison-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-        }
-        .comparison-table th { background: #0f172a; color: #6366f1; }
-        .comparison-table tr:hover { background: #0f172a; }
-        
-        .score-bar {
-            height: 8px;
-            background: #334155;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .score-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5 0%, #22c55e 100%);
-            transition: width 0.3s;
-        }
-        
-        .tag-input { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; }
-        .tag {
-            background: #4f46e5;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tag-remove { cursor: pointer; opacity: 0.8; }
-        
-        @media (max-width: 768px) {
-            .row, .swot-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Competitor Analysis Dashboard</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-bg-base);
+ min-height: 100vh;
+ color: var(--ha-text-body);
+ }
+ .header {
+ background: var(--ha-bg-elevated);
+ padding: 30px;
+ border-bottom: 1px solid var(--ha-border);
+ }
+ .header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+ .header p { opacity: 0.8; }
+ 
+ .container { max-width: 1200px; margin: 0 auto; padding: 30px; }
+ 
+ .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+ .tab {
+ padding: 12px 24px;
+ background: var(--ha-bg-surface);
+ border: 1px solid var(--ha-bg-elevated);
+ border-radius: 8px;
+ color: var(--ha-text-muted);
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .tab:hover { border-color: var(--ha-accent-purple); color: white; }
+ .tab.active { background: var(--ha-accent-purple); border-color: var(--ha-accent-purple); color: white; }
+ 
+ .card {
+ background: var(--ha-bg-surface);
+ border: 1px solid var(--ha-bg-elevated);
+ border-radius: 12px;
+ padding: 25px;
+ margin-bottom: 20px;
+ }
+ .card h2 { color: white; margin-bottom: 20px; font-size: 1.2rem; }
+ 
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-text-muted); }
+ input, select, textarea {
+ width: 100%;
+ padding: 12px 15px;
+ background: var(--ha-bg-base);
+ border: 1px solid var(--ha-bg-elevated);
+ border-radius: 8px;
+ color: white;
+ font-size: 1rem;
+ }
+ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ha-accent-purple); }
+ textarea { min-height: 100px; }
+ 
+ .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+ 
+ button.submit {
+ background: var(--ha-accent-purple);
+ color: white;
+ border: none;
+ padding: 14px 28px;
+ border-radius: 8px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { transform: translateY(-2px); }
+ button.submit:disabled { opacity: 0.6; transform: none; }
+ 
+ .tab-content { display: none; }
+ .tab-content.active { display: block; }
+ 
+ .swot-grid {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 15px;
+ margin-top: 20px;
+ }
+ .swot-box {
+ background: var(--ha-bg-base);
+ border-radius: 8px;
+ padding: 20px;
+ }
+ .swot-box.strengths { border-left: 4px solid var(--ha-status-success); }
+ .swot-box.weaknesses { border-left: 4px solid var(--ha-danger); }
+ .swot-box.opportunities { border-left: 4px solid var(--ha-accent-blue); }
+ .swot-box.threats { border-left: 4px solid var(--ha-warn); }
+ .swot-box h3 { font-size: 0.9rem; margin-bottom: 12px; }
+ .swot-item { 
+ background: var(--ha-bg-surface); 
+ padding: 10px 12px; 
+ border-radius: 6px; 
+ margin-bottom: 8px; 
+ font-size: 0.9rem;
+ }
+ 
+ .intel-section { margin-top: 25px; }
+ .intel-section h3 { color: var(--ha-accent-purple); margin-bottom: 15px; }
+ .battlecard {
+ background: linear-gradient(135deg, var(--ha-bg-surface) 0%, var(--ha-bg-elevated) 100%);
+ border-radius: 8px;
+ padding: 20px;
+ margin-bottom: 15px;
+ }
+ .battlecard h4 { color: var(--ha-status-success); margin-bottom: 10px; }
+ .battlecard ul { padding-left: 20px; }
+ .battlecard li { margin-bottom: 8px; }
+ 
+ .comparison-table {
+ width: 100%;
+ border-collapse: collapse;
+ margin-top: 20px;
+ }
+ .comparison-table th, .comparison-table td {
+ padding: 12px 15px;
+ text-align: left;
+ border-bottom: 1px solid var(--ha-bg-elevated);
+ }
+ .comparison-table th { background: var(--ha-bg-base); color: var(--ha-accent-purple); }
+ .comparison-table tr:hover { background: var(--ha-bg-base); }
+ 
+ .score-bar {
+ height: 8px;
+ background: var(--ha-bg-elevated);
+ border-radius: 4px;
+ overflow: hidden;
+ }
+ .score-fill {
+ height: 100%;
+ background: var(--ha-accent-purple);
+ transition: width 0.3s;
+ }
+ 
+ .tag-input { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; }
+ .tag {
+ background: var(--ha-accent-purple);
+ padding: 6px 12px;
+ border-radius: 20px;
+ font-size: 0.85rem;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ }
+ .tag-remove { cursor: pointer; opacity: 0.8; }
+ 
+ @media (max-width: 768px) {
+ .row, .swot-grid { grid-template-columns: 1fr; }
+ }
+ </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎯 Competitor Analysis</h1>
-        <p>Strategic intelligence and competitive insights</p>
-    </div>
+ <div class="header">
+ <h1> Competitor Analysis</h1>
+ <p>Strategic intelligence and competitive insights</p>
+ </div>
 
-    <div class="container">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('analyze')">🔍 Analyze</div>
-            <div class="tab" onclick="switchTab('compare')">📊 Compare</div>
-            <div class="tab" onclick="switchTab('strategy')">🚀 Strategy</div>
-        </div>
+ <div class="container">
+ <div class="tabs">
+ <div class="tab active" onclick="switchTab('analyze')"> Analyze</div>
+ <div class="tab" onclick="switchTab('compare')"> Compare</div>
+ <div class="tab" onclick="switchTab('strategy')"> Strategy</div>
+ </div>
 
-        <!-- Analyze Tab -->
-        <div id="analyze-tab" class="tab-content active">
-            <div class="card">
-                <h2>Analyze Competitor</h2>
-                <form id="analyze-form">
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Competitor Name</label>
-                            <input type="text" id="competitor-name" placeholder="e.g., Slack, Notion" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Industry</label>
-                            <input type="text" id="industry" placeholder="e.g., SaaS, E-commerce" required>
-                        </div>
-                    </div>
+ <!-- Analyze Tab -->
+ <div id="analyze-tab" class="tab-content active">
+ <div class="card">
+ <h2>Analyze Competitor</h2>
+ <form id="analyze-form">
+ <div class="row">
+ <div class="form-group">
+ <label>Competitor Name</label>
+ <input type="text" id="competitor-name" placeholder="e.g., Slack, Notion" required>
+ </div>
+ <div class="form-group">
+ <label>Industry</label>
+ <input type="text" id="industry" placeholder="e.g., SaaS, E-commerce" required>
+ </div>
+ </div>
 
-                    <div class="form-group">
-                        <label>Your Company (for comparison)</label>
-                        <input type="text" id="your-company" placeholder="Your company name">
-                    </div>
+ <div class="form-group">
+ <label>Your Company (for comparison)</label>
+ <input type="text" id="your-company" placeholder="Your company name">
+ </div>
 
-                    <div class="form-group">
-                        <label>Known Information (optional)</label>
-                        <textarea id="known-info" placeholder="Website, products, recent news, etc."></textarea>
-                    </div>
+ <div class="form-group">
+ <label>Known Information (optional)</label>
+ <textarea id="known-info" placeholder="Website, products, recent news, etc."></textarea>
+ </div>
 
-                    <button type="submit" class="submit" id="analyze-btn">🔍 Analyze Competitor</button>
-                </form>
-            </div>
+ <button type="submit" class="submit" id="analyze-btn"> Analyze Competitor</button>
+ </form>
+ </div>
 
-            <div id="analyze-results" style="display: none;"></div>
-        </div>
+ <div id="analyze-results" style="display: none;"></div>
+ </div>
 
-        <!-- Compare Tab -->
-        <div id="compare-tab" class="tab-content">
-            <div class="card">
-                <h2>Compare Competitors</h2>
-                <form id="compare-form">
-                    <div class="form-group">
-                        <label>Competitors (press Enter to add)</label>
-                        <div class="tag-input" id="competitors-input">
-                            <input type="text" id="competitor-input-field" placeholder="Add competitors..." style="flex: 1; min-width: 150px;">
-                        </div>
-                    </div>
+ <!-- Compare Tab -->
+ <div id="compare-tab" class="tab-content">
+ <div class="card">
+ <h2>Compare Competitors</h2>
+ <form id="compare-form">
+ <div class="form-group">
+ <label>Competitors (press Enter to add)</label>
+ <div class="tag-input" id="competitors-input">
+ <input type="text" id="competitor-input-field" placeholder="Add competitors..." style="flex: 1; min-width: 150px;">
+ </div>
+ </div>
 
-                    <div class="form-group">
-                        <label>Industry</label>
-                        <input type="text" id="compare-industry" placeholder="Industry" required>
-                    </div>
+ <div class="form-group">
+ <label>Industry</label>
+ <input type="text" id="compare-industry" placeholder="Industry" required>
+ </div>
 
-                    <button type="submit" class="submit" id="compare-btn">📊 Compare</button>
-                </form>
-            </div>
+ <button type="submit" class="submit" id="compare-btn"> Compare</button>
+ </form>
+ </div>
 
-            <div id="compare-results" style="display: none;"></div>
-        </div>
+ <div id="compare-results" style="display: none;"></div>
+ </div>
 
-        <!-- Strategy Tab -->
-        <div id="strategy-tab" class="tab-content">
-            <div class="card">
-                <h2>Generate Competitive Strategy</h2>
-                <form id="strategy-form">
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Your Company</label>
-                            <input type="text" id="strategy-company" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Industry</label>
-                            <input type="text" id="strategy-industry" required>
-                        </div>
-                    </div>
+ <!-- Strategy Tab -->
+ <div id="strategy-tab" class="tab-content">
+ <div class="card">
+ <h2>Generate Competitive Strategy</h2>
+ <form id="strategy-form">
+ <div class="row">
+ <div class="form-group">
+ <label>Your Company</label>
+ <input type="text" id="strategy-company" required>
+ </div>
+ <div class="form-group">
+ <label>Industry</label>
+ <input type="text" id="strategy-industry" required>
+ </div>
+ </div>
 
-                    <div class="form-group">
-                        <label>Key Competitors (comma-separated)</label>
-                        <input type="text" id="strategy-competitors" placeholder="Competitor A, Competitor B">
-                    </div>
+ <div class="form-group">
+ <label>Key Competitors (comma-separated)</label>
+ <input type="text" id="strategy-competitors" placeholder="Competitor A, Competitor B">
+ </div>
 
-                    <div class="form-group">
-                        <label>Your Strengths (comma-separated)</label>
-                        <input type="text" id="strategy-strengths" placeholder="Better UX, Lower price, etc.">
-                    </div>
+ <div class="form-group">
+ <label>Your Strengths (comma-separated)</label>
+ <input type="text" id="strategy-strengths" placeholder="Better UX, Lower price, etc.">
+ </div>
 
-                    <div class="form-group">
-                        <label>Strategic Goal</label>
-                        <select id="strategy-goal">
-                            <option value="market share growth">Market Share Growth</option>
-                            <option value="differentiation">Differentiation</option>
-                            <option value="cost leadership">Cost Leadership</option>
-                            <option value="market entry">New Market Entry</option>
-                        </select>
-                    </div>
+ <div class="form-group">
+ <label>Strategic Goal</label>
+ <select id="strategy-goal">
+ <option value="market share growth">Market Share Growth</option>
+ <option value="differentiation">Differentiation</option>
+ <option value="cost leadership">Cost Leadership</option>
+ <option value="market entry">New Market Entry</option>
+ </select>
+ </div>
 
-                    <button type="submit" class="submit" id="strategy-btn">🚀 Generate Strategy</button>
-                </form>
-            </div>
+ <button type="submit" class="submit" id="strategy-btn"> Generate Strategy</button>
+ </form>
+ </div>
 
-            <div id="strategy-results" style="display: none;"></div>
-        </div>
-    </div>
+ <div id="strategy-results" style="display: none;"></div>
+ </div>
+ </div>
 
-    <script>
-        let competitors = [];
+ <script>
+ let competitors = [];
 
-        // Tab switching
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`${tab}-tab`).classList.add('active');
-        }
+ // Tab switching
+ function switchTab(tab) {
+ document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+ document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+ document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+ document.getElementById(`${tab}-tab`).classList.add('active');
+ }
 
-        function parseJSON(data) {
-            if (typeof data === 'object') return data;
-            try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
-            catch { return null; }
-        }
+ function parseJSON(data) {
+ if (typeof data === 'object') return data;
+ try { return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, '')); }
+ catch { return null; }
+ }
 
-        // Competitors tag input
-        document.getElementById('competitor-input-field').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const val = e.target.value.trim();
-                if (val && !competitors.includes(val)) {
-                    competitors.push(val);
-                    renderCompetitorTags();
-                }
-                e.target.value = '';
-            }
-        });
+ // Competitors tag input
+ document.getElementById('competitor-input-field').addEventListener('keypress', (e) => {
+ if (e.key === 'Enter') {
+ e.preventDefault();
+ const val = e.target.value.trim();
+ if (val && !competitors.includes(val)) {
+ competitors.push(val);
+ renderCompetitorTags();
+ }
+ e.target.value = '';
+ }
+ });
 
-        function renderCompetitorTags() {
-            const container = document.getElementById('competitors-input');
-            container.innerHTML = competitors.map((c, i) => `
-                <div class="tag">${c}<span class="tag-remove" onclick="removeCompetitor(${i})">×</span></div>
-            `).join('') + `<input type="text" id="competitor-input-field" placeholder="Add competitors..." style="flex: 1; min-width: 150px;">`;
-            document.getElementById('competitor-input-field').addEventListener('keypress', arguments.callee);
-        }
+ function renderCompetitorTags() {
+ const container = document.getElementById('competitors-input');
+ container.innerHTML = competitors.map((c, i) => `
+ <div class="tag">${c}<span class="tag-remove" onclick="removeCompetitor(${i})">×</span></div>
+ `).join('') + `<input type="text" id="competitor-input-field" placeholder="Add competitors..." style="flex: 1; min-width: 150px;">`;
+ document.getElementById('competitor-input-field').addEventListener('keypress', arguments.callee);
+ }
 
-        function removeCompetitor(i) {
-            competitors.splice(i, 1);
-            renderCompetitorTags();
-        }
+ function removeCompetitor(i) {
+ competitors.splice(i, 1);
+ renderCompetitorTags();
+ }
 
-        // Analyze form
-        document.getElementById('analyze-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('analyze-btn');
-            btn.disabled = true;
-            btn.textContent = '🔍 Analyzing...';
+ // Analyze form
+ document.getElementById('analyze-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const btn = document.getElementById('analyze-btn');
+ btn.disabled = true;
+ btn.textContent = ' Analyzing...';
 
-            try {
-                const response = await fetch('/api/analyze-competitor', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        companyName: document.getElementById('competitor-name').value,
-                        yourCompany: document.getElementById('your-company').value,
-                        industry: document.getElementById('industry').value,
-                        knownInfo: document.getElementById('known-info').value
-                    })
-                });
-                const data = await response.json();
-                displayAnalysis(data);
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🔍 Analyze Competitor';
-            }
-        });
+ try {
+ const response = await fetch('/api/analyze-competitor', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ companyName: document.getElementById('competitor-name').value,
+ yourCompany: document.getElementById('your-company').value,
+ industry: document.getElementById('industry').value,
+ knownInfo: document.getElementById('known-info').value
+ })
+ });
+ const data = await response.json();
+ displayAnalysis(data);
+ } catch (error) {
+ alert('Error: ' + error.message);
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Analyze Competitor';
+ }
+ });
 
-        function displayAnalysis(data) {
-            const container = document.getElementById('analyze-results');
-            container.style.display = 'block';
+ function displayAnalysis(data) {
+ const container = document.getElementById('analyze-results');
+ container.style.display = 'block';
 
-            const business = parseJSON(data.business);
-            const swot = parseJSON(data.swot);
-            const intel = parseJSON(data.intel);
+ const business = parseJSON(data.business);
+ const swot = parseJSON(data.swot);
+ const intel = parseJSON(data.intel);
 
-            let html = '';
+ let html = '';
 
-            if (business) {
-                html += `
-                    <div class="card">
-                        <h2>📊 Business Overview</h2>
-                        <p><strong>Description:</strong> ${business.overview?.description || 'N/A'}</p>
-                        <p><strong>Business Model:</strong> ${business.businessModel?.type || 'N/A'} - ${business.businessModel?.pricingModel || ''}</p>
-                        <p><strong>Positioning:</strong> ${business.marketPosition?.positioning || 'N/A'}</p>
-                        <p><strong>Differentiators:</strong> ${(business.marketPosition?.differentiators || []).join(', ')}</p>
-                    </div>
-                `;
-            }
+ if (business) {
+ html += `
+ <div class="card">
+ <h2> Business Overview</h2>
+ <p><strong>Description:</strong> ${business.overview?.description || 'N/A'}</p>
+ <p><strong>Business Model:</strong> ${business.businessModel?.type || 'N/A'} - ${business.businessModel?.pricingModel || ''}</p>
+ <p><strong>Positioning:</strong> ${business.marketPosition?.positioning || 'N/A'}</p>
+ <p><strong>Differentiators:</strong> ${(business.marketPosition?.differentiators || []).join(', ')}</p>
+ </div>
+ `;
+ }
 
-            if (swot) {
-                html += `
-                    <div class="card">
-                        <h2>📋 SWOT Analysis</h2>
-                        <div class="swot-grid">
-                            <div class="swot-box strengths">
-                                <h3>💪 Strengths</h3>
-                                ${(swot.strengths || []).map(s => `<div class="swot-item">${s.item}</div>`).join('')}
-                            </div>
-                            <div class="swot-box weaknesses">
-                                <h3>⚠️ Weaknesses</h3>
-                                ${(swot.weaknesses || []).map(w => `<div class="swot-item">${w.item}</div>`).join('')}
-                            </div>
-                            <div class="swot-box opportunities">
-                                <h3>🎯 Opportunities</h3>
-                                ${(swot.opportunities || []).map(o => `<div class="swot-item">${o.item}</div>`).join('')}
-                            </div>
-                            <div class="swot-box threats">
-                                <h3>⛔ Threats</h3>
-                                ${(swot.threats || []).map(t => `<div class="swot-item">${t.item}</div>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+ if (swot) {
+ html += `
+ <div class="card">
+ <h2> SWOT Analysis</h2>
+ <div class="swot-grid">
+ <div class="swot-box strengths">
+ <h3> Strengths</h3>
+ ${(swot.strengths || []).map(s => `<div class="swot-item">${s.item}</div>`).join('')}
+ </div>
+ <div class="swot-box weaknesses">
+ <h3> Weaknesses</h3>
+ ${(swot.weaknesses || []).map(w => `<div class="swot-item">${w.item}</div>`).join('')}
+ </div>
+ <div class="swot-box opportunities">
+ <h3> Opportunities</h3>
+ ${(swot.opportunities || []).map(o => `<div class="swot-item">${o.item}</div>`).join('')}
+ </div>
+ <div class="swot-box threats">
+ <h3> Threats</h3>
+ ${(swot.threats || []).map(t => `<div class="swot-item">${t.item}</div>`).join('')}
+ </div>
+ </div>
+ </div>
+ `;
+ }
 
-            if (intel) {
-                html += `
-                    <div class="card">
-                        <h2>🎯 Competitive Intelligence</h2>
-                        <div class="intel-section">
-                            <p><strong>Competitive Advantage:</strong> ${intel.competitiveAdvantage || 'N/A'}</p>
-                            <p><strong>Key Vulnerabilities:</strong> ${(intel.vulnerabilities || []).join(', ')}</p>
-                        </div>
-                        ${intel.battlecards ? `
-                            <div class="battlecard">
-                                <h4>⚔️ Battle Card</h4>
-                                <p><strong>When to Compete:</strong></p>
-                                <ul>${(intel.battlecards.whenToCompete || []).map(w => `<li>${w}</li>`).join('')}</ul>
-                                <p><strong>Winning Arguments:</strong></p>
-                                <ul>${(intel.battlecards.winningArguments || []).map(w => `<li>${w}</li>`).join('')}</ul>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
+ if (intel) {
+ html += `
+ <div class="card">
+ <h2> Competitive Intelligence</h2>
+ <div class="intel-section">
+ <p><strong>Competitive Advantage:</strong> ${intel.competitiveAdvantage || 'N/A'}</p>
+ <p><strong>Key Vulnerabilities:</strong> ${(intel.vulnerabilities || []).join(', ')}</p>
+ </div>
+ ${intel.battlecards ? `
+ <div class="battlecard">
+ <h4> Battle Card</h4>
+ <p><strong>When to Compete:</strong></p>
+ <ul>${(intel.battlecards.whenToCompete || []).map(w => `<li>${w}</li>`).join('')}</ul>
+ <p><strong>Winning Arguments:</strong></p>
+ <ul>${(intel.battlecards.winningArguments || []).map(w => `<li>${w}</li>`).join('')}</ul>
+ </div>
+ ` : ''}
+ </div>
+ `;
+ }
 
-            container.innerHTML = html;
-        }
+ container.innerHTML = html;
+ }
 
-        // Compare form
-        document.getElementById('compare-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (competitors.length < 2) {
-                alert('Add at least 2 competitors');
-                return;
-            }
-            const btn = document.getElementById('compare-btn');
-            btn.disabled = true;
-            btn.textContent = '📊 Comparing...';
+ // Compare form
+ document.getElementById('compare-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ if (competitors.length < 2) {
+ alert('Add at least 2 competitors');
+ return;
+ }
+ const btn = document.getElementById('compare-btn');
+ btn.disabled = true;
+ btn.textContent = ' Comparing...';
 
-            try {
-                const response = await fetch('/api/compare-competitors', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        competitors: competitors,
-                        industry: document.getElementById('compare-industry').value
-                    })
-                });
-                const data = await response.json();
-                const comparison = parseJSON(data.comparison);
-                
-                document.getElementById('compare-results').style.display = 'block';
-                document.getElementById('compare-results').innerHTML = `
-                    <div class="card">
-                        <h2>📊 Comparison Results</h2>
-                        <pre style="white-space: pre-wrap; color: #94a3b8;">${JSON.stringify(comparison, null, 2)}</pre>
-                    </div>
-                `;
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📊 Compare';
-            }
-        });
+ try {
+ const response = await fetch('/api/compare-competitors', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ competitors: competitors,
+ industry: document.getElementById('compare-industry').value
+ })
+ });
+ const data = await response.json();
+ const comparison = parseJSON(data.comparison);
+ 
+ document.getElementById('compare-results').style.display = 'block';
+ document.getElementById('compare-results').innerHTML = `
+ <div class="card">
+ <h2> Comparison Results</h2>
+ <pre style="white-space: pre-wrap; color: var(--ha-text-muted);">${JSON.stringify(comparison, null, 2)}</pre>
+ </div>
+ `;
+ } catch (error) {
+ alert('Error: ' + error.message);
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Compare';
+ }
+ });
 
-        // Strategy form
-        document.getElementById('strategy-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('strategy-btn');
-            btn.disabled = true;
-            btn.textContent = '🚀 Generating...';
+ // Strategy form
+ document.getElementById('strategy-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const btn = document.getElementById('strategy-btn');
+ btn.disabled = true;
+ btn.textContent = ' Generating...';
 
-            try {
-                const response = await fetch('/api/generate-strategy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        yourCompany: document.getElementById('strategy-company').value,
-                        competitors: document.getElementById('strategy-competitors').value.split(',').map(c => c.trim()),
-                        yourStrengths: document.getElementById('strategy-strengths').value.split(',').map(s => s.trim()),
-                        industry: document.getElementById('strategy-industry').value,
-                        goal: document.getElementById('strategy-goal').value
-                    })
-                });
-                const data = await response.json();
-                const strategy = parseJSON(data.strategy);
-                
-                document.getElementById('strategy-results').style.display = 'block';
-                document.getElementById('strategy-results').innerHTML = `
-                    <div class="card">
-                        <h2>🚀 Competitive Strategy</h2>
-                        <pre style="white-space: pre-wrap; color: #94a3b8;">${JSON.stringify(strategy, null, 2)}</pre>
-                    </div>
-                `;
-            } catch (error) {
-                alert('Error: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🚀 Generate Strategy';
-            }
-        });
-    </script>
+ try {
+ const response = await fetch('/api/generate-strategy', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ yourCompany: document.getElementById('strategy-company').value,
+ competitors: document.getElementById('strategy-competitors').value.split(',').map(c => c.trim()),
+ yourStrengths: document.getElementById('strategy-strengths').value.split(',').map(s => s.trim()),
+ industry: document.getElementById('strategy-industry').value,
+ goal: document.getElementById('strategy-goal').value
+ })
+ });
+ const data = await response.json();
+ const strategy = parseJSON(data.strategy);
+ 
+ document.getElementById('strategy-results').style.display = 'block';
+ document.getElementById('strategy-results').innerHTML = `
+ <div class="card">
+ <h2> Competitive Strategy</h2>
+ <pre style="white-space: pre-wrap; color: var(--ha-text-muted);">${JSON.stringify(strategy, null, 2)}</pre>
+ </div>
+ `;
+ } catch (error) {
+ alert('Error: ' + error.message);
+ } finally {
+ btn.disabled = false;
+ btn.textContent = ' Generate Strategy';
+ }
+ });
+ </script>
 </body>
 </html>

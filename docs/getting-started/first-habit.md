@@ -254,7 +254,7 @@ Now that you've built your first habit using Base, here are some things to explo
 
 ### Learn More Features
 
-- **[Variables & Expressions](../deep-dive/variables.md)** - Learn how to pass data between nodes
+- **[Variables & Expressions](../extra-reading/variables.md)** - Learn how to pass data between nodes
 - **[Habit Schema](../deep-dive/habit-schema.md)** - Full schema reference
 - **[Security Best Practices](../security/)** - Keep your habits secure
 

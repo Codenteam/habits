@@ -1,0 +1,45 @@
+id: voice-history
+name: View Voice History
+description: Retrieves saved voice commands from SQLite
+
+input:
+  - name: limit
+    type: number
+    displayAs: text
+    label: Limit
+    description: Maximum number of records to return
+    default: 50
+    required: false
+
+nodes:
+  - id: fetch-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: voice_commands
+        filter: "{}"
+        limit: "{{habits.input.limit}}"
+        database: voice-demo.db
+
+  - id: log-results
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "Voice History"
+        message: "{{fetch-all}}"
+
+edges:
+  - source: fetch-all
+    target: log-results
+
+output:
+  results: "{{fetch-all}}"
+  logged: "{{log-results}}"

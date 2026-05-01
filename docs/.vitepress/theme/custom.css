@@ -63,7 +63,7 @@
 
 /* Full-Stack Hero Section */
 .full-stack-hero {
-  background: linear-gradient(135deg, #14477f 0%, #166487 100%);
+  background: var(--home-brand-gradient);
   border-radius: 16px;
   padding: 40px;
   margin: 0 auto 40px;

@@ -181,12 +181,23 @@ export default function WorkflowEditor() {
         position,
       });
 
-      // Convert to ReactFlow format
-      const newNode = nodeDTO.toReactFlowNode();
+      // Derive node type from module for ID generation: @ha-bits/bit-hello-world → hello-world
+      const nodeType = template.module
+        .replace(/^@[^/]+\/bit-/, '')
+        .replace(/^@[^/]+\//, '')
+        .replace(/^bit-/, '')
+        .replace(/^script-/, '') || 'node';
+
+      // Count existing nodes with this type prefix to assign a unique counter
+      const existingCount = nodes.filter(n => n.id.startsWith(`${nodeType}-`)).length;
+      const nodeId = `${nodeType}-${existingCount + 1}`;
+
+      // Convert to ReactFlow format and override generated ID
+      const newNode = { ...nodeDTO.toReactFlowNode(), id: nodeId };
       dispatch(addNode(newNode));
       dispatch(setSelectedNode(null));
     },
-    [dispatch]
+    [dispatch, nodes]
   );
 
   return (

@@ -146,6 +146,7 @@ function installDocsPackages(): void {
  
 function generateDocsContent(): void {
   console.log('\n=== Generating Documentation Content ===\n');
+  run('npx tsx packages/manage/forge/src/mcp/commands.ts'); // generate COMMANDS.md + docs/public/commands/ snippets
   run('npx tsx scripts/generate-showcase.ts');
   run('npx tsx scripts/update-bits-stats.ts'); // Fetch stats first
   run('npx tsx scripts/generate-bits.ts');     // Then generate pages with stats

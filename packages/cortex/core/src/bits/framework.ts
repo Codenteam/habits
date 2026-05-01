@@ -664,6 +664,10 @@ export enum CueStrategy {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',
   APP_WEBHOOK = 'APP_WEBHOOK',
+  /** Streaming cue strategy for triggers that continuously receive real-time events (e.g., microphone, websocket, device sensors). Follows POLLING-like lifecycle: onEnable → run (per event) → onDisable. */
+  STREAMING = 'STREAMING',
+  /** Custom cue strategy for triggers that manage their own lifecycle entirely (e.g., continuous microphone listening, device sensors) */
+  CUSTOM = 'CUSTOM',
 }
 
 /** @deprecated Use CueStrategy instead */
@@ -917,6 +921,7 @@ export function createBit<AuthType = any>(config: BitConfig<AuthType>): Bit<Auth
     displayName: config.displayName,
     description: config.description,
     logoUrl: config.logoUrl,
+    runtime: config.runtime,
     minimumSupportedRelease: config.minimumSupportedRelease,
     maximumSupportedRelease: config.maximumSupportedRelease,
     categories: config.categories,

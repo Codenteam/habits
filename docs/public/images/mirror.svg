@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" width="760" height="340">
+  <defs>
+    <style>
+      .bg { fill: #13141a; }
+      .panel { fill: #1e1f28; rx: 12; }
+      .panel-border { fill: none; stroke: #2d2e3a; stroke-width: 1.5; }
+      .label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #6b7280; letter-spacing: 0.08em; text-transform: uppercase; }
+      .otp-digit { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 22px; font-weight: 700; fill: #f0f0f8; }
+      .otp-cell { fill: #252636; }
+      .otp-cell-border { fill: none; stroke: #5865f2; stroke-width: 1.5; }
+      .url-box { fill: #252636; }
+      .url-text { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; fill: #a5b4fc; }
+      .url-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #6b7280; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; fill: #c9cadf; }
+      .arrow-line { stroke: #5865f2; stroke-width: 2; stroke-dasharray: 5,4; fill: none; }
+      .arrow-head { fill: #5865f2; }
+      .badge { fill: #5865f2; }
+      .badge-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10px; fill: #fff; font-weight: 600; }
+      .recv-row { fill: #252636; }
+      .recv-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; fill: #9ca3b0; }
+      .recv-val { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; fill: #e2e4f0; font-weight: 500; }
+      .check { fill: #22c55e; }
+      .connected-dot { fill: #22c55e; }
+      .sep { stroke: #2d2e3a; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="760" height="340" rx="14"/>
+
+  <!-- Left panel: Sender (enters the code shown by Receiver) -->
+  <rect class="panel" x="28" y="24" width="320" height="292" rx="12"/>
+  <rect class="panel-border" x="28" y="24" width="320" height="292" rx="12"/>
+
+  <!-- Sender header -->
+  <text class="label" x="44" y="52">Sender</text>
+  <text class="label" x="300" y="52" text-anchor="end">Connecting…</text>
+
+  <line class="sep" x1="28" y1="62" x2="348" y2="62"/>
+
+  <!-- Enter code title -->
+  <text class="title" x="44" y="90">Enter Pairing Code</text>
+
+  <!-- OTP input cells, 4 entered, last active with cursor -->
+  <!-- Cell 1 (filled) -->
+  <rect class="otp-cell" x="44" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="61" y="129" text-anchor="middle">4</text>
+
+  <!-- Cell 2 (filled) -->
+  <rect class="otp-cell" x="86" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="103" y="129" text-anchor="middle">8</text>
+
+  <!-- Cell 3 (filled) -->
+  <rect class="otp-cell" x="128" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="145" y="129" text-anchor="middle">2</text>
+
+  <!-- gap -->
+  <text class="otp-digit" x="174" y="129" text-anchor="middle" opacity="0.3">·</text>
+
+  <!-- Cell 4 (filled) -->
+  <rect class="otp-cell" x="184" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="201" y="129" text-anchor="middle">9</text>
+
+  <!-- Cell 5 (active, cursor) -->
+  <rect class="otp-cell" x="226" y="102" width="34" height="42" rx="7"/>
+  <rect class="otp-cell-border" x="226" y="102" width="34" height="42" rx="7"/>
+  <rect fill="#5865f2" x="241" y="111" width="2" height="22" rx="1" opacity="0.9"/>
+
+  <!-- Cell 6 (empty) -->
+  <rect class="otp-cell" x="268" y="102" width="34" height="42" rx="7"/>
+
+  <!-- hint text -->
+  <text class="label" x="44" y="162">Code shared by the receiver</text>
+
+  <!-- Connecting state indicator -->
+  <rect fill="#1a1b26" x="44" y="176" width="282" height="80" rx="8"/>
+  <text class="recv-label" x="185" y="210" text-anchor="middle">Waiting to connect…</text>
+  <!-- spinner dots -->
+  <circle fill="#5865f2" cx="167" cy="228" r="4" opacity="0.4"/>
+  <circle fill="#5865f2" cx="183" cy="228" r="4" opacity="0.7"/>
+  <circle fill="#5865f2" cx="199" cy="228" r="4" opacity="1"/>
+
+
+  <!-- Arrow in the middle, pointing RIGHT (sender connects to receiver) -->
+  <path class="arrow-line" d="M356 170 Q380 170 380 170 Q404 170 404 170"/>
+  <!-- Arrow tip right -->
+  <polygon class="arrow-head" points="402,164 412,170 402,176"/>
+
+  <!-- Right panel: Receiver (owns the habit, generates the code) -->
+  <rect class="panel" x="412" y="24" width="320" height="292" rx="12"/>
+  <rect class="panel-border" x="412" y="24" width="320" height="292" rx="12"/>
+
+  <!-- Receiver header -->
+  <text class="label" x="428" y="52">Receiver</text>
+  <circle class="connected-dot" cx="704" cy="47" r="5"/>
+  <text class="label" x="684" y="52" text-anchor="end">Active</text>
+
+  <line class="sep" x1="412" y1="62" x2="732" y2="62"/>
+
+  <!-- Pairing code section title -->
+  <text class="title" x="428" y="90">Your Pairing Code</text>
+
+  <!-- OTP digits displayed for the sender to read -->
+  <!-- Cell 1 -->
+  <rect class="otp-cell" x="428" y="102" width="34" height="42" rx="7"/>
+  <rect class="otp-cell-border" x="428" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="445" y="129" text-anchor="middle">4</text>
+
+  <!-- Cell 2 -->
+  <rect class="otp-cell" x="470" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="487" y="129" text-anchor="middle">8</text>
+
+  <!-- Cell 3 -->
+  <rect class="otp-cell" x="512" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="529" y="129" text-anchor="middle">2</text>
+
+  <!-- gap -->
+  <text class="otp-digit" x="558" y="129" text-anchor="middle" opacity="0.3">·</text>
+
+  <!-- Cell 4 -->
+  <rect class="otp-cell" x="568" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="585" y="129" text-anchor="middle">9</text>
+
+  <!-- Cell 5 -->
+  <rect class="otp-cell" x="610" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="627" y="129" text-anchor="middle">1</text>
+
+  <!-- Cell 6 -->
+  <rect class="otp-cell" x="652" y="102" width="34" height="42" rx="7"/>
+  <text class="otp-digit" x="669" y="129" text-anchor="middle">7</text>
+
+  <!-- Expires -->
+  <text class="label" x="428" y="162">Expires in 04:32</text>
+
+  <!-- Status bar -->
+  <line class="sep" x1="412" y1="288" x2="732" y2="288"/>
+  <circle class="connected-dot" cx="430" cy="306" r="5"/>
+  <text class="label" x="442" y="310">Awaiting connection…</text>
+</svg>

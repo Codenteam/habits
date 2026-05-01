@@ -65,46 +65,18 @@ const platforms = [
   { label: 'Serverless', icon: 'cloud', color: '#ff9900' },
 ]
 
-// Floating orbs data
-const orbs = [
-  { size: 300, x: 10, y: 20, color: 'rgba(88, 101, 242, 0.15)', duration: 20 },
-  { size: 200, x: 80, y: 60, color: 'rgba(56, 189, 248, 0.12)', duration: 25 },
-  { size: 150, x: 60, y: 80, color: 'rgba(236, 72, 153, 0.1)', duration: 18 },
-  { size: 100, x: 30, y: 70, color: 'rgba(34, 197, 94, 0.1)', duration: 22 },
-]
 </script>
 
 <template>
-  <section ref="sectionRef" class="flow-section">
-    <!-- Animated background orbs -->
-    <div class="background-effects">
-      <div 
-        v-for="(orb, i) in orbs" 
-        :key="i"
-        class="floating-orb"
-        :style="{
-          width: orb.size + 'px',
-          height: orb.size + 'px',
-          left: orb.x + '%',
-          top: orb.y + '%',
-          background: `radial-gradient(circle, ${orb.color}, transparent 70%)`,
-          animationDuration: orb.duration + 's',
-          animationDelay: i * -3 + 's'
-        }"
-      ></div>
-      <div class="grid-overlay"></div>
-      <div class="glow-line top"></div>
-      <div class="glow-line bottom"></div>
-    </div>
-
+  <section ref="sectionRef" class="flow-section" :class="{ 'is-visible': isVisible }">
     <div class="container" :style="parallaxStyle">
       <div class="header" :class="{ visible: isVisible }">
         <div class="header-badge" style="display: none;">
           <span class="pulse-ring"></span>
           <span class="badge-text">Next-Gen Deployment</span>
         </div>
-        <h2>Build <span class="gradient">Anything</span></h2>
-        <p class="subtitle">Nodes + AI UI = .habit → Runs Everywhere</p>
+        <h2>Build <span class="gradient">Anything</span> With Nodes</h2>
+        <p class="subtitle">Because people love building with nodes</p>
       </div>
 
       <!-- 3-column layout with glassmorphism -->
@@ -326,71 +298,15 @@ const orbs = [
    =============================================== */
 
 .flow-section {
-  padding: 100px 24px;
-  background: var(--vp-c-bg);
+  padding: 50px 24px;
+  background: transparent;
   position: relative;
-  overflow: hidden;
   min-height: 700px;
-}
-
-/* Animated Background Effects */
-.background-effects {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.floating-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  animation: orbFloat 20s ease-in-out infinite;
-  will-change: transform;
-}
-
-@keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(30px, -30px) scale(1.1); }
-  50% { transform: translate(-20px, 20px) scale(0.95); }
-  75% { transform: translate(20px, 10px) scale(1.05); }
-}
-
-.grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(88, 101, 242, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(88, 101, 242, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  animation: gridPulse 4s ease-in-out infinite;
-}
-
-@keyframes gridPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.glow-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #5865F2, #38bdf8, transparent);
-  animation: glowLineMove 3s ease-in-out infinite;
-}
-
-.glow-line.top { top: 0; }
-.glow-line.bottom { bottom: 0; animation-delay: -1.5s; }
-
-@keyframes glowLineMove {
-  0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
-  50% { opacity: 1; transform: scaleX(1); }
 }
 
 /* Container with subtle parallax */
 .container {
-  max-width: 1000px;
+  max-width: var(--home-section-max-w);
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -448,7 +364,7 @@ const orbs = [
 .badge-text {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #5865F2;
+  color: var(--home-brand-1);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -461,17 +377,10 @@ const orbs = [
 }
 
 .gradient {
-  background: linear-gradient(135deg, #5865F2 0%, #ec4899 50%, #38bdf8 100%);
-  background-size: 200% 200%;
+  background: var(--home-brand-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradientShift 4s ease infinite;
-}
-
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 
 .subtitle {
@@ -489,22 +398,22 @@ const orbs = [
   gap: 24px;
   flex-wrap: wrap;
   opacity: 0;
-  transform: translateY(40px) perspective(1000px) rotateX(10deg);
-  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s;
 }
 
 .flow-grid.visible {
   opacity: 1;
-  transform: translateY(0) perspective(1000px) rotateX(0);
+  transform: translateY(0);
 }
 
 /* Glass Card Style */
 .flow-card.glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: var(--home-surface-glass);
+  backdrop-filter: blur(var(--home-blur));
+  -webkit-backdrop-filter: blur(var(--home-blur));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-lg);
   padding: 24px;
   min-width: 200px;
   position: relative;
@@ -514,7 +423,7 @@ const orbs = [
 
 .flow-card.glass:hover {
   transform: translateY(-4px);
-  border-color: rgba(88, 101, 242, 0.3);
+  border-color: color-mix(in srgb, var(--home-brand-1) 35%, transparent);
 }
 
 /* Custom cursor for nodes card - pointer with drag icon */
@@ -544,14 +453,14 @@ const orbs = [
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(88, 101, 242, 0.15) 0%, transparent 50%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--home-brand-1) 18%, transparent) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.4s;
   pointer-events: none;
 }
 
 .card-glow.cyan {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 50%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--home-brand-2) 18%, transparent) 0%, transparent 50%);
 }
 
 .flow-card.glass:hover .card-glow {
@@ -571,15 +480,15 @@ const orbs = [
 .card-label :deep(svg) {
   width: 16px;
   height: 16px;
-  color: #5865F2;
+  color: var(--home-brand-1);
 }
 
 .ai-label {
-  color: #ec4899;
+  color: var(--home-brand-3);
 }
 
 .ai-label :deep(svg) {
-  color: #ec4899;
+  color: var(--home-brand-3);
 }
 
 /* Workflow Canvas with glowing nodes */
@@ -605,14 +514,18 @@ const orbs = [
 }
 
 .node-cursor.active {
+  /* animation starts only when section scrolls into view */
+}
+
+.flow-section.is-visible .node-cursor.active {
   animation: nodeCursorMove 3.5s ease-in-out 0.2s forwards;
 }
 
 .node-cursor svg {
   width: 20px;
   height: 20px;
-  color: #5865F2;
-  filter: drop-shadow(0 2px 4px rgba(88, 101, 242, 0.5));
+  color: var(--home-brand-1);
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--home-brand-1) 50%, transparent));
 }
 
 .cursor-drag-icon {
@@ -620,9 +533,9 @@ const orbs = [
   top: -8px;
   right: -12px;
   font-size: 14px;
-  color: #22c55e;
+  color: var(--home-accent-3);
   animation: dragIconPulse 0.5s ease-in-out infinite;
-  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--home-accent-3) 60%, transparent));
 }
 
 @keyframes dragIconPulse {
@@ -709,14 +622,18 @@ const orbs = [
 }
 
 .ui-cursor.active {
+  /* animation starts only when section scrolls into view */
+}
+
+.flow-section.is-visible .ui-cursor.active {
   animation: uiCursorMove 3.5s ease-in-out 0.5s forwards;
 }
 
 .ui-cursor svg {
   width: 18px;
   height: 18px;
-  color: #ec4899;
-  filter: drop-shadow(0 2px 4px rgba(236, 72, 153, 0.5));
+  color: var(--home-brand-3);
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--home-brand-3) 50%, transparent));
 }
 
 .cursor-sparkle {
@@ -776,17 +693,18 @@ const orbs = [
   display: flex;
   justify-content: center;
   gap: 12px;
+  opacity: 0;
+  transform: translateY(-30px) scale(0.6);
+}
+
+.flow-section.is-visible .workflow-row {
   animation: nodeDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--delay, 0s) both;
 }
 
 @keyframes nodeDrop {
   0% {
     opacity: 0;
-    transform: translateY(-30px) scale(0.6);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(5px) scale(1.05);
+    transform: translateY(-12px) scale(0.95);
   }
   100% {
     opacity: 1;
@@ -805,8 +723,8 @@ const orbs = [
   gap: 4px;
   padding: 12px 16px;
   background: var(--vp-c-bg);
-  border: 2px solid;
-  border-radius: 12px;
+  border: 1px solid;
+  border-radius: 10px;
   min-width: 95px;
   position: relative;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -924,23 +842,26 @@ const orbs = [
   top: -8px;
   right: -25px;
   padding: 2px 8px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: linear-gradient(135deg, var(--home-accent-3), color-mix(in srgb, var(--home-accent-3) 80%, #000));
   color: white;
   font-size: 0.55rem;
   font-weight: 700;
   border-radius: 6px;
   text-transform: uppercase;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--home-accent-3) 40%, transparent);
 }
 
 /* Animated Connector Lines */
 .connector-line {
   width: 2px;
   height: 18px;
-  background: linear-gradient(180deg, var(--vp-c-divider), #5865F2);
+  background: linear-gradient(180deg, var(--vp-c-divider), var(--home-brand-1));
   position: relative;
   overflow: visible;
   opacity: 0;
+}
+
+.flow-section.is-visible .connector-line {
   animation: connectorAppear 0.3s ease-out var(--conn-delay, 0s) forwards;
 }
 
@@ -956,10 +877,13 @@ const orbs = [
   left: -1px;
   width: 4px;
   height: 8px;
-  background: #5865F2;
+  background: var(--home-brand-1);
   border-radius: 2px;
-  animation: flowDown 1.5s ease-in-out infinite calc(var(--conn-delay, 0s) + 0.3s);
-  box-shadow: 0 0 8px #5865F2;
+  box-shadow: 0 0 8px var(--home-brand-1);
+}
+
+.flow-section.is-visible .connector-line.animated::before {
+  display: none;
 }
 
 @keyframes flowDown {
@@ -968,27 +892,22 @@ const orbs = [
 }
 
 .connector-line::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid #5865F2;
-  filter: drop-shadow(0 0 4px rgba(88, 101, 242, 0.5));
+  display: none;
 }
 
 .flow-particle {
   position: absolute;
   width: 6px;
   height: 6px;
-  background: #38bdf8;
+  background: var(--home-brand-2);
   border-radius: 50%;
   top: 0;
   left: -2px;
+  box-shadow: 0 0 10px var(--home-brand-2), 0 0 20px var(--home-brand-2);
+}
+
+.flow-section.is-visible .flow-particle {
   animation: particleFlow 2s ease-in-out infinite 0.5s;
-  box-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
 }
 
 @keyframes particleFlow {
@@ -1013,9 +932,9 @@ const orbs = [
   transform: translateX(-50%);
   width: 60px;
   height: 8px;
-  border-left: 2px solid #5865F2;
-  border-right: 2px solid #5865F2;
-  border-bottom: 2px solid #5865F2;
+  border-left: 2px solid var(--home-brand-1);
+  border-right: 2px solid var(--home-brand-1);
+  border-bottom: 2px solid var(--home-brand-1);
   border-radius: 0 0 8px 8px;
 }
 
@@ -1035,34 +954,26 @@ const orbs = [
 }
 
 .operator-glow {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle, rgba(88, 101, 242, 0.2) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: operatorPulse 3s ease-in-out infinite;
-}
-
-@keyframes operatorPulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.3); opacity: 1; }
+  display: none;
 }
 
 .operator-text {
   position: relative;
   z-index: 1;
-  text-shadow: 0 0 20px rgba(88, 101, 242, 0.5);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--home-brand-1) 50%, transparent);
 }
 
 /* AI Card with Typing Animation */
 .mock-preview {
-  background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--home-brand-1) 12%, var(--vp-c-bg)),
+    color-mix(in srgb, var(--home-brand-3) 8%, var(--vp-c-bg)));
   border-radius: 10px;
   padding: 14px;
   min-height: 100px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--home-border-glass);
 }
 
 .mock-bar {
@@ -1089,7 +1000,7 @@ const orbs = [
 
 .mock-line {
   height: 10px;
-  background: linear-gradient(90deg, #2a2a2a, #3a3a3a);
+  background: linear-gradient(90deg, var(--home-track), var(--home-border-strong));
   border-radius: 5px;
   position: relative;
   overflow: hidden;
@@ -1098,7 +1009,7 @@ const orbs = [
   transform-origin: left;
 }
 
-.mock-line.typing {
+.flow-section.is-visible .mock-line.typing {
   animation: uiLineAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) var(--ui-delay, 0s) forwards;
 }
 
@@ -1111,7 +1022,10 @@ const orbs = [
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(236, 72, 153, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--home-brand-3) 40%, transparent), transparent);
+}
+
+.flow-section.is-visible .mock-line.typing::after {
   animation: typingLine 1.5s ease-in-out infinite;
   animation-delay: calc(var(--ui-delay, 0s) + 0.4s);
 }
@@ -1127,7 +1041,7 @@ const orbs = [
 .mock-button {
   width: 50%;
   height: 24px;
-  background: linear-gradient(135deg, #5865F2, #38bdf8);
+  background: var(--home-brand-gradient-2);
   border-radius: 6px;
   margin-top: 8px;
   position: relative;
@@ -1136,7 +1050,7 @@ const orbs = [
   transform: scale(0.8);
 }
 
-.mock-button.typing {
+.flow-section.is-visible .mock-button.typing {
   animation: uiButtonAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) var(--ui-delay, 0s) forwards;
 }
 
@@ -1150,6 +1064,9 @@ const orbs = [
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+}
+
+.flow-section.is-visible .mock-button::after {
   animation: buttonShine 2s ease-in-out infinite;
   animation-delay: calc(var(--ui-delay, 0s) + 0.5s);
 }
@@ -1161,24 +1078,7 @@ const orbs = [
 
 /* AI Sparkles */
 .ai-sparkles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.sparkle {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  font-size: 14px;
-  animation: sparkleFloat 2s ease-in-out infinite;
-  animation-delay: var(--delay);
-  opacity: 0;
-}
-
-@keyframes sparkleFloat {
-  0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
-  50% { opacity: 1; transform: translateY(-10px) scale(1); }
+  display: none;
 }
 
 /* Holographic Habit Card */
@@ -1187,19 +1087,12 @@ const orbs = [
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: linear-gradient(135deg, rgba(88, 101, 242, 0.15), rgba(56, 189, 248, 0.15));
-  border: 2px solid transparent;
-  border-radius: 16px;
+  background: color-mix(in srgb, var(--home-brand-1) 8%, var(--home-surface-glass));
+  border: 1px solid color-mix(in srgb, var(--home-brand-1) 30%, transparent);
+  border-radius: var(--home-radius-lg);
   position: relative;
   overflow: hidden;
-  animation: holoBorder 4s linear infinite;
   padding: 10px;
-}
-
-@keyframes holoBorder {
-  0%, 100% { border-color: #5865F2; }
-  33% { border-color: #ec4899; }
-  66% { border-color: #38bdf8; }
 }
 
 .holographic-shine {
@@ -1221,51 +1114,33 @@ const orbs = [
 }
 
 .habit-badge {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #5865F2, #ec4899, #38bdf8);
-  background-size: 200% 200%;
+  width: 52px;
+  height: 52px;
+  background: color-mix(in srgb, var(--home-brand-1) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--home-brand-1) 35%, transparent);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
   position: relative;
-  animation: badgeGradient 4s ease infinite;
-  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
-}
-
-@keyframes badgeGradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--home-brand-1) 25%, transparent);
 }
 
 .badge-glow {
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(135deg, #5865F2, #ec4899, #38bdf8);
-  border-radius: 18px;
-  filter: blur(12px);
-  opacity: 0.5;
-  animation: badgeGlowPulse 2s ease-in-out infinite;
-}
-
-@keyframes badgeGlowPulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+  display: none;
 }
 
 .habit-badge :deep(svg) {
-  width: 26px;
-  height: 26px;
-  color: white;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  width: 24px;
+  height: 24px;
+  color: var(--home-brand-1);
 }
 
 .habit-name {
   font-size: 1.3rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #5865F2, #38bdf8);
+  background: var(--home-brand-gradient-2);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1279,29 +1154,7 @@ const orbs = [
 
 /* Orbit Ring */
 .orbit-ring {
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  border: 1px dashed rgba(88, 101, 242, 0.3);
-  border-radius: 50%;
-  animation: orbitSpin 10s linear infinite;
-}
-
-@keyframes orbitSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.orbit-dot {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: #5865F2;
-  border-radius: 50%;
-  box-shadow: 0 0 10px #5865F2, 0 0 20px #5865F2;
+  display: none;
 }
 
 /* Deploy Row */
@@ -1337,13 +1190,12 @@ const orbs = [
 .label-icon :deep(svg) {
   width: 16px;
   height: 16px;
-  color: #5865F2;
+  color: var(--home-brand-1);
   animation: bounceArrow 1.5s ease-in-out infinite;
 }
 
 @keyframes bounceArrow {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(4px); }
 }
 
 .deploy-targets {
@@ -1358,10 +1210,11 @@ const orbs = [
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  background: var(--home-surface-glass);
+  backdrop-filter: blur(var(--home-blur-soft));
+  -webkit-backdrop-filter: blur(var(--home-blur-soft));
+  border: 1px solid var(--home-border-glass);
+  border-radius: var(--home-radius-xl);
   font-size: 0.88rem;
   font-weight: 500;
   color: var(--vp-c-text-1);
@@ -1382,7 +1235,7 @@ const orbs = [
 .chip-glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(88, 101, 242, 0.15), transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--home-brand-1) 18%, transparent), transparent);
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -1394,14 +1247,14 @@ const orbs = [
 .deploy-chip :deep(svg) {
   width: 18px;
   height: 18px;
-  color: #5865F2;
+  color: var(--home-brand-1);
   transition: transform 0.3s;
 }
 
 .deploy-chip:hover {
-  border-color: rgba(88, 101, 242, 0.5);
+  border-color: color-mix(in srgb, var(--home-brand-1) 50%, transparent);
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.2);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--home-brand-1) 22%, transparent);
 }
 
 .deploy-chip:hover :deep(svg) {
@@ -1435,12 +1288,7 @@ const orbs = [
 }
 
 .platforms-label .label-icon :deep(svg) {
-  animation: globeSpin 8s linear infinite;
-}
-
-@keyframes globeSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  opacity: 0.7;
 }
 
 .platforms-list {
@@ -1455,8 +1303,8 @@ const orbs = [
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--home-surface-glass);
+  border: 1px solid var(--home-border-glass);
   border-radius: 10px;
   font-size: 0.82rem;
   font-weight: 500;

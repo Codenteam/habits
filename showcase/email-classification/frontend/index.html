@@ -1,30 +1,70 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email Classification API</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Email Classification API</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script>
+ tailwind.config = { darkMode: 'class' }
+ </script>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
 </head>
 <body class="bg-gray-900 min-h-screen flex items-center justify-center">
-  <div class="max-w-xl mx-auto p-8 text-center">
-    <div class="mb-6">
-      <svg class="w-16 h-16 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-      </svg>
-    </div>
-    <h1 class="text-3xl font-bold text-white mb-4">Email Classification API</h1>
-    <p class="text-gray-400 mb-6">This is an API-only habit for classifying emails using AI. Send POST requests to the workflow endpoint with email content to get classifications.</p>
-    <div class="bg-gray-800 rounded-lg p-4 text-left">
-      <code class="text-green-400 text-sm">
-        POST /workflows/email-classification-test/run<br>
-        Content-Type: application/json<br><br>
-        {"email": "Your email content here..."}
-      </code>
-    </div>
-  </div>
+ <div class="max-w-xl mx-auto p-8 text-center">
+ <div class="mb-6">
+ <svg class="w-16 h-16 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+ </svg>
+ </div>
+ <h1 class="text-3xl font-bold text-white mb-4">Email Classification API</h1>
+ <p class="text-gray-400 mb-6">This is an API-only habit for classifying emails using AI. Send POST requests to the workflow endpoint with email content to get classifications.</p>
+ <div class="bg-gray-800 rounded-lg p-4 text-left">
+ <code class="text-green-400 text-sm">
+ POST /workflows/email-classification-test/run<br>
+ Content-Type: application/json<br><br>
+ {"email": "Your email content here..."}
+ </code>
+ </div>
+ </div>
 </body>
 </html>

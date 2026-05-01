@@ -19,6 +19,7 @@ import BitsCard from './components/BitsCard.vue'
 import Icon from './components/Icon.vue'
 import ComparisonLayout from './components/ComparisonLayout.vue'
 import './custom.css'
+import './home-tokens.css'
 import './d2-custom.css'
 
 

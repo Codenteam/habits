@@ -438,7 +438,7 @@ export async function vectorSearch(params: {
          ORDER BY distance ASC LIMIT ?`
       ).all(JSON.stringify(vec), over) as any[];
     }
-    // MATCH requires LIMIT visible to the vec0 planner — use a subquery so the JOIN
+    // MATCH requires LIMIT visible to the vec0 planner, use a subquery so the JOIN
     // doesn't hide the LIMIT constraint from the virtual table optimizer.
     return sqlite.prepare(
       `SELECT v.rowid AS rowid, v.distance AS distance, m.custom_id, m.data, m.created_at

@@ -23,10 +23,10 @@ const habitTabs = [
 
 The Resume Analyzer demonstrates building a **multi-habit application** with:
 
-- **4 AI-powered workflows** — Analyze resumes, generate cover letters, list history, retrieve saved analyses
-- **OpenAI Vision integration** — Extract text from resume images
-- **Local database storage** — PouchDB for storing analyses without external dependencies
-- **Mobile-first frontend** — Responsive UI ready for packaging as native app
+- **4 AI-powered workflows**, Analyze resumes, generate cover letters, list history, retrieve saved analyses
+- **OpenAI Vision integration**, Extract text from resume images
+- **Local database storage**, PouchDB for storing analyses without external dependencies
+- **Mobile-first frontend**, Responsive UI ready for packaging as native app
 
 ## Workflow Visualization
 
@@ -43,7 +43,7 @@ Explore the 4 habits that power the Resume Analyzer:
 
 <<< @/../showcase/resume-analyzer/habits/analyze-resume.yaml [habits/analyze-resume.yaml]
 
-<<< @/../showcase/resume-analyzer/habits/generate-cover-letter.yaml [habits/generate-cover-letter.yaml]
+![generate-cover-letter.yaml](/images/generate-cover-letter.png) <!-- habits/generate-cover-letter.yaml -->
 
 <<< @/../showcase/resume-analyzer/habits/list-analyses.yaml [habits/list-analyses.yaml]
 
@@ -68,7 +68,7 @@ For detailed explanations of how habits work, see:
 - **[Creating Habits](/deep-dive/creating)**: Learn Habit-as-Code (HaC), visual editing with Base, and importing workflows
 - **[Your First Habit (Code-First)](/getting-started/first-habit)**: Step-by-step guide to writing habits in YAML
 - **[Your First Habit (GUI-First)](/getting-started/first-habit)**: Build habits visually with the Base UI
-- **[Variables & Expressions](/deep-dive/variables)**: Pass data between nodes using template expressions
+- **[Variables & Expressions](/extra-reading/variables)**: Pass data between nodes using template expressions
 
 ---
 

@@ -1,0 +1,32 @@
+{
+  "name": "@ha-bits/bit-voice",
+  "version": "0.0.1",
+  "description": "Always-listening voice trigger bit (App-only). Continuously captures microphone audio, transcribes speech in real-time, and triggers workflows when the user stops talking or says a specific phrase. Requires Tauri app environment.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "voice",
+    "speech",
+    "microphone",
+    "trigger"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "habits": {
+    "catalog": true
+  }
+}

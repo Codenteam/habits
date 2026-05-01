@@ -1,18 +1,20 @@
 {
   "name": "@ha-bits/bundle-generator",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Bundle generator for habits workflows",
   "license": "AGPL-3.0",
   "author": "Codenteam",
   "type": "commonjs",
   "main": "generator.js",
   "bin": {
-    "bundle-generator": "./cli.js"
+    "bundle-generator": "cli.js"
   },
   "files": [
     "generator.js",
     "template.js",
-    "cli.js"
+    "cli.js",
+    "node-polyfills.js",
+    "stubs/"
   ],
   "scripts": {
     "test:build": "node test-build.js",
@@ -26,13 +28,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/codenteam/habits.git",
+    "url": "git+https://github.com/codenteam/habits.git",
     "directory": "bundle-generator"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
+    "@ha-bits/cortex-core": "^1.5.0",
     "@ha-bits/bit-any-of": "^1.0.1",
     "@ha-bits/bit-auth": "^1.0.1",
     "@ha-bits/bit-cookie": "^1.0.1",

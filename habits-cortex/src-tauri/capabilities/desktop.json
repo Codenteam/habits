@@ -2,11 +2,18 @@
   "$schema": "../gen/schemas/capabilities.json",
   "identifier": "desktop",
   "description": "Desktop-only capabilities (local-ai plugin)",
-  "platforms": ["linux", "macOS", "windows", "iOS", "android"],
+  "platforms": [
+    "linux",
+    "macOS",
+    "windows",
+    "iOS",
+    "android"
+  ],
   "windows": [
     "main"
   ],
   "permissions": [
-    "local-ai:default"
+    "local-ai:default",
+    "deep-link:default"
   ]
 }

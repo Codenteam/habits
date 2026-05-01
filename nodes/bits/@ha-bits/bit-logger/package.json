@@ -1,0 +1,23 @@
+{
+  "name": "@ha-bits/bit-logger",
+  "version": "0.0.1",
+  "description": "Simple logging bit that outputs to console.log",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["habits", "bits", "logger", "debug"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": ["dist"],
+  "habits": {
+    "catalog": true
+  }
+}

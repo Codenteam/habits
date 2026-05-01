@@ -1,12 +1,12 @@
-use tauri_plugin_log::{Target, TargetKind};
+use base64::Engine;
 use log::LevelFilter;
-use std::sync::atomic::{AtomicBool, Ordering};
+use serde::Serialize;
 use std::env;
 use std::path::Path;
-use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use tauri::{Manager, Emitter};
-use base64::Engine;
+use tauri::Manager;
+use tauri_plugin_log::{Target, TargetKind};
 
 #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
 mod automation;
@@ -31,14 +31,26 @@ fn parse_cli_args() -> CliArgs {
     let mut workflow: Option<String> = None;
     let mut input: Option<String> = None;
     let mut test = false;
-    
+
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
-            "--habit" if i + 1 < args.len() => { habit = Some(args[i + 1].clone()); i += 2; }
-            "--workflow" if i + 1 < args.len() => { workflow = Some(args[i + 1].clone()); i += 2; }
-            "--input" if i + 1 < args.len() => { input = Some(args[i + 1].clone()); i += 2; }
-            "--test" => { test = true; i += 1; }
+            "--habit" if i + 1 < args.len() => {
+                habit = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--workflow" if i + 1 < args.len() => {
+                workflow = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--input" if i + 1 < args.len() => {
+                input = Some(args[i + 1].clone());
+                i += 2;
+            }
+            "--test" => {
+                test = true;
+                i += 1;
+            }
             arg => {
                 // Check for .habit file passed directly (file association on Windows/Linux)
                 if arg.ends_with(".habit") && habit.is_none() {
@@ -51,7 +63,7 @@ fn parse_cli_args() -> CliArgs {
             }
         }
     }
-    
+
     // Also check if a file was opened via file association
     if habit.is_none() {
         if let Ok(guard) = OPENED_FILE.lock() {
@@ -60,8 +72,13 @@ fn parse_cli_args() -> CliArgs {
             }
         }
     }
-    
-    CliArgs { habit, test, workflow, input }
+
+    CliArgs {
+        habit,
+        test,
+        workflow,
+        input,
+    }
 }
 
 #[tauri::command]
@@ -137,9 +154,12 @@ async fn write_app_data_file(
     file.write_all(&bytes)
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
-    println!("[write_app_data_file] {} {} bytes to {}",
+    println!(
+        "[write_app_data_file] {} {} bytes to {}",
         if append_mode { "Appended" } else { "Wrote" },
-        bytes_len, full_path.display());
+        bytes_len,
+        full_path.display()
+    );
 
     Ok(WriteAppDataFileResult {
         success: true,
@@ -159,6 +179,15 @@ fn get_cli_args() -> Option<CliArgs> {
     }
 }
 
+/// Returns build-time feature flags to the frontend.
+/// noExternalHabits: true when compiled with --features no-external-habits.
+/// Used for App Store builds (iOS + macOS) where side-loading external habits is not allowed.
+#[tauri::command]
+fn get_app_config() -> serde_json::Value {
+    serde_json::json!({
+        "noExternalHabits": cfg!(feature = "no-external-habits")
+    })
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -167,8 +196,9 @@ pub fn run() {
     if cli_args.test {
         TEST_MODE.store(true, Ordering::SeqCst);
     }
-    
+
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_keyring::init())
         .plugin(tauri_plugin_email::init())
         .plugin(tauri_plugin_shell::init())
@@ -176,11 +206,11 @@ pub fn run() {
 
     // Add local-ai plugin on all platforms (desktop/iOS: Metal+Accelerate, Android: CPU-only)
     let builder = builder.plugin(tauri_plugin_local_ai::init());
-    
+
     // Add webdriver plugin only when debug build and feature are both enabled
     #[cfg(all(debug_assertions, feature = "debug-tools"))]
     let builder = builder.plugin(tauri_plugin_webdriver::init());
-    
+
     // Mobile-only plugins (iOS/Android) - commented out for initial release
     // These require permission declarations in Google Play Console:
     // - wifi: Requires location permission (Android uses location for WiFi scanning)
@@ -194,28 +224,34 @@ pub fn run() {
     //     .plugin(tauri_plugin_matter::init())
     //     .plugin(tauri_plugin_sms::init())
     //     .plugin(tauri_plugin_system_settings::init());
-    
+
     builder
         .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_log::Builder::new()
-            .target(Target::new(TargetKind::Stdout))
-            .level(LevelFilter::Trace)
-            .level_for("tao", LevelFilter::Warn)
-            .level_for("wry", LevelFilter::Warn)
-            .level_for("tracing", LevelFilter::Warn)
-            .format(|out, message, _record| {
-                out.finish(format_args!("{}", message))
-            })
-            .build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .target(Target::new(TargetKind::Stdout))
+                .level(LevelFilter::Trace)
+                .level_for("tao", LevelFilter::Warn)
+                .level_for("wry", LevelFilter::Warn)
+                .level_for("tracing", LevelFilter::Warn)
+                .format(|out, message, _record| out.finish(format_args!("{}", message)))
+                .build(),
+        )
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![test_complete, get_cli_args, debug_log, write_app_data_file])
+        .invoke_handler(tauri::generate_handler![
+            test_complete,
+            get_cli_args,
+            get_app_config,
+            debug_log,
+            write_app_data_file
+        ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app_handle, _event| {
+        .run(|_app_handle, _event| {
             #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
-            automation::start_automation_server(app_handle.clone());
+            automation::start_automation_server(_app_handle.clone());
         });
 }

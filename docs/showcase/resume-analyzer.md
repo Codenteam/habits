@@ -48,7 +48,7 @@ const habitTabs = [
 
 Transform your job application process with an AI-powered resume analyzer that goes beyond
 basic keyword matching. This full-stack application demonstrates building a complete mobile-ready
-app using Habits — from AI workflows to a polished frontend UI.
+app using Habits, from AI workflows to a polished frontend UI.
 
 ## What It Does
 
@@ -62,11 +62,11 @@ app using Habits — from AI workflows to a polished frontend UI.
 ## Why This Example
 
 This showcase demonstrates:
-- **Multi-habit workflows** — Multiple habits working together (analyze, generate cover letter, list, get)
-- **Vision AI integration** — Uses OpenAI Vision to extract text from resume images
-- **Local database** — SQLite for storing analyses without external dependencies
-- **Mobile-first UI** — Responsive design ready for packaging as mobile/desktop app
-- **Complete app packaging** — Can be exported as standalone binary, desktop app, or mobile app
+- **Multi-habit workflows**, Multiple habits working together (analyze, generate cover letter, list, get)
+- **Vision AI integration**, Uses OpenAI Vision to extract text from resume images
+- **Local database**, SQLite for storing analyses without external dependencies
+- **Mobile-first UI**, Responsive design ready for packaging as mobile/desktop app
+- **Complete app packaging**, Can be exported as standalone binary, desktop app, or mobile app
 
 
 

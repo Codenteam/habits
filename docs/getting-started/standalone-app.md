@@ -20,7 +20,7 @@ Standalone applications offer significant advantages:
 
 | Advantage | Description |
 |-----------|-------------|
-| **Privacy** | All data stays on the user's device — no cloud transmission |
+| **Privacy** | All data stays on the user's device, no cloud transmission |
 | **Offline First** | Works without internet connection |
 | **No API Costs** | Zero ongoing costs for external services |
 | **Simple Deployment** | Distribute a single file, no server setup |
@@ -30,11 +30,11 @@ Standalone applications offer significant advantages:
 
 The QR Code Manager demonstrates building a **multi-habit application** entirely with local bits:
 
-- **5 local workflows** — Generate QR codes, scan images, full CRUD operations
-- **SQLite database** — Persistent local storage using `@ha-bits/bit-database-sql`
-- **QR processing** — Generate and decode using `@ha-bits/bit-qr`
-- **Custom frontend** — Mobile-friendly UI
-- **Cross-platform packaging** — Build for macOS, Windows, Linux, and Android
+- **5 local workflows**, Generate QR codes, scan images, full CRUD operations
+- **SQLite database**, Persistent local storage using `@ha-bits/bit-database-sql`
+- **QR processing**, Generate and decode using `@ha-bits/bit-qr`
+- **Custom frontend**, Mobile-friendly UI
+- **Cross-platform packaging**, Build for macOS, Windows, Linux, and Android
 
 ## Workflow Visualization
 
@@ -44,7 +44,7 @@ Explore the workflows that power the QR Code Manager:
 
 ## Anatomy of a Local-Only Habit
 
-The key to building standalone apps is using **local bits** instead of API-dependent ones. The Create QR workflow demonstrates this pattern — it uses `@ha-bits/bit-qr` for local QR generation and `@ha-bits/bit-database-sql` for local SQLite storage:
+The key to building standalone apps is using **local bits** instead of API-dependent ones. The Create QR workflow demonstrates this pattern, it uses `@ha-bits/bit-qr` for local QR generation and `@ha-bits/bit-database-sql` for local SQLite storage:
 
 ::: code-group
 <<< @/../showcase/qr-database/create-qr.yaml [create-qr.yaml]
@@ -128,10 +128,10 @@ Standalone binaries bundle the entire runtime. Keep them lean by:
 
 ## Next Steps
 
-- **[QR Code Manager Showcase](/showcase/qr-database)** — Explore the full example
-- **[Packing and Distribution](/deep-dive/pack-distribute)** — Learn all packaging options
-- **[Bits Catalog](/bits/)** — Discover available local and API bits
-- **[Build AI-Powered App](/getting-started/first-app-using-habits)** — For apps that need AI capabilities
+- **[QR Code Manager Showcase](/showcase/qr-database)**, Explore the full example
+- **[Packing and Distribution](/deep-dive/pack-distribute)**, Learn all packaging options
+- **[Bits Catalog](/bits/)**, Discover available local and API bits
+- **[Build AI-Powered App](/getting-started/first-app-using-habits)**, For apps that need AI capabilities
 
 <style>
 .vp-doc table {

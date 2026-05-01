@@ -1,0 +1,129 @@
+<!-- automation-palette: Marketing-style integration showcase -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080b14;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 10px;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .tile {
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tile i { font-size: 30px; line-height: 1; display: block; }
+  .tile-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    padding: 0 4px;
+  }
+
+  /* GitHub is monochrome dark — force white */
+  .devicon-github-original { color: rgba(210,218,226,0.9) !important; }
+  /* Twitter/X monochrome */
+  .devicon-twitter-original { color: #1DA1F2 !important; }
+  /* Rust monochrome — brand orange */
+  .devicon-rust-original { color: #CE422B !important; }
+  /* Ansible */
+  .devicon-ansible-plain { color: #EE0000 !important; }
+  /* Jenkins */
+  .devicon-jenkins-line { color: #D24939 !important; }
+
+  .tile.green   { background: rgba(16,185,129,0.10); border-color: rgba(16,185,129,0.2); }
+  .tile.blue    { background: rgba(59,130,246,0.10); border-color: rgba(59,130,246,0.2); }
+  .tile.violet  { background: rgba(139,92,246,0.10); border-color: rgba(139,92,246,0.2); }
+  .tile.orange  { background: rgba(249,115,22,0.10); border-color: rgba(249,115,22,0.2); }
+  .tile.red     { background: rgba(239,68,68,0.10);  border-color: rgba(239,68,68,0.2); }
+  .tile.cyan    { background: rgba(6,182,212,0.10);  border-color: rgba(6,182,212,0.2); }
+  .tile.yellow  { background: rgba(234,179,8,0.10);  border-color: rgba(234,179,8,0.2); }
+  .tile.pink    { background: rgba(236,72,153,0.10); border-color: rgba(236,72,153,0.2); }
+  .tile.slate   { background: rgba(100,116,139,0.10);border-color: rgba(100,116,139,0.2); }
+  .tile.teal    { background: rgba(20,184,166,0.10); border-color: rgba(20,184,166,0.2); }
+  .tile.indigo  { background: rgba(99,102,241,0.10); border-color: rgba(99,102,241,0.2); }
+  .tile.sky     { background: rgba(14,165,233,0.10); border-color: rgba(14,165,233,0.2); }
+  .tile.lime    { background: rgba(132,204,22,0.10); border-color: rgba(132,204,22,0.2); }
+  .tile.rose    { background: rgba(244,63,94,0.10);  border-color: rgba(244,63,94,0.2); }
+
+  .tile.glow-green  { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.5); box-shadow: 0 0 28px rgba(16,185,129,0.2); }
+  .tile.glow-violet { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.5); box-shadow: 0 0 28px rgba(139,92,246,0.2); }
+  .tile.glow-blue   { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.5); box-shadow: 0 0 28px rgba(59,130,246,0.2); }
+  .tile.glow-orange { background: rgba(249,115,22,0.18); border-color: rgba(249,115,22,0.5); box-shadow: 0 0 28px rgba(249,115,22,0.2); }
+  .tile.glow-cyan   { background: rgba(6,182,212,0.18);  border-color: rgba(6,182,212,0.5);  box-shadow: 0 0 28px rgba(6,182,212,0.2); }
+  .tile.glow-pink   { background: rgba(236,72,153,0.18); border-color: rgba(236,72,153,0.5); box-shadow: 0 0 28px rgba(236,72,153,0.2); }
+  .tile.glow-yellow { background: rgba(234,179,8,0.18);  border-color: rgba(234,179,8,0.5);  box-shadow: 0 0 28px rgba(234,179,8,0.2); }
+  .tile.glow-red    { background: rgba(239,68,68,0.18);  border-color: rgba(239,68,68,0.5);  box-shadow: 0 0 28px rgba(239,68,68,0.2); }
+</style>
+</head>
+<body>
+  <!-- Row 1 — Cloud platforms -->
+  <div class="tile glow-orange"><i class="devicon-amazonwebservices-plain colored"></i><div class="tile-name">AWS</div></div>
+  <div class="tile sky"><i class="devicon-azure-plain colored"></i><div class="tile-name">Azure</div></div>
+  <div class="tile blue"><i class="devicon-googlecloud-plain colored"></i><div class="tile-name">Google Cloud</div></div>
+  <div class="tile glow-blue"><i class="devicon-digitalocean-original colored"></i><div class="tile-name">DigitalOcean</div></div>
+  <div class="tile violet"><i class="devicon-heroku-original colored"></i><div class="tile-name">Heroku</div></div>
+  <div class="tile orange"><i class="devicon-cloudflare-plain colored"></i><div class="tile-name">Cloudflare</div></div>
+  <div class="tile slate"><i class="devicon-vercel-original"></i><div class="tile-name">Vercel</div></div>
+  <div class="tile glow-green"><i class="devicon-netlify-plain colored"></i><div class="tile-name">Netlify</div></div>
+  <div class="tile glow-blue"><i class="devicon-docker-plain colored"></i><div class="tile-name">Docker</div></div>
+  <!-- Row 2 — Databases & storage -->
+  <div class="tile glow-green"><i class="devicon-mongodb-plain colored"></i><div class="tile-name">MongoDB</div></div>
+  <div class="tile blue"><i class="devicon-postgresql-plain colored"></i><div class="tile-name">PostgreSQL</div></div>
+  <div class="tile orange"><i class="devicon-mysql-original colored"></i><div class="tile-name">MySQL</div></div>
+  <div class="tile glow-red"><i class="devicon-redis-plain colored"></i><div class="tile-name">Redis</div></div>
+  <div class="tile glow-orange"><i class="devicon-firebase-plain colored"></i><div class="tile-name">Firebase</div></div>
+  <div class="tile glow-green"><i class="devicon-supabase-plain colored"></i><div class="tile-name">Supabase</div></div>
+  <div class="tile glow-yellow"><i class="devicon-elasticsearch-plain colored"></i><div class="tile-name">Elasticsearch</div></div>
+  <div class="tile slate"><i class="devicon-apachekafka-original"></i><div class="tile-name">Kafka</div></div>
+  <div class="tile orange"><i class="devicon-rabbitmq-original colored"></i><div class="tile-name">RabbitMQ</div></div>
+  <!-- Row 3 — DevOps & CI/CD -->
+  <div class="tile glow-blue"><i class="devicon-kubernetes-plain colored"></i><div class="tile-name">Kubernetes</div></div>
+  <div class="tile slate"><i class="devicon-github-original"></i><div class="tile-name">GitHub</div></div>
+  <div class="tile glow-orange"><i class="devicon-gitlab-plain colored"></i><div class="tile-name">GitLab</div></div>
+  <div class="tile blue"><i class="devicon-bitbucket-original colored"></i><div class="tile-name">Bitbucket</div></div>
+  <div class="tile red"><i class="devicon-jenkins-line"></i><div class="tile-name">Jenkins</div></div>
+  <div class="tile glow-green"><i class="devicon-circleci-plain colored"></i><div class="tile-name">CircleCI</div></div>
+  <div class="tile glow-blue"><i class="devicon-githubactions-plain colored"></i><div class="tile-name">GitHub Actions</div></div>
+  <div class="tile orange"><i class="devicon-argocd-plain colored"></i><div class="tile-name">ArgoCD</div></div>
+  <div class="tile violet"><i class="devicon-terraform-plain colored"></i><div class="tile-name">Terraform</div></div>
+  <!-- Row 4 — Infra, monitoring & testing -->
+  <div class="tile glow-red"><i class="devicon-ansible-plain"></i><div class="tile-name">Ansible</div></div>
+  <div class="tile green"><i class="devicon-nginx-original colored"></i><div class="tile-name">Nginx</div></div>
+  <div class="tile glow-orange"><i class="devicon-grafana-plain colored"></i><div class="tile-name">Grafana</div></div>
+  <div class="tile glow-red"><i class="devicon-prometheus-original colored"></i><div class="tile-name">Prometheus</div></div>
+  <div class="tile glow-yellow"><i class="devicon-vault-plain colored"></i><div class="tile-name">Vault</div></div>
+  <div class="tile glow-violet"><i class="devicon-pulumi-plain colored"></i><div class="tile-name">Pulumi</div></div>
+  <div class="tile violet"><i class="devicon-datadog-original colored"></i><div class="tile-name">Datadog</div></div>
+  <div class="tile glow-orange"><i class="devicon-postman-plain colored"></i><div class="tile-name">Postman</div></div>
+  <div class="tile violet"><i class="devicon-sentry-plain colored"></i><div class="tile-name">Sentry</div></div>
+  <!-- Row 5 — Communication & business -->
+  <div class="tile glow-green"><i class="devicon-slack-plain colored"></i><div class="tile-name">Slack</div></div>
+  <div class="tile indigo"><i class="devicon-discordjs-plain colored"></i><div class="tile-name">Discord</div></div>
+  <div class="tile sky"><i class="devicon-linkedin-plain colored"></i><div class="tile-name">LinkedIn</div></div>
+  <div class="tile sky"><i class="devicon-twitter-original colored"></i><div class="tile-name">Twitter</div></div>
+  <div class="tile glow-blue"><i class="devicon-jira-plain colored"></i><div class="tile-name">Jira</div></div>
+  <div class="tile blue"><i class="devicon-trello-plain colored"></i><div class="tile-name">Trello</div></div>
+  <div class="tile slate"><i class="devicon-notion-plain colored"></i><div class="tile-name">Notion</div></div>
+  <div class="tile glow-red"><i class="devicon-twilio-original colored"></i><div class="tile-name">Twilio</div></div>
+  <div class="tile glow-blue"><i class="devicon-salesforce-plain colored"></i><div class="tile-name">Salesforce</div></div>
+</body>
+</html>

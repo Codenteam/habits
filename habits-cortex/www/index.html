@@ -4,22 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Habits</title>
+  <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
   <style>
     :root {
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #12121a;
-      --bg-tertiary: #1a1a24;
-      --bg-hover: #22222e;
-      --border: #2a2a38;
-      --text-primary: #ffffff;
-      --text-secondary: #8b8b9e;
-      --text-muted: #5c5c6e;
-      --accent: #6366f1;
-      --accent-hover: #5558e3;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --error: #ef4444;
+      /* Map local vars to shared tokens for backward compatibility */
+      --bg-primary:   var(--ha-bg-base);
+      --bg-secondary: var(--ha-bg-surface);
+      --bg-tertiary:  var(--ha-bg-elevated);
+      --bg-hover:     var(--ha-bg-hover);
+      --border:       var(--ha-border);
+      --text-primary: var(--ha-text-primary);
+      --text-secondary: var(--ha-text-muted);
+      --text-muted:   var(--ha-text-disabled);
+      --accent:       var(--ha-accent-blue);
+      --accent-hover: var(--ha-accent-blue-hover);
+      --success:      var(--ha-status-success);
+      --warning:      var(--ha-warn);
+      --error:        var(--ha-danger);
     }
     
     * {
@@ -45,7 +47,7 @@
     .app-shell {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100%;
       margin: 0 auto;
     }
 
@@ -133,6 +135,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
     }
     
     /* Quick Actions */
@@ -430,6 +434,7 @@
       z-index: 200;
       display: none;
       flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
     }
     
     .habit-view.active {
@@ -1152,6 +1157,20 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
           </div>
+          <div id="option-receive" class="picker-item">
+            <div class="picker-item-icon" style="background: #0ea5e9;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+            </div>
+            <div class="picker-item-info">
+              <div class="picker-item-name">Receive from Device</div>
+              <div class="picker-item-desc">Receive a habit wirelessly from another device</div>
+            </div>
+            <svg class="picker-item-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -1211,6 +1230,44 @@
       </div>
     </div>
 
+    <!-- Receive Habit Modal -->
+    <div id="receive-habit-modal" class="modal-overlay">
+      <div class="modal" style="max-width: 340px; width: 90%;">
+        <div class="modal-header">
+          <div style="width: 32px"></div>
+          <h3 class="modal-title">Receive Habit</h3>
+          <button id="receive-habit-close" class="modal-close-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Step 1: configure WS URL -->
+        <div id="receive-step-url" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Enter the signaling URL of your Habit Mirror service (e.g. <code>wss://mirror.example.com/ws</code>).</p>
+          <input id="receive-ws-url-input" type="text" placeholder="wss://mirror.example.com/ws"
+            style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); padding: 10px 14px; font-size: 14px; outline: none; width: 100%; box-sizing: border-box;"/>
+          <button id="receive-url-connect" class="modal-btn" style="margin-top: 4px;">Connect</button>
+        </div>
+
+        <!-- Step 2: show code + progress -->
+        <div id="receive-step-code" style="padding: 20px; display: none; flex-direction: column; align-items: center; gap: 16px;">
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0; text-align: center;">Mirror this code to the sender</p>
+          <div id="receive-code-display" style="font-size: 40px; font-weight: 700; letter-spacing: 10px; color: var(--text-primary); font-family: monospace;">------</div>
+          <p style="font-size: 11px; color: var(--text-secondary); margin: 0; text-align: center;">Waiting for sender to connect&hellip;</p>
+          <div style="width: 100%; background: var(--border); border-radius: 4px; height: 6px;">
+            <div id="receive-progress-bar" style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.2s;"></div>
+          </div>
+          <p id="receive-status-text" style="font-size: 12px; color: var(--text-secondary); margin: 0; text-align: center;"></p>
+          <p style="font-size: 11px; color: var(--text-tertiary); margin: 0;">
+            <span id="receive-ws-url-display"></span>
+            <button id="receive-change-url" style="background: none; border: none; color: var(--accent); font-size: 11px; cursor: pointer; padding: 0; margin-left: 4px;">change</button>
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Secrets Modal -->
     <div id="secrets-modal" class="modal-overlay">
       <div class="modal secrets-modal">
@@ -1237,6 +1294,7 @@
   </div>
 
   <script src="schema-form.js"></script>
+  <script src="habit-mirror.js"></script>
   <script type="module" src="runner.js"></script>
 </body>
 </html>

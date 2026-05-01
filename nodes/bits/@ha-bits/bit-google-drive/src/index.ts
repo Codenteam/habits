@@ -12,7 +12,7 @@
  * Level: L2 (Service-specific auth, CRUD operations)
  */
 
-import { google, drive_v3 } from 'googleapis';
+import { drive as driveApi, drive_v3 } from '@googleapis/drive';
 import { OAuth2Client } from 'google-auth-library';
 import type {
   FileMetadata,
@@ -50,7 +50,7 @@ const GOOGLE_DRIVE_SCOPES = [
  * Create OAuth2 client with access token
  */
 function createOAuth2Client(accessToken: string): OAuth2Client {
-  const oauth2Client = new google.auth.OAuth2();
+  const oauth2Client = new OAuth2Client();
   oauth2Client.setCredentials({ access_token: accessToken });
   return oauth2Client;
 }
@@ -60,7 +60,8 @@ function createOAuth2Client(accessToken: string): OAuth2Client {
  */
 function getDriveClient(accessToken: string): drive_v3.Drive {
   const oauth2Client = createOAuth2Client(accessToken);
-  return google.drive({ version: 'v3', auth: oauth2Client });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return driveApi({ version: 'v3', auth: oauth2Client as any });
 }
 
 /**

@@ -24,8 +24,19 @@
             }
         },
         {
+            "label": "Hub",
+            "type": "shell",
+            "command": "npx tsx packages/manage/forge/src/scripts/gui.ts",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
             "label": "dev:all",
-            "dependsOn": ["UI Base", "Server Base"],
+            "dependsOn": ["UI Base", "Server Base", "Hub"],
             "group": {
                 "kind": "build",
                 "isDefault": true

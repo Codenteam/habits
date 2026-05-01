@@ -28,6 +28,12 @@ const isDev = window.location.hostname === 'localhost' || window.location.hostna
 const SHOWCASE_BASE_URL = 'https://codenteam.com/intersect/habits';
 const SHOWCASE_INDEX_URL = `${SHOWCASE_BASE_URL}/showcase/index.json`;
 
+// Built-in habits (bundled with the app, available offline)
+const BUILTIN_HABITS_INDEX_URL = '/builtin-habits/index.json';
+
+// App config (feature flags from Rust build-time)
+let appConfig = { noExternalHabits: false };
+
 // ============================================================================
 // Tauri API Wrappers (using global __TAURI__ API)
 // ============================================================================
@@ -804,9 +810,9 @@ async function runHabit(habitId) {
     if (bundleJs && !htmlContent.includes('id="cortex-bundle"')) {
       const bundleScript = `<script id="cortex-bundle">\n${bundleJs}\n</script>`;
       if (htmlContent.includes('</head>')) {
-        htmlContent = htmlContent.replace('</head>', bundleScript + '\n</head>');
+        htmlContent = htmlContent.replace('</head>', () => bundleScript + '\n</head>');
       } else if (htmlContent.includes('<body')) {
-        htmlContent = htmlContent.replace(/<body([^>]*)>/i, bundleScript + '\n<body$1>');
+        htmlContent = htmlContent.replace(/<body([^>]*)>/i, (m, attrs) => bundleScript + `\n<body${attrs}>`);
       } else {
         htmlContent = bundleScript + '\n' + htmlContent;
       }
@@ -818,9 +824,9 @@ async function runHabit(habitId) {
     if (fetchProxyJs && !htmlContent.includes('id="habits-fetch-proxy"')) {
       const fetchProxyScript = `<script id="habits-fetch-proxy">\n${fetchProxyJs}\n</script>`;
       if (htmlContent.includes('</head>')) {
-        htmlContent = htmlContent.replace('</head>', fetchProxyScript + '\n</head>');
+        htmlContent = htmlContent.replace('</head>', () => fetchProxyScript + '\n</head>');
       } else if (htmlContent.includes('<body')) {
-        htmlContent = htmlContent.replace(/<body([^>]*)>/i, fetchProxyScript + '\n<body$1>');
+        htmlContent = htmlContent.replace(/<body([^>]*)>/i, (m, attrs) => fetchProxyScript + `\n<body${attrs}>`);
       } else {
         htmlContent = fetchProxyScript + '\n' + htmlContent;
       }
@@ -1328,7 +1334,7 @@ async function runHabitWithForm(habitId, workflowId = null) {
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await executeWorkflowFromForm(habit, targetWorkflow, form, formContainer);
+        executeWorkflowFromForm(habit, targetWorkflow, form, formContainer);
       });
     }
 
@@ -1433,7 +1439,7 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
 
     console.log('[Form] Executing workflow:', workflow.id, 'with input:', inputData);
 
-    // Always load the per-habit bundle if available — the global cortex-bundle-all.js
+    // Always load the per-habit bundle if available, the global cortex-bundle-all.js
     // may not contain this habit's specific workflow definitions.
     if (habit.cachedBundleJs) {
       console.log('[Form] Loading per-habit bundle...');
@@ -1476,7 +1482,7 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
     // Render output based on status
     if (outputContainer) {
       outputContainer.classList.remove('hidden');
-      
+
       // Check if workflow failed
       if (result.status === 'failed') {
         // Collect error messages from failed nodes
@@ -1484,7 +1490,7 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
           .filter(r => !r.success && r.error)
           .map(r => `${r.nodeId}: ${r.error}`)
           .join('\n');
-        
+
         outputContainer.innerHTML = `
           <div class="output-header">
             <span class="output-error-badge">✗ Failed</span>
@@ -1500,7 +1506,7 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
           <div class="output-header">
             <span class="output-success">✓ Completed</span>
           </div>
-          ${window.SchemaForm 
+          ${window.SchemaForm
             ? window.SchemaForm.generateOutputHtml(workflow.schema, result)
             : `<pre class="output-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`
           }
@@ -1510,7 +1516,7 @@ async function executeWorkflowFromForm(habit, workflow, form, formContainer) {
 
   } catch (err) {
     console.error('[Form] Workflow execution failed:', err);
-    
+
     if (outputContainer) {
       outputContainer.classList.remove('hidden');
       outputContainer.innerHTML = `
@@ -1908,6 +1914,95 @@ async function clearAllHabits() {
 }
 
 // ============================================================================
+// Receive Habit (Express Habit Sharing)
+// ============================================================================
+
+let _receiveHabitAbortController = null;
+
+function showReceiveHabitModal() {
+  const modal = document.getElementById('receive-habit-modal');
+  const storedUrl = localStorage.getItem('habitMirrorWsUrl');
+  if (storedUrl) {
+    _startReceiveFlow(storedUrl);
+  } else {
+    document.getElementById('receive-step-url').style.display = 'flex';
+    document.getElementById('receive-step-code').style.display = 'none';
+    document.getElementById('receive-ws-url-input').value = '';
+  }
+  modal.classList.add('active');
+}
+
+function hideReceiveHabitModal() {
+  document.getElementById('receive-habit-modal').classList.remove('active');
+  if (_receiveHabitAbortController) {
+    _receiveHabitAbortController.abort();
+    _receiveHabitAbortController = null;
+  }
+}
+
+async function _startReceiveFlow(wsUrl) {
+  if (_receiveHabitAbortController) {
+    _receiveHabitAbortController.abort();
+  }
+  _receiveHabitAbortController = new AbortController();
+  const signal = _receiveHabitAbortController.signal;
+
+  document.getElementById('receive-step-url').style.display = 'none';
+  const stepCode = document.getElementById('receive-step-code');
+  stepCode.style.display = 'flex';
+  document.getElementById('receive-code-display').textContent = '------';
+  document.getElementById('receive-progress-bar').style.width = '0%';
+  document.getElementById('receive-status-text').textContent = '';
+  document.getElementById('receive-ws-url-display').textContent = wsUrl;
+
+  if (!window.HabitMirror) {
+    showError('Not available', 'HabitMirror library not loaded. Make sure habit-mirror.js is present.');
+    hideReceiveHabitModal();
+    return;
+  }
+
+  try {
+    const { code, transfer } = await window.HabitMirror.createReceiver(wsUrl, {
+      onProgress: (received, total) => {
+        if (signal.aborted) return;
+        const pct = total > 0 ? Math.round((received / total) * 100) : 0;
+        document.getElementById('receive-progress-bar').style.width = pct + '%';
+        document.getElementById('receive-status-text').textContent =
+          total > 0 ? `Receiving… ${pct}%` : 'Connected, waiting for file…';
+      },
+    });
+
+    if (signal.aborted) return;
+    document.getElementById('receive-code-display').textContent = code;
+
+    const { name, blob } = await transfer;
+    if (signal.aborted) return;
+
+    document.getElementById('receive-progress-bar').style.width = '100%';
+    document.getElementById('receive-status-text').textContent = 'Saving…';
+
+    // Write to app data habits directory
+    const tauri = await waitForTauri();
+    const appDataDir = await tauri.path.appDataDir();
+    const habitsDir = await tauri.path.join(appDataDir, 'habits');
+    if (!(await exists(habitsDir))) {
+      await createDir(habitsDir);
+    }
+    const filePath = await tauri.path.join(habitsDir, name);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    await writeBinaryFile(filePath, bytes);
+
+    hideReceiveHabitModal();
+    await importHabitFile(filePath);
+  } catch (err) {
+    if (signal.aborted) return;
+    console.error('[ReceiveHabit] Error:', err);
+    showError('Receive Failed', err.message || String(err));
+    hideReceiveHabitModal();
+  }
+}
+
+// ============================================================================
 // Event Handlers
 // ============================================================================
 
@@ -1930,9 +2025,111 @@ async function handleUploadFromDevice() {
 }
 
 async function handleBrowseShowcase() {
+  if (appConfig.noExternalHabits) {
+    return handleBuiltinHabits();
+  }
   hideOpenHabitModal();
   showShowcaseModal();
   await loadShowcase();
+}
+
+// ============================================================================
+// Built-in Habits (bundled with the app, no internet required)
+// ============================================================================
+
+let builtinHabitsCache = null;
+
+async function loadBuiltinHabits() {
+  const listEl = document.getElementById('showcase-list');
+  const loadingEl = document.getElementById('showcase-loading');
+  const errorEl = document.getElementById('showcase-error');
+
+  listEl.innerHTML = '';
+  loadingEl.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+
+  try {
+    if (!builtinHabitsCache) {
+      const response = await fetch(BUILTIN_HABITS_INDEX_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      builtinHabitsCache = await response.json();
+    }
+    loadingEl.classList.add('hidden');
+    renderBuiltinHabitsList(builtinHabitsCache);
+  } catch (err) {
+    console.error('Failed to load built-in habits:', err);
+    loadingEl.classList.add('hidden');
+    errorEl.classList.remove('hidden');
+    errorEl.textContent = 'Failed to load built-in habits.';
+  }
+}
+
+function renderBuiltinHabitsList(habits) {
+  const listEl = document.getElementById('showcase-list');
+  listEl.innerHTML = '';
+
+  if (!habits || habits.length === 0) {
+    listEl.innerHTML = '<div class="showcase-loading">No built-in habits available</div>';
+    return;
+  }
+
+  habits.forEach(habit => {
+    const item = document.createElement('div');
+    item.className = 'showcase-item';
+    item.innerHTML = `
+      <img class="showcase-thumb" src="/builtin-habits/${habit.thumbnail}" alt="${habit.name}" onerror="this.style.display='none'">
+      <div class="showcase-info">
+        <div class="showcase-name">${habit.name}</div>
+        <div class="showcase-desc">${habit.description}</div>
+        <div class="showcase-tags">
+          ${habit.tags.slice(0, 3).map(tag => `<span class="showcase-tag">${tag}</span>`).join('')}
+        </div>
+      </div>
+    `;
+    item.addEventListener('click', () => importBuiltinHabit(habit));
+    listEl.appendChild(item);
+  });
+}
+
+async function importBuiltinHabit(habit) {
+  const listEl = document.getElementById('showcase-list');
+  listEl.innerHTML = '<div class="showcase-loading">Loading ' + habit.name + '...</div>';
+
+  try {
+    const response = await fetch('/builtin-habits/' + habit.habitFile);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+
+    const tauri = await waitForTauri();
+    const appDataDir = await tauri.path.appDataDir();
+    const habitsDir = await tauri.path.join(appDataDir, 'habits');
+
+    if (!(await exists(habitsDir))) {
+      await createDir(habitsDir);
+    }
+
+    const filename = habit.slug + '.habit';
+    const filePath = await tauri.path.join(habitsDir, filename);
+
+    await writeBinaryFile(filePath, bytes);
+    await importHabitFile(filePath);
+
+    hideShowcaseModal();
+    console.log('[Builtin] Imported:', habit.name);
+  } catch (err) {
+    console.error('Failed to import built-in habit:', err);
+    showError('Import Error', 'Failed to import built-in habit: ' + err.message);
+    hideShowcaseModal();
+  }
+}
+
+async function handleBuiltinHabits() {
+  hideOpenHabitModal();
+  showShowcaseModal();
+  await loadBuiltinHabits();
 }
 
 async function handleVisualizeYaml() {
@@ -2530,11 +2727,29 @@ async function deleteSecret(key) {
 // Initialization
 // ============================================================================
 
+async function applyAppConfig() {
+  if (appConfig.noExternalHabits) {
+    const uploadBtn = document.getElementById('option-upload');
+    const receiveBtn = document.getElementById('option-receive');
+    if (uploadBtn) uploadBtn.classList.add('hidden');
+    if (receiveBtn) receiveBtn.classList.add('hidden');
+  }
+}
+
 async function init() {
   console.log('Habits initializing...');
 
   // Display app version badge
   displayAppVersion();
+
+  // Fetch build-time feature flags from Rust
+  try {
+    const tauri = await waitForTauri();
+    appConfig = await tauri.core.invoke('get_app_config');
+    await applyAppConfig();
+  } catch (e) {
+    console.log('[Habits] Could not get app config, using defaults:', e);
+  }
 
   // Load saved habits
   await loadManifest();
@@ -2551,6 +2766,29 @@ async function init() {
   document.getElementById('open-habit-close').addEventListener('click', hideOpenHabitModal);
   document.getElementById('option-upload').addEventListener('click', handleUploadFromDevice);
   document.getElementById('option-browse').addEventListener('click', handleBrowseShowcase);
+  document.getElementById('option-receive').addEventListener('click', () => { hideOpenHabitModal(); showReceiveHabitModal(); });
+
+  // Receive habit modal listeners
+  document.getElementById('receive-habit-close').addEventListener('click', hideReceiveHabitModal);
+  document.getElementById('receive-url-connect').addEventListener('click', () => {
+    const url = document.getElementById('receive-ws-url-input').value.trim();
+    if (!url) return;
+    localStorage.setItem('habitMirrorWsUrl', url);
+    _startReceiveFlow(url);
+  });
+  document.getElementById('receive-ws-url-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('receive-url-connect').click();
+  });
+  document.getElementById('receive-change-url').addEventListener('click', () => {
+    if (_receiveHabitAbortController) {
+      _receiveHabitAbortController.abort();
+      _receiveHabitAbortController = null;
+    }
+    localStorage.removeItem('habitMirrorWsUrl');
+    document.getElementById('receive-step-code').style.display = 'none';
+    document.getElementById('receive-step-url').style.display = 'flex';
+    document.getElementById('receive-ws-url-input').value = '';
+  });
   
   // Showcase modal listeners
   document.getElementById('showcase-close').addEventListener('click', hideShowcaseModal);
@@ -2572,6 +2810,8 @@ async function init() {
         hideShowcaseModal();
       } else if (document.getElementById('open-habit-modal').classList.contains('active')) {
         hideOpenHabitModal();
+      } else if (document.getElementById('receive-habit-modal').classList.contains('active')) {
+        hideReceiveHabitModal();
       } else if (document.getElementById('secrets-modal').classList.contains('active')) {
         closeSecretsModal();
       } else if (document.getElementById('file-select-modal').classList.contains('active')) {
@@ -2621,6 +2861,12 @@ async function init() {
   document.getElementById('secrets-modal').addEventListener('click', (e) => {
     if (e.target.id === 'secrets-modal') {
       closeSecretsModal();
+    }
+  });
+
+  document.getElementById('receive-habit-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'receive-habit-modal') {
+      hideReceiveHabitModal();
     }
   });
   

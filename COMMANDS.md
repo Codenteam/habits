@@ -1,369 +1,387 @@
+<!-- This file is auto-generated. Edit packages/manage/forge/src/mcp/commands.ts instead. -->
+<!-- Run: pnpm nx generate-commands @ha-bits/manage -->
+<!--
 <!-- This file is more meant for bots not humans -->
+-->
 
 # Habits Commands
 
-# Pack hello-world to cortex-bundle.js
-pnpm nx dev habits pack --format bundle --config showcase/hello-world/stack.yaml
+## Pack to Bundle
+Pack a showcase to cortex-bundle.js
+pnpm nx dev habits pack --format bundle --config {{config}}
 
-# Pack hello-world to .habit file
-pnpm nx run habits pack --format habit --config showcase/hello-world/stack.yaml 
+## Pack to .habit
+Pack a showcase to .habit file
+pnpm nx run habits pack --format habit --config {{config}}
 
-# Pack marketing-campaign to .habit file
-pnpm nx run habits pack --format habit --config showcase/marketing-campaign/stack.yaml
+## Pack with .env
+Pack with .env values included (YOU MUST KNOW WHAT YOU ARE DOING!!!)
+pnpm nx dev habits pack --format habit --config {{config}} --include-env
 
-
-# Pack with .env values included (YOU MUST KNOW WHAT YOU ARE DOING!!!)
-pnpm nx dev habits pack --format habit --config showcase/marketing-campaign/stack.yaml --include-env
-
-# Run a habit as server using local @ha-bits/cortex (not the published cortex)
-pnpm nx dev @ha-bits/cortex --config showcase/hello-world/stack.yaml
-
-# Run a .habit file directly (portable self-contained package)
-pnpm nx dev @ha-bits/cortex --config showcase/hello-world/dist/hello-world.habit
-
-# Run a .habit file with external .env override (place .env beside the .habit file)
-# The external .env will merge with/override any embedded .env in the .habit file
-pnpm nx dev @ha-bits/cortex --config /path/to/example.habit
-
-# Build Habits
+## Build Habits
+Build Habits
 pnpm nx build habits
 
-# Pack Habits
+## Pack Habits
+Pack Habits
 pnpm nx pack habits
 
-# Publish Habits (latest)
+## Publish Habits (latest)
+Publish Habits (latest)
 cd packages/habits && npm version patch --no-git-tag-version && cd ../.. && pnpm nx pack habits && cd dist/packages/habits && npm publish --access public --registry https://registry.npmjs.org/
 
-# Publish Habits @next
+## Publish Habits @next
+Publish Habits @next
 cd packages/habits && npm version patch --no-git-tag-version && cd ../.. && pnpm nx pack habits && cd dist/packages/habits && npm publish --access public --registry https://registry.npmjs.org/ --tag next
 
-# Run Example (e.g., hello-world)
-pnpm nx cortex habits --config showcase/hello-world/stack.yaml
+## Run Example
+Run Example (e.g., hello-world)
+pnpm nx cortex habits --config {{config}}
 
-# Dev Cortex (mixed/stack.yaml)
-pnpm nx cortex habits --config showcase/hello-world/stack.yaml
+## Pack Showcase App (mobile-full)
+Pack Showcase App (interactive, example for mixed showcase)
+pnpm tsx packages/habits/app/src/main.ts pack --config {{config}} --format mobile-full --mobile-target {{mobileTarget}} --app-name "{{appName}}" --output {{output}}
 
-# Pack Showcase App (interactive, example for mixed showcase)
-pnpm tsx packages/habits/app/src/main.ts pack --config showcase/hello-world/stack.yaml --format mobile-full --mobile-target android --app-name "Mixed App" --output /tmp/mixed-app.apk
+## Pack SEA Binary
+Pack SEA Binary (single executable)
+node dist/packages/habits/app/main.cjs pack --config {{config}} --format single-executable -o {{output}}
 
-# Pack SEA Binary (single executable)
-node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format single-executable -o /tmp/habits-sea
+## Pack Desktop App
+Pack Desktop App (Electron dmg)
+node dist/packages/habits/app/main.cjs pack --config {{config}} --format desktop --backend-url {{backendUrl}} --desktop-platform {{desktopPlatform}} -o {{output}}
 
-# Pack Desktop App (Electron dmg)
-node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format desktop --backend-url http://localhost:3000 --desktop-platform dmg -o /tmp/habits-desktop
+## Pack Mobile App
+Pack Mobile App (Cordova)
+node dist/packages/habits/app/main.cjs pack --config {{config}} --format mobile --backend-url {{backendUrl}} --mobile-target {{mobileTarget}} -o {{output}}
 
-# Pack Mobile App (Cordova android)
-node dist/packages/habits/app/main.cjs pack --config showcase/hello-world/stack.yaml --format mobile --backend-url http://localhost:3000 --mobile-target android -o /tmp/habits-mobile
+## Pack Mobile + Sign
+Pack Mobile + Sign (release APK with debug sign)
+pnpm tsx packages/habits/app/src/main.ts pack --config {{config}} --format mobile-full --mobile-target {{mobileTarget}}
 
-# Pack Mobile + Sign (release APK with debug sign)
-pnpm tsx packages/habits/app/src/main.ts pack --config showcase/hello-world/stack.yaml --format mobile-full --mobile-target android
-
-# Sign APK (with debug keystore)
-jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android /tmp/habits-mobile.apk androiddebugkey
+## Sign APK
+Sign APK (with debug keystore)
+jarsigner -verbose -keystore ~/.android/debug.keystore -storepass android -keypass android {{apkPath}} androiddebugkey
 
 # Cortex Commands
 
-## Running .habit Files with Cortex
+## Run Cortex Server
+Run a habit as server using local @ha-bits/cortex (not the published cortex)
+pnpm nx dev @ha-bits/cortex --config {{config}}
 
-Cortex can run `.habit` files in two modes: **execute** (one-shot) and **server** (HTTP API).
+## Run .habit File
+Run a .habit file directly (portable self-contained package)
+pnpm nx dev @ha-bits/cortex --config {{config}}
 
-### Using npx (Published Package)
-```bash
-# Execute a workflow (one-shot)
-npx @ha-bits/cortex execute --config ./hello-world.habit --id hello-world --input '{"param1": "hello"}'
+## Execute Workflow (npx)
+Execute a workflow one-shot via npx
+npx @ha-bits/cortex execute --config {{config}} --id {{workflowId}} --input '{{input}}'
 
-# Start server
-npx @ha-bits/cortex server --config ./hello-world.habit --port 3000
-```
+## Start Server (npx)
+Start cortex server via npx
+npx @ha-bits/cortex server --config {{config}} --port {{port}}
 
-### Using nx (Workspace Development)
-```bash
-# Run server via nx (uses local @ha-bits/cortex)
-pnpm nx dev @ha-bits/cortex --config showcase/hello-world/stack.yaml
+## Execute Workflow (POST)
+Execute workflow via POST
+curl -X POST http://localhost:{{port}}/api/{{workflowId}} -H "Content-Type: application/json" -d '{{input}}'
 
-# Run .habit file via nx
-pnpm nx dev @ha-bits/cortex --config showcase/hello-world/dist/hello-world.habit
-```
+## Execute Workflow (GET)
+Execute workflow via GET
+curl "http://localhost:{{port}}/api/{{workflowId}}?{{queryParams}}"
 
-### Example API Calls (Server Mode)
-```bash
-# Execute workflow via POST
-curl -X POST http://localhost:3000/api/hello-world \
-  -H "Content-Type: application/json" \
-  -d '{"param1": "hello", "param2": "world"}'
-
-# Execute workflow via GET
-curl "http://localhost:3000/api/hello-world?param1=hello&param2=world"
-
-# List workflows
-curl http://localhost:3000/misc/workflows
-```
+## List Workflows
+List workflows
+curl http://localhost:{{port}}/misc/workflows
 
 ## Build Cortex
+Build Cortex
 pnpm nx build @ha-bits/cortex
 
-# Publish Cortex
+## Publish Cortex
+Publish Cortex
 cd packages/cortex/server && npm version patch --no-git-tag-version && cd ../ui && npm version patch --no-git-tag-version && cd ../../.. && pnpm nx pack @ha-bits/cortex && cd dist/packages/cortex && npm publish --registry https://registry.npmjs.org/
 
-# Link Cortex Core (npm link from dist)
+## Link Cortex Core
+Link Cortex Core (npm link from dist)
 cd dist/packages/cortex/core && npm link
 
-# Unlink Cortex Core
+## Unlink Cortex Core
+Unlink Cortex Core
 npm unlink -g @ha-bits/cortex-core
 
 # Base Commands
 
-# Build Base
+## Build Base
+Build Base
 pnpm nx build @ha-bits/base
 
-# Publish Base
+## Publish Base
+Publish Base
 cd packages/base/server && npm version patch --no-git-tag-version && cd ../ui && npm version patch --no-git-tag-version && cd ../../.. && pnpm nx pack @ha-bits/base && cd dist/packages/base && npm publish --registry https://registry.npmjs.org/
 
-# Dev Base
+## Dev Base
+Dev Base
 pnpm nx dev @ha-bits/base
 
 # Bits Commands
 
-# Build All Bits
-# Builds all bits in nodes/bits/@ha-bits/bit-*
+## Build One Bit
+Build One Bit (e.g., bit-example)
+pnpm nx build @ha-bits/{{bitName}}
 
-# Build One Bit (e.g., bit-example)
-pnpm nx build @ha-bits/bit-example
+## Publish Bit to Verdaccio
+Publish Bits to Verdaccio (local registry)
+pnpm nx publish-verdaccio @ha-bits/{{bitName}}
 
-# Publish Bits to Verdaccio (local registry)
-pnpm nx publish-verdaccio @ha-bits/bit-example
+## Publish Bit to npm
+Publish Bits to npm
+cd nodes/bits/@ha-bits/{{bitName}} && npm version patch --no-git-tag-version && cd ../../../../.. && pnpm nx build @ha-bits/{{bitName}} && cd nodes/bits/@ha-bits/{{bitName}} && npm publish --access public --registry https://registry.npmjs.org/
 
-# Publish Bits to npm
-cd nodes/bits/@ha-bits/bit-example && npm version patch --no-git-tag-version && cd ../../../../.. && pnpm nx build @ha-bits/bit-example && cd nodes/bits/@ha-bits/bit-example && npm publish --access public --registry https://registry.npmjs.org/
-
-# Link All Bits
-# Links all bits globally via npm link
-
-# Unlink All Bits
-# Unlinks all bits globally
-
-# List Bits
-# Lists all available bits with versions
-
-# Bits Converter CLI
+## Bits Converter CLI
+Bits Converter CLI
 npx tsx bits-creator/src/cli.ts
 
-# Bits Creator Server (AI mode)
+## Bits Creator Server (AI)
+Bits Creator Server (AI mode)
 npx tsx bits-creator/server/src/main.ts
 
-# Bits Creator Server (Mock)
+## Bits Creator Server (Mock)
+Bits Creator Server (Mock)
 MOCK_MODE=true npx tsx bits-creator/server/src/main.ts
 
 # General Commands
 
-# Build All (habits + cortex + base)
+## Build All
+Build All (habits + cortex + base)
 pnpm nx build habits && pnpm nx build @ha-bits/cortex && pnpm nx build @ha-bits/base
 
-# Pack All (habits + cortex + base)
+## Pack All
+Pack All (habits + cortex + base)
 pnpm nx pack habits && pnpm nx pack @ha-bits/cortex && pnpm nx pack @ha-bits/base
 
-# Publish All (habits + cortex + base)
-# Note: This bumps versions, packs, and publishes to npm
-npm version patch --no-git-tag-version && pnpm nx pack habits && cd dist/packages/habits && npm publish --access public --registry https://registry.npmjs.org/  # Repeat for cortex and base
-
-# Publish All @next (pre-release)
-# Similar to above but with --tag next
-
-# NPM Login
+## NPM Login
+NPM Login
 npm login --registry https://registry.npmjs.org/
 
-# NPM Whoami
+## NPM Whoami
+NPM Whoami
 npm whoami --registry https://registry.npmjs.org/
 
-# Clean All (dist + cache)
+## Clean All
+Clean All (dist + cache)
 rm -rf dist && pnpm nx reset
 
-# Clean Dist
+## Clean Dist
+Clean Dist
 rm -rf dist
 
-# Kill Port 3000
-lsof -ti:3000 | xargs kill -9 2>/dev/null || echo "No process"
+## Kill Port 3000
+Kill Port 3000
+lsof -ti:{{port}} | xargs kill -9 2>/dev/null || echo "No process"
 
-# List Examples
-# This lists all available examples in showcase/
-
-# Link cortex into bits, link All Bits into habits, etc
+## Link Local
+Link cortex into bits, link All Bits into habits, etc
 npx tsx scripts/link-local.cts
 
-# Unlink
+## Unlink Local
+Unlink
 npx tsx scripts/link-local.cts --unlink
 
 # Testing Commands
 
-# Run Unit Tests
+## Run Unit Tests
+Run Unit Tests
 pnpm jest
 
-# Run HTTP Tests
+## Run HTTP Tests
+Run HTTP Tests with httpyac
 httpyac http/cortex-tests.http --all
 
-# Typecheck All
+## Typecheck All
+Typecheck All
 pnpm nx run-many --target=typecheck
 
+## Test Habit
+Run habit tests on a showcase
+pnpm nx test-habit @ha-bits/manage --path={{path}}
 
+## Test WebDriver
+Run WebDriver E2E tests
+npx tsx packages/testing/src/cli/index.ts webdriver {{testFile}} --platform {{platform}}
+
+## Test Bit (Node.js)
+Test a single bit action in Node.js — smallest possible command. No build required.
+npx tsx scripts/test-bit.ts {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
+
+## Test Bit (Tauri)
+Test a single bit action in Tauri via WebDriver. Add --headless --habit <path> to auto-launch and kill the app.
+npx tsx scripts/test-bit-tauri.ts {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
+
+## Test Bit (Tauri Headless)
+Test a single bit action in Tauri — auto-launches the app, runs the test, then kills it. One-shot, no manual steps.
+npx tsx scripts/test-bit-tauri.ts --headless --habit {{habitPath}} {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
+
+## Test Bit (Cross-Platform)
+Test a single bit action across Node.js and Tauri via the built CLI. Requires pnpm nx build @ha-bits/manage first.
+node dist/packages/manage/cli/index.js bit-platform {{bit}} {{action}} --input='{{input}}' --expected='{{expected}}'
 
 # Habits-Cortex Tauri App Commands
 
-## Build Variants
-Different bundle identifiers for dev/debug/release to coexist on same device:
-- **Dev** (com.codenteam-oss.habits.dev) - "Cortex Dev" - hot reload
-- **Debug** (com.codenteam-oss.habits.debug) - "Cortex Debug" - debug symbols
-- **Release** (com.codenteam-oss.habits) - "Cortex" - production
-
-### iOS Provisioning Setup (for debug/dev builds)
-To install dev/debug builds on iOS devices, register a wildcard App ID in Apple Developer:
-1. Go to https://developer.apple.com/account/resources/identifiers
-2. Click "+" to add new identifier → App IDs → App
-3. Description: "Habits Wildcard", Bundle ID: Wildcard, enter `com.codenteam-oss.habits.*`
-4. Xcode will auto-create provisioning profiles for `.dev` and `.debug` variants
-
-## Build habits-cortex (debug, no bundle)
+## Build Tauri (debug)
+Build habits-cortex (debug, no bundle)
 cd habits-cortex && npm run build:debug
 
-## Build habits-cortex (release)
+## Build Tauri (release)
+Build habits-cortex (release)
 cd habits-cortex && npm run build
 
-## Run habits-cortex in dev mode
+## Run Tauri Dev
+Run habits-cortex in dev mode
 cd habits-cortex && npm run dev
 
-## Build apk for habits-cortex (release)
+## Build Android APK (release)
+Build APK for habits-cortex (release)
 cd habits-cortex && npm run tauri android build -- --split-per-abi -t aarch64 --apk
 
-## Build apk for habits-cortex (debug - separate app on device)
+## Build Android APK (debug)
+Build APK for habits-cortex (debug - separate app on device)
 cd habits-cortex && npm run android:build:debug -- --split-per-abi -t aarch64 --apk
 
-## Test .habit file via habits-cortex CLI (executes workflow and exits)
-./habits-cortex/src-tauri/target/debug/habits-cortex --test --habit showcase/hello-world/dist/hello-world.habit --workflow hello-world --input '{"param1":"hello","param2":"world"}'
+## Test Habit via CLI
+Test .habit file via habits-cortex CLI (executes workflow and exits)
+./habits-cortex/src-tauri/target/debug/habits-cortex --test --habit {{habitPath}} --workflow {{workflowId}} --input '{{input}}'
 
-## Run .habit file via habits-cortex (opens UI)
-./habits-cortex/src-tauri/target/debug/habits-cortex --habit showcase/hello-world/dist/hello-world.habit
+## Run Habit in App
+Run .habit file via habits-cortex (opens UI)
+./habits-cortex/src-tauri/target/debug/habits-cortex --habit {{habitPath}}
 
-## Build a .habit,  run the .habit into the  app in dev mode.
-pnpm nx run habits pack --format habit --config showcase/email-demo/stack.yaml
+## Dev with Habit
+Run habit in dev mode
+cd habits-cortex && npm run dev -- -- -- --habit {{habitPath}}
 
-npm run dev -- -- -- --habit showcase/email-demo/dist/email-demo.habit
-
-## Android Commands
-### release the lock
-rm -rf habits-cortex/src-tauri/target/.cargo-lock; find habits-cortex/src-tauri -name ".cargo-lock" -delete; fuser -k habits-cortex/src-tauri/target/.package-cache; echo "Cargo locks cleared"
-
-
-### Send file to android, preferable Downloads/Habits
-adb push <file> <dest>
-
-### Stream Cortex app logs on Android (live)
+## Stream Android Logs
+Stream Cortex app logs on Android (live)
 adb logcat | grep -iE "codenteam|habits|cortex|tauri|RustStdoutStderr"
 
+## Push File to Android
+Send file to Android device
+adb push {{file}} {{dest}}
 
-## iOS Commands
+## Clear Cargo Locks
+Release cargo locks on Android build
+rm -rf habits-cortex/src-tauri/target/.cargo-lock; find habits-cortex/src-tauri -name ".cargo-lock" -delete; fuser -k habits-cortex/src-tauri/target/.package-cache; echo "Cargo locks cleared"
 
-## Run iOS dev mode on physical device (Cortex Dev - separate app)
+## iOS Dev (Device)
+Run iOS dev mode on physical device
 cd habits-cortex && npm run ios:dev -- --host
 
-## Run iOS dev mode on simulator
-cd habits-cortex && npm run ios:dev -- "iPhone 17 Pro"
+## iOS Dev (Simulator)
+Run iOS dev mode on simulator
+cd habits-cortex && npm run ios:dev -- "{{simulator}}"
 
-## List ios devices:
-
+## List iOS Devices
+List iOS devices
 xcrun xctrace list devices
 
-
-## Build iOS app for simulator (release, no code signing needed)
+## Build iOS (Simulator)
+Build iOS app for simulator (release, no code signing)
 cd habits-cortex && npm run tauri -- ios build --target aarch64-sim
 
-## Build iOS app for device (release - Cortex)
+## Build iOS (Release)
+Build iOS app for device (release)
 cd habits-cortex && npm run ios:build
 
-## Build iOS app for device (debug - Cortex Debug - separate app)
+## Build iOS (Debug)
+Build iOS app for device (debug)
 cd habits-cortex && npm run ios:build:debug
 
-## Install and run built iOS app on simulator
-xcrun simctl boot "iPhone 17 Pro" || true
-open -a Simulator
-xcrun simctl install booted habits-cortex/src-tauri/gen/apple/build/arm64-sim/Cortex.app
-xcrun simctl launch booted com.codenteam-oss.habits
+## Install iOS App (Simulator)
+Install and run built iOS app on simulator
+xcrun simctl boot "{{simulator}}" || true && open -a Simulator && xcrun simctl install booted habits-cortex/src-tauri/gen/apple/build/arm64-sim/Cortex.app && xcrun simctl launch booted com.codenteam-oss.habits
 
+## Publish iOS
+Publish iOS app
+cd habits-cortex && npx env-cmd -f ../.secrets -- npx tsx build-release.ts --platform ios --upload-ios
 
-## Publish 
-cd habits-cortex
-npx env-cmd -f ../.secrets -- npx tsx build-release.ts --platform ios --upload-ios
-
-
-
-## Run app
-cd habits-cortex
-npm run dev
-
-## Sign android apk
-apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android --out src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-signed.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
-
-apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release-unsigned.apk
-
-
-npx tsx packages/base/server/src/pack/inline-html.ts
-
-npx tsx scripts/generate-showcase.ts
-
-
-
-
-# SIGN - NOTARIZE - Submit
-
-## To build for macos store submission
+## Publish macOS
+Build for macOS store submission
 npx env-cmd .secrets -- npx tsx habits-cortex/build-release.ts --platform macos --upload-macos
 
+## Sign Android APK
+Sign Android APK with debug keystore
+cd habits-cortex && apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android {{apkPath}}
 
+# Docs Commands
 
-
-
-# Testing
-
-## habits-test CLI
-The testing CLI can be run from source (local dev) or via npx (when published):
-```bash
-# Local development (from workspace root)
-npx tsx packages/testing/src/cli/index.ts <command> [options]
-
-# After @ha-bits/manage is published
-npx habits-test <command> [options]
-```
-
-## List all available tests
-npx tsx packages/testing/src/cli/index.ts list
-
-## Run Habit Tests (workflow tests)
-npx tsx packages/testing/src/cli/index.ts habit packages/testing/tests/habits/hello-world/workflow.test.yaml
-
-## Run Habit Tests (backend only - cortex mode)
-npx tsx packages/testing/src/cli/index.ts habit showcase/hello-world/stack.yaml --mode cortex
-
-## WebDriver E2E Tests (tauri-plugin-webdriver)
-Tests the habits-cortex Tauri app via embedded WebDriver server on port 4445.
-
-### Test on macOS
-npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform mac
-
-### Test on iOS Simulator
-npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform ios
-
-### Test on Android Emulator
-npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform android
-
-### Test with verbose output
-npx tsx packages/testing/src/cli/index.ts webdriver packages/testing/tests/habits/hello-world/webdriver.test.cts --platform mac --verbose
-
-### Notes:
-- macOS: Requires debug build (`cd habits-cortex/src-tauri && cargo build`)
-- iOS: Requires booted simulator with app installed
-- Android: Requires running emulator/device with app installed, uses ADB port forwarding
-- The WebDriver plugin creates a separate webview - workflow tests use HTTP calls to cortex server
-
-
-# Docs
-
-To deploy docs:
+## Deploy Docs
+Deploy documentation
 npx env-cmd -f .secrets -- npx tsx scripts/deploy-docs.ts
+
+## Start Docs Server
+Start the VitePress docs server on port 5173
+pnpm dev
+
+# Screenshots Commands
+
+## Generate Store Screenshots
+Capture and process Tauri app store screenshots (automate + frame)
+npx tsx packages/manage/forge/run-all.cts
+
+## Generate Docs Screenshots
+Capture Base, Cortex, Admin screenshots for the docs site
+npx tsx packages/manage/forge/generate-docs-screenshots.ts {{extra}}
+
+## Generate Get-Started Screenshots
+Capture all "Get Started" screenshots used in the landing page
+npx tsx packages/manage/forge/generate-get-started-shots.ts {{extra}}
+
+## Start Base Server
+Start the Base UI server on port 3000
+pnpm nx dev @ha-bits/base
+
+## Start Cortex Server
+Start a Cortex server with a given config
+pnpm nx dev @ha-bits/cortex --config {{config}}
+
+## Start Tauri Dev (webdriver)
+Start habits-cortex in dev mode (exposes webdriver on port 9987)
+cd habits-cortex && npm run dev
+
+## Screenshot Webpage
+Take a screenshot of any URL and save as .webp
+npx tsx packages/manage/forge/src/screenshots/cli.ts webpage --url {{url}} --out {{out}}
+
+## Screenshot HTML Template
+Render a local HTML template and save as .webp
+npx tsx packages/manage/forge/src/screenshots/cli.ts template --path {{path}} --out {{out}}
+
+## Screenshot Code Snippet
+Render a code snippet with syntax highlighting and save as .webp
+npx tsx packages/manage/forge/src/screenshots/cli.ts code-snippet --lang {{lang}} --code {{code}} --out {{out}}
+
+## Screenshot Store Listing
+Screenshot an app store listing page (e.g. Google Play) and save as .webp
+npx tsx packages/manage/forge/src/screenshots/cli.ts store-listing --url {{url}} --out {{out}}
+
+## Start Admin Server
+Start the Admin server on port 3099
+node packages/manage/admin/dist/server/index.js
+
+## Build Admin
+Build the Admin app (TypeScript + Tailwind CSS)
+cd packages/manage/admin && npm run build
+
+## Build Admin Docker Image
+Build Admin dist then rebuild the Docker image (habits-admin:latest)
+cd packages/manage/admin && npm run build && docker build -t habits-admin:latest .
+
+## Restart Admin Docker
+Restart the Admin Docker container (build image then restart compose)
+cd packages/manage/admin && npm run build && docker build -t habits-admin:latest . && docker compose up -d --force-recreate
+
+## Update Admin in Docker
+Build admin dist, copy files into the running container, then restart it (no image rebuild), this is much more prefered to be used with local dev
+cd packages/manage/admin && npm run build && docker cp dist/. habits-admin:/app/dist && docker restart habits-admin
+
+## Deploy Admin to Docker Context
+Switch to a remote Docker context, build the Admin image, restart the container, then revert back to default
+docker build --context {{context}} -t habits-admin:latest packages/manage/admin && docker --context {{context}} compose -f packages/manage/admin/compose.yaml up -d --force-recreate

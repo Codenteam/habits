@@ -81,7 +81,7 @@ const viewerUrl = `https://your-domain.com/viewer/?habit=${encoded}`;
 
 ### Using from Habits Base UI
 
-The Habits Base UI includes a "Share Habit Link" button in the toolbar that automatically generates a viewer URL for the current habit.
+The Habits Base UI includes a "Mirror Habit Link" button in the toolbar that automatically generates a viewer URL for the current habit.
 
 ## Export Formats
 

@@ -28,7 +28,7 @@ import './FrontendBuilder.css';
 // Helper Functions
 // ==========================================
 
-const defaultModel = 'claude-opus-4-0';
+const defaultModel = 'claude-sonnet-4-6';
 // Fetch available models from tenant API
 async function fetchAvailableModels(tenantUrl: string, apiKey: string): Promise<{ id: string, name: string }[]> {
   try {
@@ -341,7 +341,7 @@ export function FrontendBuilderVanilla({
     const savedApiKey = typeof window !== 'undefined' ? localStorage.getItem('webcanvas-api-key') : null;
     return {
       provider: 'auto',
-      model: 'claude-opus-4-0',
+      model: 'claude-sonnet-4-6',
       // model: 'gemini-3-pro-preview',
       ...initialConfig,
       ...(savedTenantUrl ? { tenantUrl: savedTenantUrl } : {}),
@@ -619,7 +619,6 @@ export function FrontendBuilderVanilla({
   useEffect(() => {
     if (config.tenantUrl) setTenantUrl(config.tenantUrl);
     if (config.apiKey) setApiKey(config.apiKey);
-    setSelectedModel(defaultModel);
   }, [config]);
 
   // ==========================================

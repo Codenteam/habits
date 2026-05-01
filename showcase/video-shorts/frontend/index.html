@@ -1,447 +1,487 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Shorts Generator</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
-        .subtitle { color: rgba(255,255,255,0.9); text-align: center; margin-bottom: 30px; }
-        .platforms { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }
-        .platform-icon { font-size: 2rem; filter: grayscale(100%) brightness(1000%); }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .card h2 { color: #667eea; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; }
-        input, select, textarea {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
-        textarea { resize: vertical; min-height: 100px; }
-        
-        .duration-select { display: flex; gap: 15px; }
-        .duration-btn {
-            flex: 1;
-            padding: 20px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 12px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        .duration-btn:hover { border-color: #667eea; }
-        .duration-btn.active { border-color: #667eea; background: #f0f3ff; }
-        .duration-btn .time { font-size: 1.5rem; font-weight: 700; color: #667eea; }
-        .duration-btn .label { font-size: 0.85rem; color: #888; }
-        
-        .style-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-        .style-chip {
-            padding: 10px 20px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .style-chip:hover { border-color: #667eea; }
-        .style-chip.active { border-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        
-        button.submit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        button.submit:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
-        button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        
-        .loading { display: none; text-align: center; padding: 60px; }
-        .loading.active { display: block; }
-        .spinner {
-            width: 60px; height: 60px;
-            border: 4px solid #f0f0f0;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .results { display: none; }
-        .results.active { display: block; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; }
-        .tab {
-            padding: 12px 24px;
-            background: #f0f0f0;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 500;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-        .tab:hover { background: #e0e0e0; }
-        .tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .content-section {
-            background: #f8f9ff;
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .content-section h3 { color: #667eea; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        .content-section pre { white-space: pre-wrap; line-height: 1.8; color: #444; }
-        
-        .copy-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: #667eea;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-        
-        .platform-caption {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #667eea;
-        }
-        .platform-caption h4 { margin-bottom: 10px; color: #333; }
-        .hashtags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .hashtag { background: #f0f3ff; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; color: #667eea; }
-        
-        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .history-card {
-            background: #f8f9ff;
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .history-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2); }
-        .history-card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-        }
-        .history-card-body { padding: 15px; }
-        .history-card .topic { font-weight: 600; }
-        .history-card .meta { font-size: 0.85rem; color: #888; margin-top: 5px; }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Video Shorts Generator</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body {
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+ background: var(--ha-accent-blue);
+ min-height: 100vh;
+ padding: 20px;
+ }
+ .container { max-width: 900px; margin: 0 auto; }
+ h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+ .subtitle { color: rgba(255,255,255,0.9); text-align: center; margin-bottom: 30px; }
+ .platforms { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }
+ .platform-icon { font-size: 2rem; filter: grayscale(100%) brightness(1000%); }
+ .card {
+ background: white;
+ border-radius: 20px;
+ padding: 30px;
+ margin-bottom: 20px;
+ box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+ }
+ .card h2 { color: var(--ha-accent-blue); margin-bottom: 20px; }
+ .form-group { margin-bottom: 20px; }
+ label { display: block; margin-bottom: 8px; color: var(--ha-text-disabled); font-weight: 600; }
+ input, select, textarea {
+ width: 100%;
+ padding: 14px 18px;
+ border: 2px solid var(--ha-text-body);
+ border-radius: 12px;
+ font-size: 1rem;
+ transition: all 0.2s;
+ }
+ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ha-accent-blue); }
+ textarea { resize: vertical; min-height: 100px; }
+ 
+ .duration-select { display: flex; gap: 15px; }
+ .duration-btn {
+ flex: 1;
+ padding: 20px;
+ border: 2px solid var(--ha-text-body);
+ background: white;
+ border-radius: 12px;
+ cursor: pointer;
+ text-align: center;
+ transition: all 0.2s;
+ }
+ .duration-btn:hover { border-color: var(--ha-accent-blue); }
+ .duration-btn.active { border-color: var(--ha-accent-blue); background: #f0f3ff; }
+ .duration-btn .time { font-size: 1.5rem; font-weight: 700; color: var(--ha-accent-blue); }
+ .duration-btn .label { font-size: 0.85rem; color: var(--ha-text-muted); }
+ 
+ .style-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+ .style-chip {
+ padding: 10px 20px;
+ border: 2px solid var(--ha-text-body);
+ background: white;
+ border-radius: 25px;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .style-chip:hover { border-color: var(--ha-accent-blue); }
+ .style-chip.active { border-color: var(--ha-accent-blue); background: var(--ha-accent-blue); color: white; }
+ 
+ button.submit {
+ background: var(--ha-accent-blue);
+ color: white;
+ border: none;
+ padding: 16px 32px;
+ border-radius: 12px;
+ font-size: 1.1rem;
+ font-weight: 600;
+ cursor: pointer;
+ width: 100%;
+ transition: all 0.2s;
+ }
+ button.submit:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+ button.submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+ 
+ .loading { display: none; text-align: center; padding: 60px; }
+ .loading.active { display: block; }
+ .spinner {
+ width: 60px; height: 60px;
+ border: 4px solid var(--ha-text-body);
+ border-top-color: var(--ha-accent-blue);
+ border-radius: 50%;
+ animation: spin 1s linear infinite;
+ margin: 0 auto 20px;
+ }
+ @keyframes spin { to { transform: rotate(360deg); } }
+ 
+ .results { display: none; }
+ .results.active { display: block; }
+ 
+ .tabs { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; }
+ .tab {
+ padding: 12px 24px;
+ background: var(--ha-text-body);
+ border: none;
+ border-radius: 25px;
+ cursor: pointer;
+ font-weight: 500;
+ white-space: nowrap;
+ transition: all 0.2s;
+ }
+ .tab:hover { background: var(--ha-text-body); }
+ .tab.active { background: var(--ha-accent-blue); color: white; }
+ 
+ .tab-content { display: none; }
+ .tab-content.active { display: block; }
+ 
+ .content-section {
+ background: var(--ha-bg-surface);
+ border-radius: 16px;
+ padding: 25px;
+ margin-bottom: 20px;
+ position: relative;
+ }
+ .content-section h3 { color: var(--ha-accent-blue); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+ .content-section pre { white-space: pre-wrap; line-height: 1.8; color: var(--ha-bg-hover); }
+ 
+ .copy-btn {
+ position: absolute;
+ top: 20px;
+ right: 20px;
+ padding: 8px 16px;
+ background: var(--ha-accent-blue);
+ border: none;
+ border-radius: 8px;
+ color: white;
+ cursor: pointer;
+ font-size: 0.85rem;
+ }
+ 
+ .platform-caption {
+ background: white;
+ border-radius: 12px;
+ padding: 20px;
+ margin-bottom: 15px;
+ border-left: 4px solid var(--ha-accent-blue);
+ }
+ .platform-caption h4 { margin-bottom: 10px; color: var(--ha-bg-elevated); }
+ .hashtags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+ .hashtag { background: #f0f3ff; padding: 5px 12px; border-radius: 15px; font-size: 0.85rem; color: var(--ha-accent-blue); }
+ 
+ .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+ .history-card {
+ background: var(--ha-bg-surface);
+ border-radius: 16px;
+ overflow: hidden;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .history-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2); }
+ .history-card-header {
+ background: var(--ha-accent-blue);
+ color: white;
+ padding: 15px;
+ }
+ .history-card-body { padding: 15px; }
+ .history-card .topic { font-weight: 600; }
+ .history-card .meta { font-size: 0.85rem; color: var(--ha-text-muted); margin-top: 5px; }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎬 Video Shorts Generator</h1>
-        <p class="subtitle">Create viral TikToks, YouTube Shorts & Reels</p>
-        <div class="platforms">
-            <span class="platform-icon">📱</span>
-            <span class="platform-icon">▶️</span>
-            <span class="platform-icon">📸</span>
-        </div>
+ <div class="container">
+ <h1> Video Shorts Generator</h1>
+ <p class="subtitle">Create viral TikToks, YouTube Shorts & Reels</p>
+ <div class="platforms">
+ <span class="platform-icon"></span>
+ <span class="platform-icon"></span>
+ <span class="platform-icon"></span>
+ </div>
 
-        <div class="card" id="create-section">
-            <h2>Create Your Short</h2>
-            <form id="short-form">
-                <div class="form-group">
-                    <label>What's your video about? *</label>
-                    <textarea id="topic" required placeholder="e.g., 3 productivity hacks that changed my life, Why you should never trust hotel ice machines, How to negotiate your salary..."></textarea>
-                </div>
+ <div class="card" id="create-section">
+ <h2>Create Your Short</h2>
+ <form id="short-form">
+ <div class="form-group">
+ <label>What's your video about? *</label>
+ <textarea id="topic" required placeholder="e.g., 3 productivity hacks that changed my life, Why you should never trust hotel ice machines, How to negotiate your salary..."></textarea>
+ </div>
 
-                <div class="form-group">
-                    <label>Video Length</label>
-                    <div class="duration-select">
-                        <div class="duration-btn" data-duration="15">
-                            <div class="time">15s</div>
-                            <div class="label">Quick Hit</div>
-                        </div>
-                        <div class="duration-btn active" data-duration="30">
-                            <div class="time">30s</div>
-                            <div class="label">Sweet Spot</div>
-                        </div>
-                        <div class="duration-btn" data-duration="60">
-                            <div class="time">60s</div>
-                            <div class="label">Deep Dive</div>
-                        </div>
-                    </div>
-                </div>
+ <div class="form-group">
+ <label>Video Length</label>
+ <div class="duration-select">
+ <div class="duration-btn" data-duration="15">
+ <div class="time">15s</div>
+ <div class="label">Quick Hit</div>
+ </div>
+ <div class="duration-btn active" data-duration="30">
+ <div class="time">30s</div>
+ <div class="label">Sweet Spot</div>
+ </div>
+ <div class="duration-btn" data-duration="60">
+ <div class="time">60s</div>
+ <div class="label">Deep Dive</div>
+ </div>
+ </div>
+ </div>
 
-                <div class="form-group">
-                    <label>Content Style</label>
-                    <div class="style-chips">
-                        <div class="style-chip" data-style="educational">📚 Educational</div>
-                        <div class="style-chip active" data-style="entertaining">😂 Entertaining</div>
-                        <div class="style-chip" data-style="storytime">📖 Storytime</div>
-                        <div class="style-chip" data-style="how-to">🔧 How-To</div>
-                        <div class="style-chip" data-style="dramatic">🎭 Dramatic</div>
-                        <div class="style-chip" data-style="motivational">💪 Motivational</div>
-                    </div>
-                </div>
+ <div class="form-group">
+ <label>Content Style</label>
+ <div class="style-chips">
+ <div class="style-chip" data-style="educational"> Educational</div>
+ <div class="style-chip active" data-style="entertaining"> Entertaining</div>
+ <div class="style-chip" data-style="storytime"> Storytime</div>
+ <div class="style-chip" data-style="how-to"> How-To</div>
+ <div class="style-chip" data-style="dramatic"> Dramatic</div>
+ <div class="style-chip" data-style="motivational"> Motivational</div>
+ </div>
+ </div>
 
-                <div class="form-group">
-                    <label>Target Audience</label>
-                    <input type="text" id="audience" placeholder="e.g., Gen Z college students, working professionals, fitness enthusiasts">
-                </div>
+ <div class="form-group">
+ <label>Target Audience</label>
+ <input type="text" id="audience" placeholder="e.g., Gen Z college students, working professionals, fitness enthusiasts">
+ </div>
 
-                <button type="submit" class="submit" id="submitBtn">🚀 Generate Viral Script</button>
-            </form>
-        </div>
+ <button type="submit" class="submit" id="submitBtn"> Generate Viral Script</button>
+ </form>
+ </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p style="color: #666; font-size: 1.1rem;">Creating your viral content...</p>
-        </div>
+ <div class="loading" id="loading">
+ <div class="spinner"></div>
+ <p style="color: var(--ha-text-disabled); font-size: 1.1rem;">Creating your viral content...</p>
+ </div>
 
-        <div class="results" id="results">
-            <div class="card">
-                <button onclick="backToCreate()" style="margin-bottom: 20px; background: #6c757d; padding: 10px 20px; border: none; border-radius: 10px; color: white; cursor: pointer;">← Generate Another</button>
+ <div class="results" id="results">
+ <div class="card">
+ <button onclick="backToCreate()" style="margin-bottom: 20px; background: var(--ha-text-disabled); padding: 10px 20px; border: none; border-radius: 10px; color: white; cursor: pointer;">← Generate Another</button>
 
-                <div class="tabs">
-                    <button class="tab active" onclick="showTab('hooks')">🪝 Hooks</button>
-                    <button class="tab" onclick="showTab('script')">📝 Script</button>
-                    <button class="tab" onclick="showTab('visuals')">🎥 Shot List</button>
-                    <button class="tab" onclick="showTab('captions')">#️⃣ Captions</button>
-                    <button class="tab" onclick="showTab('thumbnail')">🖼️ Thumbnails</button>
-                </div>
+ <div class="tabs">
+ <button class="tab active" onclick="showTab('hooks')"> Hooks</button>
+ <button class="tab" onclick="showTab('script')"> Script</button>
+ <button class="tab" onclick="showTab('visuals')"> Shot List</button>
+ <button class="tab" onclick="showTab('captions')">#⃣ Captions</button>
+ <button class="tab" onclick="showTab('thumbnail')"> Thumbnails</button>
+ </div>
 
-                <div id="hooks-tab" class="tab-content active">
-                    <div class="content-section">
-                        <h3>🪝 Hook Options</h3>
-                        <button class="copy-btn" onclick="copyContent('hooks-text')">Copy</button>
-                        <pre id="hooks-text"></pre>
-                    </div>
-                </div>
+ <div id="hooks-tab" class="tab-content active">
+ <div class="content-section">
+ <h3> Hook Options</h3>
+ <button class="copy-btn" onclick="copyContent('hooks-text')">Copy</button>
+ <pre id="hooks-text"></pre>
+ </div>
+ </div>
 
-                <div id="script-tab" class="tab-content">
-                    <div class="content-section">
-                        <h3>📝 Full Script</h3>
-                        <button class="copy-btn" onclick="copyContent('script-text')">Copy</button>
-                        <pre id="script-text"></pre>
-                    </div>
-                </div>
+ <div id="script-tab" class="tab-content">
+ <div class="content-section">
+ <h3> Full Script</h3>
+ <button class="copy-btn" onclick="copyContent('script-text')">Copy</button>
+ <pre id="script-text"></pre>
+ </div>
+ </div>
 
-                <div id="visuals-tab" class="tab-content">
-                    <div class="content-section">
-                        <h3>🎥 Shot List & Visuals</h3>
-                        <button class="copy-btn" onclick="copyContent('visuals-text')">Copy</button>
-                        <pre id="visuals-text"></pre>
-                    </div>
-                </div>
+ <div id="visuals-tab" class="tab-content">
+ <div class="content-section">
+ <h3> Shot List & Visuals</h3>
+ <button class="copy-btn" onclick="copyContent('visuals-text')">Copy</button>
+ <pre id="visuals-text"></pre>
+ </div>
+ </div>
 
-                <div id="captions-tab" class="tab-content">
-                    <div id="captions-container"></div>
-                </div>
+ <div id="captions-tab" class="tab-content">
+ <div id="captions-container"></div>
+ </div>
 
-                <div id="thumbnail-tab" class="tab-content">
-                    <div class="content-section">
-                        <h3>🖼️ Thumbnail Ideas</h3>
-                        <button class="copy-btn" onclick="copyContent('thumbnail-text')">Copy</button>
-                        <pre id="thumbnail-text"></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
+ <div id="thumbnail-tab" class="tab-content">
+ <div class="content-section">
+ <h3> Thumbnail Ideas</h3>
+ <button class="copy-btn" onclick="copyContent('thumbnail-text')">Copy</button>
+ <pre id="thumbnail-text"></pre>
+ </div>
+ </div>
+ </div>
+ </div>
 
-        <div class="card" id="history-section">
-            <h2>Recent Shorts</h2>
-            <div class="history-grid" id="history-grid">
-                <p style="color: #888; grid-column: 1/-1; text-align: center;">Loading...</p>
-            </div>
-        </div>
-    </div>
+ <div class="card" id="history-section">
+ <h2>Recent Shorts</h2>
+ <div class="history-grid" id="history-grid">
+ <p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">Loading...</p>
+ </div>
+ </div>
+ </div>
 
-    <script>
-        let selectedDuration = 30;
-        let selectedStyle = 'entertaining';
+ <script>
+ let selectedDuration = 30;
+ let selectedStyle = 'entertaining';
 
-        // Duration buttons
-        document.querySelectorAll('.duration-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedDuration = parseInt(btn.dataset.duration);
-            });
-        });
+ // Duration buttons
+ document.querySelectorAll('.duration-btn').forEach(btn => {
+ btn.addEventListener('click', () => {
+ document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+ btn.classList.add('active');
+ selectedDuration = parseInt(btn.dataset.duration);
+ });
+ });
 
-        // Style chips
-        document.querySelectorAll('.style-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                selectedStyle = chip.dataset.style;
-            });
-        });
+ // Style chips
+ document.querySelectorAll('.style-chip').forEach(chip => {
+ chip.addEventListener('click', () => {
+ document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
+ chip.classList.add('active');
+ selectedStyle = chip.dataset.style;
+ });
+ });
 
-        // Form submission
-        document.getElementById('short-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+ // Form submission
+ document.getElementById('short-form').addEventListener('submit', async (e) => {
+ e.preventDefault();
 
-            const topic = document.getElementById('topic').value;
-            const audience = document.getElementById('audience').value;
+ const topic = document.getElementById('topic').value;
+ const audience = document.getElementById('audience').value;
 
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('loading');
+ const submitBtn = document.getElementById('submitBtn');
+ const loading = document.getElementById('loading');
 
-            submitBtn.disabled = true;
-            loading.classList.add('active');
-            document.getElementById('create-section').style.display = 'none';
-            document.getElementById('history-section').style.display = 'none';
+ submitBtn.disabled = true;
+ loading.classList.add('active');
+ document.getElementById('create-section').style.display = 'none';
+ document.getElementById('history-section').style.display = 'none';
 
-            try {
-                const response = await fetch('/api/generate-short', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        topic,
-                        duration: selectedDuration,
-                        style: selectedStyle,
-                        targetAudience: audience || undefined
-                    })
-                });
+ try {
+ const response = await fetch('/api/generate-short', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ topic,
+ duration: selectedDuration,
+ style: selectedStyle,
+ targetAudience: audience || undefined
+ })
+ });
 
-                const data = await response.json();
-                displayResults(data);
-                loadHistory();
-            } catch (error) {
-                alert('Error: ' + error.message);
-                document.getElementById('create-section').style.display = 'block';
-                document.getElementById('history-section').style.display = 'block';
-            } finally {
-                submitBtn.disabled = false;
-                loading.classList.remove('active');
-            }
-        });
+ const data = await response.json();
+ displayResults(data);
+ loadHistory();
+ } catch (error) {
+ alert('Error: ' + error.message);
+ document.getElementById('create-section').style.display = 'block';
+ document.getElementById('history-section').style.display = 'block';
+ } finally {
+ submitBtn.disabled = false;
+ loading.classList.remove('active');
+ }
+ });
 
-        function parseJSON(data) {
-            if (typeof data === 'object') return data;
-            try {
-                return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
-            } catch { return {}; }
-        }
+ function parseJSON(data) {
+ if (typeof data === 'object') return data;
+ try {
+ return JSON.parse(data.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+ } catch { return {}; }
+ }
 
-        function displayResults(data) {
-            document.getElementById('results').classList.add('active');
-            document.getElementById('hooks-text').textContent = data.hooks || '';
-            document.getElementById('script-text').textContent = data.script || '';
-            document.getElementById('visuals-text').textContent = data.visuals || '';
-            document.getElementById('thumbnail-text').textContent = data.thumbnail || '';
+ function displayResults(data) {
+ document.getElementById('results').classList.add('active');
+ document.getElementById('hooks-text').textContent = data.hooks || '';
+ document.getElementById('script-text').textContent = data.script || '';
+ document.getElementById('visuals-text').textContent = data.visuals || '';
+ document.getElementById('thumbnail-text').textContent = data.thumbnail || '';
 
-            const captions = parseJSON(data.captions);
-            document.getElementById('captions-container').innerHTML = `
-                <div class="platform-caption">
-                    <h4>📱 TikTok</h4>
-                    <p>${captions?.tiktok?.caption || ''}</p>
-                    <div class="hashtags">
-                        ${(captions?.tiktok?.hashtags || []).map(h => `<span class="hashtag">#${h.replace('#', '')}</span>`).join('')}
-                    </div>
-                </div>
-                <div class="platform-caption">
-                    <h4>▶️ YouTube Shorts</h4>
-                    <p><strong>${captions?.youtube?.title || ''}</strong></p>
-                    <p style="margin-top: 10px;">${captions?.youtube?.description || ''}</p>
-                </div>
-                <div class="platform-caption">
-                    <h4>📸 Instagram Reels</h4>
-                    <p>${captions?.instagram?.caption || ''}</p>
-                    <div class="hashtags">
-                        ${(captions?.instagram?.hashtags || []).map(h => `<span class="hashtag">#${h.replace('#', '')}</span>`).join('')}
-                    </div>
-                </div>
-            `;
-        }
+ const captions = parseJSON(data.captions);
+ document.getElementById('captions-container').innerHTML = `
+ <div class="platform-caption">
+ <h4> TikTok</h4>
+ <p>${captions?.tiktok?.caption || ''}</p>
+ <div class="hashtags">
+ ${(captions?.tiktok?.hashtags || []).map(h => `<span class="hashtag">#${h.replace('#', '')}</span>`).join('')}
+ </div>
+ </div>
+ <div class="platform-caption">
+ <h4> YouTube Shorts</h4>
+ <p><strong>${captions?.youtube?.title || ''}</strong></p>
+ <p style="margin-top: 10px;">${captions?.youtube?.description || ''}</p>
+ </div>
+ <div class="platform-caption">
+ <h4> Instagram Reels</h4>
+ <p>${captions?.instagram?.caption || ''}</p>
+ <div class="hashtags">
+ ${(captions?.instagram?.hashtags || []).map(h => `<span class="hashtag">#${h.replace('#', '')}</span>`).join('')}
+ </div>
+ </div>
+ `;
+ }
 
-        function showTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`${tab}-tab`).classList.add('active');
-        }
+ function showTab(tab) {
+ document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+ document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+ document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
+ document.getElementById(`${tab}-tab`).classList.add('active');
+ }
 
-        function copyContent(id) {
-            navigator.clipboard.writeText(document.getElementById(id).textContent);
-            alert('Copied!');
-        }
+ function copyContent(id) {
+ navigator.clipboard.writeText(document.getElementById(id).textContent);
+ alert('Copied!');
+ }
 
-        function backToCreate() {
-            document.getElementById('results').classList.remove('active');
-            document.getElementById('create-section').style.display = 'block';
-            document.getElementById('history-section').style.display = 'block';
-        }
+ function backToCreate() {
+ document.getElementById('results').classList.remove('active');
+ document.getElementById('create-section').style.display = 'block';
+ document.getElementById('history-section').style.display = 'block';
+ }
 
-        async function loadHistory() {
-            const grid = document.getElementById('history-grid');
-            try {
-                const response = await fetch('/api/list-shorts?limit=9');
-                const data = await response.json();
+ async function loadHistory() {
+ const grid = document.getElementById('history-grid');
+ try {
+ const response = await fetch('/api/list-shorts?limit=9');
+ const data = await response.json();
 
-                if (data.shorts?.length > 0) {
-                    grid.innerHTML = data.shorts.map(s => `
-                        <div class="history-card" onclick="viewShort('${s._id}')">
-                            <div class="history-card-header">
-                                <div class="topic">${(s.topic || '').substring(0, 50)}...</div>
-                            </div>
-                            <div class="history-card-body">
-                                <div class="meta">${s.duration || 30}s • ${s.style || 'entertaining'}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">No shorts yet</p>';
-                }
-            } catch (error) {
-                grid.innerHTML = '<p style="color: #888; grid-column: 1/-1; text-align: center;">Error loading history</p>';
-            }
-        }
+ if (data.shorts?.length > 0) {
+ grid.innerHTML = data.shorts.map(s => `
+ <div class="history-card" onclick="viewShort('${s._id}')">
+ <div class="history-card-header">
+ <div class="topic">${(s.topic || '').substring(0, 50)}...</div>
+ </div>
+ <div class="history-card-body">
+ <div class="meta">${s.duration || 30}s • ${s.style || 'entertaining'}</div>
+ </div>
+ </div>
+ `).join('');
+ } else {
+ grid.innerHTML = '<p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">No shorts yet</p>';
+ }
+ } catch (error) {
+ grid.innerHTML = '<p style="color: var(--ha-text-muted); grid-column: 1/-1; text-align: center;">Error loading history</p>';
+ }
+ }
 
-        async function viewShort(id) {
-            try {
-                const response = await fetch(`/api/get-short?id=${id}`);
-                const data = await response.json();
-                if (data.short) {
-                    displayResults(data.short);
-                }
-            } catch (error) {
-                alert('Error loading short');
-            }
-        }
+ async function viewShort(id) {
+ try {
+ const response = await fetch(`/api/get-short?id=${id}`);
+ const data = await response.json();
+ if (data.short) {
+ displayResults(data.short);
+ }
+ } catch (error) {
+ alert('Error loading short');
+ }
+ }
 
-        loadHistory();
-    </script>
+ loadHistory();
+ </script>
 </body>
 </html>

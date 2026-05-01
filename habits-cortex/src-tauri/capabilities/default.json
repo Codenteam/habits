@@ -8,9 +8,13 @@
   "permissions": [
     "core:default",
     "shell:allow-open",
-        {
+    {
       "identifier": "http:default",
-      "allow": [{ "url": "*://*" }]
+      "allow": [
+        {
+          "url": "*://*"
+        }
+      ]
     },
     "log:default",
     "keyring:default",
@@ -37,7 +41,9 @@
     "fs:allow-read-dir",
     {
       "identifier": "fs:scope",
-      "allow": ["**/*"]
+      "allow": [
+        "**/*"
+      ]
     },
     "dialog:default",
     "dialog:allow-open",
@@ -52,6 +58,7 @@
     "sqlite-vec:allow-ensure-tables",
     "sqlite-vec:allow-vector-insert",
     "sqlite-vec:allow-vector-search",
-    "sqlite-vec:allow-vector-delete"
+    "sqlite-vec:allow-vector-delete",
+    "deep-link:default"
   ]
 }

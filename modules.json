@@ -114,6 +114,16 @@
       "framework": "bits",
       "source": "npm",
       "repository": "@ha-bits/bit-whatsapp"
+    },
+    {
+      "framework": "bits",
+      "source": "npm",
+      "repository": "@ha-bits/bit-voice"
+    },
+    {
+      "framework": "bits",
+      "source": "npm",
+      "repository": "@ha-bits/bit-logger"
     }
   ]
 }

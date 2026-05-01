@@ -1,6 +1,6 @@
 # Introduction
 
-Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**) — all under AGPL-3.0.
+Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**), all under AGPL-3.0.
 
 ## What Can You Build?
 
@@ -50,12 +50,12 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 
 ## Key Features
 
-- **Native Bits** — Use Habits bits (MIT licensed) for integrations with no commercial restrictions
-- **AGPL-3.0 License** — Strong copyleft ensures modifications stay open source
-- **Flexible Execution** — Run via CLI, REST API, or with an auto-generated frontend
-- **Dynamic Module Loading** — Install modules from npm, GitHub, or local sources on-the-fly
-- **Lightweight** — Minimal footprint for serverless, edge, and embedded deployments
-- **Security** — Built-in DLP, PII protection, supply chain integrity, and sandboxing
+- **Native Bits**, Use Habits bits (MIT licensed) for integrations with no commercial restrictions
+- **AGPL-3.0 License**, Strong copyleft ensures modifications stay open source
+- **Flexible Execution**, Run via CLI, REST API, or with an auto-generated frontend
+- **Dynamic Module Loading**, Install modules from npm, GitHub, or local sources on-the-fly
+- **Lightweight**, Minimal footprint for serverless, edge, and embedded deployments
+- **Security**, Built-in DLP, PII protection, supply chain integrity, and sandboxing
 
 <Checklist name="documentation-reading" title="Documentation Reading Order Checklist" icon="book">
 
@@ -66,7 +66,7 @@ The naming draws from neuroscience, the brain's **cortex** orchestrates behavior
 
 ## Next Steps
 
-- [Core Concepts](/getting-started/concepts) — Deep dive into terminology
-- [Build Your First Habit](/getting-started/first-habit) — Hands-on tutorial
-- [When to Use Habits](/getting-started/when-to-use) — Check if it fits your use case
-- [Why Habits?](/getting-started/motivation) — Detailed rationale and comparison
+- [Core Concepts](/getting-started/concepts), Deep dive into terminology
+- [Build Your First Habit](/getting-started/first-habit), Hands-on tutorial
+- [When to Use Habits](/getting-started/when-to-use), Check if it fits your use case
+- [Why Habits?](/getting-started/motivation), Detailed rationale and comparison

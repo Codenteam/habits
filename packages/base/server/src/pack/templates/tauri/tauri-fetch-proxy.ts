@@ -308,10 +308,10 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
           ', converting request to pass-through because ' + _missing + ' is not defined.';
 
         if (!_isTauri) {
-          // Running in a regular browser — small warning
+          // Running in a regular browser, small warning
           console.warn('[Habits] ' + _msg + ' (This is expected in a browser environment.)');
         } else {
-          // Inside Tauri but HabitsBundle is missing — serious misconfiguration
+          // Inside Tauri but HabitsBundle is missing, serious misconfiguration
           console.error('');
           console.error('══════════════════════════════════════════════════════════════');
           console.error('  [Habits] ERROR: ' + _msg);

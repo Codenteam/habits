@@ -143,7 +143,7 @@ export async function generateText(
   console.log('[driver.generateText] modelPath:', modelPath);
   console.log('[driver.generateText] tokenizerPath:', tokenizerPath);
 
-  // Build prompt as plain text — the Rust core wraps it with ChatML tags
+  // Build prompt as plain text, the Rust core wraps it with ChatML tags
   // (<|im_start|>user\n...<|im_end|>\n<|im_start|>assistant\n), so we must
   // NOT add template tags here or the model sees double-wrapped gibberish.
   const parts: string[] = [];

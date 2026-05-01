@@ -24,6 +24,7 @@
     "yargs": "^17.7.2"
   },
   "dependencies": {
+    "@tauri-apps/plugin-deep-link": "~2",
     "tauri-plugin-keyring-api": "^0.1.1"
   }
 }

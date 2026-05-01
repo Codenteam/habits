@@ -1,933 +1,973 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intersect AI - Campaign Generator</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Intersect AI - Campaign Generator</title>
+ <style>
+ :root {
+ /* ha-bits Design Tokens — shared palette */
+ --ha-bg-base: #0f172a;
+ --ha-bg-surface: #1e293b;
+ --ha-bg-elevated: #334155;
+ --ha-bg-hover: #475569;
+ --ha-border: #334155;
+ --ha-border-subtle: #1e293b;
+ --ha-text-primary: #ffffff;
+ --ha-text-body: #cbd5e1;
+ --ha-text-muted: #94a3b8;
+ --ha-text-disabled: #64748b;
+ --ha-accent-blue: #3b82f6;
+ --ha-accent-blue-hover: #2563eb;
+ --ha-accent-sky: #38bdf8;
+ --ha-accent-emerald: #34d399;
+ --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+ --ha-accent-cyan: #22d3ee;
+ --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+ --ha-accent-purple: #c084fc;
+ --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+ --ha-status-running: #fbbf24;
+ --ha-status-success: #4ade80;
+ --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+ --ha-status-error: #f87171;
+ --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+ --ha-status-pending: #60a5fa;
+ --ha-status-skipped: #a78bfa;
+ --ha-warn: #f59e0b;
+ --ha-danger: #ef4444;
+ --ha-danger-hover: #dc2626;
+ --ha-danger-surface: #7f1d1d;
+ --ha-radius-sm: 4px;
+ --ha-radius-md: 6px;
+ --ha-radius-lg: 8px;
+ --ha-radius-xl: 12px;
+ --ha-radius-pill: 9999px;
+ }
+ </style>
+ <style>
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+ 
+ * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ }
 
-    :root {
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --success: #22c55e;
-      --error: #ef4444;
-      --warning: #f59e0b;
-      --bg-primary: #0f0f0f;
-      --bg-secondary: #171717;
-      --bg-tertiary: #1f1f1f;
-      --bg-elevated: #262626;
-      --border: #2a2a2a;
-      --border-hover: #404040;
-      --text-primary: #fafafa;
-      --text-secondary: #a3a3a3;
-      --text-muted: #525252;
-    }
+ :root {
+ --primary: var(--ha-accent-blue);
+ --primary-hover: var(--ha-accent-blue-hover);
+ --success: var(--ha-status-success);
+ --error: var(--ha-danger);
+ --warning: var(--ha-warn);
+ --bg-primary: var(--ha-bg-base);
+ --bg-secondary: var(--ha-bg-surface);
+ --bg-tertiary: var(--ha-bg-surface);
+ --bg-elevated: var(--ha-bg-elevated);
+ --border: var(--ha-bg-elevated);
+ --border-hover: var(--ha-bg-hover);
+ --text-primary: var(--ha-text-primary);
+ --text-secondary: var(--ha-text-muted);
+ --text-muted: var(--ha-text-disabled);
+ }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg-primary);
-      min-height: 100vh;
-      color: var(--text-primary);
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
+ body {
+ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+ background: var(--bg-primary);
+ min-height: 100vh;
+ color: var(--text-primary);
+ overflow-x: hidden;
+ -webkit-font-smoothing: antialiased;
+ }
 
-    /* Main container */
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 48px 24px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+ /* Main container */
+ .container {
+ max-width: 900px;
+ margin: 0 auto;
+ padding: 48px 24px;
+ min-height: 100vh;
+ display: flex;
+ flex-direction: column;
+ }
 
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 48px;
-    }
+ /* Header */
+ .header {
+ text-align: center;
+ margin-bottom: 48px;
+ }
 
-    .logo {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.5px;
-    }
+ .logo {
+ font-size: 2rem;
+ font-weight: 700;
+ color: var(--text-primary);
+ letter-spacing: -0.5px;
+ }
 
-    .subtitle {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-top: 8px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
+ .subtitle {
+ font-size: 0.875rem;
+ color: var(--text-secondary);
+ margin-top: 8px;
+ font-weight: 500;
+ letter-spacing: 0.5px;
+ text-transform: uppercase;
+ }
 
-    /* Input section */
-    .input-section {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      margin-bottom: 24px;
-    }
+ /* Input section */
+ .input-section {
+ background: var(--bg-secondary);
+ border: 1px solid var(--border);
+ border-radius: 16px;
+ padding: 32px;
+ margin-bottom: 24px;
+ }
 
-    .input-label {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: block;
-      font-weight: 600;
-    }
+ .input-label {
+ font-size: 0.75rem;
+ color: var(--text-secondary);
+ text-transform: uppercase;
+ letter-spacing: 0.5px;
+ margin-bottom: 12px;
+ display: block;
+ font-weight: 600;
+ }
 
-    .prompt-textarea {
-      width: 100%;
-      height: 160px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      font-family: inherit;
-      font-size: 1rem;
-      color: var(--text-primary);
-      resize: vertical;
-      transition: border-color 0.2s ease;
-      line-height: 1.6;
-    }
+ .prompt-textarea {
+ width: 100%;
+ height: 160px;
+ background: var(--bg-tertiary);
+ border: 1px solid var(--border);
+ border-radius: 12px;
+ padding: 16px;
+ font-family: inherit;
+ font-size: 1rem;
+ color: var(--text-primary);
+ resize: vertical;
+ transition: border-color 0.2s ease;
+ line-height: 1.6;
+ }
 
-    .prompt-textarea::placeholder {
-      color: var(--text-muted);
-    }
+ .prompt-textarea::placeholder {
+ color: var(--text-muted);
+ }
 
-    .prompt-textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
+ .prompt-textarea:focus {
+ outline: none;
+ border-color: var(--primary);
+ }
 
-    /* Send button */
-    .btn-container {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 20px;
-    }
+ /* Send button */
+ .btn-container {
+ display: flex;
+ justify-content: flex-end;
+ margin-top: 20px;
+ }
 
-    .send-btn {
-      font-family: inherit;
-      font-size: 0.875rem;
-      font-weight: 600;
-      padding: 12px 32px;
-      background: var(--primary);
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.2s ease, transform 0.1s ease;
-    }
+ .send-btn {
+ font-family: inherit;
+ font-size: 0.875rem;
+ font-weight: 600;
+ padding: 12px 32px;
+ background: var(--primary);
+ border: none;
+ border-radius: 10px;
+ color: var(--ha-bg-base);
+ cursor: pointer;
+ position: relative;
+ overflow: hidden;
+ transition: background 0.2s ease, transform 0.1s ease;
+ }
 
-    .send-btn:hover {
-      background: var(--primary-hover);
-    }
+ .send-btn:hover {
+ background: var(--primary-hover);
+ }
 
-    .send-btn:active {
-      transform: scale(0.98);
-    }
+ .send-btn:active {
+ transform: scale(0.98);
+ }
 
-    .send-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
+ .send-btn:disabled {
+ opacity: 0.5;
+ cursor: not-allowed;
+ transform: none;
+ }
 
-    .send-btn.loading {
-      pointer-events: none;
-      padding-right: 48px;
-    }
+ .send-btn.loading {
+ pointer-events: none;
+ padding-right: 48px;
+ }
 
-    .send-btn.loading::after {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
+ .send-btn.loading::after {
+ content: '';
+ position: absolute;
+ width: 16px;
+ height: 16px;
+ border: 2px solid rgba(255,255,255,0.3);
+ border-top-color: var(--ha-bg-base);
+ border-radius: 50%;
+ animation: spin 0.8s linear infinite;
+ right: 16px;
+ top: 50%;
+ transform: translateY(-50%);
+ }
 
-    @keyframes spin {
-      to { transform: translateY(-50%) rotate(360deg); }
-    }
+ @keyframes spin {
+ to { transform: translateY(-50%) rotate(360deg); }
+ }
 
-    /* Results section */
-    .results-section {
-      flex: 1;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-    }
+ /* Results section */
+ .results-section {
+ flex: 1;
+ background: var(--bg-secondary);
+ border: 1px solid var(--border);
+ border-radius: 16px;
+ padding: 32px;
+ }
 
-    .results-header {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 600;
-    }
+ .results-header {
+ font-size: 0.75rem;
+ color: var(--text-secondary);
+ text-transform: uppercase;
+ letter-spacing: 0.5px;
+ margin-bottom: 20px;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ font-weight: 600;
+ }
 
-    .results-count {
-      background: var(--bg-elevated);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
+ .results-count {
+ background: var(--bg-elevated);
+ padding: 6px 12px;
+ border-radius: 6px;
+ font-size: 0.75rem;
+ color: var(--text-secondary);
+ }
 
-    .results-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
-    }
+ .results-list {
+ list-style: none;
+ display: flex;
+ flex-direction: column;
+ gap: 12px;
+ overflow-y: auto;
+ }
 
-    .results-list::-webkit-scrollbar {
-      width: 6px;
-    }
+ .results-list::-webkit-scrollbar {
+ width: 6px;
+ }
 
-    .results-list::-webkit-scrollbar-track {
-      background: var(--bg-tertiary);
-      border-radius: 3px;
-    }
+ .results-list::-webkit-scrollbar-track {
+ background: var(--bg-tertiary);
+ border-radius: 3px;
+ }
 
-    .results-list::-webkit-scrollbar-thumb {
-      background: var(--border-hover);
-      border-radius: 3px;
-    }
+ .results-list::-webkit-scrollbar-thumb {
+ background: var(--border-hover);
+ border-radius: 3px;
+ }
 
-    .result-item {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0;
-      transition: border-color 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
+ .result-item {
+ background: var(--bg-tertiary);
+ border: 1px solid var(--border);
+ border-radius: 12px;
+ padding: 0;
+ transition: border-color 0.2s ease;
+ position: relative;
+ overflow: hidden;
+ }
 
-    .result-item::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: var(--text-muted);
-    }
+ .result-item::before {
+ content: '';
+ position: absolute;
+ left: 0;
+ top: 0;
+ bottom: 0;
+ width: 3px;
+ background: var(--text-muted);
+ }
 
-    .result-item:hover {
-      border-color: var(--border-hover);
-    }
+ .result-item:hover {
+ border-color: var(--border-hover);
+ }
 
-    .result-item-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 20px;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.15s ease;
-    }
+ .result-item-header {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ padding: 16px 20px;
+ cursor: pointer;
+ user-select: none;
+ transition: background 0.15s ease;
+ }
 
-    .result-item-header:hover {
-      background: var(--bg-elevated);
-    }
+ .result-item-header:hover {
+ background: var(--bg-elevated);
+ }
 
-    .expand-icon {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      transition: transform 0.2s ease;
-      margin-left: auto;
-    }
+ .expand-icon {
+ font-size: 0.75rem;
+ color: var(--text-muted);
+ transition: transform 0.2s ease;
+ margin-left: auto;
+ }
 
-    .result-item.expanded .expand-icon {
-      transform: rotate(180deg);
-    }
+ .result-item.expanded .expand-icon {
+ transform: rotate(180deg);
+ }
 
-    .result-index {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      background: var(--bg-elevated);
-      padding: 6px 10px;
-      border-radius: 6px;
-      min-width: 36px;
-      text-align: center;
-    }
+ .result-index {
+ font-size: 0.75rem;
+ font-weight: 600;
+ color: var(--text-muted);
+ background: var(--bg-elevated);
+ padding: 6px 10px;
+ border-radius: 6px;
+ min-width: 36px;
+ text-align: center;
+ }
 
-    .result-type {
-      font-size: 0.8125rem;
-      color: var(--text-primary);
-      font-weight: 500;
-      flex: 1;
-    }
+ .result-type {
+ font-size: 0.8125rem;
+ color: var(--text-primary);
+ font-weight: 500;
+ flex: 1;
+ }
 
-    .status-badge {
-      font-size: 0.6875rem;
-      padding: 4px 10px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
+ .status-badge {
+ font-size: 0.6875rem;
+ padding: 4px 10px;
+ border-radius: 4px;
+ text-transform: uppercase;
+ letter-spacing: 0.5px;
+ font-weight: 600;
+ }
 
-    .status-badge.status-completed {
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--success);
-    }
+ .status-badge.status-completed {
+ background: rgba(34, 197, 94, 0.15);
+ color: var(--success);
+ }
 
-    .status-badge.status-failed {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--error);
-    }
+ .status-badge.status-failed {
+ background: rgba(239, 68, 68, 0.15);
+ color: var(--error);
+ }
 
-    .status-badge.status-running {
-      background: rgba(59, 130, 246, 0.15);
-      color: var(--primary);
-    }
+ .status-badge.status-running {
+ background: rgba(59, 130, 246, 0.15);
+ color: var(--primary);
+ }
 
-    .status-badge.status-pending {
-      background: var(--bg-elevated);
-      color: var(--text-muted);
-    }
+ .status-badge.status-pending {
+ background: var(--bg-elevated);
+ color: var(--text-muted);
+ }
 
-    .duration-badge {
-      font-size: 0.6875rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: var(--bg-elevated);
-      color: var(--text-muted);
-      font-weight: 500;
-    }
+ .duration-badge {
+ font-size: 0.6875rem;
+ padding: 4px 8px;
+ border-radius: 4px;
+ background: var(--bg-elevated);
+ color: var(--text-muted);
+ font-weight: 500;
+ }
 
-    .result-item.status-completed::before {
-      background: var(--success);
-    }
+ .result-item.status-completed::before {
+ background: var(--success);
+ }
 
-    .result-item.status-failed::before {
-      background: var(--error);
-    }
+ .result-item.status-failed::before {
+ background: var(--error);
+ }
 
-    .result-item.status-running::before {
-      background: var(--primary);
-    }
+ .result-item.status-running::before {
+ background: var(--primary);
+ }
 
-    .error-inline {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
-      padding: 12px;
-      color: var(--error);
-      font-size: 0.875rem;
-    }
+ .error-inline {
+ background: rgba(239, 68, 68, 0.1);
+ border: 1px solid rgba(239, 68, 68, 0.2);
+ border-radius: 8px;
+ padding: 12px;
+ color: var(--error);
+ font-size: 0.875rem;
+ }
 
-    .result-content {
-      color: var(--text-secondary);
-      line-height: 1.6;
-      font-size: 0.875rem;
-      padding: 0 20px 16px 20px;
-      display: none;
-      border-top: 1px solid var(--border);
-      margin-top: 0;
-    }
+ .result-content {
+ color: var(--text-secondary);
+ line-height: 1.6;
+ font-size: 0.875rem;
+ padding: 0 20px 16px 20px;
+ display: none;
+ border-top: 1px solid var(--border);
+ margin-top: 0;
+ }
 
-    .result-item.expanded .result-content {
-      display: block;
-    }
+ .result-item.expanded .result-content {
+ display: block;
+ }
 
-    .result-content-inner {
-      padding-top: 16px;
-    }
+ .result-content-inner {
+ padding-top: 16px;
+ }
 
-    .result-content pre {
-      background: var(--bg-primary);
-      padding: 16px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 0.8125rem;
-      margin-top: 12px;
-      border: 1px solid var(--border);
-    }
+ .result-content pre {
+ background: var(--bg-primary);
+ padding: 16px;
+ border-radius: 8px;
+ overflow-x: auto;
+ font-family: 'SF Mono', 'Fira Code', monospace;
+ font-size: 0.8125rem;
+ margin-top: 12px;
+ border: 1px solid var(--border);
+ }
 
-    .result-image {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 12px;
-      border: 1px solid var(--border);
-    }
+ .result-image {
+ max-width: 100%;
+ border-radius: 8px;
+ margin-top: 12px;
+ border: 1px solid var(--border);
+ }
 
-    /* Empty state */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 64px 24px;
-      color: var(--text-muted);
-      text-align: center;
-    }
+ /* Empty state */
+ .empty-state {
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ padding: 64px 24px;
+ color: var(--text-muted);
+ text-align: center;
+ }
 
-    .empty-state-icon {
-      font-size: 2.5rem;
-      margin-bottom: 16px;
-      opacity: 0.4;
-    }
+ .empty-state-icon {
+ font-size: 2.5rem;
+ margin-bottom: 16px;
+ opacity: 0.4;
+ }
 
-    .empty-state-text {
-      font-size: 0.875rem;
-      max-width: 280px;
-      line-height: 1.5;
-    }
+ .empty-state-text {
+ font-size: 0.875rem;
+ max-width: 280px;
+ line-height: 1.5;
+ }
 
-    /* Error state */
-    .error-message {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 12px;
-      padding: 16px 20px;
-      color: var(--error);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.875rem;
-    }
+ /* Error state */
+ .error-message {
+ background: rgba(239, 68, 68, 0.1);
+ border: 1px solid rgba(239, 68, 68, 0.2);
+ border-radius: 12px;
+ padding: 16px 20px;
+ color: var(--error);
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ font-size: 0.875rem;
+ }
 
-    .error-message::before {
-      content: '!';
-      font-size: 0.75rem;
-      font-weight: 700;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--error);
-      color: #fff;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+ .error-message::before {
+ content: '!';
+ font-size: 0.75rem;
+ font-weight: 700;
+ width: 20px;
+ height: 20px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ background: var(--error);
+ color: var(--ha-bg-base);
+ border-radius: 50%;
+ flex-shrink: 0;
+ }
 
-    /* Loading skeleton */
-    .skeleton {
-      background: var(--bg-elevated);
-      border-radius: 8px;
-      height: 60px;
-      position: relative;
-      overflow: hidden;
-    }
+ /* Loading skeleton */
+ .skeleton {
+ background: var(--bg-elevated);
+ border-radius: 8px;
+ height: 60px;
+ position: relative;
+ overflow: hidden;
+ }
 
-    .skeleton::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--bg-tertiary);
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
+ .skeleton::after {
+ content: '';
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ background: var(--bg-tertiary);
+ animation: skeleton-pulse 1.5s ease-in-out infinite;
+ }
 
-    @keyframes skeleton-pulse {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
-    }
+ @keyframes skeleton-pulse {
+ 0%, 100% { opacity: 0; }
+ 50% { opacity: 1; }
+ }
 
-    /* Hidden elements - not needed in clean design */
-    .bg-animation,
-    .grid-overlay,
-    .particles {
-      display: none;
-    }
+ /* Hidden elements - not needed in clean design */
+ .bg-animation,
+ .grid-overlay,
+ .particles {
+ display: none;
+ }
 
-    /* Responsive */
-    @media (max-width: 640px) {
-      .container { padding: 24px 16px; }
-      .header { margin-bottom: 32px; }
-      .logo { font-size: 1.5rem; }
-      .input-section, .results-section { padding: 24px; border-radius: 12px; }
-      .prompt-textarea { height: 140px; font-size: 1rem; padding: 14px; }
-      .send-btn { width: 100%; justify-content: center; padding: 14px 24px; }
-      .btn-container { margin-top: 16px; }
-      .result-item-header { padding: 14px 16px; flex-wrap: wrap; gap: 8px; }
-      .result-type { order: 1; width: 100%; margin-top: 4px; }
-      .expand-icon { order: 0; }
-    }
-  </style>
+ /* Responsive */
+ @media (max-width: 640px) {
+ .container { padding: 24px 16px; }
+ .header { margin-bottom: 32px; }
+ .logo { font-size: 1.5rem; }
+ .input-section, .results-section { padding: 24px; border-radius: 12px; }
+ .prompt-textarea { height: 140px; font-size: 1rem; padding: 14px; }
+ .send-btn { width: 100%; justify-content: center; padding: 14px 24px; }
+ .btn-container { margin-top: 16px; }
+ .result-item-header { padding: 14px 16px; flex-wrap: wrap; gap: 8px; }
+ .result-type { order: 1; width: 100%; margin-top: 4px; }
+ .expand-icon { order: 0; }
+ }
+ </style>
 </head>
 <body>
 
-  <div class="container">
-    <header class="header">
-      <h1 class="logo">Intersect</h1>
-      <p class="subtitle">Campaign Generator</p>
-    </header>
+ <div class="container">
+ <header class="header">
+ <h1 class="logo">Intersect</h1>
+ <p class="subtitle">Campaign Generator</p>
+ </header>
 
-    <section class="input-section">
-      <label class="input-label" for="prompt">Campaign Prompt</label>
-      <textarea 
-        id="prompt" 
-        class="prompt-textarea" 
-        placeholder="Describe your marketing campaign..."
-      ></textarea>
-      <div class="btn-container">
-        <button id="sendBtn" class="send-btn">Generate</button>
-      </div>
-    </section>
+ <section class="input-section">
+ <label class="input-label" for="prompt">Campaign Prompt</label>
+ <textarea 
+ id="prompt" 
+ class="prompt-textarea" 
+ placeholder="Describe your marketing campaign..."
+ ></textarea>
+ <div class="btn-container">
+ <button id="sendBtn" class="send-btn">Generate</button>
+ </div>
+ </section>
 
-    <section class="results-section">
-      <div class="results-header">
-        <span>Results</span>
-        <span class="results-count" id="resultsCount" style="display: none;">0 items</span>
-      </div>
-      <div id="resultsContainer">
-        <div class="empty-state">
-          <div class="empty-state-icon">○</div>
-          <div class="empty-state-text">Enter a prompt and click Generate to see results</div>
-        </div>
-      </div>
-    </section>
-  </div>
+ <section class="results-section">
+ <div class="results-header">
+ <span>Results</span>
+ <span class="results-count" id="resultsCount" style="display: none;">0 items</span>
+ </div>
+ <div id="resultsContainer">
+ <div class="empty-state">
+ <div class="empty-state-icon"></div>
+ <div class="empty-state-text">Enter a prompt and click Generate to see results</div>
+ </div>
+ </div>
+ </section>
+ </div>
 
-  <script>
-    // Main functionality
-    const promptTextarea = document.getElementById('prompt');
-    const sendBtn = document.getElementById('sendBtn');
-    const resultsContainer = document.getElementById('resultsContainer');
-    const resultsCount = document.getElementById('resultsCount');
+ <script>
+ // Main functionality
+ const promptTextarea = document.getElementById('prompt');
+ const sendBtn = document.getElementById('sendBtn');
+ const resultsContainer = document.getElementById('resultsContainer');
+ const resultsCount = document.getElementById('resultsCount');
 
-    const WORKFLOW_NAME = 'marketing-campaign';
+ const WORKFLOW_NAME = 'marketing-campaign';
 
-    sendBtn.addEventListener('click', async () => {
-      const prompt = promptTextarea.value.trim();
-      
-      if (!prompt) {
-        showError('Please enter a prompt before generating.');
-        return;
-      }
+ sendBtn.addEventListener('click', async () => {
+ const prompt = promptTextarea.value.trim();
+ 
+ if (!prompt) {
+ showError('Please enter a prompt before generating.');
+ return;
+ }
 
-      setLoading(true);
-      initStreamingResults();
-      
-      try {
-        const response = await fetch(`/api/marketing-campaign?stream=true`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ prompt }),
-        });
+ setLoading(true);
+ initStreamingResults();
+ 
+ try {
+ const response = await fetch(`/api/marketing-campaign?stream=true`, {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ },
+ body: JSON.stringify({ prompt }),
+ });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+ if (!response.ok) {
+ throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+ }
 
-        // Handle streaming NDJSON response
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+ // Handle streaming NDJSON response
+ const reader = response.body.getReader();
+ const decoder = new TextDecoder();
+ let buffer = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          
-          // Process complete lines
-          const lines = buffer.split('\n');
-          buffer = lines.pop(); // Keep incomplete line in buffer
-          
-          for (const line of lines) {
-            if (line.trim()) {
-              try {
-                const event = JSON.parse(line);
-                handleStreamEvent(event);
-              } catch (e) {
-                console.warn('Failed to parse line:', line, e);
-              }
-            }
-          }
-        }
-        
-        // Process any remaining buffer
-        if (buffer.trim()) {
-          try {
-            const event = JSON.parse(buffer);
-            handleStreamEvent(event);
-          } catch (e) {
-            console.warn('Failed to parse final buffer:', buffer, e);
-          }
-        }
-        
-        finalizeResults();
-      } catch (error) {
-        console.error('Error:', error);
-        showError(`Failed to generate campaign: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    });
+ while (true) {
+ const { done, value } = await reader.read();
+ 
+ if (done) break;
+ 
+ buffer += decoder.decode(value, { stream: true });
+ 
+ // Process complete lines
+ const lines = buffer.split('\n');
+ buffer = lines.pop(); // Keep incomplete line in buffer
+ 
+ for (const line of lines) {
+ if (line.trim()) {
+ try {
+ const event = JSON.parse(line);
+ handleStreamEvent(event);
+ } catch (e) {
+ console.warn('Failed to parse line:', line, e);
+ }
+ }
+ }
+ }
+ 
+ // Process any remaining buffer
+ if (buffer.trim()) {
+ try {
+ const event = JSON.parse(buffer);
+ handleStreamEvent(event);
+ } catch (e) {
+ console.warn('Failed to parse final buffer:', buffer, e);
+ }
+ }
+ 
+ finalizeResults();
+ } catch (error) {
+ console.error('Error:', error);
+ showError(`Failed to generate campaign: ${error.message}`);
+ } finally {
+ setLoading(false);
+ }
+ });
 
-    // Allow Ctrl+Enter to submit
-    promptTextarea.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'Enter') {
-        sendBtn.click();
-      }
-    });
+ // Allow Ctrl+Enter to submit
+ promptTextarea.addEventListener('keydown', (e) => {
+ if (e.ctrlKey && e.key === 'Enter') {
+ sendBtn.click();
+ }
+ });
 
-    function setLoading(loading) {
-      sendBtn.disabled = loading;
-      sendBtn.classList.toggle('loading', loading);
-      sendBtn.textContent = loading ? 'Generating...' : 'Generate';
-    }
+ function setLoading(loading) {
+ sendBtn.disabled = loading;
+ sendBtn.classList.toggle('loading', loading);
+ sendBtn.textContent = loading ? 'Generating...' : 'Generate';
+ }
 
-    // Streaming state
-    let streamResults = [];
-    let completedCount = 0;
-    let totalNodes = 0;
+ // Streaming state
+ let streamResults = [];
+ let completedCount = 0;
+ let totalNodes = 0;
 
-    function initStreamingResults() {
-      streamResults = [];
-      completedCount = 0;
-      totalNodes = 0;
-      resultsContainer.innerHTML = `<ul class="results-list" id="streamingList"></ul>`;
-      resultsCount.textContent = 'Streaming...';
-      resultsCount.style.display = 'block';
-    }
+ function initStreamingResults() {
+ streamResults = [];
+ completedCount = 0;
+ totalNodes = 0;
+ resultsContainer.innerHTML = `<ul class="results-list" id="streamingList"></ul>`;
+ resultsCount.textContent = 'Streaming...';
+ resultsCount.style.display = 'block';
+ }
 
-    function handleStreamEvent(event) {
-      const { nodeId, nodeName, status, result, output, error, duration } = event;
-      
-      // Use output field if result is not provided (server sends 'output', not 'result')
-      const resultData = result !== undefined ? result : output;
-      
-      // Find existing item or create new one
-      let existingIndex = streamResults.findIndex(r => r.nodeId === nodeId);
-      
-      // IF node status is execution_completed, skip
-      if (status === 'execution_completed') {
-        return;
-      }
-      if (existingIndex === -1) {
-        totalNodes++;
-        streamResults.push({
-          nodeId,
-          nodeName: nodeName || nodeId,
-          status: status || 'pending',
-          result: null,
-          error: null,
-          duration: null
-        });
-        existingIndex = streamResults.length - 1;
-      }
-      
-      // Update the item
-      const item = streamResults[existingIndex];
-      item.status = status || item.status;
-      item.nodeName = nodeName || item.nodeName;
-      
-      if (status === 'completed') {
-        completedCount++;
-        item.result = resultData;
-        item.duration = duration;
-      } else if (status === 'failed') {
-        completedCount++;
-        item.error = error;
-        item.duration = duration;
-      }
-      
-      // Update display
-      updateStreamingDisplay();
-    }
+ function handleStreamEvent(event) {
+ const { nodeId, nodeName, status, result, output, error, duration } = event;
+ 
+ // Use output field if result is not provided (server sends 'output', not 'result')
+ const resultData = result !== undefined ? result : output;
+ 
+ // Find existing item or create new one
+ let existingIndex = streamResults.findIndex(r => r.nodeId === nodeId);
+ 
+ // IF node status is execution_completed, skip
+ if (status === 'execution_completed') {
+ return;
+ }
+ if (existingIndex === -1) {
+ totalNodes++;
+ streamResults.push({
+ nodeId,
+ nodeName: nodeName || nodeId,
+ status: status || 'pending',
+ result: null,
+ error: null,
+ duration: null
+ });
+ existingIndex = streamResults.length - 1;
+ }
+ 
+ // Update the item
+ const item = streamResults[existingIndex];
+ item.status = status || item.status;
+ item.nodeName = nodeName || item.nodeName;
+ 
+ if (status === 'completed') {
+ completedCount++;
+ item.result = resultData;
+ item.duration = duration;
+ } else if (status === 'failed') {
+ completedCount++;
+ item.error = error;
+ item.duration = duration;
+ }
+ 
+ // Update display
+ updateStreamingDisplay();
+ }
 
-    function updateStreamingDisplay() {
-      const list = document.getElementById('streamingList');
-      if (!list) return;
-      
-      resultsCount.textContent = `${completedCount}/${totalNodes} nodes completed`;
-      
-      list.innerHTML = streamResults.map((item, index) => {
-        const statusClass = getStatusClass(item.status);
-        const statusIcon = getStatusIcon(item.status);
-        const content = formatStreamContent(item);
-        const itemId = `result-item-${index}`;
-        
-        return `
-          <li class="result-item ${statusClass}" id="${itemId}">
-            <div class="result-item-header" onclick="toggleResultItem('${itemId}')">
-              <span class="result-index">${String(index + 1).padStart(2, '0')}</span>
-              <span class="result-type">${escapeHtml(item.nodeName)}</span>
-              <span class="status-badge ${statusClass}">${statusIcon} ${item.status}</span>
-              ${item.duration ? `<span class="duration-badge">${item.duration}ms</span>` : ''}
-              <span class="expand-icon">▼</span>
-            </div>
-            <div class="result-content"><div class="result-content-inner">${content}</div></div>
-          </li>
-        `;
-      }).join('');
-    }
+ function updateStreamingDisplay() {
+ const list = document.getElementById('streamingList');
+ if (!list) return;
+ 
+ resultsCount.textContent = `${completedCount}/${totalNodes} nodes completed`;
+ 
+ list.innerHTML = streamResults.map((item, index) => {
+ const statusClass = getStatusClass(item.status);
+ const statusIcon = getStatusIcon(item.status);
+ const content = formatStreamContent(item);
+ const itemId = `result-item-${index}`;
+ 
+ return `
+ <li class="result-item ${statusClass}" id="${itemId}">
+ <div class="result-item-header" onclick="toggleResultItem('${itemId}')">
+ <span class="result-index">${String(index + 1).padStart(2, '0')}</span>
+ <span class="result-type">${escapeHtml(item.nodeName)}</span>
+ <span class="status-badge ${statusClass}">${statusIcon} ${item.status}</span>
+ ${item.duration ? `<span class="duration-badge">${item.duration}ms</span>` : ''}
+ <span class="expand-icon"></span>
+ </div>
+ <div class="result-content"><div class="result-content-inner">${content}</div></div>
+ </li>
+ `;
+ }).join('');
+ }
 
-    function toggleResultItem(itemId) {
-      const item = document.getElementById(itemId);
-      if (item) {
-        item.classList.toggle('expanded');
-      }
-    }
+ function toggleResultItem(itemId) {
+ const item = document.getElementById(itemId);
+ if (item) {
+ item.classList.toggle('expanded');
+ }
+ }
 
-    function getStatusClass(status) {
-      switch (status) {
-        case 'completed': return 'status-completed';
-        case 'failed': return 'status-failed';
-        case 'running': return 'status-running';
-        default: return 'status-pending';
-      }
-    }
+ function getStatusClass(status) {
+ switch (status) {
+ case 'completed': return 'status-completed';
+ case 'failed': return 'status-failed';
+ case 'running': return 'status-running';
+ default: return 'status-pending';
+ }
+ }
 
-    function getStatusIcon(status) {
-      switch (status) {
-        case 'completed': return '●';
-        case 'failed': return '●';
-        case 'running': return '○';
-        default: return '○';
-      }
-    }
+ function getStatusIcon(status) {
+ switch (status) {
+ case 'completed': return '';
+ case 'failed': return '';
+ case 'running': return '';
+ default: return '';
+ }
+ }
 
-    function formatStreamContent(item) {
-      if (item.status === 'running' || item.status === 'pending') {
-        return '<div class="skeleton" style="height: 40px;"></div>';
-      }
-      
-      if (item.error) {
-        return `<div class="error-inline">${escapeHtml(item.error)}</div>`;
-      }
-      
-      if (item.result !== null && item.result !== undefined) {
-        return formatContent(item.result);
-      }
-      
-      return '<span style="opacity: 0.5;">No output</span>';
-    }
+ function formatStreamContent(item) {
+ if (item.status === 'running' || item.status === 'pending') {
+ return '<div class="skeleton" style="height: 40px;"></div>';
+ }
+ 
+ if (item.error) {
+ return `<div class="error-inline">${escapeHtml(item.error)}</div>`;
+ }
+ 
+ if (item.result !== null && item.result !== undefined) {
+ return formatContent(item.result);
+ }
+ 
+ return '<span style="opacity: 0.5;">No output</span>';
+ }
 
-    function finalizeResults() {
-      resultsCount.textContent = `${completedCount} item${completedCount !== 1 ? 's' : ''} completed`;
-    }
+ function finalizeResults() {
+ resultsCount.textContent = `${completedCount} item${completedCount !== 1 ? 's' : ''} completed`;
+ }
 
-    function showLoading() {
-      resultsContainer.innerHTML = `
-        <ul class="results-list">
-          ${Array(3).fill('<li class="skeleton"></li>').join('')}
-        </ul>
-      `;
-      resultsCount.style.display = 'none';
-    }
+ function showLoading() {
+ resultsContainer.innerHTML = `
+ <ul class="results-list">
+ ${Array(3).fill('<li class="skeleton"></li>').join('')}
+ </ul>
+ `;
+ resultsCount.style.display = 'none';
+ }
 
-    function showError(message) {
-      resultsContainer.innerHTML = `
-        <div class="error-message">${escapeHtml(message)}</div>
-      `;
-      resultsCount.style.display = 'none';
-    }
+ function showError(message) {
+ resultsContainer.innerHTML = `
+ <div class="error-message">${escapeHtml(message)}</div>
+ `;
+ resultsCount.style.display = 'none';
+ }
 
-    function displayResults(data) {
-      // Handle different response formats
-      let results = [];
-      
-      if (Array.isArray(data)) {
-        results = data;
-      } else if (data.results && Array.isArray(data.results)) {
-        results = data.results;
-      } else if (data.outputs && Array.isArray(data.outputs)) {
-        results = data.outputs;
-      } else if (typeof data === 'object') {
-        // Convert object properties to array of results
-        results = Object.entries(data).map(([key, value]) => ({
-          type: key,
-          content: value
-        }));
-      }
+ function displayResults(data) {
+ // Handle different response formats
+ let results = [];
+ 
+ if (Array.isArray(data)) {
+ results = data;
+ } else if (data.results && Array.isArray(data.results)) {
+ results = data.results;
+ } else if (data.outputs && Array.isArray(data.outputs)) {
+ results = data.outputs;
+ } else if (typeof data === 'object') {
+ // Convert object properties to array of results
+ results = Object.entries(data).map(([key, value]) => ({
+ type: key,
+ content: value
+ }));
+ }
 
-      if (results.length === 0) {
-        resultsContainer.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">○</div>
-            <div class="empty-state-text">No results returned</div>
-          </div>
-        `;
-        resultsCount.style.display = 'none';
-        return;
-      }
+ if (results.length === 0) {
+ resultsContainer.innerHTML = `
+ <div class="empty-state">
+ <div class="empty-state-icon"></div>
+ <div class="empty-state-text">No results returned</div>
+ </div>
+ `;
+ resultsCount.style.display = 'none';
+ return;
+ }
 
-      resultsCount.textContent = `${results.length} item${results.length !== 1 ? 's' : ''}`;
-      resultsCount.style.display = 'block';
+ resultsCount.textContent = `${results.length} item${results.length !== 1 ? 's' : ''}`;
+ resultsCount.style.display = 'block';
 
-      const listHTML = results.map((result, index) => {
-        const type = result.type || result.node || result.step || 'Output';
-        const content = formatContent(result.content || result.data || result.output || result.value || result);
-        const itemId = `display-result-item-${index}`;
-        
-        return `
-          <li class="result-item" id="${itemId}">
-            <div class="result-item-header" onclick="toggleResultItem('${itemId}')">
-              <span class="result-index">${String(index + 1).padStart(2, '0')}</span>
-              <span class="result-type">${escapeHtml(String(type))}</span>
-              <span class="expand-icon">▼</span>
-            </div>
-            <div class="result-content"><div class="result-content-inner">${content}</div></div>
-          </li>
-        `;
-      }).join('');
+ const listHTML = results.map((result, index) => {
+ const type = result.type || result.node || result.step || 'Output';
+ const content = formatContent(result.content || result.data || result.output || result.value || result);
+ const itemId = `display-result-item-${index}`;
+ 
+ return `
+ <li class="result-item" id="${itemId}">
+ <div class="result-item-header" onclick="toggleResultItem('${itemId}')">
+ <span class="result-index">${String(index + 1).padStart(2, '0')}</span>
+ <span class="result-type">${escapeHtml(String(type))}</span>
+ <span class="expand-icon"></span>
+ </div>
+ <div class="result-content"><div class="result-content-inner">${content}</div></div>
+ </li>
+ `;
+ }).join('');
 
-      resultsContainer.innerHTML = `<ul class="results-list">${listHTML}</ul>`;
-    }
+ resultsContainer.innerHTML = `<ul class="results-list">${listHTML}</ul>`;
+ }
 
-    function formatContent(content) {
-      if (typeof content === 'string') {
-        // Check if it's an image URL
-        if (content.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || content.startsWith('data:image')) {
-          return `<img src="${escapeHtml(content)}" alt="Generated image" class="result-image" />`;
-        }
-        // Check if it's HTML
-        if (content.trim().startsWith('<') && content.trim().endsWith('>')) {
-          return `<pre><code>${escapeHtml(content)}</code></pre>`;
-        }
-        // Check if it's a URL
-        if (content.match(/^https?:\/\//)) {
-          return `<a href="${escapeHtml(content)}" target="_blank" style="color: var(--primary);">${escapeHtml(content)}</a>`;
-        }
-        return escapeHtml(content).replace(/\n/g, '<br>');
-      }
-      
-      if (typeof content === 'object' && content !== null) {
-        let output = '';
-        
-        // Check for base64 image data (e.g., from image generator)
-        const base64Image = extractBase64Image(content);
-        if (base64Image) {
-          output += `<img src="data:image/png;base64,${base64Image}" alt="Generated image" class="result-image" />`;
-        }
-        
-        // Check for URL in various nested locations
-        const url = extractUrl(content);
-        if (url) {
-          output += `<div style="margin: 10px 0;">
-            <span style="color: var(--secondary); font-weight: 600;">🔗 Link: </span>
-            <a href="${escapeHtml(url)}" target="_blank" style="color: var(--primary); word-break: break-all;">${escapeHtml(url)}</a>
-          </div>`;
-        }
-        
-        // If we extracted special content, show it along with collapsed raw data
-        if (output) {
-          output += `<details style="margin-top: 15px;">
-            <summary style="cursor: pointer; color: var(--secondary); font-size: 0.85rem;">View raw data</summary>
-            <pre style="margin-top: 10px;"><code>${escapeHtml(JSON.stringify(content, null, 2))}</code></pre>
-          </details>`;
-          return output;
-        }
-        
-        return `<pre><code>${escapeHtml(JSON.stringify(content, null, 2))}</code></pre>`;
-      }
-      
-      return escapeHtml(String(content));
-    }
+ function formatContent(content) {
+ if (typeof content === 'string') {
+ // Check if it's an image URL
+ if (content.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || content.startsWith('data:image')) {
+ return `<img src="${escapeHtml(content)}" alt="Generated image" class="result-image" />`;
+ }
+ // Check if it's HTML
+ if (content.trim().startsWith('<') && content.trim().endsWith('>')) {
+ return `<pre><code>${escapeHtml(content)}</code></pre>`;
+ }
+ // Check if it's a URL
+ if (content.match(/^https?:\/\//)) {
+ return `<a href="${escapeHtml(content)}" target="_blank" style="color: var(--primary);">${escapeHtml(content)}</a>`;
+ }
+ return escapeHtml(content).replace(/\n/g, '<br>');
+ }
+ 
+ if (typeof content === 'object' && content !== null) {
+ let output = '';
+ 
+ // Check for base64 image data (e.g., from image generator)
+ const base64Image = extractBase64Image(content);
+ if (base64Image) {
+ output += `<img src="data:image/png;base64,${base64Image}" alt="Generated image" class="result-image" />`;
+ }
+ 
+ // Check for URL in various nested locations
+ const url = extractUrl(content);
+ if (url) {
+ output += `<div style="margin: 10px 0;">
+ <span style="color: var(--secondary); font-weight: 600;"> Link: </span>
+ <a href="${escapeHtml(url)}" target="_blank" style="color: var(--primary); word-break: break-all;">${escapeHtml(url)}</a>
+ </div>`;
+ }
+ 
+ // If we extracted special content, show it along with collapsed raw data
+ if (output) {
+ output += `<details style="margin-top: 15px;">
+ <summary style="cursor: pointer; color: var(--secondary); font-size: 0.85rem;">View raw data</summary>
+ <pre style="margin-top: 10px;"><code>${escapeHtml(JSON.stringify(content, null, 2))}</code></pre>
+ </details>`;
+ return output;
+ }
+ 
+ return `<pre><code>${escapeHtml(JSON.stringify(content, null, 2))}</code></pre>`;
+ }
+ 
+ return escapeHtml(String(content));
+ }
 
-    function extractBase64Image(obj) {
-      if (!obj || typeof obj !== 'object') return null;
-      
-      // Check for data array with b64_json (OpenAI image format)
-      if (obj.data && Array.isArray(obj.data)) {
-        for (const item of obj.data) {
-          if (item.b64_json && item.b64_json.length > 0) {
-            return item.b64_json;
-          }
-        }
-      }
-      
-      // Check for nested output.data
-      if (obj.output && obj.output.data && Array.isArray(obj.output.data)) {
-        for (const item of obj.output.data) {
-          if (item.b64_json && item.b64_json.length > 0) {
-            return item.b64_json;
-          }
-        }
-      }
-      
-      // Check for direct b64_json property
-      if (obj.b64_json && obj.b64_json.length > 0) {
-        return obj.b64_json;
-      }
-      
-      // Check for base64 or image_base64 property
-      if (obj.base64 && obj.base64.length > 0) {
-        return obj.base64;
-      }
-      if (obj.image_base64 && obj.image_base64.length > 0) {
-        return obj.image_base64;
-      }
-      
-      return null;
-    }
+ function extractBase64Image(obj) {
+ if (!obj || typeof obj !== 'object') return null;
+ 
+ // Check for data array with b64_json (OpenAI image format)
+ if (obj.data && Array.isArray(obj.data)) {
+ for (const item of obj.data) {
+ if (item.b64_json && item.b64_json.length > 0) {
+ return item.b64_json;
+ }
+ }
+ }
+ 
+ // Check for nested output.data
+ if (obj.output && obj.output.data && Array.isArray(obj.output.data)) {
+ for (const item of obj.output.data) {
+ if (item.b64_json && item.b64_json.length > 0) {
+ return item.b64_json;
+ }
+ }
+ }
+ 
+ // Check for direct b64_json property
+ if (obj.b64_json && obj.b64_json.length > 0) {
+ return obj.b64_json;
+ }
+ 
+ // Check for base64 or image_base64 property
+ if (obj.base64 && obj.base64.length > 0) {
+ return obj.base64;
+ }
+ if (obj.image_base64 && obj.image_base64.length > 0) {
+ return obj.image_base64;
+ }
+ 
+ return null;
+ }
 
-    function extractUrl(obj) {
-      if (!obj || typeof obj !== 'object') return null;
-      
-      // Direct url property
-      if (obj.url && typeof obj.url === 'string' && obj.url.match(/^https?:\/\//)) {
-        return obj.url;
-      }
-      
-      // Nested output.url
-      if (obj.output && typeof obj.output === 'object' && obj.output.url && typeof obj.output.url === 'string' && obj.output.url.match(/^https?:\/\//)) {
-        return obj.output.url;
-      }
-      
-      // rawResponse.url
-      if (obj.rawResponse && typeof obj.rawResponse === 'object' && obj.rawResponse.url && typeof obj.rawResponse.url === 'string' && obj.rawResponse.url.match(/^https?:\/\//)) {
-        return obj.rawResponse.url;
-      }
-      
-      // link property
-      if (obj.link && typeof obj.link === 'string' && obj.link.match(/^https?:\/\//)) {
-        return obj.link;
-      }
-      
-      return null;
-    }
+ function extractUrl(obj) {
+ if (!obj || typeof obj !== 'object') return null;
+ 
+ // Direct url property
+ if (obj.url && typeof obj.url === 'string' && obj.url.match(/^https?:\/\//)) {
+ return obj.url;
+ }
+ 
+ // Nested output.url
+ if (obj.output && typeof obj.output === 'object' && obj.output.url && typeof obj.output.url === 'string' && obj.output.url.match(/^https?:\/\//)) {
+ return obj.output.url;
+ }
+ 
+ // rawResponse.url
+ if (obj.rawResponse && typeof obj.rawResponse === 'object' && obj.rawResponse.url && typeof obj.rawResponse.url === 'string' && obj.rawResponse.url.match(/^https?:\/\//)) {
+ return obj.rawResponse.url;
+ }
+ 
+ // link property
+ if (obj.link && typeof obj.link === 'string' && obj.link.match(/^https?:\/\//)) {
+ return obj.link;
+ }
+ 
+ return null;
+ }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-  </script>
+ function escapeHtml(text) {
+ const div = document.createElement('div');
+ div.textContent = text;
+ return div.innerHTML;
+ }
+ </script>
 </body>
 </html>
