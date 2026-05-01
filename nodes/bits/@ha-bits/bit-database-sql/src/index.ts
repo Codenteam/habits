@@ -22,6 +22,9 @@ import type {
   IncrementResult,
 } from '@ha-bits/bit-database';
 
+export type { VectorSearchResult } from './driver';
+import type { VectorSearchResult } from './driver';
+
 // Relative import - bundle generator's plugin will intercept and stub for Tauri
 import * as driver from './driver';
 
@@ -167,6 +170,51 @@ const sqlBit = {
       },
       async run(context: DatabaseContext): Promise<DeleteResult> {
         return driver.deleteDoc(context.propsValue as any);
+      },
+    },
+
+    vectorInsert: {
+      name: 'vectorInsert',
+      displayName: 'Vector Insert',
+      description: 'Insert a document with an embedding vector into a sqlite-vec virtual table',
+      props: {
+        collection: { type: 'SHORT_TEXT', displayName: 'Collection', required: true },
+        document:   { type: 'JSON',       displayName: 'Document (must include .vector: number[])', required: true },
+        database:   { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
+      },
+      async run(context: DatabaseContext): Promise<InsertResult> {
+        return driver.vectorInsert(context.propsValue as any);
+      },
+    },
+
+    vectorSearch: {
+      name: 'vectorSearch',
+      displayName: 'Vector Search',
+      description: 'Find top-K most similar documents via sqlite-vec (L2, cosine, or L1)',
+      props: {
+        collection: { type: 'SHORT_TEXT', displayName: 'Collection', required: true },
+        vector:     { type: 'JSON',       displayName: 'Query Vector (number[])', required: true },
+        limit:      { type: 'NUMBER',     displayName: 'Top K', required: false, defaultValue: 10 },
+        distance:   { type: 'SHORT_TEXT', displayName: 'Distance (l2|cosine|l1)', required: false, defaultValue: 'l2' },
+        filter:     { type: 'JSON',       displayName: 'Metadata filter', required: false, defaultValue: '{}' },
+        database:   { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
+      },
+      async run(context: DatabaseContext): Promise<VectorSearchResult> {
+        return driver.vectorSearch(context.propsValue as any);
+      },
+    },
+
+    vectorDelete: {
+      name: 'vectorDelete',
+      displayName: 'Vector Delete',
+      description: 'Delete a document from both the vector and metadata tables',
+      props: {
+        collection: { type: 'SHORT_TEXT', displayName: 'Collection', required: true },
+        id:         { type: 'SHORT_TEXT', displayName: 'Document ID', required: true },
+        database:   { type: 'SHORT_TEXT', displayName: 'Database File', required: false, defaultValue: 'habits-cortex.db' },
+      },
+      async run(context: DatabaseContext): Promise<DeleteResult> {
+        return driver.vectorDelete(context.propsValue as any);
       },
     },
   },

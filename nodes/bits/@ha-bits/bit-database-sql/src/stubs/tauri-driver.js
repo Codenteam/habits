@@ -282,6 +282,77 @@ async function increment(params) {
   return { collection: String(collection), key: String(key), previousValue: previousValue, newValue: newValue, amount: Number(amount) };
 }
 
+// ============ Vector actions (plugin:sqlite-vec) ============
+
+async function vectorInsert(params) {
+  var invoke = getInvoke();
+  if (!invoke) throw new Error('Tauri API not available');
+  var collection = params.collection;
+  var doc = parseValue(params.document);
+  if (typeof doc !== 'object' || doc === null) doc = { data: doc };
+  if (!Array.isArray(doc.vector)) throw new Error('vectorInsert requires document.vector');
+  var vector = doc.vector;
+  var customId = generateId();
+  var now = new Date().toISOString();
+  var meta = Object.assign({}, doc, { _id: customId });
+  delete meta.vector;
+
+  await invoke('plugin:sqlite-vec|ensure_tables', {
+    database: params.database || 'habits-cortex.db',
+    collection: collection,
+    dim: vector.length,
+  });
+  await invoke('plugin:sqlite-vec|vector_insert', {
+    database: params.database || 'habits-cortex.db',
+    collection: collection,
+    customId: customId,
+    vector: vector,
+    data: JSON.stringify(meta),
+    now: now,
+  });
+
+  return { success: true, id: customId, collection: String(collection), document: Object.assign({}, meta, { vector: vector }), createdAt: now };
+}
+
+async function vectorSearch(params) {
+  var invoke = getInvoke();
+  if (!invoke) throw new Error('Tauri API not available');
+  var collection = params.collection;
+  var vec = typeof params.vector === 'string' ? JSON.parse(params.vector) : params.vector;
+  var limit = Number(params.limit) || 10;
+  var distance = params.distance || 'l2';
+  var filter = parseFilter(params.filter);
+
+  var rows = await invoke('plugin:sqlite-vec|vector_search', {
+    database: params.database || 'habits-cortex.db',
+    collection: collection,
+    vector: vec,
+    distance: distance,
+    limit: Object.keys(filter).length ? limit * 5 : limit,
+  });
+
+  var results = [];
+  for (var i = 0; i < (rows || []).length && results.length < limit; i++) {
+    var row = rows[i];
+    var data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+    var ok = true;
+    for (var k in filter) { if (data[k] !== filter[k]) { ok = false; break; } }
+    if (ok) results.push(Object.assign({}, data, { _id: data._id, _createdAt: row.created_at, _distance: row.distance }));
+  }
+  return { collection: String(collection), results: results, count: results.length };
+}
+
+async function vectorDelete(params) {
+  var invoke = getInvoke();
+  if (!invoke) throw new Error('Tauri API not available');
+  var ok = await invoke('plugin:sqlite-vec|vector_delete', {
+    database: params.database || 'habits-cortex.db',
+    collection: params.collection,
+    id: params.id,
+  });
+  return { success: true, deleted: !!ok, collection: String(params.collection), key: String(params.id) };
+}
+
 module.exports = { 
   generateId: generateId, 
   parseValue: parseValue, 
@@ -293,5 +364,8 @@ module.exports = {
   insert: insert, 
   update: update, 
   query: query, 
-  increment: increment 
+  increment: increment,
+  vectorInsert: vectorInsert,
+  vectorSearch: vectorSearch,
+  vectorDelete: vectorDelete,
 };

@@ -1,0 +1,52 @@
+# Test Embed Text Workflow
+id: test-embed-text
+name: Test Embed Text
+description: Test the embed-text action
+
+input:
+  type: object
+  properties:
+    texts:
+      type: array
+      description: Array of texts to embed
+      default:
+        - "This is a test sentence."
+        - "A completely different sentence about cats."
+    modelId:
+      type: string
+      description: Embedding model ID to use
+      default: all-minilm-l6-v2
+    normalize:
+      type: boolean
+      description: L2-normalize output vectors
+      default: true
+    meanPool:
+      type: boolean
+      description: Mean-pool token embeddings (false = use CLS)
+      default: true
+  required:
+    - texts
+
+nodes:
+  - id: embed
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: embed-text
+      label: Embed Text
+      isTrigger: false
+      params:
+        texts: "{{habits.input.texts}}"
+        modelId: "{{habits.input.modelId}}"
+        normalize: "{{habits.input.normalize}}"
+        meanPool: "{{habits.input.meanPool}}"
+
+edges: []
+
+output:
+  embeddings: "{{embed.embeddings}}"
+  dimensions: "{{embed.dimensions}}"
+  model: "{{embed.model}}"
+  deviceUsed: "{{embed.deviceUsed}}"

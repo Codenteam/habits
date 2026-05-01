@@ -10,7 +10,7 @@ declare const process: any;
 declare const require: (id: string) => any;
 declare const console: { log: (...args: any[]) => void; error: (...args: any[]) => void };
 
-import { ChatMessage, TextGenResult, InstallModelResult, ModelRegistry } from './common/common';
+import { ChatMessage, TextGenResult, InstallModelResult, EmbedResult, ModelRegistry } from './common/common';
 
 // ============================================================================
 // Node.js Native Addon
@@ -171,6 +171,44 @@ export async function generateText(
   return {
     text: result.text,
     tokensGenerated: result.tokensGenerated || result.tokens_generated,
+    model: modelId,
+    deviceUsed: result.deviceUsed || result.device_used || 'cpu',
+  };
+}
+
+// ============================================================================
+// Embed Text
+// ============================================================================
+
+/**
+ * Embed a batch of texts using a local BERT-family model
+ */
+export async function embedText(
+  texts: string[],
+  modelId: string = 'all-minilm-l6-v2',
+  normalize: boolean = true,
+  meanPool: boolean = true
+): Promise<EmbedResult> {
+  const native = getNodeAddon();
+  const basePath = getModelsBasePath();
+
+  const modelPath = `${basePath}/embedding/${modelId}/model.safetensors`;
+  const tokenizerPath = `${basePath}/embedding/${modelId}/tokenizer.json`;
+  const configPath = `${basePath}/embedding/${modelId}/config.json`;
+
+  const result = await native.embedTexts(
+    modelPath,
+    tokenizerPath,
+    configPath,
+    texts,
+    normalize,
+    meanPool,
+    'Auto'
+  );
+
+  return {
+    embeddings: result.embeddings,
+    dimensions: result.dimensions,
     model: modelId,
     deviceUsed: result.deviceUsed || result.device_used || 'cpu',
   };

@@ -31,11 +31,21 @@ export interface InstallModelResult {
 }
 
 /**
+ * Text embedding result
+ */
+export interface EmbedResult {
+  embeddings: number[][];
+  dimensions: number;
+  model: string;
+  deviceUsed: string;
+}
+
+/**
  * Model registry entry
  */
 export interface ModelRegistryEntry {
   label: string;
-  type: 'text-gen';
+  type: 'text-gen' | 'embedding';
   size: string;
   files: Record<string, string>;
 }
@@ -102,6 +112,16 @@ export const ModelRegistry: Record<string, ModelRegistryEntry> = {
     files: {
       'model.gguf': 'https://huggingface.co/lmstudio-community/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf',
       'tokenizer.json': 'https://huggingface.co/unsloth/gemma-3-4b-it-bnb-4bit/resolve/main/tokenizer.json',
+    },
+  },
+  'all-minilm-l6-v2': {
+    label: 'all-MiniLM-L6-v2 (BERT embeddings, 384-dim)',
+    type: 'embedding',
+    size: '~90MB',
+    files: {
+      'model.safetensors': 'https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/model.safetensors',
+      'tokenizer.json': 'https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json',
+      'config.json': 'https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json',
     },
   },
 };

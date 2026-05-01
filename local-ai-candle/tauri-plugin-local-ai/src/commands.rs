@@ -5,6 +5,7 @@ use crate::state::{InstanceId, LocalAiState};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use local_ai_core::{
     device::DeviceType,
+    embed::{EmbedConfig, EmbedResult, TextEmbedder},
     image_caption::{ImageCaptionConfig, ImageCaptionResult, ImageCaptioner},
     image_gen::{ImageGenBase64Result, ImageGenConfig, ImageGenResult, ImageGenerator},
     text_gen::{TextGenConfig, TextGenResult, TextGenerator, ModelType},
@@ -641,6 +642,86 @@ pub async fn voice_synthesizer_synthesize(
     let synthesizer = state.get_voice_synthesizer(&id).await?;
     let mut synth = synthesizer.write().await;
     let result = synth.synthesize(&prompt, &output_path)?;
+    Ok(result)
+}
+
+// ============================================================================
+// Text Embeddings
+// ============================================================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsEmbedConfig {
+    pub model_path: String,
+    pub tokenizer_path: String,
+    pub config_path: String,
+    #[serde(default = "default_true")]
+    pub normalize: bool,
+    #[serde(default = "default_true")]
+    pub mean_pool: bool,
+    #[serde(default)]
+    pub device: JsDeviceType,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl From<JsEmbedConfig> for EmbedConfig {
+    fn from(c: JsEmbedConfig) -> Self {
+        EmbedConfig {
+            model_path: c.model_path,
+            tokenizer_path: c.tokenizer_path,
+            config_path: c.config_path,
+            normalize: c.normalize,
+            mean_pool: c.mean_pool,
+            device: c.device.into(),
+        }
+    }
+}
+
+#[command]
+pub fn embed_texts(
+    model_path: String,
+    tokenizer_path: String,
+    config_path: String,
+    texts: Vec<String>,
+    normalize: Option<bool>,
+    mean_pool: Option<bool>,
+    device: Option<JsDeviceType>,
+) -> Result<EmbedResult> {
+    let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+    let result = local_ai_core::embed::embed_texts(
+        &model_path,
+        &tokenizer_path,
+        &config_path,
+        &refs,
+        normalize.unwrap_or(true),
+        mean_pool.unwrap_or(true),
+        device.unwrap_or_default().into(),
+    )?;
+    Ok(result)
+}
+
+#[command]
+pub async fn create_text_embedder(
+    state: State<'_, LocalAiState>,
+    config: JsEmbedConfig,
+) -> Result<InstanceId> {
+    let embedder = TextEmbedder::new(config.into())?;
+    let id = state.add_text_embedder(embedder).await;
+    Ok(id)
+}
+
+#[command]
+pub async fn text_embedder_embed(
+    state: State<'_, LocalAiState>,
+    id: String,
+    texts: Vec<String>,
+) -> Result<EmbedResult> {
+    let embedder = state.get_text_embedder(&id).await?;
+    let refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+    let result = embedder.embed(&refs)?;
     Ok(result)
 }
 

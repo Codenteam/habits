@@ -9,6 +9,7 @@ Default permissions for Local AI plugin - allows all AI operations
 - `allow-image-gen`
 - `allow-transcribe`
 - `allow-text-to-voice`
+- `allow-embed`
 - `allow-utilities`
 
 ## Permission Table
@@ -549,6 +550,19 @@ Allow audio transcription commands
 <td>
 
 Allow text-to-voice commands
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`local-ai:allow-embed`
+
+</td>
+<td>
+
+Allow text embedding commands
 
 </td>
 </tr>
