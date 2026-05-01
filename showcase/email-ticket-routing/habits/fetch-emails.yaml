@@ -1,0 +1,29 @@
+id: fetch-emails
+name: Fetch Emails
+description: Fetch unread support emails from Gmail inbox via IMAP
+
+nodes:
+  - id: fetch
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: fetchEmails
+      params:
+        folder: "INBOX"
+        unreadOnly: true
+        limit: 20
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_GMAIL_IMAP_HOST}}"
+          port: "{{habits.env.HABITS_GMAIL_IMAP_PORT}}"
+          user: "{{habits.env.HABITS_GMAIL_IMAP_USER}}"
+          password: "{{habits.env.HABITS_GMAIL_IMAP_APP_PASSWORD}}"
+
+edges: []
+
+output:
+  emails: "{{fetch.emails}}"
+  count: "{{fetch.count}}"
+  folder: "{{fetch.folder}}"

@@ -1,0 +1,49 @@
+id: assign-ticket
+name: Assign Ticket
+description: >
+  Orchestrates ticket assignment in two clean steps:
+  1. route-category — resolves the SMTP password via bit-if and passes ticket fields through
+  2. send-email — sends the email using the combined output from step 1
+
+
+nodes:
+  - id: get-route
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "[{{analyzedTicket}}]"
+        habitId: route-category
+        inputKey: analyzedTicket
+        collectResults: true
+
+  # send-email receives each item as {{ticket}}
+  - id: send
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-route.results}}"
+        habitId: send-email
+        inputKey: ticket
+        collectResults: true
+
+edges:
+  - source: get-route
+    target: send
+
+output:
+  success: true
+  sentFrom: "{{analyzedTicket.output.from}}"
+  sentTo: "{{analyzedTicket.output.userEmail}}"
+  subject: "[{{analyzedTicket.output.routeCategory}}] {{analyzedTicket.output.subject}}"
+  routeCategory: "{{analyzedTicket.output.routeCategory}}"
+  confidence: "{{analyzedTicket.output.confidence}}"
+  priority: "{{analyzedTicket.output.priority}}"
+  summary: "{{analyzedTicket.output.summary}}"

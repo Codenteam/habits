@@ -1,0 +1,32 @@
+id: send-email
+name: Send Email
+description: Send the ticket reply to the resolved team inbox using the SMTP password from route-category
+
+nodes:
+  # Send the reply using the pre-resolved ticket fields and SMTP password
+  # All values come from ticket.output.* — the output of route-category
+  - id: send
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        to: "{{ticket.output.userEmail}}"
+        from: "{{ticket.output.customerName}} via {{ticket.output.routeCategory}} <{{ticket.output.from}}>"
+        replyTo: "{{ticket.output.from}}"
+        subject: "[{{ticket.output.routeCategory}}] {{ticket.output.subject}}"
+        body: "{{ticket.output.cleanBody}}"
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{ticket.output.userEmail}}"
+          password: "{{ticket.output.smtpPassword}}"
+
+output:
+  success: true
+  sentFrom: "{{ticket.output.from}}"
+  sentTo: "{{ticket.output.userEmail}}"
+  subject: "[{{ticket.output.routeCategory}}] {{ticket.output.subject}}"

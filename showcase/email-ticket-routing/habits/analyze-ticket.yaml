@@ -1,0 +1,77 @@
+id: analyze-ticket
+name: Analyze Ticket
+description: Classify a support email with OpenAI and route it to the correct support inbox
+
+nodes:
+  # Node 1: Send the email + routing inbox list to OpenAI for classification and routing
+  - id: analyze
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        prompt: |
+          You are a support ticket classification assistant.
+
+          Classify the incoming support email into the correct category.
+
+          CATEGORIES:
+          - support:  general help, technical issues, account problems, bug reports
+          - sales:    pricing questions, plan upgrades, demos, partnerships
+          - billing:  invoices, refunds, payment failures, subscription changes
+          - feedback: feature requests, suggestions, compliments
+          - spam:     unsolicited, irrelevant, or abusive emails
+          - urgent:   critical outages, security incidents, SLA breaches, data loss
+
+          ROUTING INBOXES (match the category to pick the correct userEmail):
+          - support:  {{habits.env.HABITS_SMTP_SUPPORT_USER}}
+          - sales:    {{habits.env.HABITS_SMTP_SALES_USER}}
+          - billing:  {{habits.env.HABITS_SMTP_BILLING_USER}}
+          - feedback: {{habits.env.HABITS_SMTP_FEEDBACK_USER}}
+          - spam:     {{habits.env.HABITS_SMTP_SPAM_USER}}
+          - urgent:   {{habits.env.HABITS_SMTP_URGENT_USER}}
+
+          INCOMING EMAIL:
+          - Date:    {{email.date}}
+          - From:    {{email.from}}
+          - To:      {{email.to}}
+          - Subject: {{email.subject}}
+          - Body:
+          {{email.body}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - category:      one of (support, sales, billing, feedback, spam, urgent)
+            - confidence:    number from 0.0 to 1.0 indicating classification confidence
+            - summary:       brief 1-2 sentence summary of what the email is about
+            - priority:      one of (high, medium, low) based on urgency and business impact
+            - suggestedReply: a short, professional auto-reply to send back to the customer
+            - cleanBody:     the plain text body of the email, with all MIME headers, boundaries, HTML parts, and encoding artifacts removed. Return only the readable message text.
+            - customerName:  the sender's display name extracted from the From header, or their email address if no display name is present.
+            - userEmail:     the exact email address from ROUTING INBOXES that matches the selected category.
+        maxTokens: 700
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  # Original email fields
+  emailId: "{{email.id}}"
+  from: "{{email.from}}"
+  to: "{{email.to}}"
+  subject: "{{email.subject}}"
+  originalBody: "{{email.body}}"
+  date: "{{email.date}}"
+  routeCategory: "{{analyze.category}}"
+  confidence: "{{analyze.confidence}}"
+  summary: "{{analyze.summary}}"
+  priority: "{{analyze.priority}}"
+  suggestedReply: "{{analyze.suggestedReply}}"
+  cleanBody: "{{analyze.cleanBody}}"
+  customerName: "{{analyze.customerName}}"
+  userEmail: "{{analyze.userEmail}}"
