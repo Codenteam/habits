@@ -1,0 +1,27 @@
+id: fetch-emails
+name: Fetch Emails
+description: Fetch unread emails from IMAP inbox
+
+nodes:
+  - id: fetch
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: fetchEmails
+      params:
+        folder: "INBOX"
+        unreadOnly: true
+        limit: 10
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_IMAP_HOST}}"
+          port: "{{habits.env.HABITS_IMAP_PORT}}"
+          user: "{{habits.env.HABITS_IMAP_USER}}"
+          password: "{{habits.env.HABITS_IMAP_PASSWORD}}"
+
+output:
+  emails: "{{fetch.emails}}"
+  count: "{{fetch.count}}"
+  folder: "{{fetch.folder}}"
