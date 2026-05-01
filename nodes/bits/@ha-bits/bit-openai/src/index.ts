@@ -35,6 +35,7 @@ import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
+import { askWithFile } from './lib/actions/ask-with-file';
 import { baseUrl, openaiAuth, openaiAuthValue, notLLMs } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 import OpenAI from 'openai';
@@ -106,6 +107,7 @@ export const openai = createBit({
     listModels,
     generateImage,
     visionPrompt,
+    askWithFile,
     textToSpeech,
     transcribeAction,
     translateAction,

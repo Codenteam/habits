@@ -41,6 +41,7 @@ export interface EmailMessage {
     filename: string;
     contentType: string;
     size: number;
+    content?: string; // base64 encoded attachment content
   }>;
 }
 
@@ -48,6 +49,7 @@ export interface FetchEmailsOptions {
   folder?: string;
   limit?: number;
   unreadOnly?: boolean;
+  attachmentsOnly?: boolean;
 }
 
 export interface SendEmailOptions {
@@ -106,7 +108,7 @@ export async function fetchImapEmails(
   config: ImapConfig,
   options: FetchEmailsOptions = {}
 ): Promise<EmailMessage[]> {
-  const { folder = 'INBOX', limit = 10, unreadOnly = true } = options;
+  const { folder = 'INBOX', limit = 10, unreadOnly = true, attachmentsOnly = false } = options;
   
   log('info', `Connecting to IMAP ${config.host}:${config.port} as ${config.user}...`);
   log('info', `Fetching from ${folder}, limit: ${limit}, unreadOnly: ${unreadOnly}`);
@@ -201,10 +203,49 @@ export async function fetchImapEmails(
             }
           }
 
-          // Extract attachments info from bodyStructure
-          const attachments: Array<{ filename: string; contentType: string; size: number }> = [];
+          // Extract attachment parts (with MIME section numbers) from bodyStructure
+          const attachmentParts: AttachmentPart[] = [];
           if (message.bodyStructure) {
-            extractAttachments(message.bodyStructure, attachments);
+            extractAttachmentParts(message.bodyStructure, attachmentParts);
+          }
+
+          // Build attachments list — download content only when attachmentsOnly is true
+          const attachments: Array<{ filename: string; contentType: string; size: number; content?: string }> = [];
+          if (attachmentsOnly) {
+            for (const part of attachmentParts) {
+              let content: string | undefined;
+              try {
+                const dl = await client.download(String(uid), part.part, { uid: true });
+                if (dl && dl.content) {
+                  const chunks: Buffer[] = [];
+                  for await (const chunk of dl.content) {
+                    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                  }
+                  content = Buffer.concat(chunks).toString('base64');
+                  log('debug', `Downloaded attachment ${part.filename} (${chunks.length} chunks, ${content.length} base64 chars)`);
+                }
+              } catch (dlErr) {
+                log('warn', `Failed to download attachment ${part.filename}: ${dlErr}`);
+              }
+              attachments.push({
+                filename: part.filename,
+                contentType: part.contentType,
+                size: part.size,
+                content,
+              });
+            }
+          } else {
+            for (const part of attachmentParts) {
+              attachments.push({
+                filename: part.filename,
+                contentType: part.contentType,
+                size: part.size,
+              });
+            }
+          }
+
+          if (attachments.length > 0) {
+            log('info', `Collected ${attachments.length} attachment(s) for uid ${uid}`);
           }
 
           emails.push({
@@ -230,16 +271,29 @@ export async function fetchImapEmails(
     log('info', 'Disconnected from IMAP server');
   }
 
-  log('info', `Fetched ${emails.length} email(s)`);
-  return emails;
+  const result = attachmentsOnly ? emails.filter(e => e.attachments && e.attachments.length > 0) : emails;
+  if (attachmentsOnly) {
+    log('info', `Filtered to ${result.length} email(s) with attachments (from ${emails.length} total)`);
+  } else {
+    log('info', `Fetched ${emails.length} email(s)`);
+  }
+  return result;
+}
+
+// Internal type that includes the MIME part section number for downloading
+interface AttachmentPart {
+  part: string;
+  filename: string;
+  contentType: string;
+  size: number;
 }
 
 /**
- * Recursively extract attachment info from bodyStructure
+ * Recursively extract attachment parts (with MIME section numbers) from bodyStructure
  */
-function extractAttachments(
+function extractAttachmentParts(
   structure: any,
-  attachments: Array<{ filename: string; contentType: string; size: number }>
+  parts: AttachmentPart[]
 ): void {
   if (!structure) return;
 
@@ -249,9 +303,12 @@ function extractAttachments(
     const filename = structure.dispositionParameters?.filename || 
                      structure.parameters?.name || 
                      'attachment';
-    attachments.push({
+    const type = structure.type || 'application';
+    const subtype = structure.subtype || 'octet-stream';
+    parts.push({
+      part: structure.part || '1',
       filename,
-      contentType: `${structure.type}/${structure.subtype}`,
+      contentType: `${type}/${subtype}`,
       size: structure.size || 0,
     });
   }
@@ -259,7 +316,7 @@ function extractAttachments(
   // Recurse into child parts
   if (structure.childNodes && Array.isArray(structure.childNodes)) {
     for (const child of structure.childNodes) {
-      extractAttachments(child, attachments);
+      extractAttachmentParts(child, parts);
     }
   }
 }

@@ -1,0 +1,93 @@
+id: invoices-processing
+name: Invoices Processing
+description: Fetch emails from Gmail INBOX and extract PDF invoice details from each one using OpenAI
+
+nodes:
+  # Node 1: Fetch emails via fetch-emails habit (single trigger call via bit-loop)
+  - id: get-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Node 2: Loop each fetched email and send to extract-invoice habit
+  - id: extract-invoices
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: extract-invoice
+        inputKey: email
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+  # Node 3: Flatten all per-attachment invoice results from every email into a single list
+  - id: flatten-invoices
+    type: action
+    data:
+      framework: script
+      source: inline
+      label: Flatten Invoice Results
+      params:
+        results: "{{extract-invoices.results}}"
+        type: script
+        language: javascript
+        script: |
+          export async function main(results) {
+            const flat = [];
+            for (const emailResult of (results || [])) {
+              const invoiceResults = emailResult.output && emailResult.output.invoiceResults;
+              if (Array.isArray(invoiceResults)) {
+                for (const inv of invoiceResults) {
+                  if (inv.output) {
+                    flat.push({ output: inv.output });
+                  }
+                }
+              }
+            }
+            return flat;
+          }
+
+  # Node 4: Save each extracted invoice row to Google Sheets
+  - id: save-to-sheets
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{flatten-invoices.result}}"
+        habitId: save-invoice-to-sheets
+        inputKey: invoice
+        delayMs: 200
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: get-emails
+    target: extract-invoices
+  - source: extract-invoices
+    target: flatten-invoices
+  - source: flatten-invoices
+    target: save-to-sheets
+
+output:
+  invoices: "{{flatten-invoices.result}}"
+  totalEmails: "{{extract-invoices.totalItems}}"
+  processed: "{{extract-invoices.successCount}}"
+  failed: "{{extract-invoices.errorCount}}"
+  sheetsSaved: "{{save-to-sheets.successCount}}"
+  sheetsFailed: "{{save-to-sheets.errorCount}}"

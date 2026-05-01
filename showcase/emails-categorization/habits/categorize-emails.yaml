@@ -1,0 +1,87 @@
+id: categorize-emails
+name: Emails Categorizer
+description: Fetch emails from INBOX and categorize each one using OpenAI
+
+nodes:
+  # Node 1: Fetch emails via fetch-emails habit (single call via bit-loop)
+  - id: get-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Node 2: Categorize each email one-by-one using OpenAI (bit-loop forEach)
+  - id: categorize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: categorize-single-email
+        inputKey: email
+        delayMs: 200
+        continueOnError: true
+        collectResults: true
+
+  # Node 3: Format Telegram message with all email details
+  - id: format-telegram
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        categorizeResult: "{{categorize}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(categorizeResult: any) {
+            const results = categorizeResult?.results ?? [];
+            const total = categorizeResult?.totalItems ?? 0;
+            const success = categorizeResult?.successCount ?? 0;
+            let msg = `📧 Emails Categorization Report\n\n${success} of ${total} emails categorized`;
+            for (const r of results) {
+              const e = r?.output;
+              if (!e) continue;
+              msg += `\n\n📌 ${e.subject ?? '(no subject)'}\n`
+                   + `👤 ${e.from ?? ''}\n`
+                   + `🏷️ ${e.category ?? 'Other'} • ${e.priority ?? 'Medium'} Priority\n`
+                   + `📝 ${e.summary ?? '—'}`;
+            }
+            return msg;
+          }
+
+  # Node 4: Send formatted report to Telegram
+  - id: telegram-notify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-telegram"
+      operation: sendMessage
+      params:
+        botToken: "{{habits.env.HABITS_TELEGRAM_BOT_TOKEN}}"
+        chatId: "{{habits.env.HABITS_TELEGRAM_CHAT_ID}}"
+        text: "{{format-telegram.result}}"
+
+edges:
+  - source: get-emails
+    target: categorize
+  - source: categorize
+    target: format-telegram
+  - source: format-telegram
+    target: telegram-notify
+
+output:
+  emails: "{{get-emails.results[0].output}}"
+  categories: "{{categorize}}"
+  telegram: "{{telegram-notify}}"

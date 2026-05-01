@@ -29,14 +29,9 @@ interface SheetRange {
 const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 async function getAccessToken(context: GoogleSheetsContext): Promise<string> {
-  // If direct access token is provided
-  if (context.propsValue.accessToken) {
-    return context.propsValue.accessToken;
-  }
   if (context.auth?.accessToken) {
     return context.auth.accessToken;
   }
-  
   // If service account key is provided (JSON)
   const serviceAccountKey = context.propsValue.serviceAccountKey || context.auth?.serviceAccountKey;
 
@@ -71,8 +66,7 @@ async function getAccessToken(context: GoogleSheetsContext): Promise<string> {
     // For now, we'll require the access token directly
     throw new Error('Service account authentication requires the access token to be pre-generated. Please provide an access token.');
   }
-  
-  throw new Error('Google Sheets authentication required. Provide an access token or service account key.');
+  throw new Error('No OAuth token. Please authorize Google Sheets access first.');
 }
 
 async function sheetsRequest(
@@ -120,9 +114,16 @@ const googleSheetsBit = {
   
   auth: {
     type: 'OAUTH2',
-    displayName: 'Google Account',
-    description: 'Google account with Sheets access',
+    displayName: 'Google Sheets',
+    description: 'Connect to Google Sheets using OAuth2',
     required: true,
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    extraAuthParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+    },
   },
 
   // ============================================================================
@@ -139,12 +140,6 @@ const googleSheetsBit = {
       displayName: 'Append Row',
       description: 'Append a new row to the end of a Google Sheet',
       props: {
-        accessToken: {
-          type: 'SECRET_TEXT',
-          displayName: 'Access Token',
-          description: 'Google OAuth access token',
-          required: true,
-        },
         spreadsheetId: {
           type: 'SHORT_TEXT',
           displayName: 'Spreadsheet ID',
@@ -219,12 +214,6 @@ const googleSheetsBit = {
       displayName: 'Read Range',
       description: 'Read data from a range of cells',
       props: {
-        accessToken: {
-          type: 'SECRET_TEXT',
-          displayName: 'Access Token',
-          description: 'Google OAuth access token',
-          required: true,
-        },
         spreadsheetId: {
           type: 'SHORT_TEXT',
           displayName: 'Spreadsheet ID',
@@ -272,12 +261,6 @@ const googleSheetsBit = {
       displayName: 'Write Range',
       description: 'Write data to a specific range of cells',
       props: {
-        accessToken: {
-          type: 'SECRET_TEXT',
-          displayName: 'Access Token',
-          description: 'Google OAuth access token',
-          required: true,
-        },
         spreadsheetId: {
           type: 'SHORT_TEXT',
           displayName: 'Spreadsheet ID',
@@ -349,12 +332,6 @@ const googleSheetsBit = {
       displayName: 'Get Spreadsheet Info',
       description: 'Get information about a spreadsheet, including sheet names',
       props: {
-        accessToken: {
-          type: 'SECRET_TEXT',
-          displayName: 'Access Token',
-          description: 'Google OAuth access token',
-          required: true,
-        },
         spreadsheetId: {
           type: 'SHORT_TEXT',
           displayName: 'Spreadsheet ID',
@@ -401,12 +378,6 @@ const googleSheetsBit = {
       displayName: 'Clear Range',
       description: 'Clear all values from a range',
       props: {
-        accessToken: {
-          type: 'SECRET_TEXT',
-          displayName: 'Access Token',
-          description: 'Google OAuth access token',
-          required: true,
-        },
         spreadsheetId: {
           type: 'SHORT_TEXT',
           displayName: 'Spreadsheet ID',
@@ -445,6 +416,8 @@ const googleSheetsBit = {
       },
     },
   },
+
+  triggers: {},
 };
 
 export default googleSheetsBit;
