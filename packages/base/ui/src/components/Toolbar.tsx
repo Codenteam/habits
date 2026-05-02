@@ -191,6 +191,7 @@ export default function Toolbar() {
             <img src="/habits/base/assets/logo.png" className="w-5 h-5"></img>
             
             <span className="text-white font-extralight">Habits Base </span>
+            <span className="text-slate-400 text-xs font-mono">v{__APP_VERSION__}</span>
 
               <span className="relative group font-light underline text-white decoration-1 cursor-pointer">
                             <span className=" ">Alpha <span
