@@ -1,0 +1,167 @@
+id: generate-invoice
+name: Generate Invoice
+description: Combine invoice description text with client data, extract structured invoice details using OpenAI, generate a PDF invoice, and upload to Google Drive
+
+input:
+  - id: invoiceText
+    type: string
+    required: true
+    description: Text describing the work or items to invoice (e.g. "3 hours web design at $150/hr, hosting setup $50")
+  - id: clientId
+    type: string
+    required: true
+    description: ID of the client record to invoice
+  - id: invoiceDate
+    type: string
+    required: true
+    description: Today's date passed from the frontend in "Month Day, Year" format (e.g. "April 27, 2026")
+  - id: customer
+    type: string
+    required: true
+    description: Your company or name that appears as the bill-to on the invoice (e.g. "Acme Corp")
+
+nodes:
+  # Step 1: Fetch client from database
+  - id: get-client
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: "invoices-clients"
+        filter:
+          _id: "{{habits.input.clientId}}"
+        limit: 1
+
+  # Step 2: Use OpenAI to extract structured invoice data from the text + client info
+  - id: extract-invoice-data
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: "gpt-4o"
+        cast: true
+        prompt: |
+          You are an invoice creation assistant. Based on the invoice description and client information provided, extract structured invoice data.
+
+          Invoice Description:
+          {{habits.input.invoiceText}}
+
+          Client (Customer) Information:
+          - Name: {{get-client.results[0].name}}
+          - Email: {{get-client.results[0].email}}
+          - Phone: {{get-client.results[0].phone}}
+          - Address: {{get-client.results[0].address}}
+          - Company: {{get-client.results[0].company}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+          {
+            "invoiceId": "INV-YYYYMMDD-NNN (generate a unique ID using today's date)",
+            "dueDate": "Month Day, Year format (e.g. April 27, 2026) — extract from invoice text if a due date is mentioned; otherwise use today's date",
+            "currency": "currency symbol extracted from the invoice text (e.g. '$', '€', '£'); default to '$' if not mentioned",
+            "items": [
+              {
+                "Description": "clear description of the item or service",
+                "Price": 0.00,
+                "Tax": 0.00,
+                "Currency": "same as invoice-level currency symbol"
+              }
+            ],
+            "notes": "any additional notes or payment instructions (or "" if none)"
+          }
+
+          Rules:
+          - Extract every line item from the invoice description.
+          - Calculate Price = Qty * Unit Price only (do NOT add Tax into Price — the invoice engine adds Tax separately to compute the total).
+          - Default Tax to 0 if not mentioned.
+          - Set Currency in each item to the same currency symbol as the invoice-level currency.
+          - dueDate: extract from the invoice text if a due date is mentioned; otherwise use today's date. Format as Month Day, Year (e.g. April 27, 2026).
+          - Generate a random 3-digit suffix for the invoice ID (e.g. INV-20260427-042).
+          - Return valid JSON only — no extra text.
+
+  # Step 3: Generate PDF invoice using bit-invoice
+  - id: create-pdf
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-invoice"
+      operation: createInvoice
+      params:
+        invoiceId: "{{extract-invoice-data.invoiceId}}"
+        invoiceDate: "{{habits.input.invoiceDate}}"
+        dueDate: "{{extract-invoice-data.dueDate}}"
+        currency: "{{extract-invoice-data.currency}}"
+        header:
+          lines:
+            - "Invoice"
+        seller:
+          lines:
+            - "{{get-client.results[0].name}}"
+            - "{{get-client.results[0].company}}"
+            - "{{get-client.results[0].address}}"
+            - "{{get-client.results[0].email}}"
+            - "{{get-client.results[0].phone}}"
+            
+        customer:
+          lines:
+            - "{{habits.input.customer}}"
+          
+        items: "{{extract-invoice-data.items}}"
+        itemColumns:
+          - "Description"
+          - "Currency"
+          - "Price"
+          - "Tax"
+        taxColumn: "Tax"
+        priceColumn: "Price"
+        notes: "{{extract-invoice-data.notes}}"
+        primaryColor: "#2563eb"
+        secondaryColor: "#f8fafc"
+
+  # Step 4: Upload the PDF to Google Drive using access token (same flow as Google Sheets)
+  - id: upload-to-drive
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: uploadFile
+      auth:
+        clientId: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: "{{extract-invoice-data.invoiceId}}.pdf"
+        content: "{{create-pdf.base64}}"
+        mimeType: "application/pdf"
+        folderId: "{{habits.env.HABITS_GOOGLE_DRIVE_FOLDER_ID}}"
+
+edges:
+  - source: get-client
+    target: extract-invoice-data
+  - source: extract-invoice-data
+    target: create-pdf
+  - source: create-pdf
+    target: upload-to-drive
+
+output:
+  invoiceId: "{{extract-invoice-data.invoiceId}}"
+  invoiceDate: "{{habits.input.invoiceDate}}"
+  dueDate: "{{extract-invoice-data.dueDate}}"
+  clientName: "{{get-client.results[0].name}}"
+  clientCompany: "{{get-client.results[0].company}}"
+  total: "{{create-pdf.total}}"
+  subtotal: "{{create-pdf.subtotal}}"
+  totalTax: "{{create-pdf.totalTax}}"
+  currency: "{{extract-invoice-data.currency}}"
+  pdfBase64: "{{create-pdf.base64}}"
+  driveFileId: "{{upload-to-drive.file.id}}"
+  driveLink: "{{upload-to-drive.file.webViewLink}}"

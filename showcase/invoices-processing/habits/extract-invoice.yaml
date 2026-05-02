@@ -1,0 +1,54 @@
+id: extract-invoice
+name: Extract Invoice
+description: Extract invoice details from all attachments in a single email using OpenAI
+
+nodes:
+  # Node 1: Enrich each attachment with email metadata so the sub-habit has full context
+  - id: prepare-items
+    type: action
+    data:
+      framework: script
+      source: inline
+      label: Prepare Attachment Items
+      params:
+        email: "{{email}}"
+        type: script
+        language: javascript
+        script: |
+          export async function main(email) {
+            const attachments = (email && email.attachments) || [];
+            return attachments.map(function(a) {
+              return Object.assign({}, a, {
+                emailFrom: email.from,
+                emailTo: email.to,
+                emailSubject: email.subject,
+                emailDate: email.date,
+              });
+            });
+          }
+
+  # Node 2: Loop over each enriched attachment and call extract-invoice-attachment
+  - id: extract-per-attachment
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{prepare-items.result}}"
+        habitId: extract-invoice-attachment
+        inputKey: attachment
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: prepare-items
+    target: extract-per-attachment
+
+output:
+  invoiceResults: "{{extract-per-attachment.results}}"
+  totalAttachments: "{{extract-per-attachment.totalItems}}"
+  processed: "{{extract-per-attachment.successCount}}"
+  failed: "{{extract-per-attachment.errorCount}}"

@@ -11,3 +11,4 @@ export { textToSpeech } from './text-to-speech';
 export { transcribeAction } from './transcriptions';
 export { translateAction } from './translation';
 export { visionPrompt } from './vision-prompt';
+export { askWithFile } from './ask-with-file';

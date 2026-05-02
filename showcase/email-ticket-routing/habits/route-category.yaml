@@ -1,0 +1,60 @@
+id: route-category
+name: Route by Category
+description: Branch on routeCategory and resolve the matching SMTP password, then pass all ticket data through for the next step
+
+nodes:
+  # Branch on routeCategory and output the matching SMTP password
+  - id: route-category
+    type: bits
+    data:
+      label: Route by Category
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: "Support"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "support"
+            output: "{{habits.env.HABITS_SMTP_SUPPORT_PASSWORD}}"
+          - label: "Sales"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "sales"
+            output: "{{habits.env.HABITS_SMTP_SALES_PASSWORD}}"
+          - label: "Billing"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "billing"
+            output: "{{habits.env.HABITS_SMTP_BILLING_PASSWORD}}"
+          - label: "Feedback"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "feedback"
+            output: "{{habits.env.HABITS_SMTP_FEEDBACK_PASSWORD}}"
+          - label: "Spam"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "spam"
+            output: "{{habits.env.HABITS_SMTP_SPAM_PASSWORD}}"
+          - label: "Urgent"
+            value1: "{{analyzedTicket.output.routeCategory}}"
+            operator: equals
+            value2: "urgent"
+            output: "{{habits.env.HABITS_SMTP_URGENT_PASSWORD}}"
+        includeElse: true
+        defaultOutput: "Support"
+
+# Pass the resolved SMTP password plus all ticket fields through as output
+# so the next habit (send-email) has everything it needs in one object
+output:
+  smtpPassword: "{{route-category.output}}"
+  userEmail: "{{analyzedTicket.output.userEmail}}"
+  from: "{{analyzedTicket.output.from}}"
+  routeCategory: "{{analyzedTicket.output.routeCategory}}"
+  subject: "{{analyzedTicket.output.subject}}"
+  cleanBody: "{{analyzedTicket.output.cleanBody}}"
+  customerName: "{{analyzedTicket.output.customerName}}"

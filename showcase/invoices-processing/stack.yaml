@@ -1,0 +1,34 @@
+version: "1.0"
+name: "Invoices Processing"
+workflows:
+  - id: fetch-emails
+    path: ./habits/fetch-emails.yaml
+    enabled: true
+
+  - id: extract-invoice
+    path: ./habits/extract-invoice.yaml
+    enabled: true
+
+  - id: extract-invoice-attachment
+    path: ./habits/extract-invoice-attachment.yaml
+    enabled: true
+
+  - id: save-invoice-to-sheets
+    path: ./habits/save-invoice-to-sheets.yaml
+    enabled: true
+
+  - id: invoices-processing
+    path: ./habits/invoices-processing.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

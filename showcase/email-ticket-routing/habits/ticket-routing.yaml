@@ -1,0 +1,69 @@
+id: ticket-routing
+name: Ticket Routing
+description: >
+  Orchestrates the full support ticket pipeline:
+  1. Fetches unread emails from Gmail via IMAP
+  2. Analyzes each email as a support ticket using OpenAI
+  3. Assigns each analyzed ticket to the correct team inbox via SMTP
+
+nodes:
+  # Node 1: Fetch all unread emails via the fetch-emails sub-habit
+  # Uses bit-loop forEach with a single trigger item to invoke fetch-emails once
+  - id: get-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Node 2: Analyze each email as a support ticket using OpenAI
+  # Iterates over the fetched emails array — one analyze-ticket call per email
+  - id: analyze-tickets
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: analyze-ticket
+        inputKey: email
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+  # Node 3: Assign each analyzed ticket to the correct team inbox
+  # Iterates over analyze-tickets results — one assign-ticket call per analyzed ticket
+  - id: assign-tickets
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{analyze-tickets.results}}"
+        habitId: assign-ticket
+        inputKey: analyzedTicket
+        delayMs: 500
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: get-emails
+    target: analyze-tickets
+  - source: analyze-tickets
+    target: assign-tickets
+
+output:
+  emailsFetched: "{{get-emails.results[0].output.count}}"
+  ticketsAnalyzed: "{{analyze-tickets.successCount}}"
+  ticketsAssigned: "{{assign-tickets.successCount}}"
+  results: "{{assign-tickets.results}}"
