@@ -50,6 +50,16 @@ export class WorkflowExecutor {
   /** Active polling cron jobs - keyed by workflowId:nodeId */
   private pollingCronJobs: Map<string, Cron> = new Map();
 
+  /** Active streaming triggers - keyed by workflowId:nodeId, stores info needed for onDisable */
+  private streamingTriggers: Map<string, {
+    moduleDefinition: { source: 'npm' | 'github'; module: string; framework: 'bits'; repository: string };
+    triggerName: string;
+    trigger: any;
+    triggerProps: Record<string, any>;
+    workflowId: string;
+    nodeId: string;
+  }> = new Map();
+
   /**
    * Initialize from in-memory data (no file system access needed)
    * This is the ONLY initialization method - it's platform-agnostic (works in browser and Node.js)
@@ -221,6 +231,9 @@ export class WorkflowExecutor {
     
     // Register bits polling triggers with cron scheduling
     await this.registerBitsPollingTriggers();
+
+    // Register bits streaming triggers (onEnable sets up persistent callbacks)
+    await this.registerBitsStreamingTriggers();
   }
 
   /**
@@ -392,6 +405,101 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Register bits streaming triggers.
+   * Calls onEnable() once at startup — onEnable itself sets up a persistent callback
+   * that fires executor.executeWorkflow() for each incoming event.
+   */
+  async registerBitsStreamingTriggers(): Promise<void> {
+    const workflows = this.getAllWorkflows();
+    this.logger.log(`\n⚡ Scanning ${workflows.length} workflow(s) for streaming triggers...`);
+
+    let registeredCount = 0;
+
+    for (const { reference, workflow } of workflows) {
+      if (reference.enabled === false) continue;
+
+      const workflowId = reference.id || workflow.id;
+
+      for (const node of workflow.nodes || []) {
+        const nodeData = node.data as any;
+        const isTrigger = nodeData?.isTrigger === true || node.type === 'trigger';
+        const isBits = nodeData?.framework === 'bits';
+        const hasModule = !!nodeData?.module;
+
+        if (!isTrigger || !isBits || !hasModule) continue;
+
+        const moduleName = nodeData.module;
+        const triggerName = nodeData.operation || 'default';
+
+        try {
+          const moduleDefinition = {
+            source: (nodeData.source || 'npm') as 'npm' | 'github',
+            module: moduleName,
+            framework: 'bits' as const,
+            repository: moduleName,
+          };
+
+          let bitPiece: any = null;
+          try {
+            bitPiece = await pieceFromModule(moduleDefinition);
+          } catch (loadError) {
+            this.logger.warn(`   ⚠️ Could not load module ${moduleName}: ${loadError}`);
+            continue;
+          }
+
+          // Skip app-only bits — they require a browser/WebView environment
+          if (bitPiece.runtime === 'app') {
+            this.logger.log(`   ⏭️ Skipping app-only bit: ${moduleName}`);
+            continue;
+          }
+
+          const triggers = typeof bitPiece.triggers === 'function' ? bitPiece.triggers() : bitPiece.triggers;
+          const trigger = triggers?.[triggerName];
+
+          if (!trigger) {
+            this.logger.warn(`   ⚠️ Trigger ${triggerName} not found in module ${moduleName}`);
+            continue;
+          }
+
+          const triggerType = trigger.type?.toUpperCase?.() || trigger.type;
+          if (triggerType !== 'STREAMING') {
+            continue; // Not a streaming trigger
+          }
+
+          const rawProps = nodeData.params || {};
+          const triggerProps = this.resolveParameters(rawProps, {});
+
+          this.logger.log(`   ⚡ Enabling streaming trigger: ${workflowId}/${node.id} (${moduleName}:${triggerName})`);
+
+          const result = await bitsTriggerHelper.executeTrigger({
+            moduleDefinition,
+            triggerName,
+            input: triggerProps,
+            hookType: TriggerHookType.ON_ENABLE,
+            trigger,
+            workflowId,
+            nodeId: node.id,
+          });
+
+          if (!result.success) {
+            this.logger.warn(`   ⚠️ Failed to enable streaming trigger ${workflowId}/${node.id}: ${result.message}`);
+            continue;
+          }
+
+          const streamKey = `${workflowId}:${node.id}`;
+          this.streamingTriggers.set(streamKey, { moduleDefinition, triggerName, trigger, triggerProps, workflowId, nodeId: node.id });
+          registeredCount++;
+          this.logger.log(`   ✅ Streaming trigger active: ${workflowId}/${node.id} (${triggerName})`);
+        } catch (error: any) {
+          this.logger.error(`   ❌ Error enabling streaming trigger for ${workflowId}/${node.id}: ${error}`);
+        }
+      }
+    }
+
+    this.logger.log(`⚡ Enabled ${registeredCount} streaming trigger(s)\n`);
+  }
+
+  /**
    * Stop all polling cron jobs
    */
   stopPollingTriggers(): void {
@@ -403,8 +511,32 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Stop all streaming triggers by calling their onDisable()
+   */
+  async stopStreamingTriggers(): Promise<void> {
+    for (const [key, info] of this.streamingTriggers) {
+      try {
+        await bitsTriggerHelper.executeTrigger({
+          moduleDefinition: info.moduleDefinition,
+          triggerName: info.triggerName,
+          input: info.triggerProps,
+          hookType: TriggerHookType.ON_DISABLE,
+          trigger: info.trigger,
+          workflowId: info.workflowId,
+          nodeId: info.nodeId,
+        });
+        this.logger.log(`   ⏹️ Stopped streaming trigger: ${key}`);
+      } catch (err: any) {
+        this.logger.error(`   ❌ Error stopping streaming trigger ${key}: ${err.message}`);
+      }
+    }
+    this.streamingTriggers.clear();
+  }
+
+  /**
    * Find all template params starting with "habits." in a workflow
    */
+
   private findHabitsParams(workflow: Workflow): string[] {
     const habitsParams: Set<string> = new Set();
     const templateRegex = /\{\{(habits\.[^}]+)\}\}/g;

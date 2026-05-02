@@ -9,7 +9,7 @@
  * as they arrive → onDisable stops the mic stream.
  */
 
-import { createTrigger, Property } from '@ha-bits/cortex-core';
+import { createCue, Property } from '@ha-bits/cortex-core';
 import { initSpeechListener, destroySpeechListener } from '../browser';
 import {
   DEFAULT_SILENCE_TIMEOUT,
@@ -20,7 +20,7 @@ import {
   type VoiceCommandEvent,
 } from '../common/common';
 
-export const voiceCommand = createTrigger({
+export const voiceCommand = createCue({
   name: 'voice_command',
   displayName: 'Voice Command',
   description:

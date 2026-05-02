@@ -708,6 +708,14 @@ export interface BitCueContext<AuthType = any, PropsType = any> {
   setSchedule: (options: { cronExpression: string; timezone?: string }) => void;
   /** Webhook payload data (for webhook cues) */
   webhookPayload?: WebhookFilterPayload;
+  /** Executor for re-invoking the parent workflow (streaming triggers only) */
+  executor?: {
+    executeWorkflow(workflowId: string, options?: { initialContext?: Record<string, any> }): Promise<any>;
+  };
+  /** ID of the workflow this cue belongs to */
+  workflowId?: string;
+  /** ID of this cue node */
+  nodeId?: string;
 }
 
 /** @deprecated Use BitCueContext instead */

@@ -37,6 +37,7 @@
       "frameworks": [],
       "minimumSystemVersion": "10.13",
       "entitlements": "./Entitlements.plist",
+      "infoPlist": "./Info.plist",
       "files": {
         "embedded.provisionprofile": "../certs/Habits_Mac.provisionprofile"
       }

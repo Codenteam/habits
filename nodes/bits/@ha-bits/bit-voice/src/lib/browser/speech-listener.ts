@@ -75,7 +75,7 @@ export class SpeechListener {
     recognition.lang = this.config.language || DEFAULT_LANGUAGE;
 
     // ---- Event Handlers ----
-
+    debugger;
     recognition.onstart = () => {
       this.isListening = true;
       console.log('[Voice] Speech recognition started');
@@ -117,6 +117,7 @@ export class SpeechListener {
     };
 
     recognition.onspeechstart = () => {
+      console.log('[Voice] Speech started');
       this.speechStartTime = Date.now();
       this.hasSpeech = true;
 
@@ -128,12 +129,14 @@ export class SpeechListener {
     };
 
     recognition.onspeechend = () => {
+      console.log('[Voice] Speech ended');
       // Start silence timer — if no more speech comes in within
       // silenceTimeout, emit the captured transcript
       this.startSilenceTimer();
     };
 
     recognition.onresult = (event: any) => {
+      console.log('[Voice] Recognition result received, results count:', event.results.length);
       let interimTranscript = '';
       let finalTranscript = '';
 

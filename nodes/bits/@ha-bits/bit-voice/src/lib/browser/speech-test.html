@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Speech Recognition Test</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; max-width: 700px; margin: 0 auto; }
+    h1 { font-size: 1.2rem; color: #aaa; }
+    button { padding: 8px 18px; margin: 4px; background: #222; color: #eee; border: 1px solid #444; cursor: pointer; border-radius: 4px; }
+    button:hover { background: #333; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    #status { margin: 12px 0; padding: 8px; background: #1a1a1a; border-left: 3px solid #555; }
+    #status.listening { border-color: #4caf50; color: #4caf50; }
+    #status.error { border-color: #f44336; color: #f44336; }
+    #warning { display: none; margin: 10px 0; padding: 10px; background: #3a1a00; border-left: 3px solid #ff9800; color: #ffb74d; font-size: 0.85rem; }
+    #transcript { margin: 12px 0; padding: 10px; background: #1a1a1a; min-height: 60px; white-space: pre-wrap; }
+    #transcript .interim { color: #888; }
+    #transcript .final { color: #eee; }
+    #log { margin-top: 16px; padding: 10px; background: #0d0d0d; height: 240px; overflow-y: auto; font-size: 0.8rem; }
+    #log .entry { padding: 2px 0; border-bottom: 1px solid #1a1a1a; }
+    #log .info { color: #4caf50; }
+    #log .warn { color: #ff9800; }
+    #log .error { color: #f44336; }
+    label { color: #aaa; font-size: 0.85rem; }
+    input[type=text], input[type=number] { background: #222; color: #eee; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; width: 200px; }
+    .config { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  </style>
+</head>
+<body>
+  <h1>Speech Recognition Test</h1>
+
+  <div id="warning">
+    ⚠️ <strong>Running on file:// — mic access is blocked by Chrome.</strong><br/>
+    Serve via localhost instead:<br/>
+    <code>cd nodes/bits/@ha-bits/bit-voice/src/lib/browser && python3 -m http.server 8787</code><br/>
+    Then open <a href="http://localhost:8787/speech-test.html" style="color:#ffb74d">http://localhost:8787/speech-test.html</a>
+  </div>
+
+  <div class="config">
+    <label>Language: <input type="text" id="lang" value="en-US" /></label>
+    <label>Silence timeout (ms): <input type="number" id="silenceTimeout" value="2000" min="500" /></label>
+    <label>Wake words (comma-sep): <input type="text" id="wakeWords" value="" placeholder="hey cortex, ok habits" /></label>
+  </div>
+
+  <div>
+    <button id="btnStart">Start</button>
+    <button id="btnStop" disabled>Stop</button>
+    <button id="btnClear">Clear Log</button>
+  </div>
+
+  <div id="status">Idle</div>
+
+  <div>
+    <div style="color:#aaa;font-size:0.85rem;margin-top:12px">Transcript:</div>
+    <div id="transcript"><span class="final"></span><span class="interim"></span></div>
+  </div>
+
+  <div>
+    <div style="color:#aaa;font-size:0.85rem;margin-top:12px">Event Log:</div>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    const finalEl = document.querySelector('#transcript .final');
+    const interimEl = document.querySelector('#transcript .interim');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+
+    let recognition = null;
+    let isListening = false;
+    let continuous = true;
+    let speechStartTime = 0;
+    let silenceTimer = null;
+    let fullTranscript = '';
+    let interimTranscript = '';
+    let hasSpeech = false;
+
+    function log(level, ...args) {
+      const msg = args.join(' ');
+      const entry = document.createElement('div');
+      entry.className = `entry ${level}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.prepend(entry);
+      if (level === 'error') console.error(msg);
+      else if (level === 'warn') console.warn(msg);
+      else console.log(msg);
+    }
+
+    function setStatus(text, cls = '') {
+      statusEl.textContent = text;
+      statusEl.className = cls;
+    }
+
+    function getConfig() {
+      return {
+        language: document.getElementById('lang').value || 'en-US',
+        silenceTimeout: parseInt(document.getElementById('silenceTimeout').value) || 2000,
+        wakeWords: document.getElementById('wakeWords').value
+          .split(',').map(w => w.trim()).filter(Boolean),
+      };
+    }
+
+    function startSilenceTimer() {
+      if (silenceTimer) clearTimeout(silenceTimer);
+      const { silenceTimeout } = getConfig();
+      silenceTimer = setTimeout(() => {
+        if (hasSpeech && fullTranscript.trim()) {
+          emitCommand('silence', null);
+          resetTranscript();
+        }
+        silenceTimer = null;
+      }, silenceTimeout);
+    }
+
+    function emitCommand(reason, matchedWakeWord) {
+      const transcript = (fullTranscript + interimTranscript).trim();
+      if (!transcript) return;
+      const durationMs = Date.now() - speechStartTime;
+      log('info', `[Voice] EMIT — reason: ${reason}, wake: ${matchedWakeWord || 'none'}, duration: ${durationMs}ms`);
+      log('info', `[Voice] Transcript: "${transcript}"`);
+    }
+
+    function resetTranscript() {
+      fullTranscript = '';
+      interimTranscript = '';
+      hasSpeech = false;
+      speechStartTime = 0;
+      finalEl.textContent = '';
+      interimEl.textContent = '';
+    }
+
+    function createRecognition() {
+      if (!SpeechRecognitionAPI) {
+        log('error', '[Voice] SpeechRecognition API not available in this browser.');
+        return null;
+      }
+
+      const r = new SpeechRecognitionAPI();
+      const config = getConfig();
+      r.continuous = true;
+      r.interimResults = true;
+      r.lang = config.language;
+
+      r.onstart = () => {
+        isListening = true;
+        log('info', '[Voice] Speech recognition started');
+        setStatus('Listening…', 'listening');
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+      };
+
+      r.onend = () => {
+        isListening = false;
+        log('info', '[Voice] Speech recognition ended');
+        setStatus('Idle');
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+
+        // Auto-restart if continuous mode is enabled
+        if (continuous && recognition) {
+          setTimeout(() => {
+            if (!isListening) start();
+          }, 100);
+        }
+      };
+
+      r.onerror = (event) => {
+        log('error', `[Voice] Speech recognition error: ${event.error} ${event.message || ''}`);
+        setStatus(`Error: ${event.error}`, 'error');
+
+        // Don't restart on 'aborted' (intentional stop) or 'no-speech' (normal silence)
+        if (event.error === 'aborted' || event.error === 'no-speech') {
+          return;
+        }
+
+        // Auto-restart on transient errors if continuous
+        if (continuous) {
+          setTimeout(() => {
+            if (!isListening) start();
+          }, 500);
+        }
+      };
+
+      r.onspeechstart = () => {
+        log('info', '[Voice] Speech started');
+        speechStartTime = Date.now();
+        hasSpeech = true;
+
+        // Clear any pending silence timer
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+      };
+
+      r.onspeechend = () => {
+        log('info', '[Voice] Speech ended');
+        // Start silence timer — if no more speech comes in within
+        // silenceTimeout, emit the captured transcript
+        startSilenceTimer();
+      };
+
+      r.onresult = (event) => {
+        log('info', `[Voice] Recognition result received, results count: ${event.results.length}`);
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const text = result[0].transcript;
+          if (result.isFinal) {
+            final += text + ' ';
+          } else {
+            interim += text;
+          }
+        }
+
+        if (final) fullTranscript += final;
+        interimTranscript = interim;
+
+        finalEl.textContent = fullTranscript;
+        interimEl.textContent = interim;
+
+        // Check for wake words in the latest results
+        const latestText = (final + interim).toLowerCase().trim();
+        const { wakeWords } = getConfig();
+        if (latestText && wakeWords.length > 0) {
+          const matchedWord = wakeWords.find(w => latestText.includes(w.toLowerCase()));
+          if (matchedWord) {
+            log('warn', `[Voice] Wake word detected: "${matchedWord}"`);
+            emitCommand('wake_word', matchedWord);
+            resetTranscript();
+          }
+        }
+      };
+
+      return r;
+    }
+
+    function start() {
+      if (isListening) return;
+      recognition = createRecognition();
+      if (!recognition) return;
+      try {
+        recognition.start();
+      } catch (e) {
+        log('warn', `[Voice] Could not start recognition: ${e.message}`);
+      }
+    }
+
+    function stop() {
+      continuous = false;
+      if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+      try { recognition && recognition.stop(); } catch (_) {}
+      isListening = false;
+      setStatus('Stopped');
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+    }
+
+    btnStart.addEventListener('click', () => { continuous = true; start(); });
+    btnStop.addEventListener('click', stop);
+    document.getElementById('btnClear').addEventListener('click', () => { logEl.innerHTML = ''; });
+
+    // Warn if on file:// (microphone blocked in Chrome)
+    if (location.protocol === 'file:') {
+      document.getElementById('warning').style.display = 'block';
+      log('error', '[Voice] Running on file:// — mic access blocked. Use http://localhost instead.');
+    }
+
+    if (!SpeechRecognitionAPI) {
+      log('error', '[Voice] SpeechRecognition API not available — use Chrome, Edge, or Safari.');
+      btnStart.disabled = true;
+    }
+
+    // Check mic permission upfront
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'microphone' }).then(result => {
+        log('info', `[Voice] Microphone permission: ${result.state}`);
+        result.onchange = () => log('info', `[Voice] Microphone permission changed: ${result.state}`);
+      }).catch(() => {});
+    }
+  </script>
+</body>
+</html>

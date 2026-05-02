@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://apple.com">
+<!--
+  ⚠️  IMPORTANT: DEV MODE + VSCODE TERMINAL = BROKEN ⚠️
+
+  Running `npm run tauri dev` (or `pnpm tauri dev`) from the VS Code integrated
+  terminal will cause the app to CRASH with:
+      Termination Reason: Namespace TCC, Code 0
+  even though NSSpeechRecognitionUsageDescription and NSMicrophoneUsageDescription
+  are correctly defined in this file.
+
+  Root cause: UNKNOWN. The TCC privacy keys are not being read by macOS when
+  the process is spawned from VS Code's terminal environment.
+
+  ✅ WORKAROUND: Always run `npm run tauri dev` from an EXTERNAL terminal
+  (e.g., Terminal.app, iTerm2) outside of VS Code. It works correctly there.
+
+  DO NOT waste time debugging this by editing this file — the keys are correct.
+-->
 <plist version="1.0">
 <dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Habits uses the microphone to capture voice commands for workflow automation.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Habits uses speech recognition to transcribe your voice commands into workflow triggers.</string>
+    
 </dict>
 </plist>
