@@ -1,5 +1,5 @@
 /* Shared design tokens */
-@import "../../theme/tokens.css";
+@import "../../../theme/tokens.css";
 
 * {
   box-sizing: border-box;
