@@ -1,0 +1,23 @@
+version: "1.0"
+name: "Social Media Multi-Posting"
+
+workflows:
+  - id: generate-social-content
+    path: ./habits/generate-social-content.yaml
+    enabled: true
+
+  - id: check-pending-posts
+    path: ./habits/check-pending-posts.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

@@ -1,0 +1,210 @@
+id: generate-social-content
+name: Generate Social Content
+description: >-
+  Form-driven habit that generates Twitter, LinkedIn, and Facebook posts
+  using AI, then saves them with a scheduled posting time to the database.
+
+input:
+  - id: topic
+    type: string
+    required: true
+    label: Content Topic
+    description: The main idea, announcement, or topic for your posts
+
+  - id: brand
+    type: string
+    required: false
+    label: Brand Name
+    description: Your brand or company name
+
+  - id: tone
+    type: string
+    required: false
+    label: Content Tone
+    description: "professional, casual, humorous, inspirational, or educational"
+    defaultValue: casual
+
+  - id: targetAudience
+    type: string
+    required: false
+    label: Target Audience
+    description: Who is this content for? (e.g. developers, marketers, small business owners)
+
+  - id: scheduledAt
+    type: string
+    required: true
+    label: Schedule Date & Time
+    description: When to publish these posts (ISO datetime, e.g. 2026-05-10T09:00:00Z)
+
+  - id: scheduleTimezone
+    type: string
+    required: false
+    label: Timezone
+    description: IANA timezone (e.g. America/New_York, Europe/London, UTC)
+    defaultValue: UTC
+
+  - id: createdAt
+    type: string
+    required: false
+    label: Created At
+    description: ISO datetime of when the form was submitted (sent by the frontend)
+
+nodes:
+  # Generate Twitter/X post
+  - id: generate-twitter
+    type: bits
+    data:
+      label: Generate Twitter Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 500
+        prompt: |
+          Create a Twitter/X post for the following:
+          Topic: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Target Audience: {{habits.input.targetAudience}}
+
+          Provide exactly these sections:
+
+          TWEET:
+          (One tweet under 280 characters — punchy, engaging, scroll-stopping)
+
+          THREAD:
+          (2-4 follow-up tweets that expand on the idea, numbered 1/, 2/, etc.)
+
+          HASHTAGS:
+          (5-7 relevant hashtags, space-separated)
+
+          Do not add any commentary outside these sections.
+
+  # Generate LinkedIn post
+  - id: generate-linkedin
+    type: bits
+    data:
+      label: Generate LinkedIn Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 700
+        prompt: |
+          Create a LinkedIn post for the following:
+          Topic: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Target Audience: {{habits.input.targetAudience}}
+
+          Provide exactly these sections:
+
+          HOOK:
+          (First line that grabs attention — no filler)
+
+          BODY:
+          (3-4 short paragraphs with insights or a story. Use blank lines between paragraphs for readability.)
+
+          TAKEAWAYS:
+          (2-3 bullet points starting with •)
+
+          CTA:
+          (One clear call to action — encourage comments or shares)
+
+          HASHTAGS:
+          (3-5 professional hashtags, space-separated)
+
+          Do not add any commentary outside these sections.
+
+  # Generate Facebook post
+  - id: generate-facebook
+    type: bits
+    data:
+      label: Generate Facebook Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 500
+        prompt: |
+          Create a Facebook post for the following:
+          Topic: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Target Audience: {{habits.input.targetAudience}}
+
+          Provide exactly these sections:
+
+          POST:
+          (Conversational post, 2-4 paragraphs. Friendly, shareable, community-focused.)
+
+          QUESTION:
+          (One engagement question to boost comments)
+
+          HASHTAGS:
+          (3-5 relevant hashtags, space-separated)
+
+          Do not add any commentary outside these sections.
+
+  # Save all generated posts with schedule info to database
+  - id: save-post
+    type: bits
+    data:
+      label: Save Scheduled Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: smmp_scheduled_posts
+        document:
+          topic: "{{habits.input.topic}}"
+          brand: "{{habits.input.brand}}"
+          tone: "{{habits.input.tone}}"
+          targetAudience: "{{habits.input.targetAudience}}"
+          scheduledAt: "{{habits.input.scheduledAt}}"
+          scheduleTimezone: "{{habits.input.scheduleTimezone}}"
+          twitter: "{{generate-twitter}}"
+          linkedin: "{{generate-linkedin}}"
+          facebook: "{{generate-facebook}}"
+          status: "pending"
+          createdAt: "{{habits.input.createdAt}}"
+
+edges:
+  - source: generate-twitter
+    target: save-post
+  - source: generate-linkedin
+    target: save-post
+  - source: generate-facebook
+    target: save-post
+
+output:
+  postId: "{{save-post.id}}"
+  status: "pending"
+  scheduledAt: "{{habits.input.scheduledAt}}"
+  scheduleTimezone: "{{habits.input.scheduleTimezone}}"
+  topic: "{{habits.input.topic}}"
+  brand: "{{habits.input.brand}}"
+  tone: "{{habits.input.tone}}"
+  targetAudience: "{{habits.input.targetAudience}}"
+  twitter: "{{generate-twitter}}"
+  linkedin: "{{generate-linkedin}}"
+  facebook: "{{generate-facebook}}"

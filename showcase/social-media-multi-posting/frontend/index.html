@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Multi-Posting</title>
+  <style>
+    :root {
+      --ha-bg-base: #0f172a;
+      --ha-bg-surface: #1e293b;
+      --ha-bg-elevated: #334155;
+      --ha-bg-hover: #475569;
+      --ha-border: #334155;
+      --ha-text-primary: #ffffff;
+      --ha-text-body: #cbd5e1;
+      --ha-text-muted: #94a3b8;
+      --ha-text-disabled: #64748b;
+      --ha-accent-purple: #c084fc;
+      --ha-accent-purple-dim: rgba(192,132,252,0.15);
+      --ha-accent-emerald: #34d399;
+      --ha-accent-emerald-dim: rgba(52,211,153,0.12);
+      --ha-accent-sky: #38bdf8;
+      --ha-accent-amber: #fbbf24;
+      --ha-accent-amber-dim: rgba(251,191,36,0.12);
+      --ha-radius-md: 6px;
+      --ha-radius-lg: 10px;
+      --ha-radius-xl: 14px;
+      --ha-radius-pill: 9999px;
+      --tw-color: #1d9bf0;
+      --tw-dim: rgba(29,155,240,0.12);
+      --li-color: #0a66c2;
+      --li-dim: rgba(10,102,194,0.12);
+      --fb-color: #1877f2;
+      --fb-dim: rgba(24,119,242,0.12);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--ha-bg-base);
+      color: var(--ha-text-body);
+      min-height: 100vh;
+    }
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+    header {
+      background: var(--ha-bg-surface);
+      border-bottom: 1px solid var(--ha-border);
+      display: flex; align-items: center;
+      padding: 0 24px; height: 58px; gap: 12px; flex-shrink: 0;
+    }
+    .logo { font-size: 1.15rem; font-weight: 700; color: var(--ha-text-primary); }
+    .logo span { color: var(--ha-accent-purple); }
+    .badge {
+      font-size: 0.68rem;
+      background: var(--ha-accent-purple-dim);
+      color: var(--ha-accent-purple);
+      border: 1px solid var(--ha-accent-purple);
+      padding: 2px 8px; border-radius: var(--ha-radius-pill);
+    }
+    .page-wrap { flex: 1; display: flex; flex-direction: column; }
+    /* Main tabs */
+    .main-tab-nav {
+      background: var(--ha-bg-surface);
+      border-bottom: 1px solid var(--ha-border);
+      display: flex; gap: 0; padding: 0 24px; flex-shrink: 0;
+    }
+    .main-tab {
+      display: flex; align-items: center; gap: 7px;
+      padding: 0 22px; height: 48px;
+      border: none; border-bottom: 3px solid transparent;
+      background: transparent; color: var(--ha-text-muted);
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .main-tab:hover { color: var(--ha-text-primary); }
+    .main-tab.active { color: var(--ha-accent-purple); border-bottom-color: var(--ha-accent-purple); }
+    .queue-count {
+      background: var(--ha-accent-amber); color: #000;
+      font-size: 0.68rem; font-weight: 700;
+      padding: 1px 7px; border-radius: var(--ha-radius-pill);
+      min-width: 18px; text-align: center;
+    }
+    /* Panels */
+    .panel { display: none; flex-direction: column; flex: 1; }
+    .panel.active { display: flex; }
+    .content-wrap {
+      width: 100%; max-width: 860px;
+      margin: 0 auto; padding: 28px 20px 48px;
+    }
+    /* Gen states */
+    .gen-state { display: none; }
+    .gen-state.active { display: block; }
+    /* Form */
+    .form-card {
+      background: var(--ha-bg-surface);
+      border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius-xl);
+      padding: 28px 28px 32px;
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    .form-title { font-size: 1.05rem; font-weight: 700; color: var(--ha-text-primary); }
+    .form-title span { color: var(--ha-accent-purple); }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 0.75rem; font-weight: 700; color: var(--ha-text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .field input, .field textarea, .field select {
+      background: var(--ha-bg-elevated);
+      border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius-md);
+      color: var(--ha-text-primary);
+      font-size: 0.9rem; padding: 10px 12px; width: 100%;
+      transition: border-color 0.15s; outline: none;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--ha-accent-purple); }
+    .field textarea { resize: vertical; min-height: 96px; }
+    .field select option { background: var(--ha-bg-elevated); }
+    .hint { font-size: 0.75rem; color: var(--ha-text-disabled); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .tone-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tone-chip {
+      padding: 6px 15px; border-radius: var(--ha-radius-pill);
+      border: 1px solid var(--ha-border); background: transparent;
+      color: var(--ha-text-muted); font-size: 0.82rem; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tone-chip:hover { border-color: var(--ha-accent-purple); color: var(--ha-text-primary); }
+    .tone-chip.active {
+      background: var(--ha-accent-purple-dim);
+      border-color: var(--ha-accent-purple); color: var(--ha-accent-purple);
+    }
+    .submit-btn {
+      background: var(--ha-accent-purple); color: #fff;
+      border: none; border-radius: var(--ha-radius-lg);
+      padding: 14px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; width: 100%; margin-top: 4px;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.87; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    /* State blocks */
+    .state-block {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; min-height: 340px;
+      color: var(--ha-text-disabled); text-align: center;
+    }
+    .state-block .icon { font-size: 2.5rem; }
+    .state-block p { font-size: 0.9rem; max-width: 280px; }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid var(--ha-border);
+      border-top-color: var(--ha-accent-purple);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .retry-btn {
+      margin-top: 4px; padding: 9px 22px;
+      border: 1px solid var(--ha-border); background: var(--ha-bg-elevated);
+      color: var(--ha-text-muted); border-radius: var(--ha-radius-md);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+    }
+    .retry-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
+    /* Results actions */
+    .results-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border: 1px solid var(--ha-border);
+      background: var(--ha-bg-elevated); color: var(--ha-text-muted);
+      border-radius: var(--ha-radius-pill); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .back-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
+    .view-queue-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border: 1px solid var(--ha-accent-emerald);
+      background: var(--ha-accent-emerald-dim); color: var(--ha-accent-emerald);
+      border-radius: var(--ha-radius-pill); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .view-queue-btn:hover { opacity: 0.82; }
+    /* Schedule banner */
+    .schedule-banner {
+      background: var(--ha-accent-purple-dim);
+      border: 1px solid var(--ha-accent-purple);
+      border-radius: var(--ha-radius-lg);
+      padding: 16px 20px; display: flex; align-items: center;
+      gap: 14px; margin-bottom: 20px;
+    }
+    .sched-icon { font-size: 1.5rem; }
+    .sched-info { flex: 1; }
+    .sched-label { font-size: 0.72rem; color: var(--ha-accent-purple); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .sched-time { font-size: 1rem; color: var(--ha-text-primary); font-weight: 700; margin-top: 3px; }
+    .sched-tz { font-size: 0.8rem; color: var(--ha-text-muted); margin-top: 2px; }
+    .sched-badge {
+      background: var(--ha-accent-emerald-dim); border: 1px solid var(--ha-accent-emerald);
+      color: var(--ha-accent-emerald); font-size: 0.75rem; padding: 4px 12px;
+      border-radius: var(--ha-radius-pill); font-weight: 700; white-space: nowrap;
+    }
+    /* Platform tabs */
+    .tab-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border-radius: var(--ha-radius-pill);
+      border: 1px solid var(--ha-border); background: transparent;
+      color: var(--ha-text-muted); font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn:hover { border-color: var(--ha-bg-hover); color: var(--ha-text-primary); }
+    .tab-btn.active-tw { background: var(--tw-dim); border-color: var(--tw-color); color: var(--tw-color); }
+    .tab-btn.active-li { background: var(--li-dim); border-color: var(--li-color); color: var(--li-color); }
+    .tab-btn.active-fb { background: var(--fb-dim); border-color: var(--fb-color); color: var(--fb-color); }
+    /* Post cards */
+    .post-card { display: none; flex-direction: column; gap: 14px; }
+    .post-card.visible { display: flex; }
+    .post-section {
+      background: var(--ha-bg-surface); border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius-xl); padding: 20px; position: relative;
+    }
+    .section-label {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+    }
+    .post-section pre {
+      white-space: pre-wrap; word-break: break-word;
+      font-family: inherit; font-size: 0.9rem; line-height: 1.75; color: var(--ha-text-body);
+    }
+    .copy-btn {
+      position: absolute; top: 14px; right: 14px;
+      padding: 5px 12px; border: 1px solid var(--ha-border);
+      background: var(--ha-bg-elevated); color: var(--ha-text-muted);
+      border-radius: var(--ha-radius-md); font-size: 0.75rem; cursor: pointer; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
+    .copy-btn.copied { border-color: var(--ha-accent-emerald); color: var(--ha-accent-emerald); }
+    .post-card[data-platform="twitter"]  .post-section { border-left: 3px solid var(--tw-color); }
+    .post-card[data-platform="linkedin"] .post-section { border-left: 3px solid var(--li-color); }
+    .post-card[data-platform="facebook"] .post-section { border-left: 3px solid var(--fb-color); }
+    .post-card[data-platform="twitter"]  .section-label { color: var(--tw-color); }
+    .post-card[data-platform="linkedin"] .section-label { color: var(--li-color); }
+    .post-card[data-platform="facebook"] .section-label { color: var(--fb-color); }
+    /* Queue */
+    .queue-cron-bar {
+      background: var(--ha-bg-surface); border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius-lg); padding: 12px 18px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .cron-item { display: flex; flex-direction: column; gap: 3px; }
+    .cron-label { font-size: 0.67rem; color: var(--ha-text-disabled); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .cron-value { font-size: 0.85rem; color: var(--ha-text-primary); font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .cron-divider { width: 1px; height: 32px; background: var(--ha-border); flex-shrink: 0; }
+    .queue-refresh-btn {
+      margin-left: auto; padding: 7px 14px;
+      border: 1px solid var(--ha-border); background: var(--ha-bg-elevated);
+      color: var(--ha-text-muted); border-radius: var(--ha-radius-md);
+      font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
+    }
+    .queue-refresh-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
+    .queue-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #queue-loading { display: none; }
+    .queue-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; padding: 70px 20px;
+      color: var(--ha-text-disabled); text-align: center;
+    }
+    .queue-empty .icon { font-size: 2.2rem; }
+    .queue-empty p { font-size: 0.88rem; max-width: 240px; }
+    .queue-card {
+      background: var(--ha-bg-surface); border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius-xl); padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      margin-bottom: 12px; transition: border-color 0.15s;
+    }
+    .queue-card:hover { border-color: var(--ha-bg-hover); }
+    .queue-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .queue-card-title { font-size: 0.95rem; font-weight: 600; color: var(--ha-text-primary); line-height: 1.4; flex: 1; }
+    .queue-card-status {
+      font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+      border-radius: var(--ha-radius-pill);
+      border: 1px solid var(--ha-accent-amber);
+      background: var(--ha-accent-amber-dim); color: var(--ha-accent-amber);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .queue-card-meta { display: flex; flex-wrap: wrap; gap: 14px; }
+    .queue-meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .queue-meta-label { font-size: 0.67rem; color: var(--ha-text-disabled); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .queue-meta-value { font-size: 0.82rem; color: var(--ha-text-body); }
+    .queue-meta-value.highlight { color: var(--ha-accent-sky); font-weight: 600; }
+    .queue-card-platforms { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .platform-pip { font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: var(--ha-radius-pill); border: 1px solid; }
+    .platform-pip.tw { color: var(--tw-color); border-color: var(--tw-color); background: var(--tw-dim); }
+    .platform-pip.li { color: var(--li-color); border-color: var(--li-color); background: var(--li-dim); }
+    .platform-pip.fb { color: var(--fb-color); border-color: var(--fb-color); background: var(--fb-dim); }
+    /* Responsive */
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .results-actions { flex-direction: column; align-items: stretch; }
+      .back-btn, .view-queue-btn { justify-content: center; }
+      .main-tab { padding: 0 14px; font-size: 0.82rem; }
+      .content-wrap { padding: 20px 14px 40px; }
+      .schedule-banner { flex-wrap: wrap; }
+      .form-card { padding: 20px 16px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Social Media <span>Multi-Posting</span></div>
+    <div class="badge">HABITS-Powered</div>
+  </header>
+  <div class="page-wrap">
+    <nav class="main-tab-nav">
+      <button class="main-tab active" id="maintab-generate" onclick="showMainTab('generate')">
+        ✨ Generate Posts
+      </button>
+      <button class="main-tab" id="maintab-queue" onclick="showMainTab('queue')">
+        🗓️ Scheduled Queue <span class="queue-count" id="queue-count" style="display:none"></span>
+      </button>
+    </nav>
+    <!-- PANEL: Generate Posts -->
+    <div class="panel active" id="panel-generate">
+      <div class="content-wrap">
+        <!-- State: Form -->
+        <div class="gen-state active" id="gen-form">
+          <div class="form-card">
+            <div class="form-title">Create &amp; Schedule Posts <span>✦</span></div>
+            <div class="field">
+              <label>Content Topic *</label>
+              <textarea id="f-topic" placeholder="What's your post about? An announcement, insight, product launch…"></textarea>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Brand Name</label>
+                <input id="f-brand" type="text" placeholder="Your brand or company name">
+              </div>
+              <div class="field">
+                <label>Target Audience</label>
+                <input id="f-audience" type="text" placeholder="e.g. developers, marketers…">
+              </div>
+            </div>
+            <div class="field">
+              <label>Content Tone</label>
+              <div class="tone-row">
+                <button class="tone-chip" data-tone="professional">Professional</button>
+                <button class="tone-chip active" data-tone="casual">Casual</button>
+                <button class="tone-chip" data-tone="humorous">Humorous</button>
+                <button class="tone-chip" data-tone="inspirational">Inspirational</button>
+                <button class="tone-chip" data-tone="educational">Educational</button>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Schedule Date &amp; Time *</label>
+                <input id="f-schedule" type="datetime-local">
+                <span class="hint">When these posts should go live</span>
+              </div>
+              <div class="field">
+                <label>Timezone</label>
+                <select id="f-timezone">
+                  <option value="UTC">UTC</option>
+                  <option value="America/New_York">America/New_York (ET)</option>
+                  <option value="America/Chicago">America/Chicago (CT)</option>
+                  <option value="America/Denver">America/Denver (MT)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (PT)</option>
+                  <option value="Europe/London">Europe/London (GMT/BST)</option>
+                  <option value="Europe/Paris">Europe/Paris (CET)</option>
+                  <option value="Europe/Berlin">Europe/Berlin (CET)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="Asia/Singapore">Asia/Singapore (SGT)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                  <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                </select>
+              </div>
+            </div>
+            <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">
+              Generate &amp; Schedule Posts
+            </button>
+          </div>
+        </div>
+        <!-- State: Loading -->
+        <div class="gen-state" id="gen-loading">
+          <div class="state-block">
+            <div class="spinner"></div>
+            <p>Generating posts for all 3 platforms…</p>
+          </div>
+        </div>
+        <!-- State: Error -->
+        <div class="gen-state" id="gen-error">
+          <div class="state-block">
+            <div class="icon">⚠️</div>
+            <p id="error-msg">Something went wrong. Please try again.</p>
+            <button class="retry-btn" onclick="showGenState('form')">← Back to Form</button>
+          </div>
+        </div>
+        <!-- State: Results -->
+        <div class="gen-state" id="gen-results">
+          <div class="results-actions">
+            <button class="back-btn" onclick="showGenState('form')">← New Post</button>
+            <button class="view-queue-btn" onclick="showMainTab('queue')">View Scheduled Queue 🗓️</button>
+          </div>
+          <div class="schedule-banner">
+            <div class="sched-icon">🗓️</div>
+            <div class="sched-info">
+              <div class="sched-label">Scheduled for</div>
+              <div class="sched-time" id="banner-time">—</div>
+              <div class="sched-tz" id="banner-tz">—</div>
+            </div>
+            <div class="sched-badge">Pending</div>
+          </div>
+          <div class="tab-bar">
+            <button class="tab-btn active-tw" id="tab-twitter"  onclick="showTab('twitter')">𝕏 Twitter</button>
+            <button class="tab-btn"           id="tab-linkedin" onclick="showTab('linkedin')">in LinkedIn</button>
+            <button class="tab-btn"           id="tab-facebook" onclick="showTab('facebook')">f Facebook</button>
+          </div>
+          <!-- Twitter -->
+          <div class="post-card visible" id="card-twitter" data-platform="twitter">
+            <div class="post-section">
+              <div class="section-label">Tweet</div>
+              <button class="copy-btn" onclick="copySection('tw-tweet', this)">Copy</button>
+              <pre id="tw-tweet"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Thread</div>
+              <button class="copy-btn" onclick="copySection('tw-thread', this)">Copy</button>
+              <pre id="tw-thread"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Hashtags</div>
+              <button class="copy-btn" onclick="copySection('tw-hashtags', this)">Copy</button>
+              <pre id="tw-hashtags"></pre>
+            </div>
+          </div>
+          <!-- LinkedIn -->
+          <div class="post-card" id="card-linkedin" data-platform="linkedin">
+            <div class="post-section">
+              <div class="section-label">Hook</div>
+              <button class="copy-btn" onclick="copySection('li-hook', this)">Copy</button>
+              <pre id="li-hook"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Body</div>
+              <button class="copy-btn" onclick="copySection('li-body', this)">Copy</button>
+              <pre id="li-body"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Takeaways</div>
+              <button class="copy-btn" onclick="copySection('li-takeaways', this)">Copy</button>
+              <pre id="li-takeaways"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Call to Action</div>
+              <button class="copy-btn" onclick="copySection('li-cta', this)">Copy</button>
+              <pre id="li-cta"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Hashtags</div>
+              <button class="copy-btn" onclick="copySection('li-hashtags', this)">Copy</button>
+              <pre id="li-hashtags"></pre>
+            </div>
+          </div>
+          <!-- Facebook -->
+          <div class="post-card" id="card-facebook" data-platform="facebook">
+            <div class="post-section">
+              <div class="section-label">Post</div>
+              <button class="copy-btn" onclick="copySection('fb-post', this)">Copy</button>
+              <pre id="fb-post"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Engagement Question</div>
+              <button class="copy-btn" onclick="copySection('fb-question', this)">Copy</button>
+              <pre id="fb-question"></pre>
+            </div>
+            <div class="post-section">
+              <div class="section-label">Hashtags</div>
+              <button class="copy-btn" onclick="copySection('fb-hashtags', this)">Copy</button>
+              <pre id="fb-hashtags"></pre>
+            </div>
+          </div>
+        </div><!-- /gen-results -->
+      </div><!-- /content-wrap -->
+    </div><!-- /panel-generate -->
+    <!-- PANEL: Scheduled Queue -->
+    <div class="panel" id="panel-queue">
+      <div class="content-wrap">
+        <div class="queue-cron-bar">
+          <div class="cron-item">
+            <span class="cron-label">Schedule</span>
+            <span class="cron-value" id="cron-expression">*/10 * * * *</span>
+          </div>
+          <div class="cron-divider"></div>
+          <div class="cron-item">
+            <span class="cron-label">Last Checked</span>
+            <span class="cron-value" id="cron-checked-at">—</span>
+          </div>
+          <div class="cron-divider"></div>
+          <div class="cron-item">
+            <span class="cron-label">Next Check</span>
+            <span class="cron-value" id="cron-next">—</span>
+          </div>
+          <button class="queue-refresh-btn" id="queue-refresh-btn" onclick="loadQueue()">↻ Refresh</button>
+        </div>
+        <div class="state-block" id="queue-loading">
+          <div class="spinner"></div>
+          <p>Loading pending posts…</p>
+        </div>
+        <div id="queue-list"></div>
+      </div><!-- /content-wrap -->
+    </div><!-- /panel-queue -->
+  </div><!-- /page-wrap -->
+</div><!-- /app -->
+<script>
+  let selectedTone = 'casual';
+  let activeTab = 'twitter';
+  let activeMainTab = 'generate';
+  let queueInterval = null;
+  const QUEUE_POLL_MS = 60_000;
+
+  document.querySelectorAll('.tone-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedTone = chip.dataset.tone;
+    });
+  });
+
+  (function setDefaultDateTime() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    document.getElementById('f-schedule').value = d.toISOString().slice(0, 16);
+  })();
+
+  function showMainTab(tab) {
+    activeMainTab = tab;
+    ['generate', 'queue'].forEach(t => {
+      document.getElementById('maintab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab === 'queue') {
+      loadQueue();
+      resetQueueInterval();
+    }
+  }
+
+  function showGenState(name) {
+    ['form', 'loading', 'error', 'results'].forEach(s => {
+      document.getElementById('gen-' + s).classList.toggle('active', s === name);
+    });
+  }
+
+  async function handleSubmit() {
+    const topic = document.getElementById('f-topic').value.trim();
+    const scheduleRaw = document.getElementById('f-schedule').value;
+    if (!topic) { alert('Please enter a content topic.'); return; }
+    if (!scheduleRaw) { alert('Please select a schedule date & time.'); return; }
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    showGenState('loading');
+    const scheduledAt = new Date(scheduleRaw).toISOString();
+    const scheduleTimezone = document.getElementById('f-timezone').value;
+    const brand = document.getElementById('f-brand').value.trim() || undefined;
+    const targetAudience = document.getElementById('f-audience').value.trim() || undefined;
+    const createdAt = new Date().toISOString();
+    try {
+      const res = await fetch('/api/generate-social-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, brand, tone: selectedTone, targetAudience, scheduledAt, scheduleTimezone, createdAt }),
+      });
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      const data = await res.json();
+      renderResults(data.output || data);
+      showGenState('results');
+    } catch (err) {
+      document.getElementById('error-msg').textContent = err.message || 'Something went wrong.';
+      showGenState('error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderResults(data) {
+    const schedDate = new Date(data.scheduledAt || '');
+    document.getElementById('banner-time').textContent = isNaN(schedDate)
+      ? (data.scheduledAt || '—')
+      : schedDate.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
+    document.getElementById('banner-tz').textContent = data.scheduleTimezone || 'UTC';
+    const tw = parseTwitter(data.twitter || '');
+    document.getElementById('tw-tweet').textContent    = tw.tweet;
+    document.getElementById('tw-thread').textContent   = tw.thread;
+    document.getElementById('tw-hashtags').textContent = tw.hashtags;
+    const li = parseLinkedin(data.linkedin || '');
+    document.getElementById('li-hook').textContent      = li.hook;
+    document.getElementById('li-body').textContent      = li.body;
+    document.getElementById('li-takeaways').textContent = li.takeaways;
+    document.getElementById('li-cta').textContent       = li.cta;
+    document.getElementById('li-hashtags').textContent  = li.hashtags;
+    const fb = parseFacebook(data.facebook || '');
+    document.getElementById('fb-post').textContent      = fb.post;
+    document.getElementById('fb-question').textContent  = fb.question;
+    document.getElementById('fb-hashtags').textContent  = fb.hashtags;
+    showTab('twitter');
+  }
+
+  function showTab(platform) {
+    activeTab = platform;
+    ['twitter', 'linkedin', 'facebook'].forEach(p => {
+      const btn = document.getElementById('tab-' + p);
+      btn.className = 'tab-btn';
+      if (p === platform) btn.classList.add('active-' + p.slice(0, 2));
+      document.getElementById('card-' + p).classList.toggle('visible', p === platform);
+    });
+  }
+
+  function resetQueueInterval() {
+    if (queueInterval) clearInterval(queueInterval);
+    queueInterval = setInterval(loadQueue, QUEUE_POLL_MS);
+  }
+
+  async function loadQueue() {
+    const refreshBtn = document.getElementById('queue-refresh-btn');
+    const loadingEl  = document.getElementById('queue-loading');
+    const listEl     = document.getElementById('queue-list');
+    if (refreshBtn) refreshBtn.disabled = true;
+    loadingEl.style.display = 'flex';
+    listEl.innerHTML = '';
+    try {
+      const res = await fetch('/api/check-pending-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      const data = await res.json();
+      renderQueue(data.output || data);
+    } catch (err) {
+      listEl.innerHTML = '<div class="queue-empty"><div class="icon">⚠️</div><p>' + escapeHtml(err.message) + '</p></div>';
+    } finally {
+      loadingEl.style.display = 'none';
+      if (refreshBtn) refreshBtn.disabled = false;
+    }
+  }
+
+  function renderQueue(data) {
+    const posts     = data.posts || [];
+    const cronExpr  = data.cronExpression;
+    const checkedAt = data.checkedAt;
+    const nextExec  = data.nextExecution;
+    if (cronExpr) document.getElementById('cron-expression').textContent = cronExpr;
+    if (checkedAt) {
+      const d = new Date(checkedAt);
+      document.getElementById('cron-checked-at').textContent = isNaN(d) ? checkedAt
+        : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' });
+    }
+    if (nextExec) {
+      const d = new Date(nextExec);
+      document.getElementById('cron-next').textContent = isNaN(d) ? nextExec
+        : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    }
+    const countEl = document.getElementById('queue-count');
+    if (posts.length > 0) { countEl.textContent = posts.length; countEl.style.display = 'inline'; }
+    else { countEl.style.display = 'none'; }
+    const listEl = document.getElementById('queue-list');
+    if (posts.length === 0) {
+      listEl.innerHTML = '<div class="queue-empty"><div class="icon">🎉</div><p>No pending posts. Generate some content first!</p></div>';
+      return;
+    }
+    listEl.innerHTML = posts.map(post => {
+      const schedDate   = new Date(post.scheduledAt || '');
+      const createdDate = new Date(post.createdAt || '');
+      const schedFmt    = isNaN(schedDate) ? (post.scheduledAt || '—')
+        : schedDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      const createdFmt  = isNaN(createdDate) ? (post.createdAt || '—')
+        : createdDate.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+      const topic = (post.topic || 'Untitled').substring(0, 90) + ((post.topic || '').length > 90 ? '…' : '');
+      return '<div class="queue-card">'
+        + '<div class="queue-card-header">'
+        + '<div class="queue-card-title">' + escapeHtml(topic) + '</div>'
+        + '<span class="queue-card-status">' + escapeHtml(post.status || 'pending') + '</span>'
+        + '</div>'
+        + '<div class="queue-card-meta">'
+        + '<div class="queue-meta-item"><span class="queue-meta-label">Scheduled</span><span class="queue-meta-value highlight">' + escapeHtml(schedFmt) + '</span></div>'
+        + '<div class="queue-meta-item"><span class="queue-meta-label">Timezone</span><span class="queue-meta-value">' + escapeHtml(post.scheduleTimezone || 'UTC') + '</span></div>'
+        + (post.brand ? '<div class="queue-meta-item"><span class="queue-meta-label">Brand</span><span class="queue-meta-value">' + escapeHtml(post.brand) + '</span></div>' : '')
+        + (post.tone  ? '<div class="queue-meta-item"><span class="queue-meta-label">Tone</span><span class="queue-meta-value">' + escapeHtml(post.tone) + '</span></div>' : '')
+        + '<div class="queue-meta-item"><span class="queue-meta-label">Created</span><span class="queue-meta-value">' + escapeHtml(createdFmt) + '</span></div>'
+        + '</div>'
+        + '<div class="queue-card-platforms">'
+        + (post.twitter  ? '<span class="platform-pip tw">𝕏 Twitter</span>'  : '')
+        + (post.linkedin ? '<span class="platform-pip li">in LinkedIn</span>' : '')
+        + (post.facebook ? '<span class="platform-pip fb">f Facebook</span>'  : '')
+        + '</div></div>';
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function extractSection(text, label, nextLabels) {
+    const rx = new RegExp(label + ':\\s*([\\s\\S]*?)(?=(?:' + nextLabels.join('|') + '):|\s*$)', 'i');
+    const m = text.match(rx);
+    return m ? m[1].trim() : '';
+  }
+  function parseTwitter(text) {
+    return {
+      tweet:    extractSection(text, 'TWEET',    ['THREAD','HASHTAGS']),
+      thread:   extractSection(text, 'THREAD',   ['HASHTAGS']),
+      hashtags: extractSection(text, 'HASHTAGS', []),
+    };
+  }
+  function parseLinkedin(text) {
+    return {
+      hook:      extractSection(text, 'HOOK',      ['BODY','TAKEAWAYS','CTA','HASHTAGS']),
+      body:      extractSection(text, 'BODY',      ['TAKEAWAYS','CTA','HASHTAGS']),
+      takeaways: extractSection(text, 'TAKEAWAYS', ['CTA','HASHTAGS']),
+      cta:       extractSection(text, 'CTA',       ['HASHTAGS']),
+      hashtags:  extractSection(text, 'HASHTAGS',  []),
+    };
+  }
+  function parseFacebook(text) {
+    return {
+      post:     extractSection(text, 'POST',     ['QUESTION','HASHTAGS']),
+      question: extractSection(text, 'QUESTION', ['HASHTAGS']),
+      hashtags: extractSection(text, 'HASHTAGS', []),
+    };
+  }
+
+  function copySection(id, btn) {
+    const text = document.getElementById(id).textContent;
+    const flash = () => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(flash);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flash();
+    }
+  }
+
+  resetQueueInterval();
+</script>
+</body>
+</html>
