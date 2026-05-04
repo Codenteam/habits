@@ -10,6 +10,10 @@ workflows:
     path: ./habits/check-pending-posts.yaml
     enabled: true
 
+  - id: publish-social-post
+    path: ./habits/publish-social-post.yaml
+    enabled: true
+
 server:
   port: 13000
   host: "0.0.0.0"

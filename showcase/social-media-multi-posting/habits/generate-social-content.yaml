@@ -67,24 +67,16 @@ nodes:
         temperature: 0.8
         maxTokens: 500
         prompt: |
-          Create a Twitter/X post for the following:
+          Write a Twitter/X post for the following:
           Topic: {{habits.input.topic}}
           Brand: {{habits.input.brand}}
           Tone: {{habits.input.tone}}
           Target Audience: {{habits.input.targetAudience}}
 
-          Provide exactly these sections:
-
-          TWEET:
-          (One tweet under 280 characters — punchy, engaging, scroll-stopping)
-
-          THREAD:
-          (2-4 follow-up tweets that expand on the idea, numbered 1/, 2/, etc.)
-
-          HASHTAGS:
-          (5-7 relevant hashtags, space-separated)
-
-          Do not add any commentary outside these sections.
+          Rules:
+          - Maximum 3 sentences, under 280 characters total including hashtags
+          - Append 3-5 relevant hashtags at the end of the text
+          - Return ONLY the final tweet text — no labels, no commentary, nothing else
 
   # Generate LinkedIn post
   - id: generate-linkedin
@@ -103,30 +95,16 @@ nodes:
         temperature: 0.7
         maxTokens: 700
         prompt: |
-          Create a LinkedIn post for the following:
+          Write a LinkedIn post for the following:
           Topic: {{habits.input.topic}}
           Brand: {{habits.input.brand}}
           Tone: {{habits.input.tone}}
           Target Audience: {{habits.input.targetAudience}}
 
-          Provide exactly these sections:
-
-          HOOK:
-          (First line that grabs attention — no filler)
-
-          BODY:
-          (3-4 short paragraphs with insights or a story. Use blank lines between paragraphs for readability.)
-
-          TAKEAWAYS:
-          (2-3 bullet points starting with •)
-
-          CTA:
-          (One clear call to action — encourage comments or shares)
-
-          HASHTAGS:
-          (3-5 professional hashtags, space-separated)
-
-          Do not add any commentary outside these sections.
+          Rules:
+          - Maximum 5 sentences, concise and professional
+          - Append 3-5 relevant hashtags on a new line at the end
+          - Return ONLY the final post text — no labels, no section headers, no commentary
 
   # Generate Facebook post
   - id: generate-facebook
@@ -145,24 +123,17 @@ nodes:
         temperature: 0.7
         maxTokens: 500
         prompt: |
-          Create a Facebook post for the following:
+          Write a Facebook post for the following:
           Topic: {{habits.input.topic}}
           Brand: {{habits.input.brand}}
           Tone: {{habits.input.tone}}
           Target Audience: {{habits.input.targetAudience}}
 
-          Provide exactly these sections:
-
-          POST:
-          (Conversational post, 2-4 paragraphs. Friendly, shareable, community-focused.)
-
-          QUESTION:
-          (One engagement question to boost comments)
-
-          HASHTAGS:
-          (3-5 relevant hashtags, space-separated)
-
-          Do not add any commentary outside these sections.
+          Rules:
+          - Maximum 4 sentences, friendly and conversational
+          - End with one short engagement question
+          - Append 3-5 relevant hashtags on a new line at the end
+          - Return ONLY the final post text — no labels, no section headers, no commentary
 
   # Save all generated posts with schedule info to database
   - id: save-post

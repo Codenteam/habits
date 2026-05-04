@@ -421,64 +421,24 @@
           <div class="post-card visible" id="card-twitter" data-platform="twitter">
             <div class="post-section">
               <div class="section-label">Tweet</div>
-              <button class="copy-btn" onclick="copySection('tw-tweet', this)">Copy</button>
-              <pre id="tw-tweet"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Thread</div>
-              <button class="copy-btn" onclick="copySection('tw-thread', this)">Copy</button>
-              <pre id="tw-thread"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Hashtags</div>
-              <button class="copy-btn" onclick="copySection('tw-hashtags', this)">Copy</button>
-              <pre id="tw-hashtags"></pre>
+              <button class="copy-btn" onclick="copySection('tw-text', this)">Copy</button>
+              <pre id="tw-text"></pre>
             </div>
           </div>
           <!-- LinkedIn -->
           <div class="post-card" id="card-linkedin" data-platform="linkedin">
             <div class="post-section">
-              <div class="section-label">Hook</div>
-              <button class="copy-btn" onclick="copySection('li-hook', this)">Copy</button>
-              <pre id="li-hook"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Body</div>
-              <button class="copy-btn" onclick="copySection('li-body', this)">Copy</button>
-              <pre id="li-body"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Takeaways</div>
-              <button class="copy-btn" onclick="copySection('li-takeaways', this)">Copy</button>
-              <pre id="li-takeaways"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Call to Action</div>
-              <button class="copy-btn" onclick="copySection('li-cta', this)">Copy</button>
-              <pre id="li-cta"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Hashtags</div>
-              <button class="copy-btn" onclick="copySection('li-hashtags', this)">Copy</button>
-              <pre id="li-hashtags"></pre>
+              <div class="section-label">Post</div>
+              <button class="copy-btn" onclick="copySection('li-text', this)">Copy</button>
+              <pre id="li-text"></pre>
             </div>
           </div>
           <!-- Facebook -->
           <div class="post-card" id="card-facebook" data-platform="facebook">
             <div class="post-section">
               <div class="section-label">Post</div>
-              <button class="copy-btn" onclick="copySection('fb-post', this)">Copy</button>
-              <pre id="fb-post"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Engagement Question</div>
-              <button class="copy-btn" onclick="copySection('fb-question', this)">Copy</button>
-              <pre id="fb-question"></pre>
-            </div>
-            <div class="post-section">
-              <div class="section-label">Hashtags</div>
-              <button class="copy-btn" onclick="copySection('fb-hashtags', this)">Copy</button>
-              <pre id="fb-hashtags"></pre>
+              <button class="copy-btn" onclick="copySection('fb-text', this)">Copy</button>
+              <pre id="fb-text"></pre>
             </div>
           </div>
         </div><!-- /gen-results -->
@@ -590,20 +550,9 @@
       ? (data.scheduledAt || '—')
       : schedDate.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
     document.getElementById('banner-tz').textContent = data.scheduleTimezone || 'UTC';
-    const tw = parseTwitter(data.twitter || '');
-    document.getElementById('tw-tweet').textContent    = tw.tweet;
-    document.getElementById('tw-thread').textContent   = tw.thread;
-    document.getElementById('tw-hashtags').textContent = tw.hashtags;
-    const li = parseLinkedin(data.linkedin || '');
-    document.getElementById('li-hook').textContent      = li.hook;
-    document.getElementById('li-body').textContent      = li.body;
-    document.getElementById('li-takeaways').textContent = li.takeaways;
-    document.getElementById('li-cta').textContent       = li.cta;
-    document.getElementById('li-hashtags').textContent  = li.hashtags;
-    const fb = parseFacebook(data.facebook || '');
-    document.getElementById('fb-post').textContent      = fb.post;
-    document.getElementById('fb-question').textContent  = fb.question;
-    document.getElementById('fb-hashtags').textContent  = fb.hashtags;
+    document.getElementById('tw-text').textContent = (data.twitter  || '').trim();
+    document.getElementById('li-text').textContent = (data.linkedin || '').trim();
+    document.getElementById('fb-text').textContent = (data.facebook || '').trim();
     showTab('twitter');
   }
 
@@ -700,35 +649,6 @@
 
   function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function extractSection(text, label, nextLabels) {
-    const rx = new RegExp(label + ':\\s*([\\s\\S]*?)(?=(?:' + nextLabels.join('|') + '):|\s*$)', 'i');
-    const m = text.match(rx);
-    return m ? m[1].trim() : '';
-  }
-  function parseTwitter(text) {
-    return {
-      tweet:    extractSection(text, 'TWEET',    ['THREAD','HASHTAGS']),
-      thread:   extractSection(text, 'THREAD',   ['HASHTAGS']),
-      hashtags: extractSection(text, 'HASHTAGS', []),
-    };
-  }
-  function parseLinkedin(text) {
-    return {
-      hook:      extractSection(text, 'HOOK',      ['BODY','TAKEAWAYS','CTA','HASHTAGS']),
-      body:      extractSection(text, 'BODY',      ['TAKEAWAYS','CTA','HASHTAGS']),
-      takeaways: extractSection(text, 'TAKEAWAYS', ['CTA','HASHTAGS']),
-      cta:       extractSection(text, 'CTA',       ['HASHTAGS']),
-      hashtags:  extractSection(text, 'HASHTAGS',  []),
-    };
-  }
-  function parseFacebook(text) {
-    return {
-      post:     extractSection(text, 'POST',     ['QUESTION','HASHTAGS']),
-      question: extractSection(text, 'QUESTION', ['HASHTAGS']),
-      hashtags: extractSection(text, 'HASHTAGS', []),
-    };
   }
 
   function copySection(id, btn) {
