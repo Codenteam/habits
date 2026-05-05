@@ -601,7 +601,8 @@
     else { countEl.style.display = 'none'; }
     const listEl = document.getElementById('queue-list');
     if (posts.length === 0) {
-      listEl.innerHTML = '<div class="queue-empty"><div class="icon">🎉</div><p>No pending posts. Generate some content first!</p></div>';
+      const checkedAtText = checkedAt ? (() => { const d = new Date(checkedAt); return isNaN(d) ? checkedAt : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }); })() : null;
+      listEl.innerHTML = '<div class="queue-empty"><div class="icon">🎉</div><p>No pending posts until ' + (checkedAtText ? escapeHtml(checkedAtText) : '—') + '.</p></div>';
       return;
     }
     listEl.innerHTML = posts.map(post => {
@@ -615,7 +616,6 @@
       return '<div class="queue-card">'
         + '<div class="queue-card-header">'
         + '<div class="queue-card-title">' + escapeHtml(topic) + '</div>'
-        + '<span class="queue-card-status">' + escapeHtml(post.status || 'pending') + '</span>'
         + '</div>'
         + '<div class="queue-card-meta">'
         + '<div class="queue-meta-item"><span class="queue-meta-label">Scheduled</span><span class="queue-meta-value highlight">' + escapeHtml(schedFmt) + '</span></div>'

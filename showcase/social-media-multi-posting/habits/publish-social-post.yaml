@@ -51,7 +51,7 @@ nodes:
   #     params:
   #       collection: smmp_scheduled_posts
   #       filter:
-  #         id: "{{post._id}}"
+  #         _id: "{{post._id}}"
   #       update:
   #         status: "published"
   #         publishedAt: "{{post.executedAt}}"
