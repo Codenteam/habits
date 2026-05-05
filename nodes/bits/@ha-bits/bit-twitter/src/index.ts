@@ -142,8 +142,8 @@ const twitterBit = {
     displayName: 'Twitter OAuth',
     description: 'OAuth 2.0 authentication with Twitter. Requires a Twitter Developer App with OAuth 2.0 enabled.',
     required: true,
-    authorizationUrl: 'https://twitter.com/i/oauth2/authorize',
-    tokenUrl: 'https://api.twitter.com/2/oauth2/token',
+    authorizationUrl: 'https://x.com/i/oauth2/authorize',
+    tokenUrl: 'https://api.x.com/2/oauth2/token',
     // clientId is configured per-user/deployment
     scopes: ['tweet.read', 'tweet.write', 'users.read', 'offline.access'],
   },

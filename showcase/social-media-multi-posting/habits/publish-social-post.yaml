@@ -1,0 +1,67 @@
+id: publish-social-post
+name: Publish Social Post
+description: >-
+  Called per-item by bit-loop in check-pending-posts.
+  Takes a single scheduled post record (with twitter and linkedin fields)
+  and posts the content to Twitter/X and LinkedIn in parallel,
+  then marks the record as "published" in the database.
+
+nodes:
+  # Post tweet to Twitter/X
+  - id: post-to-twitter
+    type: bits
+    data:
+      label: Post to Twitter/X
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      operation: tweet
+      auth:
+        clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
+      params:
+        text: "{{post.twitter}}"
+
+  # Post to LinkedIn
+  # - id: post-to-linkedin
+  #   type: bits
+  #   data:
+  #     label: Post to LinkedIn
+  #     framework: bits
+  #     source: npm
+  #     module: "@ha-bits/bit-linkedin"
+  #     operation: createPost
+  #     credentials:
+  #       linkedin:
+  #         accessToken: "{{habits.env.HABITS_LINKEDIN_ACCESS_TOKEN}}"
+  #         refreshToken: "{{habits.env.HABITS_LINKEDIN_REFRESH_TOKEN}}"
+  #     params:
+  #       text: "{{post.linkedin}}"
+  #       visibility: "PUBLIC"
+
+  # Mark the post as published in the database (runs after both platforms succeed)
+  # - id: mark-published
+  #   type: bits
+  #   data:
+  #     label: Mark Post as Published
+  #     framework: bits
+  #     source: npm
+  #     module: "@ha-bits/bit-database-sql"
+  #     operation: update
+  #     params:
+  #       collection: smmp_scheduled_posts
+  #       filter:
+  #         _id: "{{post._id}}"
+  #       update:
+  #         status: "published"
+  #         publishedAt: "{{post.executedAt}}"
+
+edges:
+  - source: post-to-twitter
+    target: mark-published
+  - source: post-to-linkedin
+    target: mark-published
+
+output:
+  # linkedinId: "{{post-to-linkedin.postId}}"
+  status: "published"

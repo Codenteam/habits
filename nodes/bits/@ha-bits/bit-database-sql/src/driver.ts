@@ -112,6 +112,42 @@ export function parseFilter(filter: any): Record<string, any> {
 }
 
 /**
+ * Check if a document's field value satisfies a filter condition.
+ * Supports MongoDB-style operators: $lte, $gte, $lt, $gt, $ne, $in.
+ * Falls back to strict equality for plain values.
+ */
+function fieldMatches(fieldValue: any, condition: any): boolean {
+  if (condition !== null && typeof condition === 'object' && !Array.isArray(condition)) {
+    const ops = Object.keys(condition);
+    for (const op of ops) {
+      const operand = condition[op];
+      switch (op) {
+        case '$lte': if (!(fieldValue <= operand)) return false; break;
+        case '$gte': if (!(fieldValue >= operand)) return false; break;
+        case '$lt':  if (!(fieldValue <  operand)) return false; break;
+        case '$gt':  if (!(fieldValue >  operand)) return false; break;
+        case '$ne':  if (fieldValue === operand) return false; break;
+        case '$in':  if (!Array.isArray(operand) || !operand.includes(fieldValue)) return false; break;
+        default: if (fieldValue !== condition) return false;
+      }
+    }
+    return true;
+  }
+  return fieldValue === condition;
+}
+
+export function matchesFilter(data: Record<string, any>, filterObj: Record<string, any>, customId?: string): boolean {
+  for (const [k, v] of Object.entries(filterObj)) {
+    if (k === '_id') {
+      if (customId !== undefined ? customId !== v : data._id !== v) return false;
+    } else if (!fieldMatches(data[k], v)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Safely convert a value to a number with a default fallback.
  * Handles strings that might be unresolved expressions.
  */
@@ -248,12 +284,7 @@ export async function update(params: {
 
   for (const row of rows) {
     const data = parseValue(row.data);
-    let matches = true;
-    for (const [k, v] of Object.entries(filterObj)) {
-      if (k === '_id') { if (row.custom_id !== v) { matches = false; break; } }
-      else if (data[k] !== v) { matches = false; break; }
-    }
-    if (matches) {
+    if (matchesFilter(data, filterObj, row.custom_id)) {
       const now = new Date().toISOString();
       const updatedData = { ...data, ...updateObj, _id: row.custom_id };
       sqlite.prepare('UPDATE documents SET data = ?, updated_at = ? WHERE id = ?')
@@ -282,11 +313,7 @@ export async function query(params: {
   const results: any[] = [];
   for (const row of rows) {
     const data = parseValue(row.data);
-    let matches = true;
-    for (const [k, v] of Object.entries(filterObj)) {
-      if (data[k] !== v) { matches = false; break; }
-    }
-    if (matches) {
+    if (matchesFilter(data, filterObj, row.custom_id)) {
       results.push({ ...data, _id: row.custom_id, _createdAt: row.created_at });
       if (results.length >= safeNumber(limit, 0)) break;
     }
@@ -450,12 +477,7 @@ export async function vectorSearch(params: {
   const results: any[] = [];
   for (const r of rows) {
     const data = parseValue(r.data);
-    let ok = true;
-    for (const [k2, v2] of Object.entries(filterObj)) {
-      if (k2 === '_id') { if (data._id !== v2) { ok = false; break; } }
-      else if (data[k2] !== v2) { ok = false; break; }
-    }
-    if (ok) {
+    if (matchesFilter(data, filterObj)) {
       results.push({ ...data, _id: data._id, _createdAt: r.created_at, _distance: r.distance });
       if (results.length >= k) break;
     }

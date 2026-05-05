@@ -1,0 +1,148 @@
+id: generate-social-content
+name: Generate Social Content
+description: >-
+  Form-driven habit that generates Twitter and LinkedIn posts
+  using AI, then saves them with a scheduled posting time to the database.
+
+input:
+  - id: topic
+    type: string
+    required: true
+    label: Content Topic
+    description: The main idea, announcement, or topic for your posts
+
+  - id: brand
+    type: string
+    required: false
+    label: Brand Name
+    description: Your brand or company name
+
+  - id: tone
+    type: string
+    required: false
+    label: Content Tone
+    description: "professional, casual, humorous, inspirational, or educational"
+    defaultValue: casual
+
+  - id: targetAudience
+    type: string
+    required: false
+    label: Target Audience
+    description: Who is this content for? (e.g. developers, marketers, small business owners)
+
+  - id: scheduledAt
+    type: string
+    required: true
+    label: Schedule Date & Time
+    description: When to publish these posts (ISO datetime, e.g. 2026-05-10T09:00:00Z)
+
+  - id: scheduleTimezone
+    type: string
+    required: false
+    label: Timezone
+    description: IANA timezone (e.g. America/New_York, Europe/London, UTC)
+    defaultValue: UTC
+
+  - id: createdAt
+    type: string
+    required: false
+    label: Created At
+    description: ISO datetime of when the form was submitted (sent by the frontend)
+
+nodes:
+  # Generate Twitter/X post
+  - id: generate-twitter
+    type: bits
+    data:
+      label: Generate Twitter Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.8
+        maxTokens: 500
+        prompt: |
+          Write a Twitter/X post for the following:
+          Topic: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Target Audience: {{habits.input.targetAudience}}
+
+          Rules:
+          - Maximum 3 sentences, under 280 characters total including hashtags
+          - Append 3-5 relevant hashtags at the end of the text
+          - Return ONLY the final tweet text — no labels, no commentary, nothing else
+
+  # Generate LinkedIn post
+  - id: generate-linkedin
+    type: bits
+    data:
+      label: Generate LinkedIn Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 700
+        prompt: |
+          Write a LinkedIn post for the following:
+          Topic: {{habits.input.topic}}
+          Brand: {{habits.input.brand}}
+          Tone: {{habits.input.tone}}
+          Target Audience: {{habits.input.targetAudience}}
+
+          Rules:
+          - Maximum 5 sentences, concise and professional
+          - Append 3-5 relevant hashtags on a new line at the end
+          - Return ONLY the final post text — no labels, no section headers, no commentary
+
+  # Save all generated posts with schedule info to database
+  - id: save-post
+    type: bits
+    data:
+      label: Save Scheduled Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: smmp_scheduled_posts
+        document:
+          topic: "{{habits.input.topic}}"
+          brand: "{{habits.input.brand}}"
+          tone: "{{habits.input.tone}}"
+          targetAudience: "{{habits.input.targetAudience}}"
+          scheduledAt: "{{habits.input.scheduledAt}}"
+          scheduleTimezone: "{{habits.input.scheduleTimezone}}"
+          twitter: "{{generate-twitter}}"
+          linkedin: "{{generate-linkedin}}"
+          status: "pending"
+          createdAt: "{{habits.input.createdAt}}"
+
+edges:
+  - source: generate-twitter
+    target: save-post
+  - source: generate-linkedin
+    target: save-post
+
+output:
+  postId: "{{save-post.id}}"
+  status: "pending"
+  scheduledAt: "{{habits.input.scheduledAt}}"
+  scheduleTimezone: "{{habits.input.scheduleTimezone}}"
+  topic: "{{habits.input.topic}}"
+  brand: "{{habits.input.brand}}"
+  tone: "{{habits.input.tone}}"
+  targetAudience: "{{habits.input.targetAudience}}"
+  twitter: "{{generate-twitter}}"
+  linkedin: "{{generate-linkedin}}"
