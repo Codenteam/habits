@@ -1,7 +1,7 @@
 id: generate-social-content
 name: Generate Social Content
 description: >-
-  Form-driven habit that generates Twitter, LinkedIn, and Facebook posts
+  Form-driven habit that generates Twitter and LinkedIn posts
   using AI, then saves them with a scheduled posting time to the database.
 
 input:
@@ -106,35 +106,6 @@ nodes:
           - Append 3-5 relevant hashtags on a new line at the end
           - Return ONLY the final post text — no labels, no section headers, no commentary
 
-  # Generate Facebook post
-  - id: generate-facebook
-    type: bits
-    data:
-      label: Generate Facebook Post
-      framework: bits
-      source: npm
-      module: "@ha-bits/bit-openai"
-      operation: ask_chatgpt
-      credentials:
-        openai:
-          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
-      params:
-        model: gpt-4o
-        temperature: 0.7
-        maxTokens: 500
-        prompt: |
-          Write a Facebook post for the following:
-          Topic: {{habits.input.topic}}
-          Brand: {{habits.input.brand}}
-          Tone: {{habits.input.tone}}
-          Target Audience: {{habits.input.targetAudience}}
-
-          Rules:
-          - Maximum 4 sentences, friendly and conversational
-          - End with one short engagement question
-          - Append 3-5 relevant hashtags on a new line at the end
-          - Return ONLY the final post text — no labels, no section headers, no commentary
-
   # Save all generated posts with schedule info to database
   - id: save-post
     type: bits
@@ -155,7 +126,6 @@ nodes:
           scheduleTimezone: "{{habits.input.scheduleTimezone}}"
           twitter: "{{generate-twitter}}"
           linkedin: "{{generate-linkedin}}"
-          facebook: "{{generate-facebook}}"
           status: "pending"
           createdAt: "{{habits.input.createdAt}}"
 
@@ -163,8 +133,6 @@ edges:
   - source: generate-twitter
     target: save-post
   - source: generate-linkedin
-    target: save-post
-  - source: generate-facebook
     target: save-post
 
 output:
@@ -178,4 +146,3 @@ output:
   targetAudience: "{{habits.input.targetAudience}}"
   twitter: "{{generate-twitter}}"
   linkedin: "{{generate-linkedin}}"
-  facebook: "{{generate-facebook}}"

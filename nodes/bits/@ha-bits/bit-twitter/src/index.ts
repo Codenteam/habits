@@ -138,7 +138,7 @@ const twitterBit = {
   
   // OAuth 2.0 PKCE authentication for Twitter API v2
   auth: {
-    type: 'CUSTOM',
+    type: 'OAUTH2',
     displayName: 'Twitter OAuth',
     description: 'OAuth 2.0 authentication with Twitter. Requires a Twitter Developer App with OAuth 2.0 enabled.',
     required: true,

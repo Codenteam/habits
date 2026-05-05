@@ -30,8 +30,6 @@
       --tw-dim: rgba(29,155,240,0.12);
       --li-color: #0a66c2;
       --li-dim: rgba(10,102,194,0.12);
-      --fb-color: #1877f2;
-      --fb-dim: rgba(24,119,242,0.12);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -212,7 +210,6 @@
     .tab-btn:hover { border-color: var(--ha-bg-hover); color: var(--ha-text-primary); }
     .tab-btn.active-tw { background: var(--tw-dim); border-color: var(--tw-color); color: var(--tw-color); }
     .tab-btn.active-li { background: var(--li-dim); border-color: var(--li-color); color: var(--li-color); }
-    .tab-btn.active-fb { background: var(--fb-dim); border-color: var(--fb-color); color: var(--fb-color); }
     /* Post cards */
     .post-card { display: none; flex-direction: column; gap: 14px; }
     .post-card.visible { display: flex; }
@@ -238,10 +235,8 @@
     .copy-btn.copied { border-color: var(--ha-accent-emerald); color: var(--ha-accent-emerald); }
     .post-card[data-platform="twitter"]  .post-section { border-left: 3px solid var(--tw-color); }
     .post-card[data-platform="linkedin"] .post-section { border-left: 3px solid var(--li-color); }
-    .post-card[data-platform="facebook"] .post-section { border-left: 3px solid var(--fb-color); }
     .post-card[data-platform="twitter"]  .section-label { color: var(--tw-color); }
     .post-card[data-platform="linkedin"] .section-label { color: var(--li-color); }
-    .post-card[data-platform="facebook"] .section-label { color: var(--fb-color); }
     /* Queue */
     .queue-cron-bar {
       background: var(--ha-bg-surface); border: 1px solid var(--ha-border);
@@ -293,7 +288,6 @@
     .platform-pip { font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: var(--ha-radius-pill); border: 1px solid; }
     .platform-pip.tw { color: var(--tw-color); border-color: var(--tw-color); background: var(--tw-dim); }
     .platform-pip.li { color: var(--li-color); border-color: var(--li-color); background: var(--li-dim); }
-    .platform-pip.fb { color: var(--fb-color); border-color: var(--fb-color); background: var(--fb-dim); }
     /* Responsive */
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
@@ -386,7 +380,7 @@
         <div class="gen-state" id="gen-loading">
           <div class="state-block">
             <div class="spinner"></div>
-            <p>Generating posts for all 3 platforms…</p>
+            <p>Generating posts for all 2 platforms…</p>
           </div>
         </div>
         <!-- State: Error -->
@@ -415,7 +409,6 @@
           <div class="tab-bar">
             <button class="tab-btn active-tw" id="tab-twitter"  onclick="showTab('twitter')">𝕏 Twitter</button>
             <button class="tab-btn"           id="tab-linkedin" onclick="showTab('linkedin')">in LinkedIn</button>
-            <button class="tab-btn"           id="tab-facebook" onclick="showTab('facebook')">f Facebook</button>
           </div>
           <!-- Twitter -->
           <div class="post-card visible" id="card-twitter" data-platform="twitter">
@@ -433,14 +426,7 @@
               <pre id="li-text"></pre>
             </div>
           </div>
-          <!-- Facebook -->
-          <div class="post-card" id="card-facebook" data-platform="facebook">
-            <div class="post-section">
-              <div class="section-label">Post</div>
-              <button class="copy-btn" onclick="copySection('fb-text', this)">Copy</button>
-              <pre id="fb-text"></pre>
-            </div>
-          </div>
+
         </div><!-- /gen-results -->
       </div><!-- /content-wrap -->
     </div><!-- /panel-generate -->
@@ -552,13 +538,12 @@
     document.getElementById('banner-tz').textContent = data.scheduleTimezone || 'UTC';
     document.getElementById('tw-text').textContent = (data.twitter  || '').trim();
     document.getElementById('li-text').textContent = (data.linkedin || '').trim();
-    document.getElementById('fb-text').textContent = (data.facebook || '').trim();
     showTab('twitter');
   }
 
   function showTab(platform) {
     activeTab = platform;
-    ['twitter', 'linkedin', 'facebook'].forEach(p => {
+    ['twitter', 'linkedin'].forEach(p => {
       const btn = document.getElementById('tab-' + p);
       btn.className = 'tab-btn';
       if (p === platform) btn.classList.add('active-' + p.slice(0, 2));
@@ -642,7 +627,6 @@
         + '<div class="queue-card-platforms">'
         + (post.twitter  ? '<span class="platform-pip tw">𝕏 Twitter</span>'  : '')
         + (post.linkedin ? '<span class="platform-pip li">in LinkedIn</span>' : '')
-        + (post.facebook ? '<span class="platform-pip fb">f Facebook</span>'  : '')
         + '</div></div>';
     }).join('');
   }

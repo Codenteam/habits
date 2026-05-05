@@ -2,7 +2,7 @@ id: publish-social-post
 name: Publish Social Post
 description: >-
   Called per-item by bit-loop in check-pending-posts.
-  Takes a single scheduled post record (with twitter, linkedin, facebook fields)
+  Takes a single scheduled post record (with twitter and linkedin fields)
   and posts the content to Twitter/X and LinkedIn in parallel,
   then marks the record as "published" in the database.
 
@@ -16,13 +16,9 @@ nodes:
       source: npm
       module: "@ha-bits/bit-twitter"
       operation: tweet
-      # auth:
-      #   clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
-      #   clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
-      credentials:
-        twitter:
-          accessToken: "{{habits.env.HABITS_TWITTER_ACCESS_TOKEN}}"
-          refreshToken: "{{habits.env.HABITS_TWITTER_REFRESH_TOKEN}}"
+      auth:
+        clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
       params:
         text: "{{post.twitter}}"
 
@@ -55,7 +51,7 @@ nodes:
   #     params:
   #       collection: smmp_scheduled_posts
   #       filter:
-  #         id: "{{post.id}}"
+  #         id: "{{post._id}}"
   #       update:
   #         status: "published"
   #         publishedAt: "{{post.executedAt}}"
