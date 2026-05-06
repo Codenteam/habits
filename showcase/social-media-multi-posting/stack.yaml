@@ -14,6 +14,10 @@ workflows:
     path: ./habits/publish-social-post.yaml
     enabled: true
 
+  - id: get-queue
+    path: ./habits/get-queue.yaml
+    enabled: true
+
 server:
   port: 13000
   host: "0.0.0.0"

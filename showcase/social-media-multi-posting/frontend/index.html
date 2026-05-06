@@ -457,6 +457,8 @@
   let activeTab = 'twitter';
   let activeMainTab = 'generate';
   let queueInterval = null;
+  let cronCheckedAt = null;
+  let cronNextExecution = null;
   const QUEUE_POLL_MS = 60_000;
 
   document.querySelectorAll('.tone-chip').forEach(chip => {
@@ -544,9 +546,49 @@
     });
   }
 
+  // Fire check-pending-posts once on page load and store cron times.
+  function triggerCronCheck() {
+    fetch('/api/check-pending-posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data) return;
+      const out = data.output || data;
+      if (out.cronExpression) document.getElementById('cron-expression').textContent = out.cronExpression;
+      if (out.checkedAt)    cronCheckedAt    = new Date(out.checkedAt);
+      if (out.nextExecution) cronNextExecution = new Date(out.nextExecution);
+      renderCronBar();
+    })
+    .catch(() => {});
+  }
+
+  function renderCronBar() {
+    if (cronCheckedAt) {
+      document.getElementById('cron-checked-at').textContent =
+        cronCheckedAt.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' });
+    }
+    if (cronNextExecution) {
+      document.getElementById('cron-next').textContent =
+        cronNextExecution.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    }
+  }
+
+  function advanceCronBar() {
+    if (!cronCheckedAt || !cronNextExecution) return;
+    cronCheckedAt    = new Date(cronCheckedAt.getTime()    + QUEUE_POLL_MS);
+    cronNextExecution = new Date(cronNextExecution.getTime() + QUEUE_POLL_MS);
+    renderCronBar();
+  }
+
   function resetQueueInterval() {
     if (queueInterval) clearInterval(queueInterval);
-    queueInterval = setInterval(loadQueue, QUEUE_POLL_MS);
+    queueInterval = setInterval(() => {
+      advanceCronBar();
+      loadQueue();
+    }, QUEUE_POLL_MS);
   }
 
   async function loadQueue() {
@@ -557,7 +599,7 @@
     loadingEl.style.display = 'flex';
     listEl.innerHTML = '';
     try {
-      const res = await fetch('/api/check-pending-posts', {
+      const res = await fetch('/api/get-queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -574,38 +616,17 @@
   }
 
   function renderQueue(data) {
-    const posts     = data.posts || [];
-    const cronExpr  = data.cronExpression;
-    const checkedAt = data.checkedAt;
-    const nextExec  = data.nextExecution;
-    if (cronExpr) document.getElementById('cron-expression').textContent = cronExpr;
-    if (checkedAt) {
-      const d = new Date(checkedAt);
-      document.getElementById('cron-checked-at').textContent = isNaN(d) ? checkedAt
-        : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' });
-    }
-    if (nextExec) {
-      const d = new Date(nextExec);
-      document.getElementById('cron-next').textContent = isNaN(d) ? nextExec
-        : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
-    }
+    const posts = data.posts || [];
     const hintEl = document.getElementById('queue-until-hint');
     if (hintEl) {
-      if (checkedAt) {
-        const d = new Date(checkedAt);
-        const fmt = isNaN(d) ? checkedAt : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-        hintEl.textContent = 'Showing posts scheduled until ' + fmt + '.';
-      } else {
-        hintEl.textContent = '';
-      }
+      hintEl.textContent = posts.length > 0 ? 'Showing all pending posts.' : '';
     }
     const countEl = document.getElementById('queue-count');
     if (posts.length > 0) { countEl.textContent = posts.length; countEl.style.display = 'inline'; }
     else { countEl.style.display = 'none'; }
     const listEl = document.getElementById('queue-list');
     if (posts.length === 0) {
-      const checkedAtText = checkedAt ? (() => { const d = new Date(checkedAt); return isNaN(d) ? checkedAt : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' }); })() : null;
-      listEl.innerHTML = '<div class="queue-empty"><div class="icon">🎉</div><p>No pending posts until ' + (checkedAtText ? escapeHtml(checkedAtText) : '—') + '.</p></div>';
+      listEl.innerHTML = '<div class="queue-empty"><div class="icon">🎉</div><p>No pending posts in the queue.</p></div>';
       return;
     }
     listEl.innerHTML = posts.map(post => {
@@ -662,6 +683,9 @@
     }
   }
 
+  // Kick off immediately on page load.
+  triggerCronCheck();
+  loadQueue();
   resetQueueInterval();
 </script>
 </body>
