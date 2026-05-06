@@ -256,6 +256,10 @@
     .queue-refresh-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
     .queue-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     #queue-loading { display: none; }
+    .queue-until-hint {
+      font-size: 0.8rem; color: var(--ha-text-disabled);
+      margin: 10px 0 4px; font-style: italic;
+    }
     .queue-empty {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; gap: 10px; padding: 70px 20px;
@@ -450,6 +454,7 @@
           </div>
           <button class="queue-refresh-btn" id="queue-refresh-btn" onclick="loadQueue()">↻ Refresh</button>
         </div>
+        <p class="queue-until-hint" id="queue-until-hint"></p>
         <div class="state-block" id="queue-loading">
           <div class="spinner"></div>
           <p>Loading pending posts…</p>
@@ -595,6 +600,16 @@
       const d = new Date(nextExec);
       document.getElementById('cron-next').textContent = isNaN(d) ? nextExec
         : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+    }
+    const hintEl = document.getElementById('queue-until-hint');
+    if (hintEl) {
+      if (checkedAt) {
+        const d = new Date(checkedAt);
+        const fmt = isNaN(d) ? checkedAt : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        hintEl.textContent = 'Showing posts scheduled until ' + fmt + '.';
+      } else {
+        hintEl.textContent = '';
+      }
     }
     const countEl = document.getElementById('queue-count');
     if (posts.length > 0) { countEl.textContent = posts.length; countEl.style.display = 'inline'; }
