@@ -13,7 +13,7 @@ nodes:
       operation: ask_chatgpt
       params:
         model: "gpt-4o-mini"
-        cast: force
+        cast: 'force'
         prompt: |
           You are a support ticket classification assistant.
 
@@ -44,7 +44,7 @@ nodes:
           {{email.body}}
 
           Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
-            - category:      one of (support, sales, billing, feedback, spam, urgent)
+            - category:      one of (support, sales, billing, feedback, spam, urgent); if the email does not clearly match any category, default to spam
             - confidence:    number from 0.0 to 1.0 indicating classification confidence
             - summary:       brief 1-2 sentence summary of what the email is about
             - priority:      one of (high, medium, low) based on urgency and business impact

@@ -13,7 +13,7 @@ nodes:
       params:
         folder: "INBOX"
         unreadOnly: true
-        limit: 20
+        limit: 10
       credentials:
         auth:
           host: "{{habits.env.HABITS_GMAIL_IMAP_HOST}}"
