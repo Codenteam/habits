@@ -1,0 +1,58 @@
+id: summarize-email
+name: Summarize Email
+description: >
+  Receives a single email object and uses OpenAI to produce a concise
+  summary, extract key points, and infer the topic category.
+
+nodes:
+  - id: summarize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are an intelligent email digest assistant.
+
+          Analyze the following email and produce a structured summary.
+
+          EMAIL DETAILS:
+          - Date:    {{email.date}}
+          - From:    {{email.from}}
+          - Subject: {{email.subject}}
+          - Body:
+          {{email.body}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - title:        A concise, descriptive title for this email (max 10 words)
+            - summary:      A 2–3 sentence plain-language summary of the email content
+            - keyPoints:    An array of 2–4 short bullet-point strings highlighting the most important information
+            - category:     One of: newsletter, article, notification, promotion, update, discussion, other
+            - sentiment:    One of: positive, neutral, negative
+            - actionRequired: true if the email requires the reader to take an action, false otherwise
+            - actionItem:   If actionRequired is true, a one-sentence description of the required action; otherwise null
+            - importance:   One of: high, medium, low — based on urgency and relevance
+        maxTokens: 600
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  emailId: "{{email.id}}"
+  from: "{{email.from}}"
+  subject: "{{email.subject}}"
+  date: "{{email.date}}"
+  title: "{{summarize.title}}"
+  summary: "{{summarize.summary}}"
+  keyPoints: "{{summarize.keyPoints}}"
+  category: "{{summarize.category}}"
+  sentiment: "{{summarize.sentiment}}"
+  actionRequired: "{{summarize.actionRequired}}"
+  actionItem: "{{summarize.actionItem}}"
+  importance: "{{summarize.importance}}"

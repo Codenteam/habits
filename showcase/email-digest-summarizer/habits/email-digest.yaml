@@ -1,0 +1,53 @@
+id: email-digest
+name: Email Digest Pipeline
+description: >
+  Master orchestrator for the email digest pipeline:
+  1. process-emails  — fetches all unread Gmail emails and summarizes each with OpenAI
+  2. send-digest     — formats all summaries into a rich Slack message and posts it
+
+nodes:
+  # Step 1: Fetch all emails and summarize each one via process-emails
+  - id: process
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: process-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Step 2: Post the complete digest to Slack via send-digest
+  # Pass summariesJson (serialized results) and metadata as top-level inputs
+  - id: digest
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: |
+          [{
+            "summariesJson": {{process.results[0].output.summaries}},
+            "emailCount": "{{process.results[0].output.emailsFetched}}",
+            "digestDate": "{{habits.input.digestDate}}"
+          }]
+        habitId: send-digest
+        inputKey: digestInput
+        collectResults: true
+
+edges:
+  - source: process
+    target: digest
+
+output:
+  emailsFetched: "{{process.results[0].output.emailsFetched}}"
+  emailsSummarized: "{{process.results[0].output.successCount}}"
+  slackPosted: "{{digest.results[0].output.success}}"
+  slackChannel: "{{digest.results[0].output.channel}}"
+  slackMessageTs: "{{digest.results[0].output.messageTs}}"
+  summaries: "{{process.results[0].output.summaries}}"

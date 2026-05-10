@@ -1,0 +1,64 @@
+id: send-digest
+name: Send Digest to Slack
+description: >
+  Formats all email summaries into a rich Slack digest message and
+  posts it to the configured Slack channel.
+
+nodes:
+  - id: format
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        prompt: |
+          You are a Slack message formatter. Format the following email summaries
+          into a clean, well-structured Slack digest message using Slack's mrkdwn syntax.
+
+          Use this structure:
+          - A bold header: *📬 Email Digest — {{digestInput.digestDate}}*
+          - A short intro line: _{{digestInput.emailCount}} emails summarized_
+          - A divider line: ---
+          - For each summary, show:
+              • *[importance emoji] Subject* (📌 high, 📄 medium, 💤 low)
+              • From: sender
+              • Category badge and sentiment emoji (😊 positive, 😐 neutral, 😟 negative)
+              • 2-sentence summary
+              • Key points as a short bulleted list
+              • If actionRequired is true, a ⚡ *Action:* line
+              • A thin divider between emails
+          - A footer: _Powered by Habits AI Digest_
+
+          SUMMARIES (JSON array):
+          {{digestInput.summariesJson}}
+
+          Return ONLY the plain Slack mrkdwn message text. No code fences.
+        maxTokens: 2000
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: post-slack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        text: "{{format}}"
+
+edges:
+  - source: format
+    target: post-slack
+
+output:
+  success: "{{post-slack.success}}"
+  messageTs: "{{post-slack.timestamp}}"
+  channel: "{{post-slack.channel}}"
+  digestText: "{{format}}"
