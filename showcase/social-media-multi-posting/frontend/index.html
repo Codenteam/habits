@@ -115,6 +115,9 @@
     .field textarea { resize: vertical; min-height: 96px; }
     .field select option { background: var(--ha-bg-elevated); }
     .hint { font-size: 0.75rem; color: var(--ha-text-disabled); }
+    .field-error { font-size: 0.75rem; color: #f87171; margin-top: 2px; display: none; }
+    .field.has-error input, .field.has-error textarea { border-color: #f87171; }
+    .field.has-error input:focus, .field.has-error textarea:focus { border-color: #f87171; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .tone-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .tone-chip {
@@ -326,14 +329,16 @@
         <div class="gen-state active" id="gen-form">
           <div class="form-card">
             <div class="form-title">Create &amp; Schedule Posts <span>✦</span></div>
-            <div class="field">
+            <div class="field" id="field-topic">
               <label>Content Topic *</label>
-              <textarea id="f-topic" placeholder="What's your post about? An announcement, insight, product launch…"></textarea>
+              <textarea id="f-topic" placeholder="What's your post about? An announcement, insight, product launch…" oninput="clearFieldError('field-topic')"></textarea>
+              <span class="field-error" id="err-topic">Content topic is required.</span>
             </div>
             <div class="form-grid">
-              <div class="field">
-                <label>Brand Name</label>
-                <input id="f-brand" type="text" placeholder="Your brand or company name">
+              <div class="field" id="field-brand">
+                <label>Brand Name *</label>
+                <input id="f-brand" type="text" placeholder="Your brand or company name" oninput="clearFieldError('field-brand')">
+                <span class="field-error" id="err-brand">Brand name is required.</span>
               </div>
               <div class="field">
                 <label>Target Audience</label>
@@ -490,24 +495,45 @@
     });
   }
 
+  function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) field.classList.remove('has-error');
+    const errId = fieldId.replace('field-', 'err-');
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.style.display = 'none';
+  }
+
+  function showFieldError(fieldId, errId) {
+    const field = document.getElementById(fieldId);
+    if (field) field.classList.add('has-error');
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.style.display = 'block';
+  }
+
   async function handleSubmit() {
     const topic = document.getElementById('f-topic').value.trim();
+    const brand = document.getElementById('f-brand').value.trim();
     const scheduleRaw = document.getElementById('f-schedule').value;
-    if (!topic) { alert('Please enter a content topic.'); return; }
+    let hasError = false;
+    if (!topic) { showFieldError('field-topic', 'err-topic'); hasError = true; }
+    else { clearFieldError('field-topic'); }
+    if (!brand) { showFieldError('field-brand', 'err-brand'); hasError = true; }
+    else { clearFieldError('field-brand'); }
     if (!scheduleRaw) { alert('Please select a schedule date & time.'); return; }
+    if (hasError) return;
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
     showGenState('loading');
     const scheduledAt = new Date(scheduleRaw).toISOString();
     const scheduleTimezone = document.getElementById('f-timezone').value;
-    const brand = document.getElementById('f-brand').value.trim() || undefined;
+    const brandVal = brand || undefined;
     const targetAudience = document.getElementById('f-audience').value.trim() || undefined;
     const createdAt = new Date().toISOString();
     try {
       const res = await fetch('/api/generate-social-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, brand, tone: selectedTone, targetAudience, scheduledAt, scheduleTimezone, createdAt }),
+        body: JSON.stringify({ topic, brand: brandVal, tone: selectedTone, targetAudience, scheduledAt, scheduleTimezone, createdAt }),
       });
       if (!res.ok) throw new Error('Server error ' + res.status);
       const data = await res.json();
