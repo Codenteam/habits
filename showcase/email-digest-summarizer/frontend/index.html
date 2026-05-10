@@ -562,12 +562,7 @@
     <div class="slack-icon-box">&#128172;</div>
     <div class="slack-info">
       <h3>Digest Posted to Slack &#10003;</h3>
-      <p>Your email digest was successfully delivered</p>
-      <div class="slack-meta">
-        <div class="slack-tag">Channel: <span id="slack-channel">&#8212;</span></div>
-        <div class="slack-tag">Message TS: <span id="slack-ts">&#8212;</span></div>
-        <div class="slack-tag">Status: <span>Delivered</span></div>
-      </div>
+      <p>&#9989; Your email digest was successfully delivered &#127881;</p>
     </div>
   </div>
 
@@ -587,7 +582,7 @@
 
 </main>
 
-<footer class="footer">Powered by Habits AI &middot; Email Digest Summarizer</footer>
+<footer class="footer">Powered by Habits &middot; Email Digest Summarizer</footer>
 
 <script>
   var $ = function(id) { return document.getElementById(id); };
@@ -799,8 +794,6 @@
 
       // Slack card
       if (slackOk) {
-        $('slack-channel').textContent = slackChannel;
-        $('slack-ts').textContent      = (slackTs && slackTs !== 'post-slack.ts') ? slackTs : '\u2014';
         $('slack-card').classList.add('visible');
       }
 
