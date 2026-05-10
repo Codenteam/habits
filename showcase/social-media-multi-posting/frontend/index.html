@@ -425,12 +425,8 @@
     <!-- PANEL: Scheduled Queue -->
     <div class="panel" id="panel-queue">
       <div class="content-wrap">
+        <p class="queue-until-hint" style="margin-bottom:12px">Pending posts are automatically checked and published.</p>
         <div class="queue-cron-bar">
-          <div class="cron-item">
-            <span class="cron-label">Schedule</span>
-            <span class="cron-value" id="cron-expression">*/10 * * * *</span>
-          </div>
-          <div class="cron-divider"></div>
           <div class="cron-item">
             <span class="cron-label">Last Checked</span>
             <span class="cron-value" id="cron-checked-at">—</span>
@@ -557,7 +553,6 @@
     .then(data => {
       if (!data) return;
       const out = data.output || data;
-      if (out.cronExpression) document.getElementById('cron-expression').textContent = out.cronExpression;
       if (out.checkedAt)    cronCheckedAt    = new Date(out.checkedAt);
       if (out.nextExecution) cronNextExecution = new Date(out.nextExecution);
       renderCronBar();

@@ -34,22 +34,7 @@ nodes:
         filter: '{"status": "pending" , "scheduledAt": {"$lte": "{{cron-trigger[0].executedAt}}"}}' 
         limit: 20
 
-  # Stamp executedAt onto every post item so publish-social-post can use it as publishedAt
-  - id: enrich-posts
-    type: script
-    data:
-      framework: script
-      source: inline
-      params:
-        posts: "{{get-pending.results}}"
-        executedAt: "{{cron-trigger[0].executedAt}}"
-        language: javascript
-        script: |
-          export async function main(posts, executedAt) {
-            return (posts || []).map(p => ({ ...p, executedAt }));
-          }
-
-  # Loop over enriched posts and invoke publish-social-post per item
+  # Loop over pending posts and invoke publish-social-post per item
   - id: publish-posts
     type: action
     data:
@@ -59,7 +44,7 @@ nodes:
       module: "@ha-bits/bit-loop"
       operation: forEach
       params:
-        items: "{{enrich-posts.result}}"
+        items: "{{get-pending.results}}"
         habitId: publish-social-post
         inputKey: post
         continueOnError: true
@@ -70,8 +55,6 @@ edges:
   - source: cron-trigger
     target: get-pending
   - source: get-pending
-    target: enrich-posts
-  - source: enrich-posts
     target: publish-posts
 
 output:
