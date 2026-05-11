@@ -1,9 +1,9 @@
 id: send-digest
 name: Send Digest to Slack
 description: >
-  Formats each email summary individually via OpenAI (one call per email),
-  then assembles all blocks into a complete Slack digest message with
-  header and footer, and posts it to the configured Slack channel.
+  Formats each content summary individually, then assembles all blocks into
+  a complete Slack digest message with header and footer, and posts it to
+  the configured Slack channel.
 
 nodes:
   # Format all summaries into a Slack digest message directly (no extra OpenAI calls)
@@ -17,26 +17,31 @@ nodes:
       params:
         summariesJson: "{{digestInput.summariesJson}}"
         digestDate: "{{digestInput.digestDate}}"
-        emailCount: "{{digestInput.emailCount}}"
+        contentCount: "{{digestInput.contentCount}}"
         language: deno
         script: |
-          export async function main(summariesJson, digestDate, emailCount) {
+          export async function main(summariesJson, digestDate, contentCount) {
             const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';
             const sentimentEmoji = (s) => s === 'positive' ? '😊' : s === 'neutral' ? '😐' : '😟';
 
-            const header = '*📬 Email Digest — ' + digestDate + '*\n_' + emailCount + ' emails summarized_\n---';
-            const footer = '_Powered by Habits_';
+            const header = '*📬 Content Digest — ' + digestDate + '*\n_' + contentCount + ' contents summarized_\n---';
 
-            const blocks = summariesJson.map(item => {
-              const s = item.output || item;
+            const blocks = (Array.isArray(summariesJson) ? summariesJson : []).map(item => {
+              const s = (item && (item.output || item)) || {};
+              const importance = (s.importance || 'low');
+              const sentiment  = (s.sentiment  || 'neutral');
+              const category   = (s.category   || 'other');
+              const title      = s.title   || '(Untitled)';
+              const source     = s.source  || '';
+              const summary    = s.summary || '';
               const lines = [
-                '*' + importanceEmoji(s.importance) + ' ' + s.subject + '*',
-                'From: ' + s.from,
-                s.category + ' ' + sentimentEmoji(s.sentiment),
-                s.summary,
-              ];
-              if (s.keyPoints && s.keyPoints.length > 0) {
-                lines.push(s.keyPoints.map(p => '• ' + p).join('\n'));
+                '*' + importanceEmoji(importance) + ' ' + title + '*',
+                source ? 'Source: ' + source : null,
+                category + ' ' + sentimentEmoji(sentiment),
+                summary,
+              ].filter(l => l !== null);
+              if (Array.isArray(s.keyPoints) && s.keyPoints.length > 0) {
+                lines.push(s.keyPoints.map(p => '• ' + (p || '')).join('\n'));
               }
               if (s.actionRequired && s.actionItem) {
                 lines.push('⚡ *Action:* ' + s.actionItem);
@@ -45,7 +50,7 @@ nodes:
               return lines.join('\n');
             });
 
-            const message = [header].concat(blocks).concat([footer]).join('\n\n');
+            const message = [header].concat(blocks).join('\n\n');
             return { message };
           }
 

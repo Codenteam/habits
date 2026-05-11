@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Email Digest Summarizer</title>
+  <title>Content Digest Summarizer</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -491,7 +491,7 @@
 <header class="topbar">
   <a class="topbar-brand" href="#">
     <span class="logo">&#128236;</span>
-    Email Digest
+    Content Digest
   </a>
   <span class="badge-pill" id="status-pill">Ready</span>
 </header>
@@ -500,13 +500,13 @@
 
   <div class="hero">
     <span class="hero-icon">&#128236;</span>
-    <h1>Email Digest Summarizer</h1>
-    <p>Fetches your unread Gmail emails, summarizes each one with GPT-4o-mini, and posts a curated digest to Slack &mdash; in one click.</p>
+    <h1>Content Digest Summarizer</h1>
+    <p>Fetches contents, summarizes each one, and posts a curated digest to Slack &mdash; in one click.</p>
   </div>
 
   <div class="pipeline">
     <div class="pipe-step" data-step="fetch">
-      <span class="dot"></span> Fetch Emails
+      <span class="dot"></span> Fetch Contents
     </div>
     <span class="pipe-arrow">&#8594;</span>
     <div class="pipe-step" data-step="process">
@@ -542,7 +542,7 @@
   <div class="stats-grid" id="stats-grid">
     <div class="stat-box blue">
       <div class="val" id="stat-fetched">0</div>
-      <div class="lbl">Emails Fetched</div>
+      <div class="lbl">Contents Fetched</div>
     </div>
     <div class="stat-box green">
       <div class="val" id="stat-summarized">0</div>
@@ -562,13 +562,13 @@
     <div class="slack-icon-box">&#128172;</div>
     <div class="slack-info">
       <h3>Digest Posted to Slack &#10003;</h3>
-      <p>&#9989; Your email digest was successfully delivered &#127881;</p>
+      <p>&#9989; Your content digest was successfully delivered &#127881;</p>
     </div>
   </div>
 
   <div id="summaries-section">
     <div class="section-header">
-      <h2>Email Summaries</h2>
+      <h2>Content Summaries</h2>
       <div class="filter-bar" id="filter-bar">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="high">High</button>
@@ -577,12 +577,12 @@
         <button class="filter-btn" data-filter="action">Action</button>
       </div>
     </div>
-    <div class="email-cards" id="email-cards"></div>
+    <div class="email-cards" id="content-cards"></div>
   </div>
 
 </main>
 
-<footer class="footer">Powered by Habits &middot; Email Digest Summarizer</footer>
+<footer class="footer">Powered by Habits &middot; Content Digest Summarizer</footer>
 
 <script>
   var $ = function(id) { return document.getElementById(id); };
@@ -636,7 +636,7 @@
   }
 
   function renderCards(summaries) {
-    var container = $('email-cards');
+    var container = $('content-cards');
     container.innerHTML = '';
 
     var filtered = summaries.filter(function(s) {
@@ -647,7 +647,7 @@
     });
 
     if (!filtered.length) {
-      container.innerHTML = '<div class="empty-state"><span class="icon">&#128269;</span><p>No emails match this filter.</p></div>';
+      container.innerHTML = '<div class="empty-state"><span class="icon">&#128269;</span><p>No contents match this filter.</p></div>';
       return;
     }
 
@@ -680,11 +680,13 @@
         } catch(e) { dateStr = d.date; }
       }
 
+      var urlHtml = d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.75rem;word-break:break-all;">' + esc(d.url) + '</a>' : '';
+
       var card = document.createElement('div');
       card.className = 'email-card importance-' + importance;
       card.innerHTML =
         '<div class="email-card-top">' +
-          '<div class="email-card-title">' + importanceEmoji + ' ' + esc(d.title || d.subject || '(No subject)') + '</div>' +
+          '<div class="email-card-title">' + importanceEmoji + ' ' + esc(d.title || '(Untitled)') + '</div>' +
           '<div class="badges">' +
             '<span class="badge badge-category">' + esc(category) + '</span>' +
             '<span class="badge badge-' + importance + '">' + esc(importance) + '</span>' +
@@ -692,9 +694,10 @@
           '</div>' +
         '</div>' +
         '<div class="email-meta">' +
-          '<span>' + esc(d.from || '') + '</span>' +
+          (d.source ? '<span>' + esc(d.source) + '</span>' : '') +
           (dateStr ? '<span>' + dateStr + '</span>' : '') +
         '</div>' +
+        (urlHtml ? '<div style="margin-bottom:10px">' + urlHtml + '</div>' : '') +
         '<p class="email-summary-text">' + esc(d.summary || '') + '</p>' +
         keyPointsHtml +
         actionHtml;
@@ -723,9 +726,9 @@
 
     // Step 1
     setPipe('fetch', 'active');
-    log('Connecting to Gmail via IMAP and fetching unread emails\u2026');
+    log('Fetching contents\u2026');
 
-    fetch('/api/email-digest', {
+    fetch('/api/content-digest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ digestDate: new Date().toISOString() })
@@ -742,18 +745,18 @@
       var output = result.output || result;
 
       setPipe('fetch', 'done');
-      var fetchedCount = Number(output.emailsFetched) || 0;
-      log('Fetched ' + fetchedCount + ' email' + (fetchedCount !== 1 ? 's' : '') + ' from Gmail.', 'ok');
+      var fetchedCount = Number(output.contentsFetched) || 0;
+      log('Fetched ' + fetchedCount + ' content' + (fetchedCount !== 1 ? 's' : '') + '.', 'ok');
 
       // Step 2
       setPipe('process', 'active');
-      log('Running per-email analysis pipeline\u2026');
+      log('Running per-content analysis pipeline\u2026');
       setPipe('process', 'done');
 
       // Step 3
       setPipe('summarize', 'active');
-      var summarizedCount = Number(output.emailsSummarized) || 0;
-      log('AI summarized ' + summarizedCount + ' email' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
+      var summarizedCount = Number(output.contentsSummarized) || 0;
+      log('AI summarized ' + summarizedCount + ' content' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
       setPipe('summarize', 'done');
 
       // Step 4
@@ -781,7 +784,7 @@
       // Slack card
       $('slack-card').classList.add('visible');
 
-      // Email summary cards
+      // Content summary cards
       if (summaries.length > 0) {
         $('summaries-section').classList.add('visible');
         renderCards(summaries);

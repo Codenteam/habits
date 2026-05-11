@@ -1,7 +1,7 @@
 version: "1.0"
-name: "Email Digest Summarizer"
+name: "Content Digest Summarizer"
 description: >
-  Fetches emails from Gmail via IMAP, summarizes each one with OpenAI,
+  Fetches contents (emails, RSS articles, or news), summarizes each one with OpenAI,
   and posts a digest of all summaries to a Slack channel.
 
 workflows:
@@ -9,20 +9,20 @@ workflows:
     path: ./habits/fetch-emails.yaml
     enabled: true
 
-  - id: summarize-email
-    path: ./habits/summarize-email.yaml
+  - id: summarize-content
+    path: ./habits/summarize-content.yaml
     enabled: true
 
   - id: send-digest
     path: ./habits/send-digest.yaml
     enabled: true
 
-  - id: process-emails
-    path: ./habits/process-emails.yaml
+  - id: process-content
+    path: ./habits/process-content.yaml
     enabled: true
 
-  - id: email-digest
-    path: ./habits/email-digest.yaml
+  - id: content-digest
+    path: ./habits/content-digest.yaml
     enabled: true
 
 server:

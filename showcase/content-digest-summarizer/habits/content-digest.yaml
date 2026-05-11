@@ -1,12 +1,12 @@
-id: email-digest
-name: Email Digest Pipeline
+id: content-digest
+name: Content Digest Pipeline
 description: >
-  Master orchestrator for the email digest pipeline:
-  1. process-emails  — fetches all unread Gmail emails and summarizes each with OpenAI
+  Master orchestrator for the content digest pipeline:
+  1. process-content — fetches all contents (emails, RSS articles, news) and summarizes each with OpenAI
   2. send-digest     — formats all summaries into a rich Slack message and posts it
 
 nodes:
-  # Step 1: Fetch all emails and summarize each one via process-emails
+  # Step 1: Fetch all contents and summarize each one via process-content
   - id: process
     type: action
     data:
@@ -16,7 +16,7 @@ nodes:
       operation: forEach
       params:
         items: '[{}]'
-        habitId: process-emails
+        habitId: process-content
         inputKey: trigger
         collectResults: true
 
@@ -33,7 +33,7 @@ nodes:
         items: |
           [{
             "summariesJson": {{process.results[0].output.summaries}},
-            "emailCount": "{{process.results[0].output.emailsFetched}}",
+            "contentCount": "{{process.results[0].output.contentsFetched}}",
             "digestDate": "{{habits.input.digestDate}}"
           }]
         habitId: send-digest
@@ -45,7 +45,7 @@ edges:
     target: digest
 
 output:
-  emailsFetched: "{{process.results[0].output.emailsFetched}}"
-  emailsSummarized: "{{process.results[0].output.successCount}}"
+  contentsFetched: "{{process.results[0].output.contentsFetched}}"
+  contentsSummarized: "{{process.results[0].output.successCount}}"
   slackPosted: "{{digest.results[0].output.success}}"
   summaries: "{{process.results[0].output.summaries}}"

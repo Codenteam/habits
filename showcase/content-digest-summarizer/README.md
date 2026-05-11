@@ -1,6 +1,6 @@
-# Email Digest Summarizer
+# Content Digest Summarizer
 
-Fetches unread Gmail emails via IMAP, summarizes each one with GPT-4o-mini, and posts a curated digest to a Slack channel — in one click.
+Fetches contents (emails, RSS articles, or news), summarizes each one with GPT-4o-mini, and posts a curated digest to a Slack channel — in one click.
 
 ---
 
@@ -19,7 +19,7 @@ If you don't already have a workspace:
 
 1. Go to [https://api.slack.com/apps](https://api.slack.com/apps)
 2. Click **Create New App** → choose **From scratch**.
-3. Give it a name (e.g. `Email Digest Bot`) and select your workspace.
+3. Give it a name (e.g. `Content Digest Bot`) and select your workspace.
 4. Click **Create App**.
 
 ---
@@ -55,7 +55,7 @@ HABITS_SLACK_BOT_TOKEN=xoxb-your-token-here
 ### 5. Invite the Bot to a Channel & Get the Channel ID
 
 1. In Slack, open (or create) the channel where you want the digest posted.
-2. Type `/invite @Email Digest Bot` and send it to add the bot.
+2. Type `/invite @Content Digest Bot` and send it to add the bot.
 3. To get the **Channel ID**:
    - Right-click the channel name in the sidebar → **View channel details**.
    - Scroll to the bottom — the Channel ID is shown there (e.g. `C08XXXXXXXX`).
