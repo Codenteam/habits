@@ -40,6 +40,7 @@ nodes:
             - actionRequired: true if the content requires the reader to take an action, false otherwise
             - actionItem:   If actionRequired is true, a one-sentence description of the required action; otherwise null
             - importance:   One of: high, medium, low — based on urgency and relevance; default to "low" if unclear
+            - link:         The URL from the input if one was provided and is non-empty; otherwise null
         maxTokens: 600
       credentials:
         openai:
@@ -51,7 +52,7 @@ output:
   contentId: "{{content.id}}"
   source: "{{content.from}}"
   date: "{{content.date}}"
-  url: "{{content.url}}"
+  url: "{{summarize.link || null}}"
   title: "{{summarize.title || '(Untitled)'}}"
   summary: "{{summarize.summary || ''}}"
   keyPoints: "{{summarize.keyPoints || []}}"

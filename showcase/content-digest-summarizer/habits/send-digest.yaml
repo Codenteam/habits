@@ -37,6 +37,7 @@ nodes:
               const lines = [
                 '*' + importanceEmoji(importance) + ' ' + title + '*',
                 source ? 'Source: ' + source : null,
+                s.url  ? '<' + s.url + '|View article>' : null,
                 category + ' ' + sentimentEmoji(sentiment),
                 summary,
               ].filter(l => l !== null);

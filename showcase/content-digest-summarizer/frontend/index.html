@@ -187,8 +187,20 @@
       margin-bottom: 18px;
     }
 
-    #run-btn {
-      width: 100%;
+    .run-actions {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 480px) {
+      .run-actions { flex-direction: column; }
+      .auto-btn { justify-content: center; }
+    }
+
+    #run-btn, #run-rss-btn {
+      flex: 1;
       padding: 16px 24px;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
       color: #fff;
@@ -205,16 +217,60 @@
       letter-spacing: 0.01em;
     }
 
-    #run-btn:hover:not(:disabled) {
+    #run-btn:hover:not(:disabled), #run-rss-btn:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(59,130,246,0.38);
     }
 
-    #run-btn:disabled {
+    #run-btn:disabled, #run-rss-btn:disabled {
       opacity: 0.55;
       cursor: not-allowed;
       transform: none;
     }
+
+    .auto-btn {
+      padding: 16px 18px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .auto-btn:hover:not(.active) {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .auto-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(34,197,94,0.08);
+    }
+    .auto-btn .auto-icon { font-size: 1rem; display: inline-block; }
+    .auto-btn.active .auto-icon { animation: spin 2s linear infinite; }
+    .auto-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border2);
+      color: var(--muted);
+      background: var(--surface2);
+    }
+
+    .auto-timer {
+      display: none;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--green);
+      text-align: right;
+    }
+    .auto-timer.visible { display: block; }
 
     .spinner {
       width: 18px;
@@ -228,7 +284,81 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #status-log {
+    /* ── Mode selection ─────────────────────────────────────────────────────── */
+    .mode-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .mode-btn-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+
+    .mode-btn-card:hover {
+      border-color: var(--accent);
+      background: rgba(59,130,246,0.07);
+      transform: translateY(-2px);
+    }
+
+    .mode-btn-card .mode-icon  { font-size: 2rem; }
+    .mode-btn-card .mode-label { font-size: 1rem; font-weight: 700; }
+    .mode-btn-card .mode-desc  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: color 0.15s;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .input-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.92rem;
+      margin-bottom: 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--muted); }
+
+    @media (max-width: 480px) { .mode-select { grid-template-columns: 1fr; } }
+
+    #status-log, #rss-status-log {
       display: none;
       margin-top: 16px;
       background: #050a14;
@@ -244,11 +374,11 @@
       line-height: 1.9;
     }
 
-    #status-log .ll       { display: block; }
-    #status-log .ll.info  { color: var(--cyan); }
-    #status-log .ll.ok    { color: var(--green); }
-    #status-log .ll.warn  { color: var(--yellow); }
-    #status-log .ll.err   { color: var(--red); }
+    #status-log .ll, #rss-status-log .ll             { display: block; }
+    #status-log .ll.info, #rss-status-log .ll.info   { color: var(--cyan); }
+    #status-log .ll.ok, #rss-status-log .ll.ok       { color: var(--green); }
+    #status-log .ll.warn, #rss-status-log .ll.warn   { color: var(--yellow); }
+    #status-log .ll.err, #rss-status-log .ll.err     { color: var(--red); }
 
     .stats-grid {
       display: none;
@@ -522,13 +652,59 @@
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Run Digest Pipeline</div>
-    <button id="run-btn">
-      <span class="spinner" id="spinner"></span>
-      <span id="btn-label">&#9654; Run Digest</span>
-    </button>
+  <!-- Mode selection -->
+  <div class="card" id="mode-card">
+    <div class="card-title">Choose Your Content Source</div>
+    <div class="mode-select">
+      <button class="mode-btn-card" id="btn-mode-email">
+        <span class="mode-icon">&#128231;</span>
+        <span class="mode-label">Email Digest</span>
+        <span class="mode-desc">Fetch unread emails from Gmail and summarize them into a digest</span>
+      </button>
+      <button class="mode-btn-card" id="btn-mode-rss">
+        <span class="mode-icon">&#128225;</span>
+        <span class="mode-label">RSS Feed Digest</span>
+        <span class="mode-desc">Fetch articles from any RSS or Atom feed URL and summarize them</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Email run card -->
+  <div class="card" id="email-card" style="display:none">
+    <button class="back-link" id="back-from-email">&#8592; Back</button>
+    <div class="card-title">Email Digest Pipeline</div>
+    <div class="run-actions">
+      <button id="run-btn">
+        <span class="spinner" id="spinner"></span>
+        <span id="btn-label">&#9654; Run Email Digest</span>
+      </button>
+      <button id="auto-email-btn" class="auto-btn" title="Auto-fetch every 1 minute">
+        <span class="auto-icon">&#8635;</span>
+        <span id="auto-email-label">Auto Fetch</span>
+      </button>
+    </div>
+    <div class="auto-timer" id="email-auto-timer"></div>
     <div id="status-log"></div>
+  </div>
+
+  <!-- RSS run card -->
+  <div class="card" id="rss-card" style="display:none">
+    <button class="back-link" id="back-from-rss">&#8592; Back</button>
+    <div class="card-title">RSS Feed Digest Pipeline</div>
+    <label class="input-label" for="rss-url">RSS / Atom Feed URL</label>
+    <input id="rss-url" class="input-field" type="url" placeholder="https://example.com/feed.xml" autocomplete="off" spellcheck="false" />
+    <div class="run-actions">
+      <button id="run-rss-btn">
+        <span class="spinner" id="rss-spinner"></span>
+        <span id="rss-btn-label">&#9654; Run RSS Digest</span>
+      </button>
+      <button id="auto-rss-btn" class="auto-btn" title="Auto-fetch every 1 minute">
+        <span class="auto-icon">&#8635;</span>
+        <span id="auto-rss-label">Auto Fetch</span>
+      </button>
+    </div>
+    <div class="auto-timer" id="rss-auto-timer"></div>
+    <div id="rss-status-log"></div>
   </div>
 
   <div class="error-card" id="error-card">
@@ -587,8 +763,10 @@
 <script>
   var $ = function(id) { return document.getElementById(id); };
 
+  var logTarget = 'status-log';
+
   function log(text, type) {
-    var el = $('status-log');
+    var el = $(logTarget);
     el.style.display = 'block';
     var line = document.createElement('span');
     line.className = 'll ' + (type || 'info');
@@ -706,9 +884,101 @@
     });
   }
 
-  $('run-btn').addEventListener('click', function() {
+  // ── Mode selection ────────────────────────────────────────────────────────────
+
+  function resetResultsUI() {
+    $('error-card').classList.remove('visible');
+    $('slack-card').classList.remove('visible');
+    $('stats-grid').classList.remove('visible');
+    $('summaries-section').classList.remove('visible');
+    allSummaries = [];
+    resetPipes();
+    setStatus('Ready', '');
+  }
+
+  function showModeCard() {
+    $('mode-card').style.display = '';
+    $('email-card').style.display = 'none';
+    $('rss-card').style.display = 'none';
+    stopEmailAuto();
+    stopRssAuto();
+    resetResultsUI();
+  }
+
+  $('btn-mode-email').addEventListener('click', function() {
+    $('mode-card').style.display = 'none';
+    $('email-card').style.display = '';
+    logTarget = 'status-log';
+    $('status-log').innerHTML = '';
+    $('status-log').style.display = 'none';
+    resetResultsUI();
+  });
+
+  $('btn-mode-rss').addEventListener('click', function() {
+    $('mode-card').style.display = 'none';
+    $('rss-card').style.display = '';
+    logTarget = 'rss-status-log';
+    $('rss-status-log').innerHTML = '';
+    $('rss-status-log').style.display = 'none';
+    resetResultsUI();
+  });
+
+  $('back-from-email').addEventListener('click', showModeCard);
+  $('back-from-rss').addEventListener('click', showModeCard);
+
+  // ── Shared result handler ─────────────────────────────────────────────────────
+
+  function handleDigestResult(output, spinnerId, labelId, btnId, defaultLabel) {
+    setPipe('fetch', 'done');
+    var fetchedCount = Number(output.contentsFetched) || 0;
+    log('Fetched ' + fetchedCount + ' content' + (fetchedCount !== 1 ? 's' : '') + '.', 'ok');
+
+    setPipe('process', 'active');
+    log('Running per-content analysis pipeline\u2026');
+    setPipe('process', 'done');
+
+    setPipe('summarize', 'active');
+    var summarizedCount = Number(output.contentsSummarized) || 0;
+    log('AI summarized ' + summarizedCount + ' content' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
+    setPipe('summarize', 'done');
+
+    setPipe('slack', 'active');
+    log('Posting digest to Slack channel\u2026');
+    setPipe('slack', 'done');
+    log('Digest posted to Slack successfully!', 'ok');
+    setStatus('Done', 'done');
+
+    var summaries = output.summaries || [];
+    allSummaries = summaries;
+
+    var actionCount = summaries.filter(function(s) {
+      var d = s.output || s;
+      return d.actionRequired === true || d.actionRequired === 'true';
+    }).length;
+
+    $('stat-fetched').textContent    = fetchedCount;
+    $('stat-summarized').textContent = summarizedCount;
+    $('stat-actions').textContent    = actionCount;
+    $('stat-slack').textContent      = '\u2713';
+    $('stats-grid').classList.add('visible');
+    $('slack-card').classList.add('visible');
+
+    if (summaries.length > 0) {
+      $('summaries-section').classList.add('visible');
+      renderCards(summaries);
+    }
+
+    $(spinnerId).style.display = 'none';
+    $(labelId).textContent = defaultLabel;
+    $(btnId).disabled = false;
+  }
+
+  // ── Email run ─────────────────────────────────────────────────────────────────
+
+  function runEmailFetch() {
     var btn   = $('run-btn');
     var label = $('btn-label');
+    if (btn.disabled) return;
 
     $('status-log').innerHTML = '';
     $('status-log').style.display = 'none';
@@ -720,13 +990,13 @@
     allSummaries = [];
 
     btn.disabled = true;
+    $('auto-email-btn').disabled = true;
     $('spinner').style.display = 'block';
     label.textContent = 'Running\u2026';
     setStatus('Running', 'running');
 
-    // Step 1
     setPipe('fetch', 'active');
-    log('Fetching contents\u2026');
+    log('Fetching emails\u2026');
 
     fetch('/api/content-digest', {
       method: 'POST',
@@ -742,53 +1012,8 @@
       return resp.json();
     })
     .then(function(result) {
-      var output = result.output || result;
-
-      setPipe('fetch', 'done');
-      var fetchedCount = Number(output.contentsFetched) || 0;
-      log('Fetched ' + fetchedCount + ' content' + (fetchedCount !== 1 ? 's' : '') + '.', 'ok');
-
-      // Step 2
-      setPipe('process', 'active');
-      log('Running per-content analysis pipeline\u2026');
-      setPipe('process', 'done');
-
-      // Step 3
-      setPipe('summarize', 'active');
-      var summarizedCount = Number(output.contentsSummarized) || 0;
-      log('AI summarized ' + summarizedCount + ' content' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
-      setPipe('summarize', 'done');
-
-      // Step 4
-      setPipe('slack', 'active');
-      log('Posting digest to Slack channel\u2026');
-      setPipe('slack', 'done');
-      log('Digest posted to Slack successfully!', 'ok');
-      setStatus('Done', 'done');
-
-      // Stats
-      var summaries = output.summaries || [];
-      allSummaries = summaries;
-
-      var actionCount = summaries.filter(function(s) {
-        var d = s.output || s;
-        return d.actionRequired === true || d.actionRequired === 'true';
-      }).length;
-
-      $('stat-fetched').textContent    = fetchedCount;
-      $('stat-summarized').textContent = summarizedCount;
-      $('stat-actions').textContent    = actionCount;
-      $('stat-slack').textContent      = '\u2713';
-      $('stats-grid').classList.add('visible');
-
-      // Slack card
-      $('slack-card').classList.add('visible');
-
-      // Content summary cards
-      if (summaries.length > 0) {
-        $('summaries-section').classList.add('visible');
-        renderCards(summaries);
-      }
+      handleDigestResult(result.output || result, 'spinner', 'btn-label', 'run-btn', '\u25BA Run Email Digest');
+      $('auto-email-btn').disabled = false;
     })
     .catch(function(err) {
       console.error(err);
@@ -797,12 +1022,172 @@
       $('error-card').classList.add('visible');
       log('Pipeline failed: ' + (err.message || 'Unknown error'), 'err');
       setStatus('Failed', 'failed');
-    })
-    .finally(function() {
-      btn.disabled = false;
       $('spinner').style.display = 'none';
-      label.textContent = '\u25BA Run Digest';
+      label.textContent = '\u25BA Run Email Digest';
+      btn.disabled = false;
+      $('auto-email-btn').disabled = false;
     });
+  }
+
+  $('run-btn').addEventListener('click', runEmailFetch);
+
+  // ── Email auto-fetch ──────────────────────────────────────────────────────────
+
+  var emailAutoInterval = null;
+  var emailAutoCountdown = null;
+  var emailAutoSecsLeft = 0;
+
+  function stopEmailAuto() {
+    if (emailAutoInterval) { clearInterval(emailAutoInterval); emailAutoInterval = null; }
+    if (emailAutoCountdown) { clearInterval(emailAutoCountdown); emailAutoCountdown = null; }
+    var abtn = $('auto-email-btn');
+    if (abtn) { abtn.classList.remove('active'); $('auto-email-label').textContent = 'Auto Fetch'; }
+    var timer = $('email-auto-timer');
+    if (timer) { timer.classList.remove('visible'); timer.textContent = ''; }
+  }
+
+  function startEmailAutoCountdown() {
+    emailAutoSecsLeft = 120;
+    var timer = $('email-auto-timer');
+    timer.textContent = '\u21BB Next fetch in ' + emailAutoSecsLeft + 's';
+    timer.classList.add('visible');
+    if (emailAutoCountdown) clearInterval(emailAutoCountdown);
+    emailAutoCountdown = setInterval(function() {
+      emailAutoSecsLeft--;
+      if (emailAutoSecsLeft <= 0) emailAutoSecsLeft = 120;
+      timer.textContent = '\u21BB Next fetch in ' + emailAutoSecsLeft + 's';
+    }, 1000);
+  }
+
+  $('auto-email-btn').addEventListener('click', function() {
+    if (emailAutoInterval) {
+      stopEmailAuto();
+    } else {
+      $('auto-email-btn').classList.add('active');
+      $('auto-email-label').textContent = 'Stop Auto';
+      runEmailFetch();
+      startEmailAutoCountdown();
+      emailAutoInterval = setInterval(function() {
+        runEmailFetch();
+        startEmailAutoCountdown();
+      }, 120000);
+    }
+  });
+
+  // ── RSS run ───────────────────────────────────────────────────────────────────
+
+  function runRssFetch() {
+    var btn   = $('run-rss-btn');
+    var label = $('rss-btn-label');
+    var feedUrl = ($('rss-url').value || '').trim();
+    if (btn.disabled) return;
+
+    if (!feedUrl) {
+      $('rss-url').focus();
+      $('rss-url').style.borderColor = 'var(--red)';
+      setTimeout(function() { $('rss-url').style.borderColor = ''; }, 1500);
+      return;
+    }
+
+    $('rss-status-log').innerHTML = '';
+    $('rss-status-log').style.display = 'none';
+    $('error-card').classList.remove('visible');
+    $('slack-card').classList.remove('visible');
+    $('stats-grid').classList.remove('visible');
+    $('summaries-section').classList.remove('visible');
+    resetPipes();
+    allSummaries = [];
+
+    btn.disabled = true;
+    $('auto-rss-btn').disabled = true;
+    $('rss-spinner').style.display = 'block';
+    label.textContent = 'Running\u2026';
+    setStatus('Running', 'running');
+
+    setPipe('fetch', 'active');
+    log('Fetching RSS feed\u2026');
+
+    fetch('/api/rss-digest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feedUrl: feedUrl, digestDate: new Date().toISOString() })
+    })
+    .then(function(resp) {
+      if (!resp.ok) {
+        return resp.text().then(function(txt) {
+          throw new Error('API error ' + resp.status + ': ' + txt);
+        });
+      }
+      return resp.json();
+    })
+    .then(function(result) {
+      handleDigestResult(result.output || result, 'rss-spinner', 'rss-btn-label', 'run-rss-btn', '\u25BA Run RSS Digest');
+      $('auto-rss-btn').disabled = false;
+    })
+    .catch(function(err) {
+      console.error(err);
+      resetPipes();
+      $('error-msg').textContent = err.message || 'Unknown error';
+      $('error-card').classList.add('visible');
+      log('Pipeline failed: ' + (err.message || 'Unknown error'), 'err');
+      setStatus('Failed', 'failed');
+      $('rss-spinner').style.display = 'none';
+      label.textContent = '\u25BA Run RSS Digest';
+      btn.disabled = false;
+      $('auto-rss-btn').disabled = false;
+    });
+  }
+
+  $('run-rss-btn').addEventListener('click', runRssFetch);
+
+  // ── RSS auto-fetch ────────────────────────────────────────────────────────────
+
+  var rssAutoInterval = null;
+  var rssAutoCountdown = null;
+  var rssAutoSecsLeft = 0;
+
+  function stopRssAuto() {
+    if (rssAutoInterval) { clearInterval(rssAutoInterval); rssAutoInterval = null; }
+    if (rssAutoCountdown) { clearInterval(rssAutoCountdown); rssAutoCountdown = null; }
+    var abtn = $('auto-rss-btn');
+    if (abtn) { abtn.classList.remove('active'); $('auto-rss-label').textContent = 'Auto Fetch'; }
+    var timer = $('rss-auto-timer');
+    if (timer) { timer.classList.remove('visible'); timer.textContent = ''; }
+  }
+
+  function startRssAutoCountdown() {
+    rssAutoSecsLeft = 120;
+    var timer = $('rss-auto-timer');
+    timer.textContent = '\u21BB Next fetch in ' + rssAutoSecsLeft + 's';
+    timer.classList.add('visible');
+    if (rssAutoCountdown) clearInterval(rssAutoCountdown);
+    rssAutoCountdown = setInterval(function() {
+      rssAutoSecsLeft--;
+      if (rssAutoSecsLeft <= 0) rssAutoSecsLeft = 120;
+      timer.textContent = '\u21BB Next fetch in ' + rssAutoSecsLeft + 's';
+    }, 1000);
+  }
+
+  $('auto-rss-btn').addEventListener('click', function() {
+    if (rssAutoInterval) {
+      stopRssAuto();
+    } else {
+      var feedUrl = ($('rss-url').value || '').trim();
+      if (!feedUrl) {
+        $('rss-url').focus();
+        $('rss-url').style.borderColor = 'var(--red)';
+        setTimeout(function() { $('rss-url').style.borderColor = ''; }, 1500);
+        return;
+      }
+      $('auto-rss-btn').classList.add('active');
+      $('auto-rss-label').textContent = 'Stop Auto';
+      runRssFetch();
+      startRssAutoCountdown();
+      rssAutoInterval = setInterval(function() {
+        runRssFetch();
+        startRssAutoCountdown();
+      }, 120000);
+    }
   });
 </script>
 </body>

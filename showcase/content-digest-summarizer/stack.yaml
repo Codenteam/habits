@@ -25,6 +25,10 @@ workflows:
     path: ./habits/content-digest.yaml
     enabled: true
 
+  - id: rss-digest
+    path: ./habits/rss-digest.yaml
+    enabled: true
+
 server:
   port: 13000
   host: "0.0.0.0"
