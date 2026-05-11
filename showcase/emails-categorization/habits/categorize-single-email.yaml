@@ -12,7 +12,7 @@ nodes:
       operation: ask_chatgpt
       params:
         model: "gpt-4o-mini"
-        cast: force
+        cast: 'force'
         prompt: |
           You are an emails categorizer. Given a single email in JSON format, analyze it and classify it.
           Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields: from, subject, category, priority, summary.
