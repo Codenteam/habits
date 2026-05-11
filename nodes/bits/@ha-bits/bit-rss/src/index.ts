@@ -311,38 +311,21 @@ const rssBit = {
           required: false,
           defaultValue: 0,
         },
-        userAgent: {
-          type: 'SHORT_TEXT',
-          displayName: 'User Agent',
-          description: 'Custom User-Agent header sent with the request',
-          required: false,
-          defaultValue: 'Mozilla/5.0 (compatible; HabitsBot/1.0)',
-        },
-        timeout: {
-          type: 'NUMBER',
-          displayName: 'Timeout (ms)',
-          description: 'Request timeout in milliseconds',
-          required: false,
-          defaultValue: 30000,
-        },
       },
 
       async run(context: RssContext): Promise<FetchFeedResult> {
         const {
           url,
           limit = 0,
-          userAgent = 'Mozilla/5.0 (compatible; HabitsBot/1.0)',
-          timeout = 30000,
         } = context.propsValue;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), Number(timeout));
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         let xml: string;
         try {
           const response = await fetch(url, {
             headers: {
-              'User-Agent': userAgent,
               Accept:
                 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
             },

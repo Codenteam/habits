@@ -1046,16 +1046,22 @@
     if (timer) { timer.classList.remove('visible'); timer.textContent = ''; }
   }
 
+  function fmtCountdown(secs) {
+    var m = Math.floor(secs / 60);
+    var s = secs % 60;
+    return m + 'm ' + (s < 10 ? '0' : '') + s + 's';
+  }
+
   function startEmailAutoCountdown() {
-    emailAutoSecsLeft = 120;
+    emailAutoSecsLeft = 300;
     var timer = $('email-auto-timer');
-    timer.textContent = '\u21BB Next fetch in ' + emailAutoSecsLeft + 's';
+    timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(emailAutoSecsLeft);
     timer.classList.add('visible');
     if (emailAutoCountdown) clearInterval(emailAutoCountdown);
     emailAutoCountdown = setInterval(function() {
       emailAutoSecsLeft--;
-      if (emailAutoSecsLeft <= 0) emailAutoSecsLeft = 120;
-      timer.textContent = '\u21BB Next fetch in ' + emailAutoSecsLeft + 's';
+      if (emailAutoSecsLeft <= 0) emailAutoSecsLeft = 300;
+      timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(emailAutoSecsLeft);
     }, 1000);
   }
 
@@ -1070,7 +1076,7 @@
       emailAutoInterval = setInterval(function() {
         runEmailFetch();
         startEmailAutoCountdown();
-      }, 120000);
+      }, 300000);
     }
   });
 
@@ -1156,15 +1162,15 @@
   }
 
   function startRssAutoCountdown() {
-    rssAutoSecsLeft = 120;
+    rssAutoSecsLeft = 300;
     var timer = $('rss-auto-timer');
-    timer.textContent = '\u21BB Next fetch in ' + rssAutoSecsLeft + 's';
+    timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(rssAutoSecsLeft);
     timer.classList.add('visible');
     if (rssAutoCountdown) clearInterval(rssAutoCountdown);
     rssAutoCountdown = setInterval(function() {
       rssAutoSecsLeft--;
-      if (rssAutoSecsLeft <= 0) rssAutoSecsLeft = 120;
-      timer.textContent = '\u21BB Next fetch in ' + rssAutoSecsLeft + 's';
+      if (rssAutoSecsLeft <= 0) rssAutoSecsLeft = 300;
+      timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(rssAutoSecsLeft);
     }, 1000);
   }
 
@@ -1186,7 +1192,7 @@
       rssAutoInterval = setInterval(function() {
         runRssFetch();
         startRssAutoCountdown();
-      }, 120000);
+      }, 300000);
     }
   });
 </script>
