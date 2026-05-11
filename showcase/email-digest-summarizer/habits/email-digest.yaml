@@ -48,6 +48,4 @@ output:
   emailsFetched: "{{process.results[0].output.emailsFetched}}"
   emailsSummarized: "{{process.results[0].output.successCount}}"
   slackPosted: "{{digest.results[0].output.success}}"
-  slackChannel: "{{digest.results[0].output.channel}}"
-  slackMessageTs: "{{digest.results[0].output.messageTs}}"
   summaries: "{{process.results[0].output.summaries}}"

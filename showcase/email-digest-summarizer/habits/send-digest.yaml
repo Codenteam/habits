@@ -67,6 +67,4 @@ edges:
 
 output:
   success: "{{post-slack.success}}"
-  messageTs: "{{post-slack.timestamp}}"
-  channel: "{{post-slack.channel}}"
   digestText: "{{assemble.result.message}}"
