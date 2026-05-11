@@ -1,45 +1,53 @@
 id: send-digest
 name: Send Digest to Slack
 description: >
-  Formats all email summaries into a rich Slack digest message and
-  posts it to the configured Slack channel.
+  Formats each email summary individually via OpenAI (one call per email),
+  then assembles all blocks into a complete Slack digest message with
+  header and footer, and posts it to the configured Slack channel.
 
 nodes:
-  - id: format
+  # Format all summaries into a Slack digest message directly (no extra OpenAI calls)
+  - id: assemble
     type: action
     data:
-      framework: bits
-      source: npm
-      module: "@ha-bits/bit-openai"
-      operation: ask_chatgpt
+      framework: script
+      source: inline
+      module: slack-assembler
+      label: Assemble Slack Digest
       params:
-        model: "gpt-4o-mini"
-        prompt: |
-          You are a Slack message formatter. Format the following email summaries
-          into a clean, well-structured Slack digest message using Slack's mrkdwn syntax.
+        summariesJson: "{{digestInput.summariesJson}}"
+        digestDate: "{{digestInput.digestDate}}"
+        emailCount: "{{digestInput.emailCount}}"
+        language: deno
+        script: |
+          export async function main(summariesJson, digestDate, emailCount) {
+            const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';
+            const sentimentEmoji = (s) => s === 'positive' ? '😊' : s === 'neutral' ? '😐' : '😟';
 
-          Use this structure:
-          - A bold header: *📬 Email Digest — {{digestInput.digestDate}}*
-          - A short intro line: _{{digestInput.emailCount}} emails summarized_
-          - A divider line: ---
-          - For each summary, show:
-              • *[importance emoji] Subject* (📌 high, 📄 medium, 💤 low)
-              • From: sender
-              • Category badge and sentiment emoji (😊 positive, 😐 neutral, 😟 negative)
-              • 2-sentence summary
-              • Key points as a short bulleted list
-              • If actionRequired is true, a ⚡ *Action:* line
-              • A thin divider between emails
-          - A footer: _Powered by Habits AI Digest_
+            const header = '*📬 Email Digest — ' + digestDate + '*\n_' + emailCount + ' emails summarized_\n---';
+            const footer = '_Powered by Habits_';
 
-          SUMMARIES (JSON array):
-          {{digestInput.summariesJson}}
+            const blocks = summariesJson.map(item => {
+              const s = item.output || item;
+              const lines = [
+                '*' + importanceEmoji(s.importance) + ' ' + s.subject + '*',
+                'From: ' + s.from,
+                s.category + ' ' + sentimentEmoji(s.sentiment),
+                s.summary,
+              ];
+              if (s.keyPoints && s.keyPoints.length > 0) {
+                lines.push(s.keyPoints.map(p => '• ' + p).join('\n'));
+              }
+              if (s.actionRequired && s.actionItem) {
+                lines.push('⚡ *Action:* ' + s.actionItem);
+              }
+              lines.push('---');
+              return lines.join('\n');
+            });
 
-          Return ONLY the plain Slack mrkdwn message text. No code fences.
-        maxTokens: 2000
-      credentials:
-        openai:
-          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+            const message = [header].concat(blocks).concat([footer]).join('\n\n');
+            return { message };
+          }
 
   - id: post-slack
     type: action
@@ -51,14 +59,14 @@ nodes:
       params:
         token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
         channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
-        text: "{{format}}"
+        text: "{{assemble.result.message}}"
 
 edges:
-  - source: format
+  - source: assemble
     target: post-slack
 
 output:
   success: "{{post-slack.success}}"
   messageTs: "{{post-slack.timestamp}}"
   channel: "{{post-slack.channel}}"
-  digestText: "{{format}}"
+  digestText: "{{assemble.result.message}}"
