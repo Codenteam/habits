@@ -65,8 +65,8 @@ nodes:
           Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
           {
             "invoiceId": "INV-YYYYMMDD-NNN (generate a unique ID using today's date)",
-            "dueDate": "Month Day, Year format (e.g. April 27, 2026), extract from invoice text if a due date is mentioned; otherwise use today's date",
-            "currency": "currency symbol extracted from the invoice text (e.g. '$', '€', '£'); default to '$' if not mentioned",
+            "dueDate": "Month Day, Year format (e.g. April 27, 2026): extract from invoice text if a due date is mentioned; otherwise use today's date",
+            "currency": "currency symbol extracted from the invoice text (e.g. $, €, £); default to $ if not mentioned",
             "items": [
               {
                 "Description": "clear description of the item or service",
