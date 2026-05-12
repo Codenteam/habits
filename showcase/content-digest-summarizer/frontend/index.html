@@ -698,12 +698,7 @@
         <span class="spinner" id="rss-spinner"></span>
         <span id="rss-btn-label">&#9654; Run RSS Digest</span>
       </button>
-      <button id="auto-rss-btn" class="auto-btn" title="Auto-fetch every 1 minute">
-        <span class="auto-icon">&#8635;</span>
-        <span id="auto-rss-label">Auto Fetch</span>
-      </button>
     </div>
-    <div class="auto-timer" id="rss-auto-timer"></div>
     <div id="rss-status-log"></div>
   </div>
 
@@ -901,7 +896,6 @@
     $('email-card').style.display = 'none';
     $('rss-card').style.display = 'none';
     stopEmailAuto();
-    stopRssAuto();
     resetResultsUI();
   }
 
@@ -1105,7 +1099,6 @@
     allSummaries = [];
 
     btn.disabled = true;
-    $('auto-rss-btn').disabled = true;
     $('rss-spinner').style.display = 'block';
     label.textContent = 'Running\u2026';
     setStatus('Running', 'running');
@@ -1128,7 +1121,6 @@
     })
     .then(function(result) {
       handleDigestResult(result.output || result, 'rss-spinner', 'rss-btn-label', 'run-rss-btn', '\u25BA Run RSS Digest');
-      $('auto-rss-btn').disabled = false;
     })
     .catch(function(err) {
       console.error(err);
@@ -1140,61 +1132,10 @@
       $('rss-spinner').style.display = 'none';
       label.textContent = '\u25BA Run RSS Digest';
       btn.disabled = false;
-      $('auto-rss-btn').disabled = false;
     });
   }
 
   $('run-rss-btn').addEventListener('click', runRssFetch);
-
-  // ── RSS auto-fetch ────────────────────────────────────────────────────────────
-
-  var rssAutoInterval = null;
-  var rssAutoCountdown = null;
-  var rssAutoSecsLeft = 0;
-
-  function stopRssAuto() {
-    if (rssAutoInterval) { clearInterval(rssAutoInterval); rssAutoInterval = null; }
-    if (rssAutoCountdown) { clearInterval(rssAutoCountdown); rssAutoCountdown = null; }
-    var abtn = $('auto-rss-btn');
-    if (abtn) { abtn.classList.remove('active'); $('auto-rss-label').textContent = 'Auto Fetch'; }
-    var timer = $('rss-auto-timer');
-    if (timer) { timer.classList.remove('visible'); timer.textContent = ''; }
-  }
-
-  function startRssAutoCountdown() {
-    rssAutoSecsLeft = 300;
-    var timer = $('rss-auto-timer');
-    timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(rssAutoSecsLeft);
-    timer.classList.add('visible');
-    if (rssAutoCountdown) clearInterval(rssAutoCountdown);
-    rssAutoCountdown = setInterval(function() {
-      rssAutoSecsLeft--;
-      if (rssAutoSecsLeft <= 0) rssAutoSecsLeft = 300;
-      timer.textContent = '\u21BB Next fetch in ' + fmtCountdown(rssAutoSecsLeft);
-    }, 1000);
-  }
-
-  $('auto-rss-btn').addEventListener('click', function() {
-    if (rssAutoInterval) {
-      stopRssAuto();
-    } else {
-      var feedUrl = ($('rss-url').value || '').trim();
-      if (!feedUrl) {
-        $('rss-url').focus();
-        $('rss-url').style.borderColor = 'var(--red)';
-        setTimeout(function() { $('rss-url').style.borderColor = ''; }, 1500);
-        return;
-      }
-      $('auto-rss-btn').classList.add('active');
-      $('auto-rss-label').textContent = 'Stop Auto';
-      runRssFetch();
-      startRssAutoCountdown();
-      rssAutoInterval = setInterval(function() {
-        runRssFetch();
-        startRssAutoCountdown();
-      }, 300000);
-    }
-  });
 </script>
 </body>
 </html>

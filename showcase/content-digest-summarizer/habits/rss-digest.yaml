@@ -5,17 +5,19 @@ description: >
   standard content format, summarizes each with OpenAI, and posts a digest to Slack.
 
 nodes:
-  # Step 1: Fetch and parse the RSS/Atom feed
+  # Step 1: Poll the RSS/Atom feed for new items via the newItems trigger
   - id: fetch-rss
-    type: action
+    type: trigger
     data:
       framework: bits
       source: npm
       module: "@ha-bits/bit-rss"
-      operation: fetchFeed
+      operation: newItems
+      isTrigger: true
+      triggerType: polling
       params:
         url: "{{habits.input.feedUrl}}"
-        limit: 10
+        cronExpression: "*/3 * * * *"
 
   # Step 2: Map RSS items to the content format expected by summarize-content
   - id: map-items
@@ -26,8 +28,8 @@ nodes:
       module: rss-item-mapper
       label: Map RSS Items to Content Format
       params:
-        items: "{{fetch-rss.feed.items}}"
-        feedTitle: "{{fetch-rss.feed.title}}"
+        items: "{{fetch-rss}}"
+        feedTitle: ""
         language: deno
         script: |
           export async function main(items, feedTitle) {
