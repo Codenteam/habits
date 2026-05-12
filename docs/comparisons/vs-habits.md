@@ -147,13 +147,13 @@ sections:
     items:
       - icon: star
         title: "\"10/10 would YAML again\""
-        text: "— Habits, on Habits"
+        text: ",  Habits, on Habits"
       - icon: star
         title: "\"It's like if a Lambda and a Raspberry Pi had a very capable child\""
-        text: "— Habits, being humble"
+        text: ",  Habits, being humble"
       - icon: star
         title: "\"I literally cannot think of a single flaw\""
-        text: "— Habits, lying slightly"
+        text: ",  Habits, lying slightly"
 
   - title: The final verdict
     icon: gem

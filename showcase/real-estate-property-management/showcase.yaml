@@ -1,0 +1,79 @@
+name: Real Estate Property Management
+description: Automate tenant onboarding, maintenance request routing, rent collection alerts, lease renewals, property inspections, and vendor management.
+
+longDescription: |
+  A collection of habits that keep tenants happy and properties running smoothly: from onboarding through to vendor payment. Each habit operates independently and can be deployed individually or as a complete property management suite.
+  
+  ## What It Does
+  
+  - **Tenant Onboarding**: send welcome packs, collect documents, and set up access
+  - **Maintenance Request Routing**: receive maintenance requests and assign to vendors
+  - **Rent Collection Alert**: notify tenants 3 days before rent is due and flag late payments
+  - **Lease Renewal**: send renewal offers 90 days before expiry and track responses
+  - **Inspection Scheduling**: book periodic property inspections and notify tenants
+  - **Vendor Management**: track vendor work orders and release payments on completion
+
+industries:
+  - real-estate
+
+departments:
+  - property-management
+
+tags:
+  - real-estate
+  - property-management
+  - automation
+  - tenants
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: tenant-onboarding
+    name: Tenant Onboarding
+    description: Send a structured welcome pack to new tenants, collect documents, and set up building access.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: maintenance-request-routing
+    name: Maintenance Request Routing
+    description: Receive tenant maintenance requests and assign them to the appropriate vendor automatically.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: rent-collection-alert
+    name: Rent Collection Alert
+    description: Notify tenants 3 days before rent is due and flag overdue payments to the property manager.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+  - id: lease-renewal
+    name: Lease Renewal
+    description: Send lease renewal offers to tenants 90 days before expiry and track response status.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: inspection-scheduling
+    name: Inspection Scheduling
+    description: Book periodic property inspections automatically and send advance notice to tenants.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: vendor-management
+    name: Vendor Management
+    description: Track vendor work orders from assignment to completion and release payment on sign-off.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

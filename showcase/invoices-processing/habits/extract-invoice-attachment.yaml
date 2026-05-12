@@ -31,7 +31,7 @@ nodes:
               - Totals may appear as "Total", "Amount Due", "Balance Due"
 
               Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
-                - hasInvoice: boolean — true if this email contains an invoice or billing document
+                - hasInvoice: boolean, true if this email contains an invoice or billing document
                 - invoiceNumber: the invoice or reference number as a string (or null)
                 - invoiceDate: the invoice date in ISO format YYYY-MM-DD (or null)
                 - vendorName: name of the invoice sender (or null)

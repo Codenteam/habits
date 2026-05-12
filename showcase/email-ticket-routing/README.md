@@ -23,7 +23,7 @@ Google requires an **App Password** instead of your regular account password whe
 3. Click **Create**.
 
 4. Google will display a **16-character password** (shown as `xxxx xxxx xxxx xxxx`).  
-   Copy it — it will not be shown again.
+   Copy it, it will not be shown again.
 
 5. Paste it (without spaces) into the relevant variable in your `.env` file.
 
@@ -51,13 +51,13 @@ cp .env.example .env
 
 | Variable | Description |
 |---|---|
-| `HABITS_GMAIL_IMAP_HOST` | IMAP host — `imap.gmail.com` |
-| `HABITS_GMAIL_IMAP_PORT` | IMAP port — `993` |
+| `HABITS_GMAIL_IMAP_HOST` | IMAP host, `imap.gmail.com` |
+| `HABITS_GMAIL_IMAP_PORT` | IMAP port, `993` |
 | `HABITS_GMAIL_IMAP_USER` | Full Gmail address to read from |
 | `HABITS_GMAIL_IMAP_APP_PASSWORD` | App Password for the IMAP account |
 | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI analysis |
-| `HABITS_SMTP_HOST` | SMTP host — `smtp.gmail.com` |
-| `HABITS_SMTP_PORT` | SMTP port — `587` (TLS) |
+| `HABITS_SMTP_HOST` | SMTP host, `smtp.gmail.com` |
+| `HABITS_SMTP_PORT` | SMTP port, `587` (TLS) |
 | `HABITS_SMTP_SUPPORT_USER` | Gmail address for support replies |
 | `HABITS_SMTP_SUPPORT_PASSWORD` | App Password for support Gmail |
 | `HABITS_SMTP_SALES_USER` | Gmail address for sales replies |

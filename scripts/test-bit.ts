@@ -1,9 +1,9 @@
 #!/usr/bin/env npx tsx
 /**
- * scripts/test-bit.ts — Standalone single-bit test runner (Node.js)
+ * scripts/test-bit.ts, Standalone single-bit test runner (Node.js)
  *
  * The smallest possible command to test a bit action in Node.js.
- * No CLI build required — runs directly with tsx.
+ * No CLI build required, runs directly with tsx.
  *
  * @usage
  *   npx tsx scripts/test-bit.ts @ha-bits/bit-hello-world greet '{"param1":"hello","param2":"world"}'
@@ -216,25 +216,25 @@ async function main() {
     if (hasExpected) {
       const passed = deepEqual(result, expected);
 
-      console.error(`\n✅ Node.js — ${duration}ms`);
+      console.error(`\n✅ Node.js, ${duration}ms`);
       console.error(`   Expected: ${JSON.stringify(expected)}`);
       console.error(`   Got:      ${typeof result === 'string' ? result : JSON.stringify(result)}`);
 
       if (passed) {
-        console.error('   ✅ PASS — output matches expected');
+        console.error('   ✅ PASS, output matches expected');
       } else {
-        console.error('   ❌ FAIL — output does not match expected');
+        console.error('   ❌ FAIL, output does not match expected');
       }
       console.log(outputStr);
       process.exit(passed ? 0 : 1);
     } else {
-      console.error(`\n✅ Node.js — ${duration}ms`);
+      console.error(`\n✅ Node.js, ${duration}ms`);
       console.log(outputStr);
       process.exit(0);
     }
   } catch (err: any) {
     const duration = Date.now() - startTime;
-    console.error(`\n❌ Node.js — ${duration}ms`);
+    console.error(`\n❌ Node.js, ${duration}ms`);
     console.error(`   Error: ${err.message || String(err)}`);
     if (err.stack) {
       console.error(err.stack.split('\n').slice(0, 5).map((l: string) => '   ' + l).join('\n'));

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance & Banking Compliance & Audit</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .header-icon {
+      width: 44px;
+      height: 44px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .header-text h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .header-text p {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+
+    .habits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .habit-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .habit-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .habit-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .trigger-pill {
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #0f2a3f;
+      color: #38bdf8;
+      border: 1px solid #1e4a66;
+      white-space: nowrap;
+    }
+
+    .trigger-pill.webhook {
+      background: #1f1a3f;
+      color: #a78bfa;
+      border-color: #3b2a7a;
+    }
+
+    .habit-desc {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .bits {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .bit-tag {
+      font-size: 0.68rem;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      color: #64748b;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .status-bar {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .status-text {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .status-text strong {
+      color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-icon">⚖️</div>
+    <div class="header-text">
+      <h1>Finance & Banking Compliance & Audit</h1>
+      <p>Automation suite · 6 habits active</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value">6</div>
+      <div class="stat-label">Active habits</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">0</div>
+      <div class="stat-label">Outstanding SARs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">100%</div>
+      <div class="stat-label">AML screening coverage</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">4</div>
+      <div class="stat-label">Days to next report deadline</div>
+    </div>
+  </div>
+
+  <div class="section-title">Habits</div>
+
+  <div class="habits-grid">
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">AML Screening</span>
+        <span class="trigger-pill">scheduler</span>
+      </div>
+      <p class="habit-desc">Screen transactions against watchlists and sanction databases and flag any matches.</p>
+      <div class="bits">
+        <span class="bit-tag">scheduler</span>
+        <span class="bit-tag">http</span>
+        <span class="bit-tag">ai</span>
+      </div>
+    </div>
+
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">SAR Filing</span>
+        <span class="trigger-pill webhook">webhook</span>
+      </div>
+      <p class="habit-desc">Draft Suspicious Activity Reports with AI assistance and route for compliance sign-off.</p>
+      <div class="bits">
+        <span class="bit-tag">webhook</span>
+        <span class="bit-tag">ai</span>
+        <span class="bit-tag">email</span>
+      </div>
+    </div>
+
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">Audit Trail Compilation</span>
+        <span class="trigger-pill">scheduler</span>
+      </div>
+      <p class="habit-desc">Aggregate system audit logs and assemble evidence packs for upcoming audits.</p>
+      <div class="bits">
+        <span class="bit-tag">scheduler</span>
+        <span class="bit-tag">ai</span>
+        <span class="bit-tag">http</span>
+      </div>
+    </div>
+
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">Policy Compliance Check</span>
+        <span class="trigger-pill">scheduler</span>
+      </div>
+      <p class="habit-desc">Verify that internal processes remain aligned with current regulatory requirements.</p>
+      <div class="bits">
+        <span class="bit-tag">scheduler</span>
+        <span class="bit-tag">ai</span>
+        <span class="bit-tag">http</span>
+      </div>
+    </div>
+
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">Regulatory Reporting</span>
+        <span class="trigger-pill">scheduler</span>
+      </div>
+      <p class="habit-desc">Generate mandatory periodic reports and submit them to regulatory authorities on schedule.</p>
+      <div class="bits">
+        <span class="bit-tag">scheduler</span>
+        <span class="bit-tag">http</span>
+        <span class="bit-tag">email</span>
+      </div>
+    </div>
+
+    <div class="habit-card">
+      <div class="habit-card-top">
+        <span class="habit-name">Risk Register Update</span>
+        <span class="trigger-pill webhook">webhook</span>
+      </div>
+      <p class="habit-desc">Update the enterprise risk register automatically based on audit findings and alerts.</p>
+      <div class="bits">
+        <span class="bit-tag">webhook</span>
+        <span class="bit-tag">http</span>
+        <span class="bit-tag">email</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span class="status-text"><strong>All habits running</strong> · Port 13013 · Habits v1.0</span>
+  </div>
+
+</body>
+</html>

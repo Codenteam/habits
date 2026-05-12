@@ -50,6 +50,8 @@ import {
   Target,
   ArrowRight,
   ChevronDown,
+  Mail,
+  Play,
   type LucideIcon,
 } from 'lucide-vue-next'
 
@@ -120,6 +122,8 @@ const iconMap: Record<string, LucideIcon> = {
   trophy: Trophy,
   target: Target,
   'arrow-right': ArrowRight,
+  mail: Mail,
+  play: Play,
 }
 
 const IconComponent = iconMap[props.name] || Info

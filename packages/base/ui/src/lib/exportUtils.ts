@@ -218,15 +218,11 @@ export function habitToYaml(habit: Habit): string {
   const cleanObj = JSON.parse(JSON.stringify(yamlObj));
 
   return yaml.dump(cleanObj, {
-    indent: 1,
+    indent: 2,
     lineWidth: -1,
     noRefs: true,
     quotingType: '"',
     forceQuotes: false,
-    condenseFlow: true,
-    flowLevel: 0,
-    noArrayIndent: true
-
   });
 }
 

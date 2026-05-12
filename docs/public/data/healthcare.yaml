@@ -1,0 +1,197 @@
+id: healthcare
+name: Healthcare
+icon: heart
+tagline: Automate patient journeys, clinical operations, and compliance, end to end.
+description: >
+  From patient intake to regulatory filings, habits replace manual follow-ups,
+  paper-based checklists, and error-prone data entry across every hospital department.
+color: blue
+
+departments:
+
+  - id: patient-management
+    name: Patient Management
+    icon: clipboard
+    description: Automate intake, appointment reminders, follow-ups, and record sync.
+    habits:
+      - id: patient-intake-form
+        name: Patient Intake Form
+        description: Capture demographics and history via webhook, store to database, and email a confirmation to the patient.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email]
+
+      - id: appointment-reminder
+        name: Appointment Reminder
+        description: Scheduler queries tomorrow's appointments and sends SMS + email reminders 24 hours in advance.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-sms, bit-email]
+
+      - id: post-visit-survey
+        name: Post-Visit Follow-up Survey
+        description: 24 hours after a completed visit, email a patient satisfaction survey and store the response score.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-http]
+
+      - id: patient-record-sync
+        name: Patient Record Sync
+        description: Daily pull from the EHR API keeps the local database current; logs every change.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-if, bit-database-sql, bit-logger]
+
+      - id: prescription-refill-request
+        name: Prescription Refill Request
+        description: Receive refill request via webhook, notify the prescribing physician by email, and SMS the patient with status.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-sms]
+
+      - id: no-show-re-engagement
+        name: No-Show Re-engagement
+        description: Daily morning job finds yesterday's no-shows and emails a rescheduling link.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+  - id: billing-insurance
+    name: Billing & Insurance
+    icon: file
+    description: Automate claim submission, eligibility checks, denial handling, and patient billing.
+    habits:
+      - id: insurance-eligibility-check
+        name: Insurance Eligibility Check
+        description: On a pre-visit webhook, call the payer eligibility API and email the billing team with the result.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-database-sql]
+
+      - id: claim-submission
+        name: Claim Submission
+        description: Nightly batch fetches unbilled encounters and submits claims to the clearinghouse via HTTP.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-http, bit-email]
+
+      - id: payment-reminder
+        name: Overdue Payment Reminder
+        description: Weekly job finds balances over 30 days and sends email + SMS reminders with a payment link.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-sms]
+
+      - id: claim-denial-alert
+        name: Claim Denial Alert
+        description: Clearinghouse webhook triggers AI-powered denial analysis and emails the billing coder a suggested fix.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-email, bit-database-sql]
+
+      - id: eob-processing
+        name: EOB Processing
+        description: Watches the billing inbox for EOB attachments, OCRs the data, matches to claims, and generates a PDF reconciliation report.
+        trigger: email
+        bits: [bit-email, bit-ocr, bit-database-sql, bit-pdf]
+
+      - id: patient-statement-generator
+        name: Patient Statement Generator
+        description: End-of-month scheduled job generates and emails PDF statements to patients with outstanding balances.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-pdf, bit-email]
+
+  - id: clinical-operations
+    name: Clinical Operations
+    icon: zap
+    description: Automate lab results, critical alerts, care plans, and referrals.
+    habits:
+      - id: lab-result-notification
+        name: Lab Result Notification
+        description: Receive lab result webhook; email and SMS patient and physician if values are within or outside reference range.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-sms]
+
+      - id: critical-value-alert
+        name: Critical Value Alert
+        description: Receive a critical-flag event and immediately SMS the on-call provider and post to the clinical ops Slack channel.
+        trigger: webhook
+        bits: [bit-http, bit-sms, bit-slack, bit-database-sql]
+
+      - id: ai-care-plan-generator
+        name: AI Care Plan Generator
+        description: On patient discharge, generate a personalised care plan using AI, format as PDF, and email to patient and PCP.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-pdf, bit-email]
+
+      - id: referral-coordination
+        name: Referral Coordination
+        description: Receive a referral order, find open slots at the specialist via Google Calendar, and email appointment details to the patient.
+        trigger: webhook
+        bits: [bit-http, bit-google-calendar, bit-email, bit-database-sql]
+
+      - id: medication-interaction-check
+        name: Medication Interaction Check
+        description: On new prescription, query a drug-interaction API and alert the prescriber by email and Slack if a conflict is found.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-slack]
+
+  - id: hr-staffing
+    name: HR & Staffing
+    icon: target
+    description: Automate credential tracking, onboarding, time-off, shift changes, and incident reporting.
+    habits:
+      - id: credential-expiry-alert
+        name: Staff Credential Expiry Alert
+        description: Daily job finds credentials expiring within 60 days and emails both the staff member and their manager.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+      - id: new-hire-onboarding
+        name: New Hire Onboarding Checklist
+        description: On a new hire event, send a welcome email, share the policy folder on Google Drive, create onboarding tasks, and schedule a 30-day check-in.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-google-drive, bit-tasks, bit-scheduler]
+
+      - id: time-off-approval
+        name: Time-off Request Approval
+        description: Receive a PTO request, email the manager an approve/deny link, and update the schedule and employee notification based on the decision.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-if, bit-database-sql]
+
+      - id: shift-change-notification
+        name: Shift Change Notification
+        description: Receive a shift-swap event and notify affected staff by email and SMS, then post to the unit Slack channel.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-sms, bit-slack]
+
+      - id: clinical-incident-report
+        name: Clinical Incident Report
+        description: Receive incident details via form, AI-classify severity and suggest immediate actions, then notify risk manager and log for OSHA reporting.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-email, bit-database-sql]
+
+  - id: compliance-reporting
+    name: Compliance & Reporting
+    icon: scale
+    description: Automate audit logs, policy sign-offs, regulatory reminders, and quality KPI feeds.
+    habits:
+      - id: hipaa-audit-log-report
+        name: HIPAA Audit Log Report
+        description: Monthly job fetches access logs, runs AI anomaly detection, generates a PDF audit report, and delivers it to the compliance officer.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+      - id: policy-acknowledgment-collection
+        name: Policy Acknowledgment Collection
+        description: On a new policy event, loop over all staff to send a sign-off email and record completion in the database via webhook.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email]
+
+      - id: regulatory-filing-reminder
+        name: Regulatory Filing Deadline Reminder
+        description: Tiered reminders at 30, 14, and 7 days before each regulatory deadline emailed to the compliance team and posted to Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-slack]
+
+      - id: incident-escalation
+        name: Incident Escalation Workflow
+        description: Severity-2+ incidents trigger C-suite and legal email notifications, create response tasks, and schedule a 4-hour follow-up check.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-tasks, bit-scheduler]
+
+      - id: quality-metrics-dashboard
+        name: Quality Metrics Dashboard Feed
+        description: Daily aggregation of readmission rate, HCAHPS, and infection rate; pushed to the dashboard API and emailed as a weekly PDF summary.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-http, bit-pdf, bit-email]

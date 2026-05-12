@@ -30,7 +30,7 @@
   <h1>Speech Recognition Test</h1>
 
   <div id="warning">
-    ⚠️ <strong>Running on file:// — mic access is blocked by Chrome.</strong><br/>
+    ⚠️ <strong>Running on file://, mic access is blocked by Chrome.</strong><br/>
     Serve via localhost instead:<br/>
     <code>cd nodes/bits/@ha-bits/bit-voice/src/lib/browser && python3 -m http.server 8787</code><br/>
     Then open <a href="http://localhost:8787/speech-test.html" style="color:#ffb74d">http://localhost:8787/speech-test.html</a>
@@ -120,7 +120,7 @@
       const transcript = (fullTranscript + interimTranscript).trim();
       if (!transcript) return;
       const durationMs = Date.now() - speechStartTime;
-      log('info', `[Voice] EMIT — reason: ${reason}, wake: ${matchedWakeWord || 'none'}, duration: ${durationMs}ms`);
+      log('info', `[Voice] EMIT, reason: ${reason}, wake: ${matchedWakeWord || 'none'}, duration: ${durationMs}ms`);
       log('info', `[Voice] Transcript: "${transcript}"`);
     }
 
@@ -199,7 +199,7 @@
 
       r.onspeechend = () => {
         log('info', '[Voice] Speech ended');
-        // Start silence timer — if no more speech comes in within
+        // Start silence timer, if no more speech comes in within
         // silenceTimeout, emit the captured transcript
         startSilenceTimer();
       };
@@ -269,11 +269,11 @@
     // Warn if on file:// (microphone blocked in Chrome)
     if (location.protocol === 'file:') {
       document.getElementById('warning').style.display = 'block';
-      log('error', '[Voice] Running on file:// — mic access blocked. Use http://localhost instead.');
+      log('error', '[Voice] Running on file://, mic access blocked. Use http://localhost instead.');
     }
 
     if (!SpeechRecognitionAPI) {
-      log('error', '[Voice] SpeechRecognition API not available — use Chrome, Edge, or Safari.');
+      log('error', '[Voice] SpeechRecognition API not available, use Chrome, Edge, or Safari.');
       btnStart.disabled = true;
     }
 

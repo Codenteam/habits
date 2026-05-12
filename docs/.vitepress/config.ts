@@ -71,6 +71,13 @@ export default defineConfig({
   themeConfig: {
     logo: '/logo.png',
     outline: [2,3],
+
+    nav: [
+      { text: 'Docs', link: '/getting-started/introduction' },
+      { component: 'UseCasesMegaMenu' },
+      { text: 'Showcase', link: '/showcase/' },
+      { text: 'Downloads', link: '/downloads' },
+    ],
     
     sidebar: [
       {
@@ -143,6 +150,18 @@ export default defineConfig({
           { text: 'Mixed Frameworks', link: '/showcase/mixed' },
           { text: 'Minimal Blog', link: '/showcase/minimal-blog' },
           { text: 'Marketing Campaign', link: '/showcase/marketing-campaign' },
+        ]
+      },
+      // Industries
+      {
+        text: 'Industries',
+        items: [
+          { text: 'All Industries', link: '/industries/' },
+          { text: 'Healthcare', link: '/industries/healthcare' },
+          { text: 'Finance & Banking', link: '/industries/finance-banking' },
+          { text: 'E-commerce & Retail', link: '/industries/ecommerce-retail' },
+          { text: 'Manufacturing', link: '/industries/manufacturing' },
+          { text: 'Real Estate', link: '/industries/real-estate' },
         ]
       },
       // Bits Catalog

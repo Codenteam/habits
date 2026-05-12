@@ -3,7 +3,7 @@
 /* Include frontend-builder package in Tailwind content scanning */
 @source "../../frontend-builder/src/**/*.tsx";
 
-/* Shared design tokens — single source of truth */
+/* Shared design tokens, single source of truth */
 @import "../../../theme/tokens.css";
 
 /* Import workflow-canvas styles */

@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Real Estate - Property Management"
+
+workflows:
+  - id: tenant-onboarding
+    path: ./habits/tenant-onboarding.yaml
+    enabled: true
+  - id: maintenance-request-routing
+    path: ./habits/maintenance-request-routing.yaml
+    enabled: true
+  - id: rent-collection-alert
+    path: ./habits/rent-collection-alert.yaml
+    enabled: true
+  - id: lease-renewal
+    path: ./habits/lease-renewal.yaml
+    enabled: true
+  - id: inspection-scheduling
+    path: ./habits/inspection-scheduling.yaml
+    enabled: true
+  - id: vendor-management
+    path: ./habits/vendor-management.yaml
+    enabled: true
+
+server:
+  port: 13044
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

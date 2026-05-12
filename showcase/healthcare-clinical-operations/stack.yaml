@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Healthcare - Clinical Operations"
+
+workflows:
+  - id: lab-results-routing
+    path: ./habits/lab-results-routing.yaml
+    enabled: true
+  - id: patient-scheduling
+    path: ./habits/patient-scheduling.yaml
+    enabled: true
+  - id: medication-refill-request
+    path: ./habits/medication-refill-request.yaml
+    enabled: true
+  - id: care-coordination
+    path: ./habits/care-coordination.yaml
+    enabled: true
+  - id: ehr-data-sync
+    path: ./habits/ehr-data-sync.yaml
+    enabled: true
+  - id: referral-management
+    path: ./habits/referral-management.yaml
+    enabled: true
+
+server:
+  port: 13002
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

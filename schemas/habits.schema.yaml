@@ -439,6 +439,36 @@ properties:
     type: string
   version:
     type: string
+  # -----------------------------------------------------------------------
+  # Showcase / industry classification metadata
+  # These optional fields are used by scripts/generate-industry-docs.ts to
+  # build the industry docs pages.  Add them to a stack.yaml placed under
+  # showcase/industries/<dept-folder>/ so the generator can pick it up.
+  # -----------------------------------------------------------------------
+  industries:
+    type: array
+    items:
+      type: string
+    description: |
+      One or more industry IDs this stack belongs to.
+      Valid values: healthcare, finance-banking, ecommerce-retail,
+      manufacturing, real-estate.
+      Folder naming convention: <industry-name>-<department-name>
+      Example:
+        industries:
+          - healthcare
+      Folder: showcase/healthcare-clinical-operations/
+  departments:
+    type: array
+    items:
+      type: string
+    description: |
+      One or more department IDs this stack belongs to within the industries above.
+      The first value is treated as the primary department.
+      Example:
+        departments:
+          - clinical-operations
+  # -----------------------------------------------------------------------
   # Workflow input schema - defines expected inputs with types and UI hints
   input:
     type: array

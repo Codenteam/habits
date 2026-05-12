@@ -406,7 +406,7 @@ export class WorkflowExecutor {
 
   /**
    * Register bits streaming triggers.
-   * Calls onEnable() once at startup — onEnable itself sets up a persistent callback
+   * Calls onEnable() once at startup, onEnable itself sets up a persistent callback
    * that fires executor.executeWorkflow() for each incoming event.
    */
   async registerBitsStreamingTriggers(): Promise<void> {
@@ -447,7 +447,7 @@ export class WorkflowExecutor {
             continue;
           }
 
-          // Skip app-only bits — they require a browser/WebView environment
+          // Skip app-only bits, they require a browser/WebView environment
           if (bitPiece.runtime === 'app') {
             this.logger.log(`   ⏭️ Skipping app-only bit: ${moduleName}`);
             continue;

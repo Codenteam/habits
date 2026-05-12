@@ -51,6 +51,6 @@ Habits ships as a collection of standalone tools. Each one can be used independe
 
 ## What a habit actually is
 
-A habit is a self-contained workflow file (`.habit` or `stack.yaml`) that describes inputs, a sequence of nodes, and an output. Each node is a **bit** — a small, single-purpose function like "call OpenAI", "send an email", or "query a database". All tools in this list know how to load and run habit files.
+A habit is a self-contained workflow file (`.habit` or `stack.yaml`) that describes inputs, a sequence of nodes, and an output. Each node is a **bit**: a small, single-purpose function like "call OpenAI", "send an email", or "query a database". All tools in this list know how to load and run habit files.
 
 See the [Recipes](/recipes/) section for end-to-end examples that combine multiple tools.

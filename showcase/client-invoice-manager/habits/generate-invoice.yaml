@@ -65,7 +65,7 @@ nodes:
           Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
           {
             "invoiceId": "INV-YYYYMMDD-NNN (generate a unique ID using today's date)",
-            "dueDate": "Month Day, Year format (e.g. April 27, 2026) — extract from invoice text if a due date is mentioned; otherwise use today's date",
+            "dueDate": "Month Day, Year format (e.g. April 27, 2026), extract from invoice text if a due date is mentioned; otherwise use today's date",
             "currency": "currency symbol extracted from the invoice text (e.g. '$', '€', '£'); default to '$' if not mentioned",
             "items": [
               {
@@ -80,12 +80,12 @@ nodes:
 
           Rules:
           - Extract every line item from the invoice description.
-          - Calculate Price = Qty * Unit Price only (do NOT add Tax into Price — the invoice engine adds Tax separately to compute the total).
+          - Calculate Price = Qty * Unit Price only (do NOT add Tax into Price, the invoice engine adds Tax separately to compute the total).
           - Default Tax to 0 if not mentioned.
           - Set Currency in each item to the same currency symbol as the invoice-level currency.
           - dueDate: extract from the invoice text if a due date is mentioned; otherwise use today's date. Format as Month Day, Year (e.g. April 27, 2026).
           - Generate a random 3-digit suffix for the invoice ID (e.g. INV-20260427-042).
-          - Return valid JSON only — no extra text.
+          - Return valid JSON only, no extra text.
 
   # Step 3: Generate PDF invoice using bit-invoice
   - id: create-pdf

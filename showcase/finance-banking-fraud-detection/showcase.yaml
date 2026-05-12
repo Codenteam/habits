@@ -1,0 +1,79 @@
+name: Finance & Banking Fraud Detection
+description: Automate real-time transaction monitoring, fraud alert generation, customer notification, account freezing, and regulatory report filing.
+
+longDescription: |
+  A collection of habits that protect customers and the institution: from real-time transaction scoring through to regulatory reporting. Each habit operates independently and can be deployed individually or as a complete fraud detection suite.
+  
+  ## What It Does
+  
+  - **Transaction Monitoring**: analyse transactions in real time and flag anomalies
+  - **Alert Generation**: create fraud alerts and route to the investigation team
+  - **Customer Notification**: notify customer of suspicious activity and request confirmation
+  - **Account Freeze**: auto-freeze account on confirmed fraud signal
+  - **Case Management**: open investigation case and assign to analyst
+  - **Fraud Report Filing**: compile and submit regulatory fraud reports
+
+industries:
+  - finance-banking
+
+departments:
+  - fraud-detection
+
+tags:
+  - finance
+  - fraud
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: transaction-monitoring
+    name: Transaction Monitoring
+    description: Analyse incoming transactions in real time using AI and flag statistical anomalies.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: alert-generation
+    name: Alert Generation
+    description: Create structured fraud alerts and route them to the investigation team immediately.
+    trigger: webhook
+    bits: [webhook, slack, email]
+
+  - id: customer-notification
+    name: Customer Notification
+    description: Notify the customer of suspicious activity via SMS and request confirmation or denial.
+    trigger: webhook
+    bits: [webhook, sms, email]
+
+  - id: account-freeze
+    name: Account Freeze
+    description: Automatically freeze the affected account when a confirmed fraud signal is received.
+    trigger: webhook
+    bits: [webhook, http, slack]
+
+  - id: case-management
+    name: Case Management
+    description: Open a structured investigation case and assign it to an available analyst.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: fraud-report-filing
+    name: Fraud Report Filing
+    description: Compile mandatory fraud reports and submit to the relevant regulatory authority.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

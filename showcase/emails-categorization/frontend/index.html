@@ -398,7 +398,7 @@
           // legacy: direct array
           categories = output.categories;
         } else if (output.categories && Array.isArray(output.categories.results)) {
-          // ForEachResult from bit-loop forEach — extract each item's output
+          // ForEachResult from bit-loop forEach, extract each item's output
           // cast:true only parses fenced ```json``` blocks; handle raw JSON strings too
           categories = output.categories.results.map(r => {
             const out = r && r.output;
@@ -410,7 +410,7 @@
             } catch (_) { return null; }
           }).filter(Boolean);
         } else if (typeof output.categories === 'string' && output.categories.trim()) {
-          // categories arrived as a raw JSON string — parse it directly
+          // categories arrived as a raw JSON string, parse it directly
           try {
             const cleaned = output.categories.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
             const parsed = JSON.parse(cleaned);
@@ -442,7 +442,7 @@
         const toastSub = document.getElementById('telegramToastSub');
         const tg = output.telegram;
         if (tg && tg.ok) {
-          toastSub.textContent = `Categorization report delivered • msg id: ${tg.result && tg.result.message_id ? tg.result.message_id : '—'}`;
+          toastSub.textContent = `Categorization report delivered • msg id: ${tg.result && tg.result.message_id ? tg.result.message_id : ', '}`;
         } else {
           toastSub.textContent = 'Categorization report sent to Telegram';
         }
@@ -492,7 +492,7 @@
           date:     email.date    || '',
           category: c.category   || 'Other',
           priority: c.priority   || 'Medium',
-          summary:  c.summary    || c.text      || '—',
+          summary:  c.summary    || c.text      || ', ',
         };
       }) : categories.map(c => ({
         from:     c.from     || '',
@@ -500,7 +500,7 @@
         date:     '',
         category: c.category || 'Other',
         priority: c.priority || 'Medium',
-        summary:  c.summary  || c.text || '—',
+        summary:  c.summary  || c.text || ', ',
       }));
 
       list.innerHTML = items.map((item, idx) => {

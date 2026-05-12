@@ -1,0 +1,79 @@
+name: Manufacturing Maintenance
+description: Automate equipment alerts, preventive maintenance scheduling, work order creation, parts ordering, downtime reporting, and technician dispatch.
+
+longDescription: |
+  A collection of habits that minimise unplanned downtime: from sensor alerts through to technician dispatch. Each habit operates independently and can be deployed individually or as a complete maintenance automation suite.
+  
+  ## What It Does
+  
+  - **Equipment Alert**: receive sensor alerts and create work orders automatically
+  - **Preventive Maintenance Scheduling**: schedule maintenance based on runtime hours or calendar
+  - **Work Order Creation**: generate and assign work orders to maintenance engineers
+  - **Part Ordering**: auto-order replacement parts when stock drops below minimum
+  - **Downtime Reporting**: log unplanned downtime and notify the production planner
+  - **Technician Dispatch**: notify on-call technician with job details via SMS
+
+industries:
+  - manufacturing
+
+departments:
+  - maintenance
+
+tags:
+  - manufacturing
+  - maintenance
+  - automation
+  - iot
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: equipment-alert
+    name: Equipment Alert
+    description: Receive sensor alerts from connected equipment and automatically create maintenance work orders.
+    trigger: webhook
+    bits: [webhook, http, slack]
+
+  - id: preventive-maintenance-scheduling
+    name: Preventive Maintenance Scheduling
+    description: Schedule preventive maintenance tasks based on equipment runtime hours or fixed calendar intervals.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: work-order-creation
+    name: Work Order Creation
+    description: Generate structured work orders and assign them to available maintenance engineers automatically.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: part-ordering
+    name: Part Ordering
+    description: Auto-order replacement parts from approved suppliers when spare parts stock falls below minimum.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+  - id: downtime-reporting
+    name: Downtime Reporting
+    description: Log all unplanned downtime events automatically and notify the production planner in real time.
+    trigger: webhook
+    bits: [webhook, slack, email]
+
+  - id: technician-dispatch
+    name: Technician Dispatch
+    description: Notify the on-call maintenance technician via SMS with full job details when a fault is confirmed.
+    trigger: webhook
+    bits: [webhook, sms, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

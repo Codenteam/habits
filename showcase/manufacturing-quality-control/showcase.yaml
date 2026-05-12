@@ -1,0 +1,79 @@
+name: Manufacturing Quality Control
+description: Automate defect report routing, inspection scheduling, non-conformance handling, corrective action tracking, and audit preparation.
+
+longDescription: |
+  A collection of habits that enforce quality at every stage: from defect capture through to audit readiness. Each habit operates independently and can be deployed individually or as a complete quality control automation suite.
+  
+  ## What It Does
+  
+  - **Defect Report Routing**: capture defect reports from the line and route to the QC team
+  - **Inspection Scheduling**: schedule quality inspections based on production milestones
+  - **Non-Conformance Routing**: route NCRs to the responsible team with deadline assignment
+  - **Corrective Action Tracking**: monitor CAPA completion and send reminders
+  - **Certification Tracking**: alert the QC manager on upcoming certification renewals
+  - **Audit Preparation**: compile evidence packs and assign tasks before audits
+
+industries:
+  - manufacturing
+
+departments:
+  - quality-control
+
+tags:
+  - manufacturing
+  - quality
+  - automation
+  - compliance
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: defect-report-routing
+    name: Defect Report Routing
+    description: Capture defect reports from the production line and route them to the QC team instantly.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: inspection-scheduling
+    name: Inspection Scheduling
+    description: Schedule quality inspections automatically based on production milestone completions.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: non-conformance-routing
+    name: Non-Conformance Routing
+    description: Route NCRs to the responsible team with deadline assignment and severity classification.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: corrective-action-tracking
+    name: Corrective Action Tracking
+    description: Monitor CAPA completion progress and send escalating reminders as deadlines approach.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: certification-tracking
+    name: Certification Tracking
+    description: Alert the QC manager automatically when product or process certifications are due for renewal.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: audit-preparation
+    name: Audit Preparation
+    description: Compile evidence packs and assign preparation tasks to the team ahead of scheduled audits.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

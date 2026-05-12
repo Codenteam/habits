@@ -1,0 +1,79 @@
+name: Finance & Banking Customer Support
+description: Automate support ticket routing, account enquiry handling, dispute resolution, callback scheduling, and escalation management.
+
+longDescription: |
+  A collection of habits that keep customer support fast and consistent: from ticket triage through to escalation handling. Each habit operates independently and can be deployed individually or as a complete support automation suite.
+  
+  ## What It Does
+  
+  - **Ticket Routing**: classify inbound support tickets and route to the correct team
+  - **Account Enquiry Handler**: resolve common account balance and statement queries
+  - **Dispute Resolution**: open disputes, notify customer, and track progress
+  - **Callback Scheduling**: book call-back slots for complex enquiries
+  - **Sentiment Analysis**: score customer interactions and flag negative sentiment
+  - **Escalation Handler**: escalate unresolved tickets to senior support
+
+industries:
+  - finance-banking
+
+departments:
+  - customer-support
+
+tags:
+  - finance
+  - support
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: ticket-routing
+    name: Ticket Routing
+    description: Classify inbound support tickets using AI and route each to the correct team automatically.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: account-enquiry-handler
+    name: Account Enquiry Handler
+    description: Resolve common account balance and statement queries instantly without agent involvement.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: dispute-resolution
+    name: Dispute Resolution
+    description: Open transaction disputes, notify the customer of next steps, and track resolution progress.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: callback-scheduling
+    name: Callback Scheduling
+    description: Book call-back time slots for customers with complex enquiries that need agent handling.
+    trigger: webhook
+    bits: [webhook, email, scheduler]
+
+  - id: sentiment-analysis
+    name: Sentiment Analysis
+    description: Score all customer interactions for sentiment and flag persistently negative experiences.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: escalation-handler
+    name: Escalation Handler
+    description: Automatically escalate tickets that breach SLA thresholds to senior support staff.
+    trigger: scheduler
+    bits: [scheduler, slack, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

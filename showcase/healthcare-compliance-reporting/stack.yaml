@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Healthcare - Compliance Reporting"
+
+workflows:
+  - id: hipaa-audit-log
+    path: ./habits/hipaa-audit-log.yaml
+    enabled: true
+  - id: incident-reporting
+    path: ./habits/incident-reporting.yaml
+    enabled: true
+  - id: policy-distribution
+    path: ./habits/policy-distribution.yaml
+    enabled: true
+  - id: accreditation-tracking
+    path: ./habits/accreditation-tracking.yaml
+    enabled: true
+  - id: risk-assessment
+    path: ./habits/risk-assessment.yaml
+    enabled: true
+  - id: regulatory-update-alert
+    path: ./habits/regulatory-update-alert.yaml
+    enabled: true
+
+server:
+  port: 13004
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

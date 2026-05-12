@@ -1,6 +1,6 @@
 # Introduction
 
-Habits is a **lightweight workflow creator, runtime, and packer** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**), all under AGPL-3.0.
+Habits is a **lightweight workflow creator, runtime, packer and server manager** for building agents, automations, full-stack apps, SaaS, and micro-apps. It combines a visual builder (**Base**) with a decentralized execution engine (**Cortex**), all under AGPL-3.0.
 
 ## What Can You Build?
 

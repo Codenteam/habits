@@ -1,0 +1,79 @@
+name: Healthcare Clinical Operations
+description: Automate lab result routing, patient scheduling, medication refills, care coordination, and EHR data sync across clinical operations.
+
+longDescription: |
+  A collection of habits that keep clinical workflows running smoothly: from lab results to referral management. Each habit operates independently and can be deployed individually or as a complete clinical operations suite.
+  
+  ## What It Does
+  
+  - **Lab Results Routing**: deliver lab results to ordering clinician and flag critical values
+  - **Patient Scheduling**: optimise appointment slots and send booking confirmations
+  - **Medication Refill Request**: process refill requests and route for prescriber approval
+  - **Care Coordination**: coordinate multi-disciplinary care plans and track task completion
+  - **EHR Data Sync**: sync patient data across systems and flag discrepancies
+  - **Referral Management**: send specialist referrals and track acknowledgement status
+
+industries:
+  - healthcare
+
+departments:
+  - clinical-operations
+
+tags:
+  - healthcare
+  - clinical
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: lab-results-routing
+    name: Lab Results Routing
+    description: Deliver lab results to the ordering clinician and flag critical values for immediate action.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: patient-scheduling
+    name: Patient Scheduling
+    description: Optimise appointment slots and send booking confirmations to patients automatically.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+  - id: medication-refill-request
+    name: Medication Refill Request
+    description: Process refill requests from patients and route to the prescriber for approval.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: care-coordination
+    name: Care Coordination
+    description: Coordinate multi-disciplinary care plans and track task completion across the team.
+    trigger: scheduler
+    bits: [scheduler, email, slack]
+
+  - id: ehr-data-sync
+    name: EHR Data Sync
+    description: Sync patient data across connected systems and flag any discrepancies for review.
+    trigger: scheduler
+    bits: [http, scheduler, ai]
+
+  - id: referral-management
+    name: Referral Management
+    description: Send specialist referrals automatically and track acknowledgement status.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

@@ -507,7 +507,7 @@ const _cueHelperImpl = {
 
         // Streaming triggers set up their stream in onEnable (e.g., open mic,
         // connect websocket). Events are pushed to run() individually as they
-        // arrive — no immediate run call.
+        // arrive, no immediate run call.
         const onEnableResult = await this.executeTrigger({
           moduleDefinition,
           triggerName,

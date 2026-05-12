@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Ecommerce Retail - Inventory Management"
+
+workflows:
+  - id: low-stock-alert
+    path: ./habits/low-stock-alert.yaml
+    enabled: true
+  - id: reorder-automation
+    path: ./habits/reorder-automation.yaml
+    enabled: true
+  - id: supplier-notification
+    path: ./habits/supplier-notification.yaml
+    enabled: true
+  - id: inventory-reconciliation
+    path: ./habits/inventory-reconciliation.yaml
+    enabled: true
+  - id: demand-forecasting-alert
+    path: ./habits/demand-forecasting-alert.yaml
+    enabled: true
+  - id: shrinkage-report
+    path: ./habits/shrinkage-report.yaml
+    enabled: true
+
+server:
+  port: 13021
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

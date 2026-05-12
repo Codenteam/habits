@@ -4,7 +4,7 @@ description: Send the ticket reply to the resolved team inbox using the SMTP pas
 
 nodes:
   # Send the reply using the pre-resolved ticket fields and SMTP password
-  # All values come from ticket.output.* — the output of route-category
+  # All values come from ticket.output.*: the output of route-category
   - id: send
     type: action
     data:

@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Manufacturing - Supply Chain"
+
+workflows:
+  - id: purchase-order-automation
+    path: ./habits/purchase-order-automation.yaml
+    enabled: true
+  - id: supplier-communication
+    path: ./habits/supplier-communication.yaml
+    enabled: true
+  - id: delivery-tracking
+    path: ./habits/delivery-tracking.yaml
+    enabled: true
+  - id: vendor-performance-report
+    path: ./habits/vendor-performance-report.yaml
+    enabled: true
+  - id: quality-inspection-alert
+    path: ./habits/quality-inspection-alert.yaml
+    enabled: true
+  - id: inventory-replenishment
+    path: ./habits/inventory-replenishment.yaml
+    enabled: true
+
+server:
+  port: 13030
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

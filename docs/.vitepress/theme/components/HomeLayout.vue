@@ -15,7 +15,8 @@ import { codeToHtml } from 'shiki'
 import showcaseData from '../data/showcase-data.json'
 import bitsData from '../data/bits-data.json'
 
-const { isDark, frontmatter } = useData()
+const { isDark, frontmatter, theme } = useData()
+const navItems = computed(() => theme.value.nav ?? [])
 
 const whoAreYouComponent = WhoAreYou
 const runEverywhereComponent = RunEverywhere
@@ -298,31 +299,43 @@ const recipesData = [
       <div class="home-grid"></div>
     </div>
 
-    <!-- Header with theme toggle and GitHub -->
+    <!-- Header with nav, theme toggle and GitHub -->
     <header class="home-header">
       <div class="header-content">
         <a :href="withBase('/')" class="header-logo">
           <img :src="withBase('/logo.png')" alt="Habits" />
           <span>Habits</span>
         </a>
-        <div class="header-actions">
-          <button 
-            class="theme-toggle" 
-            @click="toggleTheme" 
-            :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-          >
-            <span v-if="isDark" v-html="icon('sun')"></span>
-            <span v-else v-html="icon('moon')"></span>
-          </button>
-          <a 
-            href="https://github.com/codenteam/habits" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="github-link"
-            aria-label="GitHub"
-          >
-            <span v-html="icon('github')"></span>
-          </a>
+        <div class="header-right">
+          <nav class="header-nav">
+            <template v-for="item in navItems" :key="item.text ?? item.component">
+              <component :is="item.component" v-if="item.component" />
+              <a
+                v-else-if="item.link"
+                :href="withBase(item.link)"
+                class="header-nav-link"
+              >{{ item.text }}</a>
+            </template>
+          </nav>
+          <div class="header-actions">
+            <button 
+              class="theme-toggle" 
+              @click="toggleTheme" 
+              :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            >
+              <span v-if="isDark" v-html="icon('sun')"></span>
+              <span v-else v-html="icon('moon')"></span>
+            </button>
+            <a 
+              href="https://github.com/codenteam/habits" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="github-link"
+              aria-label="GitHub"
+            >
+              <span v-html="icon('github')"></span>
+            </a>
+          </div>
         </div>
       </div>
     </header>
@@ -382,7 +395,7 @@ const recipesData = [
       <div class="qi1-line"></div>
       <blockquote class="hero-quote">
         <p>All our life, is a mass of habits.</p>
-        <footer>— William James</footer>
+        <footer>,  William James</footer>
       </blockquote>
       <div class="qi1-line"></div>
     </div>
@@ -688,7 +701,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"47 tabs reduced to ONE. What do I do now, touch grass??"</p>
           <div class="testimonial-author">
-            <span class="author-name">— Overworked Dev</span>
+            <span class="author-name">,  Overworked Dev</span>
             <span class="author-title">Chief Tab Opener, Former</span>
           </div>
         </div>
@@ -696,7 +709,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"Built a full-stack app in 2 hours. Now I have MORE meetings."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Anonymous</span>
+            <span class="author-name">,  Anonymous</span>
             <span class="author-title">Meeting Survivor</span>
           </div>
         </div>
@@ -704,7 +717,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"So intuitive my manager builds workflows now. Send help."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Sarah K.</span>
+            <span class="author-name">,  Sarah K.</span>
             <span class="author-title">Actual Developer, Threatened</span>
           </div>
         </div>
@@ -712,7 +725,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"No vendor lock-in? Can't threaten to leave anymore."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Chad McMoney</span>
+            <span class="author-name">,  Chad McMoney</span>
             <span class="author-title">Professional Complainer</span>
           </div>
         </div>
@@ -720,7 +733,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"3-week deploy sprint now takes 3 minutes. I look like a wizard."</p>
           <div class="testimonial-author">
-            <span class="author-name">— DevOps Dan</span>
+            <span class="author-name">,  DevOps Dan</span>
             <span class="author-title">Accidentally Efficient</span>
           </div>
         </div>
@@ -728,7 +741,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"AI made my frontend look good. Can't blame the framework now."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Backend Bob</span>
+            <span class="author-name">,  Backend Bob</span>
             <span class="author-title">CSS Avoider</span>
           </div>
         </div>
@@ -736,7 +749,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"Worst tool, worst documentation, how can I bill my client for only 30 minutes to build their automations!"</p>
           <div class="testimonial-author">
-            <span class="author-name">— Consultant Carl</span>
+            <span class="author-name">,  Consultant Carl</span>
             <span class="author-title">Hourly Rate Defender</span>
           </div>
         </div>
@@ -744,7 +757,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"Runs on my $5 VPS. AWS sales guy stopped calling me."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Frugal Fred</span>
+            <span class="author-name">,  Frugal Fred</span>
             <span class="author-title">Cloud Cost Cutter</span>
           </div>
         </div>
@@ -752,7 +765,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"The intern shipped to production on day one. Day. One."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Tech Lead Tina</span>
+            <span class="author-name">,  Tech Lead Tina</span>
             <span class="author-title">Gatekeeper, Unemployed</span>
           </div>
         </div>
@@ -760,7 +773,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"Made an AI agent in 10 minutes. Existential crisis in 11."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Philosophical Phil</span>
+            <span class="author-name">,  Philosophical Phil</span>
             <span class="author-title">Job Security Analyst</span>
           </div>
         </div>
@@ -768,7 +781,7 @@ const recipesData = [
           <div class="testimonial-stars">★☆☆☆☆</div>
           <p class="testimonial-text">"Swagger docs auto-generate. My API doc sprint is obsolete."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Documentation Diane</span>
+            <span class="author-name">,  Documentation Diane</span>
             <span class="author-title">README Writer, Retired</span>
           </div>
         </div>
@@ -776,7 +789,7 @@ const recipesData = [
           <div class="testimonial-stars">★★☆☆☆</div>
           <p class="testimonial-text">"A bunch of liars telling us to use the same logic for Automations, Agents, Apps and runs in Linux, Windows, Mac, Docker, Android, iOS, Web."</p>
           <div class="testimonial-author">
-            <span class="author-name">— Vendor Viktor</span>
+            <span class="author-name">,  Vendor Viktor</span>
             <span class="author-title">Ecosystem Purist</span>
           </div>
         </div>
@@ -866,6 +879,12 @@ const recipesData = [
   align-items: center;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .header-logo {
   display: flex;
   align-items: center;
@@ -885,6 +904,31 @@ const recipesData = [
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 36px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.header-nav-link:hover {
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-default-soft);
 }
 
 .theme-toggle,

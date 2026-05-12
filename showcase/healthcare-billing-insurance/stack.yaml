@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Healthcare - Billing Insurance"
+
+workflows:
+  - id: claims-submission
+    path: ./habits/claims-submission.yaml
+    enabled: true
+  - id: prior-auth-request
+    path: ./habits/prior-auth-request.yaml
+    enabled: true
+  - id: denial-management
+    path: ./habits/denial-management.yaml
+    enabled: true
+  - id: eob-reconciliation
+    path: ./habits/eob-reconciliation.yaml
+    enabled: true
+  - id: eligibility-verification
+    path: ./habits/eligibility-verification.yaml
+    enabled: true
+  - id: payment-posting
+    path: ./habits/payment-posting.yaml
+    enabled: true
+
+server:
+  port: 13001
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true
