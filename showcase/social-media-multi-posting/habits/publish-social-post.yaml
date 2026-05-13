@@ -23,20 +23,21 @@ nodes:
         text: "{{post.twitter}}"
 
   # Post to LinkedIn
-  # - id: post-to-linkedin
-  #   type: bits
-  #   data:
-  #     label: Post to LinkedIn
-  #     framework: bits
-  #     source: npm
-  #     module: "@ha-bits/bit-linkedin"
-  #     operation: createPost
-  #     auth:
-  #        clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
-  #        clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
-  #     params:
-  #       text: "{{post.linkedin}}"
-  #       visibility: "PUBLIC"
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+         clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+         clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{post.linkedin}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORGANIZATION_ID}}"
 
   # Mark the post as published in the database (runs after both platforms succeed)
   - id: mark-published
