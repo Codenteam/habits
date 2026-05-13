@@ -5,7 +5,10 @@
  * Uses LinkedIn API v2 for posting, media upload, and profile/company management.
  * 
  * Authentication: OAuth 2.0 with PKCE
- * Required scopes: openid, profile, w_member_social
+ * Required scopes: openid, profile, w_member_social, r_organization_social, w_organization_social
+ *
+ * For organization page posts: use getOrganizations action to retrieve the org URN
+ * (urn:li:organization:<id>) and pass it as authorUrn in post actions.
  */
 
 interface LinkedInAuth {
@@ -90,11 +93,10 @@ async function linkedInRequest(
 }
 
 /**
- * Get the authenticated user's profile ID (URN)
+ * Build organization URN from a numeric organization ID
  */
-async function getProfileUrn(accessToken: string): Promise<string> {
-  const profile = await linkedInRequest('/me', 'GET', accessToken);
-  return `urn:li:person:${profile.id}`;
+function getOrganizationUrn(organizationId: string): string {
+  return `urn:li:organization:${organizationId}`;
 }
 
 const linkedInBit = {
@@ -112,7 +114,7 @@ const linkedInBit = {
     authorizationUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     // clientId is configured per-user/deployment
-    scopes: ['openid', 'profile', 'w_member_social'],
+    scopes: ['r_organization_social', 'w_organization_social'],
   },
   
   actions: {
@@ -143,11 +145,11 @@ const linkedInBit = {
             ],
           },
         },
-        authorUrn: {
+        organizationId: {
           type: 'SHORT_TEXT',
-          displayName: 'Author URN (optional)',
-          description: 'URN of the author (person or organization). Leave empty to post as yourself.',
-          required: false,
+          displayName: 'Organization ID',
+          description: 'Numeric LinkedIn organization ID to post as (e.g. 121664022). Use getOrganizations action to find your org ID. Required for organization page posts.',
+          required: true,
         },
       },
       async run(context: LinkedInContext): Promise<any> {
@@ -155,10 +157,9 @@ const linkedInBit = {
           throw new Error('No OAuth token available. Please complete the LinkedIn OAuth flow first.');
         }
         
-        const { text, visibility = 'PUBLIC', authorUrn } = context.propsValue;
+        const { text, visibility = 'PUBLIC', organizationId } = context.propsValue;
         
-        // Get author URN if not provided
-        const author = authorUrn || await getProfileUrn(context.auth.accessToken);
+        const author = getOrganizationUrn(organizationId);
         
         const postBody = {
           author,
@@ -233,11 +234,11 @@ const linkedInBit = {
             ],
           },
         },
-        authorUrn: {
+        organizationId: {
           type: 'SHORT_TEXT',
-          displayName: 'Author URN (optional)',
-          description: 'URN of the author. Leave empty to post as yourself.',
-          required: false,
+          displayName: 'Organization ID',
+          description: 'Numeric LinkedIn organization ID to post as (e.g. 121664022). Use getOrganization action to find your org ID. Required for organization page posts.',
+          required: true,
         },
       },
       async run(context: LinkedInContext): Promise<any> {
@@ -245,9 +246,9 @@ const linkedInBit = {
           throw new Error('No OAuth token available. Please complete the LinkedIn OAuth flow first.');
         }
         
-        const { text, imageUrl, imageTitle, imageDescription, visibility = 'PUBLIC', authorUrn } = context.propsValue;
+        const { text, imageUrl, imageTitle, imageDescription, visibility = 'PUBLIC', organizationId } = context.propsValue;
         
-        const author = authorUrn || await getProfileUrn(context.auth.accessToken);
+        const author = getOrganizationUrn(organizationId);
         
         // Step 1: Register the image upload
         const registerBody = {
@@ -370,11 +371,11 @@ const linkedInBit = {
             ],
           },
         },
-        authorUrn: {
+        organizationId: {
           type: 'SHORT_TEXT',
-          displayName: 'Author URN (optional)',
-          description: 'URN of the author. Leave empty to post as yourself.',
-          required: false,
+          displayName: 'Organization ID',
+          description: 'Numeric LinkedIn organization ID to post as (e.g. 121664022). Use getOrganization action to find your org ID. Required for organization page posts.',
+          required: true,
         },
       },
       async run(context: LinkedInContext): Promise<any> {
@@ -382,9 +383,9 @@ const linkedInBit = {
           throw new Error('No OAuth token available. Please complete the LinkedIn OAuth flow first.');
         }
         
-        const { text, articleUrl, articleTitle, articleDescription, visibility = 'PUBLIC', authorUrn } = context.propsValue;
+        const { text, articleUrl, articleTitle, articleDescription, visibility = 'PUBLIC', organizationId } = context.propsValue;
         
-        const author = authorUrn || await getProfileUrn(context.auth.accessToken);
+        const author = getOrganizationUrn(organizationId);
         
         const postBody = {
           author,
@@ -464,7 +465,45 @@ const linkedInBit = {
         };
       },
     },
-    
+
+    /**
+     * Get a LinkedIn organization's details
+     */
+    getOrganization: {
+      name: 'getOrganization',
+      displayName: 'Get Organization',
+      description: 'Get details about a LinkedIn organization page by its numeric ID',
+      props: {
+        organizationId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Organization ID',
+          description: 'Numeric LinkedIn organization ID',
+          required: true,
+        },
+      },
+      async run(context: LinkedInContext): Promise<any> {
+        if (!context.auth || !context.auth.accessToken) {
+          throw new Error('No OAuth token available. Please complete the LinkedIn OAuth flow first.');
+        }
+
+        const { organizationId } = context.propsValue;
+        const org = await linkedInRequest(`/organizations/${organizationId}`, 'GET', context.auth.accessToken, undefined, true);
+
+        return {
+          success: true,
+          id: organizationId,
+          urn: getOrganizationUrn(organizationId),
+          name: org.localizedName,
+          vanityName: org.vanityName,
+          description: org.localizedDescription,
+          websiteUrl: org.websiteUrl,
+          logoUrl: org.logoV2?.original,
+          staffCountRange: org.staffCountRange,
+          industries: org.industries,
+        };
+      },
+    },
+
     /**
      * Delete a LinkedIn post
      */
