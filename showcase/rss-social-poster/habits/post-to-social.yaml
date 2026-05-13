@@ -22,20 +22,21 @@ nodes:
         text: "{{social.twitterPost}}"
 
   # Step 2: Post to LinkedIn (runs after Twitter succeeds)
-  # - id: post-to-linkedin
-  #   type: bits
-  #   data:
-  #     label: Post to LinkedIn
-  #     framework: bits
-  #     source: npm
-  #     module: "@ha-bits/bit-linkedin"
-  #     operation: createPost
-  #     auth:
-  #        clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
-  #        clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
-  #     params:
-  #       text: "{{social.linkedinPost}}"
-  #       visibility: "PUBLIC"
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+         clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+         clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{social.linkedinPost}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORG_ID}}"
 
 edges:
   - source: post-to-twitter
