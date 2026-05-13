@@ -511,6 +511,21 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Stop a single polling cron job by workflowId and nodeId.
+   * Returns true if a job was found and stopped, false if not found.
+   */
+  stopPollingTrigger(workflowId: string, nodeId: string): boolean {
+    const key = `${workflowId}:${nodeId}`;
+    const cronJob = this.pollingCronJobs.get(key);
+    if (!cronJob) return false;
+    cronJob.stop();
+    this.pollingCronJobs.delete(key);
+    this.logger.log(`   ⏹️ Stopped polling trigger: ${key}`);
+    return true;
+  }
+
+
+  /**
    * Stop all streaming triggers by calling their onDisable()
    */
   async stopStreamingTriggers(): Promise<void> {

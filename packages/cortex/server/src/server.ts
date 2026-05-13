@@ -968,6 +968,19 @@ class WorkflowExecutorServer {
       }
     });
 
+
+
+    // Stop a specific polling trigger
+    this.app.delete('/misc/trigger/:workflowId/:nodeId', (req: Request, res: Response) => {
+      const { workflowId, nodeId } = req.params;
+      const stopped = this.executor.stopPollingTrigger(workflowId, nodeId);
+      if (stopped) {
+        res.json({ success: true, message: `Polling trigger ${workflowId}:${nodeId} stopped` });
+      } else {
+        res.status(404).json({ error: `No active polling trigger found for ${workflowId}:${nodeId}` });
+      }
+    });
+
     // ========================================================================
     // Frontend Static Files (at / if configured)
     // ========================================================================
