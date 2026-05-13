@@ -168,11 +168,9 @@ const rssBit = {
       },
 
       async onEnable(context: RssTriggerContext): Promise<void> {
-        console.log("cronnn", context.propsValue.cronExpression);
         const cron = context.propsValue.cronExpression || '*/10 * * * *';
         if (context.propsValue.url) {
           await context.store.put('feedUrl', context.propsValue.url);
-          console.log("feed urlll saved", context.propsValue.url);
         }
         context.setSchedule({ cronExpression: cron, timezone: 'UTC' });
       },
@@ -182,11 +180,7 @@ const rssBit = {
       },
 
       async run(context: RssTriggerContext): Promise<RssFeedItem[]> {
-        console.log("startt runnn")
-        console.log("Urllllsss", await context.store.get<string>('feedUrl') );
         const url: string = context.propsValue.url || await context.store.get<string>('feedUrl') || '';
-        console.log("Urllll", url);
-
         if (!url) {
           console.log('[bit-rss] No feed URL available, skipping');
           return [];
@@ -195,11 +189,9 @@ const rssBit = {
         const parser = new Parser();
         const rawFeed = await parser.parseURL(url);
         const items = rawFeed.items;
-        console.log("itemsss", items);
 
         const lastGuid = await context.store.get<string>('lastItemGuid');
 
-        console.log("last guiddd", lastGuid);
         const newItems: Parser.Item[] = [];
 
         for (const item of items) {
