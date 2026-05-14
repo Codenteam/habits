@@ -239,9 +239,15 @@ const emailBit = {
           description: 'Reply-to address (optional)',
           required: false,
         },
+        attachments: {
+          type: 'ARRAY',
+          displayName: 'Attachments',
+          description: 'Array of attachments: [{ "filename": "file.pdf", "content": "<base64>", "contentType": "application/pdf" }]',
+          required: false,
+        },
       },
       async run(context: EmailContext) {
-        const { from, to, subject, body, html, cc, bcc, replyTo } = context.propsValue;
+        const { from, to, subject, body, html, cc, bcc, replyTo, attachments } = context.propsValue;
         
         const auth = context.auth || {};
         const { host, user, password } = auth;
@@ -255,6 +261,15 @@ const emailBit = {
           throw new Error('From, To, Subject, and Body are required');
         }
         
+        // Parse attachments if provided as string
+        let parsedAttachments: Array<{ filename: string; content: string; contentType?: string }> | undefined;
+        if (attachments) {
+          const raw = typeof attachments === 'string' ? JSON.parse(attachments) : attachments;
+          if (Array.isArray(raw) && raw.length > 0) {
+            parsedAttachments = raw;
+          }
+        }
+
         const result = await driver.sendSmtpEmail(
           { host, port: Number(port), user, password },
           {
@@ -266,6 +281,7 @@ const emailBit = {
             cc: cc ? String(cc) : undefined,
             bcc: bcc ? String(bcc) : undefined,
             replyTo: replyTo ? String(replyTo) : undefined,
+            attachments: parsedAttachments,
           }
         );
         
