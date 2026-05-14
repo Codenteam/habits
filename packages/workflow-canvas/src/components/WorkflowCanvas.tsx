@@ -8,7 +8,7 @@ import ReactFlow, {
   ReactFlowInstance,
   Edge,
 } from 'reactflow';
-import { Focus, Maximize, Minimize, LayoutGrid, Code, Braces, X } from 'lucide-react';
+import { Focus, Maximize, Minimize, LayoutGrid, Code, Braces, X, Lock, Unlock } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
 import { BaseNode } from './BaseNode';
@@ -96,6 +96,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isInteractive, setIsInteractive] = useState(interactive);
     const [showYamlModal, setShowYamlModal] = useState(false);
     const [showCodeModal, setShowCodeModal] = useState(false);
     const [showAutoLayoutTooltip, setShowAutoLayoutTooltip] = useState(false);
@@ -317,13 +318,13 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
           fitView={fitView}
           minZoom={0.1}
           maxZoom={2}
-          nodesDraggable={interactive}
+          nodesDraggable={isInteractive}
           nodesConnectable={editable}
-          elementsSelectable={interactive}
-          panOnDrag={interactive}
-          zoomOnScroll={interactive}
-          zoomOnPinch={interactive}
-          zoomOnDoubleClick={interactive}
+          elementsSelectable={isInteractive}
+          panOnDrag={isInteractive}
+          zoomOnScroll={isInteractive}
+          zoomOnPinch={isInteractive}
+          zoomOnDoubleClick={isInteractive}
           proOptions={{ hideAttribution: true }}
           style={{ background: backgroundColor }}
         >
@@ -396,6 +397,17 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
                 )}
               </div>
             )}
+            <button
+              onClick={() => setIsInteractive(v => !v)}
+              className={`p-2 border rounded-lg transition-colors shadow-lg ${
+                isInteractive
+                  ? 'bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-300 hover:text-white'
+                  : 'bg-amber-900/60 hover:bg-amber-800/70 border-amber-600 text-amber-300 hover:text-amber-100'
+              }`}
+              title={isInteractive ? 'Lock canvas (disable pan/zoom)' : 'Unlock canvas (enable pan/zoom)'}
+            >
+              {isInteractive ? <Unlock size={20} /> : <Lock size={20} />}
+            </button>
             <button
               onClick={handleFitView}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors shadow-lg"

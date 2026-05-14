@@ -54,7 +54,7 @@ const TEMPLATES: Template[] = [
     name: 'Marketing Campaign',
     description: 'Generate marketing assets including images, vectors, and landing pages from a single prompt using Intersect AI.',
     icon: <Sparkles className="w-6 h-6" />,
-    stackPath: '/habits/base/api/templates/business-intersect-standalone/stack.yaml',
+    stackPath: '/habits/base/api/templates/marketing-campaign/stack.yaml',
   },
   {
     id: 'mixed-workflow',

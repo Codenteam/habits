@@ -1,0 +1,26 @@
+id: read-sheet
+name: Read Google Sheet
+description: Read data from a Google Sheet using OAuth 2. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_SPREADSHEET_ID, and GOOGLE_RANGE in the app secrets.
+version: "1.0"
+
+nodes:
+  - id: read-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: readRange
+      label: Read Sheet Data
+      credentials:
+        googleOauth:
+          clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        range: "{{habits.env.GOOGLE_RANGE}}"
+
+edges: []
+
+output:
+  data: "{{read-sheet}}"

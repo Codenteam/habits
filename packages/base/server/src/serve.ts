@@ -51,7 +51,7 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
           createResponse(
             false,
             undefined,
-            "Serving is not enabled on this instance. Set HABITS_ALLOW_SERVE=true to enable, or try self-hosting.",
+            "Serving is not enabled on this instance. To enable it, set the environment variable HABITS_ALLOW_SERVE=true.",
           ),
         );
       }

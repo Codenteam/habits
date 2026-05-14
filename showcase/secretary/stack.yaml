@@ -1,0 +1,20 @@
+version: "1.0"
+name: "Secretary"
+workflows:
+  - id: briefing
+    path: ./habits/briefing.yaml
+    enabled: true
+  - id: do-it
+    path: ./habits/do-it.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

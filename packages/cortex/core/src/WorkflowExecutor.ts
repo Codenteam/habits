@@ -1440,13 +1440,29 @@ export class WorkflowExecutor {
       this.logger.info(`Node ${node.id} executed successfully`);
 
     } catch (error: any) {
+      // Shorter params: Take the full param, recursively replace any value longer than 100 characters with a placeholder to avoid logging huge data
+      const shortenParams = (obj: any): any => {
+        if (typeof obj === 'string') {
+          return obj.length > 200 ? '[LONG_STRING]' : obj; 
+        } else if (Array.isArray(obj)) {
+          return obj.map(shortenParams);
+        } else if (typeof obj === 'object' && obj !== null) {
+          const shortenedObj: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            shortenedObj[key] = shortenParams(value);
+          }
+          return shortenedObj;
+        }
+        return obj;
+      };
+
       // Handle different error types
       const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
       this.logger.error(`Node ${node.id} failed`, { 
         error: errorMsg, 
         errorType: typeof error,
         errorObj: error,
-        inputs: fullParams 
+        inputs: shortenParams(fullParams)
       });
       result.success = false;
       result.error = errorMsg;

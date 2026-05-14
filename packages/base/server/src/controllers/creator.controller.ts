@@ -161,7 +161,7 @@ export class CreatorController {
   private guardDisabled(res: Response): boolean {
     if (process.env.HABITS_AI_GEN !== 'true') {
       res.status(403).json(
-        createResponse(false, undefined, 'AI generation is not enabled. Set HABITS_AI_GEN=true to enable.'),
+        createResponse(false, undefined, 'AI generation is not enabled. To enable it, set the environment variable HABITS_AI_GEN=true.'),
       );
       return true;
     }

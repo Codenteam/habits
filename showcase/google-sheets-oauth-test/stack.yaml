@@ -1,0 +1,23 @@
+version: "1.0"
+name: "Google Sheets OAuth Test"
+description: "Test the OAuth 2 flow for Google Sheets in the Tauri app"
+
+env:
+  - name: GOOGLE_CLIENT_ID
+    required: true
+    description: "Google OAuth Client ID"
+  - name: GOOGLE_CLIENT_SECRET
+    required: true
+    description: "Google OAuth Client Secret"
+  - name: GOOGLE_SPREADSHEET_ID
+    required: true
+    description: "Google Spreadsheet ID (from the sheet URL)"
+  - name: GOOGLE_RANGE
+    required: false
+    description: "Range in A1 notation"
+    default: "Sheet1!A1:Z10"
+
+workflows:
+  - id: read-sheet
+    path: ./habit.yaml
+    enabled: true

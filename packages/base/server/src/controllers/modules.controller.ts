@@ -5,6 +5,8 @@
  */
 
 import { Request, Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createResponse, extractBitsSchema } from '../helpers';
 import { listModules } from "@ha-bits/cortex-core/utils/moduleManager";
 import {
@@ -14,6 +16,8 @@ import {
   getModuleName,
   isModuleCloned,
   isModuleBuilt,
+  loadModulesConfig,
+  saveModulesConfig,
 } from "@ha-bits/cortex-core/utils/moduleLoader";
 import {
   ensureModuleReady,
@@ -21,6 +25,7 @@ import {
   getModulePath,
   ModuleDefinition,
 } from "@ha-bits/cortex/utils/moduleCloner";
+import { getNodesBasePath } from "@ha-bits/cortex-core/utils/utils";
 import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
@@ -86,9 +91,51 @@ export class ModulesController {
    * Add a new module to the registry
    */
   add = async (req: Request, res: Response): Promise<void> => {
-    const { framework, source, repository } = req.body;
+    const { framework, source, repository, scriptContent, scriptLanguage } = req.body;
 
     try {
+      // Handle direct script modules separately (no cloning/building required)
+      if (source === 'script') {
+        const scriptName = repository?.trim();
+        if (!scriptName) {
+          res.json(createResponse(false, undefined, 'Script name is required'));
+          return;
+        }
+        if (!scriptContent?.trim()) {
+          res.json(createResponse(false, undefined, 'Script content is required'));
+          return;
+        }
+
+        const langToExt: Record<string, string> = {
+          typescript: 'ts',
+          javascript: 'js',
+          python3: 'py',
+          go: 'go',
+          bash: 'sh',
+          sql: 'sql',
+        };
+        const ext = langToExt[scriptLanguage] || 'ts';
+
+        // Write the script file to <nodesBasePath>/scripts/<scriptName>/script.<ext>
+        const scriptsDir = path.join(getNodesBasePath(), 'scripts', scriptName);
+        fs.mkdirSync(scriptsDir, { recursive: true });
+        fs.writeFileSync(path.join(scriptsDir, `script.${ext}`), scriptContent.trim(), 'utf-8');
+
+        // Register in modules.json (using 'npm' source so getModuleName returns scriptName)
+        const config = loadModulesConfig();
+        const alreadyExists = config.modules.some(
+          (m) => m.framework === 'script' && m.repository === scriptName,
+        );
+        if (!alreadyExists) {
+          config.modules.push({ framework: 'script', source: 'npm', repository: scriptName });
+          saveModulesConfig(config);
+        }
+
+        logger.log(`✅ Script module '${scriptName}' saved`);
+        res.json(createResponse(true, { message: `Script module '${scriptName}' added successfully`, module: { framework: 'script', source: 'script', repository: scriptName } }));
+        return;
+      }
+
       if (!framework || !source || !repository) {
         res.json(
           createResponse(

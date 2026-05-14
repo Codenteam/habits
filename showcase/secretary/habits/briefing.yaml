@@ -1,0 +1,49 @@
+id: briefing
+name: Morning Briefing
+description: >-
+  Reads your files, Slack messages, and calendar to produce a structured
+  daily brief. No input needed: just run it every morning.
+
+nodes:
+  - id: secretary-agent
+    type: bit
+    data:
+      framework: bits
+      module: '@ha-bits/bit-agent'
+      operation: run_agent
+      source: npm
+      credentials:
+        agentAuth:
+          llmProvider: openai
+          apiKey: '{{habits.env.OPENAI_API_KEY}}'
+          mcpSecrets:
+            SLACK_BOT_TOKEN: '{{habits.env.SLACK_BOT_TOKEN}}'
+            SLACK_CHANNEL_ID: '{{habits.env.SLACK_CHANNEL_ID}}'
+            FS_BASE_DIR: DOCUMENT
+      params:
+        prompt: >-
+          Good morning. Please prepare a brief about this machine:
+          1. List the contents of the Documents folder (use fs_list_directory with path "." and baseDir DOCUMENT).
+          2. List the contents of the Desktop (use fs_list_directory with path "Desktop" and baseDir HOME).
+          3. Read any text files you find that look interesting (README, notes, recent .md or .txt files).
+          4. Summarise what you found: what kind of machine this seems to be, what projects are active,
+             any interesting files. Format with clear sections: Documents, Desktop, Summary.
+          Keep it concise. If a directory listing fails, skip it and continue.
+        systemPrompt: >-
+          You are a professional AI secretary. Your job is to explore the local filesystem
+          and produce a clear, structured machine brief. Be concise and accurate.
+          If a tool call fails, skip that step and continue with the rest.
+          Always end with a short "Summary" section describing the machine and its active work.
+        mcpServers:
+          - type: filesystem
+          - type: slack
+          - type: all-bits
+        model: gpt-4o
+        maxIterations: 30
+        temperature: 0.3
+
+edges: []
+
+output:
+  briefing: '{{secretary-agent.response}}'
+  toolCalls: '{{secretary-agent.toolCalls}}'

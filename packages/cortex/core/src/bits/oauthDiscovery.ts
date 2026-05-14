@@ -202,6 +202,9 @@ export async function discoverOAuthRequirements(
           clientSecret,
           scopes: moduleAuth.auth.scopes,
           extraAuthParams: moduleAuth.auth.extraAuthParams,
+          // Disable PKCE for confidential clients (those with a clientSecret).
+          // Google rejects the combination of clientSecret + code_challenge.
+          pkce: !clientSecret,
         },
         hasValidToken,
         status,
