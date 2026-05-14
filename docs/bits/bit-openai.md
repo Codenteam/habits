@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-openai`</span>
   <span class="bit-version">v0.1.11</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">556</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">690</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">openai</span> <span class="bit-category">openai</span> <span class="bit-category">ai</span></span>
 </div>
 
@@ -60,6 +60,7 @@ nodes:
 | **List Models** | List available OpenAI models for your account. |
 | **Generate Image** | Generate an image using DALL-E |
 | **Vision Prompt** | Ask GPT a question about an image |
+| **Ask ChatGPT with File** | Send a file (PDF, image, etc.) as base64 directly to OpenAI along with a text prompt. |
 | **Text-to-Speech** | Generate an audio recording from text |
 | **Transcribe Audio** | Transcribe audio to text using whisper-1 model |
 | **Translate Audio** | Translate audio to text using whisper-1 model |

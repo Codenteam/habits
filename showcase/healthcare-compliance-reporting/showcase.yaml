@@ -1,0 +1,79 @@
+name: Healthcare Compliance & Reporting
+description: Automate HIPAA audit log compilation, incident reporting, policy distribution, accreditation tracking, and regulatory update alerts.
+
+longDescription: |
+  A collection of habits that keep your compliance posture strong: from audit log compilation to regulatory monitoring. Each habit operates independently and can be deployed individually or as a complete compliance and reporting suite.
+  
+  ## What It Does
+  
+  - **HIPAA Audit Log**: compile access logs and flag anomalies for compliance review
+  - **Incident Reporting**: capture and route clinical incident reports for investigation
+  - **Policy Distribution**: push updated policies to staff and track acknowledgement
+  - **Accreditation Tracking**: monitor accreditation deadlines and trigger preparation tasks
+  - **Risk Assessment**: run periodic risk assessments and escalate findings
+  - **Regulatory Update Alert**: monitor regulatory feeds and alert compliance team
+
+industries:
+  - healthcare
+
+departments:
+  - compliance-reporting
+
+tags:
+  - healthcare
+  - compliance
+  - reporting
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: hipaa-audit-log
+    name: HIPAA Audit Log
+    description: Compile system access logs and flag anomalies for compliance review each night.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: incident-reporting
+    name: Incident Reporting
+    description: Capture clinical incident reports via webhook and route for investigation.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: policy-distribution
+    name: Policy Distribution
+    description: Push updated compliance policies to all staff and track individual acknowledgements.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: accreditation-tracking
+    name: Accreditation Tracking
+    description: Monitor accreditation renewal deadlines and trigger preparation tasks automatically.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: risk-assessment
+    name: Risk Assessment
+    description: Run periodic AI-assisted risk assessments and escalate high-risk findings.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+  - id: regulatory-update-alert
+    name: Regulatory Update Alert
+    description: Monitor regulatory feeds for changes and alert the compliance team immediately.
+    trigger: scheduler
+    bits: [scheduler, http, slack]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

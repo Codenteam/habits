@@ -1,0 +1,79 @@
+name: Real Estate Marketing
+description: Automate campaign launches, social media posting, open house promotion, newsletter distribution, listing performance alerts, and competitor analysis.
+
+longDescription: |
+  A collection of habits that keep your marketing engine running: from automated campaigns through to competitor intelligence. Each habit operates independently and can be deployed individually or as a complete real estate marketing suite.
+  
+  ## What It Does
+  
+  - **Campaign Automation**: launch targeted email campaigns for new listings and events
+  - **Social Media Posting**: schedule and post listing highlights across social channels
+  - **Open House Promotion**: send reminders and RSVP tracking for open house events
+  - **Newsletter Distribution**: compile market updates and distribute to your subscriber list
+  - **Listing Performance Alert**: alert the marketing team when a listing underperforms
+  - **Competitor Analysis**: monitor competitor listings and summarise with AI weekly
+
+industries:
+  - real-estate
+
+departments:
+  - marketing
+
+tags:
+  - real-estate
+  - marketing
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: campaign-automation
+    name: Campaign Automation
+    description: Launch targeted email campaigns automatically when new listings are published or events are created.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: social-media-posting
+    name: Social Media Posting
+    description: Schedule and post AI-crafted listing highlights across connected social media channels.
+    trigger: scheduler
+    bits: [scheduler, http, ai]
+
+  - id: open-house-promotion
+    name: Open House Promotion
+    description: Send automated reminders to registered attendees and track RSVPs for open house events.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+  - id: newsletter-distribution
+    name: Newsletter Distribution
+    description: Compile local market updates with AI and distribute the newsletter to your subscriber list.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: listing-performance-alert
+    name: Listing Performance Alert
+    description: Alert the marketing team when a listing is underperforming on views or enquiry metrics.
+    trigger: scheduler
+    bits: [scheduler, ai, slack]
+
+  - id: competitor-analysis
+    name: Competitor Analysis
+    description: Monitor competitor listings weekly and produce an AI-generated market intelligence summary.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

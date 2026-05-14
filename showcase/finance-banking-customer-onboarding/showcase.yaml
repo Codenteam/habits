@@ -1,0 +1,79 @@
+name: Finance & Banking Customer Onboarding
+description: Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.
+
+longDescription: |
+  A collection of habits that streamline the new customer journey: from document collection through to account activation. Each habit operates independently and can be deployed individually or as a complete onboarding automation suite.
+  
+  ## What It Does
+  
+  - **KYC Document Collection**: request and validate identity documents from new customers
+  - **Risk Scoring**: run automated risk scoring and flag high-risk applications
+  - **Account Creation**: provision accounts after approval and send welcome sequence
+  - **Credit Check**: initiate credit bureau enquiries and parse results
+  - **Welcome Sequence**: send personalised onboarding emails over the first 30 days
+  - **Onboarding Status Tracker**: update CRM on each onboarding milestone completion
+
+industries:
+  - finance-banking
+
+departments:
+  - customer-onboarding
+
+tags:
+  - finance
+  - onboarding
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: kyc-document-collection
+    name: KYC Document Collection
+    description: Request and validate identity documents from new customers upon application submission.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: risk-scoring
+    name: Risk Scoring
+    description: Run automated risk scoring on new applications and flag high-risk cases for review.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: account-creation
+    name: Account Creation
+    description: Provision customer accounts after approval and trigger the welcome email sequence.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: credit-check
+    name: Credit Check
+    description: Initiate credit bureau enquiries automatically and parse results into the application record.
+    trigger: webhook
+    bits: [webhook, http, ai]
+
+  - id: welcome-sequence
+    name: Welcome Sequence
+    description: Send personalised onboarding emails to new customers over the first 30 days.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: onboarding-status-tracker
+    name: Onboarding Status Tracker
+    description: Update the CRM automatically at each milestone of the onboarding journey.
+    trigger: webhook
+    bits: [webhook, http, slack]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

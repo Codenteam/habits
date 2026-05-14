@@ -439,7 +439,7 @@
       spinner.style.display = 'inline-block';
       btnText.textContent = 'Scanning inbox…';
       document.getElementById('statsBar').classList.remove('visible');
-      setStatus('⏳ Fetching emails and extracting invoice data with AI — this may take a moment…', false);
+      setStatus('⏳ Fetching emails and extracting invoice data with AI, this may take a moment…', false);
 
       document.getElementById('invoiceList').innerHTML = `
         <div class="empty-state">
@@ -488,7 +488,7 @@
         renderInvoices(invoices);
 
         const now = new Date().toLocaleTimeString();
-        setStatus(`✅ Scanned ${totalEmails} email(s) — ${foundCount} invoice(s) extracted and uploaded to Google sheet • ${now}`, false);
+        setStatus(`✅ Scanned ${totalEmails} email(s), ${foundCount} invoice(s) extracted and uploaded to Google sheet • ${now}`, false);
 
         const ts = document.getElementById('timestamp');
         ts.style.display = 'block';
@@ -535,14 +535,14 @@
 
         const amount = inv.totalAmount != null
           ? `${formatCurrency(inv.totalAmount)} ${escapeHtml(inv.currency || '')}`.trim()
-          : '—';
+          : ', ';
 
         const metaItems = [
-          { label: 'Invoice #',   value: inv.invoiceNumber || '—' },
-          { label: 'Invoice Date',  value: inv.invoiceDate   ? formatDate(inv.invoiceDate) : '—' },
-          { label: 'Due Date',    value: inv.dueDate       ? formatDate(inv.dueDate)     : '—' },
-          { label: 'Customer',    value: inv.customerName  || '—' },
-          { label: 'Vendor Email',value: inv.vendorEmail   || '—' },
+          { label: 'Invoice #',   value: inv.invoiceNumber || ', ' },
+          { label: 'Invoice Date',  value: inv.invoiceDate   ? formatDate(inv.invoiceDate) : ', ' },
+          { label: 'Due Date',    value: inv.dueDate       ? formatDate(inv.dueDate)     : ', ' },
+          { label: 'Customer',    value: inv.customerName  || ', ' },
+          { label: 'Vendor Email',value: inv.vendorEmail   || ', ' },
           { label: 'Total Amount',value: amount, isAmount: true },
         ];
 
@@ -561,10 +561,10 @@
                  <tbody>
                    ${inv.lineItems.map(li => `
                      <tr>
-                       <td>${escapeHtml(li.description || '—')}</td>
-                       <td>${escapeHtml(String(li.quantity ?? '—'))}</td>
-                       <td>${li.unitPrice != null ? formatCurrency(li.unitPrice) : '—'}</td>
-                       <td>${li.total      != null ? formatCurrency(li.total)     : '—'}</td>
+                       <td>${escapeHtml(li.description || ', ')}</td>
+                       <td>${escapeHtml(String(li.quantity ?? ', '))}</td>
+                       <td>${li.unitPrice != null ? formatCurrency(li.unitPrice) : ', '}</td>
+                       <td>${li.total      != null ? formatCurrency(li.total)     : ', '}</td>
                      </tr>`).join('')}
                  </tbody>
                </table>
@@ -598,7 +598,7 @@
     }
 
     function formatCurrency(value) {
-      if (value == null) return '—';
+      if (value == null) return ', ';
       return Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 

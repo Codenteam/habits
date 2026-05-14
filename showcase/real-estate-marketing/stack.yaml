@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Real Estate - Marketing"
+
+workflows:
+  - id: campaign-automation
+    path: ./habits/campaign-automation.yaml
+    enabled: true
+  - id: social-media-posting
+    path: ./habits/social-media-posting.yaml
+    enabled: true
+  - id: open-house-promotion
+    path: ./habits/open-house-promotion.yaml
+    enabled: true
+  - id: newsletter-distribution
+    path: ./habits/newsletter-distribution.yaml
+    enabled: true
+  - id: listing-performance-alert
+    path: ./habits/listing-performance-alert.yaml
+    enabled: true
+  - id: competitor-analysis
+    path: ./habits/competitor-analysis.yaml
+    enabled: true
+
+server:
+  port: 13043
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

@@ -196,7 +196,9 @@ export class OAuthFlowManager {
   async initiateFlow(bitId: string, config: OAuth2Config): Promise<InitiateFlowResult> {
     const state = this.generateState();
     const redirectUri = `${this.callbackBaseUrl}/${bitId}/callback`;
-    const usePkce = config.pkce !== false; // PKCE enabled by default
+    // Disable PKCE for confidential clients (those with a clientSecret) — providers like
+    // Google reject the combination of clientSecret + code_challenge.
+    const usePkce = config.pkce !== false && !config.clientSecret;
     
     // Generate PKCE codes only if enabled
     const codeVerifier = usePkce ? this.generateCodeVerifier() : undefined;
@@ -217,11 +219,14 @@ export class OAuthFlowManager {
     this.logger.info('OAuth flow initiated', { bitId, redirectUri, pkce: usePkce });
 
     // Build authorization URL
+    // Note: scopes are space-separated URLs (e.g. https://www.googleapis.com/auth/drive).
+    // URLSearchParams would percent-encode the colon and slashes inside the scope values,
+    // producing double-encoded strings that Google rejects. We therefore build the scope
+    // query parameter manually so the scope URLs are encoded only once (spaces → %20).
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: config.clientId,
       redirect_uri: redirectUri,
-      scope: config.scopes.join(' '),
       state,
     });
     
@@ -238,7 +243,10 @@ export class OAuthFlowManager {
       }
     }
 
-    const authUrl = `${config.authorizationUrl}?${params.toString()}`;
+    // Append scope manually to avoid double-encoding the scope URL values.
+    // encodeURIComponent encodes spaces as %20, which is safe and correctly decoded by providers.
+    const scopeParam = `scope=${config.scopes.map(s => encodeURIComponent(s)).join('%20')}`;
+    const authUrl = `${config.authorizationUrl}?${params.toString()}&${scopeParam}`;
 
     return { authUrl, state, redirectUri };
   }
@@ -483,7 +491,6 @@ export class OAuthFlowManager {
           response_type: 'code',
           client_id: config.clientId,
           redirect_uri: redirectUri,
-          scope: config.scopes.join(' '),
           state,
         });
         
@@ -497,7 +504,8 @@ export class OAuthFlowManager {
             params.set(key, value);
           }
         }
-        return `${config.authorizationUrl}?${params.toString()}`;
+        const scopeParam = `scope=${config.scopes.map(s => encodeURIComponent(s)).join('%20')}`;
+        return `${config.authorizationUrl}?${params.toString()}&${scopeParam}`;
       }
     }
     return null;

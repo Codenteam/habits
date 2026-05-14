@@ -1,0 +1,79 @@
+name: Healthcare HR & Staffing
+description: Automate nurse shift scheduling, credential tracking, staff onboarding, shift coverage requests, and compliance training reminders.
+
+longDescription: |
+  A collection of habits that keep clinical staffing running smoothly: from roster generation to compliance tracking. Each habit operates independently and can be deployed individually or as a complete HR and staffing automation suite.
+  
+  ## What It Does
+  
+  - **Nurse Shift Scheduling**: auto-generate shift rosters and notify staff of assignments
+  - **Credential Tracking**: monitor licence expiry and trigger renewal reminders
+  - **Staff Onboarding**: send onboarding checklists and track completion
+  - **Shift Coverage Request**: alert available staff when a shift needs cover
+  - **Compliance Training**: assign mandatory training and track completion status
+  - **Performance Review**: schedule annual reviews and collect structured feedback
+
+industries:
+  - healthcare
+
+departments:
+  - hr-staffing
+
+tags:
+  - healthcare
+  - hr
+  - staffing
+  - automation
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: nurse-shift-scheduling
+    name: Nurse Shift Scheduling
+    description: Auto-generate shift rosters and notify staff of their assignments each week.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+  - id: credential-tracking
+    name: Credential Tracking
+    description: Monitor professional licence expiry dates and trigger renewal reminders automatically.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: staff-onboarding
+    name: Staff Onboarding
+    description: Send structured onboarding checklists to new hires and track their completion.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: shift-coverage-request
+    name: Shift Coverage Request
+    description: Alert available qualified staff via SMS when a shift becomes vacant.
+    trigger: webhook
+    bits: [webhook, sms, slack]
+
+  - id: compliance-training
+    name: Compliance Training
+    description: Assign mandatory training modules to staff and track completion against deadlines.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: performance-review
+    name: Performance Review
+    description: Schedule annual performance reviews and collect structured feedback from managers.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

@@ -325,6 +325,7 @@ export async function packTauri(options: TauriPackOptions): Promise<TauriPackRes
       const oauthHandlerScript = getTauriOAuthHandlerScript({
         scheme: deepLinkScheme,
         timeout: 300000, // 5 minutes
+        intermediateCallbackUrl: 'https://habits.codenteam.com/oauth.html',
       });
       injectScripts.push({
         id: 'oauth-handler',

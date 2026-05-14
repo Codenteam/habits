@@ -130,7 +130,7 @@ export class SpeechListener {
 
     recognition.onspeechend = () => {
       console.log('[Voice] Speech ended');
-      // Start silence timer — if no more speech comes in within
+      // Start silence timer, if no more speech comes in within
       // silenceTimeout, emit the captured transcript
       this.startSilenceTimer();
     };
@@ -163,7 +163,7 @@ export class SpeechListener {
           latestText.includes(word.toLowerCase())
         );
         if (matchedWord) {
-          // Wake word detected — emit immediately
+          // Wake word detected, emit immediately
           this.emitCommand(TRIGGER_REASON.WAKE_WORD, matchedWord);
           this.resetTranscript();
           return;

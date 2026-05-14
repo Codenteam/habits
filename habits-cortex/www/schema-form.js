@@ -42,6 +42,20 @@ function parseHabitSchema(habitYaml) {
           options: propDef.enum || [],
         });
       }).filter(Boolean);
+    } else {
+      // Plain map format: { fieldId: { type, label, placeholder, required, ... } }
+      // e.g. input: { prompt: { type: textarea, label: '...', required: true } }
+      const entries = Object.entries(habitYaml.input);
+      // Only treat as field map if values are objects with recognized field properties
+      const looksLikeFieldMap = entries.length > 0 && entries.every(([, v]) =>
+        v && typeof v === 'object' && !Array.isArray(v) && ('type' in v || 'label' in v || 'description' in v)
+      );
+      if (looksLikeFieldMap) {
+        schema.hasExplicitSchema = true;
+        schema.inputs = entries.map(([id, fieldDef]) =>
+          normalizeInputField({ id, ...fieldDef })
+        ).filter(Boolean);
+      }
     }
   } else {
     // Fallback: infer inputs from {{habits.input.*}} references in nodes
@@ -232,6 +246,7 @@ function inferEnvFromNodes(nodes) {
 function inferDisplayAs(type, context) {
   const inputMap = {
     string: 'text',
+    textarea: 'textarea',
     number: 'number',
     boolean: 'checkbox',
     object: 'json-editor',
@@ -678,7 +693,13 @@ function renderOutputField(field, value) {
       
     case 'text':
     default:
-      contentHtml = `<div class="output-text">${escapeHtml(String(value ?? ''))}</div>`;
+      if (value !== null && value !== undefined && typeof value === 'object') {
+        // Value is array or object - render as JSON to avoid [object Object]
+        const jsonStr = JSON.stringify(value, null, 2);
+        contentHtml = `<pre class="output-json">${escapeHtml(jsonStr)}</pre>`;
+      } else {
+        contentHtml = `<div class="output-text">${escapeHtml(String(value ?? ''))}</div>`;
+      }
       break;
   }
   

@@ -2,8 +2,8 @@ id: assign-ticket
 name: Assign Ticket
 description: >
   Orchestrates ticket assignment in two clean steps:
-  1. route-category — resolves the SMTP password via bit-if and passes ticket fields through
-  2. send-email — sends the email using the combined output from step 1
+  1. route-category, resolves the SMTP password via bit-if and passes ticket fields through
+  2. send-email, sends the email using the combined output from step 1
 
 
 nodes:

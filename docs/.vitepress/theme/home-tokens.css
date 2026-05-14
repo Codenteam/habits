@@ -9,7 +9,7 @@
 @import "../../../packages/theme/tokens.css";
 
 :root {
-  /* Brand — aligned to app accent palette (blue/indigo, no pink) */
+  /* Brand, aligned to app accent palette (blue/indigo, no pink) */
   --home-brand-1: #6366f1;      /* indigo-500 */
   --home-brand-2: var(--ha-accent-sky);   /* sky-400 */
   --home-brand-3: var(--ha-accent-purple); /* purple-400 */
@@ -52,7 +52,7 @@
   --home-shadow-1: 0 4px 16px rgba(15, 23, 42, 0.08);
   --home-shadow-2: 0 8px 32px rgba(15, 23, 42, 0.10);
 
-  /* Backdrop orbs — blue/indigo/emerald palette matching app */
+  /* Backdrop orbs, blue/indigo/emerald palette matching app */
   --home-orb-1: rgba(99, 102, 241, 0.18);   /* indigo */
   --home-orb-2: rgba(56, 189, 248, 0.14);   /* sky */
   --home-orb-3: rgba(59, 130, 246, 0.12);   /* blue */
@@ -102,7 +102,7 @@
   --home-shadow-1: 0 4px 16px rgba(0, 0, 0, 0.35);
   --home-shadow-2: 0 8px 32px rgba(0, 0, 0, 0.50);
 
-  /* Backdrop orbs — same hues as light, similar strength */
+  /* Backdrop orbs, same hues as light, similar strength */
   --home-orb-1: rgba(99, 102, 241, 0.20);
   --home-orb-2: rgba(56, 189, 248, 0.14);
   --home-orb-3: rgba(59, 130, 246, 0.13);

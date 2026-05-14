@@ -1,4 +1,11 @@
- .two-columns, .columns {
+/* ── Scrollbar: light mode overrides ─────────────────────────────────── */
+html:not(.dark) {
+  --ha-scrollbar-track: transparent;
+  --ha-scrollbar-thumb: #cbd5e1; /* slate-300 */
+  --ha-scrollbar-thumb-hover: #94a3b8; /* slate-400 */
+}
+
+.two-columns, .columns {
   display: flex;
   gap: 20px;
 }

@@ -35,8 +35,30 @@
             }
         },
         {
+            "label": "Admin",
+            "type": "shell",
+            "command": "npx tsx packages/manage/forge/src/scripts/admin-watch-docker.ts",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Docs",
+            "type": "shell",
+            "command": "cd docs && pnpm dev",
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
             "label": "dev:all",
-            "dependsOn": ["UI Base", "Server Base", "Hub"],
+            "dependsOn": ["UI Base", "Server Base", "Hub", "Admin", "Docs"],
             "group": {
                 "kind": "build",
                 "isDefault": true

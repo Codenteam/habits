@@ -1,0 +1,79 @@
+name: Manufacturing Supply Chain
+description: Automate purchase order creation, supplier communications, delivery tracking, vendor performance reports, and inventory replenishment.
+
+longDescription: |
+  A collection of habits that keep your supply chain moving: from automatic purchase orders through to vendor performance reporting. Each habit operates independently and can be deployed individually or as a complete supply chain automation suite.
+  
+  ## What It Does
+  
+  - **Purchase Order Automation**: auto-raise POs when inventory drops below safety stock
+  - **Supplier Communication**: send order updates and delivery confirmations to suppliers
+  - **Delivery Tracking**: monitor inbound shipments and alert ops on delays
+  - **Vendor Performance Report**: compile on-time delivery and quality scores monthly
+  - **Quality Inspection Alert**: notify QC team when inbound shipment is ready for inspection
+  - **Inventory Replenishment**: trigger replenishment workflow based on production schedule
+
+industries:
+  - manufacturing
+
+departments:
+  - supply-chain
+
+tags:
+  - manufacturing
+  - supply-chain
+  - automation
+  - logistics
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: purchase-order-automation
+    name: Purchase Order Automation
+    description: Auto-raise purchase orders when inventory drops below the configured safety stock level.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+  - id: supplier-communication
+    name: Supplier Communication
+    description: Send order updates, confirmations, and delivery date requests to suppliers automatically.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: delivery-tracking
+    name: Delivery Tracking
+    description: Monitor inbound shipments in real time and alert operations on any delays or exceptions.
+    trigger: scheduler
+    bits: [scheduler, http, slack]
+
+  - id: vendor-performance-report
+    name: Vendor Performance Report
+    description: Compile on-time delivery rates and quality scores monthly and share with procurement.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+  - id: quality-inspection-alert
+    name: Quality Inspection Alert
+    description: Notify the QC team automatically when an inbound shipment is ready for inspection.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: inventory-replenishment
+    name: Inventory Replenishment
+    description: Trigger replenishment workflows automatically based on the live production schedule.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

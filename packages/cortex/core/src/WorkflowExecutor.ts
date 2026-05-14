@@ -406,7 +406,7 @@ export class WorkflowExecutor {
 
   /**
    * Register bits streaming triggers.
-   * Calls onEnable() once at startup — onEnable itself sets up a persistent callback
+   * Calls onEnable() once at startup, onEnable itself sets up a persistent callback
    * that fires executor.executeWorkflow() for each incoming event.
    */
   async registerBitsStreamingTriggers(): Promise<void> {
@@ -447,7 +447,7 @@ export class WorkflowExecutor {
             continue;
           }
 
-          // Skip app-only bits — they require a browser/WebView environment
+          // Skip app-only bits, they require a browser/WebView environment
           if (bitPiece.runtime === 'app') {
             this.logger.log(`   ⏭️ Skipping app-only bit: ${moduleName}`);
             continue;
@@ -1455,13 +1455,29 @@ export class WorkflowExecutor {
       this.logger.info(`Node ${node.id} executed successfully`);
 
     } catch (error: any) {
+      // Shorter params: Take the full param, recursively replace any value longer than 100 characters with a placeholder to avoid logging huge data
+      const shortenParams = (obj: any): any => {
+        if (typeof obj === 'string') {
+          return obj.length > 200 ? '[LONG_STRING]' : obj; 
+        } else if (Array.isArray(obj)) {
+          return obj.map(shortenParams);
+        } else if (typeof obj === 'object' && obj !== null) {
+          const shortenedObj: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            shortenedObj[key] = shortenParams(value);
+          }
+          return shortenedObj;
+        }
+        return obj;
+      };
+
       // Handle different error types
       const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
       this.logger.error(`Node ${node.id} failed`, { 
         error: errorMsg, 
         errorType: typeof error,
         errorObj: error,
-        inputs: fullParams 
+        inputs: shortenParams(fullParams)
       });
       result.success = false;
       result.error = errorMsg;

@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Ecommerce Retail - Customer Support"
+
+workflows:
+  - id: ticket-classification
+    path: ./habits/ticket-classification.yaml
+    enabled: true
+  - id: return-approval
+    path: ./habits/return-approval.yaml
+    enabled: true
+  - id: escalation-routing
+    path: ./habits/escalation-routing.yaml
+    enabled: true
+  - id: faq-auto-response
+    path: ./habits/faq-auto-response.yaml
+    enabled: true
+  - id: sentiment-monitoring
+    path: ./habits/sentiment-monitoring.yaml
+    enabled: true
+  - id: agent-handoff-summary
+    path: ./habits/agent-handoff-summary.yaml
+    enabled: true
+
+server:
+  port: 13023
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

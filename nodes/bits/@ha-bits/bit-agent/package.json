@@ -66,6 +66,9 @@
   },
   "habits": {
     "catalog": true,
-    "featured": true
+    "featured": true,
+    "stubs": {
+      "@ha-bits/bit-agent": "./dist/stubs/tauri-agent.js"
+    }
   }
 }

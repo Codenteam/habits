@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Finance Banking - Customer Support"
+
+workflows:
+  - id: ticket-routing
+    path: ./habits/ticket-routing.yaml
+    enabled: true
+  - id: account-enquiry-handler
+    path: ./habits/account-enquiry-handler.yaml
+    enabled: true
+  - id: dispute-resolution
+    path: ./habits/dispute-resolution.yaml
+    enabled: true
+  - id: callback-scheduling
+    path: ./habits/callback-scheduling.yaml
+    enabled: true
+  - id: sentiment-analysis
+    path: ./habits/sentiment-analysis.yaml
+    enabled: true
+  - id: escalation-handler
+    path: ./habits/escalation-handler.yaml
+    enabled: true
+
+server:
+  port: 13014
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

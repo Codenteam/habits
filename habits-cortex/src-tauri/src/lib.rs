@@ -5,7 +5,7 @@ use std::env;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 
 #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
@@ -198,6 +198,22 @@ pub fn run() {
     }
 
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // When a second instance is launched (e.g., via habits-cortex:// deep link on macOS),
+            // forward the URL arguments to the already-running instance by emitting a deep-link event.
+            let urls: Vec<String> = args
+                .iter()
+                .filter(|a| a.starts_with("habits-cortex://"))
+                .cloned()
+                .collect();
+            if !urls.is_empty() {
+                let _ = app.emit("deep-link://new-url", urls);
+            }
+            // Bring the existing window to the front.
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_keyring::init())
         .plugin(tauri_plugin_email::init())

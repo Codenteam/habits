@@ -1,0 +1,79 @@
+name: Finance & Banking Compliance & Audit
+description: Automate AML screening, SAR filing, audit trail compilation, policy compliance checks, and regulatory report generation.
+
+longDescription: |
+  A collection of habits that keep your compliance function ahead of regulators: from AML screening through to periodic reporting. Each habit operates independently and can be deployed individually or as a complete compliance and audit suite.
+  
+  ## What It Does
+  
+  - **AML Screening**: screen transactions against watchlists and flag matches
+  - **SAR Filing**: draft and route Suspicious Activity Reports for sign-off
+  - **Audit Trail Compilation**: aggregate audit logs and prepare evidence packs
+  - **Policy Compliance Check**: verify internal processes against current regulations
+  - **Regulatory Reporting**: generate and submit periodic regulatory reports
+  - **Risk Register Update**: update risk register entries based on audit findings
+
+industries:
+  - finance-banking
+
+departments:
+  - compliance-audit
+
+tags:
+  - finance
+  - compliance
+  - audit
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: aml-screening
+    name: AML Screening
+    description: Screen transactions against watchlists and sanction databases and flag any matches.
+    trigger: scheduler
+    bits: [scheduler, http, ai]
+
+  - id: sar-filing
+    name: SAR Filing
+    description: Draft Suspicious Activity Reports with AI assistance and route for compliance sign-off.
+    trigger: webhook
+    bits: [webhook, ai, email]
+
+  - id: audit-trail-compilation
+    name: Audit Trail Compilation
+    description: Aggregate system audit logs and assemble evidence packs for upcoming audits.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: policy-compliance-check
+    name: Policy Compliance Check
+    description: Verify that internal processes remain aligned with current regulatory requirements.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: regulatory-reporting
+    name: Regulatory Reporting
+    description: Generate mandatory periodic reports and submit them to regulatory authorities on schedule.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+  - id: risk-register-update
+    name: Risk Register Update
+    description: Update the enterprise risk register automatically based on audit findings and alerts.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

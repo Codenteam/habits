@@ -1,0 +1,15 @@
+{
+  "name": "tauri-plugin-sqlite-vec-guest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "jsdom": "^25.0.0",
+    "@tauri-apps/api": "^2.0.0"
+  }
+}

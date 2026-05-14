@@ -27,7 +27,7 @@ nodes:
           You are a data extraction assistant. Extract client information from the text below.
 
           Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
-          - name: full name of the client (string, required — use "" if not found)
+          - name: full name of the client (string, required, use "" if not found)
           - email: email address (string or "" if not found)
           - phone: phone number (string or "" if not found)
           - address: full postal address (string or "" if not found)

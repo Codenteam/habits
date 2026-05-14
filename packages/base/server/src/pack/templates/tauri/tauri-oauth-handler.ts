@@ -14,26 +14,39 @@ export interface TauriOAuthHandlerOptions {
   scheme: string;
   /** Timeout in milliseconds for OAuth flow (default: 5 minutes) */
   timeout?: number;
+  /**
+   * Intermediate HTTPS redirect page used as the OAuth redirect_uri.
+   * OAuth providers (Google, LinkedIn, etc.) reject custom-scheme redirect URIs on mobile.
+   * This page receives the callback and forwards it to the app via deep link.
+   * Default: 'https://habits.codenteam.com/oauth.html'
+   */
+  intermediateCallbackUrl?: string;
 }
 
 /**
  * Generate the OAuth handler script content for Tauri apps
  */
 export function getTauriOAuthHandlerScript(options: TauriOAuthHandlerOptions): string {
-  const { scheme, timeout = 300000 } = options;
+  const {
+    scheme,
+    timeout = 300000,
+    intermediateCallbackUrl = 'https://habits.codenteam.com/oauth.html',
+  } = options;
 
   return `/**
  * Habits Tauri OAuth Handler
  * Auto-generated - handles OAuth authentication in Tauri desktop/mobile apps
  * 
  * URL Scheme: ${scheme}
- * Callback URL: ${scheme}://oauth/{bitId}/callback
+ * OAuth redirect_uri: ${intermediateCallbackUrl}
  */
 (function() {
   'use strict';
 
   // Configuration
   var URL_SCHEME = '${scheme}';
+  // Intermediate HTTPS page used as redirect_uri (custom schemes are rejected by Google etc. on mobile).
+  var OAUTH_REDIRECT_URI = '${intermediateCallbackUrl}';
   var OAUTH_TIMEOUT = ${timeout};
 
   // Pending OAuth flows (keyed by state)
@@ -247,7 +260,7 @@ export function getTauriOAuthHandlerScript(options: TauriOAuthHandlerOptions): s
     // Generate state and PKCE codes
     var state = generateState();
     var pkce = config.pkce !== false ? await generatePkce() : {};
-    var redirectUri = URL_SCHEME + '://oauth/' + bitId + '/callback';
+    var redirectUri = OAUTH_REDIRECT_URI;
     
     // Build authorization URL
     var params = new URLSearchParams({
@@ -348,6 +361,7 @@ export function getTauriOAuthHandlerScript(options: TauriOAuthHandlerOptions): s
     cancelFlowsForBit: cancelFlowsForBit,
     parseCallbackUrl: parseCallbackUrl,
     URL_SCHEME: URL_SCHEME,
+    OAUTH_REDIRECT_URI: OAUTH_REDIRECT_URI,
   };
 
   console.log('[OAuth] Habits OAuth handler loaded (scheme: ' + URL_SCHEME + ')');

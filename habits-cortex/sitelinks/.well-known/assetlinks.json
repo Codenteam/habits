@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.codenteam_oss.habits",
+      "sha256_cert_fingerprints": [
+        "7A:16:3E:D0:AE:53:D3:28:0D:7C:86:79:62:46:83:D7:7B:C5:0C:9C:0E:E7:BC:E2:34:71:89:5D:0B:45:8B:B3"
+      ]
+    }
+  }
+]

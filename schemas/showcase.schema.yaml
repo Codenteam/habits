@@ -132,4 +132,19 @@ properties:
     examples:
       - ["habits/save-entry.yaml", "habits/get-entries.yaml"]
 
+  enterprise:
+    type: boolean
+    description: Whether this example is intended for enterprise use cases
+    default: false
+
+  improving:
+    type: boolean
+    description: Whether this example is actively being improved/a work in progress or ready-to-use
+    default: false
+
+  tailored:
+    type: boolean
+    description: Whether this example requires tailoring to specific organizational needs, usually improving or enterprise habits are tailored. 
+    default: false
+
 additionalProperties: false

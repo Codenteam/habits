@@ -1,0 +1,79 @@
+name: Finance & Banking Loan Processing
+description: Automate loan application intake, document verification, credit evaluation, approval routing, and disbursement confirmation.
+
+longDescription: |
+  A collection of habits that accelerate the loan lifecycle: from application intake through to disbursement. Each habit operates independently and can be deployed individually or as a complete loan processing automation suite.
+  
+  ## What It Does
+  
+  - **Application Intake**: receive loan applications and route to underwriting
+  - **Document Verification**: validate submitted documents and request missing items
+  - **Credit Evaluation**: pull credit data, score applicant, and produce summary
+  - **Approval Routing**: route decisions to applicant and internal teams
+  - **Disbursement Confirmation**: confirm fund disbursement and notify customer
+  - **Status Update Notification**: keep applicants informed at each processing stage
+
+industries:
+  - finance-banking
+
+departments:
+  - loan-processing
+
+tags:
+  - finance
+  - loans
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: application-intake
+    name: Application Intake
+    description: Receive incoming loan applications via webhook and route to the underwriting queue.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: document-verification
+    name: Document Verification
+    description: Validate submitted documents with AI and automatically request any missing items.
+    trigger: webhook
+    bits: [webhook, ai, email]
+
+  - id: credit-evaluation
+    name: Credit Evaluation
+    description: Pull credit bureau data, score the applicant, and produce a structured evaluation summary.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: approval-routing
+    name: Approval Routing
+    description: Route approval or decline decisions to the applicant and relevant internal teams.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: disbursement-confirmation
+    name: Disbursement Confirmation
+    description: Confirm fund disbursement with the bank and notify the customer via SMS and email.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: status-update-notification
+    name: Status Update Notification
+    description: Keep applicants informed at every stage of the processing pipeline automatically.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

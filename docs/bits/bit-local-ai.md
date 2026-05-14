@@ -1,6 +1,6 @@
 ---
-title: "List Models"
-description: "Local AI inference services with OpenAI-compatible interface. Run LLMs, Stable Diffusion, Whisper, and more entirely on your machine."
+title: "Local AI (Simple)"
+description: "Simple local AI with model installation, text generation, and embeddings"
 aside: false
 ---
 
@@ -26,16 +26,16 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="Package" :size="32" class="inline-icon" /> List Models
+# <component :is="Package" :size="32" class="inline-icon" /> Local AI (Simple)
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-local-ai`</span>
-  <span class="bit-version">v0.1.0</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-local-ai">📥 <span class="download-count">-</span> downloads</span>
-  <span class="bit-categories"><span class="bit-category">local-ai</span> <span class="bit-category">llm</span> <span class="bit-category">whisper</span> <span class="bit-category">stable-diffusion</span> <span class="bit-category">text-generation</span></span>
+  <span class="bit-version">v0.0.1</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-local-ai">📥 <span class="download-count">90</span> downloads</span>
+  <span class="bit-categories"></span>
 </div>
 
-Local AI inference services with OpenAI-compatible interface. Run LLMs, Stable Diffusion, Whisper, and more entirely on your machine.
+Simple local AI with model installation, text generation, and embeddings
 
 ## Usage
 
@@ -46,7 +46,7 @@ nodes:
     type: bit
     framework: bits
     module: "@ha-bits/bit-local-ai"
-    action: "ask_local_llm"
+    action: "install-model"
     data:
       # action properties...
 ```
@@ -55,16 +55,9 @@ nodes:
 
 | Action | Description |
 |--------|-------------|
-| **Ask Local LLM** | Generate text responses using a local LLM model. |
-| **Generate Image** | Generate images from text prompts using local Stable Diffusion models. Similar to DALL-E but runs on your machine. |
-| **Transcribe Audio** | Transcribe audio files to text using local Whisper models. Similar to OpenAI Whisper API but runs on your machine. |
-| **Text-to-Speech** | Generate spoken audio from text using local MetaVoice models. Similar to OpenAI TTS but runs on your machine. |
-| **Caption Image** | Generate descriptions for images using local BLIP models. Similar to GPT-4 Vision but runs on your machine. |
-| **Vision Prompt** | Analyze images and answer questions about them using vision-capable local models. Similar to GPT-4 Vision. |
-| **Extract Structured Data** | Extract structured JSON data from text using a schema definition. Useful for parsing invoices, receipts, documents, etc. |
-| **Install Model** | Download and install an AI model. Provide a known model name (e.g.,  |
-| **List Models** | List locally available AI models. |
-| **Get System Info** | Get information about the local AI environment (device support, version, etc.). |
+| **Install Model** | Download a local AI model by ID. Always re-downloads files. |
+| **Generate Text** | Generate text from a prompt array using a local LLM. |
+| **Embed Text** | Generate vector embeddings for a batch of texts using a local model. |
 
 <style>
 .bit-meta {

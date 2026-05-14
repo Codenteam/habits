@@ -1,0 +1,35 @@
+industries:
+  - id: healthcare
+    name: Healthcare
+    icon: heart
+    tagline: Patient journeys, clinical ops, and compliance, automated.
+    totalHabits: 27
+    departments: 5
+
+  - id: finance-banking
+    name: Finance & Banking
+    icon: shield
+    tagline: Onboarding, loan processing, fraud detection, and compliance.
+    totalHabits: 26
+    departments: 5
+
+  - id: ecommerce-retail
+    name: E-commerce & Retail
+    icon: package
+    tagline: Orders, inventory, marketing, and customer support on autopilot.
+    totalHabits: 26
+    departments: 5
+
+  - id: manufacturing
+    name: Manufacturing
+    icon: cpu
+    tagline: Supply chain, quality control, and production, connected.
+    totalHabits: 26
+    departments: 5
+
+  - id: real-estate
+    name: Real Estate
+    icon: home
+    tagline: Leads, listings, transactions, and property management, streamlined.
+    totalHabits: 27
+    departments: 5

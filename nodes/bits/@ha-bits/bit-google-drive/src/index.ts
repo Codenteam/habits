@@ -12,8 +12,6 @@
  * Level: L2 (Service-specific auth, CRUD operations)
  */
 
-import { drive as driveApi, drive_v3 } from '@googleapis/drive';
-import { OAuth2Client } from 'google-auth-library';
 import type {
   FileMetadata,
   FolderMetadata,
@@ -41,58 +39,65 @@ interface GoogleDriveContext {
   propsValue: Record<string, any>;
 }
 
+const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
+const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
+
 const GOOGLE_DRIVE_SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive',
 ];
 
-/**
- * Create OAuth2 client with access token
- */
-function createOAuth2Client(accessToken: string): OAuth2Client {
-  const oauth2Client = new OAuth2Client();
-  oauth2Client.setCredentials({ access_token: accessToken });
-  return oauth2Client;
+async function driveRequest(
+  path: string,
+  method: string,
+  accessToken: string,
+  body?: any,
+  base = DRIVE_API_BASE
+): Promise<any> {
+  const url = path.startsWith('http') ? path : `${base}${path}`;
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  const options: RequestInit = { method, headers };
+  if (body !== undefined && method !== 'GET') {
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Google Drive API Error: ${response.status} - ${err}`);
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
 }
 
-/**
- * Get Drive API client
- */
-function getDriveClient(accessToken: string): drive_v3.Drive {
-  const oauth2Client = createOAuth2Client(accessToken);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return driveApi({ version: 'v3', auth: oauth2Client as any });
-}
-
-/**
- * Convert Google Drive file to common FileMetadata
- */
-function toFileMetadata(file: drive_v3.Schema$File): FileMetadata {
+function toFileMetadata(file: Record<string, any>): FileMetadata {
   return {
-    id: file.id || '',
-    name: file.name || '',
-    mimeType: file.mimeType || 'application/octet-stream',
-    size: parseInt(file.size || '0', 10),
-    createdAt: file.createdTime || new Date().toISOString(),
-    modifiedAt: file.modifiedTime || new Date().toISOString(),
-    parentId: file.parents?.[0],
-    webViewLink: file.webViewLink || undefined,
-    downloadUrl: file.webContentLink || undefined,
-    isFolder: file.mimeType === 'application/vnd.google-apps.folder',
-    shared: file.shared || false,
+    id: file['id'] || '',
+    name: file['name'] || '',
+    mimeType: file['mimeType'] || 'application/octet-stream',
+    size: parseInt(file['size'] || '0', 10),
+    createdAt: file['createdTime'] || new Date().toISOString(),
+    modifiedAt: file['modifiedTime'] || new Date().toISOString(),
+    parentId: file['parents']?.[0],
+    webViewLink: file['webViewLink'] || undefined,
+    downloadUrl: file['webContentLink'] || undefined,
+    isFolder: file['mimeType'] === 'application/vnd.google-apps.folder',
+    shared: file['shared'] || false,
   };
 }
 
-/**
- * Convert Google Drive folder to common FolderMetadata
- */
-function toFolderMetadata(file: drive_v3.Schema$File): FolderMetadata {
+function toFolderMetadata(file: Record<string, any>): FolderMetadata {
   return {
-    id: file.id || '',
-    name: file.name || '',
-    parentId: file.parents?.[0],
-    createdAt: file.createdTime || new Date().toISOString(),
-    webViewLink: file.webViewLink || undefined,
+    id: file['id'] || '',
+    name: file['name'] || '',
+    parentId: file['parents']?.[0],
+    createdAt: file['createdTime'] || new Date().toISOString(),
+    webViewLink: file['webViewLink'] || undefined,
   };
 }
 
@@ -159,40 +164,64 @@ const googleDriveBit = {
         if (!context.auth?.accessToken) {
           throw new Error('No OAuth token. Please authorize Google Drive access first.');
         }
-        
-        const drive = getDriveClient(context.auth.accessToken);
-        const { fileName, content, mimeType, folderId } = context.propsValue;
-        
-        // Prepare file metadata
-        const fileMetadata: drive_v3.Schema$File = {
-          name: fileName,
-          parents: folderId ? [folderId] : undefined,
-        };
-        
-        // Determine if content is base64
-        let mediaBody: string | Buffer = content;
-        if (typeof content === 'string' && content.match(/^[A-Za-z0-9+/=]+$/)) {
-          try {
-            mediaBody = Buffer.from(content, 'base64');
-          } catch {
-            mediaBody = content;
-          }
+
+        const { fileName, content, mimeType = 'application/octet-stream', folderId } = context.propsValue;
+        const accessToken = context.auth.accessToken;
+
+        const metadata: Record<string, any> = { name: fileName };
+        if (folderId) metadata['parents'] = [folderId];
+
+        // Detect whether content is base64-encoded (used for binary files like PDFs, images).
+        // If so, decode to binary; otherwise treat as UTF-8 text.
+        const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(content) && content.length % 4 === 0 && content.length > 0;
+        const fileBytes: Uint8Array = isBase64
+          ? Uint8Array.from(atob(content), (c) => c.charCodeAt(0))
+          : new TextEncoder().encode(content);
+
+        const boundary = '-------habits_drive_boundary';
+        const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
+
+        // Concatenate all parts into a single Uint8Array so binary bytes are preserved.
+        const parts: Uint8Array[] = [
+          enc(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`),
+          enc(JSON.stringify(metadata)),
+          enc(`\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
+          fileBytes,
+          enc(`\r\n--${boundary}--`),
+        ];
+        const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
+        const multipartBody = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const part of parts) {
+          multipartBody.set(part, offset);
+          offset += part.length;
         }
-        
-        const response = await drive.files.create({
-          requestBody: fileMetadata,
-          media: {
-            mimeType: mimeType || 'application/octet-stream',
-            body: require('stream').Readable.from([mediaBody]),
-          },
-          fields: 'id, name, mimeType, size, createdTime, modifiedTime, parents, webViewLink, webContentLink',
-        });
-        
-        console.log(`📁 [bit-google-drive] Uploaded file: ${fileName} (ID: ${response.data.id})`);
-        
+
+        const fields = 'id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink,webContentLink';
+        const response = await fetch(
+          `${DRIVE_UPLOAD_BASE}/files?uploadType=multipart&fields=${encodeURIComponent(fields)}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': `multipart/related; boundary="${boundary}"`,
+              'Content-Length': String(multipartBody.length),
+            },
+            body: multipartBody,
+          }
+        );
+
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(`Google Drive API Error: ${response.status} - ${err}`);
+        }
+
+        const data = await response.json();
+        console.log(`📁 [bit-google-drive] Uploaded file: ${fileName} (ID: ${data.id})`);
+
         return {
           success: true,
-          file: toFileMetadata(response.data),
+          file: toFileMetadata(data),
         };
       },
     },
@@ -222,26 +251,26 @@ const googleDriveBit = {
         if (!context.auth?.accessToken) {
           throw new Error('No OAuth token. Please authorize Google Drive access first.');
         }
-        
-        const drive = getDriveClient(context.auth.accessToken);
+
         const { folderName, parentFolderId } = context.propsValue;
-        
-        const fileMetadata: drive_v3.Schema$File = {
+        const metadata: Record<string, any> = {
           name: folderName,
           mimeType: 'application/vnd.google-apps.folder',
-          parents: parentFolderId ? [parentFolderId] : undefined,
         };
-        
-        const response = await drive.files.create({
-          requestBody: fileMetadata,
-          fields: 'id, name, createdTime, parents, webViewLink',
-        });
-        
-        console.log(`📁 [bit-google-drive] Created folder: ${folderName} (ID: ${response.data.id})`);
-        
+        if (parentFolderId) metadata['parents'] = [parentFolderId];
+
+        const data = await driveRequest(
+          `/files?fields=${encodeURIComponent('id,name,createdTime,parents,webViewLink')}`,
+          'POST',
+          context.auth.accessToken,
+          metadata
+        );
+
+        console.log(`📁 [bit-google-drive] Created folder: ${folderName} (ID: ${data.id})`);
+
         return {
           success: true,
-          folder: toFolderMetadata(response.data),
+          folder: toFolderMetadata(data),
         };
       },
     },
@@ -277,32 +306,28 @@ const googleDriveBit = {
         if (!context.auth?.accessToken) {
           throw new Error('No OAuth token. Please authorize Google Drive access first.');
         }
-        
-        const drive = getDriveClient(context.auth.accessToken);
+
         const { fileId, destinationFolderId, newName } = context.propsValue;
-        
-        // Get current file to find its parent
-        const currentFile = await drive.files.get({
-          fileId,
-          fields: 'parents',
-        });
-        
-        const previousParent = currentFile.data.parents?.[0];
-        
-        // Update the file: remove from old parent, add to new parent
-        const response = await drive.files.update({
-          fileId,
+        const accessToken = context.auth.accessToken;
+
+        // Get current parents
+        const current = await driveRequest(`/files/${fileId}?fields=parents`, 'GET', accessToken);
+        const previousParent = current.parents?.[0];
+
+        const params = new URLSearchParams({
           addParents: destinationFolderId,
-          removeParents: previousParent,
-          requestBody: newName ? { name: newName } : undefined,
-          fields: 'id, name, mimeType, size, createdTime, modifiedTime, parents, webViewLink',
+          fields: 'id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink',
         });
-        
+        if (previousParent) params.set('removeParents', previousParent);
+
+        const body = newName ? { name: newName } : undefined;
+        const data = await driveRequest(`/files/${fileId}?${params.toString()}`, 'PATCH', accessToken, body);
+
         console.log(`📁 [bit-google-drive] Moved file ${fileId} to folder ${destinationFolderId}`);
-        
+
         return {
           success: true,
-          file: toFileMetadata(response.data),
+          file: toFileMetadata(data),
           previousPath: previousParent,
           newPath: destinationFolderId,
         };
@@ -353,48 +378,43 @@ const googleDriveBit = {
         if (!context.auth?.accessToken) {
           throw new Error('No OAuth token. Please authorize Google Drive access first.');
         }
-        
-        const drive = getDriveClient(context.auth.accessToken);
+
         const { folderId, query, mimeType, limit = 100, pageToken } = context.propsValue;
-        
-        // Build query
+        const accessToken = context.auth.accessToken;
+
         const queryParts: string[] = [];
-        if (folderId) {
-          queryParts.push(`'${folderId}' in parents`);
-        }
-        if (query) {
-          queryParts.push(query);
-        }
-        if (mimeType) {
-          queryParts.push(`mimeType = '${mimeType}'`);
-        }
+        if (folderId) queryParts.push(`'${folderId}' in parents`);
+        if (query) queryParts.push(query);
+        if (mimeType) queryParts.push(`mimeType = '${mimeType}'`);
         queryParts.push('trashed = false');
-        
-        const response = await drive.files.list({
+
+        const params = new URLSearchParams({
           q: queryParts.join(' and '),
-          pageSize: limit,
-          pageToken: pageToken || undefined,
-          fields: 'nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime, parents, webViewLink, webContentLink, shared)',
+          pageSize: String(limit),
+          fields: 'nextPageToken,files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink,webContentLink,shared)',
         });
-        
+        if (pageToken) params.set('pageToken', pageToken);
+
+        const data = await driveRequest(`/files?${params.toString()}`, 'GET', accessToken);
+
         const files: FileMetadata[] = [];
         const folders: FolderMetadata[] = [];
-        
-        for (const file of response.data.files || []) {
+
+        for (const file of data.files || []) {
           if (file.mimeType === 'application/vnd.google-apps.folder') {
             folders.push(toFolderMetadata(file));
           } else {
             files.push(toFileMetadata(file));
           }
         }
-        
+
         console.log(`📁 [bit-google-drive] Listed ${files.length} files and ${folders.length} folders`);
-        
+
         return {
           success: true,
           files,
           folders,
-          nextPageToken: response.data.nextPageToken || undefined,
+          nextPageToken: data.nextPageToken || undefined,
           totalCount: files.length + folders.length,
         };
       },
@@ -467,36 +487,38 @@ const googleDriveBit = {
         if (!context.auth?.accessToken) {
           throw new Error('No OAuth token. Please authorize Google Drive access first.');
         }
-        
-        const drive = getDriveClient(context.auth.accessToken);
+
         const { fileId, email, role = 'reader', type = 'user', notifyUser = true, message } = context.propsValue;
-        
-        const permission: drive_v3.Schema$Permission = {
+        const accessToken = context.auth.accessToken;
+
+        const permission: Record<string, any> = {
           role,
           type: email ? type : 'anyone',
-          emailAddress: email || undefined,
         };
-        
-        const response = await drive.permissions.create({
-          fileId,
-          requestBody: permission,
-          sendNotificationEmail: notifyUser && !!email,
-          emailMessage: message || undefined,
+        if (email) permission['emailAddress'] = email;
+
+        const permParams = new URLSearchParams({
+          sendNotificationEmail: String(notifyUser && !!email),
           fields: 'id',
         });
-        
-        // Get the updated file to get the share link
-        const fileResponse = await drive.files.get({
-          fileId,
-          fields: 'webViewLink',
-        });
-        
+        if (message) permParams.set('emailMessage', message);
+
+        const permData = await driveRequest(
+          `/files/${fileId}/permissions?${permParams.toString()}`,
+          'POST',
+          accessToken,
+          permission
+        );
+
+        // Get the share link
+        const fileData = await driveRequest(`/files/${fileId}?fields=webViewLink`, 'GET', accessToken);
+
         console.log(`📁 [bit-google-drive] Shared file ${fileId} with ${email || 'anyone'} as ${role}`);
-        
+
         return {
           success: true,
-          permissionId: response.data.id || undefined,
-          shareLink: fileResponse.data.webViewLink || undefined,
+          permissionId: permData.id || undefined,
+          shareLink: fileData.webViewLink || undefined,
         };
       },
     },

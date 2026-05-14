@@ -300,7 +300,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
 
       {/* Expandable content panel */}
       {isAnySectionVisible && (
-        <div className="w-56 bg-slate-800 border-r border-slate-700 flex flex-col overflow-hidden">
+        <div className="w-56 bg-slate-800 border-r border-slate-700 flex flex-col overflow-hidden overflow-x-hidden">
           {/* Habits Section - Collapsible */}
           {visibleSections.habits && (
             <div className={`flex flex-col ${visibleSections.nodes ? 'flex-1 min-h-0' : 'flex-1'}`}>
@@ -389,7 +389,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                         onChange={(e) => setEditName(e.target.value)}
                         onBlur={() => handleSaveEdit(habit.id)}
                         onKeyDown={(e) => handleKeyDown(e, habit.id)}
-                        className="flex-1 bg-slate-900 text-white text-sm px-2 py-0.5 rounded border border-slate-500 focus:border-blue-400 focus:outline-none"
+                        className="flex-1 min-w-0 bg-slate-900 text-white text-sm px-2 py-0.5 rounded border border-slate-500 focus:border-blue-400 focus:outline-none"
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                       />

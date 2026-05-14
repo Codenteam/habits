@@ -3,6 +3,8 @@ use tauri::{plugin::{Builder, TauriPlugin}, Manager, Runtime};
 mod commands;
 mod error;
 mod state;
+#[cfg(test)]
+mod tests;
 
 pub use error::{Error, Result};
 

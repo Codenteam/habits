@@ -1,5 +1,15 @@
 import { WorkflowExecutor, registerBundledModule } from '@ha-bits/cortex-core';
 
+// Browser polyfill: Node.js modules often reference 'global' which doesn't exist in browsers
+if (typeof global === 'undefined') {
+  // @ts-ignore
+  window.global = window;
+}
+if (typeof process === 'undefined') {
+  // @ts-ignore
+  window.process = { env: {}, argv: [], version: '', versions: {}, platform: 'browser' };
+}
+
 // Registry of bundled bits modules
 const bitsRegistry = {};
 
@@ -558,6 +568,49 @@ async function getMissingEnvVars() {
   return missing;
 }
 
+// Inspect the bits registry and return a manifest of all available actions
+function getBitManifest() {
+  const manifest = {};
+  for (const [name, mod] of Object.entries(bitsRegistry)) {
+    const piece = mod.default || mod[Object.keys(mod)[0]];
+    if (!piece || !piece.actions) continue;
+    const actions = typeof piece.actions === 'function' ? piece.actions() : piece.actions;
+    if (!actions) continue;
+    manifest[name] = {
+      displayName: piece.displayName || name,
+      runtime: piece.runtime || 'all',
+      actions: {},
+    };
+    for (const [actionName, action] of Object.entries(actions)) {
+      manifest[name].actions[actionName] = {
+        displayName: action.displayName || actionName,
+        description: action.description || '',
+        props: Object.entries(action.props || {}).map(([k, p]) => ({
+          name: k,
+          type: p.type,
+          displayName: p.displayName,
+          description: p.description || '',
+          required: p.required ?? false,
+          defaultValue: p.defaultValue,
+        })),
+      };
+    }
+  }
+  return manifest;
+}
+
+// Run a specific action from a registered bit
+async function runAction(moduleName, actionName, propsValue, credentials) {
+  const mod = bitsRegistry[moduleName];
+  if (!mod) throw new Error('Bit not loaded: ' + moduleName);
+  const piece = mod.default || mod[Object.keys(mod)[0]];
+  if (!piece || !piece.actions) throw new Error('Bit has no actions: ' + moduleName);
+  const actions = typeof piece.actions === 'function' ? piece.actions() : piece.actions;
+  const action = actions[actionName];
+  if (!action) throw new Error('Action not found: ' + actionName + ' in ' + moduleName);
+  return await action.run({ auth: credentials || null, propsValue: propsValue || {} });
+}
+
 // Export public API
 export const HabitsBundle = {
   executeWorkflow,
@@ -565,6 +618,8 @@ export const HabitsBundle = {
   getWorkflows,
   getWorkflow,
   getBitsRegistry,
+  getBitManifest,
+  runAction,
   getRequiredEnvVars,
   getMissingEnvVars,
   clearStoredSecret,

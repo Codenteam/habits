@@ -1,0 +1,79 @@
+name: Real Estate Transaction Management
+description: Automate offer tracking, document collection, inspection scheduling, closing coordination, commission calculation, and compliance review.
+
+longDescription: |
+  A collection of habits that keep every transaction on track: from offer submission through to final closing. Each habit operates independently and can be deployed individually or as a complete transaction management suite.
+  
+  ## What It Does
+  
+  - **Offer Tracking**: notify all parties when a new offer is received or updated
+  - **Document Collection**: request and track outstanding transaction documents
+  - **Inspection Scheduling**: coordinate property inspection bookings between parties
+  - **Closing Coordination**: send closing checklists and deadline reminders to all parties
+  - **Commission Calculation**: calculate and route commission splits on deal close
+  - **Compliance Review**: trigger a compliance checklist when a transaction enters contract stage
+
+industries:
+  - real-estate
+
+departments:
+  - transaction-management
+
+tags:
+  - real-estate
+  - transactions
+  - automation
+  - compliance
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: offer-tracking
+    name: Offer Tracking
+    description: Notify all transaction parties instantly when a new offer is received or an existing offer is updated.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: document-collection
+    name: Document Collection
+    description: Request outstanding transaction documents from all parties and track receipt status.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: inspection-scheduling
+    name: Inspection Scheduling
+    description: Coordinate property inspection booking between buyer, seller, and inspector automatically.
+    trigger: webhook
+    bits: [webhook, email, scheduler]
+
+  - id: closing-coordination
+    name: Closing Coordination
+    description: Send closing checklists and deadline reminders to all parties as closing day approaches.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: commission-calculation
+    name: Commission Calculation
+    description: Calculate and route commission splits automatically when a deal reaches closing.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: compliance-review
+    name: Compliance Review
+    description: Trigger a structured compliance checklist automatically when a transaction enters the contract stage.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

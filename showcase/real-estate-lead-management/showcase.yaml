@@ -1,0 +1,79 @@
+name: Real Estate Lead Management
+description: Automate lead capture, AI scoring, agent assignment, follow-up sequences, CRM sync, and cold lead re-engagement.
+
+longDescription: |
+  A collection of habits that turn enquiries into clients: from first-touch capture through to long-term re-engagement. Each habit operates independently and can be deployed individually or as a complete lead management suite.
+  
+  ## What It Does
+  
+  - **Lead Capture**: receive inbound leads from web forms and route to agents
+  - **Lead Scoring**: score leads by behaviour and budget signals using AI
+  - **Agent Assignment**: assign leads to agents based on territory and availability
+  - **Follow-Up Sequence**: send personalised follow-up emails over 14 days
+  - **CRM Sync**: push lead status updates to CRM on each interaction
+  - **Cold Lead Re-engagement**: re-engage leads inactive for 30+ days with new content
+
+industries:
+  - real-estate
+
+departments:
+  - lead-management
+
+tags:
+  - real-estate
+  - leads
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: lead-capture
+    name: Lead Capture
+    description: Receive inbound leads from web forms and portal integrations and route to the correct agent.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: lead-scoring
+    name: Lead Scoring
+    description: Score each lead automatically using AI based on behaviour, budget signals, and intent data.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: agent-assignment
+    name: Agent Assignment
+    description: Assign leads to the best-matched agent based on territory, specialisation, and current workload.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: follow-up-sequence
+    name: Follow-Up Sequence
+    description: Send a personalised 14-day follow-up email sequence to new leads automatically.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: crm-sync
+    name: CRM Sync
+    description: Push lead status updates and interaction events to the CRM on every touchpoint.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: cold-lead-re-engagement
+    name: Cold Lead Re-engagement
+    description: Re-engage leads that have been inactive for 30+ days with fresh market content and AI personalisation.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

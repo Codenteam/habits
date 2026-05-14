@@ -1,0 +1,192 @@
+id: ecommerce-retail
+name: E-commerce & Retail
+icon: package
+tagline: Orders, inventory, marketing, and customer support on autopilot.
+description: >
+  From abandoned cart recovery to revenue reconciliation, habits connect your
+  store, warehouse, and customers, automatically handling every touchpoint
+  in the buyer journey.
+color: orange
+
+departments:
+
+  - id: order-management
+    name: Order Management
+    icon: package
+    description: Automate confirmations, shipping updates, returns, fraud scoring, and delay alerts.
+    habits:
+      - id: order-confirmation-email
+        name: Order Confirmation Email
+        description: Receive the order-placed webhook, store the order, and send a branded confirmation email with the order summary.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email]
+
+      - id: shipping-status-update
+        name: Shipping Status Update
+        description: Receive carrier tracking events and send status-specific notifications (shipped / out-for-delivery / delivered / exception) by email and SMS.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-sms]
+
+      - id: return-request-handler
+        name: Return Request Handler
+        description: Receive a return form, check the return window, create an RMA, email a pre-paid label, and notify the fulfilment team on Slack.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-database-sql, bit-email, bit-slack]
+
+      - id: order-fraud-scoring
+        name: Order Fraud Scoring
+        description: On every new order, call a fraud-scoring API and flag high-risk orders for manual review with a Slack alert.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-slack, bit-database-sql]
+
+      - id: delayed-order-alert
+        name: Delayed Order Alert
+        description: Daily job finds orders overdue vs SLA, sends proactive delay notices to customers, and alerts the fulfilment ops lead on Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-slack]
+
+  - id: inventory-management
+    name: Inventory Management
+    icon: database
+    description: Automate low-stock alerts, reorders, reconciliation, dead-stock analysis, and catalogue sync.
+    habits:
+      - id: low-stock-alert
+        name: Low Stock Alert
+        description: Every 6 hours, fetch inventory counts and alert the procurement team by email and Slack for any SKU below its reorder point.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-if, bit-email, bit-slack]
+
+      - id: automatic-supplier-reorder
+        name: Automatic Supplier Reorder
+        description: Daily job finds SKUs below par, POSTs a purchase order to each supplier API, and emails the buyer a PO confirmation.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-http, bit-email]
+
+      - id: inventory-reconciliation
+        name: Inventory Reconciliation Report
+        description: Weekly job compares WMS counts to the system-of-record, flags discrepancies with AI root-cause suggestions, and emails a PDF report to the warehouse manager.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+      - id: dead-stock-alert
+        name: Dead Stock Alert
+        description: Monthly job finds SKUs with no sales in 90 days and emails the merchandising team AI-generated suggestions to markdown, bundle, or return.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-email]
+
+      - id: catalogue-sync
+        name: New Product Catalogue Sync
+        description: Receive a new product event from the PIM system and push the listing to the e-commerce platform and all marketplace APIs.
+        trigger: webhook
+        bits: [bit-http, bit-loop, bit-database-sql, bit-email]
+
+  - id: marketing-crm
+    name: Marketing & CRM
+    icon: target
+    description: Automate abandoned cart recovery, reviews, loyalty updates, welcome sequences, and campaign reports.
+    habits:
+      - id: abandoned-cart-recovery
+        name: Abandoned Cart Recovery
+        description: One hour after cart abandonment, AI-generate personalised recovery copy and email it with the cart contents.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-ai, bit-email]
+
+      - id: post-purchase-review
+        name: Post-Purchase Review Request
+        description: Five days after delivery, email customers a review request with the product image and review link.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+      - id: birthday-discount-mailer
+        name: Birthday Discount Mailer
+        description: Daily morning job finds customers with a birthday today and sends a personalised email with a unique discount code.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-ai, bit-email]
+
+      - id: loyalty-points-notification
+        name: Loyalty Points Update Notification
+        description: Receive a points-earned event and email the customer a balance update; if they hit a tier threshold, send a congratulation email.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-if]
+
+      - id: welcome-series
+        name: New Subscriber Welcome Series
+        description: On sign-up, store the subscriber and send a welcome email day 0, best-sellers day 3, and a category preferences quiz day 7.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-scheduler]
+
+      - id: campaign-performance-report
+        name: Campaign Performance Report
+        description: Every Monday, fetch email/ad campaign stats, AI-write narrative insights, generate a PDF, and email it to the marketing director.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-ai, bit-pdf, bit-email]
+
+  - id: customer-support
+    name: Customer Support
+    icon: bot
+    description: Automate ticket classification, refund updates, CSAT surveys, SLA alerts, and proactive outreach.
+    habits:
+      - id: ticket-auto-classification
+        name: Ticket Auto-Classification & Assignment
+        description: Watch the support inbox, AI-classify intent and sentiment, and create a ticket in the helpdesk assigned to the correct queue.
+        trigger: email
+        bits: [bit-email, bit-ai, bit-if, bit-http]
+
+      - id: refund-status-notification
+        name: Refund Status Notification
+        description: On refund processed, notify the customer by email and SMS with the amount and expected timeline.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-sms, bit-database-sql]
+
+      - id: csat-survey
+        name: CSAT Survey Post-Resolution
+        description: One hour after ticket close, email a one-question CSAT survey, collect the score, and Slack-alert the agent to follow up on low scores.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-http, bit-if, bit-slack]
+
+      - id: sla-breach-alert
+        name: SLA Breach Alert
+        description: Every 30 minutes, check open tickets for SLA breaches and immediately alert the supervisor on Slack with an escalation email to the team lead.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-if, bit-slack, bit-email]
+
+      - id: proactive-exception-outreach
+        name: Proactive Order Exception Outreach
+        description: On order exception (lost, damaged, customs), AI-draft an empathetic message and proactively contact the customer before they complain.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-email, bit-sms]
+
+  - id: finance-reporting
+    name: Finance & Reporting
+    icon: file
+    description: Automate daily sales reports, invoice generation, chargeback response, reconciliation, and tax summaries.
+    habits:
+      - id: daily-sales-report
+        name: Daily Sales Report
+        description: Every morning, fetch orders and revenue, AI-highlight anomalies vs forecast, and email a PDF sales report to finance and ops.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-ai, bit-pdf, bit-email]
+
+      - id: invoice-generation
+        name: Invoice Generation
+        description: On order paid, generate a tax-compliant invoice, email it to the customer, and store the record.
+        trigger: webhook
+        bits: [bit-http, bit-invoice, bit-email, bit-database-sql]
+
+      - id: chargeback-alert
+        name: Chargeback Alert & Response
+        description: On chargeback webhook, fetch order evidence, AI-draft a dispute rebuttal, compile a PDF evidence pack, and notify the finance team.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+      - id: revenue-reconciliation
+        name: Revenue Reconciliation
+        description: End of day, match settlement data from the payment gateway to orders; alert finance on Slack for discrepancies and generate a reconciliation PDF.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-database-sql, bit-if, bit-slack, bit-pdf, bit-email]
+
+      - id: monthly-tax-summary
+        name: Monthly Tax Summary Report
+        description: First of month, aggregate taxable sales by jurisdiction, AI-flag anomalies, generate a tax summary PDF, and send it to the tax accountant.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]

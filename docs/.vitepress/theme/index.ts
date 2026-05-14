@@ -18,6 +18,10 @@ import BitsGrid from './components/BitsGrid.vue'
 import BitsCard from './components/BitsCard.vue'
 import Icon from './components/Icon.vue'
 import ComparisonLayout from './components/ComparisonLayout.vue'
+import IndustryBrowser from './components/industries/IndustryBrowser.vue'
+import IndustryPage from './components/industries/IndustryPage.vue'
+import ContactForm from './components/ContactForm.vue'
+import UseCasesMegaMenu from './components/UseCasesMegaMenu.vue'
 import './custom.css'
 import './home-tokens.css'
 import './d2-custom.css'
@@ -43,6 +47,10 @@ export default {
     app.component('BitsCard', BitsCard)
     app.component('Icon', Icon)
     app.component('ComparisonLayout', ComparisonLayout)
+    app.component('IndustryBrowser', IndustryBrowser)
+    app.component('IndustryPage', IndustryPage)
+    app.component('ContactForm', ContactForm)
+    app.component('UseCasesMegaMenu', UseCasesMegaMenu)
     enhanceAppWithTabs(app)
   }
 }

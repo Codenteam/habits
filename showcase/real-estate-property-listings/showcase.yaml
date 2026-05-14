@@ -1,0 +1,79 @@
+name: Real Estate Property Listings
+description: Automate listing creation alerts, MLS syndication, price change notifications, expiry reminders, performance reports, and photo review requests.
+
+longDescription: |
+  A collection of habits that keep your listing pipeline active and accurate: from creation through to expiry. Each habit operates independently and can be deployed individually or as a complete property listings automation suite.
+  
+  ## What It Does
+  
+  - **Listing Creation Alert**: notify the team when a new property is ready for listing
+  - **MLS Syndication**: push listing data to MLS and portal platforms automatically
+  - **Price Change Notification**: alert interested buyers when a listing price drops
+  - **Listing Expiry Reminder**: remind agents 7 days before a listing agreement expires
+  - **Performance Report**: compile weekly views, enquiries, and showing metrics
+  - **Photo Review Request**: request professional photos when a new listing is created
+
+industries:
+  - real-estate
+
+departments:
+  - property-listings
+
+tags:
+  - real-estate
+  - listings
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: listing-creation-alert
+    name: Listing Creation Alert
+    description: Notify the listings team when a new property is ready to go live and assign preparation tasks.
+    trigger: webhook
+    bits: [webhook, email, slack]
+
+  - id: mls-syndication
+    name: MLS Syndication
+    description: Push listing data to MLS and all connected portal platforms automatically on publication.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: price-change-notification
+    name: Price Change Notification
+    description: Alert interested buyers automatically when a listing price is reduced.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: listing-expiry-reminder
+    name: Listing Expiry Reminder
+    description: Remind the responsible agent 7 days before a listing agreement is due to expire.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: performance-report
+    name: Performance Report
+    description: Compile weekly listing performance metrics — views, enquiries, and showings — and distribute to agents.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+  - id: photo-review-request
+    name: Photo Review Request
+    description: Automatically request professional photography when a new listing is created in the system.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

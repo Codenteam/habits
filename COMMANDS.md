@@ -209,7 +209,7 @@ Run WebDriver E2E tests
 npx tsx packages/testing/src/cli/index.ts webdriver {{testFile}} --platform {{platform}}
 
 ## Test Bit (Node.js)
-Test a single bit action in Node.js — smallest possible command. No build required.
+Test a single bit action in Node.js, smallest possible command. No build required.
 npx tsx scripts/test-bit.ts {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
 
 ## Test Bit (Tauri)
@@ -217,7 +217,7 @@ Test a single bit action in Tauri via WebDriver. Add --headless --habit <path> t
 npx tsx scripts/test-bit-tauri.ts {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
 
 ## Test Bit (Tauri Headless)
-Test a single bit action in Tauri — auto-launches the app, runs the test, then kills it. One-shot, no manual steps.
+Test a single bit action in Tauri, auto-launches the app, runs the test, then kills it. One-shot, no manual steps.
 npx tsx scripts/test-bit-tauri.ts --headless --habit {{habitPath}} {{bit}} {{action}} '{{input}}' --expected '{{expected}}'
 
 ## Test Bit (Cross-Platform)

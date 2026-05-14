@@ -669,11 +669,35 @@ async function executeGenericBitsPiece(
           expiresAt: userToken.expiresAt,
         };
         logger.log(`🔐 Using per-user OAuth2 token from cookies for: ${bitId}`);
-        
-        // Token refresh for per-user tokens would need to be handled differently
-        // (e.g., trigger re-auth flow if expired)
+
+        // If the cookie token is locally expired, try the global store (which may have
+        // a fresh token from the same OAuth callback) or attempt a refresh.
         if (userToken.expiresAt && userToken.expiresAt < Date.now()) {
-          logger.warn(`⚠️ Per-user OAuth token expired for ${bitId}. User needs to re-authenticate.`);
+          logger.warn(`⚠️ Per-user OAuth token locally expired for ${bitId}. Checking global store...`);
+          const storedToken = oauthTokenStore.getToken(bitId);
+          if (storedToken && (!storedToken.expiresAt || storedToken.expiresAt > Date.now())) {
+            auth = {
+              accessToken: storedToken.accessToken,
+              refreshToken: storedToken.refreshToken,
+              tokenType: storedToken.tokenType,
+              expiresAt: storedToken.expiresAt,
+            };
+            logger.log(`✅ Using fresh token from global store for: ${bitId}`);
+          } else if (oauthTokenStore.isExpired(bitId)) {
+            logger.warn(`⚠️ Global token also expired for ${bitId}, attempting refresh...`);
+            const refreshedToken = await oauthTokenStore.refreshToken(bitId);
+            if (refreshedToken) {
+              auth = {
+                accessToken: refreshedToken.accessToken,
+                refreshToken: refreshedToken.refreshToken,
+                tokenType: refreshedToken.tokenType,
+                expiresAt: refreshedToken.expiresAt,
+              };
+              logger.log(`✅ OAuth token refreshed for: ${bitId}`);
+            } else {
+              logger.warn(`❌ Token refresh failed for ${bitId}. User needs to re-authenticate.`);
+            }
+          }
         }
       } else {
         // Priority 3: Try to get OAuth token from global store (single-user mode or Tauri)
@@ -685,7 +709,7 @@ async function executeGenericBitsPiece(
             tokenType: oauthToken.tokenType,
             expiresAt: oauthToken.expiresAt,
           };
-          logger.log(`🔐 Using OAuth2 PKCE token for: ${bitId}`);
+          logger.log(`🔐 Using OAuth2 PKCE token for: ${bitId} (token prefix: ${oauthToken.accessToken?.substring(0, 10)}..., length: ${oauthToken.accessToken?.length})`);
           
           // Check if token is expired and try to refresh
           if (oauthTokenStore.isExpired(bitId)) {
@@ -704,7 +728,58 @@ async function executeGenericBitsPiece(
             }
           }
         } else {
-          logger.warn(`⚠️ No OAuth token found for ${bitId}. Provide tokens via credentials or complete the OAuth flow.`);
+          // Tauri context: attempt an interactive OAuth flow via system browser + deep link.
+          // window.HabitsOAuth is provided by oauth-handler.js (main app) or the inline
+          // oauth-handler script (packed Tauri apps). In server/Node mode it is absent.
+          // Habits run inside an iframe, so also check window.parent (and window.parent.parent).
+          const habitsOAuth =
+            (typeof window !== 'undefined' && (window as any).HabitsOAuth) ||
+            (typeof window !== 'undefined' && (window as any).parent?.HabitsOAuth) ||
+            (typeof window !== 'undefined' && (window as any).parent?.parent?.HabitsOAuth);
+          if (habitsOAuth) {
+            logger.log(`🔐 No cached OAuth token for ${bitId} — launching interactive OAuth flow...`);
+            const pieceAuth = piece.auth as any;
+            const credValues = Object.values(credentials || {});
+            const credObj = (credValues[0] as any) || {};
+            const clientId = credObj.clientId || credObj.client_id || pieceAuth.clientId || '';
+            const clientSecret = credObj.clientSecret || credObj.client_secret || pieceAuth.clientSecret;
+
+            if (!clientId) {
+              throw new Error(
+                `OAuth requires a clientId for ${bitId}. ` +
+                `Add clientId (and optionally clientSecret) to the habit credentials.`
+              );
+            }
+
+            const oauthResult = await habitsOAuth.startOAuthFlow(bitId, {
+              clientId,
+              clientSecret,
+              authorizationUrl: pieceAuth.authorizationUrl,
+              tokenUrl: pieceAuth.tokenUrl,
+              scopes: pieceAuth.scopes || [],
+              extraAuthParams: pieceAuth.extraAuthParams,
+              // Use PKCE only for public clients (no clientSecret). Confidential clients
+              // (Web Application type with clientSecret) must NOT send code_challenge — Google
+              // rejects the combination as a malformed request.
+              pkce: !clientSecret,
+            });
+
+            auth = oauthResult.tokens;
+            logger.log(`✅ OAuth flow completed for ${bitId}, access token received`);
+
+            // Persist tokens so subsequent actions in the same session skip the browser flow.
+            oauthTokenStore.setToken(bitId, auth, {
+              displayName: pieceAuth.displayName || bitId,
+              required: pieceAuth.required || false,
+              authorizationUrl: pieceAuth.authorizationUrl || '',
+              tokenUrl: pieceAuth.tokenUrl || '',
+              clientId,
+              clientSecret,
+              scopes: pieceAuth.scopes || [],
+            });
+          } else {
+            logger.warn(`⚠️ No OAuth token found for ${bitId}. Provide tokens via credentials or complete the OAuth flow.`);
+          }
         }
       }
     } else if (credentials) {

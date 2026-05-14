@@ -1,8 +1,9 @@
 /**
  * Script Executor
  * 
- * Executes scripts in a Node.js environment.
- * Supports TypeScript/JavaScript (converted from Deno), Python, Go, and Bash scripts.
+ * Executes scripts in a Node.js environment (server) or browser environment (Tauri).
+ * In Tauri app mode, only JavaScript is supported (no Node.js runtime available).
+ * In Node.js server mode, all languages are supported: TypeScript/JavaScript (Deno-converted), Python, Go, and Bash.
  */
 
 import * as fs from 'fs';
@@ -23,6 +24,55 @@ import {
 import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
+
+// ============================================================================
+// Environment Detection
+// ============================================================================
+
+/**
+ * Returns true when running inside the Tauri webview (no Node.js runtime available).
+ * Detection mirrors the pattern used in cortex-bundle.js.
+ */
+function isTauriEnvironment(): boolean {
+  if (typeof window === 'undefined') return false;
+  const g = globalThis as any;
+  return !!(g.__TAURI__ || g.__TAURI_INTERNALS__);
+}
+
+// ============================================================================
+// Browser / Tauri JavaScript Executor
+// ============================================================================
+
+/**
+ * Execute a JavaScript script inside the browser webview (Tauri app mode).
+ * Uses AsyncFunction constructor so the script runs in the global browser scope
+ * without requiring Node.js vm or child_process.
+ * The script must export a `main` function; its return value is the result.
+ */
+async function executeJavaScriptInBrowser(
+  code: string,
+  params: Record<string, any>
+): Promise<any> {
+  // Build a wrapper that defines the user script then calls main() with params.
+  // We expose: params object, console, fetch, and process.env (populated by the
+  // bundle-generator template before workflow execution).
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const wrapper = new AsyncFunction(
+    '__params__',
+    '__env__',
+    `
+${code}
+
+if (typeof main !== 'function') {
+  throw new Error('No main function found in script');
+}
+return await main(...Object.values(__params__));
+`
+  );
+
+  const env = (typeof process !== 'undefined' && process.env) ? process.env : {};
+  return wrapper(params, env);
+}
 
 // Lazy-loaded TypeScript module
 let _ts: typeof TypeScript | null = null;
@@ -676,27 +726,17 @@ export async function executeScriptModule(
   let result: any;
 
   try {
-    switch (script.language) {
-      case 'deno':
-      case 'typescript':
-      case 'javascript':
-        result = await executeJavaScript(script.content, executionParams, context);
-        break;
+    if (script.language !== 'javascript') {
+      throw new Error(
+        `Only JavaScript is supported in script nodes. ` +
+        `Please set \`language: javascript\` on your script node (current: ${script.language}).`
+      );
+    }
 
-      case 'python3':
-        result = await executePython(script.content, executionParams, context);
-        break;
-
-      case 'go':
-        result = await executeGo(script.content, executionParams, context);
-        break;
-
-      case 'bash':
-        result = await executeBash(script.content, executionParams, context);
-        break;
-
-      default:
-        throw new Error(`Unsupported language: ${script.language}`);
+    if (isTauriEnvironment()) {
+      result = await executeJavaScriptInBrowser(script.content, executionParams);
+    } else {
+      result = await executeJavaScript(script.content, executionParams, context);
     }
 
     logger.log(`✅ Script executed successfully`);

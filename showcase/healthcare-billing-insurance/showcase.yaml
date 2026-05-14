@@ -1,0 +1,79 @@
+name: Healthcare Billing & Insurance
+description: Automate claims submission, prior auth requests, denial management, and payment posting across your billing and insurance workflows.
+
+longDescription: |
+  A collection of habits that streamline the full billing cycle: from eligibility verification through to payment reconciliation. Each habit operates independently and can be deployed individually or as a complete billing automation suite.
+  
+  ## What It Does
+  
+  - **Claims Submission**: auto-submit insurance claims after patient visits
+  - **Prior Auth Request**: trigger pre-authorisation requests for scheduled procedures
+  - **Denial Management**: route denied claims for review and resubmission
+  - **EOB Reconciliation**: match explanation-of-benefits to patient records nightly
+  - **Eligibility Verification**: verify patient insurance eligibility before appointments
+  - **Payment Posting**: post received payments to patient accounts automatically
+
+industries:
+  - healthcare
+
+departments:
+  - billing-insurance
+
+tags:
+  - healthcare
+  - billing
+  - automation
+  - finance
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: claims-submission
+    name: Claims Submission
+    description: Auto-submit insurance claims after patient visits with all required documentation.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: prior-auth-request
+    name: Prior Auth Request
+    description: Trigger pre-authorisation requests for scheduled procedures and track approval status.
+    trigger: scheduler
+    bits: [http, email, scheduler]
+
+  - id: denial-management
+    name: Denial Management
+    description: Route denied claims for review and resubmission with denial reason context.
+    trigger: webhook
+    bits: [email, http, slack]
+
+  - id: eob-reconciliation
+    name: EOB Reconciliation
+    description: Match explanation-of-benefits documents to patient records every night.
+    trigger: scheduler
+    bits: [http, ai, scheduler]
+
+  - id: eligibility-verification
+    name: Eligibility Verification
+    description: Verify patient insurance eligibility before each appointment automatically.
+    trigger: scheduler
+    bits: [http, scheduler, email]
+
+  - id: payment-posting
+    name: Payment Posting
+    description: Post received payments to patient accounts automatically on confirmation.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

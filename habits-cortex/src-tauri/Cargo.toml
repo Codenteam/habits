@@ -64,6 +64,9 @@ tauri-plugin-local-ai = { path = "../../local-ai-candle/tauri-plugin-local-ai" }
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
 xcap = { version = "0.9", optional = true }
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
+
 [features]
 custom-protocol = ["tauri/custom-protocol"]
 debug-tools = ["dep:tauri-plugin-webdriver", "dep:xcap"]

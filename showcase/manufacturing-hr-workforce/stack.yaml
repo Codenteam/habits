@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Manufacturing - Hr Workforce"
+
+workflows:
+  - id: shift-scheduling
+    path: ./habits/shift-scheduling.yaml
+    enabled: true
+  - id: time-and-attendance
+    path: ./habits/time-and-attendance.yaml
+    enabled: true
+  - id: safety-incident-reporting
+    path: ./habits/safety-incident-reporting.yaml
+    enabled: true
+  - id: training-compliance
+    path: ./habits/training-compliance.yaml
+    enabled: true
+  - id: payroll-preparation
+    path: ./habits/payroll-preparation.yaml
+    enabled: true
+  - id: headcount-planning-alert
+    path: ./habits/headcount-planning-alert.yaml
+    enabled: true
+
+server:
+  port: 13033
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

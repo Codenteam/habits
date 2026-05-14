@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * scripts/test-bit-tauri.ts — Standalone single-bit test runner (Tauri)
+ * scripts/test-bit-tauri.ts, Standalone single-bit test runner (Tauri)
  *
  * Tests a bit action inside the Tauri app via WebDriver.
  *
@@ -146,7 +146,7 @@ if (hasExpected) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WebDriver HTTP helpers (no external deps — pure Node.js http)
+// WebDriver HTTP helpers (no external deps, pure Node.js http)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const WD_HOST = '127.0.0.1';
@@ -431,13 +431,13 @@ async function main() {
     const duration = Date.now() - startTime;
 
     if (result.__error) {
-      console.error(`\n❌ Tauri — ${duration}ms`);
+      console.error(`\n❌ Tauri, ${duration}ms`);
       console.error(`   Error: ${result.__error}`);
       await cleanup(1);
     }
 
     if (!result.success) {
-      console.error(`\n❌ Tauri — ${duration}ms`);
+      console.error(`\n❌ Tauri, ${duration}ms`);
       console.error(`   Error: ${result.error}`);
       if (result.logs && result.logs.length > 0) {
         console.error('   Logs:');
@@ -451,26 +451,26 @@ async function main() {
     if (hasExpected) {
       const passed = deepEqual(result.output, expected);
 
-      console.error(`\n✅ Tauri — ${duration}ms`);
+      console.error(`\n✅ Tauri, ${duration}ms`);
       console.error(`   Expected: ${JSON.stringify(expected)}`);
       console.error(`   Got:      ${typeof result.output === 'string' ? result.output : JSON.stringify(result.output)}`);
 
       if (passed) {
-        console.error('   ✅ PASS — output matches expected');
+        console.error('   ✅ PASS, output matches expected');
       } else {
-        console.error('   ❌ FAIL — output does not match expected');
+        console.error('   ❌ FAIL, output does not match expected');
       }
       console.log(outputStr);
       await cleanup(passed ? 0 : 1);
     } else {
-      console.error(`\n✅ Tauri — ${duration}ms`);
+      console.error(`\n✅ Tauri, ${duration}ms`);
       console.log(outputStr);
       await cleanup(0);
     }
 
   } catch (err: any) {
     const duration = Date.now() - startTime;
-    console.error(`\n❌ Tauri — ${duration}ms`);
+    console.error(`\n❌ Tauri, ${duration}ms`);
     console.error(`   Error: ${err.message || String(err)}`);
     await cleanup(1);
   } finally {
