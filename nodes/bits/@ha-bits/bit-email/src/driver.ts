@@ -372,11 +372,23 @@ export async function sendSmtpEmail(
   }
 
   if (message.attachments && message.attachments.length > 0) {
-    mailOptions.attachments = message.attachments.map(att => ({
-      filename: att.filename,
-      content: att.content,
-      contentType: att.contentType,
-    }));
+    mailOptions.attachments = message.attachments.map(att => {
+      // Decode base64 string content to a Buffer so nodemailer sends binary
+      // files (PDF, images, etc.) correctly — mirrors bit-google-drive behaviour.
+      let content: string | Buffer = att.content;
+      if (typeof att.content === 'string' && att.content.length > 0) {
+        try {
+          content = Buffer.from(att.content, 'base64');
+        } catch {
+          content = att.content;
+        }
+      }
+      return {
+        filename: att.filename,
+        content,
+        contentType: att.contentType,
+      };
+    });
   }
 
   // Send mail
