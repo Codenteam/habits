@@ -88,6 +88,11 @@
     {
       "framework": "bits",
       "source": "npm",
+      "repository": "@ha-bits/bit-rss"
+    },
+    {
+      "framework": "bits",
+      "source": "npm",
       "repository": "@ha-bits/bit-jsonplaceholder"
     },
     {

@@ -1,0 +1,95 @@
+id: rss-digest
+name: RSS Content Digest Pipeline
+description: >
+  Fetches an RSS/Atom feed directly with bit-rss, maps each article to the
+  standard content format, summarizes each with OpenAI, and posts a digest to Slack.
+
+nodes:
+  # Step 1: Poll the RSS/Atom feed for new items via the newItems trigger
+  - id: fetch-rss
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-rss"
+      operation: newItems
+      isTrigger: true
+      triggerType: polling
+      params:
+        url: "{{habits.input.feedUrl}}"
+        cronExpression: "*/3 * * * *"
+
+  # Step 2: Map RSS items to the content format expected by summarize-content
+  - id: map-items
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: rss-item-mapper
+      label: Map RSS Items to Content Format
+      params:
+        items: "{{fetch-rss}}"
+        feedTitle: ""
+        language: deno
+        script: |
+          export async function main(items, feedTitle) {
+            const contents = (Array.isArray(items) ? items : []).map(item => ({
+              id:    item.guid  || item.link  || item.title || '',
+              type:  'rss',
+              title: item.title || '(Untitled)',
+              from:  item.author || feedTitle || '',
+              date:  item.pubDate || '',
+              url:   item.link || '',
+              body:  item.description || '',
+            }));
+            return { items: contents, count: contents.length };
+          }
+
+  # Step 3: Summarize each article individually via summarize-content
+  - id: summarize-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{map-items.result.items}}"
+        habitId: summarize-content
+        inputKey: content
+        delayMs: 400
+        continueOnError: true
+        collectResults: true
+
+  # Step 4: Post the complete digest to Slack via send-digest
+  - id: digest
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: |
+          [{
+            "summariesJson": {{summarize-all.results}},
+            "contentCount": "{{map-items.result.count}}",
+            "digestDate": "{{habits.input.digestDate}}"
+          }]
+        habitId: send-digest
+        inputKey: digestInput
+        collectResults: true
+
+edges:
+  - source: fetch-rss
+    target: map-items
+  - source: map-items
+    target: summarize-all
+  - source: summarize-all
+    target: digest
+
+output:
+  contentsFetched: "{{map-items.result.count}}"
+  contentsSummarized: "{{summarize-all.successCount}}"
+  slackPosted: "{{digest.results[0].output.success}}"
+  summaries: "{{summarize-all.results}}"
