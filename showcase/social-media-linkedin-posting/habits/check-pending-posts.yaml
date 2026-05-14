@@ -1,0 +1,67 @@
+id: check-pending-posts
+name: Check Pending Posts
+description: >-
+  Polling habit that runs every 1 minute via cron.
+  Fetches all scheduled posts with status "pending" from smmp_scheduled_posts,
+  then loops over each post and invokes publish-social-post to post to
+  LinkedIn and mark each record as published.
+
+nodes:
+  # Cron trigger — fires every 1 minute
+  - id: cron-trigger
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      params:
+        cronExpression: "*/1 * * * *"
+        timezone: "UTC"
+
+  # Get all pending scheduled posts
+  - id: get-pending
+    type: bits
+    data:
+      label: Get Pending Posts
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: smmp_scheduled_posts
+        filter: '{"status": "pending" , "scheduledAt": {"$lte": "{{cron-trigger[0].executedAt}}"}}' 
+        limit: 20
+
+  # Loop over pending posts and invoke publish-social-post per item
+  - id: publish-posts
+    type: action
+    data:
+      label: Publish Each Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-pending.results}}"
+        habitId: publish-social-post
+        inputKey: post
+        continueOnError: true
+        collectResults: true
+
+
+edges:
+  - source: cron-trigger
+    target: get-pending
+  - source: get-pending
+    target: publish-posts
+
+output:
+  posts: "{{get-pending.results}}"
+  totalPending: "{{get-pending.count}}"
+  published: "{{publish-posts.successCount}}"
+  publishResults: "{{publish-posts.results}}"
+  checkedAt: "{{cron-trigger[0].executedAt}}"
+  cronExpression: "{{cron-trigger[0].cronExpression}}"
+  nextExecution: "{{cron-trigger[0].nextExecution}}"

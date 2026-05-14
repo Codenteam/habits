@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Social Media Multi-Posting</title>
+  <title>LinkedIn Posting</title>
   <style>
     :root {
       --ha-bg-base: #0f172a;
@@ -26,8 +26,6 @@
       --ha-radius-lg: 10px;
       --ha-radius-xl: 14px;
       --ha-radius-pill: 9999px;
-      --tw-color: #1d9bf0;
-      --tw-dim: rgba(29,155,240,0.12);
       --li-color: #0a66c2;
       --li-dim: rgba(10,102,194,0.12);
     }
@@ -211,7 +209,6 @@
       cursor: pointer; transition: all 0.15s;
     }
     .tab-btn:hover { border-color: var(--ha-bg-hover); color: var(--ha-text-primary); }
-    .tab-btn.active-tw { background: var(--tw-dim); border-color: var(--tw-color); color: var(--tw-color); }
     .tab-btn.active-li { background: var(--li-dim); border-color: var(--li-color); color: var(--li-color); }
     /* Post cards */
     .post-card { display: none; flex-direction: column; gap: 14px; }
@@ -236,9 +233,7 @@
     }
     .copy-btn:hover { border-color: var(--ha-accent-purple); color: var(--ha-accent-purple); }
     .copy-btn.copied { border-color: var(--ha-accent-emerald); color: var(--ha-accent-emerald); }
-    .post-card[data-platform="twitter"]  .post-section { border-left: 3px solid var(--tw-color); }
     .post-card[data-platform="linkedin"] .post-section { border-left: 3px solid var(--li-color); }
-    .post-card[data-platform="twitter"]  .section-label { color: var(--tw-color); }
     .post-card[data-platform="linkedin"] .section-label { color: var(--li-color); }
     /* Queue */
     .queue-cron-bar {
@@ -293,7 +288,6 @@
     .queue-meta-value.highlight { color: var(--ha-accent-sky); font-weight: 600; }
     .queue-card-platforms { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
     .platform-pip { font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: var(--ha-radius-pill); border: 1px solid; }
-    .platform-pip.tw { color: var(--tw-color); border-color: var(--tw-color); background: var(--tw-dim); }
     .platform-pip.li { color: var(--li-color); border-color: var(--li-color); background: var(--li-dim); }
     .queue-card-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
     .action-btn {
@@ -322,7 +316,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="logo">Social Media <span>Multi-Posting</span></div>
+    <div class="logo">LinkedIn <span>Posting</span></div>
     <div class="badge">HABITS-Powered</div>
   </header>
   <div class="page-wrap">
@@ -389,7 +383,7 @@
         <div class="gen-state" id="gen-loading">
           <div class="state-block">
             <div class="spinner"></div>
-            <p>Generating posts for all 2 platforms…</p>
+            <p>Generating LinkedIn post…</p>
           </div>
         </div>
         <!-- State: Error -->
@@ -415,20 +409,8 @@
             </div>
             <div class="sched-badge">Pending</div>
           </div>
-          <div class="tab-bar">
-            <button class="tab-btn active-tw" id="tab-twitter"  onclick="showTab('twitter')">𝕏 Twitter</button>
-            <button class="tab-btn"           id="tab-linkedin" onclick="showTab('linkedin')">in LinkedIn</button>
-          </div>
-          <!-- Twitter -->
-          <div class="post-card visible" id="card-twitter" data-platform="twitter">
-            <div class="post-section">
-              <div class="section-label">Tweet</div>
-              <button class="copy-btn" onclick="copySection('tw-text', this)">Copy</button>
-              <pre id="tw-text"></pre>
-            </div>
-          </div>
           <!-- LinkedIn -->
-          <div class="post-card" id="card-linkedin" data-platform="linkedin">
+          <div class="post-card visible" id="card-linkedin" data-platform="linkedin">
             <div class="post-section">
               <div class="section-label">Post</div>
               <button class="copy-btn" onclick="copySection('li-text', this)">Copy</button>
@@ -467,7 +449,6 @@
 </div><!-- /app -->
 <script>
   let selectedTone = 'casual';
-  let activeTab = 'twitter';
   let activeMainTab = 'generate';
   let queueInterval = null;
   let cronCheckedAt = null;
@@ -565,19 +546,7 @@
       ? (data.scheduledAt || '—')
       : schedDate.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
     document.getElementById('banner-tz').textContent = data.scheduleTimezone || 'UTC';
-    document.getElementById('tw-text').textContent = (data.twitter  || '').trim();
     document.getElementById('li-text').textContent = (data.linkedin || '').trim();
-    showTab('twitter');
-  }
-
-  function showTab(platform) {
-    activeTab = platform;
-    ['twitter', 'linkedin'].forEach(p => {
-      const btn = document.getElementById('tab-' + p);
-      btn.className = 'tab-btn';
-      if (p === platform) btn.classList.add('active-' + p.slice(0, 2));
-      document.getElementById('card-' + p).classList.toggle('visible', p === platform);
-    });
   }
 
   // Fire check-pending-posts once on page load and store cron times.
@@ -684,7 +653,6 @@
         + '<div class="queue-meta-item"><span class="queue-meta-label">Created</span><span class="queue-meta-value">' + escapeHtml(createdFmt) + '</span></div>'
         + '</div>'
         + '<div class="queue-card-platforms">'
-        + (post.twitter  ? '<span class="platform-pip tw">𝕏 Twitter</span>'  : '')
         + (post.linkedin ? '<span class="platform-pip li">in LinkedIn</span>' : '')
         + '</div>'
         + '<div class="queue-card-actions">'
@@ -725,7 +693,7 @@
 
   async function publishNow(postId, btn) {
     if (!postId) return;
-    if (!confirm('Publish this post immediately to Twitter/X and LinkedIn?')) return;
+    if (!confirm('Publish this post immediately to LinkedIn?')) return;
     const pubBtn = document.getElementById('pub-btn-' + postId);
     const delBtn = document.getElementById('del-btn-' + postId);
     if (pubBtn) { pubBtn.disabled = true; pubBtn.textContent = '⏳ Publishing…'; }

@@ -1,0 +1,25 @@
+id: delete-post
+name: Delete Pending Post
+description: >-
+  Deletes a pending post from the queue by ID.
+  Input: postId (string)
+
+nodes:
+  - id: delete-record
+    type: bits
+    data:
+      label: Delete Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: delete
+      params:
+        collection: smmp_scheduled_posts
+        filter:
+          _id: "{{habits.input.postId}}"
+
+edges: []
+
+output:
+  deleted: "{{delete-record.deleted}}"
+  postId: "{{habits.input.postId}}"

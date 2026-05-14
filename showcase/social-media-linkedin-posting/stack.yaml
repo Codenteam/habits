@@ -1,5 +1,5 @@
 version: "1.0"
-name: "Social Media Multi-Posting"
+name: "LinkedIn Posting"
 
 workflows:
   - id: generate-social-content

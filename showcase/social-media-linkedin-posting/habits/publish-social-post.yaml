@@ -1,0 +1,47 @@
+id: publish-social-post
+name: Publish LinkedIn Post
+description: >-
+  Called per-item by bit-loop in check-pending-posts.
+  Takes a single scheduled post record (with a linkedin field)
+  and posts the content to LinkedIn, then marks the record as "published" in the database.
+
+nodes:
+  # Post to LinkedIn
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+        clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{post.linkedin}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORGANIZATION_ID}}"
+
+  # Mark the post as published in the database
+  - id: mark-published
+    type: bits
+    data:
+      label: Mark Post as Published
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: smmp_scheduled_posts
+        filter:
+          _id: "{{post._id}}"
+        update:
+          status: "published"
+
+edges:
+  - source: post-to-linkedin
+    target: mark-published
+
+output:
+  status: "published"
