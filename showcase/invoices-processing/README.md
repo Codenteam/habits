@@ -1,4 +1,4 @@
-# Invoices Processing — Setup Guide
+# Invoices Processing: Setup Guide
 
 This workflow fetches emails, extracts invoice data via OpenAI, and saves results to a Google Sheet.
 
@@ -19,7 +19,7 @@ HABITS_GOOGLE_SPREADSHEET_ID=...
 ## Getting `HABITS_GOOGLE_SPREADSHEET_ID`
 
 1. Open [Google Sheets](https://sheets.google.com) and open (or create) your spreadsheet.
-2. Look at the URL — it looks like:
+2. Look at the URL, it looks like:
    ```
    https://docs.google.com/spreadsheets/d/<ID>/edit
    ```
@@ -32,7 +32,7 @@ HABITS_GOOGLE_SPREADSHEET_ID=...
 
 ## Getting `HABITS_GOOGLE_SHEETS_CLIENT_ID` and `HABITS_GOOGLE_SHEETS_CLIENT_SECRET`
 
-## Step 1 — Create a Google Cloud Project & Enable the API
+## Step 1: Create a Google Cloud Project & Enable the API
 
 ### 1.1 Create a new project ( If first time)
 
@@ -43,12 +43,12 @@ HABITS_GOOGLE_SPREADSHEET_ID=...
 3. Give it a name (e.g. `Invoices Processing`) and click **Create**
 4. Make sure the new project is selected in the dropdown
 
-### Step 1.2 — Enable the Google Sheets API
+### Step 1.2: Enable the Google Sheets API
 
 1. In the left sidebar go to **APIs & Services → Library**
 2. Search for **Google Sheets API** and click **Enable**.
 
-### Step 2 — Configure the OAuth Consent Screen
+### Step 2: Configure the OAuth Consent Screen
 
 Before creating credentials, Google requires an app to be configured (Skip from 1 to 4 if already app created before):
 
@@ -70,7 +70,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
 
 > **Why test users?** While the app is in "Testing" mode (not published), only explicitly added test users can authorize it.
 
-### Step 3 — Create OAuth 2.0 Credentials
+### Step 3: Create OAuth 2.0 Credentials
 
 1. Navigate to **APIs & Services → Credentials**.
 2. Click **+ Create Credentials → OAuth client ID**.
@@ -80,7 +80,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
    ```
    http://localhost:13000/oauth/bit-google-sheets/callback
    ```
-6. Click **Create** — a dialog will show the created client, open it and copy the **Client ID** and **Client Secret** into your `.env` file.
+6. Click **Create**: a dialog will show the created client, open it and copy the **Client ID** and **Client Secret** into your `.env` file.
    > **If the Client Secret is not visible in the dialog**, click **OK** to close it, then find your client in the **Clients** list on the same page, click on its name to open it, and copy the **Client Secret** from the bottom-right of the client details page.
 7. Paste them into `.env`:
    ```env
@@ -88,7 +88,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
    HABITS_GOOGLE_SHEETS_CLIENT_SECRET=your-client-secret
    ```
 
-### Step 4 — Authorize via OAuth on First Run
+### Step 4: Authorize via OAuth on First Run
 
 When you start the server , it will print a URL to the console:
 

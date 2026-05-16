@@ -406,7 +406,7 @@ export class WorkflowExecutor {
 
   /**
    * Register bits streaming triggers.
-   * Calls onEnable() once at startup — onEnable itself sets up a persistent callback
+   * Calls onEnable() once at startup, onEnable itself sets up a persistent callback
    * that fires executor.executeWorkflow() for each incoming event.
    */
   async registerBitsStreamingTriggers(): Promise<void> {
@@ -447,7 +447,7 @@ export class WorkflowExecutor {
             continue;
           }
 
-          // Skip app-only bits — they require a browser/WebView environment
+          // Skip app-only bits, they require a browser/WebView environment
           if (bitPiece.runtime === 'app') {
             this.logger.log(`   ⏭️ Skipping app-only bit: ${moduleName}`);
             continue;
@@ -509,6 +509,95 @@ export class WorkflowExecutor {
     }
     this.pollingCronJobs.clear();
   }
+
+  /**
+   * Stop a single polling cron job by workflowId and nodeId.
+   * Returns true if a job was found and stopped, false if not found.
+   */
+  stopPollingTrigger(workflowId: string, nodeId: string): boolean {
+    const key = `${workflowId}:${nodeId}`;
+    const cronJob = this.pollingCronJobs.get(key);
+    if (!cronJob) return false;
+    cronJob.stop();
+    this.pollingCronJobs.delete(key);
+    this.logger.log(`   ⏹️ Stopped polling trigger: ${key}`);
+    return true;
+  }
+
+  /**
+   * Immediately fire a polling trigger's run() method, bypassing the cron schedule.
+   * Useful for testing. Returns the items the trigger produced.
+   */
+  async fireTriggerNow(workflowId: string, nodeId: string): Promise<{ success: boolean; items: any[]; message?: string }> {
+    const loadedWorkflow = this.getWorkflow(workflowId);
+    if (!loadedWorkflow) {
+      return { success: false, items: [], message: `Workflow not found: ${workflowId}` };
+    }
+
+    const node = loadedWorkflow.workflow.nodes?.find((n: any) => n.id === nodeId);
+    if (!node) {
+      return { success: false, items: [], message: `Node not found: ${nodeId}` };
+    }
+
+    const nodeData = node.data as any;
+    const moduleName = nodeData?.module;
+    const triggerName = nodeData?.operation || 'default';
+
+    if (nodeData?.framework !== 'bits' || !moduleName) {
+      return { success: false, items: [], message: 'Node is not a bits trigger' };
+    }
+
+    const moduleDefinition = {
+      source: (nodeData.source || 'npm') as 'npm' | 'github',
+      module: moduleName,
+      framework: 'bits' as const,
+      repository: moduleName,
+    };
+
+    const rawProps = nodeData.params || {};
+    const triggerProps = this.resolveParameters(rawProps, {});
+
+    this.logger.log(`   🔥 Firing trigger now: ${workflowId}/${nodeId}`);
+
+    const runResult = await bitsTriggerHelper.executeTrigger({
+      moduleDefinition,
+      triggerName,
+      input: triggerProps,
+      hookType: TriggerHookType.RUN,
+      workflowId,
+      nodeId,
+    });
+
+    if (!runResult.success) {
+      return { success: false, items: [], message: runResult.message };
+    }
+
+    const items = runResult.output || [];
+
+    if (items.length > 0) {
+      const triggeredAt = new Date().toISOString();
+      for (let i = 0; i < items.length; i++) {
+        try {
+          await this.executeWorkflow(loadedWorkflow.workflow, {
+            initialContext: {
+              'habits.input': items[i],
+              __pollingTrigger: true,
+              __pollingNodeId: nodeId,
+              __triggeredAt: triggeredAt,
+              __pollingItemIndex: i,
+            },
+            skipTriggerWait: true,
+            triggerNodeId: nodeId,
+          });
+        } catch (err: any) {
+          this.logger.error(`   ❌ Item ${i + 1} failed: ${err.message}`);
+        }
+      }
+    }
+
+    return { success: true, items };
+  }
+
 
   /**
    * Stop all streaming triggers by calling their onDisable()
@@ -1440,13 +1529,29 @@ export class WorkflowExecutor {
       this.logger.info(`Node ${node.id} executed successfully`);
 
     } catch (error: any) {
+      // Shorter params: Take the full param, recursively replace any value longer than 100 characters with a placeholder to avoid logging huge data
+      const shortenParams = (obj: any): any => {
+        if (typeof obj === 'string') {
+          return obj.length > 200 ? '[LONG_STRING]' : obj; 
+        } else if (Array.isArray(obj)) {
+          return obj.map(shortenParams);
+        } else if (typeof obj === 'object' && obj !== null) {
+          const shortenedObj: any = {};
+          for (const [key, value] of Object.entries(obj)) {
+            shortenedObj[key] = shortenParams(value);
+          }
+          return shortenedObj;
+        }
+        return obj;
+      };
+
       // Handle different error types
       const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
       this.logger.error(`Node ${node.id} failed`, { 
         error: errorMsg, 
         errorType: typeof error,
         errorObj: error,
-        inputs: fullParams 
+        inputs: shortenParams(fullParams)
       });
       result.success = false;
       result.error = errorMsg;

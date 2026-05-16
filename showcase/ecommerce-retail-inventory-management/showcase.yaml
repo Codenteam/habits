@@ -1,0 +1,79 @@
+name: Ecommerce & Retail Inventory Management
+description: Automate low stock alerts, reorder purchase orders, supplier notifications, inventory reconciliation, and demand forecasting.
+
+longDescription: |
+  A collection of habits that keep shelves stocked and suppliers informed: from reorder triggers through to shrinkage reporting. Each habit operates independently and can be deployed individually or as a complete inventory management suite.
+  
+  ## What It Does
+  
+  - **Low Stock Alert**: notify purchasing when a SKU drops below reorder point
+  - **Reorder Automation**: auto-raise purchase orders for critical SKUs
+  - **Supplier Notification**: send order confirmations and delivery date requests to suppliers
+  - **Inventory Reconciliation**: reconcile warehouse counts against system records
+  - **Demand Forecasting Alert**: trigger planning review when forecast deviation exceeds threshold
+  - **Shrinkage Report**: compile daily shrinkage data and distribute to management
+
+industries:
+  - ecommerce-retail
+
+departments:
+  - inventory-management
+
+tags:
+  - ecommerce
+  - inventory
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: low-stock-alert
+    name: Low Stock Alert
+    description: Notify the purchasing team automatically when a SKU drops below its reorder point.
+    trigger: scheduler
+    bits: [scheduler, slack, email]
+
+  - id: reorder-automation
+    name: Reorder Automation
+    description: Auto-raise purchase orders for critical SKUs based on reorder rules and lead times.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+  - id: supplier-notification
+    name: Supplier Notification
+    description: Send purchase order confirmations and delivery date requests to suppliers automatically.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: inventory-reconciliation
+    name: Inventory Reconciliation
+    description: Reconcile warehouse physical counts against system records and flag discrepancies.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: demand-forecasting-alert
+    name: Demand Forecasting Alert
+    description: Trigger a planning review when AI forecast deviation exceeds the configured threshold.
+    trigger: scheduler
+    bits: [scheduler, ai, slack]
+
+  - id: shrinkage-report
+    name: Shrinkage Report
+    description: Compile daily shrinkage and loss data and distribute the summary report to management.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

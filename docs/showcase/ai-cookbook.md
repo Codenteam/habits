@@ -40,6 +40,8 @@ const habitTabs = [
   <ShowcaseHero :images="images" />
 </div>
 
+
+
 <p class="showcase-description">Generate personalized recipes from your available ingredients with AI-powered recipe creation and beautiful food photography.</p>
 
 Transform your available ingredients into culinary masterpieces with the AI Cookbook.
@@ -56,6 +58,7 @@ customized recipes tailored to your dietary preferences and cuisine choices.
 
 Perfect for home cooks looking to reduce food waste, try new cuisines, or find
 inspiration when staring at a fridge full of random ingredients.
+
 
 
 
@@ -113,6 +116,13 @@ inspiration when staring at a fridge full of random ingredients.
 <ExampleRunner examplePath="ai-cookbook" />
 
 <DownloadExample examplePath="ai-cookbook" />
+
+
+<ContactForm
+  heading="Want this habit running in your environment?"
+  subtext="This habit is a starting point. Tell us about your stack and we'll help you get it working exactly the way your team needs."
+/>
+
 <style>
 .showcase-header {
   margin: 20px 0 28px;
@@ -215,6 +225,175 @@ inspiration when staring at a fridge full of random ingredients.
   color: var(--vp-c-text-2);
   line-height: 1.6;
   margin: 0 0 24px;
+}
+
+.showcase-taxonomy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+
+.taxonomy-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taxonomy-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--vp-c-text-3);
+  min-width: 90px;
+}
+
+.taxonomy-values {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.taxonomy-pill {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-2);
+  text-transform: capitalize;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+a.taxonomy-pill:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.showcase-notice {
+  margin: 24px 0;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 30%, transparent);
+  border-radius: 10px;
+}
+
+.showcase-notice-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin: 0 0 4px;
+}
+
+.showcase-notice-text {
+  font-size: 0.82rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+  clear: both;
+}
+
+.habit-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.habit-card:hover {
+  border-color: var(--vp-c-brand-2);
+}
+
+.habit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.habit-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  line-height: 1.4;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.habit-description {
+  font-size: 0.78rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.bit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bit-badge {
+  font-size: 0.68rem;
+  font-family: var(--vp-font-family-mono);
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(100, 150, 255, 0.08);
+  color: var(--vp-c-brand-1);
+  border: 1px solid rgba(100, 150, 255, 0.2);
+  white-space: nowrap;
+}
+
+.trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trigger-scheduler {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.trigger-webhook {
+  background: rgba(37, 99, 235, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.trigger-email {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.trigger-manual {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .gallery-container {

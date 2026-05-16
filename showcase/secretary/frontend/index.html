@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Secretary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      background: #0a0a0a;
+      color: #f0f0f0;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      overscroll-behavior: none;
+    }
+    .tab-active { color: #fff; border-bottom: 2px solid #fff; }
+    .tab-inactive { color: #666; border-bottom: 2px solid transparent; }
+    pre { white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+    .output-box {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 120px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .btn {
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.15s;
+    }
+    .btn:active { opacity: 0.75; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-secondary {
+      background: transparent;
+      color: #aaa;
+      border: 1px solid #333;
+    }
+    textarea {
+      background: #141414;
+      color: #f0f0f0;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      width: 100%;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    textarea:focus { border-color: #555; }
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #555;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tool-chip {
+      display: inline-block;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: #888;
+      margin: 2px;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app" class="max-w-lg mx-auto px-4 pt-4 pb-24">
+
+  <!-- Header -->
+  <div class="mb-5">
+    <h1 class="text-2xl font-bold tracking-tight">Secretary</h1>
+    <p class="text-sm text-gray-500 mt-1">Your AI assistant</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-6 mb-6 border-b border-gray-800 pb-0">
+    <button id="tab-briefing" class="tab-active pb-3 text-sm font-semibold" onclick="switchTab('briefing')">Briefing</button>
+    <button id="tab-do-it" class="tab-inactive pb-3 text-sm font-semibold" onclick="switchTab('do-it')">Do It</button>
+  </div>
+
+  <!-- Briefing Tab -->
+  <div id="panel-briefing">
+    <p class="text-sm text-gray-400 mb-4">
+      Get a structured morning brief from your files, Slack messages, and notes.
+    </p>
+
+    <button class="btn mb-4" id="btn-briefing" onclick="runBriefing()">
+      Run Morning Briefing
+    </button>
+
+    <div id="briefing-status" class="hidden text-sm text-gray-500 mb-3 flex items-center">
+      <span class="spinner"></span> Working...
+    </div>
+
+    <div id="briefing-output" class="output-box hidden">
+      <pre id="briefing-text"></pre>
+    </div>
+
+    <div id="briefing-tools" class="mt-3 hidden">
+      <div class="section-label">Tools used</div>
+      <div id="briefing-tools-list"></div>
+    </div>
+
+    <div id="briefing-error" class="hidden mt-3 text-sm text-red-400 output-box"></div>
+  </div>
+
+  <!-- Do It Tab -->
+  <div id="panel-do-it" class="hidden">
+    <p class="text-sm text-gray-400 mb-4">
+      Describe any task and the secretary will figure out how to do it.
+    </p>
+
+    <textarea
+      id="do-it-prompt"
+      rows="4"
+      placeholder="Send a Slack message summarising today's headlines..."
+      class="mb-4"
+    ></textarea>
+
+    <div class="flex gap-3 mb-4">
+      <button class="btn" id="btn-do-it" onclick="runDoIt()">Do It</button>
+      <button class="btn btn-secondary" style="width:auto;padding:14px 18px;" onclick="clearDoIt()">Clear</button>
+    </div>
+
+    <div id="do-it-status" class="hidden text-sm text-gray-500 mb-3 flex items-center">
+      <span class="spinner"></span> Working...
+    </div>
+
+    <div id="do-it-output" class="output-box hidden">
+      <pre id="do-it-text"></pre>
+    </div>
+
+    <div id="do-it-meta" class="mt-3 hidden">
+      <div class="section-label">Tool calls</div>
+      <div id="do-it-tools-list"></div>
+      <div class="section-label mt-2">Iterations</div>
+      <div id="do-it-iterations" class="text-sm text-gray-500"></div>
+    </div>
+
+    <div id="do-it-error" class="hidden mt-3 text-sm text-red-400 output-box"></div>
+  </div>
+
+</div>
+
+<script>
+const BASE_URL = '';
+
+// Tab switching
+function switchTab(name) {
+  document.getElementById('panel-briefing').classList.toggle('hidden', name !== 'briefing');
+  document.getElementById('panel-do-it').classList.toggle('hidden', name !== 'do-it');
+  document.getElementById('tab-briefing').className = name === 'briefing' ? 'tab-active pb-3 text-sm font-semibold' : 'tab-inactive pb-3 text-sm font-semibold';
+  document.getElementById('tab-do-it').className = name === 'do-it' ? 'tab-active pb-3 text-sm font-semibold' : 'tab-inactive pb-3 text-sm font-semibold';
+}
+
+// Stream NDJSON from the server
+async function streamRequest(endpoint, body, onChunk, onDone, onError) {
+  try {
+    const res = await fetch(`${BASE_URL}/api/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/x-ndjson' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      onError(`Server error ${res.status}: ${text}`);
+      return;
+    }
+
+    const contentType = res.headers.get('Content-Type') || '';
+    if (!contentType.includes('ndjson') && !contentType.includes('stream')) {
+      // Non-streaming response
+      const data = await res.json();
+      onChunk(data);
+      onDone(data);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const parsed = JSON.parse(trimmed);
+          onChunk(parsed);
+          if (parsed.type === 'done' || parsed.done) {
+            onDone(parsed);
+          }
+        } catch {
+          // partial chunk, keep in buffer
+        }
+      }
+    }
+  } catch (err) {
+    onError(err.message || String(err));
+  }
+}
+
+// Briefing
+async function runBriefing() {
+  const btn = document.getElementById('btn-briefing');
+  const status = document.getElementById('briefing-status');
+  const output = document.getElementById('briefing-output');
+  const text = document.getElementById('briefing-text');
+  const tools = document.getElementById('briefing-tools');
+  const toolsList = document.getElementById('briefing-tools-list');
+  const errorBox = document.getElementById('briefing-error');
+
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  output.classList.add('hidden');
+  tools.classList.add('hidden');
+  errorBox.classList.add('hidden');
+  text.textContent = '';
+
+  let finalData = null;
+
+  await streamRequest(
+    'briefing',
+    {},
+    (chunk) => {
+      // Stream tokens or partial output
+      if (chunk.type === 'token' || chunk.type === 'chunk') {
+        text.textContent += chunk.content || chunk.token || '';
+        output.classList.remove('hidden');
+      } else if (chunk.briefing || chunk.response) {
+        text.textContent = chunk.briefing || chunk.response;
+        output.classList.remove('hidden');
+        finalData = chunk;
+      }
+    },
+    (data) => {
+      if (!finalData) {
+        const val = data.briefing || data.response || data.result;
+        if (val) { text.textContent = val; output.classList.remove('hidden'); }
+      }
+      // Show tools
+      const toolsAvailable = data.toolsUsed || data.toolsAvailable || [];
+      if (toolsAvailable.length) {
+        toolsList.innerHTML = toolsAvailable.map(t => `<span class="tool-chip">${t}</span>`).join('');
+        tools.classList.remove('hidden');
+      }
+      status.classList.add('hidden');
+      btn.disabled = false;
+    },
+    (err) => {
+      errorBox.textContent = err;
+      errorBox.classList.remove('hidden');
+      status.classList.add('hidden');
+      btn.disabled = false;
+    }
+  );
+}
+
+// Do It
+async function runDoIt() {
+  const prompt = document.getElementById('do-it-prompt').value.trim();
+  if (!prompt) {
+    document.getElementById('do-it-prompt').focus();
+    return;
+  }
+
+  const btn = document.getElementById('btn-do-it');
+  const status = document.getElementById('do-it-status');
+  const output = document.getElementById('do-it-output');
+  const text = document.getElementById('do-it-text');
+  const meta = document.getElementById('do-it-meta');
+  const toolsList = document.getElementById('do-it-tools-list');
+  const iterEl = document.getElementById('do-it-iterations');
+  const errorBox = document.getElementById('do-it-error');
+
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  output.classList.add('hidden');
+  meta.classList.add('hidden');
+  errorBox.classList.add('hidden');
+  text.textContent = '';
+
+  await streamRequest(
+    'do-it',
+    { prompt },
+    (chunk) => {
+      if (chunk.type === 'token' || chunk.type === 'chunk') {
+        text.textContent += chunk.content || chunk.token || '';
+        output.classList.remove('hidden');
+      } else if (chunk.result || chunk.response) {
+        text.textContent = chunk.result || chunk.response;
+        output.classList.remove('hidden');
+      }
+    },
+    (data) => {
+      const val = data.result || data.response;
+      if (val && !text.textContent) { text.textContent = val; output.classList.remove('hidden'); }
+
+      const calls = data.toolCalls;
+      if (calls && calls.length) {
+        toolsList.innerHTML = calls.map(c => `<span class="tool-chip">${c.tool || c}</span>`).join('');
+        meta.classList.remove('hidden');
+      }
+      if (data.iterations) {
+        iterEl.textContent = `${data.iterations} iteration(s)`;
+        meta.classList.remove('hidden');
+      }
+      status.classList.add('hidden');
+      btn.disabled = false;
+    },
+    (err) => {
+      errorBox.textContent = err;
+      errorBox.classList.remove('hidden');
+      status.classList.add('hidden');
+      btn.disabled = false;
+    }
+  );
+}
+
+function clearDoIt() {
+  document.getElementById('do-it-prompt').value = '';
+  document.getElementById('do-it-output').classList.add('hidden');
+  document.getElementById('do-it-meta').classList.add('hidden');
+  document.getElementById('do-it-error').classList.add('hidden');
+  document.getElementById('do-it-text').textContent = '';
+}
+</script>
+</body>
+</html>

@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-oauth-mock`</span>
   <span class="bit-version">v1.0.0</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-oauth-mock">📥 <span class="download-count">62</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-oauth-mock">📥 <span class="download-count">68</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">oauth</span> <span class="bit-category">oauth2</span> <span class="bit-category">pkce</span> <span class="bit-category">mock</span> <span class="bit-category">testing</span></span>
 </div>
 

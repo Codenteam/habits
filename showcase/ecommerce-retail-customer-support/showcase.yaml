@@ -1,0 +1,79 @@
+name: Ecommerce & Retail Customer Support
+description: Automate ticket classification, return approvals, escalation routing, FAQ auto-responses, sentiment monitoring, and agent handoff summaries.
+
+longDescription: |
+  A collection of habits that keep retail customer support fast and consistent, from ticket triage through to agent handoff. Each habit operates independently and can be deployed individually or as a complete support automation suite.
+  
+  ## What It Does
+  
+  - **Ticket Classification**: auto-classify inbound tickets by type and urgency
+  - **Return Approval**: validate return eligibility and issue authorisation automatically
+  - **Escalation Routing**: route complex complaints to senior agents with context
+  - **FAQ Auto-Response**: detect common queries and send instant AI-generated responses
+  - **Sentiment Monitoring**: score support interactions and flag at-risk customers
+  - **Agent Handoff Summary**: prepare a context summary when a ticket is transferred
+
+industries:
+  - ecommerce-retail
+
+departments:
+  - customer-support
+
+tags:
+  - ecommerce
+  - support
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: ticket-classification
+    name: Ticket Classification
+    description: Auto-classify inbound support tickets by type and urgency using AI before routing.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: return-approval
+    name: Return Approval
+    description: Validate return eligibility against policy rules and issue authorisation automatically.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: escalation-routing
+    name: Escalation Routing
+    description: Route complex complaints to senior agents with full ticket context pre-loaded.
+    trigger: webhook
+    bits: [webhook, slack, email]
+
+  - id: faq-auto-response
+    name: FAQ Auto-Response
+    description: Detect common queries and send instant AI-generated responses without agent involvement.
+    trigger: webhook
+    bits: [webhook, ai, email]
+
+  - id: sentiment-monitoring
+    name: Sentiment Monitoring
+    description: Score all support interactions for sentiment and flag customers showing negative trends.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: agent-handoff-summary
+    name: Agent Handoff Summary
+    description: Generate a concise context summary with AI whenever a ticket is transferred between agents.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

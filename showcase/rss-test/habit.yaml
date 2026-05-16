@@ -1,0 +1,40 @@
+id: rss-test
+name: RSS Feed Test
+description: Test the bit-rss newItems polling trigger
+
+nodes:
+  - id: fetch-rss
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-rss"
+      operation: newItems
+      isCue: true
+      triggerType: polling
+      params:
+        url: "http://localhost:8765/feed.xml"
+        cronExpression: "*/1 * * * *"
+
+  - id: log-item
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Log RSS Item
+      params:
+        item: "{{habits.input}}"
+        type: script
+        language: deno
+        script: |
+          export async function main(item: unknown) {
+            console.log("RSS item received:", JSON.stringify(item, null, 2));
+            return { received: item };
+          }
+
+edges:
+  - source: fetch-rss
+    target: log-item
+
+output:
+  result: "{{log-item}}"

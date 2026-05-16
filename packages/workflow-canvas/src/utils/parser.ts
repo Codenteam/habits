@@ -197,11 +197,10 @@ function convertHabitNode(node: HabitYamlNode, _index: number): WorkflowNode {
  * Convert HabitYaml edge to WorkflowEdge
  */
 function convertHabitEdge(
-  edge: { source: string; target: string; sourceHandle?: string; targetHandle?: string }, 
-  index: number
+  edge: { source: string; target: string; sourceHandle?: string; targetHandle?: string }
 ): WorkflowEdge {
   return {
-    id: `edge-${edge.source}-${edge.target}-${index}`,
+    id: `${edge.source}-_-${edge.target}-_-${edge.sourceHandle ?? 'main'}-_-${edge.targetHandle ?? 'main'}`,
     source: edge.source,
     target: edge.target,
     sourceHandle: edge.sourceHandle,

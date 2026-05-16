@@ -293,7 +293,7 @@
     </div>
 
     <!-- ══════════════════════════════════════════════
-         TAB 1 — Add Client
+         TAB 1, Add Client
     ══════════════════════════════════════════════ -->
     <div id="tab-clients" class="tab-panel active">
       <div class="card">
@@ -303,7 +303,7 @@
           <label for="client-text">Client Information</label>
           <textarea
             id="client-text"
-            placeholder="Paste any text about your client — name, email, phone, company, address, notes...&#10;&#10;Example:&#10;John Doe from Acme Corp. Email: john@acme.com, Phone: +1 555-0100&#10;Address: 42 Market Street, New York, NY 10001&#10;Notes: Preferred payment by wire transfer."
+            placeholder="Paste any text about your client, name, email, phone, company, address, notes...&#10;&#10;Example:&#10;John Doe from Acme Corp. Email: john@acme.com, Phone: +1 555-0100&#10;Address: 42 Market Street, New York, NY 10001&#10;Notes: Preferred payment by wire transfer."
           ></textarea>
         </div>
 
@@ -326,7 +326,7 @@
     </div>
 
     <!-- ══════════════════════════════════════════════
-         TAB 2 — Generate Invoice
+         TAB 2, Generate Invoice
     ══════════════════════════════════════════════ -->
     <div id="tab-invoices" class="tab-panel">
       <div class="card">
@@ -355,7 +355,7 @@
           <label for="client-select">Select Client</label>
           <div class="dropdown-row">
             <select id="client-select">
-              <option value="">— Loading clients… —</option>
+              <option value="">,  Loading clients… , </option>
             </select>
             <button class="btn-refresh" title="Refresh client list" onclick="loadClients()">↻</button>
           </div>
@@ -417,7 +417,7 @@
       const empty = !value || value === 'null' || value === 'undefined';
       return `<div class="result-field">
         <div class="field-label">${label}</div>
-        <div class="field-value${empty ? ' empty' : ''}">${empty ? '—' : escapeHtml(String(value))}</div>
+        <div class="field-value${empty ? ' empty' : ''}">${empty ? ', ' : escapeHtml(String(value))}</div>
       </div>`;
     }
 
@@ -426,7 +426,7 @@
     }
 
     function fmtDate(val) {
-      if (!val || val === 'null' || val === 'undefined') return '—';
+      if (!val || val === 'null' || val === 'undefined') return ', ';
       const d = new Date(val);
       if (!isNaN(d.getTime())) return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       return val; // already formatted string
@@ -476,7 +476,7 @@
     // ── TAB 2: Load clients into dropdown ──────────────────────────
     async function loadClients() {
       const select = document.getElementById('client-select');
-      select.innerHTML = '<option value="">— Loading… —</option>';
+      select.innerHTML = '<option value="">,  Loading… , </option>';
       try {
         const res = await fetch('/api/list-clients', {
           method: 'POST',
@@ -536,7 +536,7 @@
 
         const out = data.output ?? data;
         const currency = out.currency || '$';
-        const fmt = v => (v != null && v !== 'null') ? `${currency}${Number(v).toFixed(2)}` : '—';
+        const fmt = v => (v != null && v !== 'null') ? `${currency}${Number(v).toFixed(2)}` : ', ';
 
         let html = `
           <div class="invoice-totals">

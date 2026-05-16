@@ -55,7 +55,8 @@ const viewerUrl = computed(() => {
   
   if (props.hideControls) params.set('hideControls', 'false')
   if (props.fitView !== false) params.set('fitView', 'true')
-  return `${baseUrl.value}?${params.toString()}`
+  // All params go in the hash to avoid 414 Request-URI Too Long for large habits
+  return `${baseUrl.value}#${params.toString()}`
 })
 
 const frameHeight = computed(() => {

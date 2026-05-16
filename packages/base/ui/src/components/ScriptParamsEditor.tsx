@@ -26,7 +26,7 @@ const ScriptParamsEditor = memo(({
   onChange,
   className = '',
 }: ScriptParamsEditorProps) => {
-  const [newParamKey, setNewParamKey] = useState('');
+  const [newParamKey, setNewParamKey] = useState('input');
   const [newParamValue, setNewParamValue] = useState('');
 
   // Get custom params (exclude reserved keys)
@@ -78,9 +78,11 @@ const ScriptParamsEditor = memo(({
           Script Parameters
         </label>
       </div>
-      
+
+
+
       <p className="text-xs text-slate-500">
-        Add custom parameters that can be used in your script. Reference previous nodes using {'{{node-id}}'} syntax.
+        Add parameters passed to your script. Reference previous nodes using {'{{node-id}}'} syntax.
       </p>
 
       {/* Existing Parameters */}
@@ -154,17 +156,6 @@ const ScriptParamsEditor = memo(({
           <Plus className="w-5 h-5" />
         </button>
       </div>
-
-      {/* Usage hint */}
-      {customParams.length > 0 && (
-        <div className="text-xs text-slate-500 bg-slate-900/50 p-2 rounded border border-slate-700">
-          <strong className="text-slate-400">Usage in script:</strong>{' '}
-          Parameters are passed to your <code className="text-cyan-400">main()</code> function.
-          <div className="mt-1 font-mono text-cyan-400/80">
-            export async function main({customParams.map(([key]) => key).join(', ')}) {'{ ... }'}
-          </div>
-        </div>
-      )}
     </div>
   );
 });

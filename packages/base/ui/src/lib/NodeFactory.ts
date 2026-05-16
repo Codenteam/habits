@@ -302,6 +302,10 @@ export class NodeFactory {
           language: template.language || 'deno',
           label: template.label,
           position: template.position,
+          content: `export async function main({ input }) {
+  // your code here
+  return { result: input };
+}`,
         });
       }
     }

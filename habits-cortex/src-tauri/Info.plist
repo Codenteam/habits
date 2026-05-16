@@ -15,7 +15,7 @@
   ✅ WORKAROUND: Always run `npm run tauri dev` from an EXTERNAL terminal
   (e.g., Terminal.app, iTerm2) outside of VS Code. It works correctly there.
 
-  DO NOT waste time debugging this by editing this file — the keys are correct.
+  DO NOT waste time debugging this by editing this file, the keys are correct.
 -->
 <plist version="1.0">
 <dict>

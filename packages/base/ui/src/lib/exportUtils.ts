@@ -204,7 +204,6 @@ export function habitToYaml(habit: Habit): string {
       return yamlNode;
     }),
     edges: habit.edges.length > 0 ? habit.edges.map(edge => ({
-      id: edge.id,
       source: edge.source,
       target: edge.target,
       ...(edge.sourceHandle && { sourceHandle: edge.sourceHandle }),
@@ -218,15 +217,11 @@ export function habitToYaml(habit: Habit): string {
   const cleanObj = JSON.parse(JSON.stringify(yamlObj));
 
   return yaml.dump(cleanObj, {
-    indent: 1,
+    indent: 2,
     lineWidth: -1,
     noRefs: true,
     quotingType: '"',
     forceQuotes: false,
-    condenseFlow: true,
-    flowLevel: 0,
-    noArrayIndent: true
-
   });
 }
 

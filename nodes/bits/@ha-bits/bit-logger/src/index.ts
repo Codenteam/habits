@@ -1,7 +1,7 @@
 /**
  * @ha-bits/bit-logger
  *
- * Minimal logging bit — calls console.log with whatever it receives.
+ * Minimal logging bit, calls console.log with whatever it receives.
  * Useful for debugging and testing trigger outputs.
  */
 

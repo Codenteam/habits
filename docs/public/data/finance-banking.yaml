@@ -1,0 +1,192 @@
+id: finance-banking
+name: Finance & Banking
+icon: shield
+tagline: Automate onboarding, loan processing, fraud detection, and compliance.
+description: >
+  Habits remove manual bottlenecks from KYC collection to AML screening , 
+  letting compliance teams focus on judgement calls while automation handles
+  the routine.
+color: green
+
+departments:
+
+  - id: customer-onboarding
+    name: Customer Onboarding
+    icon: star
+    description: Automate KYC, account creation, identity checks, and re-engagement.
+    habits:
+      - id: kyc-document-collection
+        name: KYC Document Collection
+        description: Receive an application via webhook, OCR the ID, AI-validate the match, and request any missing documents by email.
+        trigger: webhook
+        bits: [bit-http, bit-ocr, bit-ai, bit-database-sql, bit-email]
+
+      - id: account-opening
+        name: Account Opening Workflow
+        description: On KYC approval, call the core-banking API to create the account, generate a welcome kit PDF, and email it to the new customer.
+        trigger: webhook
+        bits: [bit-http, bit-pdf, bit-email, bit-database-sql]
+
+      - id: identity-verification
+        name: Identity Verification
+        description: Receive a selfie/ID upload, call an identity-verification API, and email the pass/fail result to both the applicant and compliance.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-database-sql]
+
+      - id: onboarding-re-engagement
+        name: Onboarding Drop-off Re-engagement
+        description: At 24, 48, and 72 hours after a start, find incomplete applications and email a resume link with the next step highlighted.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+      - id: first-transaction-tip
+        name: First Transaction Education
+        description: On the first transaction webhook, AI-personalises a financial tip based on the transaction category and emails it with a relevant product suggestion.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-email]
+
+  - id: loan-processing
+    name: Loan Processing
+    icon: file
+    description: Automate application intake, document chasing, credit pulls, and offer letters.
+    habits:
+      - id: loan-application-intake
+        name: Loan Application Intake
+        description: Receive an application, store it, acknowledge by email to the applicant, and notify the loan officer on Slack.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-slack]
+
+      - id: document-completeness-check
+        name: Document Completeness Check
+        description: Daily job finds pending applications missing documents and chases the applicant by email.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-if, bit-email]
+
+      - id: credit-bureau-pull
+        name: Credit Bureau Pull
+        description: On application complete, call the credit bureau API, store the score, and either auto-approve or notify the underwriter.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-if, bit-email]
+
+      - id: underwriting-status-update
+        name: Underwriting Status Update
+        description: Receive a status change from the underwriting system and email + SMS the applicant with the latest position.
+        trigger: webhook
+        bits: [bit-http, bit-email, bit-sms, bit-database-sql]
+
+      - id: loan-offer-letter
+        name: Loan Offer Letter Generator
+        description: On approval, AI-draft a personalised offer letter, format as PDF, and email it to the applicant with an e-sign link.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-pdf, bit-email]
+
+      - id: disbursement-confirmation
+        name: Disbursement Confirmation
+        description: Receive a disbursal event, generate a PDF disbursement advice, email it to the borrower, and mark the loan as active.
+        trigger: webhook
+        bits: [bit-http, bit-pdf, bit-email, bit-database-sql]
+
+  - id: fraud-detection
+    name: Fraud Detection
+    icon: shield
+    description: Automate real-time alerts, SAR drafts, account freezes, and dispute intake.
+    habits:
+      - id: transaction-alert
+        name: Real-time Transaction Alert
+        description: Receive a high-risk transaction flag, send an OTP/alert to the cardholder by SMS and email, and log the case.
+        trigger: webhook
+        bits: [bit-http, bit-sms, bit-email, bit-database-sql]
+
+      - id: sar-draft
+        name: Suspicious Activity Report Draft
+        description: Receive an AML flag, AI-draft a SAR narrative from transaction data, format as PDF, and email to the compliance officer for review.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-pdf, bit-email]
+
+      - id: account-freeze
+        name: Account Freeze & Notification
+        description: Receive a fraud-confirmed event, freeze the account via the core-banking API, notify the account holder, and create an investigation task.
+        trigger: webhook
+        bits: [bit-http, bit-sms, bit-email, bit-tasks]
+
+      - id: dispute-intake
+        name: Dispute Intake Form
+        description: Receive a dispute form submission, create a case, acknowledge by email with a case reference, and notify the disputes team on Slack.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-slack]
+
+      - id: fraud-weekly-summary
+        name: Fraud Case Weekly Summary
+        description: Every Monday, aggregate cases by type, amount, and status; AI-write a narrative summary; generate a PDF and email the fraud team.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+  - id: compliance-audit
+    name: Compliance & Audit
+    icon: scale
+    description: Automate SOX evidence collection, AML screening, audit exports, and policy sign-offs.
+    habits:
+      - id: sox-evidence-collection
+        name: SOX Controls Evidence Collection
+        description: Quarterly job fetches control test results, gathers evidence files from the filesystem, compiles a PDF pack, and delivers it to the external auditor.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-filesystem, bit-pdf, bit-email]
+
+      - id: aml-sanctions-screening
+        name: AML Sanctions Screening
+        description: Daily job checks new customers and transactions against the sanctions list API and alerts compliance by email and Slack if a match is found.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-http, bit-if, bit-email, bit-slack]
+
+      - id: regulatory-filing-reminder
+        name: Regulatory Filing Reminder
+        description: Tiered email reminders at 14, 7, and 1 day before each regulatory deadline.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+      - id: audit-trail-export
+        name: Audit Trail Export
+        description: Monthly job exports access and change logs to an encrypted file and emails it to the audit team.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-filesystem, bit-email]
+
+      - id: policy-sign-off
+        name: Policy Sign-off Tracker
+        description: On a new policy event, loop over relevant staff to send sign-off requests and record completion percentages.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email]
+
+  - id: customer-support
+    name: Customer Support
+    icon: bot
+    description: Automate ticket routing, statement delivery, SLA alerts, and NPS collection.
+    habits:
+      - id: ticket-auto-routing
+        name: Support Ticket Auto-Routing
+        description: Watch the support inbox, AI-classify intent, and forward to the correct team queue.
+        trigger: email
+        bits: [bit-email, bit-ai, bit-if]
+
+      - id: account-statement-request
+        name: Account Statement Request
+        description: Receive a date-range request from the self-service portal, generate a PDF statement, and email it to the verified address.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-pdf, bit-email]
+
+      - id: complaint-sla-alert
+        name: Complaint Resolution SLA Alert
+        description: Every 4 hours, find open complaints near SLA breach and alert the team lead on Slack; escalate by email if breached.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-slack, bit-email]
+
+      - id: callback-scheduler
+        name: Callback Scheduler
+        description: Receive a preferred time from the callback form, book a slot in the agent's Google Calendar, and confirm by SMS and email.
+        trigger: webhook
+        bits: [bit-http, bit-google-calendar, bit-sms, bit-email]
+
+      - id: nps-survey
+        name: NPS Survey & Analysis
+        description: Seven days after ticket resolution, email an NPS survey, collect the response, AI-analyse comments, and flag detractors in the database.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-http, bit-ai]

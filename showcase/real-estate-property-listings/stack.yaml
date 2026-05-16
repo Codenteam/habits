@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Real Estate - Property Listings"
+
+workflows:
+  - id: listing-creation-alert
+    path: ./habits/listing-creation-alert.yaml
+    enabled: true
+  - id: mls-syndication
+    path: ./habits/mls-syndication.yaml
+    enabled: true
+  - id: price-change-notification
+    path: ./habits/price-change-notification.yaml
+    enabled: true
+  - id: listing-expiry-reminder
+    path: ./habits/listing-expiry-reminder.yaml
+    enabled: true
+  - id: performance-report
+    path: ./habits/performance-report.yaml
+    enabled: true
+  - id: photo-review-request
+    path: ./habits/photo-review-request.yaml
+    enabled: true
+
+server:
+  port: 13041
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

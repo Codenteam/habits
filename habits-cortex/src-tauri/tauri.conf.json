@@ -78,11 +78,21 @@
     }
   },
   "plugins": {
-    "mobile": [
+    "deep-link": {
+      "mobile": [
         {
           "scheme": ["habits-cortex"],
           "appLink": false
+        },
+        {
+          "host": "habits.codenteam.com",
+          "scheme": ["https"],
+          "appLink": true
         }
-      ]
+      ],
+      "desktop": {
+        "schemes": ["habits-cortex"]
+      }
+    }
   }
 }

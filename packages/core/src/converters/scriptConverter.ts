@@ -50,7 +50,7 @@ export class ScriptWorkflowConverter {
         if (index > 0 && modules[index - 1]) {
           const prevNodeId = modules[index - 1].id || `script-${Date.now()}-${index - 1}`;
           edges.push({
-            id: `edge-${prevNodeId}-${nodeId}`,
+            id: `${prevNodeId}-_-${nodeId}-_-main-_-main`,
             source: prevNodeId,
             target: nodeId,
             sourceHandle: 'main',
@@ -61,7 +61,7 @@ export class ScriptWorkflowConverter {
         // Create edge from parent if exists
         if (parentId) {
           edges.push({
-            id: `edge-${parentId}-${nodeId}`,
+            id: `${parentId}-_-${nodeId}-_-main-_-main`,
             source: parentId,
             target: nodeId,
             sourceHandle: 'main',

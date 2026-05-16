@@ -2,7 +2,7 @@
 
 A Habits workflow that saves client data with AI extraction, generates PDF invoices, and uploads them automatically to Google Drive.
 
-## Step 1 — Create a Google Cloud Project & Enable the API
+## Step 1: Create a Google Cloud Project & Enable the API
 
 ### 1.1 Create a new project ( If first time)
 
@@ -20,7 +20,7 @@ A Habits workflow that saves client data with AI extraction, generates PDF invoi
 3. Click it → click **Enable**
 
 
-### Step 2 — Configure the OAuth Consent Screen
+### Step 2: Configure the OAuth Consent Screen
 
 Before creating credentials, Google requires an app to be configured (Skip from 1 to 4 if already app created before):
 
@@ -43,7 +43,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
 > **Why test users?** While the app is in "Testing" mode (not published), only explicitly added test users can authorize it.
 
 
-### Step 3 — Create OAuth 2.0 Credentials
+### Step 3: Create OAuth 2.0 Credentials
 
 1. Navigate to **APIs & Services → Credentials**.
 2. Click **+ Create Credentials → OAuth client ID**.
@@ -53,7 +53,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
    ```
    http://localhost:13000/oauth/bit-google-drive/callback
    ```
-6. Click **Create** — a dialog will show the created client, open it and copy the **Client ID** and **Client Secret** into your `.env` file.
+6. Click **Create**: a dialog will show the created client, open it and copy the **Client ID** and **Client Secret** into your `.env` file.
    > **If the Client Secret is not visible in the dialog**, click **OK** to close it, then find your client in the **Clients** list on the same page, click on its name to open it, and copy the **Client Secret** from the bottom-right of the client details page.
 7. Paste them into `.env`:
    ```env
@@ -61,7 +61,7 @@ Before creating credentials, Google requires an app to be configured (Skip from 
    HABITS_GOOGLE_DRIVE_CLIENT_SECRET=your-client-secret
 
 
-### Step 4 — Authorize via OAuth on First Run
+### Step 4: Authorize via OAuth on First Run
 
 When you start the server , it will print a URL to the console:
 
@@ -77,7 +77,7 @@ Open that URL in your browser, sign in with the Google account you added as a te
 
 1. Open [Google Drive](https://drive.google.com)
 2. Navigate to (or create) the folder where invoices will be uploaded
-3. Open the folder — look at the URL in your browser:
+3. Open the folder, look at the URL in your browser:
    ```
    https://drive.google.com/drive/folders/<ID>
                                           ^^^^

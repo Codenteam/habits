@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { Code } from 'lucide-react';
 import ScriptEditor from './ScriptEditor';
 
@@ -23,15 +23,8 @@ export interface ScriptNodeEditorProps {
   readonly?: boolean;
 }
 
-// Available languages with display names
-const LANGUAGES = [
-  { value: 'deno', label: 'Deno (TypeScript)' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python3', label: 'Python 3' },
-  { value: 'bash', label: 'Bash' },
-  { value: 'go', label: 'Go' },
-  { value: 'sql', label: 'SQL' },
-] as const;
+// Only JavaScript is supported
+const JAVASCRIPT_LANGUAGE = 'javascript';
 
 /**
  * ScriptNodeEditor - Combined language selector and code editor for script nodes
@@ -49,42 +42,22 @@ const LANGUAGES = [
  * - When editing script-type workflow nodes
  * - When you need both language selection and code editing together
  */
+// Suppress unused warning
+void JAVASCRIPT_LANGUAGE;
+
 const ScriptNodeEditor = memo(({
   script,
   language,
   onScriptChange,
-  onLanguageChange,
+  onLanguageChange: _onLanguageChange,
   height = '200px',
-  showLanguageSelector = true,
+  showLanguageSelector: _showLanguageSelector = true,
   showLabel = true,
   className = '',
   readonly = false,
 }: ScriptNodeEditorProps) => {
-  const handleLanguageChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    onLanguageChange(e.target.value);
-  }, [onLanguageChange]);
-
   return (
     <div className={`space-y-3 ${className}`}>
-      {/* Language Selection */}
-      {showLanguageSelector && (
-        <div>
-          <label className="block text-sm font-medium mb-1 text-slate-300">Language</label>
-          <select
-            value={language}
-            onChange={handleLanguageChange}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            disabled={readonly}
-            className={`w-full px-3 py-2 border border-slate-600 rounded-md bg-slate-900 text-white focus:border-blue-500 focus:outline-none nodrag ${readonly ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            {LANGUAGES.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {/* Script Editor */}
       <div>
         {showLabel && (
@@ -96,7 +69,7 @@ const ScriptNodeEditor = memo(({
         <ScriptEditor
           value={script}
           onChange={onScriptChange}
-          language={language}
+          language={language || 'deno'}
           height={height}
           readOnly={readonly}
         />

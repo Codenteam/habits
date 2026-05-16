@@ -35,7 +35,7 @@ interface ShowcaseMetadata {
   author?: string;
   version?: string;
   requirements?: string[];
-  habits?: string[];
+  habits?: string[] | Record<string, unknown>[];
   links?: {
     github?: string;
     demo?: string;
@@ -43,6 +43,9 @@ interface ShowcaseMetadata {
   };
   disabled?: boolean; // If true, example is skipped from generation
   quickDownload?: boolean; // If true, include in public/showcase/index.json for quick download
+  industries?: string[];
+  departments?: string[];
+  notice?: { title: string; text: string };
 }
 
 interface DownloadFile {
@@ -264,15 +267,20 @@ function scanExamples(): ExampleData[] {
       // Determine habit files: use showcase.yaml habits if specified, otherwise auto-detect
       let habitFiles: string[] = [];
       if (metadata.habits && metadata.habits.length > 0) {
-        // Use explicitly specified habits (validate they exist)
-        habitFiles = metadata.habits.filter(file => {
-          const fullPath = join(examplePath, file);
-          if (!existsSync(fullPath)) {
-            console.log(`  ⚠️  Habit file not found: ${file}`);
-            return false;
-          }
-          return true;
-        });
+        // habits can be path strings OR objects (from showcase.yaml used for industry docs)
+        const firstHabit = metadata.habits[0];
+        if (typeof firstHabit === 'string') {
+          // Validate path strings exist
+          habitFiles = (metadata.habits as string[]).filter(file => {
+            const fullPath = join(examplePath, file);
+            if (!existsSync(fullPath)) {
+              console.log(`  ⚠️  Habit file not found: ${file}`);
+              return false;
+            }
+            return true;
+          });
+        }
+        // If habits are objects (HabitEntry), skip file validation, used only for industry docs
       } else {
         // Auto-detect from habits/ folder
         const habitsDir = join(examplePath, 'habits');
@@ -370,6 +378,40 @@ function copyShowcaseAssets(examples: ExampleData[]): void {
     const downloadNote = example.downloads.length > 0 ? ` [${example.downloads.length} downloads]` : '';
     console.log(`  📁 docs/public/showcase/${example.slug}/ (${assetCount} files)${example.useDefaultImage ? ' [default image]' : ''}${downloadNote}`);
   }
+}
+
+const TRIGGER_LABELS: Record<string, string> = {
+  scheduler: 'Scheduled',
+  webhook: 'Webhook',
+  email: 'Email',
+  manual: 'Manual',
+};
+
+function buildHabitsGrid(example: ExampleData): string {
+  const habits = example.habits as Record<string, unknown>[] | undefined;
+  if (!habits?.length) return '';
+  const objectHabits = habits.filter(h => typeof h === 'object' && h !== null && 'name' in h && 'description' in h);
+  if (!objectHabits.length) return '';
+
+  const cards = objectHabits.map(h => {
+    const name = String(h['name'] ?? '');
+    const description = String(h['description'] ?? '');
+    const trigger = String(h['trigger'] ?? '');
+    const bits = Array.isArray(h['bits']) ? (h['bits'] as string[]) : [];
+    const triggerLabel = TRIGGER_LABELS[trigger] ?? trigger;
+    const triggerClass = `trigger-${trigger || 'webhook'}`;
+    const bitsHtml = bits.map(b => `<span class="bit-badge">${b}</span>`).join('');
+    return `  <div class="habit-card">
+    <div class="habit-header">
+      <h3 class="habit-name">${name}</h3>
+      ${trigger ? `<span class="trigger-badge ${triggerClass}">${triggerLabel}</span>` : ''}
+    </div>
+    <p class="habit-description">${description}</p>
+    ${bits.length ? `<div class="bit-list">${bitsHtml}</div>` : ''}
+  </div>`;
+  }).join('\n');
+
+  return `\n<div class="habits-grid">\n${cards}\n</div>\n`;
 }
 
 function generateLandingPage(example: ExampleData): string {
@@ -507,9 +549,9 @@ ${scriptSetupContent}
       <span class="meta-divider"></span>
       <div class="tags">${tagBadges}</div>
     </div>
-    <div class="meta-right">
+    ${example.quickDownload !== false ? `<div class="meta-right">
       <DownloadExample examplePath="${example.slug}" />
-    </div>
+    </div>` : ''}
   </div>
 </div>
 
@@ -517,15 +559,25 @@ ${scriptSetupContent}
   <ShowcaseHero :images="images" />
 </div>
 
+${(example.industries?.length || example.departments?.length) ? `<div class="showcase-taxonomy">${example.industries?.length ? `<div class="taxonomy-group"><span class="taxonomy-label">Industries</span><span class="taxonomy-values">${example.industries.map(i => `<a href="../industries/${i}" class="taxonomy-pill">${i.replace(/-/g, ' ')}</a>`).join('')}</span></div>` : ''}${example.departments?.length ? `<div class="taxonomy-group"><span class="taxonomy-label">Departments</span><span class="taxonomy-values">${example.departments.map(d => `<a href="../industries/${(example.industries?.[0] ?? d)}#${d}" class="taxonomy-pill">${d.replace(/-/g, ' ')}</a>`).join('')}</span></div>` : ''}</div>` : ''}
+
 <p class="showcase-description">${example.description}</p>
 
 ${example.longDescription || ''}
+${buildHabitsGrid(example)}
 ${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
-## Quick Start
+${example.quickDownload !== false ? `## Quick Start
 
 <ExampleRunner examplePath="${example.slug}" />
 
-<DownloadExample examplePath="${example.slug}" />${linksSection}
+<DownloadExample examplePath="${example.slug}" />${linksSection}` : linksSection}
+${example.notice ? `<div class="showcase-notice"><p class="showcase-notice-title">${example.notice.title}</p><p class="showcase-notice-text">${example.notice.text}</p></div>` : ''}
+
+<ContactForm
+  heading="Want this habit running in your environment?"
+  subtext="This habit is a starting point. Tell us about your stack and we'll help you get it working exactly the way your team needs."
+/>
+
 <style>
 .showcase-header {
   margin: 20px 0 28px;
@@ -628,6 +680,175 @@ ${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
   color: var(--vp-c-text-2);
   line-height: 1.6;
   margin: 0 0 24px;
+}
+
+.showcase-taxonomy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+
+.taxonomy-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taxonomy-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--vp-c-text-3);
+  min-width: 90px;
+}
+
+.taxonomy-values {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.taxonomy-pill {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-2);
+  text-transform: capitalize;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+a.taxonomy-pill:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}
+
+.showcase-notice {
+  margin: 24px 0;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 30%, transparent);
+  border-radius: 10px;
+}
+
+.showcase-notice-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin: 0 0 4px;
+}
+
+.showcase-notice-text {
+  font-size: 0.82rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+  clear: both;
+}
+
+.habit-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.habit-card:hover {
+  border-color: var(--vp-c-brand-2);
+}
+
+.habit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.habit-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  line-height: 1.4;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.habit-description {
+  font-size: 0.78rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.bit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bit-badge {
+  font-size: 0.68rem;
+  font-family: var(--vp-font-family-mono);
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(100, 150, 255, 0.08);
+  color: var(--vp-c-brand-1);
+  border: 1px solid rgba(100, 150, 255, 0.2);
+  white-space: nowrap;
+}
+
+.trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trigger-scheduler {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.trigger-webhook {
+  background: rgba(37, 99, 235, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.trigger-email {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.trigger-manual {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .gallery-container {

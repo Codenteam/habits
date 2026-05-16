@@ -18,8 +18,8 @@
     "actionCount": 1,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 202,
-    "downloadsFormatted": "202"
+    "downloads": 212,
+    "downloadsFormatted": "212"
   },
   {
     "slug": "bit-database",
@@ -38,8 +38,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 4,
-    "downloads": 262,
-    "downloadsFormatted": "262"
+    "downloads": 386,
+    "downloadsFormatted": "386"
   },
   {
     "slug": "bit-database-sql",
@@ -60,8 +60,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 2,
-    "downloads": 74,
-    "downloadsFormatted": "74"
+    "downloads": 83,
+    "downloadsFormatted": "83"
   },
   {
     "slug": "bit-email",
@@ -82,8 +82,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 597,
-    "downloadsFormatted": "597"
+    "downloads": 732,
+    "downloadsFormatted": "732"
   },
   {
     "slug": "bit-wifi",
@@ -190,8 +190,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 223,
-    "downloadsFormatted": "223"
+    "downloads": 344,
+    "downloadsFormatted": "344"
   },
   {
     "slug": "bit-intersect",
@@ -210,30 +210,8 @@
     "actionCount": 11,
     "triggerCount": 0,
     "showcaseCount": 3,
-    "downloads": 1385,
-    "downloadsFormatted": "1.4K"
-  },
-  {
-    "slug": "bit-local-ai",
-    "packageName": "@ha-bits/bit-local-ai",
-    "name": "Local Ai",
-    "displayName": "List Models",
-    "description": "Local AI inference services with OpenAI-compatible interface. Run LLMs, Stable Diffusion, Whisper, and more entirely on your machine.",
-    "version": "0.1.0",
-    "categories": [
-      "local-ai",
-      "llm",
-      "whisper",
-      "stable-diffusion",
-      "text-generation"
-    ],
-    "featured": true,
-    "icon": "Package",
-    "actionCount": 10,
-    "triggerCount": 0,
-    "showcaseCount": 1,
-    "downloads": 0,
-    "downloadsFormatted": "-"
+    "downloads": 1583,
+    "downloadsFormatted": "1.6K"
   },
   {
     "slug": "bit-openai",
@@ -249,11 +227,11 @@
     ],
     "featured": true,
     "icon": "Sparkles",
-    "actionCount": 9,
+    "actionCount": 10,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 556,
-    "downloadsFormatted": "556"
+    "downloads": 690,
+    "downloadsFormatted": "690"
   },
   {
     "slug": "bit-sms",
@@ -296,8 +274,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 226,
-    "downloadsFormatted": "226"
+    "downloads": 347,
+    "downloadsFormatted": "347"
   },
   {
     "slug": "bit-ai",
@@ -338,8 +316,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 220,
-    "downloadsFormatted": "220"
+    "downloads": 341,
+    "downloadsFormatted": "341"
   },
   {
     "slug": "bit-cookie",
@@ -358,8 +336,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 237,
-    "downloadsFormatted": "237"
+    "downloads": 358,
+    "downloadsFormatted": "358"
   },
   {
     "slug": "bit-crm",
@@ -379,8 +357,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 232,
-    "downloadsFormatted": "232"
+    "downloads": 353,
+    "downloadsFormatted": "353"
   },
   {
     "slug": "bit-database-mongodb",
@@ -420,8 +398,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 205,
-    "downloadsFormatted": "205"
+    "downloads": 215,
+    "downloadsFormatted": "215"
   },
   {
     "slug": "bit-discord",
@@ -441,8 +419,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 74,
-    "downloadsFormatted": "74"
+    "downloads": 172,
+    "downloadsFormatted": "172"
   },
   {
     "slug": "bit-smart-home",
@@ -505,8 +483,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 61,
-    "downloadsFormatted": "61"
+    "downloads": 67,
+    "downloadsFormatted": "67"
   },
   {
     "slug": "bit-filesystem",
@@ -526,8 +504,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 236,
-    "downloadsFormatted": "236"
+    "downloads": 356,
+    "downloadsFormatted": "356"
   },
   {
     "slug": "bit-loop",
@@ -547,8 +525,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 229,
-    "downloadsFormatted": "229"
+    "downloads": 352,
+    "downloadsFormatted": "352"
   },
   {
     "slug": "bit-github",
@@ -568,8 +546,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 223,
-    "downloadsFormatted": "223"
+    "downloads": 347,
+    "downloadsFormatted": "347"
   },
   {
     "slug": "bit-gohighlevel",
@@ -630,8 +608,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 63,
-    "downloadsFormatted": "63"
+    "downloads": 71,
+    "downloadsFormatted": "71"
   },
   {
     "slug": "bit-hello-world",
@@ -649,8 +627,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 225,
-    "downloadsFormatted": "225"
+    "downloads": 373,
+    "downloadsFormatted": "373"
   },
   {
     "slug": "bit-http",
@@ -670,8 +648,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 325,
-    "downloadsFormatted": "325"
+    "downloads": 450,
+    "downloadsFormatted": "450"
   },
   {
     "slug": "bit-httpbin",
@@ -690,8 +668,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 83,
-    "downloadsFormatted": "83"
+    "downloads": 197,
+    "downloadsFormatted": "197"
   },
   {
     "slug": "bit-hubspot",
@@ -733,8 +711,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 62,
-    "downloadsFormatted": "62"
+    "downloads": 68,
+    "downloadsFormatted": "68"
   },
   {
     "slug": "bit-invoice",
@@ -754,8 +732,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 63,
-    "downloadsFormatted": "63"
+    "downloads": 71,
+    "downloadsFormatted": "71"
   },
   {
     "slug": "bit-jsonplaceholder",
@@ -770,8 +748,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 82,
-    "downloadsFormatted": "82"
+    "downloads": 196,
+    "downloadsFormatted": "196"
   },
   {
     "slug": "bit-linkedin",
@@ -791,20 +769,39 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 60,
-    "downloadsFormatted": "60"
+    "downloads": 67,
+    "downloadsFormatted": "67"
   },
   {
     "slug": "bit-local-ai",
     "packageName": "@ha-bits/bit-local-ai",
-    "name": "Local Ai New",
+    "name": "Local Ai",
     "displayName": "Local AI (Simple)",
-    "description": "Simple local AI with model installation and text generation",
+    "description": "Simple local AI with model installation, text generation, and embeddings",
     "version": "0.0.1",
     "categories": [],
     "featured": false,
     "icon": "Package",
-    "actionCount": 2,
+    "actionCount": 3,
+    "triggerCount": 0,
+    "showcaseCount": 0,
+    "downloads": 90,
+    "downloadsFormatted": "90"
+  },
+  {
+    "slug": "bit-logger",
+    "packageName": "@ha-bits/bit-logger",
+    "name": "Logger",
+    "displayName": "Logger",
+    "description": "Simple logging bit that outputs to console.log",
+    "version": "0.0.1",
+    "categories": [
+      "logger",
+      "debug"
+    ],
+    "featured": false,
+    "icon": "Package",
+    "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
     "downloads": 0,
@@ -827,8 +824,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 208,
-    "downloadsFormatted": "208"
+    "downloads": 222,
+    "downloadsFormatted": "222"
   },
   {
     "slug": "bit-onedrive",
@@ -871,8 +868,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 62,
-    "downloadsFormatted": "62"
+    "downloads": 68,
+    "downloadsFormatted": "68"
   },
   {
     "slug": "bit-ocr",
@@ -915,8 +912,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 69,
-    "downloadsFormatted": "69"
+    "downloads": 76,
+    "downloadsFormatted": "76"
   },
   {
     "slug": "bit-qr",
@@ -980,8 +977,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 67,
-    "downloadsFormatted": "67"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-shell",
@@ -1001,8 +998,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 207,
-    "downloadsFormatted": "207"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-slack",
@@ -1021,8 +1018,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 246,
-    "downloadsFormatted": "246"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-snov",
@@ -1058,8 +1055,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 226,
-    "downloadsFormatted": "226"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-stripe",
@@ -1100,8 +1097,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 230,
-    "downloadsFormatted": "230"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-telegram",
@@ -1121,8 +1118,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 342,
-    "downloadsFormatted": "342"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-text",
@@ -1142,8 +1139,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 226,
-    "downloadsFormatted": "226"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-twitter",
@@ -1163,8 +1160,29 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 69,
-    "downloadsFormatted": "69"
+    "downloads": 0,
+    "downloadsFormatted": "-"
+  },
+  {
+    "slug": "bit-voice",
+    "packageName": "@ha-bits/bit-voice",
+    "name": "Voice",
+    "displayName": "Voice",
+    "description": "Always-listening voice trigger. Captures speech via microphone and triggers workflows when you stop talking or say a specific phrase.",
+    "version": "0.0.1",
+    "categories": [
+      "voice",
+      "speech",
+      "microphone",
+      "trigger"
+    ],
+    "featured": false,
+    "icon": "Package",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0,
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-web-scraper",
@@ -1185,8 +1203,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 74,
-    "downloadsFormatted": "74"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-whatsapp",
@@ -1205,8 +1223,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 257,
-    "downloadsFormatted": "257"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   },
   {
     "slug": "bit-wise",
@@ -1227,7 +1245,7 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 66,
-    "downloadsFormatted": "66"
+    "downloads": 0,
+    "downloadsFormatted": "-"
   }
 ]

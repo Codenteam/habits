@@ -1067,6 +1067,10 @@ function simpleYamlParse(yamlContent) {
   let inputPropertiesSection = false;
   let currentInputProperty = null;
   let currentInputPropertyIndent = 0;
+  
+  // For plain field-map input parsing: input: { prompt: { type, label, ... } }
+  let inputFieldMapMode = false;
+  let currentFieldMapId = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -1088,9 +1092,16 @@ function simpleYamlParse(yamlContent) {
         result.input.push(currentInputProperty);
         currentInputProperty = null;
       }
+      // Save last field map field if in field map mode
+      if (inputFieldMapMode && currentFieldMapId && currentInputProperty) {
+        result.input.push(currentInputProperty);
+        currentInputProperty = null;
+        currentFieldMapId = null;
+      }
       outputKey = null;
       inputObjectMode = false;
       inputPropertiesSection = false;
+      inputFieldMapMode = false;
       
       const match = trimmed.match(/^([a-zA-Z_]+):\s*(.*)?$/);
       if (match) {
@@ -1114,12 +1125,18 @@ function simpleYamlParse(yamlContent) {
                 currentArray = 'input';
                 arrayStartIndent = 2;
                 result.input = [];
+              } else {
+                // Plain field map format: indent + key: (no dash, no OpenAPI wrapper)
+                // e.g. input:\n  prompt:\n    type: textarea
+                inputFieldMapMode = true;
+                result.input = [];
+                currentArray = null;
               }
               break;
             }
             nextIdx++;
           }
-          if (!inputObjectMode) {
+          if (!inputObjectMode && !inputFieldMapMode) {
             currentArray = 'input';
             arrayStartIndent = 2;
             result.input = [];
@@ -1135,6 +1152,27 @@ function simpleYamlParse(yamlContent) {
         } else if (value && !value.startsWith('|') && !value.startsWith('>')) {
           result[currentKey] = value.replace(/^['"]|['"]$/g, '');
           currentArray = null;
+        }
+      }
+    } else if (inputFieldMapMode && currentKey === 'input') {
+      // Plain field map: indent=2 keys are field IDs, indent=4+ are field properties
+      const propMatch = trimmed.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (propMatch) {
+        const propName = propMatch[1];
+        let propValue = propMatch[2]?.trim().replace(/^['"]|['"]$/g, '');
+        if (propValue === 'true') propValue = true;
+        else if (propValue === 'false') propValue = false;
+
+        if (lineIndent === 2 && !propMatch[2]?.trim()) {
+          // New field ID (e.g., "  prompt:")
+          if (currentInputProperty) {
+            result.input.push(currentInputProperty);
+          }
+          currentFieldMapId = propName;
+          currentInputProperty = { id: propName };
+        } else if (currentInputProperty && lineIndent > 2) {
+          // Property of the current field (type, label, placeholder, required, ...)
+          currentInputProperty[propName] = propValue;
         }
       }
     } else if (inputObjectMode && currentKey === 'input') {
@@ -1238,6 +1276,11 @@ function simpleYamlParse(yamlContent) {
   
   // Don't forget last input property if in object mode
   if (inputObjectMode && currentInputProperty) {
+    result.input.push(currentInputProperty);
+  }
+  
+  // Don't forget last field if in field map mode
+  if (inputFieldMapMode && currentInputProperty) {
     result.input.push(currentInputProperty);
   }
 
@@ -2298,7 +2341,7 @@ function openHabitViewer(yamlContentOrHabitId) {
   
   // URL-encode the YAML content for the habit parameter
   const encodedContent = encodeURIComponent(yamlContent);
-  const habitViewerUrl = `./habit-viewer/index.html?habit=${encodedContent}&hideMinimap=true`;
+  const habitViewerUrl = `./habit-viewer/index.html#habit=${encodedContent}&hideMinimap=true`;
   
   // Create fullscreen iframe with small close button
   const viewerHtml = `

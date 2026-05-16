@@ -1,0 +1,32 @@
+version: "1.0"
+name: "Finance Banking - Fraud Detection"
+
+workflows:
+  - id: transaction-monitoring
+    path: ./habits/transaction-monitoring.yaml
+    enabled: true
+  - id: alert-generation
+    path: ./habits/alert-generation.yaml
+    enabled: true
+  - id: customer-notification
+    path: ./habits/customer-notification.yaml
+    enabled: true
+  - id: account-freeze
+    path: ./habits/account-freeze.yaml
+    enabled: true
+  - id: case-management
+    path: ./habits/case-management.yaml
+    enabled: true
+  - id: fraud-report-filing
+    path: ./habits/fraud-report-filing.yaml
+    enabled: true
+
+server:
+  port: 13012
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

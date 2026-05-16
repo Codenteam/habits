@@ -1,0 +1,79 @@
+name: Ecommerce & Retail Finance Reporting
+description: Automate revenue reconciliation, tax reporting preparation, invoice generation, expense categorisation, financial alerts, and period-close checklists.
+
+longDescription: |
+  A collection of habits that keep the books accurate and reporting on schedule, from daily reconciliation through to period-close. Each habit operates independently and can be deployed individually or as a complete finance reporting suite.
+  
+  ## What It Does
+  
+  - **Revenue Reconciliation**: match sales transactions to bank deposits daily
+  - **Tax Reporting Prep**: aggregate tax data by jurisdiction for reporting periods
+  - **Invoice Generation**: auto-generate B2B invoices from order completion events
+  - **Expense Categorisation**: classify and route expense submissions for approval
+  - **Financial Alert**: alert the CFO when daily revenue or margin deviates from forecast
+  - **Period Close Checklist**: trigger month-end close tasks and track completion
+
+industries:
+  - ecommerce-retail
+
+departments:
+  - finance-reporting
+
+tags:
+  - ecommerce
+  - finance
+  - reporting
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: revenue-reconciliation
+    name: Revenue Reconciliation
+    description: Match all sales transactions to bank deposit records automatically every day.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: tax-reporting-prep
+    name: Tax Reporting Prep
+    description: Aggregate tax data by jurisdiction and prepare structured packs for each reporting period.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: invoice-generation
+    name: Invoice Generation
+    description: Auto-generate compliant B2B invoices on order completion and deliver via email.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: expense-categorisation
+    name: Expense Categorisation
+    description: Classify expense submissions using AI and route to the correct approver automatically.
+    trigger: webhook
+    bits: [webhook, ai, http]
+
+  - id: financial-alert
+    name: Financial Alert
+    description: Alert the CFO immediately when daily revenue or gross margin deviates from forecast.
+    trigger: scheduler
+    bits: [scheduler, ai, slack]
+
+  - id: period-close-checklist
+    name: Period Close Checklist
+    description: Trigger month-end close tasks automatically and track completion status across the team.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

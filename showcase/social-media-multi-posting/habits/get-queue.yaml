@@ -1,0 +1,27 @@
+id: get-queue
+name: Get Scheduled Queue
+description: >-
+  Read-only habit used by the UI to display the full pending queue.
+  Returns all posts with status "pending" from smmp_scheduled_posts,
+  ordered by scheduledAt ascending. Does NOT publish anything.
+
+nodes:
+  # Fetch ALL pending posts regardless of scheduledAt
+  - id: get-all-pending
+    type: bits
+    data:
+      label: Get All Pending Posts
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: smmp_scheduled_posts
+        filter: '{"status": "pending"}'
+        limit: 20
+
+edges: []
+
+output:
+  posts: "{{get-all-pending.results}}"
+  totalPending: "{{get-all-pending.count}}"

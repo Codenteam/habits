@@ -1,0 +1,79 @@
+name: Ecommerce & Retail Marketing & CRM
+description: Automate abandoned cart recovery, loyalty notifications, customer segmentation, win-back campaigns, review requests, and performance reporting.
+
+longDescription: |
+  A collection of habits that grow revenue and deepen customer relationships: from cart recovery through to campaign analytics. Each habit operates independently and can be deployed individually or as a complete marketing and CRM automation suite.
+  
+  ## What It Does
+  
+  - **Abandoned Cart Recovery**: send personalised recovery emails with an incentive
+  - **Loyalty Points Notification**: notify customers of earned points and redemption options
+  - **Customer Segmentation**: segment customers by behaviour and update CRM tags
+  - **Win-Back Campaign**: re-engage lapsed customers with targeted offers
+  - **Review Request**: request product reviews 7 days after confirmed delivery
+  - **Campaign Performance Report**: compile marketing metrics and distribute a daily digest
+
+industries:
+  - ecommerce-retail
+
+departments:
+  - marketing-crm
+
+tags:
+  - ecommerce
+  - marketing
+  - crm
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: abandoned-cart-recovery
+    name: Abandoned Cart Recovery
+    description: Send personalised recovery emails with a time-limited incentive to customers who abandoned carts.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: loyalty-points-notification
+    name: Loyalty Points Notification
+    description: Notify customers of newly earned loyalty points and their available redemption options.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: customer-segmentation
+    name: Customer Segmentation
+    description: Segment customers by purchase behaviour and RFM signals, then update CRM tags automatically.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: win-back-campaign
+    name: Win-Back Campaign
+    description: Re-engage customers who have not purchased in 90 days with AI-personalised offers.
+    trigger: scheduler
+    bits: [scheduler, email, ai]
+
+  - id: review-request
+    name: Review Request
+    description: Request product reviews from customers 7 days after confirmed delivery automatically.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: campaign-performance-report
+    name: Campaign Performance Report
+    description: Compile key marketing metrics daily and distribute a digest to the marketing team.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

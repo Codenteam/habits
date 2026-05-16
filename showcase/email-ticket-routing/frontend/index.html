@@ -387,7 +387,7 @@
           document.getElementById('results-detail').className = 'results-detail visible';
         }
 
-        setStatus(`Done — ${analyzed} email(s) analyzed, ${assigned} ticket${assigned === 1 ? '' : 's'} assigned.`, 'success');
+        setStatus(`Done, ${analyzed} email(s) analyzed, ${assigned} ticket${assigned === 1 ? '' : 's'} assigned.`, 'success');
 
       } catch (err) {
         setStep('analyze', 'error');

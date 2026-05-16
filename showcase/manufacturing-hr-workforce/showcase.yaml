@@ -1,0 +1,79 @@
+name: Manufacturing HR & Workforce
+description: Automate shift scheduling, time and attendance processing, safety incident reporting, compliance training, payroll preparation, and headcount alerts.
+
+longDescription: |
+  A collection of habits that keep your workforce running efficiently and safely: from shift rosters through to payroll submission. Each habit operates independently and can be deployed individually or as a complete HR and workforce automation suite.
+  
+  ## What It Does
+  
+  - **Shift Scheduling**: generate weekly shift schedules and notify workers
+  - **Time and Attendance**: process time sheet submissions and flag anomalies
+  - **Safety Incident Reporting**: capture incident reports and route for investigation
+  - **Training Compliance**: track mandatory safety training and send reminders
+  - **Payroll Preparation**: compile payroll data and submit to the payroll system
+  - **Headcount Planning Alert**: notify HR when department headcount falls below target
+
+industries:
+  - manufacturing
+
+departments:
+  - hr-workforce
+
+tags:
+  - manufacturing
+  - hr
+  - workforce
+  - automation
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: shift-scheduling
+    name: Shift Scheduling
+    description: Generate weekly shift schedules based on headcount rules and notify workers of assignments.
+    trigger: scheduler
+    bits: [scheduler, email, sms]
+
+  - id: time-and-attendance
+    name: Time and Attendance
+    description: Process time sheet submissions automatically and flag anomalies for manager review.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: safety-incident-reporting
+    name: Safety Incident Reporting
+    description: Capture safety incident reports via webhook and route to HR and HSE for investigation.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: training-compliance
+    name: Training Compliance
+    description: Track mandatory safety training completion and send automated reminders ahead of deadlines.
+    trigger: scheduler
+    bits: [scheduler, email, http]
+
+  - id: payroll-preparation
+    name: Payroll Preparation
+    description: Compile approved payroll data and submit it to the payroll system on the scheduled run date.
+    trigger: scheduler
+    bits: [scheduler, http, email]
+
+  - id: headcount-planning-alert
+    name: Headcount Planning Alert
+    description: Alert HR automatically when any department headcount falls below the configured target level.
+    trigger: scheduler
+    bits: [scheduler, slack, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

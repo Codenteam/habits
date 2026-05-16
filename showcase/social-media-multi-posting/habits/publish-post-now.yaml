@@ -1,0 +1,83 @@
+id: publish-post-now
+name: Publish Post Now
+description: >-
+  Immediately publishes a single pending post by ID to Twitter/X and LinkedIn,
+  then marks the record as "published" in the database.
+  Input: postId (string)
+
+nodes:
+  # Fetch the post record by ID
+  - id: get-post
+    type: bits
+    data:
+      label: Get Post by ID
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: smmp_scheduled_posts
+        filter: '{"_id": "{{habits.input.postId}}"}'
+        limit: 1
+
+  # Post tweet to Twitter/X
+  - id: post-to-twitter
+    type: bits
+    data:
+      label: Post to Twitter/X
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      operation: tweet
+      auth:
+        clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
+      params:
+        text: "{{get-post.results[0].twitter}}"
+
+  # Post to LinkedIn
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+        clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{get-post.results[0].linkedin}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORGANIZATION_ID}}"
+
+  # Mark the post as published (runs after both platforms succeed)
+  - id: mark-published
+    type: bits
+    data:
+      label: Mark Post as Published
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: smmp_scheduled_posts
+        filter:
+          _id: "{{habits.input.postId}}"
+        update:
+          status: "published"
+
+edges:
+  - source: get-post
+    target: post-to-twitter
+  - source: get-post
+    target: post-to-linkedin
+  - source: post-to-twitter
+    target: mark-published
+  - source: post-to-linkedin
+    target: mark-published
+
+output:
+  status: "published"
+  postId: "{{habits.input.postId}}"

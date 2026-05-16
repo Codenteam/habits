@@ -1,0 +1,79 @@
+name: Ecommerce & Retail Order Management
+description: Automate order confirmations, fulfilment routing, shipping updates, delivery confirmations, return processing, and exception alerts.
+
+longDescription: |
+  A collection of habits that keep every order moving smoothly: from placement through to return. Each habit operates independently and can be deployed individually or as a complete order management automation suite.
+  
+  ## What It Does
+  
+  - **Order Confirmation**: send personalised order confirmations with estimated delivery
+  - **Fulfilment Routing**: route orders to the optimal warehouse based on stock and location
+  - **Shipping Update**: send real-time shipping updates at each carrier milestone
+  - **Delivery Confirmation**: confirm delivery and trigger a review request
+  - **Return Processing**: initiate return labels, track receipt, and trigger refund
+  - **Order Exception Alert**: alert the ops team when orders are delayed or stuck
+
+industries:
+  - ecommerce-retail
+
+departments:
+  - order-management
+
+tags:
+  - ecommerce
+  - orders
+  - automation
+  - logistics
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: order-confirmation
+    name: Order Confirmation
+    description: Send personalised order confirmations with itemised details and estimated delivery date.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: fulfilment-routing
+    name: Fulfilment Routing
+    description: Route each order to the optimal warehouse based on real-time stock levels and customer location.
+    trigger: webhook
+    bits: [webhook, http, scheduler]
+
+  - id: shipping-update
+    name: Shipping Update
+    description: Send real-time shipping updates to customers at each carrier tracking milestone.
+    trigger: webhook
+    bits: [webhook, email, sms]
+
+  - id: delivery-confirmation
+    name: Delivery Confirmation
+    description: Confirm delivery to the customer and trigger a product review request 24 hours later.
+    trigger: webhook
+    bits: [webhook, email, scheduler]
+
+  - id: return-processing
+    name: Return Processing
+    description: Issue return labels automatically, track item receipt, and trigger the refund on confirmation.
+    trigger: webhook
+    bits: [webhook, email, http]
+
+  - id: order-exception-alert
+    name: Order Exception Alert
+    description: Detect delayed or stuck orders and alert the operations team with full order context.
+    trigger: scheduler
+    bits: [scheduler, slack, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

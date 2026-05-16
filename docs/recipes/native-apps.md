@@ -32,8 +32,8 @@ Both apps embed a full Cortex runtime. Your habits run directly on the device. T
 
 Install Habits from the App Store or Google Play:
 
-- **iOS:** [Download on the App Store](#) — requires iOS 16+
-- **Android:** [Get it on Google Play](#) — requires Android 12+
+- **iOS:** [Download on the App Store](#), requires iOS 16+
+- **Android:** [Get it on Google Play](#), requires Android 12+
 
 After installing, open the app. You'll land on the home screen, an empty habit list on first launch.
 
@@ -41,11 +41,11 @@ After installing, open the app. You'll land on the home screen, an empty habit l
 
 There are three ways to add a habit:
 
-**From the built-in library** — tap **Browse**, pick any habit, tap **Install**.
+**From the built-in library**: tap **Browse**, pick any habit, tap **Install**.
 
-**Import a `.habit` file** — tap **Import** and select the file. Habits validates it and adds it to your list.
+**Import a `.habit` file**: tap **Import** and select the file. Habits validates it and adds it to your list.
 
-**Transfer from desktop via Mirror** — on your desktop, open Base and use **Pack → Share via Mirror**. On your phone, tap **Import → Mirror** and enter the pairing code. The habit transfers over a local peer-to-peer connection. See [Mirror](/tools/mirror).
+**Transfer from desktop via Mirror**: on your desktop, open Base and use **Pack → Share via Mirror**. On your phone, tap **Import → Mirror** and enter the pairing code. The habit transfers over a local peer-to-peer connection. See [Mirror](/tools/mirror).
 
 ### Step 3, Run and trigger habits
 
@@ -53,9 +53,9 @@ There are three ways to add a habit:
 
 The detail view gives you three trigger options:
 
-- **Run now** — tap **Run**, fill inputs, tap **Submit**. The habit runs on-device with a live progress indicator.
-- **Schedule** — set a cron expression or a simple interval (every hour, daily at 8am). The app registers a background task.
-- **Webhook** — enable **Webhook** and the app generates a local URL (`http://phone-ip:3000/api/my-habit`) other devices on the same network can call.
+- **Run now**: tap **Run**, fill inputs, tap **Submit**. The habit runs on-device with a live progress indicator.
+- **Schedule**: set a cron expression or a simple interval (every hour, daily at 8am). The app registers a background task.
+- **Webhook**: enable **Webhook** and the app generates a local URL (`http://phone-ip:3000/api/my-habit`) other devices on the same network can call.
 
 ### Step 4, Push notifications
 
@@ -86,9 +86,9 @@ When the app prompts for notification permission, tap **Allow**. Each habit can 
 
 Download the installer for your operating system:
 
-- **macOS** — `.dmg` universal binary (Apple Silicon + Intel). Right-click → **Open** on first launch to bypass quarantine. The app is notarized by Apple.
-- **Windows** — `.msi` installer.
-- **Linux** — `.AppImage` (no install required, just make it executable and run).
+- **macOS**: `.dmg` universal binary (Apple Silicon + Intel). Right-click → **Open** on first launch to bypass quarantine. The app is notarized by Apple.
+- **Windows**: `.msi` installer.
+- **Linux**: `.AppImage` (no install required, just make it executable and run).
 
 ### Step 2, Explore the native canvas
 
@@ -96,11 +96,11 @@ Download the installer for your operating system:
 
 The app opens with two panels:
 
-**Left — Habit library:** all installed habits with name, icon, and last-run status. Click **+** to install from the library or import a `.habit` file.
+**Left, Habit library:** all installed habits with name, icon, and last-run status. Click **+** to install from the library or import a `.habit` file.
 
-**Right — Canvas or detail view:** click a habit to see its workflow canvas. The embedded Base editor is fully functional. Run the habit with the **Run** button in the top bar.
+**Right, Canvas or detail view:** click a habit to see its workflow canvas. The embedded Base editor is fully functional. Run the habit with the **Run** button in the top bar.
 
-No running server needed — the Cortex runtime, the Base editor, and habit storage are all embedded.
+No running server needed, the Cortex runtime, the Base editor, and habit storage are all embedded.
 
 ### Step 3, Use OS integrations
 
@@ -108,13 +108,13 @@ No running server needed — the Cortex runtime, the Base editor, and habit stor
 
 The desktop app exposes native OS capabilities unavailable in the browser:
 
-**Keychain** — store and retrieve secrets in the system keychain (`@ha-bits/bit-keyring`). macOS uses Keychain Access, Windows uses Credential Manager, Linux uses libsecret.
+**Keychain**: store and retrieve secrets in the system keychain (`@ha-bits/bit-keyring`). macOS uses Keychain Access, Windows uses Credential Manager, Linux uses libsecret.
 
-**System notifications** — send native OS notifications from any habit via `@ha-bits/bit-notify`.
+**System notifications**: send native OS notifications from any habit via `@ha-bits/bit-notify`.
 
-**WiFi management** — query connected networks, scan for available networks, connect or disconnect.
+**WiFi management**: query connected networks, scan for available networks, connect or disconnect.
 
-**System settings** — read OS version, hostname, username, and active user.
+**System settings**: read OS version, hostname, username, and active user.
 
 ### Step 4, Run habits fully offline
 
@@ -129,9 +129,9 @@ Any habit that doesn't call external APIs works completely offline:
 ### Tips for desktop
 
 - **Store all API keys in the keychain once**, then reference them by key name across all habits.
-- **Use scheduled habits as background services** — they run even when the window is closed.
-- **Use Mirror to share habits between machines** — generate a pairing code in the app and receive on another device.
-- **Edit workflows in the app** — the embedded canvas is identical to Habits Base; no separate terminal process needed.
+- **Use scheduled habits as background services**: they run even when the window is closed.
+- **Use Mirror to share habits between machines**: generate a pairing code in the app and receive on another device.
+- **Edit workflows in the app**: the embedded canvas is identical to Habits Base; no separate terminal process needed.
 
 ### Platform-specific notes
 

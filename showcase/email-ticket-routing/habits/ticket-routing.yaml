@@ -23,7 +23,7 @@ nodes:
         collectResults: true
 
   # Node 2: Analyze each email as a support ticket using OpenAI
-  # Iterates over the fetched emails array — one analyze-ticket call per email
+  # Iterates over the fetched emails array: one analyze-ticket call per email
   - id: analyze-tickets
     type: action
     data:
@@ -40,7 +40,7 @@ nodes:
         collectResults: true
 
   # Node 3: Assign each analyzed ticket to the correct team inbox
-  # Iterates over analyze-tickets results — one assign-ticket call per analyzed ticket
+  # Iterates over analyze-tickets results: one assign-ticket call per analyzed ticket
   - id: assign-tickets
     type: action
     data:

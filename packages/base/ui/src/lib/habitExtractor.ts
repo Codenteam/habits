@@ -49,7 +49,7 @@ export interface SchemaNode {
 
 /** Schema-compliant workflow edge */
 export interface SchemaEdge {
-  id: string;
+  id?: string;
   source: string;
   target: string;
   sourceHandle?: string;
@@ -164,7 +164,6 @@ export function extractSchemaHabit(
   
   const schemaEdges: SchemaEdge[] = edges.map(edge => {
     const schemaEdge: SchemaEdge = {
-      id: edge.id,
       source: edge.source,
       target: edge.target,
     };

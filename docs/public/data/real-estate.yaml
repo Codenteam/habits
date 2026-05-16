@@ -1,0 +1,198 @@
+id: real-estate
+name: Real Estate
+icon: home
+tagline: Leads, listings, transactions, and property management, streamlined.
+description: >
+  From the moment a lead fills in a form to the day a tenant renews their lease,
+  habits automate every communication, document, and follow-up in the
+  real estate lifecycle.
+color: purple
+
+departments:
+
+  - id: lead-management
+    name: Lead Management
+    icon: target
+    description: Automate lead capture, scoring, follow-up sequences, stale alerts, and attribution reports.
+    habits:
+      - id: lead-capture-crm-sync
+        name: New Lead Capture & CRM Sync
+        description: Receive a lead form, create a contact in the CRM, send an instant follow-up email from the assigned agent, and log the source.
+        trigger: webhook
+        bits: [bit-http, bit-crm, bit-email, bit-database-sql]
+
+      - id: lead-qualification-scorer
+        name: Lead Qualification Scorer
+        description: On a new CRM lead event, AI-score the lead 1–10 based on budget, timeline, and location; update the CRM score field; immediately Slack-alert senior agents for high scores.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-crm, bit-if, bit-slack]
+
+      - id: multi-touch-follow-up
+        name: Multi-Touch Follow-up Sequence
+        description: On days 1, 3, 7, and 14 after lead capture, AI-generate a personalised property suggestion email and send it to the lead.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-ai, bit-email]
+
+      - id: stale-lead-alert
+        name: Stale Lead Alert
+        description: Daily job finds leads not contacted in more than 5 days, emails the assigned agent, and posts the stale-lead list to the team Slack channel.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-slack]
+
+      - id: lead-source-attribution-report
+        name: Lead Source Attribution Report
+        description: Every Monday, aggregate leads by source, calculate conversion rates and cost per lead using AI, generate a PDF, and email it to the sales director.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+  - id: property-listings
+    name: Property Listings
+    icon: home
+    description: Automate AI listing descriptions, multi-portal sync, price alerts, expiry reminders, and open house campaigns.
+    habits:
+      - id: ai-listing-description
+        name: AI Listing Description Generator
+        description: Receive property details and photos, AI-analyse the photos and generate compelling listing copy, store the content, and email the listing agent for approval.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-database-sql, bit-email]
+
+      - id: multi-portal-listing-sync
+        name: Multi-Portal Listing Sync
+        description: On listing approval, push the listing to each portal API (Zillow, MLS, etc.), log the sync status per portal, and confirm to the agent by email.
+        trigger: webhook
+        bits: [bit-http, bit-loop, bit-database-sql, bit-email]
+
+      - id: price-reduction-alert
+        name: Price Reduction Alert
+        description: On a price change event, find saved-search subscribers matching the property's area, type, and budget, and send a price-drop alert by email and SMS.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email, bit-sms]
+
+      - id: listing-expiry-reminder
+        name: Listing Expiry Reminder
+        description: At 14, 7, and 1 day before listing expiry, remind the listing agent to renew or adjust their pricing strategy.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+      - id: open-house-invitation
+        name: Open House Invitation Campaign
+        description: On open house scheduled, find leads matching the property profile and send invitations by email and SMS with a map link and calendar invite.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email, bit-sms, bit-google-calendar]
+
+  - id: transaction-management
+    name: Transaction Management
+    icon: file
+    description: Automate offer packages, milestone tracking, inspection distribution, EMD reminders, closing briefs, and post-close surveys.
+    habits:
+      - id: offer-submission-package
+        name: Offer Submission Package
+        description: Receive offer terms, generate a PDF offer letter, deliver it to the listing agent and seller, and Slack-alert the deal manager.
+        trigger: webhook
+        bits: [bit-http, bit-pdf, bit-email, bit-database-sql, bit-slack]
+
+      - id: contract-milestone-tracker
+        name: Contract Milestone Tracker
+        description: Daily job checks upcoming contract milestones (inspection, appraisal, finance, closing) and sends reminders by email and SMS with Google Calendar updates.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-sms, bit-google-calendar]
+
+      - id: inspection-report-distribution
+        name: Inspection Report Distribution
+        description: On inspection complete, AI-summarise key findings and flag urgent issues, attach the original report as PDF, and email both to the buyer and buyer's agent.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-pdf, bit-email]
+
+      - id: earnest-money-reminder
+        name: Earnest Money Deposit Reminder
+        description: At 48 and 24 hours before the EMD deadline, urgently remind the buyer by SMS and email; Slack-alert the transaction coordinator.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-sms, bit-email, bit-slack]
+
+      - id: closing-brief
+        name: Closing Checklist & Day-of Brief
+        description: 48 hours before closing, AI-compile a closing checklist with documents to bring and wire instructions, format as PDF, and email all parties.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+      - id: post-closing-survey
+        name: Post-Closing Survey & Review Request
+        description: Three days after closing, email both buyer and seller a client experience survey and a Google/Zillow review request.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+
+  - id: marketing
+    name: Marketing
+    icon: zap
+    description: Automate market reports, social media posts, client anniversary mailers, development alerts, and neighbourhood digests.
+    habits:
+      - id: monthly-market-report
+        name: Monthly Market Report Mailer
+        description: First of month, fetch MLS stats, AI-write a narrative on median price and inventory, generate a branded PDF, and batch-send it to the newsletter list.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-ai, bit-pdf, bit-database-sql, bit-email]
+
+      - id: social-media-listing-post
+        name: Social Media Listing Post
+        description: On listing approval, AI-generate an engaging caption with hashtags and post to Instagram and Facebook via API.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-http, bit-database-sql]
+
+      - id: client-anniversary-mailer
+        name: Client Anniversary & Birthday Mailer
+        description: Daily morning job finds clients with a closing anniversary or birthday today and sends a warm personalised email from their agent.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-ai, bit-email]
+
+      - id: new-development-alert
+        name: New Development Alert
+        description: Receive a developer partner announcement, find matching leads by area, budget, and property type, and send early-access alerts by email.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email]
+
+      - id: neighbourhood-digest
+        name: Neighbourhood Digest Newsletter
+        description: Every Friday, scrape local news, new listings, and recent sales; AI-curate a neighbourhood digest; email it to subscribers segmented by neighbourhood.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-web-scraper, bit-ai, bit-email]
+
+  - id: property-management
+    name: Property Management
+    icon: settings
+    description: Automate rent reminders, maintenance requests, lease renewals, tenant surveys, utility billing, and vacancy reports.
+    habits:
+      - id: rent-payment-reminder
+        name: Rent Payment Reminder
+        description: On day 25 of the month, email and SMS all tenants a payment reminder with an online pay link.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-sms]
+
+      - id: maintenance-request-workflow
+        name: Maintenance Request Workflow
+        description: Receive a tenant maintenance request, create a work order, acknowledge by email, dispatch to the vendor, and create a deadline-bound task.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-tasks]
+
+      - id: lease-renewal-notice
+        name: Lease Renewal Notice
+        description: At 90, 60, and 30 days before expiry, AI-generate a personalised renewal offer with market-rate context and send tiered notices to tenants.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-ai, bit-email]
+
+      - id: tenant-satisfaction-survey
+        name: Tenant Satisfaction Survey
+        description: Semi-annually, email all active tenants an NPS and comment survey, collect responses, AI-analyse themes, and flag complaints requiring action.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-http, bit-ai]
+
+      - id: utility-billing-reconciliation
+        name: Utility Billing Reconciliation
+        description: Monthly job fetches utility invoices, allocates costs per tenant, generates a PDF statement for each, and emails it with a charge posted to the ledger.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-pdf, bit-email]
+
+      - id: vacancy-loss-report
+        name: Vacancy Loss Report
+        description: Monthly job calculates vacant days times market rate per unit; AI-identify highest-impact vacancies and pricing optimisations; email a PDF to the portfolio manager.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]

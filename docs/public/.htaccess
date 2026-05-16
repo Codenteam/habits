@@ -19,6 +19,13 @@ ErrorDocument 404 /intersect/habits/404.html
     RewriteRule . /intersect/habits/404.html [L]
 </IfModule>
 
+# Allow CORS for all origins
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type"
+</IfModule>
+
 # Prevent directory listing
 Options -Indexes
 

@@ -146,7 +146,7 @@ function installDocsPackages(): void {
  
 function generateDocsContent(): void {
   console.log('\n=== Generating Documentation Content ===\n');
-  run('npx tsx packages/manage/forge/src/mcp/commands.ts'); // generate COMMANDS.md + docs/public/commands/ snippets
+  // run('npx tsx packages/manage/forge/src/mcp/commands.ts'); // generate COMMANDS.md + docs/public/commands/ snippets
   run('npx tsx scripts/generate-showcase.ts');
   run('npx tsx scripts/update-bits-stats.ts'); // Fetch stats first
   run('npx tsx scripts/generate-bits.ts');     // Then generate pages with stats
@@ -204,10 +204,23 @@ function uploadToServer(): void {
   }
 }
 
+function validateEnv(): void {
+  const required = ['SCP_HOST', 'SCP_USERNAME', 'SCP_KEY', 'SCP_PATH'];
+  const missing = required.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  } else {
+    console.log(`All required environment variables are set, including ${required.join(', ')}`);
+  }
+}
+
 async function main(): Promise<void> {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║           📚 Habits Documentation Deployment 📚            ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
+
+  validateEnv();
 
   const startTime = Date.now();
 

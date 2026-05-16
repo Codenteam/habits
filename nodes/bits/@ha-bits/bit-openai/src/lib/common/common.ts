@@ -169,7 +169,7 @@ export const castMarkdownProperty = Property.StaticDropdown({
       },
       {
         label: 'Force',
-        value: 'force',
+        value: 'force' as unknown as boolean,
       },
     ],
   },

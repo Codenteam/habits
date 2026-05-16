@@ -1,0 +1,79 @@
+name: Manufacturing Production Planning
+description: Automate capacity alerts, production order creation, material requirements planning, schedule change notifications, and output reporting.
+
+longDescription: |
+  A collection of habits that keep production plans accurate and teams aligned: from capacity monitoring through to daily output reporting. Each habit operates independently and can be deployed individually or as a complete production planning suite.
+  
+  ## What It Does
+  
+  - **Capacity Alert**: flag capacity constraints when order volume exceeds threshold
+  - **Production Order Creation**: auto-create production orders from confirmed sales orders
+  - **Material Requirements Planning**: calculate material needs and alert purchasing
+  - **Schedule Change Notification**: notify affected teams when the production schedule changes
+  - **Bottleneck Alert**: detect and escalate workstation bottlenecks in real time
+  - **Output Reporting**: distribute a daily production output report to management
+
+industries:
+  - manufacturing
+
+departments:
+  - production-planning
+
+tags:
+  - manufacturing
+  - planning
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+type: automation
+
+quickDownload: false
+
+enterprise: true
+improving: true
+tailored: true
+
+habits:
+  - id: capacity-alert
+    name: Capacity Alert
+    description: Flag capacity constraints automatically when confirmed order volume exceeds production threshold.
+    trigger: scheduler
+    bits: [scheduler, ai, slack]
+
+  - id: production-order-creation
+    name: Production Order Creation
+    description: Auto-create structured production orders in the MES when sales orders are confirmed.
+    trigger: webhook
+    bits: [webhook, http, email]
+
+  - id: material-requirements-planning
+    name: Material Requirements Planning
+    description: Calculate material requirements from the production plan and alert purchasing on shortfalls.
+    trigger: scheduler
+    bits: [scheduler, ai, http]
+
+  - id: schedule-change-notification
+    name: Schedule Change Notification
+    description: Notify all affected teams immediately when changes are made to the production schedule.
+    trigger: webhook
+    bits: [webhook, slack, email]
+
+  - id: bottleneck-alert
+    name: Bottleneck Alert
+    description: Detect workstation bottlenecks in real time using throughput data and escalate to the planner.
+    trigger: scheduler
+    bits: [scheduler, ai, slack]
+
+  - id: output-reporting
+    name: Output Reporting
+    description: Compile actual vs planned production output daily and distribute the report to management.
+    trigger: scheduler
+    bits: [scheduler, ai, email]
+
+notice:
+  title: "Tailored to your systems & workflows"
+  text: "Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows."

@@ -1,0 +1,192 @@
+id: manufacturing
+name: Manufacturing
+icon: cpu
+tagline: Supply chain, quality control, maintenance, and production, all connected.
+description: >
+  From purchase order approvals to OEE reports, habits integrate your ERP,
+  MES, CMMS, and quality systems, replacing manual emails and spreadsheets
+  with reliable automated flows.
+color: yellow
+
+departments:
+
+  - id: supply-chain
+    name: Supply Chain
+    icon: link
+    description: Automate supplier alerts, PO approvals, goods receipt, shortage alerts, and performance reports.
+    habits:
+      - id: supplier-lead-time-alert
+        name: Supplier Lead Time Alert
+        description: Daily job fetches supplier delivery performance; if lead time degrades more than 10%, alerts the procurement manager by email and Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-http, bit-if, bit-email, bit-slack]
+
+      - id: po-approval-workflow
+        name: Purchase Order Approval Workflow
+        description: Receive a new PO from the ERP, email the approver with an approve/reject link, and update the ERP via API once a decision is received.
+        trigger: webhook
+        bits: [bit-http, bit-if, bit-email, bit-database-sql]
+
+      - id: goods-receipt-notification
+        name: Goods Receipt Notification
+        description: Receive a GRN event from the WMS, match to the PO, notify the quality team to inspect, and post to the warehouse Slack channel.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-slack]
+
+      - id: critical-parts-shortage
+        name: Critical Parts Shortage Alert
+        description: Every 4 hours, check inventory against minimum safety stock for BOM-critical parts and alert the supply chain director by SMS and email.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-if, bit-sms, bit-email, bit-slack]
+
+      - id: supplier-performance-report
+        name: Supplier Performance Report
+        description: Monthly job aggregates on-time delivery, quality defects, and lead time per supplier; AI ranks them, flags at-risk ones, and emails a PDF scorecard.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+  - id: quality-control
+    name: Quality Control
+    icon: check-circle
+    description: Automate NCRs, incoming inspections, defect alerts, CAPA tracking, and monthly QC reports.
+    habits:
+      - id: non-conformance-report
+        name: Non-Conformance Report (NCR)
+        description: Receive inspection form data, create an NCR record, notify QC manager and production lead, and create a CAPA task on Slack.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email, bit-tasks, bit-slack]
+
+      - id: incoming-inspection-checklist
+        name: Incoming Inspection Checklist
+        description: On GRN event, fetch the inspection criteria for the part and supplier, email the checklist to the QC inspector, and collect the result via webhook.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-email]
+
+      - id: defect-rate-alert
+        name: Defect Rate Threshold Alert
+        description: At each shift end, compute defect percentage by line and product; alert the QC lead on Slack and email a shift summary to the plant manager.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-if, bit-slack, bit-email]
+
+      - id: capa-escalation
+        name: CAPA Escalation Tracker
+        description: Weekly job finds open CAPAs past their due date and emails escalation reminders to the owner and QC director, then posts the overdue list to Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-slack]
+
+      - id: qc-monthly-report
+        name: Quality KPI Monthly Report
+        description: First of month, aggregate first-pass yield, defect rates, NCRs, and CAPAs; AI-write a narrative with root-cause trends; email a PDF to management.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+  - id: maintenance
+    name: Maintenance
+    icon: wrench
+    description: Automate preventive maintenance reminders, downtime alerts, spare parts reorders, work orders, and OEE reports.
+    habits:
+      - id: preventive-maintenance-reminder
+        name: Preventive Maintenance Reminder
+        description: Assets due for PM in the next 7 days trigger emails to the maintenance tech and supervisor, plus a work order in the task system.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-tasks]
+
+      - id: equipment-downtime-alert
+        name: Equipment Downtime Alert
+        description: Receive a machine-down SCADA event and immediately SMS and Slack the maintenance lead and production manager; log the downtime start.
+        trigger: webhook
+        bits: [bit-http, bit-sms, bit-slack, bit-database-sql]
+
+      - id: spare-parts-reorder
+        name: Spare Parts Reorder
+        description: Daily job checks spare parts inventory against minimum levels and raises a PO in the ERP via API for anything below threshold.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-if, bit-http, bit-email]
+
+      - id: work-order-completion
+        name: Work Order Completion Log
+        description: On work order close, log duration and parts used, update AI failure-history notes for the asset, and email a summary to the supervisor.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-ai, bit-email]
+
+      - id: oee-report
+        name: OEE Weekly Report
+        description: Every Monday, calculate availability, performance, and quality per asset; AI-identify the lowest-OEE machines; email a PDF report to plant management.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+  - id: hr-workforce
+    name: HR & Workforce
+    icon: target
+    description: Automate shift notifications, safety training compliance, incident reports, attendance anomalies, and performance reviews.
+    habits:
+      - id: shift-schedule-notification
+        name: Shift Schedule Notification
+        description: Every Friday at 3 PM, send next week's personal shift schedule to each employee by SMS and email.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-sms, bit-email]
+
+      - id: safety-training-reminder
+        name: Safety Training Compliance Reminder
+        description: Daily job finds employees with overdue safety training and emails a reminder with the LMS link; escalates to HR manager if overdue more than 7 days.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email, bit-if]
+
+      - id: workplace-incident-report
+        name: Workplace Incident Report
+        description: Receive incident data via form, AI-classify severity and generate an immediate actions list, then notify HR, safety officer, and plant manager.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-email, bit-database-sql]
+
+      - id: attendance-anomaly-alert
+        name: Attendance Anomaly Alert
+        description: Daily 9 AM check compares scheduled vs clocked attendance; if absence rate on a line exceeds 15%, alerts the production supervisor on Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-if, bit-slack, bit-email]
+
+      - id: performance-review-scheduler
+        name: Performance Review Scheduler
+        description: 60 days before each employee anniversary, create a review meeting in Google Calendar and notify both employee and manager with a self-assessment form.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-google-calendar, bit-email]
+
+  - id: production-planning
+    name: Production Planning
+    icon: clipboard
+    description: Automate daily schedules, delay alerts, yield loss flags, BOM change notifications, and capacity reports.
+    habits:
+      - id: daily-production-schedule
+        name: Daily Production Schedule Broadcast
+        description: At 5:30 AM, fetch the day's production orders and send the schedule to line supervisors by email and Slack.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-email, bit-slack]
+
+      - id: customer-order-delay-alert
+        name: Customer Order Delay Alert
+        description: Every 2 hours, compare WIP progress to due dates; alert the planning team and customer service by email for at-risk orders.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-if, bit-email, bit-sms]
+
+      - id: yield-loss-alert
+        name: Yield Loss Alert
+        description: Receive a below-target yield event from the MES, correlate with recent BOM and process changes using AI, and alert the production engineer on Slack.
+        trigger: webhook
+        bits: [bit-http, bit-ai, bit-slack, bit-email]
+
+      - id: bom-change-notification
+        name: BOM Change Notification
+        description: Receive a BOM-change event from the PLM system, find all active production orders using that BOM, and notify production, procurement, and QC by email.
+        trigger: webhook
+        bits: [bit-http, bit-database-sql, bit-loop, bit-email]
+
+      - id: machine-utilisation-report
+        name: Machine Utilisation Report
+        description: Every Monday, fetch runtime, idle, and downtime by machine; AI-identify bottlenecks and scheduling changes; email a PDF to the plant manager.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]
+
+      - id: capacity-planning-report
+        name: Capacity Planning Report
+        description: Monthly aggregation of order backlog and resource availability; AI models overtime, subcontract, and new-shift scenarios; emails a PDF to the operations director.
+        trigger: scheduler
+        bits: [bit-scheduler, bit-database-sql, bit-ai, bit-pdf, bit-email]

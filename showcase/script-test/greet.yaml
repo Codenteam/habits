@@ -1,0 +1,43 @@
+id: greet
+name: Greet with JavaScript
+description: Greets a person using an inline JavaScript script node
+
+input:
+  - name: name
+    type: string
+    displayAs: text
+    label: Name
+    description: Enter your name
+    default: World
+    required: true
+
+nodes:
+  - id: run-script
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Greet via JS
+      params:
+        name: "{{habits.input.name}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(name) {
+          const message = "are you ok?"
+            return { message: 'Hello, ' + name + '! ' + message, timestamp: new Date().toISOString() };
+          }
+
+edges: []
+
+output:
+  greeting:
+    value: "{{run-script.message}}"
+    type: string
+    displayAs: text
+    label: Greeting
+  timestamp:
+    value: "{{run-script.timestamp}}"
+    type: string
+    displayAs: text
+    label: Timestamp

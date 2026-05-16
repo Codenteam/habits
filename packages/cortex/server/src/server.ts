@@ -968,6 +968,30 @@ class WorkflowExecutorServer {
       }
     });
 
+
+
+    // Stop a specific polling trigger
+    this.app.delete('/misc/trigger/:workflowId/:nodeId', (req: Request, res: Response) => {
+      const { workflowId, nodeId } = req.params;
+      const stopped = this.executor.stopPollingTrigger(workflowId, nodeId);
+      if (stopped) {
+        res.json({ success: true, message: `Polling trigger ${workflowId}:${nodeId} stopped` });
+      } else {
+        res.status(404).json({ error: `No active polling trigger found for ${workflowId}:${nodeId}` });
+      }
+    });
+
+    // Fire a polling trigger immediately (bypasses cron schedule, useful for testing)
+    this.app.post('/misc/trigger/:workflowId/:nodeId/fire', async (req: Request, res: Response) => {
+      const { workflowId, nodeId } = req.params;
+      try {
+        const result = await this.executor.fireTriggerNow(workflowId, nodeId);
+        res.json(result);
+      } catch (error: any) {
+        res.status(500).json({ success: false, items: [], message: error.message });
+      }
+    });
+
     // ========================================================================
     // Frontend Static Files (at / if configured)
     // ========================================================================

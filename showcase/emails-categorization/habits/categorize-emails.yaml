@@ -55,7 +55,7 @@ nodes:
               msg += `\n\n📌 ${e.subject ?? '(no subject)'}\n`
                    + `👤 ${e.from ?? ''}\n`
                    + `🏷️ ${e.category ?? 'Other'} • ${e.priority ?? 'Medium'} Priority\n`
-                   + `📝 ${e.summary ?? '—'}`;
+                   + `📝 ${e.summary ?? ', '}`;
             }
             return msg;
           }

@@ -67,7 +67,8 @@
             ".local.js": "text"
           },
           "external": [
-            "lightningcss"
+            "lightningcss",
+            "@anthropic-ai/claude-agent-sdk"
           ],
           "packages": "bundle"
         }

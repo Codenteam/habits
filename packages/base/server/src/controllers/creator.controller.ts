@@ -20,7 +20,9 @@
 
 import { Request, Response } from 'express';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import JSZip from 'jszip';
 import { LoggerFactory } from '@ha-bits/core/logger';
 import { createResponse } from '../helpers';
@@ -78,6 +80,113 @@ function resolveWorkspaceRoot(): string {
     if (fs.existsSync(path.join(dir, 'showcase'))) return dir;
   }
   return cwd;
+}
+
+// ── Reference material resolver / downloader ────────────────────────
+
+const REFERENCE_REPO = 'https://github.com/codenteam/habits.git';
+const SPARSE_PATHS = ['nodes/bits/@ha-bits', 'showcase'];
+
+/** Stable cache dir: ~/.habits/reference (or HABITS_REF_PATH env override) */
+function getReferenceCacheDir(): string {
+  return process.env.HABITS_REF_PATH || path.join(os.homedir(), '.habits', 'reference');
+}
+
+interface ReferencePaths {
+  bitsDir: string;
+  examplesDir: string;
+}
+
+/**
+ * Check the workspace root first, then the user-level cache.
+ * Returns null when neither is populated yet.
+ */
+function findExistingReferences(): ReferencePaths | null {
+  const root = resolveWorkspaceRoot();
+  const wsBitsDir = path.join(root, 'nodes', 'bits', '@ha-bits');
+  const wsExamplesDir = path.join(root, 'showcase');
+  if (fs.existsSync(wsBitsDir) && fs.existsSync(wsExamplesDir)) {
+    return { bitsDir: wsBitsDir, examplesDir: wsExamplesDir };
+  }
+
+  const cacheDir = getReferenceCacheDir();
+  const cacheBitsDir = path.join(cacheDir, 'nodes', 'bits', '@ha-bits');
+  const cacheExamplesDir = path.join(cacheDir, 'showcase');
+  if (fs.existsSync(cacheBitsDir) && fs.existsSync(cacheExamplesDir)) {
+    return { bitsDir: cacheBitsDir, examplesDir: cacheExamplesDir };
+  }
+
+  return null;
+}
+
+/** In-memory singleton so concurrent requests share one download */
+let referenceDownloadPromise: Promise<ReferencePaths> | null = null;
+
+/**
+ * Sparse-clone only `nodes/bits/@ha-bits` and `showcase` from the habits repo
+ * into the user-level cache dir, then return the resolved paths.
+ */
+async function downloadReferenceMaterials(
+  onProgress: (msg: string) => void,
+): Promise<ReferencePaths> {
+  const cacheDir = getReferenceCacheDir();
+
+  // Double-check cache (another request may have finished while we waited)
+  const existing = findExistingReferences();
+  if (existing) return existing;
+
+  onProgress('Downloading AI reference materials (first run only, please wait)...');
+
+  // Check git is available
+  try {
+    execSync('git --version', { stdio: 'pipe' });
+  } catch {
+    throw new Error(
+      'git is required to download reference materials but was not found. ' +
+      'Install git and retry, or set HABITS_REF_PATH to a directory containing ' +
+      'nodes/bits/@ha-bits and showcase.',
+    );
+  }
+
+  const tmpCloneDir = path.join(os.tmpdir(), `habits-ref-${Date.now()}`);
+
+  try {
+    onProgress('Cloning reference repository (sparse, no history)...');
+    execSync(
+      `git clone --depth=1 --filter=blob:none --sparse ${REFERENCE_REPO} "${tmpCloneDir}"`,
+      { stdio: 'pipe', timeout: 180_000 },
+    );
+
+    onProgress('Checking out reference directories...');
+    execSync(
+      `git -C "${tmpCloneDir}" sparse-checkout set ${SPARSE_PATHS.join(' ')}`,
+      { stdio: 'pipe', timeout: 120_000 },
+    );
+
+    onProgress('Installing reference materials to cache...');
+    fs.mkdirSync(cacheDir, { recursive: true });
+
+    for (const rel of SPARSE_PATHS) {
+      const src = path.join(tmpCloneDir, rel);
+      const dest = path.join(cacheDir, rel);
+      if (fs.existsSync(src)) {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.cpSync(src, dest, { recursive: true, force: true });
+      }
+    }
+
+    logger.info('Reference materials downloaded', { cacheDir });
+    onProgress('Reference materials ready.');
+
+    return {
+      bitsDir: path.join(cacheDir, 'nodes', 'bits', '@ha-bits'),
+      examplesDir: path.join(cacheDir, 'showcase'),
+    };
+  } finally {
+    try {
+      fs.rmSync(tmpCloneDir, { recursive: true, force: true });
+    } catch { /* ignore cleanup errors */ }
+  }
 }
 
 // ── Progress extraction from SDK messages ───────────────────────────
@@ -161,7 +270,7 @@ export class CreatorController {
   private guardDisabled(res: Response): boolean {
     if (process.env.HABITS_AI_GEN !== 'true') {
       res.status(403).json(
-        createResponse(false, undefined, 'AI generation is not enabled. Set HABITS_AI_GEN=true to enable.'),
+        createResponse(false, undefined, 'AI generation is not enabled. To enable it, set the environment variable HABITS_AI_GEN=true.'),
       );
       return true;
     }
@@ -175,40 +284,26 @@ export class CreatorController {
   }
 
   /**
-   * Guard that checks if bits and examples directories exist.
-   * These are required for the AI to learn from and generate quality output.
+   * Ensure bits and showcase directories are available, downloading them if needed.
+   * Streams SSE progress while the download runs. Returns the resolved paths.
+   * Uses a module-level singleton promise so concurrent requests share one download.
    */
-  private guardMissingReferences(res: Response): boolean {
-    const root = resolveWorkspaceRoot();
-    const bitsDir = path.join(root, 'nodes', 'bits', '@ha-bits');
-    const examplesDir = path.join(root, 'showcase');
+  private async ensureReferences(res: Response): Promise<ReferencePaths> {
+    const existing = findExistingReferences();
+    if (existing) return existing;
 
-    const missingBits = !fs.existsSync(bitsDir);
-    const missingExamples = !fs.existsSync(examplesDir);
-
-    if (missingBits || missingExamples) {
-      const missing: string[] = [];
-      if (missingBits) missing.push('nodes/bits/@ha-bits (bit modules)');
-      if (missingExamples) missing.push('examples (reference habits)');
-
-      const message = [
-        `AI generation requires reference materials that are not present: ${missing.join(', ')}.`,
-        '',
-        'The AI needs access to existing bits and example habits to generate quality output.',
-        '',
-        'To fix this, clone the full habits repository instead of using npx/npm:',
-        '',
-        '  git clone https://github.com/codenteam/habits.git',
-        '  cd habits',
-        '  pnpm install',
-        '',
-        'Then run the server from the cloned repository.',
-      ].join('\n');
-
-      res.status(400).json(createResponse(false, undefined, message));
-      return true;
+    if (!referenceDownloadPromise) {
+      referenceDownloadPromise = downloadReferenceMaterials((msg) =>
+        sseEvent(res, 'progress', { step: msg }),
+      ).finally(() => {
+        // Reset so a failed download can be retried on the next request
+        referenceDownloadPromise = null;
+      });
+    } else {
+      sseEvent(res, 'progress', { step: 'Waiting for reference download already in progress...' });
     }
-    return false;
+
+    return referenceDownloadPromise;
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────
@@ -234,12 +329,21 @@ export class CreatorController {
     logger.info('Starting Claude agent execution', { stagingDir });
     sseEvent(res, 'progress', { step: 'Starting AI agent…' });
 
-    // const query = await loadClaudeAgent();
+    // Resolve the SDK's cli.js explicitly so it works when bundled as CJS
+    // (import.meta.url is undefined in CJS, which the SDK normally uses to locate cli.js)
+    let pathToClaudeCodeExecutable: string | undefined;
+    try {
+      const sdkPkg = require.resolve('@anthropic-ai/claude-agent-sdk/package.json');
+      pathToClaudeCodeExecutable = path.join(path.dirname(sdkPkg), 'cli.js');
+    } catch {
+      // SDK not found in node_modules; fall back and let the SDK try import.meta.url
+    }
 
     for await (const message of query({
       prompt,
       options: {
         allowedTools: ['Read', 'Edit', 'Bash', 'Write', 'Glob', 'Grep'],
+        ...(pathToClaudeCodeExecutable ? { pathToClaudeCodeExecutable } : {}),
       },
     })) {
       // Log full message for debugging
@@ -309,7 +413,6 @@ export class CreatorController {
    */
   createHabit = async (req: Request, res: Response): Promise<void> => {
     if (this.guardDisabled(res)) return;
-    if (this.guardMissingReferences(res)) return;
 
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
@@ -321,10 +424,9 @@ export class CreatorController {
     const stagingDir = this.createStagingDir();
 
     try {
+      const { bitsDir, examplesDir } = await this.ensureReferences(res);
       const root = resolveWorkspaceRoot();
-      const examplesDir = path.join(root, 'showcase');
       const schemaFile = path.join(root, 'schemas', 'habits.schema.yaml');
-      const bitsDir = path.join(root,  'nodes', 'bits', '@ha-bits');
 
       sseEvent(res, 'progress', { step: 'Preparing prompt…' });
 
@@ -442,7 +544,6 @@ export class CreatorController {
    */
   createBit = async (req: Request, res: Response): Promise<void> => {
     if (this.guardDisabled(res)) return;
-    if (this.guardMissingReferences(res)) return;
 
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
@@ -454,8 +555,7 @@ export class CreatorController {
     const stagingDir = this.createStagingDir();
 
     try {
-      const root = resolveWorkspaceRoot();
-      const bitsDir = path.join(root,  'nodes', 'bits', '@ha-bits');
+      const { bitsDir } = await this.ensureReferences(res);
 
       sseEvent(res, 'progress', { step: 'Preparing prompt…' });
 

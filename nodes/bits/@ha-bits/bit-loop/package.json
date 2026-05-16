@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/bit-loop",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Iterate over items and invoke a sub-habit for each one",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

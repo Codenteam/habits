@@ -141,11 +141,15 @@ impl ImapClient {
         let mut tls_guard = self.inner.tls_session.lock().unwrap();
         let mut plain_guard = self.inner.plain_session.lock().unwrap();
         
-        // Determine what to fetch - use RFC822 for body which is more compatible
+        // Determine what to fetch - use BODY.PEEK[] to avoid marking emails as read unless explicitly requested
         let fetch_items = if options.headers_only {
             "(UID FLAGS ENVELOPE)"
         } else if options.fetch_body {
-            "(UID FLAGS ENVELOPE RFC822)"
+            if options.mark_as_read {
+                "(UID FLAGS ENVELOPE RFC822)"
+            } else {
+                "(UID FLAGS ENVELOPE BODY.PEEK[])"
+            }
         } else {
             "(UID FLAGS ENVELOPE)"
         };
@@ -217,7 +221,11 @@ impl ImapClient {
         let fetch_items = if options.headers_only {
             "(FLAGS ENVELOPE)"
         } else if options.fetch_body {
-            "(FLAGS ENVELOPE RFC822)"
+            if options.mark_as_read {
+                "(FLAGS ENVELOPE RFC822)"
+            } else {
+                "(FLAGS ENVELOPE BODY.PEEK[])"
+            }
         } else {
             "(FLAGS ENVELOPE)"
         };

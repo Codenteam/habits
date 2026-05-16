@@ -653,7 +653,7 @@ Test HTML Date: ${new Date().toISOString()}
       provider: request.provider || config.provider || 'auto',
       model: request.model || config.model || 'gpt-4.1-mini',
       // html: request.html,
-      apiToken: request.apiToken || config.apiKey,
+      // Note: apiToken is intentionally omitted for Intersect provider - auth is via the Authorization header
     }),
   });
 
@@ -705,6 +705,19 @@ Test HTML Date: ${new Date().toISOString()}
   
   // Extract HTML from markdown code blocks if present
   const extractedHtml = extractHtmlFromResponse(accumulatedContent);
+  
+  // Check if the response is a JSON error from the Intersect API
+  try {
+    const parsed = JSON.parse(accumulatedContent.trim());
+    if (parsed && parsed.ok === false && parsed.message) {
+      throw new Error(`Intersect AI error: ${parsed.message}`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Intersect AI error:')) {
+      throw e;
+    }
+    // Not valid JSON or no ok:false - continue normally
+  }
   
   // Normalize the response
   return {

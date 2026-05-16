@@ -23,7 +23,7 @@ export default function ShareLinkModal({ isOpen, onClose, habitYaml }: ShareLink
 
   if (!isOpen) return null;
 
-  // Build the URL with all parameters
+  // Build the URL with all parameters in the hash (avoids 414 Request-URI Too Long)
   const buildUrl = () => {
     const encodedYaml = encodeURIComponent(habitYaml);
     const params = new URLSearchParams();
@@ -42,7 +42,7 @@ export default function ShareLinkModal({ isOpen, onClose, habitYaml }: ShareLink
       params.set('fitView', 'false');
     }
     
-    return `https://codenteam.com/intersect/habits/viewer/?${params.toString()}`;
+    return `https://codenteam.com/intersect/habits/viewer/#${params.toString()}`;
   };
 
   const shareUrl = buildUrl();

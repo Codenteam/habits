@@ -209,7 +209,7 @@ export async function fetchImapEmails(
             extractAttachmentParts(message.bodyStructure, attachmentParts);
           }
 
-          // Build attachments list — download content only when attachmentsOnly is true
+          // Build attachments list, download content only when attachmentsOnly is true
           const attachments: Array<{ filename: string; contentType: string; size: number; content?: string }> = [];
           if (attachmentsOnly) {
             for (const part of attachmentParts) {
@@ -219,9 +219,9 @@ export async function fetchImapEmails(
                 if (dl && dl.content) {
                   const chunks: Buffer[] = [];
                   for await (const chunk of dl.content) {
-                    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as unknown as ArrayBuffer));
                   }
-                  content = Buffer.concat(chunks).toString('base64');
+                  content = Buffer.concat(chunks as unknown as Uint8Array[]).toString('base64');
                   log('debug', `Downloaded attachment ${part.filename} (${chunks.length} chunks, ${content.length} base64 chars)`);
                 }
               } catch (dlErr) {
@@ -372,11 +372,23 @@ export async function sendSmtpEmail(
   }
 
   if (message.attachments && message.attachments.length > 0) {
-    mailOptions.attachments = message.attachments.map(att => ({
-      filename: att.filename,
-      content: att.content,
-      contentType: att.contentType,
-    }));
+    mailOptions.attachments = message.attachments.map(att => {
+      // Decode base64 string content to a Buffer so nodemailer sends binary
+      // files (PDF, images, etc.) correctly — mirrors bit-google-drive behaviour.
+      let content: string | Buffer = att.content;
+      if (typeof att.content === 'string' && att.content.length > 0) {
+        try {
+          content = Buffer.from(att.content, 'base64');
+        } catch {
+          content = att.content;
+        }
+      }
+      return {
+        filename: att.filename,
+        content,
+        contentType: att.contentType,
+      };
+    });
   }
 
   // Send mail

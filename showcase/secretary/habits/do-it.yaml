@@ -1,0 +1,58 @@
+id: do-it
+name: Do It
+description: >-
+  Free-form AI secretary. Give it any task: organize files, send messages,
+  search the web, or call any available bit. It will figure out the tools to use.
+
+input:
+  prompt:
+    type: textarea
+    label: What should I do?
+    placeholder: "e.g. Send a Slack message to #general summarising today's news headlines"
+    required: true
+
+nodes:
+  - id: secretary-agent
+    type: bit
+    data:
+      framework: bits
+      module: '@ha-bits/bit-agent'
+      operation: run_agent
+      source: npm
+      credentials:
+        agentAuth:
+          llmProvider: openai
+          apiKey: '{{habits.env.OPENAI_API_KEY}}'
+          mcpSecrets:
+            SLACK_BOT_TOKEN: '{{habits.env.SLACK_BOT_TOKEN}}'
+            SLACK_CHANNEL_ID: '{{habits.env.SLACK_CHANNEL_ID}}'
+            TELEGRAM_BOT_TOKEN: '{{habits.env.TELEGRAM_BOT_TOKEN}}'
+            TELEGRAM_CHAT_ID: '{{habits.env.TELEGRAM_CHAT_ID}}'
+            GITHUB_TOKEN: '{{habits.env.GITHUB_TOKEN}}'
+            GOOGLE_API_KEY: '{{habits.env.GOOGLE_API_KEY}}'
+            FS_BASE_DIR: DOCUMENT
+      params:
+        prompt: '{{habits.input.prompt}}'
+        systemPrompt: >-
+          You are a capable AI secretary with access to the filesystem, messaging
+          apps, the web, and many other tools. Execute the user's request
+          completely and report what you did. If you are unsure how to proceed,
+          reason step by step before using tools. Always confirm completion.
+        mcpServers:
+          - type: filesystem
+          - type: slack
+          - type: telegram
+          - type: fetch
+          - type: notification
+          - type: clipboard
+          - type: all-bits
+        model: gpt-4o
+        maxIterations: 40
+        temperature: 0.5
+
+edges: []
+
+output:
+  result: '{{secretary-agent.response}}'
+  toolCalls: '{{secretary-agent.toolCalls}}'
+  iterations: '{{secretary-agent.iterations}}'
