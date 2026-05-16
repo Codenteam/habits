@@ -1,0 +1,115 @@
+id: generate-social-posts
+name: Generate Social Media Posts
+description: >
+  Receives a single normalised RSS article and uses OpenAI to produce two
+  platform-specific posts: a concise tweet for Twitter/X and a longer
+  professional post for LinkedIn.  Once both are ready it hands off to
+  post-to-social to publish them.
+
+nodes:
+  # Step 1: Generate a Twitter/X tweet for the article
+  - id: generate-twitter
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: "force"
+        maxTokens: 300
+        prompt: |
+          You are a social media expert who writes punchy, high-engagement tweets.
+
+          Write a single tweet for the following article. The tweet must:
+          - Be under 240 characters (leaving room for the URL)
+          - Grab attention with a strong opening
+          - Include 2–3 relevant hashtags at the end
+          - End with the article URL on its own line
+
+          ARTICLE DETAILS:
+          Title:  {{article.title}}
+          Author: {{article.author}}
+          Date:   {{article.date}}
+          URL:    {{article.url}}
+          Body:
+          {{article.body}}
+
+          Return ONLY valid JSON wrapped in ```json``` fences:
+          {
+            "tweet": "Your tweet text here\n\n{{article.url}}\n\n#hashtag1 #hashtag2"
+          }
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  # Step 2: Generate a LinkedIn post for the article
+  - id: generate-linkedin
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: "force"
+        maxTokens: 600
+        prompt: |
+          You are a professional content creator who writes insightful LinkedIn posts.
+
+          Write a LinkedIn post for the following article. The post must:
+          - Start with a compelling hook (one sentence)
+          - Have 2–3 short paragraphs of insight or key takeaways
+          - Be professional yet conversational
+          - End with the article URL
+          - Include 3–5 relevant hashtags on the last line
+          - Total length: 150–350 words
+
+          ARTICLE DETAILS:
+          Title:  {{article.title}}
+          Author: {{article.author}}
+          Date:   {{article.date}}
+          URL:    {{article.url}}
+          Body:
+          {{article.body}}
+
+          Return ONLY valid JSON wrapped in ```json``` fences:
+          {
+            "post": "Your full LinkedIn post text here\n\n{{article.url}}\n\n#hashtag1 #hashtag2 #hashtag3"
+          }
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  # Step 3: Hand off both generated posts to post-to-social
+  - id: publish
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items:
+          - twitterPost: "{{generate-twitter.tweet}}"
+            linkedinPost: "{{generate-linkedin.post}}"
+            articleTitle: "{{article.title}}"
+            articleUrl: "{{article.url}}"
+        habitId: post-to-social
+        inputKey: social
+        continueOnError: true
+        collectResults: false
+
+edges:
+  - source: generate-twitter
+    target: generate-linkedin
+  - source: generate-linkedin
+    target: publish
+
+output:
+  articleTitle: "{{article.title}}"
+  articleUrl:   "{{article.url}}"
+  twitterPost:  "{{generate-twitter.tweet}}"
+  linkedinPost: "{{generate-linkedin.post}}"

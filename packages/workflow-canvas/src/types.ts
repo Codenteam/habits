@@ -207,6 +207,8 @@ export interface WorkflowCanvasProps {
   onConnect?: (connection: Connection) => void;
   /** Edges delete handler (for editing mode) */
   onEdgesDelete?: (edges: WorkflowEdge[]) => void;
+  /** Edge click handler */
+  onEdgeClick?: (event: React.MouseEvent, edge: WorkflowEdge) => void;
   /** Children to render inside ReactFlow (e.g., Panel components) */
   children?: React.ReactNode;
 }

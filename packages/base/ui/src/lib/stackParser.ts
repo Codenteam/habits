@@ -222,8 +222,8 @@ export function convertHabitYamlToHabit(habitYaml: HabitYaml): ParsedHabit {
   });
   
   // Convert edges
-  const edges: CanvasEdge[] = habitYaml.edges.map((edge, index) => ({
-    id: `edge-${edge.source}-${edge.target}-${index}`,
+  const edges: CanvasEdge[] = habitYaml.edges.map((edge) => ({
+    id: `${edge.source}-_-${edge.target}-_-${edge.sourceHandle ?? 'main'}-_-${edge.targetHandle ?? 'main'}`,
     source: edge.source,
     target: edge.target,
     sourceHandle: edge.sourceHandle,

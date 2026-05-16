@@ -1,0 +1,16 @@
+version: "1.0"
+name: "RSS Trigger Test"
+workflows:
+  - id: rss-test
+    path: ./habit.yaml
+    enabled: true
+
+server:
+  port: 13002
+  host: "0.0.0.0"
+
+logging:
+  level: debug
+  outputs: [console]
+  format: text
+  colorize: true

@@ -271,7 +271,6 @@ async function startAdminServer(): Promise<ServerHandle | null> {
       NS_MANAGER_ROOT_DOMAIN: 'habits.local',
       NS_MANAGER_USERNAME: 'admin',
       NS_MANAGER_DEV_USER: 'admin',     // bypass bcrypt auth
-      NS_MANAGER_PDNS_API_KEY: 'test',
       NS_MANAGER_DATA_DIR: '/tmp/habits-admin-test',
       PORT: '3099',
       HOST: '127.0.0.1',

@@ -1,0 +1,42 @@
+version: "1.0"
+name: "Content Digest Summarizer"
+description: >
+  Fetches contents (emails, RSS articles, or news), summarizes each one with OpenAI,
+  and posts a digest of all summaries to a Slack channel.
+
+workflows:
+  - id: fetch-emails
+    path: ./habits/fetch-emails.yaml
+    enabled: true
+
+  - id: summarize-content
+    path: ./habits/summarize-content.yaml
+    enabled: true
+
+  - id: send-digest
+    path: ./habits/send-digest.yaml
+    enabled: true
+
+  - id: process-content
+    path: ./habits/process-content.yaml
+    enabled: true
+
+  - id: content-digest
+    path: ./habits/content-digest.yaml
+    enabled: true
+
+  - id: rss-digest
+    path: ./habits/rss-digest.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  openapi: true
+  frontend: ./frontend
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

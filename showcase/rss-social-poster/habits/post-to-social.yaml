@@ -1,0 +1,50 @@
+id: post-to-social
+name: Post to Twitter and LinkedIn
+description: >
+  Receives a generated twitterPost and linkedinPost and publishes them in
+  sequence — first to Twitter/X, then to LinkedIn — using the configured
+  OAuth access tokens.
+
+nodes:
+  # Step 1: Post the tweet to Twitter/X
+  - id: post-to-twitter
+    type: bits
+    data:
+      label: Post to Twitter/X
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      operation: tweet
+      auth:
+        clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
+      params:
+        text: "{{social.twitterPost}}"
+
+  # Step 2: Post to LinkedIn (runs after Twitter succeeds)
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+         clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+         clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{social.linkedinPost}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORG_ID}}"
+
+edges:
+  - source: post-to-twitter
+    target: post-to-linkedin
+
+output:
+  articleTitle:  "{{social.articleTitle}}"
+  articleUrl:    "{{social.articleUrl}}"
+  twitterPostId: "{{post-to-twitter.tweetId}}"
+  linkedinPostId: "{{post-to-linkedin.postId}}"
+  success: true

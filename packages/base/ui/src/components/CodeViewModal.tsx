@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Download, Copy, Check, FileCode, Settings, Key, FileText, ChevronDown, ChevronRight, Shield, AlertTriangle, Loader2, Sparkles, Package } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectHabits, selectServerConfig, setServerConfig, selectActiveEnvVariables, setEnvVariables, selectExportBundle } from '../store/slices/workflowSlice';
+import { selectHabits, selectServerConfig, setServerConfig, selectActiveEnvVariables, selectExportBundle } from '../store/slices/workflowSlice';
 import { envVariablesToString } from '../lib/exportUtils';
 
 import BinaryExportTab from './BinaryExportTab';
@@ -27,47 +27,6 @@ interface SecurityCapabilities {
   registryInfo?: string;
 }
 
-// Helper to parse .env string back to envVariables format with comments
-function parseEnvString(content: string): Record<string, { value: string; comment?: string }> {
-  const result: Record<string, { value: string; comment?: string }> = {};
-  const lines = content.split('\n');
-  let pendingComments: string[] = [];
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    
-    // Accumulate comment lines
-    if (trimmed.startsWith('#')) {
-      const commentText = trimmed.slice(1).trimStart();
-      pendingComments.push(commentText);
-      continue;
-    }
-    
-    // Skip empty lines
-    if (!trimmed) {
-      if (Object.keys(result).length > 0) {
-        pendingComments = [];
-      }
-      continue;
-    }
-    
-    const match = trimmed.match(/^([^=]+)=(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      let value = match[2].trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      result[key] = {
-        value,
-        comment: pendingComments.length > 0 ? pendingComments.join('\n') : undefined,
-      };
-      pendingComments = [];
-    }
-  }
-  return result;
-}
-
 export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
   const dispatch = useAppDispatch();
   const habits = useAppSelector(selectHabits);
@@ -84,7 +43,7 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('config');
   const [activeFileTab, setActiveFileTab] = useState<FileSubTab>('stack');
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [expandedHabits, setExpandedHabits] = useState<Set<number>>(new Set([0]));
+  const [expandedHabits, setExpandedHabits] = useState<Set<number>>(new Set());
   // Local state for manageEndpoint (not persisted to Redux)
   const [manageEndpoint, setManageEndpoint] = useState(false);
   
@@ -189,13 +148,12 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
 
 
   const toggleHabitExpanded = (index: number) => {
-    const newExpanded = new Set(expandedHabits);
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index);
-    } else {
-      newExpanded.add(index);
-    }
-    setExpandedHabits(newExpanded);
+    setExpandedHabits(prev => {
+      if (prev.has(index)) {
+        return new Set<number>();
+      }
+      return new Set<number>([index]);
+    });
   };
 
   const hasFrontend = !!frontendHtml;
@@ -802,7 +760,7 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
               {activeFileTab === 'env' && (
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50">
-                    <span className="text-sm text-slate-400">.env (editable)</span>
+                    <span className="text-sm text-slate-400">.env</span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleCopy(envContent, 'env')}
@@ -820,18 +778,8 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
                       </button>
                     </div>
                   </div>
-                  <div className="flex-1 p-4">
-                    <textarea
-                      value={envContent}
-                      onChange={(e) => {
-                        // Parse the edited content and update envVariables state
-                        const parsed = parseEnvString(e.target.value);
-                        dispatch(setEnvVariables(parsed));
-                      }}
-                      rows={50}
-                      className="w-full h-full bg-slate-900 border border-slate-700 rounded p-3 text-sm font-mono text-slate-300 resize-none focus:border-blue-500 focus:outline-none"
-                      placeholder="# Environment variables will be extracted from your habits..."
-                    />
+                  <div className="flex-1 overflow-auto p-4">
+                    <pre className="text-sm font-mono text-slate-300 whitespace-pre-wrap">{envContent || '# No environment variables found in your habits.'}</pre>
                   </div>
                 </div>
               )}

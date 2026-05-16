@@ -16,7 +16,7 @@ const industry = {
     {
       "id": "billing-insurance",
       "name": "Healthcare Billing & Insurance",
-      "icon": "scale",
+      "icon": "zap",
       "description": "Automate claims submission, prior auth requests, denial management, and payment posting across your billing and insurance workflows.",
       "habits": [
         {
@@ -101,7 +101,7 @@ const industry = {
     {
       "id": "clinical-operations",
       "name": "Healthcare Clinical Operations",
-      "icon": "clipboard",
+      "icon": "zap",
       "description": "Automate lab result routing, patient scheduling, medication refills, care coordination, and EHR data sync across clinical operations.",
       "habits": [
         {
@@ -186,7 +186,7 @@ const industry = {
     {
       "id": "compliance-reporting",
       "name": "Healthcare Compliance & Reporting",
-      "icon": "shield",
+      "icon": "zap",
       "description": "Automate HIPAA audit log compilation, incident reporting, policy distribution, accreditation tracking, and regulatory update alerts.",
       "habits": [
         {
@@ -271,7 +271,7 @@ const industry = {
     {
       "id": "hr-staffing",
       "name": "Healthcare HR & Staffing",
-      "icon": "smile",
+      "icon": "zap",
       "description": "Automate nurse shift scheduling, credential tracking, staff onboarding, shift coverage requests, and compliance training reminders.",
       "habits": [
         {
@@ -356,7 +356,7 @@ const industry = {
     {
       "id": "patient-management",
       "name": "Healthcare Patient Management",
-      "icon": "heart",
+      "icon": "zap",
       "description": "Automate appointment reminders, discharge summaries, readmission alerts, referral coordination, and patient satisfaction surveys.",
       "habits": [
         {

@@ -16,7 +16,7 @@ const industry = {
     {
       "id": "customer-support",
       "name": "Ecommerce & Retail Customer Support",
-      "icon": "smile",
+      "icon": "zap",
       "description": "Automate ticket classification, return approvals, escalation routing, FAQ auto-responses, sentiment monitoring, and agent handoff summaries.",
       "habits": [
         {
@@ -101,7 +101,7 @@ const industry = {
     {
       "id": "finance-reporting",
       "name": "Ecommerce & Retail Finance Reporting",
-      "icon": "scale",
+      "icon": "zap",
       "description": "Automate revenue reconciliation, tax reporting preparation, invoice generation, expense categorisation, financial alerts, and period-close checklists.",
       "habits": [
         {
@@ -186,7 +186,7 @@ const industry = {
     {
       "id": "inventory-management",
       "name": "Ecommerce & Retail Inventory Management",
-      "icon": "package",
+      "icon": "zap",
       "description": "Automate low stock alerts, reorder purchase orders, supplier notifications, inventory reconciliation, and demand forecasting.",
       "habits": [
         {
@@ -271,7 +271,7 @@ const industry = {
     {
       "id": "marketing-crm",
       "name": "Ecommerce & Retail Marketing & CRM",
-      "icon": "target",
+      "icon": "zap",
       "description": "Automate abandoned cart recovery, loyalty notifications, customer segmentation, win-back campaigns, review requests, and performance reporting.",
       "habits": [
         {

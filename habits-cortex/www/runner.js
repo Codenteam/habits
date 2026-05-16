@@ -2341,7 +2341,7 @@ function openHabitViewer(yamlContentOrHabitId) {
   
   // URL-encode the YAML content for the habit parameter
   const encodedContent = encodeURIComponent(yamlContent);
-  const habitViewerUrl = `./habit-viewer/index.html?habit=${encodedContent}&hideMinimap=true`;
+  const habitViewerUrl = `./habit-viewer/index.html#habit=${encodedContent}&hideMinimap=true`;
   
   // Create fullscreen iframe with small close button
   const viewerHtml = `

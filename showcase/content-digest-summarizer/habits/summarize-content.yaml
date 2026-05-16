@@ -1,0 +1,63 @@
+id: summarize-content
+name: Summarize Content
+description: >
+  Receives a single content item (email, RSS article, or news) and uses OpenAI to produce a concise
+  summary, extract key points, and infer the topic category.
+
+nodes:
+  - id: summarize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are an intelligent content digest assistant.
+
+          Analyze the following content item and produce a structured summary.
+          The content may be an email, an RSS article, a news post, or any similar item.
+          Some fields below may be empty or missing — ignore any that are empty and infer from what is available.
+
+          CONTENT DETAILS:
+          - Type:   {{content.type}}
+          - Date:   {{content.date}}
+          - Source: {{content.from}}
+          - Title:  {{content.title}}
+          - URL:    {{content.url}}
+          - Body:
+          {{content.body}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - title:        A concise, descriptive title for this content item (max 10 words); never null
+            - summary:      A 2–3 sentence plain-language summary of the content; never null
+            - keyPoints:    An array of 2–4 short bullet-point strings; use an empty array [] if nothing notable
+            - category:     One of: newsletter, article, notification, promotion, update, discussion, other; default to "other" if unclear
+            - sentiment:    One of: positive, neutral, negative; default to "neutral" if unclear
+            - actionRequired: true if the content requires the reader to take an action, false otherwise
+            - actionItem:   If actionRequired is true, a one-sentence description of the required action; otherwise null
+            - importance:   One of: high, medium, low — based on urgency and relevance; default to "low" if unclear
+            - link:         The URL from the input if one was provided and is non-empty; otherwise null
+        maxTokens: 600
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  contentId: "{{content.id}}"
+  source: "{{content.from}}"
+  date: "{{content.date}}"
+  url: "{{summarize.link || null}}"
+  title: "{{summarize.title || '(Untitled)'}}"
+  summary: "{{summarize.summary || ''}}"
+  keyPoints: "{{summarize.keyPoints || []}}"
+  category: "{{summarize.category || 'other'}}"
+  sentiment: "{{summarize.sentiment || 'neutral'}}"
+  actionRequired: "{{summarize.actionRequired || false}}"
+  actionItem: "{{summarize.actionItem || null}}"
+  importance: "{{summarize.importance || 'low'}}"

@@ -16,7 +16,7 @@ const industry = {
     {
       "id": "hr-workforce",
       "name": "Manufacturing HR & Workforce",
-      "icon": "smile",
+      "icon": "zap",
       "description": "Automate shift scheduling, time and attendance processing, safety incident reporting, compliance training, payroll preparation, and headcount alerts.",
       "habits": [
         {
@@ -101,7 +101,7 @@ const industry = {
     {
       "id": "maintenance",
       "name": "Manufacturing Maintenance",
-      "icon": "wrench",
+      "icon": "zap",
       "description": "Automate equipment alerts, preventive maintenance scheduling, work order creation, parts ordering, downtime reporting, and technician dispatch.",
       "habits": [
         {
@@ -186,7 +186,7 @@ const industry = {
     {
       "id": "production-planning",
       "name": "Manufacturing Production Planning",
-      "icon": "clipboard",
+      "icon": "zap",
       "description": "Automate capacity alerts, production order creation, material requirements planning, schedule change notifications, and output reporting.",
       "habits": [
         {
@@ -271,7 +271,7 @@ const industry = {
     {
       "id": "quality-control",
       "name": "Manufacturing Quality Control",
-      "icon": "check-circle",
+      "icon": "zap",
       "description": "Automate defect report routing, inspection scheduling, non-conformance handling, corrective action tracking, and audit preparation.",
       "habits": [
         {
@@ -356,7 +356,7 @@ const industry = {
     {
       "id": "supply-chain",
       "name": "Manufacturing Supply Chain",
-      "icon": "package",
+      "icon": "zap",
       "description": "Automate purchase order creation, supplier communications, delivery tracking, vendor performance reports, and inventory replenishment.",
       "habits": [
         {

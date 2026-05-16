@@ -1,0 +1,51 @@
+id: content-digest
+name: Content Digest Pipeline
+description: >
+  Master orchestrator for the content digest pipeline:
+  1. process-content — fetches all contents (emails, RSS articles, news) and summarizes each with OpenAI
+  2. send-digest     — formats all summaries into a rich Slack message and posts it
+
+nodes:
+  # Step 1: Fetch all contents and summarize each one via process-content
+  - id: process
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: process-content
+        inputKey: trigger
+        collectResults: true
+
+  # Step 2: Post the complete digest to Slack via send-digest
+  # Pass summariesJson (serialized results) and metadata as top-level inputs
+  - id: digest
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: |
+          [{
+            "summariesJson": {{process.results[0].output.summaries}},
+            "contentCount": "{{process.results[0].output.contentsFetched}}",
+            "digestDate": "{{habits.input.digestDate}}"
+          }]
+        habitId: send-digest
+        inputKey: digestInput
+        collectResults: true
+
+edges:
+  - source: process
+    target: digest
+
+output:
+  contentsFetched: "{{process.results[0].output.contentsFetched}}"
+  contentsSummarized: "{{process.results[0].output.successCount}}"
+  slackPosted: "{{digest.results[0].output.success}}"
+  summaries: "{{process.results[0].output.summaries}}"

@@ -1,0 +1,78 @@
+id: fetch-rss
+name: Fetch RSS Feed
+description: >
+  Polls the RSS/Atom feed URL provided as input on a fixed 3-minute schedule,
+  maps each new item to a normalised article object, and fans out to
+  generate-social-posts for every article via a forEach loop.
+
+input:
+  - id: feedUrl
+    type: string
+    required: true
+    description: The RSS or Atom feed URL to monitor
+
+nodes:
+  # Step 1: Poll the RSS/Atom feed — fires whenever new items arrive
+  - id: poll-feed
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-rss"
+      operation: newItems
+      isTrigger: true
+      triggerType: polling
+      params:
+        url: "{{habits.input.feedUrl}}"
+        cronExpression: "*/3 * * * *"
+
+  # Step 2: Normalise RSS items into a flat article array
+  - id: map-items
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: rss-item-normaliser
+      label: Normalise RSS Items
+      params:
+        items: "{{poll-feed}}"
+        language: deno
+        script: |
+          export async function main(items) {
+            const list = Array.isArray(items) ? items : [];
+            return list.map(item => ({
+              title:  item.title       || '(Untitled)',
+              body:   item.description || item.content || '',
+              url:    item.link        || '',
+              author: item.author      || '',
+              date:   item.pubDate     || new Date().toISOString(),
+              guid:   item.guid        || item.link || item.title || '',
+            }));
+          }
+
+  # Step 3: For each article, call generate-social-posts
+  - id: process-articles
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{map-items.result}}"
+        habitId: generate-social-posts
+        inputKey: article
+        delayMs: 1500
+        continueOnError: true
+        collectResults: true
+
+
+edges:
+  - source: poll-feed
+    target: map-items
+  - source: map-items
+    target: process-articles
+    
+output:
+  articlesFound: "{{map-items.result.length}}"
+  results: "{{process-articles.results}}"

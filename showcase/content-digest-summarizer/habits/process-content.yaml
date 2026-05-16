@@ -1,0 +1,47 @@
+id: process-content
+name: Process Content
+description: >
+  Invokes fetch-emails once to retrieve all unread emails, then uses
+  forEach to call summarize-content for each individual content item, collecting
+  all summaries into a single results array.
+
+nodes:
+  # Step 1: Trigger the fetch-emails habit once via forEach with a single dummy item
+  - id: get-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: '[{}]'
+        habitId: fetch-emails
+        inputKey: trigger
+        collectResults: true
+
+  # Step 2: Iterate over every content item and summarize it individually
+  - id: summarize-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-emails.results[0].output.emails}}"
+        habitId: summarize-content
+        inputKey: content
+        delayMs: 400
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: get-emails
+    target: summarize-all
+
+output:
+  contentsFetched: "{{get-emails.results[0].output.count}}"
+  summaries: "{{summarize-all.results}}"
+  successCount: "{{summarize-all.successCount}}"
+  errorCount: "{{summarize-all.errorCount}}"
