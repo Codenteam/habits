@@ -16,7 +16,7 @@ const industry = {
     {
       "id": "lead-management",
       "name": "Real Estate Lead Management",
-      "icon": "target",
+      "icon": "zap",
       "description": "Automate lead capture, AI scoring, agent assignment, follow-up sequences, CRM sync, and cold lead re-engagement.",
       "habits": [
         {
@@ -101,7 +101,7 @@ const industry = {
     {
       "id": "marketing",
       "name": "Real Estate Marketing",
-      "icon": "sparkles",
+      "icon": "zap",
       "description": "Automate campaign launches, social media posting, open house promotion, newsletter distribution, listing performance alerts, and competitor analysis.",
       "habits": [
         {
@@ -186,7 +186,7 @@ const industry = {
     {
       "id": "property-listings",
       "name": "Real Estate Property Listings",
-      "icon": "home",
+      "icon": "zap",
       "description": "Automate listing creation alerts, MLS syndication, price change notifications, expiry reminders, performance reports, and photo review requests.",
       "habits": [
         {
@@ -240,7 +240,7 @@ const industry = {
         {
           "id": "performance-report",
           "name": "Performance Report",
-          "description": "Compile weekly listing performance metrics: views, enquiries, and showings, and distribute to agents.",
+          "description": "Compile weekly listing performance metrics — views, enquiries, and showings — and distribute to agents.",
           "trigger": "scheduler",
           "bits": [
             "scheduler",
@@ -271,7 +271,7 @@ const industry = {
     {
       "id": "property-management",
       "name": "Real Estate Property Management",
-      "icon": "wrench",
+      "icon": "zap",
       "description": "Automate tenant onboarding, maintenance request routing, rent collection alerts, lease renewals, property inspections, and vendor management.",
       "habits": [
         {
@@ -356,7 +356,7 @@ const industry = {
     {
       "id": "transaction-management",
       "name": "Real Estate Transaction Management",
-      "icon": "clipboard",
+      "icon": "zap",
       "description": "Automate offer tracking, document collection, inspection scheduling, closing coordination, commission calculation, and compliance review.",
       "habits": [
         {

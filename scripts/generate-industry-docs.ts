@@ -269,7 +269,12 @@ function generateIndexPage(industries: IndustryData[]): string {
     icon: ind.icon,
     tagline: ind.tagline,
     totalHabits: ind.departments.reduce((s, d) => s + d.habits.length, 0),
-    departments: ind.departments.length,
+    departmentList: ind.departments.map((d) => ({
+      id: d.id,
+      name: d.name,
+      description: d.description,
+      showcaseSlug: d.showcaseSlug ?? '',
+    })),
   }))
 
   return `---

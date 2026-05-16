@@ -269,9 +269,9 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
                         <span className="font-medium text-gray-900 truncate">{pkg.name}</span>
                         <span className="text-xs text-gray-500">v{pkg.version}</span>
                         {trusted ? (
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" title="Trusted module" />
+                          <span title="Trusted module"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" /></span>
                         ) : (
-                          <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Not a trusted module" />
+                          <span title="Not a trusted module"><ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" /></span>
                         )}
                       </div>
                       <p className="mt-1 text-sm text-gray-600 line-clamp-2">{pkg.description}</p>
@@ -301,9 +301,9 @@ export default function AddModuleModal({ isOpen, onClose, onModuleAdded }: AddMo
                   <span className={`font-medium ${trusted ? 'text-green-800' : 'text-amber-800'}`}>{selectedPackage.name}</span>
                   <span className={`text-xs ${trusted ? 'text-green-600' : 'text-amber-600'}`}>v{selectedPackage.version}</span>
                   {trusted ? (
-                    <ShieldCheck className="w-4 h-4 text-emerald-500" title="Trusted module" />
+                    <span title="Trusted module"><ShieldCheck className="w-4 h-4 text-emerald-500" /></span>
                   ) : (
-                    <ShieldAlert className="w-4 h-4 text-amber-500" title="Not a trusted module" />
+                    <span title="Not a trusted module"><ShieldAlert className="w-4 h-4 text-amber-500" /></span>
                   )}
                 </div>
                 <p className={`mt-1 text-sm ${trusted ? 'text-green-700' : 'text-amber-700'}`}>{selectedPackage.description}</p>

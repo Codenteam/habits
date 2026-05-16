@@ -16,7 +16,7 @@ const industry = {
     {
       "id": "compliance-audit",
       "name": "Finance & Banking Compliance & Audit",
-      "icon": "shield",
+      "icon": "zap",
       "description": "Automate AML screening, SAR filing, audit trail compilation, policy compliance checks, and regulatory report generation.",
       "habits": [
         {
@@ -101,7 +101,7 @@ const industry = {
     {
       "id": "customer-onboarding",
       "name": "Finance & Banking Customer Onboarding",
-      "icon": "clipboard",
+      "icon": "zap",
       "description": "Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.",
       "habits": [
         {
@@ -186,7 +186,7 @@ const industry = {
     {
       "id": "customer-support",
       "name": "Finance & Banking Customer Support",
-      "icon": "smile",
+      "icon": "zap",
       "description": "Automate support ticket routing, account enquiry handling, dispute resolution, callback scheduling, and escalation management.",
       "habits": [
         {
@@ -271,7 +271,7 @@ const industry = {
     {
       "id": "fraud-detection",
       "name": "Finance & Banking Fraud Detection",
-      "icon": "lock",
+      "icon": "zap",
       "description": "Automate real-time transaction monitoring, fraud alert generation, customer notification, account freezing, and regulatory report filing.",
       "habits": [
         {
@@ -356,7 +356,7 @@ const industry = {
     {
       "id": "loan-processing",
       "name": "Finance & Banking Loan Processing",
-      "icon": "file",
+      "icon": "zap",
       "description": "Automate loan application intake, document verification, credit evaluation, approval routing, and disbursement confirmation.",
       "habits": [
         {
