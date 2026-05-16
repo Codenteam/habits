@@ -13,12 +13,22 @@ interface RssContext {
   propsValue: Record<string, any>;
 }
 
+interface BitsPollingStore {
+  hasSeenItem(itemId: string, itemDate?: Date): Promise<boolean>;
+  markItemSeen(itemId: string, sourceDate: Date | null, data?: any): Promise<void>;
+  getLastPolledDate(): Promise<Date | null>;
+  setLastPolledDate(date: Date): Promise<void>;
+  getSeenCount(): Promise<number>;
+  clearTrigger(): Promise<void>;
+}
+
 interface RssTriggerContext {
   propsValue: Record<string, any>;
   store: {
     get<T>(key: string): Promise<T | null>;
     put(key: string, value: any): Promise<void>;
   };
+  pollingStore?: BitsPollingStore;
   setSchedule: (options: { cronExpression: string; timezone?: string }) => void;
 }
 
@@ -169,9 +179,6 @@ const rssBit = {
 
       async onEnable(context: RssTriggerContext): Promise<void> {
         const cron = context.propsValue.cronExpression || '*/10 * * * *';
-        if (context.propsValue.url) {
-          await context.store.put('feedUrl', context.propsValue.url);
-        }
         context.setSchedule({ cronExpression: cron, timezone: 'UTC' });
       },
 
@@ -180,7 +187,7 @@ const rssBit = {
       },
 
       async run(context: RssTriggerContext): Promise<RssFeedItem[]> {
-        const url: string = context.propsValue.url || await context.store.get<string>('feedUrl') || '';
+        const url: string = context.propsValue.url || '';
         if (!url) {
           console.log('[bit-rss] No feed URL available, skipping');
           return [];
@@ -190,20 +197,38 @@ const rssBit = {
         const rawFeed = await parser.parseURL(url);
         const items = rawFeed.items;
 
-        const lastGuid = await context.store.get<string>('lastItemGuid');
-
+        const pollingStore = context.pollingStore;
         const newItems: Parser.Item[] = [];
 
-        for (const item of items) {
-          const guid = item.guid || item.link || item.title || '';
-          if (guid === lastGuid) break;
-          newItems.push(item);
-        }
-
-        if (newItems.length > 0) {
-          const first = newItems[0];
-          const newLastGuid = first.guid || first.link || first.title || '';
-          await context.store.put('lastItemGuid', newLastGuid);
+        if (pollingStore) {
+          // Use SQLite-backed pollingStore: check each item individually (survives restarts)
+          for (const item of items) {
+            const guid = item.guid || item.link || item.title || '';
+            if (!guid) continue;
+            const seen = await pollingStore.hasSeenItem(guid);
+            if (!seen) {
+              newItems.push(item);
+            }
+          }
+          // Mark all new items as seen
+          for (const item of newItems) {
+            const guid = item.guid || item.link || item.title || '';
+            const pubDate = item.pubDate ? new Date(item.pubDate) : null;
+            await pollingStore.markItemSeen(guid, pubDate);
+          }
+        } else {
+          // Fallback: use in-memory store with last-guid approach (lost on restart)
+          const lastGuid = await context.store.get<string>('lastItemGuid');
+          for (const item of items) {
+            const guid = item.guid || item.link || item.title || '';
+            if (guid === lastGuid) break;
+            newItems.push(item);
+          }
+          if (newItems.length > 0) {
+            const first = newItems[0];
+            const newLastGuid = first.guid || first.link || first.title || '';
+            await context.store.put('lastItemGuid', newLastGuid);
+          }
         }
 
         console.log(`[bit-rss] newItems trigger: ${newItems.length} new item(s) from ${url}`);

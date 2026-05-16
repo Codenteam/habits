@@ -15,6 +15,11 @@ export default defineConfig({
   },
   server: {
     port: 3030,
+    allowedHosts: 'all',
+    headers: {
+      'X-Frame-Options': 'ALLOWALL',
+      'Content-Security-Policy': "frame-ancestors *",
+    },
   },
   build: {
     outDir: '../../dist/packages/habit-viewer',

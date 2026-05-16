@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send, KeyRound } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
-import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle } from '../store/slices/workflowSlice';
+import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle, selectActiveEnvVariables } from '../store/slices/workflowSlice';
 import { setViewMode } from '../store/slices/uiSlice';
 import { api } from '../lib/api';
-import { habitToYaml, parseStackYaml } from '../lib/exportUtils';
+import { habitToYaml, parseStackYaml, extractEnvVariables } from '../lib/exportUtils';
 import CodeViewModal from './CodeViewModal';
 import OpenModal from './OpenModal';
 import NewWorkflowModal from './NewWorkflowModal';
@@ -14,6 +14,7 @@ import ShareLinkModal from './ShareLinkModal';
 import SendHabitModal from './SendHabitModal';
 import GenerateModal from './GenerateModal';
 import ValidationModal from './ValidationModal';
+import EnvSetupModal from './EnvSetupModal';
 import Dialog from './Dialog';
 import { validateHabit, type ValidatableHabit } from '../store/validation/habitValidation';
 
@@ -40,6 +41,13 @@ export default function Toolbar() {
   const [showSendHabitModal, setShowSendHabitModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showEnvSetup, setShowEnvSetup] = useState(false);
+
+  const activeEnvVariables = useAppSelector(selectActiveEnvVariables);
+  const envHasMissing = useMemo(() => {
+    const keys = extractEnvVariables(habits as any);
+    return keys.some(({ key }) => !activeEnvVariables[key]?.value);
+  }, [habits, activeEnvVariables]);
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -362,6 +370,23 @@ export default function Toolbar() {
           </button>
         </div>
 
+        {/* Environment Setup */}
+        <div className="relative group">
+          <button
+            onClick={() => setShowEnvSetup(true)}
+            className={`flex items-center justify-center w-9 h-9 rounded-md transition-colors cursor-pointer ${
+              envHasMissing
+                ? 'text-yellow-400 bg-yellow-900/30 hover:bg-yellow-900/50'
+                : 'text-slate-300 bg-slate-700 hover:bg-slate-600'
+            }`}
+          >
+            <KeyRound className="w-4 h-4" />
+          </button>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            Setup Environment
+          </div>
+        </div>
+
        
 
         {/* Share Link */}
@@ -574,6 +599,12 @@ export default function Toolbar() {
         message={dialogConfig.message}
         type={dialogConfig.type}
         onConfirm={dialogConfig.onConfirm}
+      />
+
+      {/* Env Setup Modal */}
+      <EnvSetupModal
+        isOpen={showEnvSetup}
+        onClose={() => setShowEnvSetup(false)}
       />
     </div>
     </>

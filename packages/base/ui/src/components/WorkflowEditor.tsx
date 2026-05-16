@@ -106,8 +106,20 @@ export default function WorkflowEditor() {
 
   const handleEdgesDelete = useCallback(
     (deletedEdges: Edge[]) => {
-      const deletedIds = new Set(deletedEdges.map(e => e.id));
-      const updatedEdges = storeEdges.filter((edge) => !deletedIds.has(edge.id));
+      const updatedEdges = storeEdges.filter((edge) =>
+        !deletedEdges.some((deleted) => {
+          if (deleted.id && edge.id) {
+            return deleted.id === edge.id;
+          }
+          // Fall back to source+target+handle match for edges without ids
+          return (
+            deleted.source === edge.source &&
+            deleted.target === edge.target &&
+            deleted.sourceHandle === edge.sourceHandle &&
+            deleted.targetHandle === edge.targetHandle
+          );
+        })
+      );
       dispatch(setEdges(updatedEdges));
     },
     [storeEdges, dispatch]
@@ -119,8 +131,10 @@ export default function WorkflowEditor() {
       // Also handle removes here as a safety net (onEdgesDelete may not fire for all cases)
       const removeChanges = changes.filter((c: any) => c.type === 'remove');
       if (removeChanges.length > 0) {
-        const removedIds = new Set(removeChanges.map((c: any) => c.id));
-        dispatch(setEdges(storeEdges.filter((e) => !removedIds.has(e.id))));
+        const removedIds = new Set(removeChanges.map((c: any) => c.id).filter(Boolean));
+        if (removedIds.size > 0) {
+          dispatch(setEdges(storeEdges.filter((e) => e.id ? !removedIds.has(e.id) : true)));
+        }
       }
     },
     [onEdgesChange, dispatch, storeEdges]
@@ -128,18 +142,33 @@ export default function WorkflowEditor() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      // Create edge with custom ID format: sourceId-targetId
+      const src = connection.source!;
+      const tgt = connection.target!;
+      const sh = connection.sourceHandle;
+      const th = connection.targetHandle;
+      const id = `${src}-_-${tgt}-_-${sh ?? 'main'}-_-${th ?? 'main'}`;
       const edgeWithId: Edge = {
-        id: `${connection.source}__${connection.target}`,
-        source: connection.source!,
-        target: connection.target!,
-        sourceHandle: connection.sourceHandle,
-        targetHandle: connection.targetHandle,
+        id,
+        source: src,
+        target: tgt,
+        sourceHandle: sh,
+        targetHandle: th,
       };
       const newEdges = addEdge(edgeWithId, edges);
       dispatch(setEdges(newEdges));
     },
     [edges, dispatch]
+  );
+
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, clickedEdge: Edge) => {
+      // Explicitly enforce single-edge selection — ReactFlow controlled mode
+      // does not reliably deselect other edges when a new one is clicked.
+      setEdgesState(prev =>
+        prev.map(e => ({ ...e, selected: e.id === clickedEdge.id }))
+      );
+    },
+    [setEdgesState]
   );
 
   const onNodeClick = useCallback(
@@ -225,6 +254,7 @@ export default function WorkflowEditor() {
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
               onEdgesDelete={handleEdgesDelete}
+              onEdgeClick={onEdgeClick}
               onConnect={onConnect}
               onNodeClick={onNodeClick}
               onAutoLayout={handleAutoLayout}

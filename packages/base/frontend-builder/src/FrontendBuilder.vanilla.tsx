@@ -367,7 +367,7 @@ export function FrontendBuilderVanilla({
   const [message, setMessage] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [aiProvider, setAiProvider] = useState<'intersect' | 'openai' | 'anthropic' | 'gemini'>('intersect');
+  const [aiProvider, setAiProvider] = useState<'intersect' | 'openai' | 'anthropic' | 'gemini'>('openai');
   const [customApiKey, setCustomApiKey] = useState('');
   const [customModel, setCustomModel] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(560);
@@ -872,21 +872,11 @@ export function FrontendBuilderVanilla({
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
-                          aiProvider === 'intersect'
-                            ? 'bg-cyan-500 text-white border-2 border-cyan-400'
-                            : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
-                        }`}
-                        onClick={() => setAiProvider('intersect')}
-                      >
-                        Intersect
-                      </button>
-                      <button
-                        className={`h-10 px-4 text-sm rounded-lg font-medium transition-all cursor-pointer ${
                           aiProvider === 'openai'
                             ? 'bg-cyan-500 text-white border-2 border-cyan-400'
                             : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
                         }`}
-                        onClick={() => { setAiProvider('openai'); setCustomModel(customModel || 'gpt-4o'); }}
+                        onClick={() => { setAiProvider('openai'); setCustomApiKey(''); setCustomModel('gpt-4o'); }}
                       >
                         OpenAI
                       </button>
@@ -896,7 +886,7 @@ export function FrontendBuilderVanilla({
                             ? 'bg-cyan-500 text-white border-2 border-cyan-400'
                             : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
                         }`}
-                        onClick={() => { setAiProvider('anthropic'); setCustomModel(customModel || 'claude-opus-4-5'); }}
+                        onClick={() => { setAiProvider('anthropic'); setCustomApiKey(''); setCustomModel('claude-opus-4-5'); }}
                       >
                         Anthropic
                       </button>
@@ -906,9 +896,15 @@ export function FrontendBuilderVanilla({
                             ? 'bg-cyan-500 text-white border-2 border-cyan-400'
                             : 'bg-gray-700/50 text-white/60 border border-white/10 hover:bg-gray-700'
                         }`}
-                        onClick={() => { setAiProvider('gemini'); setCustomModel(customModel || 'gemini-2.0-flash-exp'); }}
+                        onClick={() => { setAiProvider('gemini'); setCustomApiKey(''); setCustomModel('gemini-2.0-flash'); }}
                       >
                         Gemini
+                      </button>
+                      <button
+                        disabled
+                        className="h-10 px-4 text-sm rounded-lg font-medium bg-gray-700/30 text-white/30 border border-white/5 cursor-not-allowed"
+                      >
+                        Intersect
                       </button>
                     </div>
                   </div>
@@ -980,14 +976,14 @@ export function FrontendBuilderVanilla({
                         type="text"
                         value={customModel}
                         onChange={(e) => setCustomModel(e.target.value)}
-                        placeholder={aiProvider === 'anthropic' ? 'claude-opus-4-5' : aiProvider === 'gemini' ? 'gemini-2.0-flash-exp' : 'gpt-4o'}
+                        placeholder={aiProvider === 'anthropic' ? 'claude-opus-4-5' : aiProvider === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o'}
                         className="w-full h-10 px-4 text-sm rounded-lg text-white focus:outline-none transition-all"
                         style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
                       />
                       <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
                         {aiProvider === 'openai' && 'e.g., gpt-4o, gpt-4-turbo, o1-mini, o3-mini'}
                         {aiProvider === 'anthropic' && 'e.g., claude-opus-4-5, claude-sonnet-4-5'}
-                        {aiProvider === 'gemini' && 'e.g., gemini-2.0-flash-exp, gemini-1.5-pro'}
+                        {aiProvider === 'gemini' && 'e.g., gemini-2.0-flash, gemini-1.5-pro'}
                       </p>
                     </div>
                   </div>

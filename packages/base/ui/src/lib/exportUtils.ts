@@ -204,7 +204,6 @@ export function habitToYaml(habit: Habit): string {
       return yamlNode;
     }),
     edges: habit.edges.length > 0 ? habit.edges.map(edge => ({
-      id: edge.id,
       source: edge.source,
       target: edge.target,
       ...(edge.sourceHandle && { sourceHandle: edge.sourceHandle }),

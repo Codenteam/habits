@@ -672,7 +672,7 @@ print(json.dumps(main(${JSON.stringify(text)})))
 });
 ```
 
-### Deno Script Doer
+### Javascript Script Doer
 
 ```typescript
 // bits/transform/jmespath-transform.ts

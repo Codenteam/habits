@@ -981,6 +981,17 @@ class WorkflowExecutorServer {
       }
     });
 
+    // Fire a polling trigger immediately (bypasses cron schedule, useful for testing)
+    this.app.post('/misc/trigger/:workflowId/:nodeId/fire', async (req: Request, res: Response) => {
+      const { workflowId, nodeId } = req.params;
+      try {
+        const result = await this.executor.fireTriggerNow(workflowId, nodeId);
+        res.json(result);
+      } catch (error: any) {
+        res.status(500).json({ success: false, items: [], message: error.message });
+      }
+    });
+
     // ========================================================================
     // Frontend Static Files (at / if configured)
     // ========================================================================

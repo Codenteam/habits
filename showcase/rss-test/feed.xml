@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>RSS Test Feed</title>
+    <link>http://localhost:8765/</link>
+    <description>Test RSS feed for bit-rss trigger testing</description>
+    <language>en-us</language>
+
+    <item>
+      <title>Item 6 - Sixth Article</title>
+      <link>http://localhost:8765/item-6</link>
+      <description>Test article: Item 6 - Sixth Article</description>
+      <pubDate>Sun, 18 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-6</guid>
+    </item>
+
+    <item>
+      <title>Item 5 - Fifth Article</title>
+      <link>http://localhost:8765/item-5</link>
+      <description>Test article: Item 5 - Fifth Article</description>
+      <pubDate>Sat, 17 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-5</guid>
+    </item>
+
+    <item>
+      <title>Item 4 - Fourth Article</title>
+      <link>http://localhost:8765/item-4</link>
+      <description>Test article: Item 4 - Fourth Article</description>
+      <pubDate>Fri, 16 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-4</guid>
+    </item>
+
+    <item>
+      <title>Item 3 - Third Article</title>
+      <link>http://localhost:8765/item-3</link>
+      <description>This is the third test article.</description>
+      <pubDate>Thu, 15 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-3</guid>
+    </item>
+
+    <item>
+      <title>Item 2 - Second Article</title>
+      <link>http://localhost:8765/item-2</link>
+      <description>This is the second test article.</description>
+      <pubDate>Wed, 14 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-2</guid>
+    </item>
+
+    <item>
+      <title>Item 1 - First Article</title>
+      <link>http://localhost:8765/item-1</link>
+      <description>This is the first test article.</description>
+      <pubDate>Tue, 13 May 2026 10:00:00 +0000</pubDate>
+      <guid>http://localhost:8765/item-1</guid>
+    </item>
+
+  </channel>
+</rss>

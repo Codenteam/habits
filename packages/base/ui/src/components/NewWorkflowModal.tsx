@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { FileJson, Sparkles, FileText, X, Loader2, Wand2 } from 'lucide-react';
-import { useAppDispatch } from '../store/hooks';
-import { clearWorkflow, loadWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
-import { clearFrontendHtml, setFrontendHtml, clearEnvContent, setEnvContent } from '../store/slices/uiSlice';
+import { useState, useEffect } from 'react';
+import { FileJson, X, Loader2, Wand2, AlertCircle } from 'lucide-react';
+import JSZip from 'jszip';
 import yaml from 'js-yaml';
+import { useAppDispatch } from '../store/hooks';
+import { clearWorkflow, loadWorkflow, setEnvVariables, addHabit } from '../store/slices/workflowSlice';
+import { clearFrontendHtml, setFrontendHtml, clearEnvContent, setEnvContent } from '../store/slices/uiSlice';
 import GenerateModal from './GenerateModal';
 import Dialog from './Dialog';
+import type { Workflow } from '../types/workflow';
+import { convertHabitYamlToHabit } from '../lib/stackParser';
 
 // Helper to parse .env file content into key-value object
 function parseEnvContent(content: string): Record<string, string> {
@@ -14,7 +17,6 @@ function parseEnvContent(content: string): Record<string, string> {
   
   for (const line of lines) {
     const trimmed = line.trim();
-    // Skip empty lines and comments
     if (!trimmed || trimmed.startsWith('#')) continue;
     
     const eqIndex = trimmed.indexOf('=');
@@ -22,7 +24,6 @@ function parseEnvContent(content: string): Record<string, string> {
       const key = trimmed.substring(0, eqIndex).trim();
       let value = trimmed.substring(eqIndex + 1).trim();
       
-      // Handle quoted values
       if ((value.startsWith('"') && value.endsWith('"')) ||
           (value.startsWith("'") && value.endsWith("'"))) {
         value = value.slice(1, -1);
@@ -35,35 +36,22 @@ function parseEnvContent(content: string): Record<string, string> {
   return envVars;
 }
 
+const SHOWCASE_BASE_URL = 'https://codenteam.com/intersect/habits';
+
+interface ShowcaseEntry {
+  slug: string;
+  name: string;
+  description: string;
+  thumbnail: string;
+  tags: string[];
+  difficulty: string;
+  habitUrl: string;
+}
+
 interface NewWorkflowModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  stackPath: string; // Path to stack.yaml
-}
-
-const TEMPLATES: Template[] = [
-  {
-    id: 'marketing-campaign',
-    name: 'Marketing Campaign',
-    description: 'Generate marketing assets including images, vectors, and landing pages from a single prompt using Intersect AI.',
-    icon: <Sparkles className="w-6 h-6" />,
-    stackPath: '/habits/base/api/templates/marketing-campaign/stack.yaml',
-  },
-  {
-    id: 'mixed-workflow',
-    name: 'Mixed Framework',
-    description: 'A mixed workflow example with text-to-voice processing, demonstrating multi-framework integration.',
-    icon: <FileText className="w-6 h-6" />,
-    stackPath: '/habits/base/api/templates/hello-world/stack.yaml',
-  },
-];
 
 export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalProps) {
   const dispatch = useAppDispatch();
@@ -76,6 +64,24 @@ export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalPr
     type: 'confirm' | 'alert';
     onConfirm?: () => void;
   }>({ message: '', type: 'alert' });
+
+  const [showcase, setShowcase] = useState<ShowcaseEntry[]>([]);
+  const [showcaseLoading, setShowcaseLoading] = useState(false);
+  const [showcaseError, setShowcaseError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setShowcaseLoading(true);
+    setShowcaseError(null);
+    fetch(`${SHOWCASE_BASE_URL}/showcase/index.json`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<ShowcaseEntry[]>;
+      })
+      .then((data) => setShowcase(data))
+      .catch(() => setShowcaseError('Failed to load showcase. Check your connection.'))
+      .finally(() => setShowcaseLoading(false));
+  }, [isOpen]);
 
   const handleStartFromScratch = () => {
     setDialogConfig({
@@ -91,130 +97,90 @@ export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalPr
     setDialogOpen(true);
   };
 
-  const handleSelectTemplate = async (template: Template) => {
+  const handleSelectShowcaseHabit = (entry: ShowcaseEntry) => {
     setDialogConfig({
-      message: `Load the "${template.name}" template? This will replace your current workflow.`,
+      message: `Load "${entry.name}"? This will replace your current workflow.`,
       type: 'confirm',
-      onConfirm: () => loadTemplate(template),
+      onConfirm: () => loadShowcaseHabit(entry),
     });
     setDialogOpen(true);
   };
 
-  const loadTemplate = async (template: Template) => {
-
-    setLoading(template.id);
+  const loadShowcaseHabit = async (entry: ShowcaseEntry) => {
+    setLoading(entry.slug);
     setError(null);
 
     try {
-      const templateDir = template.stackPath.substring(0, template.stackPath.lastIndexOf('/'));
-      
-      // 1. Load and parse the stack file (config)
-      const stackResponse = await fetch(template.stackPath);
-      if (!stackResponse.ok) {
-        throw new Error(`Failed to fetch stack config: ${stackResponse.statusText}`);
-      }
-      
-      const stackContent = await stackResponse.text();
-      let stackConfig: any;
-      
-      // Try to parse as JSON first, then YAML (some .yaml files contain JSON)
-      try {
-        stackConfig = JSON.parse(stackContent);
-      } catch {
-        stackConfig = yaml.load(stackContent);
-      }
-      
-      // 2. Load all workflows defined in the stack
-      const workflows: any[] = [];
-      const workflowConfigs = stackConfig.workflows || [];
-      
-      for (const wfConfig of workflowConfigs) {
-        if (!wfConfig.path) continue;
-        
-        // Resolve workflow path relative to stack file
-        const workflowPath = wfConfig.path.startsWith('./')
-          ? `${templateDir}/${wfConfig.path.slice(2)}`
-          : `${templateDir}/${wfConfig.path}`;
-        
-        const wfResponse = await fetch(workflowPath);
-        if (!wfResponse.ok) {
-          console.warn(`Could not load workflow: ${workflowPath}`);
-          continue;
-        }
-        
-        const wfContent = await wfResponse.text();
-        let workflow: any;
-        
-        // Try to parse as JSON first, then YAML
-        try {
-          workflow = JSON.parse(wfContent);
-        } catch {
-          workflow = yaml.load(wfContent);
-        }
-        
-        workflows.push(workflow);
-      }
-      
-      if (workflows.length === 0) {
-        throw new Error('No workflows found in stack configuration');
+      const habitUrl = `${SHOWCASE_BASE_URL}${entry.habitUrl}`;
+      const res = await fetch(habitUrl);
+      if (!res.ok) throw new Error(`Failed to fetch habit: ${res.statusText}`);
+
+      const arrayBuffer = await res.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      // Read stack.yaml to find workflow paths and frontend dir
+      const stackYamlFile = zip.file('stack.yaml');
+      if (!stackYamlFile) throw new Error('No stack.yaml in habit file');
+
+      const stackContent = await stackYamlFile.async('text');
+      const stackConfig = yaml.load(stackContent) as any;
+
+      // Extract workflow YAMLs
+      const workflows: Workflow[] = [];
+      for (const wfConfig of (stackConfig?.workflows ?? []) as Array<{ path?: string; enabled?: boolean }>) {
+        if (!wfConfig.path || wfConfig.enabled === false) continue;
+        const relativePath = wfConfig.path.replace(/^\.\//u, '');
+        const wfFile = zip.file(relativePath);
+        if (!wfFile) continue;
+        const parsed = yaml.load(await wfFile.async('text'));
+        if (parsed) workflows.push(parsed as Workflow);
       }
 
-      // Clear existing workflow and load the template
+      if (workflows.length === 0) throw new Error('No workflows found in this habit');
+
       dispatch(clearWorkflow());
       dispatch(clearFrontendHtml());
       dispatch(clearEnvContent());
-      
-      // Load the first workflow (or all of them if loadWorkflow supports it)
-      dispatch(loadWorkflow(workflows[0]));
-      
-      // 3. Load frontend HTML if specified in stack config or exists in frontend folder
-      const frontendConfigPath = stackConfig.server?.frontend;
-      let frontendPath: string;
-      
-      if (frontendConfigPath) {
-        // Use path from config, resolve relative to template dir
-        const resolvedPath = frontendConfigPath.startsWith('./')
-          ? `${templateDir}/${frontendConfigPath.slice(2)}`
-          : `${templateDir}/${frontendConfigPath}`;
-        frontendPath = resolvedPath.endsWith('/') || !resolvedPath.includes('.')
-          ? `${resolvedPath}/index.html`
-          : resolvedPath;
-      } else {
-        frontendPath = `${templateDir}/frontend/index.html`;
-      }
-      
-      try {
-        const frontendResponse = await fetch(frontendPath);
-        if (frontendResponse.ok) {
-          const frontendHtml = await frontendResponse.text();
-          dispatch(setFrontendHtml(frontendHtml));
-        }
-      } catch (frontendErr) {
-        console.warn('Could not load frontend for template:', frontendErr);
-      }
-      
-      // 4. Load .env file
-      const envPath = `${templateDir}/.env`;
-      try {
-        const envResponse = await fetch(envPath);
-        if (envResponse.ok) {
-          const envFileContent = await envResponse.text();
-          dispatch(setEnvContent(envFileContent));
-          
-          // Parse and set env variables to habit state
-          const envVars = parseEnvContent(envFileContent);
-          if (Object.keys(envVars).length > 0) {
-            dispatch(setEnvVariables(envVars));
+
+      // Load all workflows as habits in the stack.
+      // For the first one, use loadWorkflow to replace the placeholder habit created by
+      // clearWorkflow (new-1) in place. For subsequent ones, addHabit appends to the stack.
+      workflows.forEach((wf, index) => {
+        if (index === 0) {
+          dispatch(loadWorkflow(wf));
+        } else {
+          try {
+            const habit = convertHabitYamlToHabit(wf as any);
+            dispatch(addHabit(habit));
+          } catch {
+            // skip malformed workflows
           }
         }
-      } catch (envErr) {
-        console.warn('Could not load .env for template:', envErr);
+      });
+
+      // Extract frontend HTML (prefer -src version for editable source)
+      const frontendDir = (stackConfig?.server?.frontend as string | undefined)
+        ?.replace(/^\.\//u, '').replace(/\/$/u, '') ?? 'frontend';
+      for (const candidate of [`${frontendDir}-src/index.html`, `${frontendDir}/index.html`, 'index.html']) {
+        const htmlFile = zip.file(candidate);
+        if (htmlFile) {
+          dispatch(setFrontendHtml(await htmlFile.async('text')));
+          break;
+        }
       }
-      
+
+      // Extract .env
+      const envFile = zip.file('.env');
+      if (envFile) {
+        const envContent = await envFile.async('text');
+        dispatch(setEnvContent(envContent));
+        const envVars = parseEnvContent(envContent);
+        if (Object.keys(envVars).length > 0) dispatch(setEnvVariables(envVars));
+      }
+
       onClose();
     } catch (err) {
-      console.error('Failed to load template:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load template');
+      setError(err instanceof Error ? err.message : 'Failed to load habit');
     } finally {
       setLoading(null);
     }
@@ -277,36 +243,78 @@ export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalPr
             </button>
           </div>
 
-          {/* Templates section */}
+          {/* Showcase section */}
           <div>
             <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">
-              Or choose a template
+              Or choose from the showcase
             </h3>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {TEMPLATES.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => handleSelectTemplate(template)}
-                  disabled={loading !== null}
-                  className="w-full flex items-center gap-4 p-4 bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-blue-500 rounded-lg transition-all group text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="p-3 bg-blue-600/20 rounded-lg group-hover:bg-blue-600/30 transition-colors">
-                    {loading === template.id ? (
-                      <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-                    ) : (
-                      <div className="text-blue-400">{template.icon}</div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white font-medium">{template.name}</div>
-                    <div className="text-slate-400 text-sm mt-1 line-clamp-2">
-                      {template.description}
+
+            {showcaseLoading && (
+              <div className="flex items-center justify-center gap-2 py-8 text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading showcase...</span>
+              </div>
+            )}
+
+            {showcaseError && (
+              <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-700 rounded-lg text-red-400 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {showcaseError}
+              </div>
+            )}
+
+            {!showcaseLoading && !showcaseError && showcase.length > 0 && (
+              <div className="grid grid-cols-1 gap-3 max-h-72 overflow-y-auto pr-1">
+                {showcase.map((entry) => (
+                  <button
+                    key={entry.slug}
+                    onClick={() => handleSelectShowcaseHabit(entry)}
+                    disabled={loading !== null}
+                    className="w-full flex items-center gap-3 p-3 bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-blue-500 rounded-lg transition-all group text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 shrink-0 rounded overflow-hidden bg-slate-600 flex items-center justify-center">
+                      {loading === entry.slug ? (
+                        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                      ) : (
+                        <img
+                          src={`${SHOWCASE_BASE_URL}${entry.thumbnail}`}
+                          alt={entry.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-white font-medium text-sm">{entry.name}</span>
+                        {entry.difficulty && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-slate-600 text-slate-300">
+                            {entry.difficulty}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-xs mt-0.5 line-clamp-2">{entry.description}</p>
+                      {entry.tags?.length > 0 && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {entry.tags.slice(0, 3).map((tag) => (
+                            <span key={tag} className="text-xs px-1.5 py-0.5 rounded bg-slate-600/60 text-slate-400">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!showcaseLoading && !showcaseError && showcase.length === 0 && (
+              <p className="text-sm text-slate-500 py-4 text-center">No showcase habits available.</p>
+            )}
           </div>
 
           {/* Error display */}
@@ -318,7 +326,7 @@ export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalPr
 
           {/* Info */}
           <div className="text-xs text-slate-500 pt-2 border-t border-slate-700">
-            <p>Templates provide pre-configured workflows to help you get started quickly.</p>
+            <p>Showcase habits are ready-to-use examples from the Habits community.</p>
           </div>
         </div>
       </div>

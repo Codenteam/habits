@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, Layers,
-  Zap, Code, Settings, Puzzle, FileCode,
+  Puzzle, FileCode,
   ArrowUpFromLineIcon,
   FolderOpen,
   AlertTriangle,
@@ -49,7 +49,6 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
 
   // Node palette state
   const availableModules = useAppSelector(state => state.workflow.availableModules);
-  const [selectedFrameworks, setSelectedFrameworks] = useState<('script' | 'bits')[]>(['script', 'bits']);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showCodeViewModal, setShowCodeViewModal] = useState(false);
 
@@ -215,15 +214,6 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   // ===== NODE PALETTE HANDLERS =====
   const bitsModules = availableModules.filter((m) => m.framework === 'bits');
   const scriptModules = availableModules.filter((m) => m.framework === 'script');
-
-  const toggleFramework = (framework: 'script' | 'bits') => {
-    if (selectedFrameworks.includes(framework)) {
-      if (selectedFrameworks.length === 1) return;
-      setSelectedFrameworks(selectedFrameworks.filter(f => f !== framework));
-    } else {
-      setSelectedFrameworks([...selectedFrameworks, framework]);
-    }
-  };
 
   const handleAddNode = (framework: 'script' | 'bits', module: string, label: string) => {
     onAddNode({ framework, module, label });
@@ -406,11 +396,11 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                     {hasUUIDId && editingId !== habit.id && (
                       <div 
                         className="relative group/tooltip"
-                        title="Please give the habit a descriptive name representing what it does"
+                        title="Please give the habit a descriptive name representing what it does."
                       >
                         <AlertTriangle className="w-4 h-4 text-red-500" />
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 px-2 py-1 bg-slate-900 text-white text-xs rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 border border-red-500">
-                          Please give the habit a descriptive name representing what it does
+                          Please give the habit a descriptive name representing what it does.
                         </div>
                       </div>
                     )}
@@ -488,77 +478,58 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
           {visibleSections.nodes && (
             <div className={`flex flex-col ${visibleSections.habits ? 'flex-1 min-h-0 border-t border-slate-600' : 'flex-1'}`}>
               <div className="p-3 border-b border-slate-700 flex-shrink-0">
-                <div className="flex items-center gap-2 text-slate-300 mb-3">
-                  <Puzzle className="w-4 h-4" />
-                  <span className="text-sm font-medium">Node Palette</span>
-                </div>
-                
-                {/* Framework toggle buttons */}
-                <div className="grid grid-cols-2 gap-1 mb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <Puzzle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Node Palette</span>
+                  </div>
                   <button
-                    onClick={() => toggleFramework('bits')}
-                    className={`flex flex-col items-center justify-center gap-1 px-2 py-1.5 rounded transition-colors text-xs ${
-                      selectedFrameworks.includes('bits')
-                        ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/50'
-                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border border-transparent'
-                    }`}
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+                    title="Add Module"
                   >
-                    <Zap className="w-3.5 h-3.5" />
-                    Bits
-                  </button>
-                  <button
-                    onClick={() => toggleFramework('script')}
-                    className={`flex flex-col items-center justify-center gap-1 px-2 py-1.5 rounded transition-colors text-xs ${
-                      selectedFrameworks.includes('script')
-                        ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/50'
-                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 border border-transparent'
-                    }`}
-                  >
-                    <Code className="w-3.5 h-3.5" />
-                    Script
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                
-                {/* Add Module Button */}
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors text-xs font-medium"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Add Module
-                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-2 space-y-2 max-h-100vh">
-                {/* Built-in Bits - Always visible when bits filter is active */}
-                {selectedFrameworks.includes('bits') && (
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Built-in Bits</h4>
-                    {BITS.map((bit) => {
-                      const IconComponent = bit.icon;
-                      return (
-                        <button
-                          key={`bit-${bit.name}`}
-                          onClick={() => handleAddNode('bits', bit.name, bit.displayName)}
-                          className="w-full text-left px-2 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded transition-colors group"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <IconComponent className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span className="text-xs text-emerald-400 truncate">
-                                {bit.displayName}
-                              </span>
-                            </div>
-                            <Plus className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                {/* Add Script Button */}
+                <button
+                  onClick={() => handleAddNode('script', 'script-deno', 'Code/Script')}
+                  className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-cyan-600/10 hover:bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 rounded transition-colors text-xs font-medium"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Script
+                </button>
+
+                {/* Built-in Bits */}
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Built-in Bits</h4>
+                  {BITS.map((bit) => {
+                    const IconComponent = bit.icon;
+                    return (
+                      <button
+                        key={`bit-${bit.name}`}
+                        onClick={() => handleAddNode('bits', bit.name, bit.displayName)}
+                        className="w-full text-left px-2 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded transition-colors group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <IconComponent className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="text-xs text-emerald-400 truncate">
+                              {bit.displayName}
+                            </span>
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                          <Plus className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
                 {/* Custom Bits modules */}
-                {selectedFrameworks.includes('bits') && bitsModules.length > 0 && (
+                {bitsModules.length > 0 && (
                   <div className="space-y-1">
                     <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Custom Bits</h4>
                     {bitsModules.map((module) => (
@@ -582,7 +553,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                 )}
 
                 {/* Script modules */}
-                {selectedFrameworks.includes('script') && scriptModules.length > 0 && (
+                {scriptModules.length > 0 && (
                   <div className="space-y-1">
                     <h4 className="text-xs font-medium text-cyan-400 border-b border-cyan-500/30 pb-1 px-1">Script</h4>
                     {scriptModules.map((module) => (

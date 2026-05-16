@@ -2,7 +2,7 @@ id: habit-code
 name: Habit Code Demo
 description: A habit demonstrating if conditions, loops, and string utilities using pure script nodes (Deno)
 
-# This habit demonstrates using Deno scripts for:
+# This habit demonstrates using scripts for:
 # 1. If conditions - Check if data is valid
 # 2. Loops - Iterate over items and transform them
 # 3. String utils - Split, join, uppercase, lowercase operations

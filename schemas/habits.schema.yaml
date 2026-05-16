@@ -322,6 +322,11 @@ definitions:
     properties:
       id:
         type: string
+        deprecated: true
+        description: >-
+          Deprecated. Edge IDs are now auto-derived as "source-_-target"
+          (or "source-_-target-_-sourceHandle-_-targetHandle" when handles are set).
+          Do not set this field; it will be ignored on import.
       source:
         type: string
       sourceHandle:

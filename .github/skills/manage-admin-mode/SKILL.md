@@ -1,6 +1,6 @@
 ---
 name: manage-admin-mode
-description: 'Development, testing, and deployment for the Habits Admin package (packages/manage/admin). Use when: working on the admin UI or server, managing Docker deployment, handling DNS/Caddy/PowerDNS config, working on habit service lifecycle (run/pause/stop/delete), editing subdomain routing, or deploying admin to production. Package name: @ha-bits/admin.'
+description: 'Development, testing, and deployment for the Habits Admin package (packages/manage/admin). Use when: working on the admin UI or server, managing Docker deployment, handling DNS/Caddy config, working on habit service lifecycle (run/pause/stop/delete), editing subdomain routing, or deploying admin to production. Package name: @ha-bits/admin.'
 argument-hint: 'Describe the admin feature, deployment step, or Docker change you need'
 ---
 
@@ -11,7 +11,6 @@ argument-hint: 'Describe the admin feature, deployment step, or Docker change yo
 The Admin (`packages/manage/admin`, package `@ha-bits/admin`) is a Node.js/TypeScript server that manages habits as web services. It runs inside a single Docker container that bundles:
 
 - **Caddy** - reverse proxy + TLS termination
-- **PowerDNS** - authoritative DNS for habit subdomains
 - **s6-overlay** - per-habit process supervision
 - **Admin app** - thin Fastify server serving a Handlebars UI
 
@@ -26,12 +25,12 @@ packages/manage/admin/
 ├── src/
 │   ├── server/          # Fastify server entry point
 │   ├── auth/            # Password auth (bcrypt)
-│   ├── integrations/    # Caddy, PowerDNS, metrics integrations
+│   ├── integrations/    # Caddy, metrics integrations
 │   ├── services/        # Habit service lifecycle (run/pause/stop/delete)
 │   ├── storage/         # File storage, .habit uploads
 │   └── ui/              # Handlebars templates + Tailwind CSS
 ├── docker/
-│   ├── allinone/        # Single Docker image (Caddy+PowerDNS+s6+app)
+│   ├── allinone/        # Single Docker image (Caddy+s6+app)
 │   └── caddy/           # Caddy config fragments
 ├── scripts/
 │   ├── test-stack.sh    # Integration test runner (15 checks)
@@ -58,7 +57,6 @@ src/
 │       └── metrics.ts   # CPU/RAM metrics endpoint
 ├── integrations/
 │   ├── caddy.ts         # Caddy Admin API calls (add/remove routes)
-│   ├── powerdns.ts      # PowerDNS API calls (DNS records)
 │   └── metrics.ts       # In-memory metrics ring (30-min window)
 ├── services/
 │   └── lifecycle.ts     # Start/pause/stop/delete habit processes
@@ -114,7 +112,7 @@ cd packages/manage/admin
 # Copy and fill in env
 cp .env.example admin.env   # edit admin.env with your values
 
-# Start the full stack (Caddy + PowerDNS + s6 + admin app)
+# Start the full stack (Caddy + s6 + admin app)
 docker compose up -d --build
 
 # View logs
@@ -152,8 +150,6 @@ cd packages/manage/admin && npm run build
 | Admin UI (HTTP) | `:80` | Behind Caddy |
 | Admin UI (HTTPS) | `:443` | TLS via Caddy |
 | Caddy Admin API | `:2019` | No auth in dev, do not expose publicly |
-| PowerDNS API | `:8081` | Requires `X-API-Key` header |
-| PowerDNS DNS | `127.0.0.1:5354` | UDP+TCP (macOS uses `/etc/resolver/`) |
 
 ---
 
@@ -206,9 +202,6 @@ curl -X POST http://localhost:3000/api/services/hello-world/start
 # Check Caddy routes
 curl http://localhost:2019/config/apps/http/servers/main/routes
 
-# Check PowerDNS zones
-curl -H "X-API-Key: test-key-123" \
-  http://localhost:8081/api/v1/servers/localhost/zones
 ```
 
 ---
@@ -253,7 +246,6 @@ docker run -d \
 - Templating: **Handlebars** (`.hbs` files in `src/ui/`)
 - Styles: **Tailwind CSS** (dark mode, mobile-first, no gradients)
 - Auth: **bcrypt** password hash in `.env`
-- DNS: PowerDNS API (never edit SQLite directly)
 - Proxy: Caddy Admin API (never edit `Caddyfile` directly)
 - Logging: Use `pino` (already a dependency), not `console.log`
 - No gradients in UI, solid colors only, dark mode preferred
@@ -262,5 +254,4 @@ docker run -d \
 
 - When editing `src/server/routes/services.ts` broadly, prefer a single clean full-file replacement over incremental patches to avoid content duplication.
 - The compose env file (`admin.env`) requires `$$` for every `$` in bcrypt hashes.
-- Do not edit PowerDNS SQLite directly; always go through the REST API on port 8081.
 - Caddy Admin API is on port 2019 (no auth in dev); never expose this publicly.

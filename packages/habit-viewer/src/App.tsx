@@ -135,28 +135,34 @@ steps:
  * Parse URL parameters for habit content and render settings
  */
 function getUrlParams() {
-  const params = new URLSearchParams(window.location.search);
+  // Hash-based params avoid 414 Request-URI Too Long for large habit YAMLs.
+  // Fallback to query string for backward compatibility with old shared links.
+  const hashStr = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+  const hashParams = new URLSearchParams(hashStr);
+  const queryParams = new URLSearchParams(window.location.search);
+  const get = (key: string) => hashParams.get(key) ?? queryParams.get(key);
+
   return {
     // Habit content - passed as URL-encoded string (use \n for newlines)
-    habit: params.get('habit'),
+    habit: get('habit'),
     // URL to fetch habit content from (relative or absolute)
-    url: params.get('url'),
+    url: get('url'),
     // Render format: svg, png, html, or interactive (default)
-    format: params.get('format') as ExportFormat | 'interactive' | null,
+    format: get('format') as ExportFormat | 'interactive' | null,
     // Auto-download after render
-    download: params.get('download') === 'true',
+    download: get('download') === 'true',
     // Filename for download
-    filename: params.get('filename') || 'habit-workflow',
+    filename: get('filename') || 'habit-workflow',
     // Hide controls
-    hideControls: params.get('hideControls') === 'true',
+    hideControls: get('hideControls') === 'true',
     // Hide minimap
-    hideMinimap: params.get('hideMinimap') === 'true',
+    hideMinimap: get('hideMinimap') === 'true',
     // Background color
-    bgColor: params.get('bgColor') || '#0f172a',
+    bgColor: get('bgColor') || '#0f172a',
     // Fit view
-    fitView: params.get('fitView') !== 'false',
+    fitView: get('fitView') !== 'false',
     // Compact mode - collapse node details by default
-    compact: params.get('compact') === 'true',
+    compact: get('compact') === 'true',
   };
 }
 
@@ -208,20 +214,22 @@ function App() {
 
   const params = getUrlParams();
 
-  // Handle form submission - redirect with new params
+  // Handle form submission - redirect with new params in hash
   const handleFormSubmit = useCallback((formParams: { habit?: string; url?: string }) => {
-    const newParams = new URLSearchParams(window.location.search);
-    
+    const hashStr = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
+    const hashParams = new URLSearchParams(hashStr);
+
     if (formParams.habit) {
-      newParams.set('habit', encodeURIComponent(formParams.habit));
-      newParams.delete('url');
+      hashParams.set('habit', encodeURIComponent(formParams.habit));
+      hashParams.delete('url');
     } else if (formParams.url) {
-      newParams.set('url', formParams.url);
-      newParams.delete('habit');
+      hashParams.set('url', formParams.url);
+      hashParams.delete('habit');
     }
-    
-    // Redirect to the same page with new params
-    window.location.search = newParams.toString();
+
+    // Set hash then force reload (hash-only changes don't trigger navigation/reload)
+    window.location.hash = hashParams.toString();
+    window.location.reload();
   }, []);
 
   // Handle node changes (dragging, selecting, etc.)

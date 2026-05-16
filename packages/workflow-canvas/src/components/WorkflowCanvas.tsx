@@ -89,6 +89,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
       onEdgesChange,
       onConnect,
       onEdgesDelete,
+      onEdgeClick,
       children,
       habitCode
     },
@@ -305,6 +306,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
           onEdgesChange={editable ? onEdgesChange : undefined}
           onConnect={editable ? onConnect : undefined}
           onEdgesDelete={editable ? handleEdgesDelete : undefined}
+          onEdgeClick={onEdgeClick as any}
           onInit={(instance) => {
             reactFlowInstance.current = instance;
             console.log('oninit, fitting');

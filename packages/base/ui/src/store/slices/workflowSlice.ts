@@ -301,12 +301,19 @@ export const workflowSlice = createSlice({
         };
         
         // Update edges that reference this node
-        habit.edges = habit.edges.map(edge => ({
-          ...edge,
-          id: edge.id.replace(oldId, newId),
-          source: edge.source === oldId ? newId : edge.source,
-          target: edge.target === oldId ? newId : edge.target,
-        }));
+        habit.edges = habit.edges.map(edge => {
+          const newSource = edge.source === oldId ? newId : edge.source;
+          const newTarget = edge.target === oldId ? newId : edge.target;
+          const sh = edge.sourceHandle;
+          const th = edge.targetHandle;
+          const newEdgeId = `${newSource}-_-${newTarget}-_-${sh ?? 'main'}-_-${th ?? 'main'}`;
+          return {
+            ...edge,
+            id: newEdgeId,
+            source: newSource,
+            target: newTarget,
+          };
+        });
         
         // Update selected node if it's the one being renamed
         if (habit.selectedNode?.id === oldId) {
@@ -374,7 +381,10 @@ export const workflowSlice = createSlice({
       
       state.workflow = workflow;
       habit.nodes = nodes;
-      habit.edges = workflow.edges || [];
+      habit.edges = (workflow.edges || []).map((edge) => ({
+        ...edge,
+        id: `${edge.source}-_-${edge.target}-_-${(edge.sourceHandle ?? 'main') as string}-_-${(edge.targetHandle ?? 'main') as string}`,
+      }));
       habit.selectedNode = null;
       habit.nodeConfig = null;
       // Use the workflow's original ID if available

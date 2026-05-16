@@ -124,9 +124,17 @@ pnpm nx dev @ha-bits/base
 
 # Bits Commands
 
+## Relink Local Bits + Core
+Replace npm-installed bits in /tmp/habits-nodes with symlinks to local workspace sources. Run this after editing local bits or core.
+node scripts/relink-local-bits.mjs
+
 ## Build One Bit
 Build One Bit (e.g., bit-example)
 pnpm nx build @ha-bits/{{bitName}}
+
+## Build & Deploy Bit to npm
+Bump version, build, and publish a specific bit to npm (public registry)
+cd nodes/bits/@ha-bits/{{bitName}} && npm version patch --no-git-tag-version && cd ../.. && pnpm nx build @ha-bits/{{bitName}} && cd '@ha-bits/{{bitName}}' && npm publish --access public --registry https://registry.npmjs.org/
 
 ## Publish Bit to Verdaccio
 Publish Bits to Verdaccio (local registry)
@@ -134,7 +142,7 @@ pnpm nx publish-verdaccio @ha-bits/{{bitName}}
 
 ## Publish Bit to npm
 Publish Bits to npm
-cd nodes/bits/@ha-bits/{{bitName}} && npm version patch --no-git-tag-version && cd ../../../../.. && pnpm nx build @ha-bits/{{bitName}} && cd nodes/bits/@ha-bits/{{bitName}} && npm publish --access public --registry https://registry.npmjs.org/
+cd nodes/bits/@ha-bits/{{bitName}} && npm version patch --no-git-tag-version && cd ../.. && pnpm nx build @ha-bits/{{bitName}} && cd '@ha-bits/{{bitName}}' && npm publish --access public --registry https://registry.npmjs.org/
 
 ## Bits Converter CLI
 Bits Converter CLI
@@ -362,9 +370,15 @@ npx tsx packages/manage/forge/src/screenshots/cli.ts code-snippet --lang {{lang}
 Screenshot an app store listing page (e.g. Google Play) and save as .webp
 npx tsx packages/manage/forge/src/screenshots/cli.ts store-listing --url {{url}} --out {{out}}
 
+# Admin Commands
+
 ## Start Admin Server
 Start the Admin server on port 3099
 node packages/manage/admin/dist/server/index.js
+
+## Watch Admin (Docker Dev)
+Build admin, start a volume-mounted Docker container (habits-admin-dev) on port 3099, then watch src and hot-reload on every save
+npx tsx packages/manage/forge/src/scripts/admin-watch-docker.ts
 
 ## Build Admin
 Build the Admin app (TypeScript + Tailwind CSS)
@@ -383,5 +397,51 @@ Build admin dist, copy files into the running container, then restart it (no ima
 cd packages/manage/admin && npm run build && docker cp dist/. habits-admin:/app/dist && docker restart habits-admin
 
 ## Deploy Admin to Docker Context
-Switch to a remote Docker context, build the Admin image, restart the container, then revert back to default
-docker build --context {{context}} -t habits-admin:latest packages/manage/admin && docker --context {{context}} compose -f packages/manage/admin/compose.yaml up -d --force-recreate
+Build the Admin image directly on a remote Docker context, then restart the running habits-admin container with the new image
+docker --context {{context}} build -t habits-admin:latest packages/manage/admin && docker --context {{context}} restart habits-admin
+
+## Update Admin on Remote Context (no rebuild)
+Build admin dist locally, copy files into the remote running container via docker cp, then restart it, no image rebuild needed
+cd packages/manage/admin && npm run build && docker --context {{context}} cp dist/. habits-admin:/app/dist && docker --context {{context}} restart habits-admin
+
+# Hub VM Commands
+
+## Start Hub VM
+Create and provision the Lima VM (Ubuntu 22.04) for running Hub. Safe to re-run.
+bash packages/manage/hub/vagrant/lima-up.sh
+
+## Reprovision Hub VM
+Re-run install.sh on an existing VM (reinstalls Docker, Node.js, Caddy, systemd unit).
+bash packages/manage/hub/vagrant/lima-up.sh --reprovision
+
+## Stop Hub VM
+Stop the Lima VM (habits-hub) without deleting it.
+bash packages/manage/hub/vagrant/lima-up.sh --stop
+
+## Destroy Hub VM
+Permanently delete the Lima VM and all its data.
+bash packages/manage/hub/vagrant/lima-up.sh --destroy
+
+## Sync Hub to VM
+rsync Hub source to the Lima VM, build TypeScript, and restart the habits-hub service.
+bash packages/manage/hub/vagrant/sync.sh
+
+## Sync Hub to Remote Server
+rsync Hub source to any SSH host (e.g. root@1.2.3.4), build, and restart.
+bash packages/manage/hub/vagrant/sync.sh {{sshTarget}}
+
+## Sync Hub + Rebuild Admin
+Sync Hub source AND rebuild the habits-admin Docker image on the target.
+bash packages/manage/hub/vagrant/sync.sh --rebuild-admin
+
+## Setup Hub DNS (macOS)
+One-time macOS setup: installs dnsmasq and configures *.hub.codenteam.localhost to resolve to the Lima VM IP.
+bash packages/manage/hub/vagrant/dns-setup.sh
+
+## SSH into Hub VM
+Open an interactive shell inside the Lima VM.
+limactl shell habits-hub
+
+## View Hub Service Logs
+Stream live logs from the habits-hub systemd service inside the VM.
+ssh -F ~/.lima/habits-hub/ssh.config lima-habits-hub "sudo journalctl -u habits-hub -f --no-pager"

@@ -524,6 +524,80 @@ export class WorkflowExecutor {
     return true;
   }
 
+  /**
+   * Immediately fire a polling trigger's run() method, bypassing the cron schedule.
+   * Useful for testing. Returns the items the trigger produced.
+   */
+  async fireTriggerNow(workflowId: string, nodeId: string): Promise<{ success: boolean; items: any[]; message?: string }> {
+    const loadedWorkflow = this.getWorkflow(workflowId);
+    if (!loadedWorkflow) {
+      return { success: false, items: [], message: `Workflow not found: ${workflowId}` };
+    }
+
+    const node = loadedWorkflow.workflow.nodes?.find((n: any) => n.id === nodeId);
+    if (!node) {
+      return { success: false, items: [], message: `Node not found: ${nodeId}` };
+    }
+
+    const nodeData = node.data as any;
+    const moduleName = nodeData?.module;
+    const triggerName = nodeData?.operation || 'default';
+
+    if (nodeData?.framework !== 'bits' || !moduleName) {
+      return { success: false, items: [], message: 'Node is not a bits trigger' };
+    }
+
+    const moduleDefinition = {
+      source: (nodeData.source || 'npm') as 'npm' | 'github',
+      module: moduleName,
+      framework: 'bits' as const,
+      repository: moduleName,
+    };
+
+    const rawProps = nodeData.params || {};
+    const triggerProps = this.resolveParameters(rawProps, {});
+
+    this.logger.log(`   🔥 Firing trigger now: ${workflowId}/${nodeId}`);
+
+    const runResult = await bitsTriggerHelper.executeTrigger({
+      moduleDefinition,
+      triggerName,
+      input: triggerProps,
+      hookType: TriggerHookType.RUN,
+      workflowId,
+      nodeId,
+    });
+
+    if (!runResult.success) {
+      return { success: false, items: [], message: runResult.message };
+    }
+
+    const items = runResult.output || [];
+
+    if (items.length > 0) {
+      const triggeredAt = new Date().toISOString();
+      for (let i = 0; i < items.length; i++) {
+        try {
+          await this.executeWorkflow(loadedWorkflow.workflow, {
+            initialContext: {
+              'habits.input': items[i],
+              __pollingTrigger: true,
+              __pollingNodeId: nodeId,
+              __triggeredAt: triggeredAt,
+              __pollingItemIndex: i,
+            },
+            skipTriggerWait: true,
+            triggerNodeId: nodeId,
+          });
+        } catch (err: any) {
+          this.logger.error(`   ❌ Item ${i + 1} failed: ${err.message}`);
+        }
+      }
+    }
+
+    return { success: true, items };
+  }
+
 
   /**
    * Stop all streaming triggers by calling their onDisable()

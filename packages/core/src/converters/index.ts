@@ -25,7 +25,7 @@ export { ScriptWorkflowConverter } from './scriptConverter';
 // Main Workflow Converter
 export {
   detectWorkflowType,
-  convertWorkflow,
+  convertWorkflow, 
   convertWorkflowWithConnections,
   getWorkflowTypeName,
 } from './workflowConverter';
