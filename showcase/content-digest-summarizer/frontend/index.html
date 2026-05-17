@@ -835,10 +835,6 @@
       <span class="rss-badge rss-badge-slack">&#128172; Slack</span>
     </div>
 
-    <!-- Feed URL input -->
-    <label class="input-label" for="rss-url">RSS / Atom Feed URL</label>
-    <input id="rss-url" class="input-field" type="url" placeholder="https://example.com/feed.xml" autocomplete="off" spellcheck="false" />
-
     <!-- Info card -->
     <div class="rss-info-card">
       <div class="rss-info-row">
@@ -1322,14 +1318,6 @@
     var btn     = $('rss-btn-start');
     var spin    = $('rss-spin');
     var label   = $('rss-start-label');
-    var feedUrl = ($('rss-url').value || '').trim();
-
-    if (!feedUrl) {
-      $('rss-url').focus();
-      showRssStatus('error', '\u26a0\ufe0f Please enter an RSS or Atom feed URL before starting.');
-      return;
-    }
-
     btn.disabled = true;
     spin.classList.add('visible');
     label.textContent = 'Starting\u2026';
@@ -1338,7 +1326,7 @@
     fetch('/api/rss-digest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ feedUrl: feedUrl, digestDate: new Date().toISOString() })
+      body: JSON.stringify({ digestDate: new Date().toISOString() })
     })
     .then(function(res) {
       if (!res.ok) return res.text().then(function(t) { throw new Error('Server responded ' + res.status + ': ' + t); });
