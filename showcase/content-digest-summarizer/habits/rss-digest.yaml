@@ -30,7 +30,7 @@ nodes:
       params:
         items: "{{fetch-rss}}"
         feedTitle: ""
-        language: deno
+        language: javascript
         script: |
           export async function main(items, feedTitle) {
             const contents = (Array.isArray(items) ? items : []).map(item => ({

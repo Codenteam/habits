@@ -36,7 +36,7 @@ nodes:
       label: Normalise RSS Items
       params:
         items: "{{poll-feed}}"
-        language: deno
+        language: javascript
         script: |
           export async function main(items) {
             const list = Array.isArray(items) ? items : [];
