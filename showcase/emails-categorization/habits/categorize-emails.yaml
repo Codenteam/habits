@@ -42,7 +42,7 @@ nodes:
       params:
         categorizeResult: "{{categorize}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(categorizeResult: any) {
             const results = categorizeResult?.results ?? [];
