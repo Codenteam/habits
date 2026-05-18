@@ -35,7 +35,7 @@ This showcase demonstrates posting to multiple social media platforms from a sin
    ```
 5. Add any website URL you own to the **Website URL** field.
 6. Click **Save Changes**.
-7. A dialog will show your **Client ID** and **Client Secret** — save these values and close the dialog.
+7. A dialog will show your **Client ID** and **Client Secret** — save the value of Client ID and close the dialog.
 
 ### 5. Add Credentials to `.env`
 
@@ -43,7 +43,7 @@ Add the following variables to your `.env` file:
 
 ```dotenv
 HABITS_TWITTER_CLIENT_ID=<YOUR_TWITTER_CLIENT_ID>
-HABITS_TWITTER_CLIENT_SECRET=<YOUR_TWITTER_CLIENT_SECRET>
+
 ```
 
 ---
