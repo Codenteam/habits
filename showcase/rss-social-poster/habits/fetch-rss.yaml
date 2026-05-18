@@ -23,7 +23,7 @@ nodes:
       isTrigger: true
       triggerType: polling
       params:
-        url: "{{habits.input.feedUrl}}"
+        url: "{{habits.env.HABITS_RSS_FEED_URL}}"
         cronExpression: "*/3 * * * *"
 
   # Step 2: Normalise RSS items into a flat article array
@@ -36,7 +36,7 @@ nodes:
       label: Normalise RSS Items
       params:
         items: "{{poll-feed}}"
-        language: deno
+        language: javascript
         script: |
           export async function main(items) {
             const list = Array.isArray(items) ? items : [];

@@ -146,6 +146,7 @@ const twitterBit = {
     tokenUrl: 'https://api.x.com/2/oauth2/token',
     // clientId is configured per-user/deployment
     scopes: ['tweet.read', 'tweet.write', 'users.read', 'offline.access'],
+    pkce:true,
   },
   
   actions: {

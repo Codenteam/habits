@@ -998,18 +998,22 @@
     ═══════════════════════════════════════════════════════ */
     let _allClients = [];
 
+    async function fetchClients() {
+      const res = await fetch('/api/list-clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      return (data.output ?? data).clients ?? [];
+    }
+
     async function loadClientsTab() {
       document.getElementById('clients-skeleton').style.display = 'grid';
       document.getElementById('clients-grid').style.display = 'none';
 
       try {
-        const res = await fetch('/api/list-clients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json();
-        _allClients = (data.output ?? data).clients ?? [];
+        _allClients = await fetchClients();
         renderClientsGrid(_allClients);
         updateClientTabCount(_allClients.length);
       } catch {
@@ -1069,15 +1073,8 @@
 
     async function refreshClientCount() {
       try {
-        const res = await fetch('/api/list-clients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json();
-        const clients = (data.output ?? data).clients ?? [];
-        updateClientTabCount(clients.length);
-        _allClients = clients;
+        _allClients = await fetchClients();
+        updateClientTabCount(_allClients.length);
       } catch { /* silent */ }
     }
 
@@ -1090,13 +1087,7 @@
       const sel = document.getElementById('client-select');
       sel.innerHTML = '<option value="">— Loading… —</option>';
       try {
-        const res = await fetch('/api/list-clients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        const data = await res.json();
-        _selectClients = (data.output ?? data).clients ?? [];
+        _selectClients = await fetchClients();
         if (!_selectClients.length) {
           sel.innerHTML = '<option value="">— No clients yet —</option>';
         } else {

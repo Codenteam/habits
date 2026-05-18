@@ -981,7 +981,7 @@ export function FrontendBuilderVanilla({
                         style={{ backgroundColor: '#13141c', border: '1px solid rgba(255,255,255,0.15)' }}
                       />
                       <p className="mt-1 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                        {aiProvider === 'openai' && 'e.g., gpt-4o, gpt-4-turbo, o1-mini, o3-mini'}
+                        {aiProvider === 'openai' && 'e.g., gpt-5.5'}
                         {aiProvider === 'anthropic' && 'e.g., claude-opus-4-5, claude-sonnet-4-5'}
                         {aiProvider === 'gemini' && 'e.g., gemini-2.0-flash, gemini-1.5-pro'}
                       </p>

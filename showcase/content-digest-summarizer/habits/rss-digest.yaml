@@ -16,7 +16,7 @@ nodes:
       isTrigger: true
       triggerType: polling
       params:
-        url: "{{habits.input.feedUrl}}"
+        url: "{{habits.env.HABITS_RSS_FEED_URL}}"
         cronExpression: "*/3 * * * *"
 
   # Step 2: Map RSS items to the content format expected by summarize-content
@@ -30,7 +30,7 @@ nodes:
       params:
         items: "{{fetch-rss}}"
         feedTitle: ""
-        language: deno
+        language: javascript
         script: |
           export async function main(items, feedTitle) {
             const contents = (Array.isArray(items) ? items : []).map(item => ({

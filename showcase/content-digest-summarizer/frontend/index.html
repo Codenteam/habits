@@ -835,10 +835,6 @@
       <span class="rss-badge rss-badge-slack">&#128172; Slack</span>
     </div>
 
-    <!-- Feed URL input -->
-    <label class="input-label" for="rss-url">RSS / Atom Feed URL</label>
-    <input id="rss-url" class="input-field" type="url" placeholder="https://example.com/feed.xml" autocomplete="off" spellcheck="false" />
-
     <!-- Info card -->
     <div class="rss-info-card">
       <div class="rss-info-row">
@@ -1152,7 +1148,7 @@
 
   // ── Email run ─────────────────────────────────────────────────────────────────
 
-  function runEmailFetch() {
+  async function runEmailFetch() {
     var btn   = $('run-btn');
     var label = $('btn-label');
     if (btn.disabled) return;
@@ -1175,24 +1171,20 @@
     setPipe('fetch', 'active');
     log('Fetching emails\u2026');
 
-    fetch('/api/content-digest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ digestDate: new Date().toISOString() })
-    })
-    .then(function(resp) {
+    try {
+      var resp = await fetch('/api/content-digest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digestDate: new Date().toISOString() })
+      });
       if (!resp.ok) {
-        return resp.text().then(function(txt) {
-          throw new Error('API error ' + resp.status + ': ' + txt);
-        });
+        var txt = await resp.text();
+        throw new Error('API error ' + resp.status + ': ' + txt);
       }
-      return resp.json();
-    })
-    .then(function(result) {
+      var result = await resp.json();
       handleDigestResult(result.output || result, 'spinner', 'btn-label', 'run-btn', '\u25BA Run Email Digest');
       $('auto-email-btn').disabled = false;
-    })
-    .catch(function(err) {
+    } catch (err) {
       console.error(err);
       resetPipes();
       $('error-msg').textContent = err.message || 'Unknown error';
@@ -1203,7 +1195,7 @@
       label.textContent = '\u25BA Run Email Digest';
       btn.disabled = false;
       $('auto-email-btn').disabled = false;
-    });
+    }
   }
 
   $('run-btn').addEventListener('click', runEmailFetch);
@@ -1301,63 +1293,57 @@
     btnStop.disabled = false;
   }
 
-  function stopRssAutomation() {
+  async function stopRssAutomation() {
     var btnStop = $('rss-btn-stop');
     btnStop.disabled = true;
     showRssStatus('running', '\u29d3 <strong>Stopping\u2026</strong> Disabling the RSS polling trigger.');
-    fetch('/misc/trigger/' + RSS_TRIGGER_WORKFLOW_ID + '/' + RSS_TRIGGER_NODE_ID, { method: 'DELETE' })
-      .then(function(res) {
-        if (!res.ok) return res.text().then(function(t) { throw new Error('Server responded ' + res.status + ': ' + t); });
-        setRssIdleState();
-        showRssStatus('info', '\u23f9 <strong>Automation stopped.</strong> The RSS polling trigger has been disabled. Click Start to resume.');
-      })
-      .catch(function(err) {
-        console.error(err);
-        showRssStatus('error', '\u274c <strong>Could not stop automation.</strong> ' + (err.message || 'Unknown error'));
-        btnStop.disabled = false;
-      });
+    try {
+      var res = await fetch('/misc/trigger/' + RSS_TRIGGER_WORKFLOW_ID + '/' + RSS_TRIGGER_NODE_ID, { method: 'DELETE' });
+      if (!res.ok) {
+        var t = await res.text();
+        throw new Error('Server responded ' + res.status + ': ' + t);
+      }
+      setRssIdleState();
+      showRssStatus('info', '\u23f9 <strong>Automation stopped.</strong> The RSS polling trigger has been disabled. Click Start to resume.');
+    } catch (err) {
+      console.error(err);
+      showRssStatus('error', '\u274c <strong>Could not stop automation.</strong> ' + (err.message || 'Unknown error'));
+      btnStop.disabled = false;
+    }
   }
 
-  function startRssAutomation() {
+  async function startRssAutomation() {
     var btn     = $('rss-btn-start');
     var spin    = $('rss-spin');
     var label   = $('rss-start-label');
-    var feedUrl = ($('rss-url').value || '').trim();
-
-    if (!feedUrl) {
-      $('rss-url').focus();
-      showRssStatus('error', '\u26a0\ufe0f Please enter an RSS or Atom feed URL before starting.');
-      return;
-    }
-
     btn.disabled = true;
     spin.classList.add('visible');
     label.textContent = 'Starting\u2026';
     showRssStatus('running', '\u29d3 <strong>Connecting\u2026</strong> Setting up your automation pipeline.');
 
-    fetch('/api/rss-digest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ feedUrl: feedUrl, digestDate: new Date().toISOString() })
-    })
-    .then(function(res) {
-      if (!res.ok) return res.text().then(function(t) { throw new Error('Server responded ' + res.status + ': ' + t); });
-      return res.json().catch(function() { return {}; });
-    })
-    .then(function() {
+    try {
+      var res = await fetch('/api/rss-digest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digestDate: new Date().toISOString() })
+      });
+      if (!res.ok) {
+        var t = await res.text();
+        throw new Error('Server responded ' + res.status + ': ' + t);
+      }
+      await res.json().catch(function() { return {}; });
       setRssLiveState();
       showRssStatus('info',
         '\ud83d\udfe2 <strong>Automation is live!</strong> Your RSS feed is now being monitored \u2014 every 3 minutes, new articles will be discovered, summarized by AI, and posted as a digest to Slack automatically.'
       );
-    })
-    .catch(function(err) {
+    } catch (err) {
       console.error(err);
       showRssStatus('error',
         '\u274c <strong>Could not start automation.</strong> ' + (err.message || 'Unknown error') +
         '<br><br>Make sure the habits server is running and your <code>.env</code> credentials are set correctly.'
       );
       setRssIdleState();
-    });
+    }
   }
 
   $('rss-btn-start').addEventListener('click', startRssAutomation);
