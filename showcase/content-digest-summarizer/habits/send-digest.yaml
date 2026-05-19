@@ -24,7 +24,7 @@ nodes:
             const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';
             const sentimentEmoji = (s) => s === 'positive' ? '😊' : s === 'neutral' ? '😐' : '😟';
 
-            const header = '*📬 Content Digest — ' + digestDate + '*\n_' + contentCount + ' contents summarized_\n---';
+            const header = '*📬 Content Digest — ' + new Date(digestDate).toLocaleString() + '*\n_' + contentCount + ' contents summarized_\n---';
 
             const blocks = (Array.isArray(summariesJson) ? summariesJson : []).map(item => {
               const s = (item && (item.output || item)) || {};
