@@ -1,0 +1,68 @@
+# Showcase metadata for AI Invoice Mailer example
+# This example demonstrates AI-powered invoice generation and automated email delivery
+
+name: AI Invoice Mailer
+type: fullstack
+description: Generate professional invoices with AI and send them to clients via SMTP email. Manage clients, auto-populate invoice fields, and deliver polished results in one workflow.
+
+longDescription: |
+  **AI Invoice Mailer** is a full-stack automation that combines AI text generation with SMTP
+  email delivery to produce and send professional invoices with minimal effort.
+
+  ## What it does
+
+  - **Client management** — Save and list clients with `save-client` and `list-clients` habits
+  - **AI invoice generation** — Uses OpenAI to auto-fill line items, descriptions, and totals based on a short prompt
+  - **Email delivery** — Sends the finished invoice directly to the client via SMTP using credentials stored in `.env`
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered invoice content generation |
+  | `HABITS_SMTP_HOST` | SMTP server hostname (e.g. `smtp.gmail.com`) |
+  | `HABITS_SMTP_PORT` | SMTP port (typically `587` for STARTTLS) |
+  | `HABITS_SMTP_USER` | SMTP login username / email address |
+  | `HABITS_SMTP_PASSWORD` | SMTP password or app-specific password |
+  | `HABITS_EMAIL_FROM` | Display name and address used as the sender |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in your credentials.
+  2. On desktop/mobile apps, the same keys are stored securely in the system keyring.
+  3. Run `save-client` to add a client, then `generate-invoice` to create and send an invoice.
+
+  ## Tech stack
+
+  - **habits framework** for workflow orchestration
+  - **OpenAI** for natural-language invoice generation
+  - **SMTP** (Nodemailer-compatible) for email delivery
+  - **Frontend habit** for interactive client/invoice management UI
+
+tags:
+  - ai
+  - email
+  - finance
+  - automation
+  - frontend
+
+difficulty: beginner
+
+featured: true
+
+version: "1.0"
+
+requirements:
+  - HABITS_OPENAI_API_KEY — OpenAI API key
+  - HABITS_SMTP_HOST — SMTP server hostname
+  - HABITS_SMTP_PORT — SMTP port (587 recommended)
+  - HABITS_SMTP_USER — SMTP username / email
+  - HABITS_SMTP_PASSWORD — SMTP password or app password
+  - HABITS_EMAIL_FROM — Sender display name and address
+
+habits:
+  - habits/generate-invoice.yaml
+  - habits/save-client.yaml
+  - habits/list-clients.yaml
+
+quickDownload: true
