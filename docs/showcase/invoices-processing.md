@@ -9,7 +9,8 @@ import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/invoices-processing/invoices-processing-1.webp', caption: 'Invoices Processing' },
-    { img: '/showcase/invoices-processing/invoices-processing-2.webp', caption: 'Invoices Processing' }
+    { img: '/showcase/invoices-processing/invoices-processing-2.webp', caption: 'Invoices Processing' },
+    { img: '/showcase/invoices-processing/invoices-processing-3.webp', caption: 'Invoices Processing' }
 ]
 
 const habitTabs = [

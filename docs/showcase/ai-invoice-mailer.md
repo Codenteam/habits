@@ -10,7 +10,9 @@ import { Brain, Mail, Tag, Zap, Layout } from 'lucide-vue-next'
 const images = [
     { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-1.webp', caption: 'AI Invoice Mailer' },
     { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-2.webp', caption: 'AI Invoice Mailer' },
-    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-3.webp', caption: 'AI Invoice Mailer' }
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-3.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-4.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-5.webp', caption: 'AI Invoice Mailer' }
 ]
 
 const habitTabs = [
@@ -51,9 +53,9 @@ email delivery to produce and send professional invoices with minimal effort.
 
 ## What it does
 
-- **Client management** — Save and list clients with `save-client` and `list-clients` habits
-- **AI invoice generation** — Uses OpenAI to auto-fill line items, descriptions, and totals based on a short prompt
-- **Email delivery** — Sends the finished invoice directly to the client via SMTP using credentials stored in `.env`
+- **Client management** : Save and list clients with `save-client` and `list-clients` habits
+- **AI invoice generation** : Uses OpenAI to auto-fill line items, descriptions, and totals based on a short prompt
+- **Email delivery** : Sends the finished invoice directly to the client via SMTP using credentials stored in `.env`
 
 ## Environment variables (`.env` / keyring on apps)
 

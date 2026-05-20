@@ -9,7 +9,9 @@ import { Brain, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/rss-social-poster/rss-social-poster-1.webp', caption: 'RSS Social Poster' },
-    { img: '/showcase/rss-social-poster/rss-social-poster-2.webp', caption: 'RSS Social Poster' }
+    { img: '/showcase/rss-social-poster/rss-social-poster-2.webp', caption: 'RSS Social Poster' },
+    { img: '/showcase/rss-social-poster/rss-social-poster-3.webp', caption: 'RSS Social Poster' },
+    { img: '/showcase/rss-social-poster/rss-social-poster-4.webp', caption: 'RSS Social Poster' }
 ]
 
 const habitTabs = [

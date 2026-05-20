@@ -3,7 +3,7 @@
 
 name: Content Digest Summarizer
 type: fullstack
-description: Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel — in one click.
+description: Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel : in one click.
 
 longDescription: |
   **Content Digest Summarizer** is an automation that aggregates content from multiple sources
@@ -12,12 +12,12 @@ longDescription: |
 
   ## What it does
 
-  - **Email fetching** — Retrieves unread Gmail messages via IMAP with `fetch-emails`
-  - **RSS monitoring** — Polls any RSS/Atom feed for new articles with `rss-digest`
-  - **AI summarisation** — Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
-  - **Content processing** — `process-content` orchestrates the fetch → summarise loop for all email items
-  - **Slack delivery** — Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
-  - **Full pipeline** — `content-digest` ties everything together: process all content sources then send the digest
+  - **Email fetching** : Retrieves unread Gmail messages via IMAP with `fetch-emails`
+  - **RSS monitoring** : Polls any RSS/Atom feed for new articles with `rss-digest`
+  - **AI summarisation** : Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
+  - **Content processing** : `process-content` orchestrates the fetch → summarise loop for all email items
+  - **Slack delivery** : Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
+  - **Full pipeline** : `content-digest` ties everything together: process all content sources then send the digest
 
   ## Environment variables (`.env` / keyring on apps)
 

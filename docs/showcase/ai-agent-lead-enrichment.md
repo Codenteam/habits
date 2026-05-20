@@ -8,6 +8,7 @@ aside: false
 import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
+    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichmend-3.webp', caption: 'AI Agent Lead Enrichment' },
     { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-1.webp', caption: 'AI Agent Lead Enrichment' },
     { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-2.webp', caption: 'AI Agent Lead Enrichment' }
 ]
@@ -48,9 +49,9 @@ with HubSpot CRM integration to qualify and store leads with minimal effort.
 
 ## What it does
 
-- **Lead intake** — Accepts lead details (email, name, company, phone) via an interactive frontend form
-- **AI lead scoring** — Uses OpenAI to analyse the email domain and company name and assign a quality score between 0 and 100
-- **CRM sync** — Creates or updates the contact in HubSpot with the enriched score via the `enrich-lead` habit
+- **Lead intake** : Accepts lead details (email, name, company, phone) via an interactive frontend form
+- **AI lead scoring** : Uses OpenAI to analyse the email domain and company name and assign a quality score between 0 and 100
+- **CRM sync** : Creates or updates the contact in HubSpot with the enriched score via the `enrich-lead` habit
 
 ## Environment variables (`.env` / keyring on apps)
 

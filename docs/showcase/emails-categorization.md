@@ -9,7 +9,8 @@ import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/emails-categorization/emails-categorization-1.webp', caption: 'Emails Categorization' },
-    { img: '/showcase/emails-categorization/emails-categorization-2.webp', caption: 'Emails Categorization' }
+    { img: '/showcase/emails-categorization/emails-categorization-2.webp', caption: 'Emails Categorization' },
+    { img: '/showcase/emails-categorization/emails-categorization-3.webp', caption: 'Emails Categorization' }
 ]
 
 const habitTabs = [

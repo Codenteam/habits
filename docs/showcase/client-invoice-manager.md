@@ -11,7 +11,9 @@ const images = [
     { img: '/showcase/client-invoice-manager/client-invoice-manager-1.webp', caption: 'Client Invoice Manager' },
     { img: '/showcase/client-invoice-manager/client-invoice-manager-2.webp', caption: 'Client Invoice Manager' },
     { img: '/showcase/client-invoice-manager/client-invoice-manager-3.webp', caption: 'Client Invoice Manager' },
-    { img: '/showcase/client-invoice-manager/client-invoice-manager-4.webp', caption: 'Client Invoice Manager' }
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-4.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-5.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-6.webp', caption: 'Client Invoice Manager' }
 ]
 
 const habitTabs = [

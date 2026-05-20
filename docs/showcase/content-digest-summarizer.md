@@ -12,7 +12,8 @@ const images = [
     { img: '/showcase/content-digest-summarizer/content-digest-summarizer-2.webp', caption: 'Content Digest Summarizer' },
     { img: '/showcase/content-digest-summarizer/content-digest-summarizer-3.webp', caption: 'Content Digest Summarizer' },
     { img: '/showcase/content-digest-summarizer/content-digest-summarizer-4.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-5.webp', caption: 'Content Digest Summarizer' }
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-5.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-6.webp', caption: 'Content Digest Summarizer' }
 ]
 
 const habitTabs = [

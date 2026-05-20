@@ -9,7 +9,8 @@ import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/email-ticket-routing/email-ticket-routing-1.webp', caption: 'Email Ticket Routing' },
-    { img: '/showcase/email-ticket-routing/email-ticket-routing-2.webp', caption: 'Email Ticket Routing' }
+    { img: '/showcase/email-ticket-routing/email-ticket-routing-2.webp', caption: 'Email Ticket Routing' },
+    { img: '/showcase/email-ticket-routing/email-ticket-routing-3.webp', caption: 'Email Ticket Routing' }
 ]
 
 const habitTabs = [
@@ -50,14 +51,14 @@ const habitTabs = [
 
 **Email Ticket Routing** is an automation that reads your Gmail inbox over IMAP, uses OpenAI
 to classify each incoming email into one of six categories (support, sales, billing, feedback,
-spam, or urgent) and forwards it to the correct team inbox via SMTP — no manual triage needed.
+spam, or urgent) and forwards it to the correct team inbox via SMTP : no manual triage needed.
 
 ## What it does
 
-- **Email fetching** — Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
-- **AI classification** — Passes each email to OpenAI for category detection (support / sales / billing / feedback / spam / urgent) and priority scoring via `analyze-ticket`
-- **Team routing** — Resolves the correct SMTP credentials for the target team and forwards the ticket via `route-category` and `send-email`
-- **Full pipeline** — `ticket-routing` orchestrates the entire fetch → analyze → assign flow; `assign-ticket` handles the per-ticket assignment steps
+- **Email fetching** : Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
+- **AI classification** : Passes each email to OpenAI for category detection (support / sales / billing / feedback / spam / urgent) and priority scoring via `analyze-ticket`
+- **Team routing** : Resolves the correct SMTP credentials for the target team and forwards the ticket via `route-category` and `send-email`
+- **Full pipeline** : `ticket-routing` orchestrates the entire fetch → analyze → assign flow; `assign-ticket` handles the per-ticket assignment steps
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -87,7 +88,7 @@ spam, or urgent) and forwards it to the correct team inbox via SMTP — no manua
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
 2. Enable 2-Step Verification on every Gmail account involved and generate a separate 16-character App Password for each (IMAP source + each team inbox).
-3. Run `ticket-routing` — it will fetch unread emails, classify them with AI, and forward each one to the appropriate team inbox automatically.
+3. Run `ticket-routing` : it will fetch unread emails, classify them with AI, and forward each one to the appropriate team inbox automatically.
 
 ## Tech stack
 
