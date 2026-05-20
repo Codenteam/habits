@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate low stock alerts, reorder purchase orders, supplier notifications, inventory reconciliation, and demand forecasting.</p>
 
-A collection of habits that keep shelves stocked and suppliers informed, from reorder triggers through to shrinkage reporting. Each habit operates independently and can be deployed individually or as a complete inventory management suite.
+A collection of habits that keep shelves stocked and suppliers informed: from reorder triggers through to shrinkage reporting. Each habit operates independently and can be deployed individually or as a complete inventory management suite.
 
 ## What It Does
 

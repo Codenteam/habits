@@ -1,0 +1,74 @@
+# Showcase metadata for RSS Social Poster example
+# This example demonstrates AI-powered social media posting from RSS feed articles
+
+name: RSS Social Poster
+type: fullstack
+description: Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically — every time a new article drops.
+
+longDescription: |
+  **RSS Social Poster** is an automation that polls any RSS or Atom feed on a 3-minute schedule,
+  uses OpenAI to craft platform-specific posts for each new article, and publishes them to
+  Twitter/X and LinkedIn without any manual intervention.
+
+  ## What it does
+
+  - **RSS monitoring** — Polls any RSS/Atom feed URL every 3 minutes for new items via `fetch-rss`; normalises each article into a standard format
+  - **AI content generation** — Passes each article to OpenAI to produce a concise tweet and a longer professional LinkedIn post via `generate-social-posts`
+  - **Multi-platform publishing** — Posts the tweet to Twitter/X and the LinkedIn post to your organisation page sequentially via `post-to-social`
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for social post generation |
+  | `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
+  | `HABITS_LINKEDIN_ORG_ID` | LinkedIn Organization ID for page posts |
+  | `HABITS_RSS_FEED_URL` | RSS/Atom feed URL to monitor |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in your credentials.
+  2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL; copy the Client ID.
+  3. Create a LinkedIn Developer App linked to your Company Page; copy the Client ID, Client Secret, and Organization ID.
+  4. Set any RSS/Atom feed URL in `HABITS_RSS_FEED_URL`.
+  5. Start the server — `fetch-rss` will automatically poll the feed every 3 minutes and publish new articles to both platforms.
+
+  ## Tech stack
+
+  - **habits framework** for workflow orchestration and cron scheduling
+  - **OpenAI** (`@ha-bits/bit-openai`) for platform-tailored social content generation
+  - **RSS** (`@ha-bits/bit-rss`) for feed polling and new-item detection
+  - **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
+  - **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
+
+tags:
+  - ai
+  - rss
+  - social-media
+  - twitter
+  - linkedin
+  - automation
+  - scheduling
+
+difficulty: intermediate
+
+featured: true
+
+version: "1.0"
+
+requirements:
+  - HABITS_OPENAI_API_KEY — OpenAI API key
+  - HABITS_TWITTER_CLIENT_ID — Twitter/X OAuth 2.0 Client ID
+  - HABITS_LINKEDIN_CLIENT_ID — LinkedIn OAuth 2.0 Client ID
+  - HABITS_LINKEDIN_CLIENT_SECRET — LinkedIn OAuth 2.0 Client Secret
+  - HABITS_LINKEDIN_ORG_ID — LinkedIn Organization ID
+  - HABITS_RSS_FEED_URL — RSS/Atom feed URL to monitor
+
+habits:
+  - habits/fetch-rss.yaml
+  - habits/generate-social-posts.yaml
+  - habits/post-to-social.yaml
+
+quickDownload: true

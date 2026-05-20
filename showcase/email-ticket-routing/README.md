@@ -37,7 +37,9 @@ You need a separate App Password for every Gmail account referenced in `.env`:
 | `HABITS_SMTP_SUPPORT_PASSWORD` | Support team Gmail address |
 | `HABITS_SMTP_SALES_PASSWORD` | Sales team Gmail address |
 | `HABITS_SMTP_BILLING_PASSWORD` | Billing team Gmail address |
-   And so on
+| `HABITS_SMTP_FEEDBACK_PASSWORD` | Feedback team Gmail address |
+| `HABITS_SMTP_SPAM_PASSWORD` | Spam/abuse inbox Gmail address |
+| `HABITS_SMTP_URGENT_PASSWORD` | Urgent/critical inbox Gmail address |
 
 ---
 
@@ -64,5 +66,11 @@ cp .env.example .env
 | `HABITS_SMTP_SALES_PASSWORD` | App Password for sales Gmail |
 | `HABITS_SMTP_BILLING_USER` | Gmail address for billing replies |
 | `HABITS_SMTP_BILLING_PASSWORD` | App Password for billing Gmail |
+| `HABITS_SMTP_FEEDBACK_USER` | Gmail address for feedback replies |
+| `HABITS_SMTP_FEEDBACK_PASSWORD` | App Password for feedback Gmail |
+| `HABITS_SMTP_SPAM_USER` | Gmail address for spam/abuse inbox |
+| `HABITS_SMTP_SPAM_PASSWORD` | App Password for spam Gmail |
+| `HABITS_SMTP_URGENT_USER` | Gmail address for urgent/critical inbox |
+| `HABITS_SMTP_URGENT_PASSWORD` | App Password for urgent Gmail |
 
 ---

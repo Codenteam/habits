@@ -1,0 +1,60 @@
+# Showcase metadata for AI Agent Lead Enrichment example
+# This example demonstrates AI-powered lead scoring and automated CRM sync with HubSpot
+
+name: AI Agent Lead Enrichment
+type: fullstack
+description: Score and enrich leads with AI, then automatically sync them to HubSpot CRM. Submit a lead form, let OpenAI evaluate the contact quality, and push enriched data in one workflow.
+
+longDescription: |
+  **AI Agent Lead Enrichment** is a full-stack automation that combines AI-powered lead scoring
+  with HubSpot CRM integration to qualify and store leads with minimal effort.
+
+  ## What it does
+
+  - **Lead intake** — Accepts lead details (email, name, company, phone) via an interactive frontend form
+  - **AI lead scoring** — Uses OpenAI to analyse the email domain and company name and assign a quality score between 0 and 100
+  - **CRM sync** — Creates or updates the contact in HubSpot with the enriched score via the `enrich-lead` habit
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered lead scoring |
+  | `HABITS_HUBSPOT_ACCESS_TOKEN` | HubSpot Private App access token for CRM sync |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in your credentials.
+  2. Create a HubSpot Private App with the required CRM scopes and paste the token as `HABITS_HUBSPOT_ACCESS_TOKEN`.
+  3. On desktop/mobile apps, the same keys are stored securely in the system keyring.
+  4. Run the `enrich-lead` habit, fill in the lead form, and the contact will be scored and synced to HubSpot automatically.
+
+  ## Tech stack
+
+  - **habits framework** for workflow orchestration
+  - **OpenAI** (`@ha-bits/bit-openai`) for natural-language lead scoring
+  - **HubSpot** (`@ha-bits/bit-hubspot`) for CRM contact creation and updates
+  - **Frontend habit** for interactive lead submission UI
+
+tags:
+  - ai
+  - crm
+  - hubspot
+  - sales
+  - automation
+  - frontend
+
+difficulty: beginner
+
+featured: true
+
+version: "1.0"
+
+requirements:
+  - HABITS_OPENAI_API_KEY — OpenAI API key
+  - HABITS_HUBSPOT_ACCESS_TOKEN — HubSpot Private App access token
+
+habits:
+  - habits/enrich-lead.yaml
+
+quickDownload: true

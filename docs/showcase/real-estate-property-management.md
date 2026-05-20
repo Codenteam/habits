@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate tenant onboarding, maintenance request routing, rent collection alerts, lease renewals, property inspections, and vendor management.</p>
 
-A collection of habits that keep tenants happy and properties running smoothly, from onboarding through to vendor payment. Each habit operates independently and can be deployed individually or as a complete property management suite.
+A collection of habits that keep tenants happy and properties running smoothly: from onboarding through to vendor payment. Each habit operates independently and can be deployed individually or as a complete property management suite.
 
 ## What It Does
 

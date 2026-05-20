@@ -1,5 +1,22 @@
 [
   {
+    "slug": "ai-agent-lead-enrichment",
+    "name": "AI Agent Lead Enrichment",
+    "description": "Score and enrich leads with AI, then automatically sync them to HubSpot CRM. Submit a lead form, let OpenAI evaluate the contact quality, and push enriched data in one workflow.",
+    "tags": [
+      "ai",
+      "crm",
+      "hubspot",
+      "sales",
+      "automation",
+      "frontend"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-1.webp",
+    "imageCount": 2
+  },
+  {
     "slug": "ai-cookbook",
     "name": "AI Cookbook",
     "description": "Generate personalized recipes from your available ingredients with AI-powered recipe creation and beautiful food photography.",
@@ -15,6 +32,22 @@
     "imageCount": 2
   },
   {
+    "slug": "ai-invoice-mailer",
+    "name": "AI Invoice Mailer",
+    "description": "Generate professional invoices with AI and send them to clients via SMTP email. Manage clients, auto-populate invoice fields, and deliver polished results in one workflow.",
+    "tags": [
+      "ai",
+      "email",
+      "finance",
+      "automation",
+      "frontend"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/ai-invoice-mailer/ai-invoice-mailer-1.webp",
+    "imageCount": 3
+  },
+  {
     "slug": "ai-journal",
     "name": "AI Journal",
     "description": "Your personal AI-powered journaling companion that analyzes entries, tracks mood patterns, and provides compassionate weekly insights.",
@@ -28,6 +61,39 @@
     "featured": true,
     "thumbnail": "/showcase/ai-journal/1.png",
     "imageCount": 2
+  },
+  {
+    "slug": "client-invoice-manager",
+    "name": "Client Invoice Manager",
+    "description": "Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive — all from a single workflow.",
+    "tags": [
+      "ai",
+      "finance",
+      "google-drive",
+      "automation",
+      "frontend"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/client-invoice-manager/client-invoice-manager-1.webp",
+    "imageCount": 4
+  },
+  {
+    "slug": "content-digest-summarizer",
+    "name": "Content Digest Summarizer",
+    "description": "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel — in one click.",
+    "tags": [
+      "ai",
+      "email",
+      "rss",
+      "slack",
+      "productivity",
+      "automation"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/content-digest-summarizer/content-digest-summarizer-1.webp",
+    "imageCount": 5
   },
   {
     "slug": "email-demo",
@@ -46,6 +112,38 @@
     "imageCount": 1
   },
   {
+    "slug": "email-ticket-routing",
+    "name": "Email Ticket Routing",
+    "description": "Fetch support emails via IMAP, classify each ticket with AI, and automatically route it to the right team inbox (support, sales, billing, feedback, spam, or urgent) via SMTP.",
+    "tags": [
+      "ai",
+      "email",
+      "support",
+      "automation",
+      "routing"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/email-ticket-routing/email-ticket-routing-1.webp",
+    "imageCount": 2
+  },
+  {
+    "slug": "emails-categorization",
+    "name": "Emails Categorization",
+    "description": "Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram — fully automated.",
+    "tags": [
+      "ai",
+      "email",
+      "productivity",
+      "automation",
+      "telegram"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/emails-categorization/emails-categorization-1.webp",
+    "imageCount": 2
+  },
+  {
     "slug": "hello-world",
     "name": "Hello World Habit",
     "description": "Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.",
@@ -58,6 +156,22 @@
     "featured": true,
     "thumbnail": "/showcase/hello-world/1.webp",
     "imageCount": 1
+  },
+  {
+    "slug": "invoices-processing",
+    "name": "Invoices Processing",
+    "description": "Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet — zero manual data entry.",
+    "tags": [
+      "ai",
+      "email",
+      "finance",
+      "automation",
+      "google-sheets"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/invoices-processing/invoices-processing-1.webp",
+    "imageCount": 2
   },
   {
     "slug": "marketing-campaign",
@@ -103,5 +217,41 @@
     "featured": true,
     "thumbnail": "/showcase/resume-analyzer/1.webp",
     "imageCount": 4
+  },
+  {
+    "slug": "rss-social-poster",
+    "name": "RSS Social Poster",
+    "description": "Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically — every time a new article drops.",
+    "tags": [
+      "ai",
+      "rss",
+      "social-media",
+      "twitter",
+      "linkedin",
+      "automation",
+      "scheduling"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/rss-social-poster/rss-social-poster-1.webp",
+    "imageCount": 2
+  },
+  {
+    "slug": "social-media-multi-posting",
+    "name": "Social Media Multi-Posting",
+    "description": "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn — all from a single workflow.",
+    "tags": [
+      "ai",
+      "social-media",
+      "twitter",
+      "linkedin",
+      "automation",
+      "scheduling",
+      "frontend"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/social-media-multi-posting/social-media-posting-1.webp",
+    "imageCount": 3
   }
 ]

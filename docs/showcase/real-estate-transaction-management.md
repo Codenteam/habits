@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate offer tracking, document collection, inspection scheduling, closing coordination, commission calculation, and compliance review.</p>
 
-A collection of habits that keep every transaction on track, from offer submission through to final closing. Each habit operates independently and can be deployed individually or as a complete transaction management suite.
+A collection of habits that keep every transaction on track: from offer submission through to final closing. Each habit operates independently and can be deployed individually or as a complete transaction management suite.
 
 ## What It Does
 

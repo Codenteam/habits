@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate HIPAA audit log compilation, incident reporting, policy distribution, accreditation tracking, and regulatory update alerts.</p>
 
-A collection of habits that keep your compliance posture strong, from audit log compilation to regulatory monitoring. Each habit operates independently and can be deployed individually or as a complete compliance and reporting suite.
+A collection of habits that keep your compliance posture strong: from audit log compilation to regulatory monitoring. Each habit operates independently and can be deployed individually or as a complete compliance and reporting suite.
 
 ## What It Does
 

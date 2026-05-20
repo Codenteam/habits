@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate lead capture, AI scoring, agent assignment, follow-up sequences, CRM sync, and cold lead re-engagement.</p>
 
-A collection of habits that turn enquiries into clients, from first-touch capture through to long-term re-engagement. Each habit operates independently and can be deployed individually or as a complete lead management suite.
+A collection of habits that turn enquiries into clients: from first-touch capture through to long-term re-engagement. Each habit operates independently and can be deployed individually or as a complete lead management suite.
 
 ## What It Does
 
