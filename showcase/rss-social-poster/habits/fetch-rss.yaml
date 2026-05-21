@@ -38,7 +38,7 @@ nodes:
         items: "{{poll-feed}}"
         language: javascript
         script: |
-          export async function main(items) {
+          async function main(items) {
             const list = Array.isArray(items) ? items : [];
             return list.map(item => ({
               title:  item.title       || '(Untitled)',

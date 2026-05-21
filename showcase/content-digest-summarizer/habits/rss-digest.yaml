@@ -32,7 +32,7 @@ nodes:
         feedTitle: ""
         language: javascript
         script: |
-          export async function main(items, feedTitle) {
+          async function main(items, feedTitle) {
             const contents = (Array.isArray(items) ? items : []).map(item => ({
               id:    item.guid  || item.link  || item.title || '',
               type:  'rss',

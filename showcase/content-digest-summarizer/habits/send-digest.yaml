@@ -20,7 +20,7 @@ nodes:
         contentCount: "{{digestInput.contentCount}}"
         language: javascript
         script: |
-          export async function main(summariesJson, digestDate, contentCount) {
+          async function main(summariesJson, digestDate, contentCount) {
             const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';
             const sentimentEmoji = (s) => s === 'positive' ? '😊' : s === 'neutral' ? '😐' : '😟';
 

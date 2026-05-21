@@ -45,7 +45,7 @@ nodes:
         type: script
         language: javascript
         script: |
-          export async function main(results) {
+          async function main(results) {
             const flat = [];
             for (const emailResult of (results || [])) {
               const invoiceResults = emailResult.output && emailResult.output.invoiceResults;
