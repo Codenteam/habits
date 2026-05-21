@@ -134,25 +134,25 @@ spam, or urgent) and forwards it to the correct team inbox via SMTP : no manual 
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_GMAIL_IMAP_HOST — IMAP host
-- HABITS_GMAIL_IMAP_PORT — IMAP port (993 recommended)
-- HABITS_GMAIL_IMAP_USER — Gmail address to read from
-- HABITS_GMAIL_IMAP_APP_PASSWORD — Gmail App Password for IMAP account
-- HABITS_SMTP_HOST — SMTP host
-- HABITS_SMTP_PORT — SMTP port (587 recommended)
-- HABITS_SMTP_SUPPORT_USER — Support team Gmail address
-- HABITS_SMTP_SUPPORT_PASSWORD — Support team Gmail App Password
-- HABITS_SMTP_SALES_USER — Sales team Gmail address
-- HABITS_SMTP_SALES_PASSWORD — Sales team Gmail App Password
-- HABITS_SMTP_BILLING_USER — Billing team Gmail address
-- HABITS_SMTP_BILLING_PASSWORD — Billing team Gmail App Password
-- HABITS_SMTP_FEEDBACK_USER — Feedback team Gmail address
-- HABITS_SMTP_FEEDBACK_PASSWORD — Feedback team Gmail App Password
-- HABITS_SMTP_SPAM_USER — Spam/abuse inbox Gmail address
-- HABITS_SMTP_SPAM_PASSWORD — Spam inbox Gmail App Password
-- HABITS_SMTP_URGENT_USER — Urgent/critical inbox Gmail address
-- HABITS_SMTP_URGENT_PASSWORD — Urgent inbox Gmail App Password
+- OPENAI_API_KEY (OpenAI API key)
+- GMAIL_IMAP_HOST (IMAP host for Gmail)
+- GMAIL_IMAP_PORT (IMAP port for Gmail)
+- GMAIL_IMAP_USER (Gmail address to read incoming tickets from)
+- GMAIL_IMAP_APP_PASSWORD (Gmail App Password for the IMAP account)
+- SMTP_HOST (SMTP host for Gmail)
+- SMTP_PORT (SMTP port for Gmail)
+- SMTP_SUPPORT_USER (Gmail address for the support team inbox)
+- SMTP_SUPPORT_PASSWORD (Gmail App Password for the support inbox)
+- SMTP_SALES_USER (Gmail address for the sales team inbox)
+- SMTP_SALES_PASSWORD (Gmail App Password for the sales inbox)
+- SMTP_BILLING_USER (Gmail address for the billing team inbox)
+- SMTP_BILLING_PASSWORD (Gmail App Password for the billing inbox)
+- SMTP_FEEDBACK_USER (Gmail address for the feedback team inbox)
+- SMTP_FEEDBACK_PASSWORD (Gmail App Password for the feedback inbox)
+- SMTP_SPAM_USER (Gmail address for the spam/abuse inbox)
+- SMTP_SPAM_PASSWORD (Gmail App Password for the spam inbox)
+- SMTP_URGENT_USER (Gmail address for the urgent/critical inbox)
+- SMTP_URGENT_PASSWORD (Gmail App Password for the urgent inbox)
 
 ## Key Files
 

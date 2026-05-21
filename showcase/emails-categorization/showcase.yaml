@@ -3,7 +3,7 @@
 
 name: Emails Categorization
 type: fullstack
-description: Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram : fully automated.
+description: Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram fully automated.
 
 longDescription: |
   **Emails Categorization** is an automation that reads your inbox over IMAP, uses OpenAI to
@@ -55,13 +55,13 @@ featured: true
 version: "1.0"
 
 requirements:
-  - HABITS_OPENAI_API_KEY — OpenAI API key
-  - HABITS_IMAP_HOST — IMAP server hostname
-  - HABITS_IMAP_PORT — IMAP port (993 recommended)
-  - HABITS_IMAP_USER — IMAP username / email
-  - HABITS_IMAP_PASSWORD — IMAP password or Gmail App Password
-  - HABITS_TELEGRAM_BOT_TOKEN — Telegram Bot token
-  - HABITS_TELEGRAM_CHAT_ID — Telegram chat ID for the report
+  - OPENAI_API_KEY (OpenAI API key)
+  - IMAP_HOST (IMAP server hostname)
+  - IMAP_PORT (IMAP port)
+  - IMAP_USER (IMAP login username / email address)
+  - IMAP_PASSWORD (IMAP password or Gmail App Password)
+  - TELEGRAM_BOT_TOKEN (Telegram Bot token from BotFather)
+  - TELEGRAM_CHAT_ID (Telegram chat ID to send the report to)
 
 habits:
   - habits/categorize-emails.yaml

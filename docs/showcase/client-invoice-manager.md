@@ -1,6 +1,6 @@
 ---
 title: "Client Invoice Manager"
-description: "Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive — all from a single workflow."
+description: "Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive all from a single workflow."
 aside: false
 ---
 
@@ -47,7 +47,7 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive — all from a single workflow.</p>
+<p class="showcase-description">Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive all from a single workflow.</p>
 
 **Client Invoice Manager** is a full-stack automation that combines AI text extraction with
 PDF generation and Google Drive integration to handle the full client-to-invoice lifecycle
@@ -55,9 +55,9 @@ with minimal manual input.
 
 ## What it does
 
-- **Client management** — Paste any free-form text about a client and `save-client` uses OpenAI to extract structured fields (name, email, company, address) and stores them in a SQL database
-- **Client listing** — Browse all saved clients via `list-clients`
-- **Invoice generation** — Describe invoice details in plain text, pick a client, and `generate-invoice` uses OpenAI to extract line items, calculates totals, renders a PDF invoice, and uploads it to Google Drive automatically
+- **Client management** : Paste any free-form text about a client and `save-client` uses OpenAI to extract structured fields (name, email, company, address) and stores them in a SQL database
+- **Client listing** : Browse all saved clients via `list-clients`
+- **Invoice generation** : Describe invoice details in plain text, pick a client, and `generate-invoice` uses OpenAI to extract line items, calculates totals, renders a PDF invoice, and uploads it to Google Drive automatically
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -121,10 +121,10 @@ with minimal manual input.
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_GOOGLE_DRIVE_CLIENT_ID — Google OAuth 2.0 Client ID
-- HABITS_GOOGLE_DRIVE_CLIENT_SECRET — Google OAuth 2.0 Client Secret
-- HABITS_GOOGLE_DRIVE_FOLDER_ID — Target Google Drive folder ID
+- OPENAI_API_KEY (OpenAI API key)
+- GOOGLE_DRIVE_CLIENT_ID (Google OAuth 2.0 Client ID)
+- GOOGLE_DRIVE_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+- GOOGLE_DRIVE_FOLDER_ID (Target Google Drive folder ID for uploads)
 
 ## Key Files
 

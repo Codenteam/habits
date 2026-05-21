@@ -111,8 +111,8 @@ with HubSpot CRM integration to qualify and store leads with minimal effort.
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_HUBSPOT_ACCESS_TOKEN — HubSpot Private App access token
+- OPENAI_API_KEY (OpenAI API key)
+- HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
 
 ## Key Files
 

@@ -1,6 +1,6 @@
 ---
 title: "Content Digest Summarizer"
-description: "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel — in one click."
+description: "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click."
 aside: false
 ---
 
@@ -50,7 +50,7 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel — in one click.</p>
+<p class="showcase-description">Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click.</p>
 
 **Content Digest Summarizer** is an automation that aggregates content from multiple sources
 (Gmail inbox and RSS/Atom feeds), uses OpenAI to summarise each item, and delivers a clean
@@ -58,12 +58,12 @@ digest report to a Slack channel.
 
 ## What it does
 
-- **Email fetching** — Retrieves unread Gmail messages via IMAP with `fetch-emails`
-- **RSS monitoring** — Polls any RSS/Atom feed for new articles with `rss-digest`
-- **AI summarisation** — Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
-- **Content processing** — `process-content` orchestrates the fetch → summarise loop for all email items
-- **Slack delivery** — Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
-- **Full pipeline** — `content-digest` ties everything together: process all content sources then send the digest
+- **Email fetching** : Retrieves unread Gmail messages via IMAP with `fetch-emails`
+- **RSS monitoring** : Polls any RSS/Atom feed for new articles with `rss-digest`
+- **AI summarisation** : Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
+- **Content processing** : `process-content` orchestrates the fetch → summarise loop for all email items
+- **Slack delivery** : Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
+- **Full pipeline** : `content-digest` ties everything together: process all content sources then send the digest
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -132,14 +132,14 @@ digest report to a Slack channel.
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_GMAIL_IMAP_HOST — IMAP host
-- HABITS_GMAIL_IMAP_PORT — IMAP port (993 recommended)
-- HABITS_GMAIL_IMAP_USER — Gmail address to read from
-- HABITS_GMAIL_IMAP_APP_PASSWORD — Gmail App Password
-- HABITS_SLACK_BOT_TOKEN — Slack Bot User OAuth Token
-- HABITS_SLACK_DIGEST_CHANNEL — Slack channel ID
-- HABITS_RSS_FEED_URL — RSS/Atom feed URL
+- OPENAI_API_KEY (OpenAI API key)
+- GMAIL_IMAP_HOST (IMAP host for Gmail)
+- GMAIL_IMAP_PORT (IMAP port for Gmail)
+- GMAIL_IMAP_USER (Gmail address to read content emails from)
+- GMAIL_IMAP_APP_PASSWORD (Gmail App Password for the IMAP account)
+- SLACK_BOT_TOKEN (Slack Bot User OAuth Token)
+- SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
+- RSS_FEED_URL (RSS/Atom feed URL to monitor for new articles)
 
 ## Key Files
 

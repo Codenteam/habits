@@ -3,7 +3,7 @@
 
 name: RSS Social Poster
 type: fullstack
-description: Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically : every time a new article drops.
+description: Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically every time a new article drops.
 
 longDescription: |
   **RSS Social Poster** is an automation that polls any RSS or Atom feed on a 3-minute schedule,
@@ -59,12 +59,12 @@ featured: true
 version: "1.0"
 
 requirements:
-  - HABITS_OPENAI_API_KEY — OpenAI API key
-  - HABITS_TWITTER_CLIENT_ID — Twitter/X OAuth 2.0 Client ID
-  - HABITS_LINKEDIN_CLIENT_ID — LinkedIn OAuth 2.0 Client ID
-  - HABITS_LINKEDIN_CLIENT_SECRET — LinkedIn OAuth 2.0 Client Secret
-  - HABITS_LINKEDIN_ORG_ID — LinkedIn Organization ID
-  - HABITS_RSS_FEED_URL — RSS/Atom feed URL to monitor
+  - OPENAI_API_KEY (OpenAI API key)
+  - TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
+  - LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
+  - LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
+  - LINKEDIN_ORG_ID (LinkedIn Organization ID for page posts)
+  - RSS_FEED_URL (RSS/Atom feed URL to monitor)
 
 habits:
   - habits/fetch-rss.yaml

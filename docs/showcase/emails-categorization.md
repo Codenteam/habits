@@ -1,6 +1,6 @@
 ---
 title: "Emails Categorization"
-description: "Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram — fully automated."
+description: "Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram fully automated."
 aside: false
 ---
 
@@ -44,16 +44,16 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram — fully automated.</p>
+<p class="showcase-description">Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram fully automated.</p>
 
 **Emails Categorization** is an automation that reads your inbox over IMAP, uses OpenAI to
 classify and summarise every unread email, and delivers a structured report to a Telegram chat.
 
 ## What it does
 
-- **Email fetching** — Connects to any IMAP inbox (e.g. Gmail) and retrieves unread messages with `fetch-emails`
-- **Per-email AI categorization** — Passes each email through OpenAI via `categorize-single-email` to extract category, priority, and a short summary
-- **Telegram report** — Formats the enriched results and sends a clean digest to a Telegram chat via `categorize-emails`
+- **Email fetching** : Connects to any IMAP inbox (e.g. Gmail) and retrieves unread messages with `fetch-emails`
+- **Per-email AI categorization** : Passes each email through OpenAI via `categorize-single-email` to extract category, priority, and a short summary
+- **Telegram report** : Formats the enriched results and sends a clean digest to a Telegram chat via `categorize-emails`
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -72,7 +72,7 @@ classify and summarise every unread email, and delivers a structured report to a
 1. Copy `.env.example` to `.env` and fill in your credentials.
 2. For Gmail, enable 2-Step Verification and generate a 16-character App Password to use as `HABITS_IMAP_PASSWORD`.
 3. Create a Telegram bot via `@BotFather`, grab the token, and obtain your chat ID.
-4. Run `categorize-emails` — it will fetch, score, and report your inbox automatically.
+4. Run `categorize-emails` : it will fetch, score, and report your inbox automatically.
 
 ## Tech stack
 
@@ -118,13 +118,13 @@ classify and summarise every unread email, and delivers a structured report to a
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_IMAP_HOST — IMAP server hostname
-- HABITS_IMAP_PORT — IMAP port (993 recommended)
-- HABITS_IMAP_USER — IMAP username / email
-- HABITS_IMAP_PASSWORD — IMAP password or Gmail App Password
-- HABITS_TELEGRAM_BOT_TOKEN — Telegram Bot token
-- HABITS_TELEGRAM_CHAT_ID — Telegram chat ID for the report
+- OPENAI_API_KEY (OpenAI API key)
+- IMAP_HOST (IMAP server hostname)
+- IMAP_PORT (IMAP port)
+- IMAP_USER (IMAP login username / email address)
+- IMAP_PASSWORD (IMAP password or Gmail App Password)
+- TELEGRAM_BOT_TOKEN (Telegram Bot token from BotFather)
+- TELEGRAM_CHAT_ID (Telegram chat ID to send the report to)
 
 ## Key Files
 

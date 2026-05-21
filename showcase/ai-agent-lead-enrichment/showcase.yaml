@@ -51,8 +51,8 @@ featured: true
 version: "1.0"
 
 requirements:
-  - HABITS_OPENAI_API_KEY — OpenAI API key
-  - HABITS_HUBSPOT_ACCESS_TOKEN — HubSpot Private App access token
+  - OPENAI_API_KEY (OpenAI API key)
+  - HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
 
 habits:
   - habits/enrich-lead.yaml

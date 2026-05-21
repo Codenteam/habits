@@ -1,6 +1,6 @@
 ---
 title: "Invoices Processing"
-description: "Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet — zero manual data entry."
+description: "Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet zero manual data entry."
 aside: false
 ---
 
@@ -46,7 +46,7 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet — zero manual data entry.</p>
+<p class="showcase-description">Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet zero manual data entry.</p>
 
 **Invoices Processing** is a full-stack automation that reads your Gmail inbox over IMAP,
 uses OpenAI vision to parse invoice attachments, and appends the structured data to a
@@ -54,10 +54,10 @@ Google Sheet for easy bookkeeping.
 
 ## What it does
 
-- **Email fetching** — Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
-- **Invoice extraction** — Loops over each email and its PDF attachments, sending them to OpenAI for structured data extraction via `extract-invoice` and `extract-invoice-attachment`
-- **Google Sheets sync** — Appends each extracted invoice as a new row to a designated spreadsheet tab via `save-invoice-to-sheets`
-- **Full pipeline** — The `invoices-processing` habit orchestrates the entire fetch → extract → save flow in one run
+- **Email fetching** : Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
+- **Invoice extraction** : Loops over each email and its PDF attachments, sending them to OpenAI for structured data extraction via `extract-invoice` and `extract-invoice-attachment`
+- **Google Sheets sync** : Appends each extracted invoice as a new row to a designated spreadsheet tab via `save-invoice-to-sheets`
+- **Full pipeline** : The `invoices-processing` habit orchestrates the entire fetch → extract → save flow in one run
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -78,7 +78,7 @@ Google Sheet for easy bookkeeping.
 2. For Gmail, enable 2-Step Verification and generate a 16-character App Password for `HABITS_IMAP_PASSWORD`.
 3. Create a Google Cloud project, enable the Google Sheets API, configure the OAuth consent screen, and create OAuth 2.0 credentials with the correct redirect URI.
 4. Create (or reuse) a Google Sheet and name the target tab `Invoices`; copy the Spreadsheet ID from the URL.
-5. Run `invoices-processing` — it will fetch emails, extract invoice data from PDF attachments, and populate your sheet automatically.
+5. Run `invoices-processing` : it will fetch emails, extract invoice data from PDF attachments, and populate your sheet automatically.
 
 ## Tech stack
 
@@ -124,14 +124,14 @@ Google Sheet for easy bookkeeping.
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_IMAP_HOST — IMAP server hostname
-- HABITS_IMAP_PORT — IMAP port (993 recommended)
-- HABITS_IMAP_USER — Gmail address
-- HABITS_IMAP_PASSWORD — Gmail App Password
-- HABITS_GOOGLE_SHEETS_CLIENT_ID — Google OAuth 2.0 Client ID
-- HABITS_GOOGLE_SHEETS_CLIENT_SECRET — Google OAuth 2.0 Client Secret
-- HABITS_GOOGLE_SPREADSHEET_ID — Target Google Spreadsheet ID
+- OPENAI_API_KEY (OpenAI API key)
+- IMAP_HOST (IMAP server hostname)
+- IMAP_PORT (IMAP port)
+- IMAP_USER (IMAP login username / email address)
+- IMAP_PASSWORD (IMAP password or Gmail App Password)
+- GOOGLE_SHEETS_CLIENT_ID (Google OAuth 2.0 Client ID)
+- GOOGLE_SHEETS_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+- GOOGLE_SPREADSHEET_ID (Target Google Spreadsheet ID)
 
 ## Key Files
 

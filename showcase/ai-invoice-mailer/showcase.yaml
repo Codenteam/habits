@@ -53,12 +53,12 @@ featured: true
 version: "1.0"
 
 requirements:
-  - HABITS_OPENAI_API_KEY — OpenAI API key
-  - HABITS_SMTP_HOST — SMTP server hostname
-  - HABITS_SMTP_PORT — SMTP port (587 recommended)
-  - HABITS_SMTP_USER — SMTP username / email
-  - HABITS_SMTP_PASSWORD — SMTP password or app password
-  - HABITS_EMAIL_FROM — Sender display name and address
+  - OPENAI_API_KEY (OpenAI API key)
+  - SMTP_HOST (SMTP server hostname)
+  - SMTP_PORT (SMTP port)
+  - SMTP_USER (SMTP login username / email address)
+  - SMTP_PASSWORD (SMTP password or app-specific password)
+  - EMAIL_FROM (Display name and address used as the sender)
 
 habits:
   - habits/generate-invoice.yaml

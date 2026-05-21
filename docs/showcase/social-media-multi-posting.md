@@ -1,6 +1,6 @@
 ---
 title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn — all from a single workflow."
+description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
 aside: false
 ---
 
@@ -49,17 +49,17 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn — all from a single workflow.</p>
+<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
 
 **Social Media Multi-Posting** is a full-stack automation that combines AI content generation
 with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
 
 ## What it does
 
-- **AI content generation** — Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** — Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** — A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** — Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
+- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
+- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
+- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -125,11 +125,11 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY — OpenAI API key
-- HABITS_TWITTER_CLIENT_ID — Twitter/X OAuth 2.0 Client ID
-- HABITS_LINKEDIN_CLIENT_ID — LinkedIn OAuth 2.0 Client ID
-- HABITS_LINKEDIN_CLIENT_SECRET — LinkedIn OAuth 2.0 Client Secret
-- HABITS_LINKEDIN_ORGANIZATION_ID — LinkedIn Company Page Organization ID
+- OPENAI_API_KEY (OpenAI API key)
+- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
+- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
+- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
+- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
 
 ## Key Files
 

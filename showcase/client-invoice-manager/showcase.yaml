@@ -3,7 +3,7 @@
 
 name: Client Invoice Manager
 type: fullstack
-description: Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive : all from a single workflow.
+description: Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive all from a single workflow.
 
 longDescription: |
   **Client Invoice Manager** is a full-stack automation that combines AI text extraction with
@@ -55,10 +55,10 @@ featured: true
 version: "1.0"
 
 requirements:
-  - HABITS_OPENAI_API_KEY — OpenAI API key
-  - HABITS_GOOGLE_DRIVE_CLIENT_ID — Google OAuth 2.0 Client ID
-  - HABITS_GOOGLE_DRIVE_CLIENT_SECRET — Google OAuth 2.0 Client Secret
-  - HABITS_GOOGLE_DRIVE_FOLDER_ID — Target Google Drive folder ID
+  - OPENAI_API_KEY (OpenAI API key)
+  - GOOGLE_DRIVE_CLIENT_ID (Google OAuth 2.0 Client ID)
+  - GOOGLE_DRIVE_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+  - GOOGLE_DRIVE_FOLDER_ID (Target Google Drive folder ID for uploads)
 
 habits:
   - habits/save-client.yaml
