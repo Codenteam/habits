@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate loan application intake, document verification, credit evaluation, approval routing, and disbursement confirmation.</p>
 
-A collection of habits that accelerate the loan lifecycle, from application intake through to disbursement. Each habit operates independently and can be deployed individually or as a complete loan processing automation suite.
+A collection of habits that accelerate the loan lifecycle: from application intake through to disbursement. Each habit operates independently and can be deployed individually or as a complete loan processing automation suite.
 
 ## What It Does
 

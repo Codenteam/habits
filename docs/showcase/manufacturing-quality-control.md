@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate defect report routing, inspection scheduling, non-conformance handling, corrective action tracking, and audit preparation.</p>
 
-A collection of habits that enforce quality at every stage, from defect capture through to audit readiness. Each habit operates independently and can be deployed individually or as a complete quality control automation suite.
+A collection of habits that enforce quality at every stage: from defect capture through to audit readiness. Each habit operates independently and can be deployed individually or as a complete quality control automation suite.
 
 ## What It Does
 

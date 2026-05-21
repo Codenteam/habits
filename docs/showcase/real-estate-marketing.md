@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate campaign launches, social media posting, open house promotion, newsletter distribution, listing performance alerts, and competitor analysis.</p>
 
-A collection of habits that keep your marketing engine running, from automated campaigns through to competitor intelligence. Each habit operates independently and can be deployed individually or as a complete real estate marketing suite.
+A collection of habits that keep your marketing engine running: from automated campaigns through to competitor intelligence. Each habit operates independently and can be deployed individually or as a complete real estate marketing suite.
 
 ## What It Does
 

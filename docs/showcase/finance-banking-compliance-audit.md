@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate AML screening, SAR filing, audit trail compilation, policy compliance checks, and regulatory report generation.</p>
 
-A collection of habits that keep your compliance function ahead of regulators, from AML screening through to periodic reporting. Each habit operates independently and can be deployed individually or as a complete compliance and audit suite.
+A collection of habits that keep your compliance function ahead of regulators: from AML screening through to periodic reporting. Each habit operates independently and can be deployed individually or as a complete compliance and audit suite.
 
 ## What It Does
 

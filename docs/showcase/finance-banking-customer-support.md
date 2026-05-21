@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate support ticket routing, account enquiry handling, dispute resolution, callback scheduling, and escalation management.</p>
 
-A collection of habits that keep customer support fast and consistent, from ticket triage through to escalation handling. Each habit operates independently and can be deployed individually or as a complete support automation suite.
+A collection of habits that keep customer support fast and consistent: from ticket triage through to escalation handling. Each habit operates independently and can be deployed individually or as a complete support automation suite.
 
 ## What It Does
 

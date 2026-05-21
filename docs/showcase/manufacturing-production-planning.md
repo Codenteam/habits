@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate capacity alerts, production order creation, material requirements planning, schedule change notifications, and output reporting.</p>
 
-A collection of habits that keep production plans accurate and teams aligned, from capacity monitoring through to daily output reporting. Each habit operates independently and can be deployed individually or as a complete production planning suite.
+A collection of habits that keep production plans accurate and teams aligned: from capacity monitoring through to daily output reporting. Each habit operates independently and can be deployed individually or as a complete production planning suite.
 
 ## What It Does
 

@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate shift scheduling, time and attendance processing, safety incident reporting, compliance training, payroll preparation, and headcount alerts.</p>
 
-A collection of habits that keep your workforce running efficiently and safely, from shift rosters through to payroll submission. Each habit operates independently and can be deployed individually or as a complete HR and workforce automation suite.
+A collection of habits that keep your workforce running efficiently and safely: from shift rosters through to payroll submission. Each habit operates independently and can be deployed individually or as a complete HR and workforce automation suite.
 
 ## What It Does
 

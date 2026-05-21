@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate purchase order creation, supplier communications, delivery tracking, vendor performance reports, and inventory replenishment.</p>
 
-A collection of habits that keep your supply chain moving, from automatic purchase orders through to vendor performance reporting. Each habit operates independently and can be deployed individually or as a complete supply chain automation suite.
+A collection of habits that keep your supply chain moving: from automatic purchase orders through to vendor performance reporting. Each habit operates independently and can be deployed individually or as a complete supply chain automation suite.
 
 ## What It Does
 

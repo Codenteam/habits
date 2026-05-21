@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate equipment alerts, preventive maintenance scheduling, work order creation, parts ordering, downtime reporting, and technician dispatch.</p>
 
-A collection of habits that minimise unplanned downtime, from sensor alerts through to technician dispatch. Each habit operates independently and can be deployed individually or as a complete maintenance automation suite.
+A collection of habits that minimise unplanned downtime: from sensor alerts through to technician dispatch. Each habit operates independently and can be deployed individually or as a complete maintenance automation suite.
 
 ## What It Does
 

@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate real-time transaction monitoring, fraud alert generation, customer notification, account freezing, and regulatory report filing.</p>
 
-A collection of habits that protect customers and the institution, from real-time transaction scoring through to regulatory reporting. Each habit operates independently and can be deployed individually or as a complete fraud detection suite.
+A collection of habits that protect customers and the institution: from real-time transaction scoring through to regulatory reporting. Each habit operates independently and can be deployed individually or as a complete fraud detection suite.
 
 ## What It Does
 

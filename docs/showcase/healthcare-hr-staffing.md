@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate nurse shift scheduling, credential tracking, staff onboarding, shift coverage requests, and compliance training reminders.</p>
 
-A collection of habits that keep clinical staffing running smoothly, from roster generation to compliance tracking. Each habit operates independently and can be deployed individually or as a complete HR and staffing automation suite.
+A collection of habits that keep clinical staffing running smoothly: from roster generation to compliance tracking. Each habit operates independently and can be deployed individually or as a complete HR and staffing automation suite.
 
 ## What It Does
 

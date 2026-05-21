@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate abandoned cart recovery, loyalty notifications, customer segmentation, win-back campaigns, review requests, and performance reporting.</p>
 
-A collection of habits that grow revenue and deepen customer relationships, from cart recovery through to campaign analytics. Each habit operates independently and can be deployed individually or as a complete marketing and CRM automation suite.
+A collection of habits that grow revenue and deepen customer relationships: from cart recovery through to campaign analytics. Each habit operates independently and can be deployed individually or as a complete marketing and CRM automation suite.
 
 ## What It Does
 

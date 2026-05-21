@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate order confirmations, fulfilment routing, shipping updates, delivery confirmations, return processing, and exception alerts.</p>
 
-A collection of habits that keep every order moving smoothly, from placement through to return. Each habit operates independently and can be deployed individually or as a complete order management automation suite.
+A collection of habits that keep every order moving smoothly: from placement through to return. Each habit operates independently and can be deployed individually or as a complete order management automation suite.
 
 ## What It Does
 

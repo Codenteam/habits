@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate lab result routing, patient scheduling, medication refills, care coordination, and EHR data sync across clinical operations.</p>
 
-A collection of habits that keep clinical workflows running smoothly, from lab results to referral management. Each habit operates independently and can be deployed individually or as a complete clinical operations suite.
+A collection of habits that keep clinical workflows running smoothly: from lab results to referral management. Each habit operates independently and can be deployed individually or as a complete clinical operations suite.
 
 ## What It Does
 
