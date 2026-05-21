@@ -455,21 +455,6 @@
       <span class="platform-badge openai">✦ OpenAI</span>
     </div>
 
-    <!-- RSS URL input -->
-    <div class="feed-input-wrap">
-      <label class="feed-label" for="feed-url">RSS / Atom Feed URL</label>
-      <div class="feed-row">
-        <input
-          id="feed-url"
-          type="url"
-          class="feed-input"
-          placeholder="https://example.com/feed.xml"
-          autocomplete="off"
-          spellcheck="false"
-        />
-      </div>
-    </div>
-
     <!-- Config info card -->
     <div class="info-card">
       <div class="info-row">
@@ -613,14 +598,6 @@
       const btn     = document.getElementById('btn-start');
       const spinner = document.getElementById('spinner');
       const label   = document.getElementById('btn-label');
-      const feedUrl = document.getElementById('feed-url').value.trim();
-
-      if (!feedUrl) {
-        document.getElementById('feed-url').focus();
-        showStatus('error', '⚠️ Please enter an RSS or Atom feed URL before starting.');
-        return;
-      }
-
       btn.disabled = true;
       spinner.classList.add('visible');
       label.textContent = 'Starting…';
@@ -632,7 +609,7 @@
         const res = await fetch(API_BASE + '/api/' + HABIT_ID, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ feedUrl })
+          body: JSON.stringify({})
         });
 
         if (!res.ok) {

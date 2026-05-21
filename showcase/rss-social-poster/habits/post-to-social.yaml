@@ -17,7 +17,6 @@ nodes:
       operation: tweet
       auth:
         clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
-        clientSecret: "{{habits.env.HABITS_TWITTER_CLIENT_SECRET}}"
       params:
         text: "{{social.twitterPost}}"
 
