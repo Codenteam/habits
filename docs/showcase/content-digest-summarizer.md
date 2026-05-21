@@ -1,44 +1,45 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "Content Digest Summarizer"
+description: "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-1.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-2.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-3.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-4.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-5.webp', caption: 'Content Digest Summarizer' },
+    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-6.webp', caption: 'Content Digest Summarizer' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'content-digest', url: '/showcase/content-digest-summarizer/content-digest.yaml' },
+    { label: 'process-content', url: '/showcase/content-digest-summarizer/process-content.yaml' },
+    { label: 'fetch-emails', url: '/showcase/content-digest-summarizer/fetch-emails.yaml' },
+    { label: 'summarize-content', url: '/showcase/content-digest-summarizer/summarize-content.yaml' },
+    { label: 'send-digest', url: '/showcase/content-digest-summarizer/send-digest.yaml' },
+    { label: 'rss-digest', url: '/showcase/content-digest-summarizer/rss-digest.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# Content Digest Summarizer
 
 <div class="showcase-header">
   <div class="showcase-meta">
     <div class="meta-left">
-      <span class="difficulty-pill difficulty-intermediate">
+      <span class="difficulty-pill difficulty-beginner">
         <span class="difficulty-dot"></span>
-        Intermediate
+        Beginner
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-rss"><component :is="Tag" :size="12" /> rss</span> <span class="showcase-tag tag-slack"><component :is="Tag" :size="12" /> slack</span> <span class="showcase-tag tag-productivity"><component :is="Tag" :size="12" /> productivity</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="content-digest-summarizer" />
     </div>
   </div>
 </div>
@@ -49,44 +50,50 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**Content Digest Summarizer** is an automation that aggregates content from multiple sources
+(Gmail inbox and RSS/Atom feeds), uses OpenAI to summarise each item, and delivers a clean
+digest report to a Slack channel.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **Email fetching** : Retrieves unread Gmail messages via IMAP with `fetch-emails`
+- **RSS monitoring** : Polls any RSS/Atom feed for new articles with `rss-digest`
+- **AI summarisation** : Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
+- **Content processing** : `process-content` orchestrates the fetch → summarise loop for all email items
+- **Slack delivery** : Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
+- **Full pipeline** : `content-digest` ties everything together: process all content sources then send the digest
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
-| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for content summarisation |
+| `HABITS_GMAIL_IMAP_HOST` | IMAP host (e.g. `imap.gmail.com`) |
+| `HABITS_GMAIL_IMAP_PORT` | IMAP port (typically `993` for SSL) |
+| `HABITS_GMAIL_IMAP_USER` | Gmail address to read content emails from |
+| `HABITS_GMAIL_IMAP_APP_PASSWORD` | Gmail App Password for the IMAP account |
+| `HABITS_SLACK_BOT_TOKEN` | Slack Bot User OAuth Token (`xoxb-...`) |
+| `HABITS_SLACK_DIGEST_CHANNEL` | Slack channel ID to post the digest to |
+| `HABITS_RSS_FEED_URL` | RSS/Atom feed URL to monitor for new articles |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. For Gmail, enable 2-Step Verification and generate a 16-character App Password for `HABITS_GMAIL_IMAP_APP_PASSWORD`.
+3. Create a Slack app, add `chat:write` and `channels:read` bot scopes, install it to your workspace, and copy the `xoxb-` token.
+4. Invite the bot to your target channel and copy the Channel ID into `HABITS_SLACK_DIGEST_CHANNEL`.
+5. Set any RSS/Atom feed URL in `HABITS_RSS_FEED_URL`.
+6. Run `content-digest` for a full email + RSS digest, or `rss-digest` for RSS only.
 
 ## Tech stack
 
-- **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
-- **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
-- **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
+- **habits framework** for workflow orchestration
+- **OpenAI** (`@ha-bits/bit-openai`) for natural-language content summarisation
+- **IMAP** (`@ha-bits/bit-email`) for Gmail inbox access
+- **RSS** (`@ha-bits/bit-rss`) for feed polling
+- **Slack** (`@ha-bits/bit-slack`) for digest delivery
 
 
 
@@ -126,30 +133,33 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- GMAIL_IMAP_HOST (IMAP host for Gmail)
+- GMAIL_IMAP_PORT (IMAP port for Gmail)
+- GMAIL_IMAP_USER (Gmail address to read content emails from)
+- GMAIL_IMAP_APP_PASSWORD (Gmail App Password for the IMAP account)
+- SLACK_BOT_TOKEN (Slack Bot User OAuth Token)
+- SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
+- RSS_FEED_URL (RSS/Atom feed URL to monitor for new articles)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/content-digest-summarizer/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/content-digest-summarizer/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/content-digest-summarizer/habits/content-digest.yaml [content-digest.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/content-digest-summarizer/habits/fetch-emails.yaml [fetch-emails.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/content-digest-summarizer/habits/process-content.yaml [process-content.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="content-digest-summarizer" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="content-digest-summarizer" />
 
 
 <ContactForm

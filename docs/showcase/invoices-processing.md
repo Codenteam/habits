@@ -1,31 +1,28 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "Invoices Processing"
+description: "Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet zero manual data entry."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/invoices-processing/invoices-processing-1.webp', caption: 'Invoices Processing' },
+    { img: '/showcase/invoices-processing/invoices-processing-2.webp', caption: 'Invoices Processing' },
+    { img: '/showcase/invoices-processing/invoices-processing-3.webp', caption: 'Invoices Processing' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'invoices-processing', url: '/showcase/invoices-processing/invoices-processing.yaml' },
+    { label: 'fetch-emails', url: '/showcase/invoices-processing/fetch-emails.yaml' },
+    { label: 'extract-invoice', url: '/showcase/invoices-processing/extract-invoice.yaml' },
+    { label: 'extract-invoice-attachment', url: '/showcase/invoices-processing/extract-invoice-attachment.yaml' },
+    { label: 'save-invoice-to-sheets', url: '/showcase/invoices-processing/save-invoice-to-sheets.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# Invoices Processing
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -35,10 +32,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-finance"><component :is="Tag" :size="12" /> finance</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-google-sheets"><component :is="Tag" :size="12" /> google-sheets</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="invoices-processing" />
     </div>
   </div>
 </div>
@@ -49,44 +46,46 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Fetch emails from Gmail, extract PDF invoice data with AI, and automatically save structured results to a Google Sheet zero manual data entry.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**Invoices Processing** is a full-stack automation that reads your Gmail inbox over IMAP,
+uses OpenAI vision to parse invoice attachments, and appends the structured data to a
+Google Sheet for easy bookkeeping.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **Email fetching** : Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
+- **Invoice extraction** : Loops over each email and its PDF attachments, sending them to OpenAI for structured data extraction via `extract-invoice` and `extract-invoice-attachment`
+- **Google Sheets sync** : Appends each extracted invoice as a new row to a designated spreadsheet tab via `save-invoice-to-sheets`
+- **Full pipeline** : The `invoices-processing` habit orchestrates the entire fetch → extract → save flow in one run
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
-| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for PDF invoice extraction |
+| `HABITS_IMAP_HOST` | IMAP server hostname (e.g. `imap.gmail.com`) |
+| `HABITS_IMAP_PORT` | IMAP port (typically `993` for SSL) |
+| `HABITS_IMAP_USER` | Gmail address used for IMAP login |
+| `HABITS_IMAP_PASSWORD` | Gmail App Password (16-character, no spaces) |
+| `HABITS_GOOGLE_SHEETS_CLIENT_ID` | Google OAuth 2.0 Client ID |
+| `HABITS_GOOGLE_SHEETS_CLIENT_SECRET` | Google OAuth 2.0 Client Secret |
+| `HABITS_GOOGLE_SPREADSHEET_ID` | Target Google Spreadsheet ID (from the sheet URL) |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. For Gmail, enable 2-Step Verification and generate a 16-character App Password for `HABITS_IMAP_PASSWORD`.
+3. Create a Google Cloud project, enable the Google Sheets API, configure the OAuth consent screen, and create OAuth 2.0 credentials with the correct redirect URI.
+4. Create (or reuse) a Google Sheet and name the target tab `Invoices`; copy the Spreadsheet ID from the URL.
+5. Run `invoices-processing` : it will fetch emails, extract invoice data from PDF attachments, and populate your sheet automatically.
 
 ## Tech stack
 
-- **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
-- **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
-- **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
+- **habits framework** for workflow orchestration
+- **OpenAI** (`@ha-bits/bit-openai`) for AI-powered PDF invoice data extraction
+- **IMAP** (`@ha-bits/bit-email`) for Gmail inbox access
+- **Google Sheets** (`@ha-bits/bit-google-sheets`) for structured data storage
 
 
 
@@ -126,30 +125,33 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- IMAP_HOST (IMAP server hostname)
+- IMAP_PORT (IMAP port)
+- IMAP_USER (IMAP login username / email address)
+- IMAP_PASSWORD (IMAP password or Gmail App Password)
+- GOOGLE_SHEETS_CLIENT_ID (Google OAuth 2.0 Client ID)
+- GOOGLE_SHEETS_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+- GOOGLE_SPREADSHEET_ID (Target Google Spreadsheet ID)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/invoices-processing/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/invoices-processing/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/invoices-processing/habits/extract-invoice-attachment.yaml [extract-invoice-attachment.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/invoices-processing/habits/extract-invoice.yaml [extract-invoice.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/invoices-processing/habits/fetch-emails.yaml [fetch-emails.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="invoices-processing" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="invoices-processing" />
 
 
 <ContactForm

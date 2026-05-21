@@ -1,0 +1,71 @@
+# Showcase metadata for Emails Categorization example
+# This example demonstrates AI-powered email categorization with Telegram reporting
+
+name: Emails Categorization
+type: fullstack
+description: Fetch unread emails via IMAP, categorize each one with AI, and receive a formatted summary report in Telegram fully automated.
+
+longDescription: |
+  **Emails Categorization** is an automation that reads your inbox over IMAP, uses OpenAI to
+  classify and summarise every unread email, and delivers a structured report to a Telegram chat.
+
+  ## What it does
+
+  - **Email fetching** : Connects to any IMAP inbox (e.g. Gmail) and retrieves unread messages with `fetch-emails`
+  - **Per-email AI categorization** : Passes each email through OpenAI via `categorize-single-email` to extract category, priority, and a short summary
+  - **Telegram report** : Formats the enriched results and sends a clean digest to a Telegram chat via `categorize-emails`
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered email categorization |
+  | `HABITS_IMAP_HOST` | IMAP server hostname (e.g. `imap.gmail.com`) |
+  | `HABITS_IMAP_PORT` | IMAP port (typically `993` for SSL) |
+  | `HABITS_IMAP_USER` | IMAP login username / email address |
+  | `HABITS_IMAP_PASSWORD` | IMAP password or Gmail App Password |
+  | `HABITS_TELEGRAM_BOT_TOKEN` | Telegram Bot token from BotFather |
+  | `HABITS_TELEGRAM_CHAT_ID` | Telegram chat ID to send the report to |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in your credentials.
+  2. For Gmail, enable 2-Step Verification and generate a 16-character App Password to use as `HABITS_IMAP_PASSWORD`.
+  3. Create a Telegram bot via `@BotFather`, grab the token, and obtain your chat ID.
+  4. Run `categorize-emails` : it will fetch, score, and report your inbox automatically.
+
+  ## Tech stack
+
+  - **habits framework** for workflow orchestration
+  - **OpenAI** (`@ha-bits/bit-openai`) for natural-language email classification and summarisation
+  - **IMAP** (`@ha-bits/bit-email`) for inbox access
+  - **Telegram** (`@ha-bits/bit-telegram`) for report delivery
+
+tags:
+  - ai
+  - email
+  - productivity
+  - automation
+  - telegram
+
+difficulty: beginner
+
+featured: true
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key)
+  - IMAP_HOST (IMAP server hostname)
+  - IMAP_PORT (IMAP port)
+  - IMAP_USER (IMAP login username / email address)
+  - IMAP_PASSWORD (IMAP password or Gmail App Password)
+  - TELEGRAM_BOT_TOKEN (Telegram Bot token from BotFather)
+  - TELEGRAM_CHAT_ID (Telegram chat ID to send the report to)
+
+habits:
+  - habits/categorize-emails.yaml
+  - habits/categorize-single-email.yaml
+  - habits/fetch-emails.yaml
+
+quickDownload: true

@@ -1,34 +1,76 @@
-# Showcase metadata for Mixed Frameworks example
-# This example demonstrates combining multiple AI frameworks
+# Showcase metadata for Social Media Multi-Posting example
+# This example demonstrates AI-generated content scheduling and automated publishing to Twitter/X and LinkedIn
 
-name: Social Media Scheduling Habit (Twitter, LinkedIn)
-description: Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.
+name: Social Media Multi-Posting
+type: fullstack
+description: Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.
 
 longDescription: |
-  This habit demonstrates a minimal "Hello World" automation using the habits framework. It shows how to:
+  **Social Media Multi-Posting** is a full-stack automation that combines AI content generation
+  with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
 
-  - Access environment variables (e.g., `PARAM1`), which are kept in keyring on apps (iOS, Android, MacOS, Linux, Windows) and in .env on servers
-  - Read user input parameters
-  - Output results to both logs (Servers) and the UI (Apps)
-  - Structure a habit YAML according to the habits.schema.yaml
+  ## What it does
 
-  Use this as a starting point for building more complex automations that interact with both backend and frontend components. All code and configuration follow the project’s minimalistic, mobile-first, and dark mode UI guidelines.
+  - **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
+  - **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
+  - **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
+  - **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
 
-type: fullstack
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
+  | `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
+  | `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+
+  ## How to set up
+  
+  1. Copy `.env.example` to `.env` and fill in your credentials.
+  2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
+  3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
+  4. Run `generate-social-content` to create and schedule your first post.
+  5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+
+  ## Tech stack
+
+  - **habits framework** for workflow orchestration and cron scheduling
+  - **OpenAI** for platform-tailored social content generation
+  - **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
+  - **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
+  - **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
+  - **Frontend habit** for interactive content creation and queue management UI
 
 tags:
+  - ai
+  - social-media
+  - twitter
+  - linkedin
+  - automation
+  - scheduling
   - frontend
-  - backend
-  - creative
 
-difficulty: beginner
+difficulty: intermediate
 
 featured: true
 
+version: "1.0"
+
 requirements:
-  - PARAM1 environment key
+  - OPENAI_API_KEY (OpenAI API key)
+  - TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
+  - LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
+  - LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
+  - LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
 
 habits:
-  - habit.yaml
-  - habit-env.yaml
+  - habits/generate-social-content.yaml
+  - habits/check-pending-posts.yaml
+  - habits/publish-social-post.yaml
+  - habits/publish-post-now.yaml
+  - habits/get-queue.yaml
+  - habits/delete-post.yaml
+
 quickDownload: true

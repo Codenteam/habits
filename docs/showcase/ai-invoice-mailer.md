@@ -1,44 +1,41 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "AI Invoice Mailer"
+description: "Generate professional invoices with AI and send them to clients via SMTP email. Manage clients, auto-populate invoice fields, and deliver polished results in one workflow."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Mail, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-1.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-2.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-3.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-4.webp', caption: 'AI Invoice Mailer' },
+    { img: '/showcase/ai-invoice-mailer/ai-invoice-mailer-5.webp', caption: 'AI Invoice Mailer' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'generate-invoice', url: '/showcase/ai-invoice-mailer/generate-invoice.yaml' },
+    { label: 'save-client', url: '/showcase/ai-invoice-mailer/save-client.yaml' },
+    { label: 'list-clients', url: '/showcase/ai-invoice-mailer/list-clients.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# AI Invoice Mailer
 
 <div class="showcase-header">
   <div class="showcase-meta">
     <div class="meta-left">
-      <span class="difficulty-pill difficulty-intermediate">
+      <span class="difficulty-pill difficulty-beginner">
         <span class="difficulty-dot"></span>
-        Intermediate
+        Beginner
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-finance"><component :is="Tag" :size="12" /> finance</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="ai-invoice-mailer" />
     </div>
   </div>
 </div>
@@ -49,44 +46,40 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Generate professional invoices with AI and send them to clients via SMTP email. Manage clients, auto-populate invoice fields, and deliver polished results in one workflow.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**AI Invoice Mailer** is a full-stack automation that combines AI text generation with SMTP
+email delivery to produce and send professional invoices with minimal effort.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **Client management** : Save and list clients with `save-client` and `list-clients` habits
+- **AI invoice generation** : Uses OpenAI to auto-fill line items, descriptions, and totals based on a short prompt
+- **Email delivery** : Sends the finished invoice directly to the client via SMTP using credentials stored in `.env`
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
-| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered invoice content generation |
+| `HABITS_SMTP_HOST` | SMTP server hostname (e.g. `smtp.gmail.com`) |
+| `HABITS_SMTP_PORT` | SMTP port (typically `587` for STARTTLS) |
+| `HABITS_SMTP_USER` | SMTP login username / email address |
+| `HABITS_SMTP_PASSWORD` | SMTP password or app-specific password |
+| `HABITS_EMAIL_FROM` | Display name and address used as the sender |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. On desktop/mobile apps, the same keys are stored securely in the system keyring.
+3. Run `save-client` to add a client, then `generate-invoice` to create and send an invoice.
 
 ## Tech stack
 
-- **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
-- **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
-- **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
+- **habits framework** for workflow orchestration
+- **OpenAI** for natural-language invoice generation
+- **SMTP** (Nodemailer-compatible) for email delivery
+- **Frontend habit** for interactive client/invoice management UI
 
 
 
@@ -126,30 +119,31 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- SMTP_HOST (SMTP server hostname)
+- SMTP_PORT (SMTP port)
+- SMTP_USER (SMTP login username / email address)
+- SMTP_PASSWORD (SMTP password or app-specific password)
+- EMAIL_FROM (Display name and address used as the sender)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/ai-invoice-mailer/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/ai-invoice-mailer/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/ai-invoice-mailer/habits/generate-invoice.yaml [generate-invoice.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/ai-invoice-mailer/habits/list-clients.yaml [list-clients.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/ai-invoice-mailer/habits/save-client.yaml [save-client.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="ai-invoice-mailer" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="ai-invoice-mailer" />
 
 
 <ContactForm

@@ -1,31 +1,27 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "RSS Social Poster"
+description: "Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically every time a new article drops."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/rss-social-poster/rss-social-poster-1.webp', caption: 'RSS Social Poster' },
+    { img: '/showcase/rss-social-poster/rss-social-poster-2.webp', caption: 'RSS Social Poster' },
+    { img: '/showcase/rss-social-poster/rss-social-poster-3.webp', caption: 'RSS Social Poster' },
+    { img: '/showcase/rss-social-poster/rss-social-poster-4.webp', caption: 'RSS Social Poster' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'fetch-rss', url: '/showcase/rss-social-poster/fetch-rss.yaml' },
+    { label: 'generate-social-posts', url: '/showcase/rss-social-poster/generate-social-posts.yaml' },
+    { label: 'post-to-social', url: '/showcase/rss-social-poster/post-to-social.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# RSS Social Poster
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -35,10 +31,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-rss"><component :is="Tag" :size="12" /> rss</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="rss-social-poster" />
     </div>
   </div>
 </div>
@@ -49,44 +45,44 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Monitor any RSS/Atom feed, generate platform-optimised posts for Twitter/X and LinkedIn with AI, and publish them automatically every time a new article drops.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**RSS Social Poster** is an automation that polls any RSS or Atom feed on a 3-minute schedule,
+uses OpenAI to craft platform-specific posts for each new article, and publishes them to
+Twitter/X and LinkedIn without any manual intervention.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **RSS monitoring** : Polls any RSS/Atom feed URL every 3 minutes for new items via `fetch-rss`; normalises each article into a standard format
+- **AI content generation** : Passes each article to OpenAI to produce a concise tweet and a longer professional LinkedIn post via `generate-social-posts`
+- **Multi-platform publishing** : Posts the tweet to Twitter/X and the LinkedIn post to your organisation page sequentially via `post-to-social`
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for social post generation |
 | `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
 | `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
 | `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_LINKEDIN_ORG_ID` | LinkedIn Organization ID for page posts |
+| `HABITS_RSS_FEED_URL` | RSS/Atom feed URL to monitor |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL; copy the Client ID.
+3. Create a LinkedIn Developer App linked to your Company Page; copy the Client ID, Client Secret, and Organization ID.
+4. Set any RSS/Atom feed URL in `HABITS_RSS_FEED_URL`.
+5. Start the server : `fetch-rss` will automatically poll the feed every 3 minutes and publish new articles to both platforms.
 
 ## Tech stack
 
 - **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
+- **OpenAI** (`@ha-bits/bit-openai`) for platform-tailored social content generation
+- **RSS** (`@ha-bits/bit-rss`) for feed polling and new-item detection
 - **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
 - **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
 
 
 
@@ -129,27 +125,28 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 - TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
 - LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
 - LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- LINKEDIN_ORG_ID (LinkedIn Organization ID for page posts)
+- RSS_FEED_URL (RSS/Atom feed URL to monitor)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/rss-social-poster/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/rss-social-poster/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/rss-social-poster/habits/fetch-rss.yaml [fetch-rss.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/rss-social-poster/habits/generate-social-posts.yaml [generate-social-posts.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/rss-social-poster/habits/post-to-social.yaml [post-to-social.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="rss-social-poster" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="rss-social-poster" />
 
 
 <ContactForm

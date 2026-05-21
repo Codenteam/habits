@@ -1,6 +1,6 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "Client Invoice Manager"
+description: "Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive all from a single workflow."
 aside: false
 ---
 
@@ -8,24 +8,22 @@ aside: false
 import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-1.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-2.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-3.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-4.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-5.webp', caption: 'Client Invoice Manager' },
+    { img: '/showcase/client-invoice-manager/client-invoice-manager-6.webp', caption: 'Client Invoice Manager' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'save-client', url: '/showcase/client-invoice-manager/save-client.yaml' },
+    { label: 'list-clients', url: '/showcase/client-invoice-manager/list-clients.yaml' },
+    { label: 'generate-invoice', url: '/showcase/client-invoice-manager/generate-invoice.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# Client Invoice Manager
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -35,10 +33,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-finance"><component :is="Tag" :size="12" /> finance</span> <span class="showcase-tag tag-google-drive"><component :is="Tag" :size="12" /> google-drive</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="client-invoice-manager" />
     </div>
   </div>
 </div>
@@ -49,44 +47,42 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Save clients with AI extraction, generate PDF invoices from plain text descriptions, and upload them automatically to Google Drive all from a single workflow.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**Client Invoice Manager** is a full-stack automation that combines AI text extraction with
+PDF generation and Google Drive integration to handle the full client-to-invoice lifecycle
+with minimal manual input.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **Client management** : Paste any free-form text about a client and `save-client` uses OpenAI to extract structured fields (name, email, company, address) and stores them in a SQL database
+- **Client listing** : Browse all saved clients via `list-clients`
+- **Invoice generation** : Describe invoice details in plain text, pick a client, and `generate-invoice` uses OpenAI to extract line items, calculates totals, renders a PDF invoice, and uploads it to Google Drive automatically
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
-| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for client data and invoice content extraction |
+| `HABITS_GOOGLE_DRIVE_CLIENT_ID` | Google OAuth 2.0 Client ID for Drive upload |
+| `HABITS_GOOGLE_DRIVE_CLIENT_SECRET` | Google OAuth 2.0 Client Secret for Drive upload |
+| `HABITS_GOOGLE_DRIVE_FOLDER_ID` | Target Google Drive folder ID where invoices are uploaded |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. Create a Google Cloud project, enable the **Google Drive API**, configure the OAuth consent screen, and create OAuth 2.0 credentials with `http://localhost:13000/oauth/bit-google-drive/callback` as the redirect URI.
+3. On first server start, open the printed authorization URL in your browser and grant Drive access.
+4. Create (or reuse) a Google Drive folder and copy its ID from the URL into `HABITS_GOOGLE_DRIVE_FOLDER_ID`.
+5. Run `save-client` to add clients, then `generate-invoice` to create and upload invoices.
 
 ## Tech stack
 
-- **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
-- **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
-- **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
+- **habits framework** for workflow orchestration
+- **OpenAI** (`@ha-bits/bit-openai`) for natural-language client data extraction and invoice line-item parsing
+- **SQL database** (`@ha-bits/bit-database-sql`) for client record storage
+- **Google Drive** (`@ha-bits/bit-google-drive`) for automatic PDF invoice upload
+- **Frontend habit** for interactive client and invoice management UI
 
 
 
@@ -126,30 +122,29 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- GOOGLE_DRIVE_CLIENT_ID (Google OAuth 2.0 Client ID)
+- GOOGLE_DRIVE_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+- GOOGLE_DRIVE_FOLDER_ID (Target Google Drive folder ID for uploads)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/client-invoice-manager/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/client-invoice-manager/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/client-invoice-manager/habits/generate-invoice.yaml [generate-invoice.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/client-invoice-manager/habits/list-clients.yaml [list-clients.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/client-invoice-manager/habits/save-client.yaml [save-client.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="client-invoice-manager" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="client-invoice-manager" />
 
 
 <ContactForm

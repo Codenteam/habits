@@ -1,31 +1,29 @@
 ---
-title: "Social Media Multi-Posting"
-description: "Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow."
+title: "Email Ticket Routing"
+description: "Fetch support emails via IMAP, classify each ticket with AI, and automatically route it to the right team inbox (support, sales, billing, feedback, spam, or urgent) via SMTP."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
-    { img: '/showcase/social-media-multi-posting/social-media-posting-5.webp', caption: 'Social Media Multi-Posting' }
+    { img: '/showcase/email-ticket-routing/email-ticket-routing-1.webp', caption: 'Email Ticket Routing' },
+    { img: '/showcase/email-ticket-routing/email-ticket-routing-2.webp', caption: 'Email Ticket Routing' },
+    { img: '/showcase/email-ticket-routing/email-ticket-routing-3.webp', caption: 'Email Ticket Routing' }
 ]
 
 const habitTabs = [
-    { label: 'generate-social-content', url: '/showcase/social-media-multi-posting/generate-social-content.yaml' },
-    { label: 'check-pending-posts', url: '/showcase/social-media-multi-posting/check-pending-posts.yaml' },
-    { label: 'publish-social-post', url: '/showcase/social-media-multi-posting/publish-social-post.yaml' },
-    { label: 'publish-post-now', url: '/showcase/social-media-multi-posting/publish-post-now.yaml' },
-    { label: 'get-queue', url: '/showcase/social-media-multi-posting/get-queue.yaml' },
-    { label: 'delete-post', url: '/showcase/social-media-multi-posting/delete-post.yaml' }
+    { label: 'ticket-routing', url: '/showcase/email-ticket-routing/ticket-routing.yaml' },
+    { label: 'fetch-emails', url: '/showcase/email-ticket-routing/fetch-emails.yaml' },
+    { label: 'analyze-ticket', url: '/showcase/email-ticket-routing/analyze-ticket.yaml' },
+    { label: 'assign-ticket', url: '/showcase/email-ticket-routing/assign-ticket.yaml' },
+    { label: 'route-category', url: '/showcase/email-ticket-routing/route-category.yaml' },
+    { label: 'send-email', url: '/showcase/email-ticket-routing/send-email.yaml' }
 ]
 </script>
 
-# Social Media Multi-Posting
+# Email Ticket Routing
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -35,10 +33,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-support"><component :is="Tag" :size="12" /> support</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-routing"><component :is="Tag" :size="12" /> routing</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="social-media-multi-posting" />
+      <DownloadExample examplePath="email-ticket-routing" />
     </div>
   </div>
 </div>
@@ -49,44 +47,55 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Generate tailored social media posts with AI, schedule them, and automatically publish to Twitter/X and LinkedIn all from a single workflow.</p>
+<p class="showcase-description">Fetch support emails via IMAP, classify each ticket with AI, and automatically route it to the right team inbox (support, sales, billing, feedback, spam, or urgent) via SMTP.</p>
 
-**Social Media Multi-Posting** is a full-stack automation that combines AI content generation
-with a cron-driven scheduler to publish posts to multiple social platforms with minimal effort.
+**Email Ticket Routing** is an automation that reads your Gmail inbox over IMAP, uses OpenAI
+to classify each incoming email into one of six categories (support, sales, billing, feedback,
+spam, or urgent) and forwards it to the correct team inbox via SMTP : no manual triage needed.
 
 ## What it does
 
-- **AI content generation** : Uses OpenAI to craft platform-specific posts for Twitter/X and LinkedIn from a single topic, brand, tone, and audience prompt via `generate-social-content`
-- **Scheduling queue** : Saves generated posts to a database with a `scheduledAt` time and `pending` status; browse the queue with `get-queue`
-- **Automated publishing** : A cron habit (`check-pending-posts`) polls every minute, picks up due posts, and publishes each one in parallel to Twitter/X and LinkedIn via `publish-social-post`
-- **Queue management** : Instantly publish a post with `publish-post-now` or remove it with `delete-post`
+- **Email fetching** : Connects to Gmail via IMAP and retrieves unread messages with `fetch-emails`
+- **AI classification** : Passes each email to OpenAI for category detection (support / sales / billing / feedback / spam / urgent) and priority scoring via `analyze-ticket`
+- **Team routing** : Resolves the correct SMTP credentials for the target team and forwards the ticket via `route-category` and `send-email`
+- **Full pipeline** : `ticket-routing` orchestrates the entire fetch → analyze → assign flow; `assign-ticket` handles the per-ticket assignment steps
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered content generation |
-| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
-| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
-| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for ticket classification |
+| `HABITS_GMAIL_IMAP_HOST` | IMAP host (e.g. `imap.gmail.com`) |
+| `HABITS_GMAIL_IMAP_PORT` | IMAP port (typically `993` for SSL) |
+| `HABITS_GMAIL_IMAP_USER` | Gmail address to read incoming tickets from |
+| `HABITS_GMAIL_IMAP_APP_PASSWORD` | Gmail App Password for the IMAP account |
+| `HABITS_SMTP_HOST` | SMTP host (e.g. `smtp.gmail.com`) |
+| `HABITS_SMTP_PORT` | SMTP port (typically `587` for STARTTLS) |
+| `HABITS_SMTP_SUPPORT_USER` | Gmail address for the support team inbox |
+| `HABITS_SMTP_SUPPORT_PASSWORD` | Gmail App Password for the support inbox |
+| `HABITS_SMTP_SALES_USER` | Gmail address for the sales team inbox |
+| `HABITS_SMTP_SALES_PASSWORD` | Gmail App Password for the sales inbox |
+| `HABITS_SMTP_BILLING_USER` | Gmail address for the billing team inbox |
+| `HABITS_SMTP_BILLING_PASSWORD` | Gmail App Password for the billing inbox |
+| `HABITS_SMTP_FEEDBACK_USER` | Gmail address for the feedback team inbox |
+| `HABITS_SMTP_FEEDBACK_PASSWORD` | Gmail App Password for the feedback inbox |
+| `HABITS_SMTP_SPAM_USER` | Gmail address for the spam/abuse inbox |
+| `HABITS_SMTP_SPAM_PASSWORD` | Gmail App Password for the spam inbox |
+| `HABITS_SMTP_URGENT_USER` | Gmail address for the urgent/critical inbox |
+| `HABITS_SMTP_URGENT_PASSWORD` | Gmail App Password for the urgent inbox |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a Twitter Developer App with **Read and Write** permissions and add `http://localhost:13000/oauth/bit-twitter/callback` as the callback URL.
-3. Create a LinkedIn Developer App linked to your Company Page and enable the `w_member_social` and `r_basicprofile` scopes.
-4. Run `generate-social-content` to create and schedule your first post.
-5. `check-pending-posts` runs automatically on a 1-minute cron and publishes posts when their scheduled time arrives.
+2. Enable 2-Step Verification on every Gmail account involved and generate a separate 16-character App Password for each (IMAP source + each team inbox).
+3. Run `ticket-routing` : it will fetch unread emails, classify them with AI, and forward each one to the appropriate team inbox automatically.
 
 ## Tech stack
 
-- **habits framework** for workflow orchestration and cron scheduling
-- **OpenAI** for platform-tailored social content generation
-- **Twitter/X** (`@ha-bits/bit-twitter`) for tweet publishing via OAuth 2.0
-- **LinkedIn** (`@ha-bits/bit-linkedin`) for LinkedIn post publishing via OAuth 2.0
-- **SQL database** (`@ha-bits/bit-database-sql`) for post queue storage
-- **Frontend habit** for interactive content creation and queue management UI
+- **habits framework** for workflow orchestration
+- **OpenAI** for natural-language ticket classification and priority scoring
+- **IMAP** (`@ha-bits/bit-email`) for Gmail inbox access
+- **SMTP** for forwarding routed tickets to team inboxes
 
 
 
@@ -126,30 +135,44 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- TWITTER_CLIENT_ID (Twitter/X OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_ID (LinkedIn OAuth 2.0 Client ID)
-- LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
-- LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
+- GMAIL_IMAP_HOST (IMAP host for Gmail)
+- GMAIL_IMAP_PORT (IMAP port for Gmail)
+- GMAIL_IMAP_USER (Gmail address to read incoming tickets from)
+- GMAIL_IMAP_APP_PASSWORD (Gmail App Password for the IMAP account)
+- SMTP_HOST (SMTP host for Gmail)
+- SMTP_PORT (SMTP port for Gmail)
+- SMTP_SUPPORT_USER (Gmail address for the support team inbox)
+- SMTP_SUPPORT_PASSWORD (Gmail App Password for the support inbox)
+- SMTP_SALES_USER (Gmail address for the sales team inbox)
+- SMTP_SALES_PASSWORD (Gmail App Password for the sales inbox)
+- SMTP_BILLING_USER (Gmail address for the billing team inbox)
+- SMTP_BILLING_PASSWORD (Gmail App Password for the billing inbox)
+- SMTP_FEEDBACK_USER (Gmail address for the feedback team inbox)
+- SMTP_FEEDBACK_PASSWORD (Gmail App Password for the feedback inbox)
+- SMTP_SPAM_USER (Gmail address for the spam/abuse inbox)
+- SMTP_SPAM_PASSWORD (Gmail App Password for the spam inbox)
+- SMTP_URGENT_USER (Gmail address for the urgent/critical inbox)
+- SMTP_URGENT_PASSWORD (Gmail App Password for the urgent inbox)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
+<<< @/../showcase/email-ticket-routing/stack.yaml [stack.yaml]
 
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
+<<< @/../showcase/email-ticket-routing/.env.example [.env.example]
 
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
+<<< @/../showcase/email-ticket-routing/habits/analyze-ticket.yaml [analyze-ticket.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
+<<< @/../showcase/email-ticket-routing/habits/assign-ticket.yaml [assign-ticket.yaml]
 
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
+<<< @/../showcase/email-ticket-routing/habits/fetch-emails.yaml [fetch-emails.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="social-media-multi-posting" />
+<ExampleRunner examplePath="email-ticket-routing" />
 
-<DownloadExample examplePath="social-media-multi-posting" />
+<DownloadExample examplePath="email-ticket-routing" />
 
 
 <ContactForm
