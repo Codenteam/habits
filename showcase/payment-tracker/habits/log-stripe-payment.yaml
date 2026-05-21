@@ -31,7 +31,7 @@ nodes:
       params:
         payment: "{{stripe-trigger}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           interface PaymentData {
             payment: {

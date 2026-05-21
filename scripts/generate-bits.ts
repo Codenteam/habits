@@ -36,6 +36,7 @@ const examplesDir = join(rootDir, 'showcase');
 const docsDir = join(rootDir, 'docs');
 const bitsPagesDir = join(docsDir, 'bits');
 const dataDir = join(docsDir, '.vitepress/theme/data');
+const baseUiLibDir = join(rootDir, 'packages/base/ui/src/lib');
 
 // ============================================================================
 // Types
@@ -75,6 +76,7 @@ interface BitData {
   description: string;
   version: string;
   categories: string[];
+  level: 'l0' | 'l1' | 'l2' | 'l3';
   featured: boolean;
   icon: string;
   actions: ActionInfo[];
@@ -136,7 +138,8 @@ function loadDownloadStats(): Record<string, number> {
 // Keywords to exclude from categories (internal/structural)
 const EXCLUDED_KEYWORDS = [
   'bits', 'habits', 'type:bit', 'scope:bits', 'bit', 
-  'module', 'workflow', 'node'
+  'module', 'workflow', 'node',
+  'l0', 'l1', 'l2', 'l3',
 ];
 
 // Map categories to Lucide icons
@@ -639,6 +642,7 @@ async function scanBits(): Promise<BitData[]> {
         description: parsedIndex.description || packageJson.description || '',
         version: packageJson.version || '1.0.0',
         categories,
+        level: (packageJson.keywords || []).find(k => /^l[0-3]$/.test(k)) as 'l0' | 'l1' | 'l2' | 'l3' ?? 'l1',
         featured: habitsConfig.featured ?? false,
         icon,
         actions: parsedIndex.actions,
@@ -684,6 +688,7 @@ function generateDataFile(bits: BitData[]): void {
     description: b.description,
     version: b.version,
     categories: b.categories,
+    level: b.level,
     featured: b.featured,
     icon: b.icon,
     actionCount: b.actions.length,
@@ -697,6 +702,20 @@ function generateDataFile(bits: BitData[]): void {
   const dataFilePath = join(dataDir, 'bits-data.json');
   writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
   console.log(`  📄 .vitepress/theme/data/bits-data.json (${bits.length} bits)`);
+
+  // Write a slim copy for the base-ui package (only fields the UI needs)
+  const catalogData = data.map(b => ({
+    packageName: b.packageName,
+    displayName: b.displayName,
+    description: b.description,
+    icon: b.icon,
+    level: b.level,
+    categories: b.categories,
+  }));
+  mkdirSync(baseUiLibDir, { recursive: true });
+  const catalogFilePath = join(baseUiLibDir, 'bits-catalog.json');
+  writeFileSync(catalogFilePath, JSON.stringify(catalogData, null, 2) + '\n');
+  console.log(`  📄 packages/base/ui/src/lib/bits-catalog.json (${bits.length} bits)`);
 }
 
 /**

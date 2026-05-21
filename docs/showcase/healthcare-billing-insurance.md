@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate claims submission, prior auth requests, denial management, and payment posting across your billing and insurance workflows.</p>
 
-A collection of habits that streamline the full billing cycle, from eligibility verification through to payment reconciliation. Each habit operates independently and can be deployed individually or as a complete billing automation suite.
+A collection of habits that streamline the full billing cycle: from eligibility verification through to payment reconciliation. Each habit operates independently and can be deployed individually or as a complete billing automation suite.
 
 ## What It Does
 

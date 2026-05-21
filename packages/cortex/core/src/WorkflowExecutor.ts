@@ -1474,7 +1474,7 @@ export class WorkflowExecutor {
             params: fullParams,
             script: {
               type: fullParams.type || 'script',
-              language: fullParams.language || 'deno',
+              language: fullParams.language || 'javascript',
               content: fullParams.script,
             },
           });

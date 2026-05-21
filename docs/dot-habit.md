@@ -855,7 +855,7 @@ output:
   </div>
 
   <h4>Script Node</h4>
-  <p>Execute custom code in multiple languages (TypeScript/Deno, Python, Bash, Go):</p>
+  <p>Execute custom code in Javascript:</p>
   <div class="example-workflow" v-pre>
 
 ```yaml
@@ -866,7 +866,7 @@ output:
     source: inline
     params:
       input: "{{previous-node.output}}"
-      language: deno
+      language: javascript
       script: |
         export async function main(input: string) {
           const processed = input.toUpperCase();

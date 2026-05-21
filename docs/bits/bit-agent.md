@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-agent`</span>
   <span class="bit-version">v0.1.2</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-agent">📥 <span class="download-count">212</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-agent">📥 <span class="download-count">223</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">agent</span> <span class="bit-category">langchain</span> <span class="bit-category">mcp</span> <span class="bit-category">model-context-protocol</span> <span class="bit-category">ai</span></span>
 </div>
 

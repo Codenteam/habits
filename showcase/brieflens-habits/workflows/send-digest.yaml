@@ -60,7 +60,7 @@ nodes:
       params:
         results: "{{send-all-digests}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(results: any) {
             console.log("📧 Daily digest completed:");

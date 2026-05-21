@@ -70,7 +70,7 @@ nodes:
         events: "{{fetch-events.events}}"
         userEmail: "{{habits.input.userEmail}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(events: any[], userEmail: string) {
             const processedEvents = [];
@@ -119,7 +119,7 @@ nodes:
       params:
         processed: "{{process-events}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(processed: any) {
             // Events will be stored via database bit in production

@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate listing creation alerts, MLS syndication, price change notifications, expiry reminders, performance reports, and photo review requests.</p>
 
-A collection of habits that keep your listing pipeline active and accurate, from creation through to expiry. Each habit operates independently and can be deployed individually or as a complete property listings automation suite.
+A collection of habits that keep your listing pipeline active and accurate: from creation through to expiry. Each habit operates independently and can be deployed individually or as a complete property listings automation suite.
 
 ## What It Does
 
@@ -86,7 +86,7 @@ A collection of habits that keep your listing pipeline active and accurate, from
       <h3 class="habit-name">Performance Report</h3>
       <span class="trigger-badge trigger-scheduler">Scheduled</span>
     </div>
-    <p class="habit-description">Compile weekly listing performance metrics: views, enquiries, and showings as well as distribute to agents.</p>
+    <p class="habit-description">Compile weekly listing performance metrics — views, enquiries, and showings — and distribute to agents.</p>
     <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">ai</span><span class="bit-badge">email</span></div>
   </div>
   <div class="habit-card">

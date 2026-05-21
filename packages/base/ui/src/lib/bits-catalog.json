@@ -1,0 +1,783 @@
+[
+  {
+    "packageName": "@ha-bits/bit-agent",
+    "displayName": "Agent",
+    "description": "AI Agent with LangChain and MCP integration. Connect to multiple MCP servers to give your agent access to tools like Google Drive, Slack, GitHub, Notion, Figma, and more.",
+    "icon": "Bot",
+    "level": "l1",
+    "categories": [
+      "agent",
+      "langchain",
+      "mcp",
+      "model-context-protocol",
+      "ai"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-database",
+    "displayName": "Database (Memory)",
+    "description": "Database/storage bit for persisting data in workflows",
+    "icon": "Database",
+    "level": "l1",
+    "categories": [
+      "database",
+      "storage",
+      "persist"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-database-sql",
+    "displayName": "Database (SQL/SQLite)",
+    "description": "SQL database storage bit using Drizzle ORM with SQLite support - replaces @ha-bits/bit-database with SQL persistence",
+    "icon": "Database",
+    "level": "l1",
+    "categories": [
+      "database",
+      "storage",
+      "sql",
+      "sqlite",
+      "drizzle"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-email",
+    "displayName": "Email (IMAP/SMTP)",
+    "description": "Email integration bit for IMAP fetching and SMTP sending",
+    "icon": "Mail",
+    "level": "l1",
+    "categories": [
+      "email",
+      "imap",
+      "smtp",
+      "mail",
+      "nodemailer"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-wifi",
+    "displayName": "Get Current Network",
+    "description": "Monitor Wi-Fi network connections and trigger actions on network changes",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "wifi",
+      "network",
+      "mobile",
+      "tauri"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-location",
+    "displayName": "Get Current Position",
+    "description": "Device location and geofencing for mobile/desktop apps",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "location",
+      "geolocation",
+      "geofence",
+      "gps",
+      "tauri"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-system-settings",
+    "displayName": "Get Volume",
+    "description": "Control device system settings like volume, ringer mode, Bluetooth, and DND",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "system",
+      "settings",
+      "volume",
+      "bluetooth",
+      "dnd"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-google-drive",
+    "displayName": "Google Drive",
+    "description": "Google Drive integration bit for file hosting and cloud storage operations",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "google-drive",
+      "cloud-storage",
+      "file-hosting",
+      "oauth2"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-if",
+    "displayName": "If / Branch",
+    "description": "Conditional logic bit for branching workflows with if/else and switch statements",
+    "icon": "GitBranch",
+    "level": "l1",
+    "categories": [
+      "if",
+      "condition",
+      "conditional",
+      "branch",
+      "switch"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-intersect",
+    "displayName": "Intersect",
+    "description": "Use Intersect AI tools including ChatGPT, Gemini, Claude for text generaiton, image generation, Website Generation, Document drafts generations, Vector designs and more.",
+    "icon": "Sparkles",
+    "level": "l1",
+    "categories": [
+      "intersect",
+      "openai",
+      "ai"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-openai",
+    "displayName": "List Models",
+    "description": "OpenAI AI services including ChatGPT, GPT-4, Assistants, DALL-E, and more. Implements the @ha-bits/bit-ai interface.",
+    "icon": "Sparkles",
+    "level": "l1",
+    "categories": [
+      "openai",
+      "openai",
+      "ai"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-sms",
+    "displayName": "Send SMS",
+    "description": "Send and read SMS messages on mobile devices",
+    "icon": "Type",
+    "level": "l1",
+    "categories": [
+      "sms",
+      "messaging",
+      "mobile",
+      "text",
+      "tauri"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-any-of",
+    "displayName": "Any Of (Race)",
+    "description": "Any-of flow control bit - continues when any one incoming edge completes without waiting for others",
+    "icon": "GitBranch",
+    "level": "l1",
+    "categories": [
+      "any-of",
+      "race",
+      "flow-control",
+      "first-to-finish",
+      "parallel"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-ai",
+    "displayName": "Ask AI",
+    "description": "L0 base bit for AI/LLM services. Provides common interfaces and simple random responses. Use @ha-bits/bit-openai or @ha-bits/bit-local-ai for real AI functionality.",
+    "icon": "Brain",
+    "level": "l1",
+    "categories": [
+      "ai",
+      "llm",
+      "chat",
+      "base"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-auth",
+    "displayName": "Authentication",
+    "description": "Authentication bit with JWT sign, verify, and decode operations",
+    "icon": "Shield",
+    "level": "l1",
+    "categories": [
+      "auth",
+      "jwt",
+      "authentication"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-cookie",
+    "displayName": "Cookie",
+    "description": "Cookie management bit for setting and reading cookies in HTTP workflows",
+    "icon": "Cookie",
+    "level": "l1",
+    "categories": [
+      "cookie",
+      "http",
+      "session"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-crm",
+    "displayName": "CRM (Base)",
+    "description": "CRM integration bit for lead and contact management",
+    "icon": "Users",
+    "level": "l1",
+    "categories": [
+      "crm",
+      "leads",
+      "contacts",
+      "sales"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-database-mongodb",
+    "displayName": "Database (MongoDB)",
+    "description": "MongoDB database storage bit - replaces @ha-bits/bit-database",
+    "icon": "Database",
+    "level": "l1",
+    "categories": [
+      "database",
+      "storage",
+      "mongodb"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-pouch",
+    "displayName": "Database (PouchDB)",
+    "description": "PouchDB database storage bit - replaces @ha-bits/bit-database with local persistence",
+    "icon": "Database",
+    "level": "l1",
+    "categories": [
+      "database",
+      "storage",
+      "pouchdb",
+      "local"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-discord",
+    "displayName": "Discord",
+    "description": "Discord Bot integration bit for sending messages and notifications",
+    "icon": "MessageCircle",
+    "level": "l1",
+    "categories": [
+      "discord",
+      "bot",
+      "messaging",
+      "notifications"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-smart-home",
+    "displayName": "Discover Devices",
+    "description": "Control Matter-compatible smart home devices (lights, switches, outlets)",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "smart-home",
+      "matter",
+      "homekit",
+      "google-home",
+      "lights"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-dropbox",
+    "displayName": "Dropbox",
+    "description": "Dropbox integration bit for file hosting and cloud storage operations",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "dropbox",
+      "cloud-storage",
+      "file-hosting",
+      "oauth2"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-file-hosting",
+    "displayName": "File Hosting (Base)",
+    "description": "L0 base bit for cloud file hosting/storage services - provides common interfaces and types",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "file-hosting",
+      "cloud-storage",
+      "base"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-filesystem",
+    "displayName": "Filesystem",
+    "description": "Filesystem operations bit for reading, writing, and managing files",
+    "icon": "FolderOpen",
+    "level": "l1",
+    "categories": [
+      "filesystem",
+      "files",
+      "io",
+      "storage"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-loop",
+    "displayName": "For Each Habit",
+    "description": "Iterate over items and invoke a sub-habit for each one",
+    "icon": "Repeat",
+    "level": "l1",
+    "categories": [
+      "loop",
+      "foreach",
+      "iteration",
+      "subworkflow"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-github",
+    "displayName": "GitHub",
+    "description": "GitHub integration bit for managing pull requests, issues, and repositories",
+    "icon": "Github",
+    "level": "l1",
+    "categories": [
+      "github",
+      "pull-requests",
+      "issues",
+      "repositories"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-gohighlevel",
+    "displayName": "GoHighLevel CRM",
+    "description": "GoHighLevel CRM integration bit for contacts, opportunities, and workflow automation",
+    "icon": "Users",
+    "level": "l1",
+    "categories": [
+      "gohighlevel",
+      "highlevel",
+      "crm",
+      "contacts",
+      "opportunities"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-google-calendar",
+    "displayName": "Google Calendar",
+    "description": "Google Calendar integration with OAuth2 authentication",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "google",
+      "calendar",
+      "oauth2"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-google-sheets",
+    "displayName": "Google Sheets",
+    "description": "Google Sheets integration for Habits workflows",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "google-sheets",
+      "spreadsheet",
+      "google"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-hello-world",
+    "displayName": "Hello World",
+    "description": "A simple hello world bit for demonstration and testing",
+    "icon": "Hand",
+    "level": "l1",
+    "categories": [
+      "hello-world",
+      "demo"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-http",
+    "displayName": "HTTP Request",
+    "description": "HTTP request bit for making web API calls",
+    "icon": "Globe",
+    "level": "l1",
+    "categories": [
+      "http",
+      "api",
+      "fetch",
+      "request"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-httpbin",
+    "displayName": "HTTPBin",
+    "description": "Declarative bit for HTTPBin API - testing HTTP requests",
+    "icon": "Server",
+    "level": "l1",
+    "categories": [
+      "httpbin",
+      "declarative",
+      "api"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-hubspot",
+    "displayName": "HubSpot CRM",
+    "description": "HubSpot CRM integration bit for contacts, deals, and lead management",
+    "icon": "Users",
+    "level": "l1",
+    "categories": [
+      "hubspot",
+      "crm",
+      "contacts",
+      "deals",
+      "leads"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-instagram",
+    "displayName": "Instagram",
+    "description": "Instagram integration bit for posting content via Meta Graph API",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "instagram",
+      "meta",
+      "social-media",
+      "posts"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-invoice",
+    "displayName": "Invoice",
+    "description": "Invoice generation bit - create professional PDF invoices with dynamic content",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "invoice",
+      "pdf",
+      "billing",
+      "document"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-jsonplaceholder",
+    "displayName": "JSONPlaceholder",
+    "description": "JSONPlaceholder API declarative bit for testing",
+    "icon": "Package",
+    "level": "l1",
+    "categories": []
+  },
+  {
+    "packageName": "@ha-bits/bit-linkedin",
+    "displayName": "LinkedIn",
+    "description": "LinkedIn integration bit for posting content and managing professional presence",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "linkedin",
+      "social-media",
+      "posts",
+      "professional-network"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-local-ai",
+    "displayName": "Local AI (Simple)",
+    "description": "Simple local AI with model installation, text generation, and embeddings",
+    "icon": "Package",
+    "level": "l1",
+    "categories": []
+  },
+  {
+    "packageName": "@ha-bits/bit-logger",
+    "displayName": "Logger",
+    "description": "Simple logging bit that outputs to console.log",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "logger",
+      "debug"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-markdown-to-html",
+    "displayName": "Markdown to HTML",
+    "description": "Convert Markdown to HTML. Note: Does not sanitize output HTML - use with caution for user-generated content.",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "markdown",
+      "html",
+      "convert"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-onedrive",
+    "displayName": "Microsoft OneDrive",
+    "description": "Microsoft OneDrive integration bit for file hosting and cloud storage operations",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "onedrive",
+      "microsoft",
+      "cloud-storage",
+      "file-hosting",
+      "oauth2"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-oauth-mock",
+    "displayName": "OAuth Mock",
+    "description": "Mock OAuth2 integration bit for testing OAuth2 PKCE authentication flow",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "oauth",
+      "oauth2",
+      "pkce",
+      "mock",
+      "testing"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-ocr",
+    "displayName": "OCR",
+    "description": "OCR bit using Tesseract.js - extract text from images",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "ocr",
+      "tesseract",
+      "text-recognition",
+      "image",
+      "document"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-pdf",
+    "displayName": "PDF",
+    "description": "PDF processing bit - extract text, images, tables, and metadata from PDF files",
+    "icon": "Type",
+    "level": "l1",
+    "categories": [
+      "pdf",
+      "document",
+      "extract",
+      "text",
+      "parsing"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-qr",
+    "displayName": "QR Code",
+    "description": "QR code generation and reading bit - supports text, URLs, vCard, WiFi, and calendar data formats",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "qr",
+      "qrcode",
+      "barcode",
+      "scanner",
+      "generator"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-rss",
+    "displayName": "RSS Feed",
+    "description": "RSS feed bit for fetching and parsing RSS/Atom XML feeds",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "rss",
+      "atom",
+      "feed",
+      "xml",
+      "news"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-salesforce",
+    "displayName": "Salesforce CRM",
+    "description": "Salesforce CRM integration bit for contacts, opportunities, and lead management",
+    "icon": "Users",
+    "level": "l1",
+    "categories": [
+      "salesforce",
+      "crm",
+      "contacts",
+      "opportunities",
+      "leads"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-scheduler",
+    "displayName": "Scheduler",
+    "description": "Native cron scheduling trigger for Habits workflows",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "scheduler",
+      "cron",
+      "trigger",
+      "schedule"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-shell",
+    "displayName": "Shell",
+    "description": "Shell command execution bit for running system commands",
+    "icon": "Terminal",
+    "level": "l1",
+    "categories": [
+      "shell",
+      "exec",
+      "command",
+      "terminal"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-slack",
+    "displayName": "Slack",
+    "description": "Slack integration bit for sending messages and notifications",
+    "icon": "MessageSquare",
+    "level": "l1",
+    "categories": [
+      "slack",
+      "messaging",
+      "notifications"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-snov",
+    "displayName": "Snov.io",
+    "description": "Snov.io API integration for email enrichment and lead data",
+    "icon": "Mail",
+    "level": "l1",
+    "categories": [
+      "snov",
+      "email",
+      "enrichment",
+      "leads"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-string",
+    "displayName": "String Utils",
+    "description": "Simple string manipulation bit",
+    "icon": "Package",
+    "level": "l1",
+    "categories": []
+  },
+  {
+    "packageName": "@ha-bits/bit-stripe",
+    "displayName": "Stripe",
+    "description": "Stripe payment integration for Habits workflows",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "stripe",
+      "payments",
+      "trigger",
+      "webhook"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-tasks",
+    "displayName": "Tasks / Tickets",
+    "description": "Task management bit for Jira, Asana, and generic ticket systems",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "tasks",
+      "jira",
+      "asana",
+      "tickets"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-telegram",
+    "displayName": "Telegram",
+    "description": "Telegram Bot integration bit for sending messages and notifications",
+    "icon": "Send",
+    "level": "l1",
+    "categories": [
+      "telegram",
+      "bot",
+      "messaging",
+      "notifications"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-text",
+    "displayName": "Text Processing",
+    "description": "Text processing bit for diff, cleanup, extraction, and formatting",
+    "icon": "Type",
+    "level": "l1",
+    "categories": [
+      "text",
+      "diff",
+      "cleanup",
+      "extract"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-twitter",
+    "displayName": "Twitter/X",
+    "description": "Twitter/X integration bit for tweeting and social media management",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "twitter",
+      "x",
+      "social-media",
+      "tweets"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-voice",
+    "displayName": "Voice",
+    "description": "Always-listening voice trigger. Captures speech via microphone and triggers workflows when you stop talking or say a specific phrase.",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "voice",
+      "speech",
+      "microphone",
+      "trigger"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-web-scraper",
+    "displayName": "Web Scraper",
+    "description": "Web scraping bit for extracting data from webpages",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "web-scraper",
+      "scraping",
+      "data-extraction",
+      "html",
+      "leads"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-whatsapp",
+    "displayName": "WhatsApp",
+    "description": "WhatsApp Business API integration bit for sending messages",
+    "icon": "MessageCircle",
+    "level": "l1",
+    "categories": [
+      "whatsapp",
+      "messaging",
+      "business"
+    ]
+  },
+  {
+    "packageName": "@ha-bits/bit-wise",
+    "displayName": "Wise",
+    "description": "Wise (TransferWise) integration for Habits workflows",
+    "icon": "Package",
+    "level": "l1",
+    "categories": [
+      "wise",
+      "transferwise",
+      "currency",
+      "payments",
+      "trigger"
+    ]
+  }
+]

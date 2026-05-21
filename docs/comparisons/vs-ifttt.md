@@ -42,7 +42,7 @@ features:
 
   - name: Custom code / scripts
     icon: code
-    habits: Deno/TypeScript inline
+    habits: Javascript inline
     competitor: Filter code (JS, limited)
 
   - name: Offline execution
@@ -125,7 +125,7 @@ sections:
           type: script
           data:
             params:
-              language: typescript
+              language: javascript
               code: |
                 return input.subject.toLowerCase().includes("invoice")
         - id: extract

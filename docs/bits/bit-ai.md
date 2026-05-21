@@ -32,7 +32,7 @@ onMounted(async () => {
   <span class="bit-package">`@ha-bits/bit-ai`</span>
   <span class="bit-version">v1.0.0</span>
   <span class="bit-downloads" data-package="@ha-bits/bit-ai">📥 <span class="download-count">-</span> downloads</span>
-  <span class="bit-categories"><span class="bit-category">ai</span> <span class="bit-category">llm</span> <span class="bit-category">chat</span> <span class="bit-category">base</span> <span class="bit-category">l0</span></span>
+  <span class="bit-categories"><span class="bit-category">ai</span> <span class="bit-category">llm</span> <span class="bit-category">chat</span> <span class="bit-category">base</span></span>
 </div>
 
 L0 base bit for AI/LLM services. Provides common interfaces and simple random responses. Use @ha-bits/bit-openai or @ha-bits/bit-local-ai for real AI functionality.

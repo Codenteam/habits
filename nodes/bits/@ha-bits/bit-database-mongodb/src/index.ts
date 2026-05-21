@@ -70,7 +70,7 @@ function parseFilter(filter: any): Record<string, any> {
 }
 
 const databaseMongoDBBit = {
-  displayName: 'Database / Storage (MongoDB)',
+  displayName: 'Database (MongoDB)',
   description: 'Store and retrieve data in workflows using MongoDB',
   logoUrl: 'lucide:Database',
   runtime: 'all',

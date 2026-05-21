@@ -73,7 +73,7 @@ nodes:
       params:
         email: "{{get-user-info.email}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(email: string) {
             return {

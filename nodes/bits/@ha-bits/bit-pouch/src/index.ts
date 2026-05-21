@@ -150,7 +150,7 @@ function parseFilter(filter: any): Record<string, any> {
 }
 
 const pouchBit = {
-  displayName: 'Database / Storage (PouchDB)',
+  displayName: 'Database (PouchDB)',
   description: 'Store and retrieve data in workflows using PouchDB local storage',
   logoUrl: 'lucide:Database',
   runtime: 'all',

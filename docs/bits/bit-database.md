@@ -1,5 +1,5 @@
 ---
-title: "Database / Storage (Memory)"
+title: "Database (Memory)"
 description: "Database/storage bit for persisting data in workflows"
 aside: false
 ---
@@ -26,12 +26,12 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="Database" :size="32" class="inline-icon" /> Database / Storage (Memory)
+# <component :is="Database" :size="32" class="inline-icon" /> Database (Memory)
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-database">📥 <span class="download-count">386</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-database">📥 <span class="download-count">404</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">persist</span></span>
 </div>
 
@@ -53,6 +53,7 @@ nodes:
 
 ## Used In Showcases
 
+- [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [resume-analyzer](/showcase/resume-analyzer)
 - [qr-database](/showcase/qr-database)
 - [ai-journal](/showcase/ai-journal)

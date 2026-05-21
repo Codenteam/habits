@@ -1,5 +1,5 @@
 ---
-title: "Hello World Habit"
+title: "Hello World"
 description: "Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input."
 aside: false
 ---
@@ -8,7 +8,7 @@ aside: false
 import { Layout, Server, Tag } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/hello-world/1.webp', caption: 'Hello World Habit' }
+    { img: '/showcase/hello-world/1.webp', caption: 'Hello World' }
 ]
 
 const habitTabs = [
@@ -17,7 +17,7 @@ const habitTabs = [
 ]
 </script>
 
-# Hello World Habit
+# Hello World
 
 <div class="showcase-header">
   <div class="showcase-meta">

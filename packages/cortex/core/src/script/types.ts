@@ -3,7 +3,7 @@
 export interface ScriptDefinition {
   path?: string;
   type: 'script';
-  language: 'deno' | 'python3' | 'go' | 'bash' | 'typescript' | 'javascript';
+  language: 'javascript';
   content?: string;
   lock?: string | null;
   input_transforms?: Record<string, ScriptInputTransform>;

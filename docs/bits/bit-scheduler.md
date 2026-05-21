@@ -51,6 +51,10 @@ nodes:
       # action properties...
 ```
 
+## Used In Showcases
+
+- [social-media-multi-posting](/showcase/social-media-multi-posting)
+
 <style>
 .bit-meta {
   display: flex;

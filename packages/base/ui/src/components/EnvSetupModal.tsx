@@ -46,7 +46,7 @@ export default function EnvSetupModal({ isOpen, onClose }: EnvSetupModalProps) {
           <div className="flex items-center gap-3">
             <Key className="w-5 h-5 text-yellow-400" />
             <div>
-              <h3 className="text-lg font-semibold text-white">Environment Setup</h3>
+              <h3 className="text-lg font-semibold text-white">Secrets Setup</h3>
               {extractedKeys.length > 0 && (
                 <p className="text-xs text-slate-400 mt-0.5">
                   {extractedKeys.length} key{extractedKeys.length !== 1 ? 's' : ''} found
@@ -70,9 +70,9 @@ export default function EnvSetupModal({ isOpen, onClose }: EnvSetupModalProps) {
           {extractedKeys.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Key className="w-10 h-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 text-sm font-medium">No environment variables found</p>
+              <p className="text-slate-400 text-sm font-medium">No Secrets found</p>
               <p className="text-slate-500 text-xs mt-1">
-                Use <code className="bg-slate-700 px-1 rounded">{'{{habits.env.VAR_NAME}}'}</code> in your habit nodes to reference env vars.
+                Use <code className="bg-slate-700 px-1 rounded">{'{{habits.env.VAR_NAME}}'}</code> in your habit nodes to reference secrets.
               </p>
             </div>
           ) : (

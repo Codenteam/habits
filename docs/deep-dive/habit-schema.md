@@ -53,7 +53,7 @@ For `type: script` nodes:
 | Field | Type | Description |
 |-------|------|-------------|
 | `type` | string | Set to `"script"` |
-| `language` | string | `bash`, `deno`, `go`, `python3`, `sql`, or `typescript` |
+| `language` | string | `javascript` |
 | `script` | string | The script code to execute |
 
 ## Edges

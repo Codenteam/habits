@@ -5,6 +5,7 @@
 
 import { Request, Response } from 'express';
 import { createResponse } from '../helpers';
+import { getServerFlags } from '../flags';
 
 export class RootController {
   /**
@@ -17,5 +18,13 @@ export class RootController {
       version: "1.0.0",
       documentation: "/docs",
     });
+  };
+
+  /**
+   * GET /api/flags
+   * Returns the current feature flags so the UI can disable guarded controls.
+   */
+  getFlags = (_req: Request, res: Response): void => {
+    res.json(createResponse(true, getServerFlags()));
   };
 }

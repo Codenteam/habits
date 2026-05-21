@@ -14,7 +14,7 @@ nodes:
       params:
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             export async function main(): Promise<{ message: string; count: number }> {
               return {
@@ -36,7 +36,7 @@ nodes:
       params:
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             import { format } from "https://deno.land/std@0.224.0/datetime/format.ts";
 
@@ -63,7 +63,7 @@ nodes:
         text: "{{start.result.message}}"
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             export async function main(text: string): Promise<{ original: string; upper: string; length: number }> {
               return {
@@ -86,7 +86,7 @@ nodes:
       params:
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             export async function main(): Promise<{ uuid: string }> {
               return {
@@ -110,7 +110,7 @@ nodes:
         datetime: "{{datetime.result.datetime}}"
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             export async function main(text: string, uuid: string, datetime: string): Promise<{ success: boolean; filepath: string; size: number; timestamp: string }> {
               const outputDir = '/tmp/habits-test';
@@ -145,7 +145,7 @@ nodes:
         saveResult: "{{save-file.result}}"
         script:
           type: script
-          language: deno
+          language: javascript
           content: |
             export async function main(saveResult: any): Promise<{ verified: boolean; filepath: string; content: string; fileAgeMs: number; isRecent: boolean }> {
               const filepath = saveResult.filepath;

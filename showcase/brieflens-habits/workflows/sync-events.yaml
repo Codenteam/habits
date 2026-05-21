@@ -60,7 +60,7 @@ nodes:
       params:
         results: "{{sync-all-users}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(results: any) {
             console.log("📅 Calendar sync completed:");

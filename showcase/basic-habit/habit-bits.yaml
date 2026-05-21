@@ -17,7 +17,7 @@ nodes:
       label: Create Test Data
       params:
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main() {
             console.log("📝 Creating test data for bits demo");
@@ -78,7 +78,7 @@ nodes:
         conditionResult: "{{check-count}}"
         splitResult: "{{split-items}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(uppercaseResult: any, conditionResult: any, splitResult: any) {
             console.log("📊 Generating bits demo summary");

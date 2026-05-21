@@ -155,7 +155,10 @@ export default function NodeConfigPanel({ node }: NodeConfigPanelProps) {
       const result = await api.checkModuleAvailability(node.data.framework, nodeConfig.module);
       dispatch(setModuleAvailability({ moduleKey, available: result.available }));
 
-      if (result.available) {
+      // For bits nodes, always attempt to load the schema regardless of availability.
+      // If the module isn't installed the schema endpoint returns an error, which is shown
+      // in the panel so the user can take action (e.g. install it).
+      if (result.available || node.data.framework === 'bits') {
         await loadModuleSchema();
       }
     } catch (err: any) {
@@ -666,10 +669,32 @@ export default function NodeConfigPanel({ node }: NodeConfigPanelProps) {
             </div>
           )}
 
-          {/* Bits Node Error State */}
-          {isBitsNode && !isLoadingSchema && error && (
+          {/* Bits Node - Not Installed State */}
+          {isBitsNode && !isLoadingSchema && moduleAvailable === false && !moduleSchema && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-orange-900/30 border border-orange-800 rounded-md">
+                <AlertCircle className="w-4 h-4 text-orange-400 shrink-0" />
+                <div className="flex-1">
+                  <div className="text-sm text-orange-300 font-medium">Bit not installed</div>
+                  <div className="text-xs text-orange-400 mt-0.5">
+                    Install this bit to configure it and use it in your workflows.
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleShowDownloadPrompt}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm"
+              >
+                <AlertCircle className="w-4 h-4" />
+                Install Bit
+              </button>
+            </div>
+          )}
+
+          {/* Bits Node - Other Error State */}
+          {isBitsNode && !isLoadingSchema && error && moduleAvailable !== false && (
             <div className="flex items-center gap-2 p-3 bg-red-900/30 border border-red-800 rounded-md text-red-400">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}

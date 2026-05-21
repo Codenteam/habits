@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AuthConfig } from '../lib/formBuilder/types';
 import { FormFieldRenderer } from './FormFieldRenderer';
 import { FormBuilderAPI } from '../lib/formBuilderAPI';
+import { useAppSelector } from '../store/hooks';
+import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 
 interface Module {
   framework: string;
@@ -26,6 +28,7 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
 }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{ isValid: boolean; message: string } | null>(null);
+  const serverFlags = useAppSelector(selectServerFlags);
 
   // Convert AuthConfig to FormField for rendering
   const authField = {
@@ -88,11 +91,11 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
 
       {/* Verify Auth Button */}
       {module && value && (
-        <div className="mt-3">
+        <div className="mt-3 relative group">
           <button
             type="button"
-            onClick={handleVerifyAuth}
-            disabled={isVerifying}
+            onClick={serverFlags.allowFormsAuth ? handleVerifyAuth : undefined}
+            disabled={isVerifying || !serverFlags.allowFormsAuth}
             className="inline-flex items-center px-3 py-2 border border-slate-500 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-200 bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isVerifying ? (
@@ -112,6 +115,11 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
               </>
             )}
           </button>
+          {!serverFlags.allowFormsAuth && (
+            <div className="absolute top-full left-0 mt-2 px-2 py-1 bg-slate-900 text-amber-300 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Auth verification is disabled on this instance (HABITS_ALLOW_FORMS_AUTH)
+            </div>
+          )}
         </div>
       )}
 

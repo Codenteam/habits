@@ -14,7 +14,7 @@ nodes:
       label: Custom Script
       params:
         type: script
-        language: deno
+        language: javascript
         script: |
           // Custom logic, no dependency concerns
           export async function main() {

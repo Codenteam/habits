@@ -710,7 +710,6 @@ const result = jmespath.search(data, expression);
 console.log(JSON.stringify(result));
 `;
 
-    const result = await scriptRunner.deno({ script });
     return JSON.parse(result.stdout);
   },
 });

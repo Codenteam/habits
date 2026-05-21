@@ -1,5 +1,5 @@
 ---
-title: "Database / Storage (PouchDB)"
+title: "Database (PouchDB)"
 description: "PouchDB database storage bit - replaces @ha-bits/bit-database with local persistence"
 aside: false
 ---
@@ -26,12 +26,12 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="Database" :size="32" class="inline-icon" /> Database / Storage (PouchDB)
+# <component :is="Database" :size="32" class="inline-icon" /> Database (PouchDB)
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-pouch`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-pouch">📥 <span class="download-count">215</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-pouch">📥 <span class="download-count">223</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">pouchdb</span> <span class="bit-category">local</span></span>
 </div>
 

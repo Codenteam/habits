@@ -18,7 +18,7 @@ nodes:
         phone: "{{habits.input.phone}}"
         source: "{{habits.input.source}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(email: string, name: string, company: string, phone: string, source: string) {
             console.log("📝 New lead submission:", email);
@@ -104,7 +104,7 @@ nodes:
         companyData: "{{enrich-company.body}}"
         personData: "{{enrich-person.body}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(leadData: any, companyData: any, personData: any) {
             let score = 0;

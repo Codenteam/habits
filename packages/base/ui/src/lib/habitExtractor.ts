@@ -24,7 +24,7 @@ export interface SchemaNodeData {
   credentials?: Record<string, any>;
   params?: {
     type?: string;
-    language?: 'bash' | 'deno' | 'go' | 'python3' | 'sql' | 'typescript';
+    language?: 'javascript';
     script?: string;
     [key: string]: any;
   };

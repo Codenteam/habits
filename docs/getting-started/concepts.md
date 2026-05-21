@@ -25,7 +25,7 @@ A **Stack** groups multiple habits together. Define one `stack.yaml` to run rela
 
 A **Bit** is a single node in a habit. It can be:
 - A **Habits bit** (e.g., `@ha-bits/bit-intersect`)
-- A **custom script** (Deno/TypeScript)
+- A **custom script** (JavaScript)
 
 ## Base
 

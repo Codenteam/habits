@@ -1,7 +1,7 @@
 # Showcase metadata for Mixed Frameworks example
 # This example demonstrates combining multiple AI frameworks
 
-name: Hello World Habit
+name: Hello World
 description: Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.
 
 longDescription: |

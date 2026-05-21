@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate appointment reminders, discharge summaries, readmission alerts, referral coordination, and patient satisfaction surveys.</p>
 
-A collection of habits that cover the full patient journey, from appointment booking
+A collection of habits that cover the full patient journey: from appointment booking
 to post-discharge follow-up. Each habit operates independently and can be deployed
 individually or as a complete patient management automation suite.
 

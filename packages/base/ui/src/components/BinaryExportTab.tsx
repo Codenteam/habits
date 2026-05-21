@@ -21,6 +21,8 @@ import {
 import { api } from '../lib/api';
 import JSZip from 'jszip';
 import { ExportBundle } from '@ha-bits/core';
+import { useAppSelector } from '../store/hooks';
+import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 
 // Types
 type PackFormat = 'habit' | 'full-stack' | 'desktop' | 'mobile';
@@ -577,9 +579,21 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
   };
   
   const hasFrontend = !!frontendHtml;
+  const serverFlags = useAppSelector(selectServerFlags);
 
   return (
     <div className="flex-1 overflow-auto p-6">
+      {!serverFlags.allowExport && (
+        <div className="mb-4 flex items-start gap-3 px-4 py-3 bg-amber-900/30 border border-amber-700/50 rounded-md text-amber-300 text-sm">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>
+            Export is disabled on this instance. To enable it, set
+            <code className="mx-1 px-1 py-0.5 bg-slate-800 rounded text-amber-200 text-xs">HABITS_ALLOW_EXPORT=true</code>
+            on the server.
+          </span>
+        </div>
+      )}
+      <div className={!serverFlags.allowExport ? 'pointer-events-none opacity-40 select-none' : undefined}>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div>
@@ -2098,6 +2112,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

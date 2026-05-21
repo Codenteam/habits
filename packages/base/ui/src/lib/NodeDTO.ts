@@ -20,7 +20,7 @@ export class NodeDTO {
   public readonly credentials: Record<string, any>;
   // Script-specific properties
   public readonly scriptPath?: string;
-  public readonly language?: 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript' | 'javascript';
+  public readonly language?: 'javascript';
   public readonly content?: string;
   public readonly inputTransforms?: Record<string, any>;
   public readonly stopAfterIf?: { expr: string; skipIfStopped?: boolean };
@@ -39,7 +39,7 @@ export class NodeDTO {
     
     // Script-specific properties
     this.scriptPath = data.data?.scriptPath;
-    this.language = data.data?.language;
+    this.language = data.data?.language as 'javascript' | undefined;
     this.content = data.data?.content;
     this.inputTransforms = data.data?.inputTransforms;
     this.stopAfterIf = data.data?.stopAfterIf;
@@ -76,7 +76,7 @@ export class NodeDTO {
     operation?: string;
     // Script-specific options
     scriptPath?: string;
-    language?: 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript';
+    language?: 'javascript';
     content?: string;
     inputTransforms?: Record<string, any>;
     stopAfterIf?: { expr: string; skipIfStopped?: boolean };

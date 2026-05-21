@@ -44,3 +44,16 @@ jobs:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: npx tsx scripts/npm-publish.ts | npx tsx scripts/log-sanitizer.ts
 
+      - name: Deploy to server
+        env:
+          STAGING_HUB_SSH_KEY: ${{ secrets.STAGING_HUB_SSH_KEY }}
+          STAGING_HUB_SSH_HOST: ${{ secrets.STAGING_HUB_SSH_HOST }}
+          STAGING_HUB_SSH_USER: ${{ secrets.STAGING_HUB_SSH_USER }}
+          STAGING_HUB_SSH_PORT: ${{ secrets.STAGING_HUB_SSH_PORT }}
+          PROD_HUB_SSH_KEY: ${{ secrets.PROD_HUB_SSH_KEY }}
+          PROD_HUB_SSH_HOST: ${{ secrets.PROD_HUB_SSH_HOST }}
+          PROD_HUB_SSH_USER: ${{ secrets.PROD_HUB_SSH_USER }}
+          PROD_HUB_SSH_PORT: ${{ secrets.PROD_HUB_SSH_PORT }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: npx tsx scripts/deploy.ts | npx tsx scripts/log-sanitizer.ts
+

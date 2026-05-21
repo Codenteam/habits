@@ -28,7 +28,7 @@ nodes:
       label: Find Urgent Events
       params:
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main() {
             // Calculate time window (next 30 minutes)
@@ -70,7 +70,7 @@ nodes:
       params:
         events: "{{query-events.documents}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(events: any[]) {
             const now = new Date();
@@ -96,7 +96,7 @@ nodes:
       params:
         urgentData: "{{filter-urgent}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(urgentData: any) {
             if (urgentData.count === 0) {
@@ -153,7 +153,7 @@ nodes:
       params:
         urgentData: "{{filter-urgent}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(urgentData: any) {
             // In production, this would update the database
@@ -173,7 +173,7 @@ nodes:
         sendResults: "{{send-alerts}}"
         processed: "{{process-urgent}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(sendResults: any, processed: any) {
             if (processed.skipped) {

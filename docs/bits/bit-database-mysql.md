@@ -1,5 +1,5 @@
 ---
-title: "Database / Storage (MySQL)"
+title: "Database (MySQL)"
 description: "MySQL database storage bit - replaces @ha-bits/bit-database"
 aside: false
 ---
@@ -8,7 +8,7 @@ aside: false
 import { Database } from 'lucide-vue-next'
 </script>
 
-# <component :is="Database" :size="32" class="inline-icon" /> Database / Storage (MySQL)
+# <component :is="Database" :size="32" class="inline-icon" /> Database (MySQL)
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database-mysql`</span>

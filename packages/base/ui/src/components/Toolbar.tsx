@@ -4,12 +4,14 @@ import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
 import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle, selectActiveEnvVariables } from '../store/slices/workflowSlice';
 import { setViewMode } from '../store/slices/uiSlice';
+import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 import { api } from '../lib/api';
 import { habitToYaml, parseStackYaml, extractEnvVariables } from '../lib/exportUtils';
 import CodeViewModal from './CodeViewModal';
 import OpenModal from './OpenModal';
 import NewWorkflowModal from './NewWorkflowModal';
 import ServePopup from './ServePopup';
+import ServeNotEnabledModal from './ServeNotEnabledModal';
 import ShareLinkModal from './ShareLinkModal';
 import SendHabitModal from './SendHabitModal';
 import GenerateModal from './GenerateModal';
@@ -27,6 +29,7 @@ export default function Toolbar() {
   const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const hasValidationErrors = useAppSelector(selectHasValidationErrors);
+  const serverFlags = useAppSelector(selectServerFlags);
   const [serving, setServing] = useState(false);
   const [serverRunning, setServerRunning] = useState(false);
   const [serverPort, setServerPort] = useState<number | null>(null);
@@ -42,6 +45,7 @@ export default function Toolbar() {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showEnvSetup, setShowEnvSetup] = useState(false);
+  const [showServeNotEnabledModal, setShowServeNotEnabledModal] = useState(false);
 
   const activeEnvVariables = useAppSelector(selectActiveEnvVariables);
   const envHasMissing = useMemo(() => {
@@ -133,6 +137,8 @@ export default function Toolbar() {
         setServerPort(configData.server.port);
         setServerHost(result.data?.host || 'localhost');
         console.log('Server started:', result);
+      } else if (result.serveNotEnabled) {
+        setShowServeNotEnabledModal(true);
       } else {
         throw new Error(result.error || 'Failed to start server');
       }
@@ -301,13 +307,18 @@ export default function Toolbar() {
                 {/* Generate with AI */}
         <div className="relative group">
           <button
-            onClick={() => setShowGenerateModal(true)}
-            className="flex items-center justify-center w-9 h-9 text-purple-300 bg-purple-900/50 hover:bg-purple-800/50 rounded-md transition-colors cursor-pointer border border-purple-700/50"
+            onClick={() => serverFlags.allowAIGen && setShowGenerateModal(true)}
+            disabled={!serverFlags.allowAIGen}
+            className={`flex items-center justify-center w-9 h-9 rounded-md transition-colors border ${
+              serverFlags.allowAIGen
+                ? 'text-purple-300 bg-purple-900/50 hover:bg-purple-800/50 border-purple-700/50 cursor-pointer'
+                : 'text-slate-500 bg-slate-800 border-slate-700 cursor-not-allowed opacity-50'
+            }`}
           >
             <Wand2 className="w-4 h-4" />
           </button>
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-            Generate with AI
+            {serverFlags.allowAIGen ? 'Generate with AI' : 'AI generation is disabled. Set HABITS_AI_GEN=true (habits command or Admin panel service settings)'}
           </div>
         </div>
 
@@ -370,7 +381,7 @@ export default function Toolbar() {
           </button>
         </div>
 
-        {/* Environment Setup */}
+        {/* Secrets Setup */}
         <div className="relative group">
           <button
             onClick={() => setShowEnvSetup(true)}
@@ -383,7 +394,7 @@ export default function Toolbar() {
             <KeyRound className="w-4 h-4" />
           </button>
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-            Setup Environment
+            Setup Secrets
           </div>
         </div>
 
@@ -432,25 +443,39 @@ export default function Toolbar() {
         )}
 
         {/* Serve Controls */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center group/serve">
+          {/* Disabled overlay tooltip */}
+          {/* {!serverFlags.allowServe && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-amber-300 text-xs rounded-md opacity-0 group-hover/serve:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Serving is disabled on this instance (HABITS_ALLOW_SERVE)
+            </div>
+          )} */}
           {/* Settings Button */}
           <button
-            onClick={() => setShowServePopup(!showServePopup)}
-            className="flex items-center justify-center w-9 h-9 text-slate-300 bg-slate-700 hover:bg-slate-600 rounded-l-md border-r border-slate-600 transition-colors cursor-pointer"
-            title="Server settings"
+            onClick={() => serverFlags.allowServe ? setShowServePopup(!showServePopup) : setShowServeNotEnabledModal(true)}
+            className={`flex items-center justify-center w-9 h-9 rounded-l-md border-r border-slate-600 transition-colors ${
+              serverFlags.allowServe
+                ? 'text-slate-300 bg-slate-700 hover:bg-slate-600 cursor-pointer'
+                : 'text-slate-500 bg-slate-800 hover:bg-slate-700 cursor-pointer opacity-50'
+            }`}
+            title={serverFlags.allowServe ? 'Server settings' : 'Serving is disabled on this instance'}
           >
             <Settings className="w-4 h-4" />
           </button>
 
           {/* Play/Restart Button */}
           <button
-            onClick={() => handleServe()}
-            disabled={hasValidationErrors}
-            title={hasValidationErrors ? "Fix validation errors before serving" : serverRunning ? "Restart server" : "Start server"}
-            className={`flex items-center h-9 gap-2 px-4 py-2 text-sm transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed ${
-              serverRunning 
-                ? 'bg-orange-800 hover:bg-orange-900 text-white' 
-                : 'bg-green-600 hover:bg-green-700 text-white rounded-r-md'
+            onClick={() => !serverFlags.allowServe ? setShowServeNotEnabledModal(true) : !hasValidationErrors && handleServe()}
+            disabled={hasValidationErrors && serverFlags.allowServe}
+            title={!serverFlags.allowServe ? 'Serving is disabled on this instance' : hasValidationErrors ? "Fix validation errors before serving" : serverRunning ? "Restart server" : "Start server"}
+            className={`flex items-center h-9 gap-2 px-4 py-2 text-sm transition-colors ${
+              !serverFlags.allowServe
+                ? 'bg-gray-600 text-gray-400 cursor-pointer rounded-r-md opacity-50 hover:opacity-70'
+                : hasValidationErrors
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed rounded-r-md opacity-50'
+                : serverRunning 
+                  ? 'bg-orange-800 hover:bg-orange-900 text-white cursor-pointer' 
+                  : 'bg-green-600 hover:bg-green-700 text-white rounded-r-md cursor-pointer'
             }`}
           >
             {serverRunning ? (
@@ -491,22 +516,26 @@ export default function Toolbar() {
          {/* Export */}
         <div className="relative group">
           <button
-            onClick={handlePublishDeploy}
-            disabled={hasValidationErrors}
-            title={hasValidationErrors ? "Fix validation errors before exporting" : "Export / Deploy"}
+            onClick={() => serverFlags.allowExport && !hasValidationErrors && handlePublishDeploy()}
+            disabled={!serverFlags.allowExport || hasValidationErrors}
+            title={
+              !serverFlags.allowExport ? 'Export is disabled on this instance'
+              : hasValidationErrors ? 'Fix validation errors before exporting'
+              : 'Export / Deploy'
+            }
             className={`flex items-center justify-center h-9 text-white rounded-md transition-colors gap-2 px-4 py-2 ${
-              hasValidationErrors
-                ? 'bg-gray-400 cursor-not-allowed'
+              !serverFlags.allowExport || hasValidationErrors
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
                 : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
             }`}
           >
             <Rocket className="w-4 h-4" />
           </button>
-          {!hasValidationErrors && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              Export / Deploy
-            </div>
-          )}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            {!serverFlags.allowExport ? 'Export is disabled on this instance (HABITS_ALLOW_EXPORT)'
+              : hasValidationErrors ? 'Fix validation errors before exporting'
+              : 'Export / Deploy'}
+          </div>
         </div>
 
         {/* Validation Status */}
@@ -605,6 +634,12 @@ export default function Toolbar() {
       <EnvSetupModal
         isOpen={showEnvSetup}
         onClose={() => setShowEnvSetup(false)}
+      />
+
+      {/* Serve Not Enabled Modal */}
+      <ServeNotEnabledModal
+        isOpen={showServeNotEnabledModal}
+        onClose={() => setShowServeNotEnabledModal(false)}
       />
     </div>
     </>

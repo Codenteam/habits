@@ -31,8 +31,8 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-file-hosting`</span>
   <span class="bit-version">v1.0.0</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-file-hosting">📥 <span class="download-count">67</span> downloads</span>
-  <span class="bit-categories"><span class="bit-category">file-hosting</span> <span class="bit-category">cloud-storage</span> <span class="bit-category">base</span> <span class="bit-category">l0</span></span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-file-hosting">📥 <span class="download-count">76</span> downloads</span>
+  <span class="bit-categories"><span class="bit-category">file-hosting</span> <span class="bit-category">cloud-storage</span> <span class="bit-category">base</span></span>
 </div>
 
 L0 base bit for cloud file hosting/storage services - provides common interfaces and types

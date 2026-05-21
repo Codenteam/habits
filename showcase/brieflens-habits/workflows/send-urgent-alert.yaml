@@ -102,7 +102,7 @@ nodes:
         email: "{{habits.input.userEmail}}"
         eventCount: "{{habits.input.eventCount}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(email: string, eventCount: number) {
             console.log(`⏰ Sent urgent alert to ${email} for ${eventCount} meeting(s)`);

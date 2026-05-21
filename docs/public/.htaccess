@@ -10,10 +10,19 @@ RewriteBase /intersect/habits/
 # Custom 404 error document (must use full path from site root)
 ErrorDocument 404 /intersect/habits/404.html
 
-# Ensure this .htaccess takes precedence
-# and doesn't fall through to parent configurations
 <IfModule mod_rewrite.c>
-    # If a file or directory doesn't exist, show our 404
+    # Case 1: Directory exists but has NO index.html (VitePress asset dirs like /showcase/hello-world/)
+    # mod_dir redirects /page to /page/ because the asset dir exists; serve the .html page instead.
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_FILENAME}/index.html !-f
+    RewriteRule ^(.+?)/?$ $1.html [L]
+
+    # Case 2: No file or directory exists — clean URL support (serve page.html for /page)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.+)$ $1.html [L]
+
+    # Fallback: show custom 404 for everything else that doesn't resolve
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule . /intersect/habits/404.html [L]

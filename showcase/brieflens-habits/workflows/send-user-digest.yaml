@@ -146,7 +146,7 @@ nodes:
         eventCount: "{{get-events.count}}"
         hasEvents: "{{check-events}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(email: string, eventCount: number, hasEvents: string) {
             if (hasEvents === "no_events") {

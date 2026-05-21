@@ -18,7 +18,7 @@ nodes:
         summariesJson: "{{digestInput.summariesJson}}"
         digestDate: "{{digestInput.digestDate}}"
         contentCount: "{{digestInput.contentCount}}"
-        language: deno
+        language: javascript
         script: |
           export async function main(summariesJson, digestDate, contentCount) {
             const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';

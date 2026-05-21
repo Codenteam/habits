@@ -17,7 +17,7 @@ nodes:
         subject: "{{habits.input.subject}}"
         message: "{{habits.input.message}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(ticketId: string, customerEmail: string, subject: string, message: string) {
             console.log("📩 Received support ticket:", ticketId);

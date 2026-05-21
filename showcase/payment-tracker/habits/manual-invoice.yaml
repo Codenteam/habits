@@ -67,7 +67,7 @@ nodes:
         total: "{{habits.input.total}}"
         currency: "{{habits.input.currency}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(
             invoiceNumber: string,

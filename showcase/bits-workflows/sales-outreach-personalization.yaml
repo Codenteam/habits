@@ -20,7 +20,7 @@ nodes:
         role: "{{habits.input.role}}"
         industry: "{{habits.input.industry}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(leadId: string, email: string, firstName: string, lastName: string, company: string, role: string, industry: string) {
             console.log("📧 Processing lead for outreach:", email);
@@ -133,7 +133,7 @@ nodes:
       params:
         variantsJson: "{{generate-variants.content}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(variantsJson: string) {
             try {

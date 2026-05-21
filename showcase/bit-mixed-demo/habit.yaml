@@ -16,7 +16,7 @@ nodes:
       label: Create Mock Data
       params:
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main() {
             console.log("📝 Creating mock post data");

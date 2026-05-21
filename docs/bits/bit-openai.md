@@ -30,8 +30,8 @@ onMounted(async () => {
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-openai`</span>
-  <span class="bit-version">v0.1.11</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">690</span> downloads</span>
+  <span class="bit-version">v0.1.15</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">877</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">openai</span> <span class="bit-category">openai</span> <span class="bit-category">ai</span></span>
 </div>
 
@@ -68,6 +68,7 @@ nodes:
 
 ## Used In Showcases
 
+- [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [resume-analyzer](/showcase/resume-analyzer)
 
 <style>

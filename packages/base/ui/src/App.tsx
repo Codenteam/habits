@@ -5,6 +5,7 @@ import { loadState } from './store/middleware/persistenceMiddleware';
 import { store } from './store/store';
 import { restoreWorkflowState } from './store/slices/workflowSlice';
 import { restoreUIState } from './store/slices/uiSlice';
+import { fetchServerFlags } from './store/slices/serverFlagsSlice';
 
 function App() {
   useEffect(() => {
@@ -23,6 +24,9 @@ function App() {
 
     // Setup automatic state persistence
     setupStatePersistence();
+
+    // Fetch server feature flags so the UI can disable guarded controls
+    store.dispatch(fetchServerFlags());
   }, []);
 
   return (

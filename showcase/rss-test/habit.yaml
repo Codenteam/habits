@@ -25,7 +25,7 @@ nodes:
       params:
         item: "{{habits.input}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(item: unknown) {
             console.log("RSS item received:", JSON.stringify(item, null, 2));

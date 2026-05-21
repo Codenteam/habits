@@ -19,7 +19,7 @@ nodes:
         requesterName: "{{habits.input.requesterName}}"
         summaryLength: "{{habits.input.summaryLength}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(
             documentContent: string,
@@ -71,7 +71,7 @@ nodes:
         text: "{{extract-text.result}}"
         documentName: "{{upload-trigger.result.name}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(text: string, documentName: string) {
             const wordCount = text.split(/\s+/).length;
@@ -173,7 +173,7 @@ nodes:
       params:
         entitiesJson: "{{extract-entities.content}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(entitiesJson: string) {
             try {
@@ -233,7 +233,7 @@ nodes:
         readingTime: "{{analyze-document.result.readingTimeMinutes}}"
         entities: "{{parse-entities.result}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(
             summary: string, 

@@ -140,7 +140,7 @@ function getCollection(name: string): Map<string, any> {
 }
 
 const databaseBit = {
-  displayName: 'Database / Storage (Memory)',
+  displayName: 'Database (Memory)',
   description: 'Store and retrieve data in workflows using in-memory storage',
   logoUrl: 'lucide:Database',
   runtime: 'all',

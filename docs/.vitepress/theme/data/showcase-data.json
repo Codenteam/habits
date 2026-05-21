@@ -47,7 +47,7 @@
   },
   {
     "slug": "hello-world",
-    "name": "Hello World Habit",
+    "name": "Hello World",
     "description": "Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.",
     "tags": [
       "frontend",
@@ -103,5 +103,19 @@
     "featured": true,
     "thumbnail": "/showcase/resume-analyzer/1.webp",
     "imageCount": 4
+  },
+  {
+    "slug": "social-media-multi-posting",
+    "name": "Social Media Scheduling Habit (Twitter, LinkedIn)",
+    "description": "Simple Habit to showcase the possible methods and ways to consume bits and read from both env and input.",
+    "tags": [
+      "frontend",
+      "backend",
+      "creative"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/social-media-multi-posting/1.webp",
+    "imageCount": 1
   }
 ]

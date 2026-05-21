@@ -35,7 +35,7 @@ You want to combine pre-built integrations with custom logic:
   "nodes": [
     { "type": "bits", "data": { "module": "@ha-bits/bit-http" } },
     { "type": "bits", "data": { "module": "@ha-bits/bit-openai" } },
-    { "type": "script", "data": { "params": { "language": "python3" } } }
+    { "type": "script", "data": { "params": { "language": "javascript" } } }
   ]
 }
 ```

@@ -38,7 +38,7 @@ nodes:
 |----------|-------------|---------|
 | **Pre-built nodes** | Standard integrations | OpenAI, Postgres, SendGrid, etc |
 | **Declarative config** | Simple HTTP calls, data transforms | REST API requests |
-| **Custom scripts** | Unique business logic | Deno/TypeScript inline code |
+| **Custom scripts** | Unique business logic | JavaScript inline code |
 
 ## Open Source
 

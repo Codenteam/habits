@@ -12,7 +12,7 @@ nodes:
       params:
         word: "{{habits.input.word}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(word: string) {
             // 4D semantic space: [royalty, male, human, rodent]

@@ -33,7 +33,7 @@ nodes:
       params:
         scheduleData: "{{schedule}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(scheduleData: unknown) {
             const timestamp = new Date().toISOString();

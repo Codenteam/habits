@@ -174,7 +174,7 @@ export class NodeFactory {
     params?: Record<string, any>;
     credentials?: Record<string, any>;
     // Script-specific properties
-    language?: 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript';
+    language?: 'javascript';
     content?: string;
   }>): NodeDTO[] {
     const nodes: NodeDTO[] = [];
@@ -206,7 +206,7 @@ export class NodeFactory {
         }
       } else if (config.framework === 'script') {
         node = this.createScript({
-          language: config.language || 'deno',
+          language: config.language || 'javascript',
           label: config.label,
           position,
           content: config.content,
@@ -232,7 +232,7 @@ export class NodeFactory {
    */
   static createScript(options: {
     scriptPath?: string;
-    language: 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript';
+    language: 'javascript';
     content?: string;
     label?: string;
     position?: { x: number; y: number };
@@ -288,7 +288,7 @@ export class NodeFactory {
     position?: { x: number; y: number };
     // Script-specific template properties
     scriptType?: 'script' | 'flow';
-    language?: 'deno' | 'python3' | 'go' | 'bash' | 'sql' | 'typescript';
+    language?: 'javascript';
   }): NodeDTO {
     if (template.framework === 'script') {
       if (template.scriptType === 'flow') {
@@ -299,7 +299,7 @@ export class NodeFactory {
         });
       } else {
         return this.createScript({
-          language: template.language || 'deno',
+          language: template.language || 'javascript',
           label: template.label,
           position: template.position,
           content: `export async function main({ input }) {

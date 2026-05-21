@@ -196,7 +196,7 @@ export function habitToYaml(habit: Habit): string {
             yamlNode.data.params = {};
           }
           yamlNode.data.params.type = 'script';
-          yamlNode.data.params.language = node.data.language || 'deno';
+          yamlNode.data.params.language = node.data.language || 'javascript';
           yamlNode.data.params.script = node.data.content;
         }
       }

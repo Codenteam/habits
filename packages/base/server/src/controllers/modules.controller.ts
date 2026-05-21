@@ -107,14 +107,9 @@ export class ModulesController {
         }
 
         const langToExt: Record<string, string> = {
-          typescript: 'ts',
           javascript: 'js',
-          python3: 'py',
-          go: 'go',
-          bash: 'sh',
-          sql: 'sql',
         };
-        const ext = langToExt[scriptLanguage] || 'ts';
+        const ext = langToExt[scriptLanguage] || 'js';
 
         // Write the script file to <nodesBasePath>/scripts/<scriptName>/script.<ext>
         const scriptsDir = path.join(getNodesBasePath(), 'scripts', scriptName);

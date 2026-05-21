@@ -8,11 +8,41 @@ interface APIExecutionResult {
   data?: any;
   error?: string;
   execution_id?: string;
+  serveNotEnabled?: boolean;
+}
+
+export interface ServerFlags {
+  allowExecute: boolean;
+  allowModulesInstall: boolean;
+  allowFormsAuth: boolean;
+  allowSecurityApi: boolean;
+  allowExport: boolean;
+  allowServe: boolean;
+  allowAIGen: boolean;
 }
 
 const API_BASE_URL = '/habits/base/api';
 
 export const api = {
+  // Feature flags
+  async getServerFlags(): Promise<ServerFlags> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/flags`);
+      return response.data.data as ServerFlags;
+    } catch {
+      // If the endpoint is unreachable, assume everything is enabled
+      return {
+        allowExecute: true,
+        allowModulesInstall: true,
+        allowFormsAuth: true,
+        allowSecurityApi: true,
+        allowExport: true,
+        allowServe: true,
+        allowAIGen: true,
+      };
+    }
+  },
+
   // Module management
   async getModules(): Promise<AvailableModuleDefinition[]> {
     const response = await axios.get(`${API_BASE_URL}/modules`);
@@ -49,6 +79,9 @@ export const api = {
   async getModuleSchema(framework: string, moduleName: string): Promise<{ schema?: any; error?: string }> {
     try {
       const response = await axios.get(`${API_BASE_URL}/modules/schema/${framework}/${encodeURIComponent(moduleName)}`);
+      if (!response.data.success || !response.data.data) {
+        return { error: response.data.error || 'Failed to get module schema' };
+      }
       return response.data.data;
     } catch (error: any) {
       return { error: error.response?.data?.error || 'Failed to get module schema' };
@@ -110,6 +143,7 @@ export const api = {
       success: response.data.success,
       data: response.data.data,
       error: response.data.error,
+      serveNotEnabled: response.data.data?.serveNotEnabled === true,
     };
   },
 

@@ -104,7 +104,7 @@ sections:
     items:
       - icon: puzzle
         title: Embed in your app
-        text: Drop the Cortex runtime into any Node/Deno process and execute habits in-line.
+        text: Drop the Cortex runtime into any Node process and execute habits in-line.
       - icon: monitor
         title: CLI-first
         text: "`habits execute --config ./stack.yaml`, run automations from scripts, cron, or CI."
@@ -134,7 +134,7 @@ sections:
   - title: Bits and scripts, together
     icon: puzzle
     type: default
-    description: Mix pre-built Habits bits with inline Deno/TypeScript scripts in one workflow, no need to author a new "piece" every time you have one-off logic.
+    description: Mix pre-built Habits bits with inline Javascript scripts in one workflow, no need to author a new "piece" every time you have one-off logic.
     items:
       - icon: package
         title: 200+ bits

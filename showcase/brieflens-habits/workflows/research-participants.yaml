@@ -91,7 +91,7 @@ nodes:
       params:
         results: "{{research-all}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(results: any) {
             console.log("🔍 Participant research completed:");

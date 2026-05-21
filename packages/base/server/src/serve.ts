@@ -50,8 +50,11 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
         return res.json(
           createResponse(
             false,
-            undefined,
-            "Serving is not enabled on this instance. To enable it, set the environment variable HABITS_ALLOW_SERVE=true.",
+            { serveNotEnabled: true },
+            "Serving is not enabled on this instance. It can be enabled in several ways: " +
+            "(1) habits command: set HABITS_ALLOW_SERVE=true when starting Base (e.g. HABITS_ALLOW_SERVE=true npx habits@latest base, or add it to a .env file in the same directory); " +
+            "(2) Admin panel: open the service settings for this Base instance and add HABITS_ALLOW_SERVE=true to its environment variables. " +
+            "See: https://codenteam.com/intersect/habits/tools/base.html#environment-variables and https://codenteam.com/intersect/habits/tools/admin.html",
           ),
         );
       }

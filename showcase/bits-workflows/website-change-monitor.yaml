@@ -15,7 +15,7 @@ nodes:
         url: "{{habits.input.url}}"
         monitorName: "{{habits.input.monitorName}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(url: string, monitorName: string) {
             return {

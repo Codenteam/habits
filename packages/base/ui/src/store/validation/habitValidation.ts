@@ -67,7 +67,7 @@ export const validateHabitName: HabitValidator = (habit) => {
       habitName: habit.name,
       errorType: 'missing_name',
       message: `Habit "${habit.name}" has a default name. Consider giving it a meaningful name.`,
-      severity: 'error',
+      severity: 'warning',
     };
   }
 
@@ -77,7 +77,7 @@ export const validateHabitName: HabitValidator = (habit) => {
       habitName: habit.name,
       errorType: 'missing_name',
       message: `Habit "${habit.name}" has a default name. Consider giving it a meaningful name.`,
-      severity: 'error',
+      severity: 'warning',
     };
   }
   

@@ -16,7 +16,7 @@ nodes:
         dateRange: "{{habits.input.dateRange}}"
         recipients: "{{habits.input.recipients}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(reportType: string, dateRange: string, recipients: string) {
             const now = new Date();
@@ -104,7 +104,7 @@ nodes:
         productData: "{{fetch-product.body}}"
         dateRange: "{{schedule-trigger.result.dateRange}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(salesData: any, supportData: any, productData: any, dateRange: string) {
             // Default values in case APIs return empty

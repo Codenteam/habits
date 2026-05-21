@@ -37,7 +37,7 @@ features:
 
   - name: Custom code nodes
     icon: code
-    habits: Deno/TypeScript
+    habits: JavaScript
     competitor: JavaScript/Python
 
   - name: Edge & serverless deploy

@@ -16,7 +16,7 @@ nodes:
         meetingTitle: "{{habits.input.meetingTitle}}"
         attendees: "{{habits.input.attendees}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(transcript: string, meetingTitle: string, attendees: string) {
             console.log("📝 Processing meeting:", meetingTitle);
@@ -88,7 +88,7 @@ nodes:
       params:
         tasksJson: "{{extract-tasks.content}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(tasksJson: string) {
             try {

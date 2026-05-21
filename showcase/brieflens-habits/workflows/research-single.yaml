@@ -85,7 +85,7 @@ nodes:
         name: "{{habits.input.name}}"
         summary: "{{ai-research.content}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(email: string, name: string, summary: string) {
             console.log(`🔍 Researched: ${name} (${email})`);

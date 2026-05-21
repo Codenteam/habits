@@ -1,9 +1,8 @@
 /**
  * Script Executor
  * 
- * Executes scripts in a Node.js environment (server) or browser environment (Tauri).
- * In Tauri app mode, only JavaScript is supported (no Node.js runtime available).
- * In Node.js server mode, all languages are supported: TypeScript/JavaScript (Deno-converted), Python, Go, and Bash.
+ * Executes JavaScript scripts in a Node.js environment (server) or browser environment (Tauri).
+ * Only JavaScript is supported.
  */
 
 import * as fs from 'fs';
@@ -19,7 +18,6 @@ import {
   ScriptExecutionResult,
   ScriptContext,
   ScriptState,
-  DenoToNodeConversionResult,
 } from './types';
 import { LoggerFactory } from '@ha-bits/core/logger';
 
@@ -114,116 +112,6 @@ async function setInternalState(scriptPath: string, state: any): Promise<void> {
   internalStates.set(getInternalStatePath(scriptPath), state);
 }
 
-// ============================================================================
-// Deno to Node.js Conversion
-// ============================================================================
-
-/**
- * Convert Deno imports to Node.js compatible imports
- */
-function convertDenoImports(code: string): DenoToNodeConversionResult {
-  const npmPackages: string[] = [];
-  const imports: string[] = [];
-  let convertedCode = code;
-
-  // Replace Deno.land imports with npm equivalents
-  const denoImportPatterns: Array<{
-    pattern: RegExp;
-    replacement: string | ((match: string, ...args: string[]) => string);
-    npmPackage?: string;
-  }> = [
-    {
-      pattern: /import\s+\*\s+as\s+wmill\s+from\s+["']https:\/\/deno\.land\/x\/[@\w.]*\/mod\.ts["'];?/g,
-      replacement: `// Script SDK (mocked for Node.js)
-const wmill = {
-  getInternalStatePath: () => '__internal_state__',
-  getInternalState: async () => globalThis.__script_state || null,
-  setInternalState: async (state) => { globalThis.__script_state = state; },
-  getVariable: async (path) => process.env[path] || null,
-  setVariable: async (path, value) => { process.env[path] = value; },
-  getResource: async (path) => globalThis.__script_resources?.[path] || null,
-};`,
-    },
-    // Standard library fetch (use native)
-    {
-      pattern: /import\s*{\s*([^}]+)\s*}\s*from\s+["']https:\/\/deno\.land\/std[@\w.]*\/http\/mod\.ts["'];?/g,
-      replacement: '', // fetch is native in Node 18+
-    },
-    // Crypto
-    {
-      pattern: /import\s*{\s*([^}]+)\s*}\s*from\s+["']https:\/\/deno\.land\/std[@\w.]*\/crypto\/mod\.ts["'];?/g,
-      replacement: `const crypto = require('crypto');`,
-    },
-    // Path
-    {
-      pattern: /import\s*{\s*([^}]+)\s*}\s*from\s+["']https:\/\/deno\.land\/std[@\w.]*\/path\/mod\.ts["'];?/g,
-      replacement: `const path = require('path');`,
-    },
-    // fs
-    {
-      pattern: /import\s*{\s*([^}]+)\s*}\s*from\s+["']https:\/\/deno\.land\/std[@\w.]*\/fs\/mod\.ts["'];?/g,
-      replacement: `const fs = require('fs').promises;`,
-    },
-    // npm: imports
-    {
-      pattern: /import\s+(?:(\*\s+as\s+\w+)|{([^}]+)}|(\w+))\s+from\s+["']npm:([^@"']+)(?:@[^"']*)?["'];?/g,
-      replacement: (match: string, star: string, named: string, defaultImport: string, pkg: string) => {
-        npmPackages.push(pkg);
-        if (star) {
-          return `const ${star.replace('* as ', '')} = require('${pkg}');`;
-        } else if (named) {
-          return `const { ${named} } = require('${pkg}');`;
-        } else {
-          return `const ${defaultImport} = require('${pkg}');`;
-        }
-      },
-    },
-  ];
-
-  for (const { pattern, replacement, npmPackage } of denoImportPatterns) {
-    if (typeof replacement === 'function') {
-      convertedCode = convertedCode.replace(pattern, replacement as any);
-    } else {
-      convertedCode = convertedCode.replace(pattern, replacement);
-    }
-    if (npmPackage) {
-      npmPackages.push(npmPackage);
-    }
-  }
-
-  // Replace Deno.* APIs with Node.js equivalents
-  const denoApiReplacements: Array<[RegExp, string]> = [
-    [/Deno\.env\.get\(([^)]+)\)/g, 'process.env[$1]'],
-    [/Deno\.env\.set\(([^,]+),\s*([^)]+)\)/g, 'process.env[$1] = $2'],
-    [/Deno\.args/g, 'process.argv.slice(2)'],
-    [/Deno\.exit\(([^)]*)\)/g, 'process.exit($1)'],
-    [/Deno\.cwd\(\)/g, 'process.cwd()'],
-    [/Deno\.readTextFile\(([^)]+)\)/g, 'fs.readFileSync($1, "utf-8")'],
-    [/Deno\.writeTextFile\(([^,]+),\s*([^)]+)\)/g, 'fs.writeFileSync($1, $2)'],
-    [/Deno\.readFile\(([^)]+)\)/g, 'fs.readFileSync($1)'],
-    [/Deno\.writeFile\(([^,]+),\s*([^)]+)\)/g, 'fs.writeFileSync($1, $2)'],
-    [/Deno\.remove\(([^)]+)\)/g, 'fs.unlinkSync($1)'],
-    [/Deno\.mkdir\(([^)]+)\)/g, 'fs.mkdirSync($1, { recursive: true })'],
-    [/Deno\.stat\(([^)]+)\)/g, 'fs.statSync($1)'],
-  ];
-
-  for (const [pattern, replacement] of denoApiReplacements) {
-    convertedCode = convertedCode.replace(pattern, replacement);
-  }
-
-  // Extract import statements for reference
-  const importRegex = /^(import\s+.+from\s+['"].+['"];?)$/gm;
-  let match;
-  while ((match = importRegex.exec(code)) !== null) {
-    imports.push(match[1]);
-  }
-
-  return {
-    code: convertedCode,
-    imports,
-    npmPackages: [...new Set(npmPackages)],
-  };
-}
 
 /**
  * Convert TypeScript to JavaScript using the TypeScript compiler
@@ -254,101 +142,7 @@ function transpileTypeScript(code: string): string {
   return jsCode;
 }
 
-/**
- * Convert Deno script to Node.js compatible JavaScript
- */
-export function convertDenoToNode(code: string): string {
-  // First convert Deno-specific imports and APIs
-  const { code: convertedCode } = convertDenoImports(code);
-  
-  // Then transpile TypeScript to JavaScript
-  const jsCode = transpileTypeScript(convertedCode);
-  
-  return jsCode;
-}
 
-// ============================================================================
-// Script Execution
-// ============================================================================
-
-/**
- * Execute a JavaScript/TypeScript script in Node.js
- */
-async function executeJavaScript(
-  code: string,
-  params: Record<string, any>,
-  context: ScriptContext
-): Promise<any> {
-  // Convert Deno code to Node.js
-  const nodeCode = convertDenoToNode(code);
-  
-  // Create a wrapper that exports the main function result
-  const wrappedCode = `
-    ${nodeCode}
-    
-    // Execute main function
-    (async () => {
-      if (typeof main === 'function') {
-        return await main(...Object.values(__params__));
-      }
-      throw new Error('No main function found in script');
-    })();
-  `;
-
-  // Create a sandbox context
-  const sandbox: Record<string, any> = {
-    __params__: params,
-    __context__: context,
-    globalThis: {
-      __script_state: null,
-      __script_resources: {},
-    },
-    console,
-    process,
-    require,
-    fetch,
-    Buffer,
-    setTimeout,
-    setInterval,
-    clearTimeout,
-    clearInterval,
-    Promise,
-    JSON,
-    Object,
-    Array,
-    String,
-    Number,
-    Boolean,
-    Date,
-    Math,
-    RegExp,
-    Error,
-    URL,
-    URLSearchParams,
-    TextEncoder: globalThis.TextEncoder,
-    TextDecoder: globalThis.TextDecoder,
-    crypto: globalThis.crypto,
-    fs: require('fs'),
-    path: require('path'),
-  };
-
-  const vmContext = vm.createContext(sandbox);
-  
-  try {
-    const script = new vm.Script(wrappedCode, {
-      filename: 'script-executor.js',
-    });
-    
-    const result = await script.runInContext(vmContext, {
-      timeout: 300000, // 5 minute timeout
-    });
-    
-    return result;
-  } catch (error: any) {
-    logger.error(`JavaScript execution error: ${error.message}`);
-    throw error;
-  }
-}
 
 /**
  * Execute a Python script
@@ -645,11 +439,7 @@ function loadLocalScript(moduleName: string): ScriptDefinition | null {
   
   // Try different file extensions
   const extensions = [
-    { ext: 'script.ts', language: 'deno' as const },
     { ext: 'script.js', language: 'javascript' as const },
-    { ext: 'script.py', language: 'python3' as const },
-    { ext: 'script.go', language: 'go' as const },
-    { ext: 'script.sh', language: 'bash' as const },
   ];
 
   for (const { ext, language } of extensions) {
@@ -736,7 +526,7 @@ export async function executeScriptModule(
     if (isTauriEnvironment()) {
       result = await executeJavaScriptInBrowser(script.content, executionParams);
     } else {
-      result = await executeJavaScript(script.content, executionParams, context);
+      result = await executeJavaScriptInBrowser(script.content, executionParams);
     }
 
     logger.log(`✅ Script executed successfully`);

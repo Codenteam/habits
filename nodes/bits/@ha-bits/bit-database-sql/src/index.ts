@@ -33,7 +33,7 @@ interface DatabaseContext {
 }
 
 const sqlBit = {
-  displayName: 'Database / Storage (SQL/SQLite)',
+  displayName: 'Database (SQL/SQLite)',
   description: 'Store and retrieve data in workflows using SQLite with Drizzle ORM',
   logoUrl: 'lucide:Database',
   runtime: 'all',

@@ -20,7 +20,7 @@ nodes:
         feedback: "{{habits.input.feedback}}"
         productUsed: "{{habits.input.productUsed}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(
             responseId: string,
@@ -109,7 +109,7 @@ nodes:
         rating: "{{survey-trigger.result.rating}}"
         sentiment: "{{sentiment-analysis.sentiment}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(aiResponse: string, rating: number, sentiment: string) {
             let analysis;

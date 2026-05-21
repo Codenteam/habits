@@ -416,12 +416,7 @@ definitions:
               language:
                 type: string
                 enum:
-                  - bash
-                  - deno
-                  - go
-                  - python3
-                  - sql
-                  - typescript
+                  - javascript
                 description: Script language for script framework nodes
               script:
                 type: string

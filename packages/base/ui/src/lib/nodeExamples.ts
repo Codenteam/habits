@@ -28,8 +28,8 @@ export function createScriptNode() {
     module: 'script',
     label: 'Process Data',
     position: { x: 300, y: 100 },
-    language: 'typescript',
-    content: 'export default function process(input: any) { return input; }',
+    language: 'javascript',
+    content: 'function main(input) { return input; }',
   });
 
   return node;

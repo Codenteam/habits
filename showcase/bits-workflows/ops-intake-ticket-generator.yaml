@@ -19,7 +19,7 @@ nodes:
         requesterName: "{{habits.input.requesterName}}"
         requesterEmail: "{{habits.input.requesterEmail}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(
             subject: string, 
@@ -96,7 +96,7 @@ nodes:
       params:
         aiResponse: "{{ai-clarifier.content}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(aiResponse: string) {
             try {
@@ -137,7 +137,7 @@ nodes:
         requester: "{{intake-trigger.result.requester}}"
         intakeId: "{{intake-trigger.result.intakeId}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(parsed: any, requester: any, intakeId: string) {
             const priorities: Record<string, string> = {

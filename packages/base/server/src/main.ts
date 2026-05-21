@@ -45,8 +45,30 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-app.use(express.json({ limit: '1000mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1000mb' }));
+// CORS - restrict to configured origins in public mode (HABITS_CORS_ORIGINS=https://example.com)
+const corsOrigins = process.env.HABITS_CORS_ORIGINS;
+if (corsOrigins && corsOrigins !== '*') {
+  const allowed = corsOrigins.split(',').map(o => o.trim());
+  app.use((req: Request, res: Response, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowed.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+}
+
+const bodyLimitMb = process.env.HABITS_BODY_LIMIT_MB ?? '1000';
+const bodyLimit = `${bodyLimitMb}mb`;
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";

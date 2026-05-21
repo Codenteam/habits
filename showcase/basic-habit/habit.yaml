@@ -17,7 +17,7 @@ nodes:
       label: Create Test Data
       params:
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main() {
             console.log("📝 Creating test data");
@@ -41,7 +41,7 @@ nodes:
         isValid: "{{create-data.result.isValid}}"
         count: "{{create-data.result.count}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(isValid: boolean, count: number) {
             console.log("🔀 Running if condition check");
@@ -72,7 +72,7 @@ nodes:
       params:
         text: "{{create-data.result.name}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(text: string) {
             console.log("📝 Running string utilities");
@@ -100,7 +100,7 @@ nodes:
       params:
         itemsString: "{{create-data.result.items}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(itemsString: string) {
             console.log("🔄 Running loop over items");
@@ -145,7 +145,7 @@ nodes:
         stringOps: "{{string-utils.result}}"
         loopResult: "{{loop-items.result}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(validation: any, stringOps: any, loopResult: any) {
             console.log("📊 Generating final summary");

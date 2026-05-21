@@ -60,7 +60,7 @@ nodes:
         currentRate: "{{get-current-rate}}"
         historicalData: "{{get-historical-rates}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           interface RateData {
             rate: number;
@@ -153,7 +153,7 @@ nodes:
       params:
         analysis: "{{analyze-rates}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           export async function main(analysis: any) {
             return {

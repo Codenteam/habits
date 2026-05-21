@@ -31,7 +31,7 @@ nodes:
       params:
         transfer: "{{wise-trigger}}"
         type: script
-        language: deno
+        language: javascript
         script: |
           interface TransferData {
             transfer: {

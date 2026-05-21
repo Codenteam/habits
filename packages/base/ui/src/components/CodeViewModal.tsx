@@ -40,7 +40,7 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
   
   // Construct env content string from state
   const envContent = useMemo(() => envVariablesToString(envVariables), [envVariables]);
-  const [activeTab, setActiveTab] = useState<TabType>('config');
+  const [activeTab, setActiveTab] = useState<TabType>('binary');
   const [activeFileTab, setActiveFileTab] = useState<FileSubTab>('stack');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedHabits, setExpandedHabits] = useState<Set<number>>(new Set());
@@ -179,6 +179,17 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
 
         {/* Tabs */}
         <div className="flex border-b border-slate-700">
+            <button
+            onClick={() => setActiveTab('binary')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-medium transition-colors ${
+              activeTab === 'binary'
+              ? 'text-purple-400 border-b-2 border-purple-400 bg-slate-700/50'
+              : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            Pack/Export/Download
+          </button>
           <button
             onClick={() => setActiveTab('config')}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
@@ -201,17 +212,7 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
             <Shield className="w-4 h-4" />
             Security
           </button>
-            <button
-            onClick={() => setActiveTab('binary')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-medium transition-colors ${
-              activeTab === 'binary'
-              ? 'text-purple-400 border-b-2 border-purple-400 bg-slate-700/50'
-              : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            Pack/Export/Download
-          </button>
+          
           <button
             onClick={() => setActiveTab('files')}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${

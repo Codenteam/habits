@@ -1,5 +1,5 @@
 ---
-title: "Database / Storage (MongoDB)"
+title: "Database (MongoDB)"
 description: "MongoDB database storage bit - replaces @ha-bits/bit-database"
 aside: false
 ---
@@ -26,7 +26,7 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="Database" :size="32" class="inline-icon" /> Database / Storage (MongoDB)
+# <component :is="Database" :size="32" class="inline-icon" /> Database (MongoDB)
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database-mongodb`</span>

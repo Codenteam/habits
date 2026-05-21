@@ -36,7 +36,7 @@ const images = [
 
 <p class="showcase-description">Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.</p>
 
-A collection of habits that streamline the new customer journey, from document collection through to account activation. Each habit operates independently and can be deployed individually or as a complete onboarding automation suite.
+A collection of habits that streamline the new customer journey: from document collection through to account activation. Each habit operates independently and can be deployed individually or as a complete onboarding automation suite.
 
 ## What It Does
 

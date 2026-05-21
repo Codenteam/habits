@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Trash2, Layers,
   Puzzle, FileCode,
@@ -13,6 +13,7 @@ import {
   addHabit, removeHabit, setActiveHabit, updateHabit, 
   setAvailableModules, selectHabits, selectActiveHabitId 
 } from '../store/slices/workflowSlice';
+import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 import { convertWorkflowWithConnections, detectWorkflowType } from '../lib/workflowConverter';
 import { slugify } from '../lib/exportUtils';
 import { api } from '../lib/api';
@@ -40,6 +41,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   // Habits state
   const habits = useAppSelector(selectHabits);
   const activeHabitId = useAppSelector(selectActiveHabitId);
+  const serverFlags = useAppSelector(selectServerFlags);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [converting, setConverting] = useState(false);
@@ -66,8 +68,34 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
     nodes: true,
   });
 
+  // Resizer state: ratio of height taken by habits section (default 1/3)
+  const [splitRatio, setSplitRatio] = useState(1 / 3);
+  const isDragging = useRef(false);
+  const panelContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     loadModules();
+  }, []);
+
+  const handleResizerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current || !panelContainerRef.current) return;
+      const rect = panelContainerRef.current.getBoundingClientRect();
+      const newRatio = (ev.clientY - rect.top) / rect.height;
+      setSplitRatio(Math.min(0.85, Math.max(0.15, newRatio)));
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }, []);
 
   const loadModules = async () => {
@@ -290,10 +318,13 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
 
       {/* Expandable content panel */}
       {isAnySectionVisible && (
-        <div className="w-56 bg-slate-800 border-r border-slate-700 flex flex-col overflow-hidden overflow-x-hidden">
+        <div ref={panelContainerRef} className="w-56 bg-slate-800 border-r border-slate-700 flex flex-col overflow-hidden overflow-x-hidden">
           {/* Habits Section - Collapsible */}
           {visibleSections.habits && (
-            <div className={`flex flex-col ${visibleSections.nodes ? 'flex-1 min-h-0' : 'flex-1'}`}>
+            <div
+              className="flex flex-col min-h-0 overflow-hidden"
+              style={visibleSections.nodes ? { height: `${splitRatio * 100}%` } : { flex: 1 }}
+            >
               {/* Header */}
               <div className="p-3 border-b border-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between mb-2">
@@ -474,22 +505,51 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
             </div>
           )}
 
+          {/* Resize handle - only shown when both sections are visible */}
+          {visibleSections.habits && visibleSections.nodes && (
+            <div
+              onMouseDown={handleResizerMouseDown}
+              className="shrink-0 h-1.5 bg-slate-700 hover:bg-blue-500/50 cursor-row-resize flex items-center justify-center group transition-colors"
+            >
+              <div className="flex gap-0.5">
+                <span className="block w-4 h-px bg-slate-500 group-hover:bg-blue-400 transition-colors" />
+                <span className="block w-4 h-px bg-slate-500 group-hover:bg-blue-400 transition-colors" />
+                <span className="block w-4 h-px bg-slate-500 group-hover:bg-blue-400 transition-colors" />
+              </div>
+            </div>
+          )}
+
           {/* Nodes Section - Collapsible */}
           {visibleSections.nodes && (
-            <div className={`flex flex-col ${visibleSections.habits ? 'flex-1 min-h-0 border-t border-slate-600' : 'flex-1'}`}>
+            <div
+              className="flex flex-col min-h-0 overflow-hidden"
+              style={visibleSections.habits ? { height: `${(1 - splitRatio) * 100}%` } : { flex: 1 }}
+            >
               <div className="p-3 border-b border-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-slate-300">
                     <Puzzle className="w-4 h-4" />
                     <span className="text-sm font-medium">Node Palette</span>
                   </div>
-                  <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
-                    title="Add Module"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                  <div className="relative group">
+                    <button
+                      onClick={() => serverFlags.allowModulesInstall && setIsAddModalOpen(true)}
+                      disabled={!serverFlags.allowModulesInstall}
+                      className={`p-1.5 rounded transition-colors ${
+                        serverFlags.allowModulesInstall
+                          ? 'hover:bg-slate-700 text-slate-400 hover:text-slate-200'
+                          : 'text-slate-600 cursor-not-allowed opacity-50'
+                      }`}
+                      title={serverFlags.allowModulesInstall ? 'Add Module' : 'Module installation is disabled on this instance'}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    {!serverFlags.allowModulesInstall && (
+                      <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-slate-900 text-amber-300 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        Module installation is disabled (HABITS_ALLOW_MODULES_INSTALL)
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -514,7 +574,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                         onClick={() => handleAddNode('bits', bit.name, bit.displayName)}
                         className="w-full text-left px-2 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded transition-colors group"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between overflow-hidden">
                           <div className="flex items-center gap-1.5">
                             <IconComponent className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span className="text-xs text-emerald-400 truncate">
@@ -529,7 +589,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                 </div>
 
                 {/* Custom Bits modules */}
-                {bitsModules.length > 0 && (
+                {false && bitsModules.length > 0 && (
                   <div className="space-y-1">
                     <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Custom Bits</h4>
                     {bitsModules.map((module) => (

@@ -270,13 +270,24 @@ export class CreatorController {
   private guardDisabled(res: Response): boolean {
     if (process.env.HABITS_AI_GEN !== 'true') {
       res.status(403).json(
-        createResponse(false, undefined, 'AI generation is not enabled. To enable it, set the environment variable HABITS_AI_GEN=true.'),
+        createResponse(false, undefined,
+          'AI generation is not enabled. It can be enabled in several ways: ' +
+          '(1) habits command: set HABITS_AI_GEN=true when starting Base (e.g. HABITS_AI_GEN=true npx habits@latest base, or add it to a .env file in the same directory); ' +
+          '(2) Admin panel: open the service settings for this Base instance and add HABITS_AI_GEN=true to its environment variables. ' +
+          'See: https://codenteam.com/intersect/habits/tools/base.html#environment-variables and https://codenteam.com/intersect/habits/tools/admin.html'
+        ),
       );
       return true;
     }
     if (!process.env.CLAUDE_API_KEY) {
       res.status(403).json(
-        createResponse(false, undefined, 'CLAUDE_API_KEY is not set. Provide an Anthropic API key.'),
+        createResponse(false, undefined,
+          'CLAUDE_API_KEY is not set. Provide an Anthropic API key. ' +
+          'It can be configured in several ways: ' +
+          '(1) habits command: set CLAUDE_API_KEY=sk-ant-... when starting Base (or add it to a .env file in the same directory); ' +
+          '(2) Admin panel: open the service settings for this Base instance and add CLAUDE_API_KEY to its environment variables. ' +
+          'See: https://codenteam.com/intersect/habits/tools/base.html#environment-variables and https://codenteam.com/intersect/habits/tools/admin.html'
+        ),
       );
       return true;
     }
