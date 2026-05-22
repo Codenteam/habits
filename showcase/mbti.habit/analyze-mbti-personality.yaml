@@ -1,0 +1,103 @@
+id: analyze-mbti-personality
+name: Analyze MBTI Personality
+description: |
+  Submit up to 10 text samples written by or about a person. AI will score all 16 MBTI types, rank them, and return the closest type conclusion. Each analysis is saved to history with an optional name.
+nodes:
+  - id: mbti-analysis
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: mbti-analysis
+      operation: ask_chatgpt
+      params:
+        model: gpt-4o-mini
+        maxTokens: 2048
+        temperature: 0.3
+        roles:
+          - role: system
+            content: |
+              You are an expert MBTI personality analyst with deep knowledge of all 16 Myers-Briggs types. You analyze writing style, word choice, reasoning patterns, emotional expression, and cognitive preferences to determine personality type. You always return strictly valid JSON with no extra text.
+        prompt: |
+          Analyze the following text samples to determine the MBTI personality type of the author.
+          Ignore any samples that are empty or blank.
+
+          --- TEXT SAMPLES START ---
+          [Sample 1]: {{habits.input.text1}}
+          [Sample 2]: {{habits.input.text2}}
+          [Sample 3]: {{habits.input.text3}}
+          [Sample 4]: {{habits.input.text4}}
+          [Sample 5]: {{habits.input.text5}}
+          [Sample 6]: {{habits.input.text6}}
+          [Sample 7]: {{habits.input.text7}}
+          [Sample 8]: {{habits.input.text8}}
+          [Sample 9]: {{habits.input.text9}}
+          [Sample 10]: {{habits.input.text10}}
+          --- TEXT SAMPLES END ---
+
+          Score each of the 16 MBTI types on a scale of 0–100 based on how well the texts match that type.
+          Rank them from highest to lowest score.
+
+          Return ONLY the following JSON (no markdown, no code fences, no extra text):
+          {
+            "rankings": [
+              {
+                "rank": 1,
+                "type": "INTJ",
+                "score": 87,
+                "label": "The Architect",
+                "reasoning": "Short 1-2 sentence explanation of why this type fits"
+              }
+            ],
+            "dimensions": {
+              "EI": { "E": 30, "I": 70, "label": "Introverted" },
+              "SN": { "S": 25, "N": 75, "label": "Intuitive" },
+              "TF": { "T": 80, "F": 20, "label": "Thinking" },
+              "JP": { "J": 65, "P": 35, "label": "Judging" }
+            },
+            "conclusion": {
+              "type": "INTJ",
+              "label": "The Architect",
+              "confidence": "High",
+              "summary": "A 2-3 sentence personality summary describing this person",
+              "strengths": ["Strength 1", "Strength 2", "Strength 3"],
+              "growthAreas": ["Area 1", "Area 2"],
+              "famousExamples": ["Person A", "Person B"]
+            }
+          }
+
+          All 16 types must appear in the rankings array. Confidence must be one of: High, Medium, Low.
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+  - id: save-to-history
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: save-to-history
+      operation: insert
+      params:
+        collection: mbti_history
+        document:
+          name: "{{habits.input.name || ''}}"
+          text1: "{{habits.input.text1 || ''}}"
+          text2: "{{habits.input.text2 || ''}}"
+          text3: "{{habits.input.text3 || ''}}"
+          text4: "{{habits.input.text4 || ''}}"
+          text5: "{{habits.input.text5 || ''}}"
+          text6: "{{habits.input.text6 || ''}}"
+          text7: "{{habits.input.text7 || ''}}"
+          text8: "{{habits.input.text8 || ''}}"
+          text9: "{{habits.input.text9 || ''}}"
+          text10: "{{habits.input.text10 || ''}}"
+          analysis: "{{mbti-analysis}}"
+edges:
+  - source: mbti-analysis
+    target: save-to-history
+output:
+  analysis: "{{mbti-analysis}}"
+  recordId: "{{save-to-history.id}}"
+  savedAt: "{{save-to-history.createdAt}}"

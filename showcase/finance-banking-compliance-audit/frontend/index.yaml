@@ -1,0 +1,64 @@
+# Finance & Banking Compliance & Audit — converted from finance-banking-compliance-audit.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: finance-banking-compliance-audit
+  title: "Finance & Banking Compliance & Audit"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "⚖️"
+  documentTitle: "Finance & Banking Compliance & Audit"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Finance & Banking Compliance & Audit"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "⚖️"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13013 · Habits v1.0"
+    port: 13013
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "0", label: Outstanding SARs }
+      - { value: "100%", label: AML screening coverage }
+      - { value: "4", label: Days to next report deadline }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: AML Screening
+            description: Screen transactions against watchlists and sanction databases and flag any matches.
+            trigger: scheduler
+            tags: [scheduler, http, ai]
+          - name: SAR Filing
+            description: Draft Suspicious Activity Reports with AI assistance and route for compliance sign-off.
+            trigger: webhook
+            tags: [webhook, ai, email]
+          - name: Audit Trail Compilation
+            description: Aggregate system audit logs and assemble evidence packs for upcoming audits.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Policy Compliance Check
+            description: Verify that internal processes remain aligned with current regulatory requirements.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Regulatory Reporting
+            description: Generate mandatory periodic reports and submit them to regulatory authorities on schedule.
+            trigger: scheduler
+            tags: [scheduler, http, email]
+          - name: Risk Register Update
+            description: Update the enterprise risk register automatically based on audit findings and alerts.
+            trigger: webhook
+            tags: [webhook, http, email]

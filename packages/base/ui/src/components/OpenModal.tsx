@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { FolderOpen, FileJson, AlertCircle, Check, X, Loader2, Upload } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { addHabit, setActiveHabit, clearWorkflow } from '../store/slices/workflowSlice';
-import { setFrontendHtml } from '../store/slices/uiSlice';
+import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
 import {
   FileEntry,
   detectConfigFiles,
@@ -164,12 +164,17 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
       if (parsed.frontendHtml) {
         dispatch(setFrontendHtml(parsed.frontendHtml));
       }
+
+      // Load frontend YAML if available
+      if (parsed.frontendYaml) {
+        dispatch(setFrontendYaml(parsed.frontendYaml));
+      }
       
       setResult({
         type: 'folder',
         habitsLoaded: parsed.habits.length,
         errors: parsed.errors,
-        frontendLoaded: !!parsed.frontendHtml,
+        frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
       });
       setMode('result');
     } catch (error) {
@@ -339,7 +344,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
                     <p className="text-green-400 font-medium">Successfully loaded!</p>
                     <p className="text-green-300 text-sm mt-1">
                       {result.type === 'file' ? 'Workflow' : `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''}`} loaded
-                      {result.frontendLoaded && ' • Frontend HTML loaded'}
+                      {result.frontendLoaded && ' • Frontend loaded'}
                     </p>
                   </div>
                 </div>

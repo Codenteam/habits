@@ -7123,12 +7123,6 @@
           "type": "string",
           "const": "sqlite-vec:deny-vector-search",
           "markdownDescription": "Denies the vector_search command without any pre-configured scope."
-        },
-        {
-          "description": "Default permissions for the plugin",
-          "type": "string",
-          "const": "webdriver:default",
-          "markdownDescription": "Default permissions for the plugin"
         }
       ]
     },

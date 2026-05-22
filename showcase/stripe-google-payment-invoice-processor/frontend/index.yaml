@@ -1,0 +1,181 @@
+version: 1
+meta:
+  id: stripe-google-payment-invoice-processor
+  title: Invoice Hub
+  subtitle: Stripe → Google Drive
+  icon: "💸"
+
+theme:
+  preset: cyberpunk
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Invoice Hub, subtitle: "Stripe · Drive", icon: "💸" }
+  nav:
+    - { id: dashboard, label: Home, icon: "🏠" }
+    - { id: create, label: Create, icon: "➕" }
+    - { id: scan, label: Scan, icon: "📷" }
+    - { id: history, label: History, icon: "🗂️" }
+    - { id: settings, label: Settings, icon: "⚙️" }
+
+state:
+  invoices: []
+  invoiceNumber: "INV-001"
+  date: ""
+  customerName: ""
+  customerEmail: ""
+  customerAddress: ""
+  description: ""
+  notes: ""
+  amount: 100
+  vat: 20
+  total: 120
+  currency: "$"
+  createResult: null
+  scanMode: ocr
+  scanFile: ""
+  scanFileName: ""
+  scanResult: null
+  error: null
+
+actions:
+  loadDashboard:
+    method: POST
+    endpoint: /api/list-invoices
+    body: {}
+    responsePath: output.invoices
+    onSuccess: { set: { invoices: "$response" } }
+  createInvoice:
+    method: POST
+    endpoint: /api/manual-invoice
+    body:
+      invoiceNumber: "{{state.invoiceNumber}}"
+      date: "{{state.date}}"
+      customerName: "{{state.customerName}}"
+      customerEmail: "{{state.customerEmail}}"
+      customerAddress: "{{state.customerAddress}}"
+      description: "{{state.description}}"
+      notes: "{{state.notes}}"
+      amount: "{{state.amount}}"
+      vat: "{{state.vat}}"
+      total: "{{state.total}}"
+      currency: "{{state.currency}}"
+    responsePath: output.invoice
+    onSuccess: { set: { createResult: "$response" }, dispatch: loadDashboard, toast: "Invoice created" }
+    onError: { set: { error: "$error.message" } }
+  scan:
+    method: POST
+    endpoint: "/api/{{state.scanMode === 'ocr' ? 'process-ocr' : 'extract-pdf'}}"
+    body: { source: "{{state.scanFile}}", sourceType: base64, language: en }
+    responsePath: output.result
+    onSuccess: { set: { scanResult: "$response" } }
+    onError: { set: { error: "$error.message" } }
+
+onMount:
+  - loadDashboard
+
+defaultView: dashboard
+
+views:
+  dashboard:
+    widgets:
+      - kind: metric-grid
+        columns: 2
+        metrics:
+          - { value: "{{state.invoices | sum:total | currency}}", label: "Revenue" }
+          - { value: "{{state.invoices.length}}", label: "Invoices" }
+      - kind: card
+        title: Recent invoices
+        children:
+          - kind: list
+            source: state.invoices
+            limit: 5
+            empty: "No invoices yet."
+            template:
+              - { kind: text, value: "{{item.invoiceNumber}} · {{item.customerName}}", strong: true }
+              - { kind: text, value: "{{item.currency}}{{item.total}}", muted: true }
+      - kind: button-row
+        buttons:
+          - { label: New invoice, action: { goto: create }, variant: primary }
+          - { label: Scan, action: { goto: scan }, variant: secondary }
+  create:
+    widgets:
+      - kind: card
+        title: New invoice
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: invoiceNumber, type: text, label: "Invoice #", required: true }
+              - { name: date, type: date, label: Date, required: true }
+              - { name: customerName, type: text, label: Customer, required: true }
+              - { name: customerEmail, type: email, label: Customer email }
+              - { name: customerAddress, type: textarea, label: Customer address, rows: 2 }
+              - { name: description, type: textarea, label: Description, rows: 3, required: true }
+              - { name: amount, type: number, label: Amount, step: 0.01, required: true }
+              - { name: vat, type: number, label: VAT, step: 0.01 }
+              - { name: total, type: number, label: Total, step: 0.01, required: true }
+              - { name: currency, type: select, label: Currency, options: ["$", "€", "£"], default: "$" }
+              - { name: notes, type: textarea, label: Notes, rows: 2 }
+            submit: { label: Create invoice, action: createInvoice, loadingLabel: "Generating..." }
+      - kind: result-panel
+        source: state.createResult
+        title: Invoice ready
+        sections:
+          - kind: download-button
+            label: Download PDF
+            source: state.createResult.base64
+            fileName: "{{state.invoiceNumber}}.pdf"
+            mimeType: application/pdf
+  scan:
+    widgets:
+      - kind: card
+        title: Scan a document
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: scanMode
+                type: chip-group
+                label: Mode
+                default: ocr
+                options:
+                  - { value: ocr, label: "OCR (image)" }
+                  - { value: pdf, label: "Extract PDF" }
+              - { name: scanFile, type: file-upload, label: Upload, accept: "image/*,application/pdf", asBase64: true, bindNameTo: state.scanFileName, required: true }
+            submit: { label: Process, action: scan, loadingLabel: "Processing..." }
+      - kind: result-panel
+        source: state.scanResult
+        title: Result
+        sections:
+          - { kind: json-dump, source: state.scanResult, copy: true }
+  history:
+    widgets:
+      - kind: card
+        title: All invoices
+        children:
+          - kind: list
+            source: state.invoices
+            empty: "No invoices yet."
+            template:
+              - { kind: text, value: "{{item.invoiceNumber}} · {{item.customerName}}", strong: true }
+              - { kind: text, value: "{{item.currency}}{{item.total}} · {{item.date | date}}", muted: true }
+              - kind: download-button
+                label: Download
+                source: item.base64
+                fileName: "{{item.invoiceNumber}}.pdf"
+                mimeType: application/pdf
+  settings:
+    widgets:
+      - kind: card
+        title: Connections
+        children:
+          - kind: kv-grid
+            items:
+              - { label: Stripe, value: "Connected" }
+              - { label: Google Drive, value: "Connected" }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

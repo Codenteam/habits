@@ -1,0 +1,64 @@
+# Healthcare Compliance & Reporting — converted from healthcare-compliance-reporting.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: healthcare-compliance-reporting
+  title: "Healthcare Compliance & Reporting"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "📋"
+  documentTitle: "Healthcare Compliance & Reporting"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Healthcare Compliance & Reporting"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "📋"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13004 · Habits v1.0"
+    port: 13004
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "0", label: Unresolved incidents }
+      - { value: "14", label: Days to next audit }
+      - { value: "100%", label: Policy acknowledgement rate }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: HIPAA Audit Log
+            description: Compile system access logs and flag anomalies for compliance review each night.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Incident Reporting
+            description: Capture clinical incident reports via webhook and route for investigation.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: Policy Distribution
+            description: Push updated compliance policies to all staff and track individual acknowledgements.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Accreditation Tracking
+            description: Monitor accreditation renewal deadlines and trigger preparation tasks automatically.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Risk Assessment
+            description: Run periodic AI-assisted risk assessments and escalate high-risk findings.
+            trigger: scheduler
+            tags: [scheduler, ai, email]
+          - name: Regulatory Update Alert
+            description: Monitor regulatory feeds for changes and alert the compliance team immediately.
+            trigger: scheduler
+            tags: [scheduler, http, slack]

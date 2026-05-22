@@ -1,0 +1,64 @@
+# Real Estate Property Management — converted from real-estate-property-management.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: real-estate-property-management
+  title: Real Estate Property Management
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🏢"
+  documentTitle: Real Estate Property Management
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Real Estate Property Management
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🏢"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13044 · Habits v1.0"
+    port: 13044
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "98%", label: On-time rent collection rate }
+      - { value: "4", label: Maintenance requests this week }
+      - { value: "3", label: Leases up for renewal }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Tenant Onboarding
+            description: "Send a structured welcome pack to new tenants, collect documents, and set up building access."
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Maintenance Request Routing
+            description: Receive tenant maintenance requests and assign them to the appropriate vendor automatically.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Rent Collection Alert
+            description: Notify tenants 3 days before rent is due and flag overdue payments to the property manager.
+            trigger: scheduler
+            tags: [scheduler, email, sms]
+          - name: Lease Renewal
+            description: Send lease renewal offers to tenants 90 days before expiry and track response status.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Inspection Scheduling
+            description: Book periodic property inspections automatically and send advance notice to tenants.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Vendor Management
+            description: Track vendor work orders from assignment to completion and release payment on sign-off.
+            trigger: webhook
+            tags: [webhook, http, email]

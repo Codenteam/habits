@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hello World Greeting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+    .input-glow:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(10px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .result-reveal { animation: reveal 0.4s ease-out forwards; }
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4 font-sans">
+  <div class="glass-card rounded-2xl p-8 max-w-md w-full shadow-2xl">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+        Hello World Greeting
+      </h1>
+      <p class="text-slate-400 mt-2 text-sm">
+        Powered by <span class="text-cyan-400">@ha-bits</span>/bit-hello-world
+      </p>
+    </div>
+
+    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+      <p class="text-slate-300 text-sm text-center">
+        Try <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">hello</code>
+        and <code class="bg-blue-500/20 px-2 py-0.5 rounded text-cyan-300 font-mono">world</code>
+      </p>
+    </div>
+
+    <div class="mb-4">
+      <label for="param1" class="block text-slate-300 text-sm mb-2 font-medium">First Word</label>
+      <input type="text" id="param1" value="hello"
+        class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all input-glow font-mono" />
+    </div>
+
+    <div class="mb-6">
+      <label for="param2" class="block text-slate-300 text-sm mb-2 font-medium">Second Word</label>
+      <input type="text" id="param2" value="world"
+        class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-all input-glow font-mono" />
+    </div>
+
+    <button id="runBtn" onclick="runWorkflow()"
+      class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/25">
+      <span id="btnText">Execute</span>
+    </button>
+
+    <div id="status" class="mt-5 p-4 rounded-xl text-sm text-center hidden"></div>
+
+    <div id="result" class="mt-5 hidden">
+      <div class="bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-600/30 rounded-xl p-6">
+        <p class="text-slate-400 text-xs uppercase tracking-widest mb-2 text-center">Response</p>
+        <div id="resultMessage" class="text-2xl font-bold text-center bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function runWorkflow() {
+      const btn = document.getElementById('runBtn');
+      const btnText = document.getElementById('btnText');
+      const status = document.getElementById('status');
+      const result = document.getElementById('result');
+      const resultMessage = document.getElementById('resultMessage');
+
+      const param1 = document.getElementById('param1').value;
+      const param2 = document.getElementById('param2').value;
+
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btnText.innerHTML = '<span class="loading-dots">Processing</span>';
+
+      status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-slate-800/50 border border-slate-600/30 text-slate-300';
+      status.textContent = 'Executing...';
+      result.className = 'mt-5 hidden';
+
+      try {
+        const response = await fetch('/api/hello-world-greeting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ param1, param2 })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
+          status.textContent = 'Completed successfully!';
+
+          result.className = 'mt-5 block result-reveal';
+          const output = data.output || data;
+          const greeting = output?.greeting?.value ?? output?.greeting ?? JSON.stringify(output);
+          resultMessage.textContent = greeting;
+        } else {
+          throw new Error(data.message || 'Request failed');
+        }
+      } catch (error) {
+        status.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-red-500/10 border border-red-500/30 text-red-300';
+        status.textContent = error.message;
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btnText.textContent = 'Execute';
+      }
+    }
+  </script>
+</body>
+</html>

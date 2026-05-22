@@ -1,0 +1,64 @@
+# Real Estate Property Listings — converted from real-estate-property-listings.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: real-estate-property-listings
+  title: Real Estate Property Listings
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🏘️"
+  documentTitle: Real Estate Property Listings
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Real Estate Property Listings
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🏘️"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13041 · Habits v1.0"
+    port: 13041
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "142", label: Active listings }
+      - { value: 3.2h, label: Average time-to-live on MLS }
+      - { value: "28", label: Enquiries generated this week }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Listing Creation Alert
+            description: Notify the listings team when a new property is ready to go live and assign preparation tasks.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: MLS Syndication
+            description: Push listing data to MLS and all connected portal platforms automatically on publication.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Price Change Notification
+            description: Alert interested buyers automatically when a listing price is reduced.
+            trigger: webhook
+            tags: [webhook, email, sms]
+          - name: Listing Expiry Reminder
+            description: Remind the responsible agent 7 days before a listing agreement is due to expire.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Performance Report
+            description: "Compile weekly listing performance metrics: views, enquiries, and showings — and distribute to agents."
+            trigger: scheduler
+            tags: [scheduler, ai, email]
+          - name: Photo Review Request
+            description: Automatically request professional photography when a new listing is created in the system.
+            trigger: webhook
+            tags: [webhook, email, http]

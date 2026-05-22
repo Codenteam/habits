@@ -1,0 +1,164 @@
+version: 1
+meta:
+  id: app-mobile-automation
+  title: Mobile Automation Suite
+  subtitle: WiFi · Geofence · Smart Home
+  icon: "📱"
+
+theme:
+  preset: mobile-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Mobile Automation Suite, subtitle: "Context-aware automations", icon: "📱" }
+  nav:
+    - { id: wifi, label: WiFi, icon: "📶" }
+    - { id: geofence, label: Geofence, icon: "📍" }
+    - { id: smarthome, label: Smart Home, icon: "🏠" }
+
+state:
+  currentWifi: "Not connected"
+  contextMode: ""
+  workSsid: OfficeNetwork
+  homeSsid: HomeNetwork
+  zoneName: Home
+  notifyPhone: "+1234567890"
+  smsMessage: "I just arrived!"
+  lastGeofenceEvent: ""
+  voiceCommand: "turn on living room lights"
+  routineName: Morning
+  routineCommands: "lights on, set temp 72"
+  routines: []
+  log: []
+  error: null
+
+actions:
+  wifiWorkMode:
+    method: POST
+    endpoint: /api/wifi-work-mode
+    body: { config: { work_wifi_ssid: "{{state.workSsid}}" } }
+    onSuccess: { set: { contextMode: "Work" }, append: { log: { ts: "{{now | iso}}", message: "Switched to Work mode" } } }
+  wifiHomeMode:
+    method: POST
+    endpoint: /api/wifi-home-mode
+    body: { config: { home_wifi_ssid: "{{state.homeSsid}}" } }
+    onSuccess: { set: { contextMode: "Home" }, append: { log: { ts: "{{now | iso}}", message: "Switched to Home mode" } } }
+  geofenceArrival:
+    method: POST
+    endpoint: /api/geofence-arrival-sms
+    body: { zone_name: "{{state.zoneName}}", phone_number: "{{state.notifyPhone}}", message: "{{state.smsMessage}}" }
+    onSuccess: { set: { lastGeofenceEvent: "Arrival" }, append: { log: { ts: "{{now | iso}}", message: "Arrival SMS triggered" } } }
+  geofenceDeparture:
+    method: POST
+    endpoint: /api/geofence-departure-sms
+    body: { zone_name: "{{state.zoneName}}", phone_number: "{{state.notifyPhone}}" }
+    onSuccess: { set: { lastGeofenceEvent: "Departure" }, append: { log: { ts: "{{now | iso}}", message: "Departure SMS triggered" } } }
+  processCommand:
+    method: POST
+    endpoint: /api/smart-home-process-command
+    body: { command: "{{state.voiceCommand}}" }
+    responsePath: result.response
+    onSuccess: { append: { log: { ts: "{{now | iso}}", message: "$response" } } }
+  createRoutine:
+    method: POST
+    endpoint: /api/smart-home-create-routine
+    body: { name: "{{state.routineName}}", commands: "{{state.routineCommands | splitCsv}}" }
+    onSuccess: { dispatch: listRoutines, toast: "Routine created" }
+  listRoutines:
+    method: POST
+    endpoint: /api/smart-home-list-routines
+    body: {}
+    responsePath: result.routines
+    onSuccess: { set: { routines: "$response" } }
+  listCommands:
+    method: POST
+    endpoint: /api/smart-home-list-commands
+    body: {}
+    responsePath: result.commands
+    onSuccess: { append: { log: { ts: "{{now | iso}}", message: "Commands refreshed" } } }
+
+onMount:
+  - listRoutines
+
+defaultView: wifi
+
+views:
+  wifi:
+    widgets:
+      - kind: card
+        title: WiFi context
+        children:
+          - kind: kv-grid
+            items:
+              - { label: Current network, value: "{{state.currentWifi}}" }
+              - { label: Active mode, value: "{{state.contextMode}}" }
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: workSsid, type: text, label: Work SSID, default: OfficeNetwork }
+              - { name: homeSsid, type: text, label: Home SSID, default: HomeNetwork }
+          - kind: button-row
+            buttons:
+              - { label: Activate Work mode, action: wifiWorkMode, variant: primary }
+              - { label: Activate Home mode, action: wifiHomeMode, variant: secondary }
+  geofence:
+    widgets:
+      - kind: card
+        title: Geofence
+        children:
+          - kind: kv-grid
+            items:
+              - { label: Last event, value: "{{state.lastGeofenceEvent}}" }
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: zoneName, type: text, label: Zone name, default: Home }
+              - { name: notifyPhone, type: text, label: Notify phone, default: "+1234567890" }
+              - { name: smsMessage, type: text, label: Arrival message, default: "I just arrived!" }
+          - kind: button-row
+            buttons:
+              - { label: Simulate arrival, action: geofenceArrival, variant: primary }
+              - { label: Simulate departure, action: geofenceDeparture, variant: secondary }
+  smarthome:
+    widgets:
+      - kind: card
+        title: Voice command
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: voiceCommand, type: text, label: Command, default: "turn on living room lights" }
+            submit: { label: Run command, action: processCommand }
+          - kind: button
+            label: List supported commands
+            action: listCommands
+            variant: secondary
+      - kind: card
+        title: Routines
+        children:
+          - kind: list
+            source: state.routines
+            empty: "No routines yet."
+            template:
+              - { kind: text, value: "{{item.name}}", strong: true }
+              - { kind: text, value: "{{item.commands | join:', '}}", muted: true }
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: routineName, type: text, label: Routine name, default: Morning }
+              - { name: routineCommands, type: text, label: "Commands (comma-separated)", default: "lights on, set temp 72" }
+            submit: { label: Create routine, action: createRoutine }
+      - kind: card
+        title: Activity log
+        children:
+          - kind: list
+            source: state.log
+            empty: "No activity yet."
+            limit: 50
+            template:
+              - { kind: text, value: "{{item.ts | date}} · {{item.message}}", muted: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

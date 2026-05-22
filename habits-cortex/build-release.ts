@@ -121,7 +121,9 @@ async function main(): Promise<void> {
     const bundleAllOutput = path.resolve(__dirname, 'www', 'cortex-bundle-all.js');
     
     if (fs.existsSync(bundleAllScript)) {
-      exec(`node "${bundleAllScript}" --output "${bundleAllOutput}"`, {
+      const modulesPath = path.resolve(__dirname, '..', 'docker', 'habit', 'modules.json');
+      const modulesArg = fs.existsSync(modulesPath) ? `--modules "${modulesPath}"` : '';
+      exec(`node "${bundleAllScript}" --output "${bundleAllOutput}" ${modulesArg}`.trimEnd(), {
         cwd: path.resolve(__dirname, '..', 'bundle-generator'),
       });
       console.log('success', 'Bundle-all generated at www/cortex-bundle-all.js');
@@ -430,8 +432,19 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
   // Build both app and dmg for direct distribution
   const bundles = options.uploadMacos ? 'app' : 'app,dmg';
+
+  // For App Store uploads, override tauri.conf.json to use Entitlements.store.plist.
+  // For non-App-Store (Developer ID) builds, tauri.conf.json references Entitlements.plist.
+  let configArg = '';
+  if (options.uploadMacos) {
+    const storeConfigPath = path.join(TEMP_DIR, 'tauri.conf.store.json');
+    fs.writeFileSync(storeConfigPath, JSON.stringify({ bundle: { macOS: { entitlements: './Entitlements.store.plist' } } }));
+    configArg = `--config "${storeConfigPath}"`;
+    console.log('info', 'Using Entitlements.store.plist for App Store build');
+  }
+
   // Always use no-external-habits for App Store / direct-distribution macOS builds
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits`, { env: buildEnv });
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${configArg}`.trimEnd(), { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
@@ -478,7 +491,7 @@ async function signMacOS(ctx: MacOSContext, artifacts: string[], options: CLIOpt
         
         // Re-sign with Apple Distribution and entitlements for App Store
         // This is required to embed the application-identifier in the signature
-        const entitlementsPath = path.join(TAURI_DIR, 'Entitlements.plist');
+        const entitlementsPath = path.join(TAURI_DIR, 'Entitlements.store.plist');
         if (ctx.appStoreIdentity) {
           console.log('step', `Re-signing app for App Store with entitlements...`);
           exec(`codesign --force --deep --options runtime --sign "${ctx.appStoreIdentity}" --entitlements "${entitlementsPath}" "${appPath}"`);
@@ -950,8 +963,10 @@ async function buildIOS(): Promise<string[]> {
     CI: 'true',
   };
 
-  // Use --ci flag and let tauri handle the xcodebuild invocation
-  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --ci --features no-external-habits`, { 
+  // Do NOT pass --ci: that flag adds CODE_SIGNING_REQUIRED=NO / CODE_SIGNING_ALLOWED=NO which
+  // prevents xcodebuild from finding destinations when targeting iphoneos.
+  // CI=true in tauriBuildEnv keeps tauri non-interactive without disabling code signing.
+  exec(`npm run tauri -- ios build --target aarch64 --export-method app-store-connect --features no-external-habits`, { 
     env: tauriBuildEnv 
   });
   console.log('success', 'iOS build completed');

@@ -24,10 +24,10 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      operation: findOne
+      operation: get
       params:
         collection: "quizzes"
-        filter: '{"_id": "{{habits.input.quizId}}"}'
+        key: "{{habits.input.quizId}}"
 
   # Grade with AI for detailed feedback
   - id: grade-and-feedback
@@ -52,7 +52,7 @@ nodes:
           Grade this quiz submission and provide detailed feedback.
           
           Quiz Content:
-          {{fetch-quiz.document.content}}
+          {{fetch-quiz.value.content}}
           
           User Answers:
           {{habits.input.answers}}

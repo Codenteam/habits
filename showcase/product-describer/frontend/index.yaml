@@ -1,0 +1,162 @@
+version: 1
+meta:
+  id: product-describer
+  title: Product Describer
+  subtitle: SEO-optimised descriptions, bullets, and social copy from product images
+  icon: "🛍️"
+  documentTitle: Product Describer
+
+theme:
+  preset: ha-bits-red
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: Product Describer
+    subtitle: AI E-commerce Content
+    icon: "🛍️"
+  nav:
+    - { id: describe, label: Describe, icon: "✨" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  imageBase64: ""
+  imageUrls: ""
+  productName: ""
+  category: Electronics
+  targetAudience: ""
+  result: null
+  error: ""
+
+actions:
+  describe:
+    method: POST
+    endpoint: /api/describe-product
+    body:
+      productName: "{{state.productName}}"
+      category: "{{state.category}}"
+      targetAudience: "{{state.targetAudience}}"
+      imageUrls: "{{state.imageUrls}}"
+      imageBase64: "{{state.imageBase64}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: "''"
+      dispatch: listHistory
+      toast: "Content generated"
+    onError:
+      set:
+        error: "{{error.message}}"
+
+  listHistory:
+    method: GET
+    endpoint: /api/list-products
+    query:
+      limit: 12
+    responsePath: output
+
+  reopenProduct:
+    method: GET
+    endpoint: /api/get-product
+    query:
+      id: "{{params.id}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response.product"
+        productName: "$response.product.name"
+        category: "$response.product.category"
+        targetAudience: "$response.product.targetAudience"
+        error: "''"
+      goto: describe
+      toast: "Product loaded"
+
+defaultView: describe
+
+views:
+  describe:
+    widgets:
+      - kind: card
+        title: Product details
+        children:
+          - kind: form
+            id: productForm
+            bindTo: state
+            validate:
+              - when: "!state.imageBase64 && !state.imageUrls"
+                message: "Please upload an image or provide an image URL"
+            fields:
+              - { name: productName, type: text, label: Product name, placeholder: "Wireless Bluetooth Earbuds" }
+              - name: category
+                type: select
+                label: Category
+                required: true
+                options:
+                  - Electronics
+                  - "Fashion & Apparel"
+                  - "Home & Garden"
+                  - "Beauty & Personal Care"
+                  - "Sports & Outdoors"
+                  - "Toys & Games"
+                  - "Food & Beverages"
+                  - "Jewelry & Accessories"
+                  - Automotive
+                  - Other
+              - { name: targetAudience, type: text, label: Target audience, placeholder: "Young professionals, tech enthusiasts" }
+              - { name: imageUrls, type: url, label: Image URL, placeholder: "https://example.com/product.jpg" }
+              - { name: imageBase64, type: image-upload, label: "Or upload an image", asBase64: true }
+            submit:
+              label: Generate content
+              action: describe
+              loadingLabel: "Generating..."
+      - kind: status-banner
+        showWhen: "state.error"
+        source: state.error
+      - kind: result-panel
+        showWhen: "state.result"
+        source: state.result
+        title: Generated content
+        sections:
+          - kind: section
+            title: Long description
+            children:
+              - { kind: markdown, source: state.result.longDescription }
+          - kind: section
+            title: Bullet points
+            children:
+              - { kind: bullet-list, source: state.result.bulletPoints, itemTemplate: "{{item}}" }
+          - kind: section
+            title: Amazon listing
+            children:
+              - { kind: markdown, source: state.result.amazonListing }
+          - kind: section
+            title: Instagram caption
+            children:
+              - { kind: markdown, source: state.result.instagramCaption }
+          - kind: section
+            title: SEO keywords
+            children:
+              - { kind: badge-list, source: state.result.seoKeywords }
+          - kind: section
+            title: Taglines
+            children:
+              - { kind: bullet-list, source: state.result.taglines, itemTemplate: "{{item}}" }
+
+  history:
+    onEnter: listHistory
+    widgets:
+      - kind: history-grid
+        loadAction: listHistory
+        dataPath: products
+        reloadAfter: [describe]
+        columns: 2
+        itemTemplate:
+          title: "{{item.name | default:Unnamed product}}"
+          subtitle: "{{item.category}}"
+          meta: "{{item._createdAt | date}}"
+        onClick:
+          action: reopenProduct
+          params: { id: "{{item._id}}" }
+        empty: "No products yet."

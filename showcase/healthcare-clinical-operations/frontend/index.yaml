@@ -1,0 +1,64 @@
+# Healthcare Clinical Operations — converted from healthcare-clinical-operations.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: healthcare-clinical-operations
+  title: Healthcare Clinical Operations
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🏥"
+  documentTitle: Healthcare Clinical Operations
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Healthcare Clinical Operations
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🏥"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13002 · Habits v1.0"
+    port: 13002
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "340", label: Lab results routed today }
+      - { value: "8", label: Critical values flagged }
+      - { value: "97%", label: Referral acknowledgement rate }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Lab Results Routing
+            description: Deliver lab results to the ordering clinician and flag critical values for immediate action.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: Patient Scheduling
+            description: Optimise appointment slots and send booking confirmations to patients automatically.
+            trigger: scheduler
+            tags: [scheduler, email, sms]
+          - name: Medication Refill Request
+            description: Process refill requests from patients and route to the prescriber for approval.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Care Coordination
+            description: Coordinate multi-disciplinary care plans and track task completion across the team.
+            trigger: scheduler
+            tags: [scheduler, email, slack]
+          - name: EHR Data Sync
+            description: Sync patient data across connected systems and flag any discrepancies for review.
+            trigger: scheduler
+            tags: [http, scheduler, ai]
+          - name: Referral Management
+            description: Send specialist referrals automatically and track acknowledgement status.
+            trigger: webhook
+            tags: [webhook, email, http]

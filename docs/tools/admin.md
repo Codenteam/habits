@@ -21,20 +21,18 @@
 
 ## How to run Admin
 
-```bash
-npx habits admin
-```
+Admin is available through [Codenteam Hub](https://hub.codenteam.com). Register an account, then enable the Admin instance from your Hub dashboard. Once enabled, Admin is accessible at your assigned subdomain.
 
-Admin starts at `http://localhost:3000` by default. In production, put it behind a reverse proxy with wildcard subdomain support so each Cortex instance gets its own subdomain.
+In production, Admin sits behind a reverse proxy with wildcard subdomain support so each Cortex instance gets its own subdomain.
 
 ## Architecture
 
 ```
-yourdomain.com          → Admin UI
-app.yourdomain.com      → Cortex instance (habit: my-app)
-crm.yourdomain.com      → Cortex instance (habit: crm-workflow)
-mirror.yourdomain.com   → Habit Mirror signaling server
-base.yourdomain.com     → Base UI (optional)
+admin.instance.yourdomain.com          → Admin UI
+app.instance.yourdomain.com      → Cortex instance (habit: my-app)
+crm.instance.yourdomain.com      → Cortex instance (habit: crm-workflow)
+mirror.instance.yourdomain.com   → Habit Mirror signaling server
+base.instance.yourdomain.com     → Base UI (optional)
 ```
 
 ## System services

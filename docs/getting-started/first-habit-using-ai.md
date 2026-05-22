@@ -41,7 +41,7 @@ The AI generator requires a few environment variables to be set when starting th
 |----------|----------|-------------|
 | `HABITS_AI_GEN` | **Yes** | Set to `true` to enable the AI generation endpoints. Without this the "Generate with AI" feature is disabled. |
 | `CLAUDE_API_KEY` | **Yes** | Your Anthropic API key (starts with `sk-ant-…`). Used by the AI agent to generate workflows and UI. |
-| `HABITS_AI_DEBUG` | No | Set to `true` to keep the temporary staging directories on disk after the ZIP is sent. Useful for inspecting raw generated files when troubleshooting. |
+| `HABITS_AI_DEBUG` | No | Set to `true` to keep the temporary staging directories on disk after the habit is sent back to the user. Useful for inspecting raw generated files when troubleshooting. |
 
 ### When to set them
 
@@ -69,14 +69,12 @@ On **Intersect Cloud** and **Intersect Self-hosted**, these variables are config
 ## Prerequisites
 
 - Habits Base UI running (see [Setup Base Locally](./first-habit.md#setup-base-locally))
-- The environment variables above configured (at minimum `HABITS_AI_GEN=true` and `CLAUDE_API_KEY`)
+- Optionally, a `CLAUDE_API_KEY` set on the server (or enter your own key in the modal)
 
 Then run the server from the cloned repository:
 
 ```bash
-HABITS_AI_GEN=true \
-CLAUDE_API_KEY=sk-ant-… \
-pnpm nx dev @ha-bits/base
+CLAUDE_API_KEY=sk-ant-… pnpm nx dev @ha-bits/base
 ```
 
 The AI uses the `nodes/bits/@ha-bits/` directory (bit modules) and `showcase/` directory (reference habits) to understand how to build new habits properly.
@@ -180,8 +178,7 @@ The generated bit files will be created and ready for use in your workflows.
 
 ### No "Generate with AI" Button
 
-~~AI generation requires Intersect Cloud or Intersect Self-hosted~~  
-- Make sure the required environment variables are set correctly (`HABITS_AI_GEN=true` and a valid `CLAUDE_API_KEY`). Without these, the "Generate with AI" button will not appear. See the [Environment Variables](#environment-variables) section above for details.
+- The button is always visible. If clicking it shows an API key prompt, enter your Anthropic API key (`sk-ant-...`) directly in the modal. Alternatively, set `CLAUDE_API_KEY` on the server so all users share it.
 
 <Checklist name="stack-readiness" title="Habits Stack Preparation Checklist" icon="clipboard">
 

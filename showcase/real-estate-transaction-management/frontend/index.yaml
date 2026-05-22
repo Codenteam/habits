@@ -1,0 +1,64 @@
+# Real Estate Transaction Management — converted from real-estate-transaction-management.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: real-estate-transaction-management
+  title: Real Estate Transaction Management
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🤝"
+  documentTitle: Real Estate Transaction Management
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Real Estate Transaction Management
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🤝"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13042 · Habits v1.0"
+    port: 13042
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "18", label: Transactions in pipeline }
+      - { value: "2", label: Closings scheduled this week }
+      - { value: "0", label: Compliance issues outstanding }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Offer Tracking
+            description: Notify all transaction parties instantly when a new offer is received or an existing offer is updated.
+            trigger: webhook
+            tags: [webhook, email, sms]
+          - name: Document Collection
+            description: Request outstanding transaction documents from all parties and track receipt status.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Inspection Scheduling
+            description: "Coordinate property inspection booking between buyer, seller, and inspector automatically."
+            trigger: webhook
+            tags: [webhook, email, scheduler]
+          - name: Closing Coordination
+            description: Send closing checklists and deadline reminders to all parties as closing day approaches.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Commission Calculation
+            description: Calculate and route commission splits automatically when a deal reaches closing.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Compliance Review
+            description: Trigger a structured compliance checklist automatically when a transaction enters the contract stage.
+            trigger: webhook
+            tags: [webhook, email, http]

@@ -1,0 +1,115 @@
+version: 1
+meta:
+  id: meeting-summarizer
+  title: Meeting Summarizer
+  subtitle: Audio → summary, decisions, and action items
+  icon: "🎧"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Meeting Summarizer, subtitle: "Audio in, structured notes out", icon: "🎧" }
+  nav:
+    - { id: upload, label: New meeting, icon: "🎤" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  meetingTitle: ""
+  attendees: ""
+  audioBase64: ""
+  audioUrl: ""
+  result: null
+  meetings: []
+  selectedId: ""
+  error: null
+
+actions:
+  summarize:
+    method: POST
+    endpoint: /api/summarize
+    body:
+      meetingTitle: "{{state.meetingTitle}}"
+      attendees: "{{state.attendees}}"
+      audioBase64: "{{state.audioBase64}}"
+      audioUrl: "{{state.audioUrl}}"
+    onSuccess: { set: { result: "$response" }, dispatch: listMeetings }
+    onError: { set: { error: "$error.message" } }
+  listMeetings:
+    method: GET
+    endpoint: /api/list-meetings?limit=20
+    responsePath: meetings
+    onSuccess: { set: { meetings: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-meeting?id={{state.selectedId}}"
+    responsePath: meeting
+    onSuccess: { set: { result: "$response", __view: upload } }
+
+onMount:
+  - listMeetings
+
+defaultView: upload
+
+views:
+  upload:
+    widgets:
+      - kind: card
+        title: Upload meeting audio
+        hideWhen: state.result
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: meetingTitle, type: text, label: Meeting title, required: true, placeholder: "Weekly Team Standup" }
+              - { name: attendees, type: text, label: Attendees, placeholder: "John, Sarah, Mike" }
+              - { name: audioBase64, type: file-upload, label: Audio file, accept: ".mp3,.wav,.m4a,.webm", asBase64: true }
+              - { name: audioUrl, type: url, label: "Or paste audio URL", placeholder: "https://example.com/meeting.mp3" }
+            submit: { label: Summarize, action: summarize, loadingLabel: "Transcribing & summarising..." }
+      - kind: result-panel
+        source: state.result
+        title: "{{state.result.meetingTitle}}"
+        sections:
+          - kind: section
+            title: Summary
+            children:
+              - { kind: markdown, source: state.result.summary }
+          - kind: section
+            title: Decisions
+            children:
+              - { kind: bullet-list, source: state.result.decisions }
+          - kind: section
+            title: Action items
+            children:
+              - kind: list
+                source: state.result.actionItems
+                template:
+                  - { kind: text, value: "{{item.task}}", strong: true }
+                  - { kind: text, value: "{{item.assignee}} · due {{item.deadline}}", muted: true }
+          - kind: accordion
+            items:
+              - { id: transcript, title: Transcript, children: [{ kind: pre, source: state.result.transcript }] }
+              - { id: report, title: Full report, children: [{ kind: markdown, source: state.result.report }] }
+          - kind: button
+            label: New meeting
+            action: { reset: ["result"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Past meetings
+        children:
+          - kind: list
+            source: state.meetings
+            empty: "No meetings yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.meetingTitle}}", strong: true }
+              - { kind: text, value: "{{item.attendees}} · {{item.createdAt | date}}", muted: true }

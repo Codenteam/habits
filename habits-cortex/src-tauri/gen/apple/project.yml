@@ -55,7 +55,7 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 1.0.8
-        CFBundleVersion: "20260429010015"
+        CFBundleVersion: "20260522123117"
     entitlements:
       path: habits-cortex_iOS/habits-cortex_iOS.entitlements
     scheme:

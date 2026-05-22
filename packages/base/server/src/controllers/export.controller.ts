@@ -559,7 +559,7 @@ export class ExportController {
    */
   packHabit = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { habits, stackYaml, habitFiles, stackName, envContent, frontendHtml } = req.body;
+      const { habits, stackYaml, habitFiles, stackName, envContent, frontendHtml, frontendYaml } = req.body;
 
       // Validate required fields
       if (!habits || !Array.isArray(habits) || habits.length === 0) {
@@ -611,11 +611,11 @@ export class ExportController {
       for (const h of habitFiles) zip.file(h.filename, h.content);
       if (envContent) zip.file('.env', envContent);
       
-      // Add frontend HTML or _auto-ui marker
-      if (frontendHtml) {
-        zip.file('frontend/index.html', frontendHtml);
-      } else {
-        // Add _auto-ui marker when no frontend is provided
+      // Add frontend artifacts or _auto-ui marker.
+      // YAML wins when both are present (Cortex prefers index.yaml).
+      if (frontendYaml) zip.file('frontend/index.yaml', frontendYaml);
+      if (frontendHtml) zip.file('frontend/index.html', frontendHtml);
+      if (!frontendYaml && !frontendHtml) {
         zip.file('_auto-ui', 'true');
       }
 

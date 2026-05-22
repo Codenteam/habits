@@ -1,0 +1,64 @@
+# Healthcare Billing & Insurance — converted from healthcare-billing-insurance.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: healthcare-billing-insurance
+  title: "Healthcare Billing & Insurance"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "💳"
+  documentTitle: "Healthcare Billing & Insurance"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Healthcare Billing & Insurance"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "💳"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13001 · Habits v1.0"
+    port: 13001
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "98%", label: Claims submitted same-day }
+      - { value: "12", label: Denials re-routed today }
+      - { value: "$2.4M", label: Payments processed this month }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Claims Submission
+            description: Auto-submit insurance claims after patient visits with all required documentation.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Prior Auth Request
+            description: Trigger pre-authorisation requests for scheduled procedures and track approval status.
+            trigger: scheduler
+            tags: [http, email, scheduler]
+          - name: Denial Management
+            description: Route denied claims for review and resubmission with denial reason context.
+            trigger: webhook
+            tags: [email, http, slack]
+          - name: EOB Reconciliation
+            description: Match explanation-of-benefits documents to patient records every night.
+            trigger: scheduler
+            tags: [http, ai, scheduler]
+          - name: Eligibility Verification
+            description: Verify patient insurance eligibility before each appointment automatically.
+            trigger: scheduler
+            tags: [http, scheduler, email]
+          - name: Payment Posting
+            description: Post received payments to patient accounts automatically on confirmation.
+            trigger: webhook
+            tags: [webhook, http, email]

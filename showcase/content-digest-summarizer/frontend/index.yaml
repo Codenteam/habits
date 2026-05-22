@@ -1,0 +1,114 @@
+version: 1
+meta:
+  id: content-digest-summarizer
+  title: Content Digest Summarizer
+  subtitle: Fetches contents, summarizes each one, and posts a curated digest to Slack — in one click
+  icon: "📬"
+
+theme:
+  preset: aurora
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Content Digest, subtitle: "Email or RSS to Slack", icon: "📬" }
+  nav:
+    - { id: email, label: Email Digest, icon: "📧" }
+    - { id: rss, label: RSS Digest, icon: "📡" }
+
+state:
+  rssLive: false
+  stats:
+    fetched: 0
+    summarized: 0
+    actions: 0
+    slack: ""
+  allSummaries: []
+  error: null
+
+actions:
+  runEmailDigest:
+    method: POST
+    endpoint: /api/content-digest
+    body:
+      digestDate: "{{new Date().toISOString()}}"
+    responsePath: output
+    onSuccess:
+      set:
+        stats: "$response.stats"
+        allSummaries: "$response.summaries"
+        error: null
+      toast: "Digest sent to Slack"
+    onError: { set: { error: "$error.message" } }
+  startRss:
+    method: POST
+    endpoint: /api/rss-digest
+    body:
+      digestDate: "{{new Date().toISOString()}}"
+    onSuccess: { set: { rssLive: true, error: null }, toast: "Automation started" }
+    onError: { set: { error: "$error.message" } }
+  stopRss:
+    method: DELETE
+    endpoint: /misc/trigger/rss-digest/fetch-rss
+    onSuccess: { set: { rssLive: false, error: null }, toast: "Automation stopped" }
+    onError: { set: { error: "$error.message" } }
+
+defaultView: email
+
+views:
+  email:
+    widgets:
+      - kind: status-banner
+        source: "Pipeline: fetch Gmail → AI summarize each → post digest to Slack"
+      - kind: card
+        title: Email digest
+        children:
+          - kind: button
+            label: Run now
+            action: runEmailDigest
+            loadingLabel: "Running..."
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.allSummaries
+        source: state.allSummaries
+        title: Last run
+        sections:
+          - kind: metric-grid
+            columns: 4
+            metrics:
+              - { value: "{{state.stats.fetched}}", label: Fetched }
+              - { value: "{{state.stats.summarized}}", label: Summarized }
+              - { value: "{{state.stats.actions}}", label: Actions }
+              - { value: "{{state.stats.slack}}", label: Slack }
+          - kind: data-table
+            source: state.allSummaries
+            empty: "No summaries yet. Run the digest to fetch emails."
+            columns:
+              - { key: title, label: Title }
+              - { key: importance, label: Importance }
+              - { key: category, label: Category }
+              - { key: sentiment, label: Sentiment }
+              - { key: actionItem, label: Action }
+  rss:
+    widgets:
+      - kind: card
+        title: RSS automation
+        children:
+          - kind: kv-grid
+            items:
+              - { label: Cron, value: "*/3 * * * *" }
+              - { label: Status, value: "{{state.rssLive ? 'Running' : 'Stopped'}}" }
+          - kind: button
+            label: Start
+            action: startRss
+            hideWhen: state.rssLive
+          - kind: button
+            label: Stop
+            action: stopRss
+            tone: danger
+            showWhen: state.rssLive
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error

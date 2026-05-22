@@ -12,6 +12,7 @@ import {
   SecurityController,
   ExportController,
   CreatorController,
+  UiController,
 } from './controllers';
 import { setupServeRoutes } from './serve';
 import { createResponse } from './helpers';
@@ -42,6 +43,7 @@ export function setupRoutes(
   const securityController = new SecurityController();
   const exportController = new ExportController();
   const creatorController = new CreatorController();
+  const uiController = new UiController();
 
   // Root route
   app.get(basePath + '/', rootController.getRoot);
@@ -90,7 +92,12 @@ export function setupRoutes(
     app.post(basePath + '/export/pack/habit', exportController.packHabit);
   }
 
+  // UI builder routes (compile a UiSpec YAML to a self-contained HTML
+  // document for the new YAML-driven builder's live preview).
+  app.post(basePath + '/ui/compile-yaml', uiController.compileYaml);
+
   // Creator routes (AI generation) - also gated by HABITS_AI_GEN inside the controller
+  app.get(basePath + '/creator/status', creatorController.getStatus);
   app.post(basePath + '/creator/create-habit', creatorController.createHabit);
   app.post(basePath + '/creator/create-bit', creatorController.createBit);
 

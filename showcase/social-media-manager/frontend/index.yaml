@@ -1,0 +1,96 @@
+version: 1
+meta:
+  id: social-media-manager
+  title: Social Media Manager
+  subtitle: Generate content for all platforms in one click
+  icon: "📣"
+
+theme:
+  preset: ha-bits-red
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Social Media Manager, subtitle: "All platforms · one click", icon: "📣" }
+  nav:
+    - { id: create, label: Create, icon: "✨" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  topic: ""
+  brand: ""
+  tone: casual
+  generatedContent: null
+  activePlatform: twitter
+  history: []
+  selectedId: ""
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-content
+    body:
+      topic: "{{state.topic}}"
+      brand: "{{state.brand}}"
+      tone: "{{state.tone}}"
+    onSuccess: { set: { generatedContent: "$response" }, dispatch: listContent }
+    onError: { set: { error: "$error.message" } }
+  listContent:
+    method: GET
+    endpoint: /api/list-content?limit=12
+    responsePath: content
+    onSuccess: { set: { history: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-content?id={{state.selectedId}}"
+    responsePath: content
+    onSuccess: { set: { generatedContent: "$response", __view: create } }
+
+onMount:
+  - listContent
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Content brief
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: topic, type: textarea, label: "What's it about?", placeholder: "Enter your idea, announcement, or topic", rows: 4, required: true }
+              - { name: brand, type: text, label: Brand name, placeholder: "Your brand" }
+              - { name: tone, type: chip-group, label: Tone, default: casual, options: [professional, casual, humorous, inspirational, educational] }
+            submit: { label: Generate, action: generate, loadingLabel: "Working..." }
+      - kind: result-panel
+        source: state.generatedContent
+        title: Posts
+        sections:
+          - kind: tabs
+            bindTo: state.activePlatform
+            tabs:
+              - { id: twitter, label: Twitter/X, children: [{ kind: pre, source: state.generatedContent.twitter, copy: true }] }
+              - { id: linkedin, label: LinkedIn, children: [{ kind: pre, source: state.generatedContent.linkedin, copy: true }] }
+              - { id: instagram, label: Instagram, children: [{ kind: pre, source: state.generatedContent.instagram, copy: true }] }
+              - { id: facebook, label: Facebook, children: [{ kind: pre, source: state.generatedContent.facebook, copy: true }] }
+              - { id: image, label: Images, children: [{ kind: pre, source: state.generatedContent.imagePrompt, copy: true }] }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Previous generations
+        children:
+          - kind: list
+            source: state.history
+            empty: "No history yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.topic | truncate:120}}", strong: true }
+              - { kind: text, value: "{{item.brand}} · {{item.tone}}", muted: true }

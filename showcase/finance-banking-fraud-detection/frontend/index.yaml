@@ -1,0 +1,64 @@
+# Finance & Banking Fraud Detection — converted from finance-banking-fraud-detection.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: finance-banking-fraud-detection
+  title: "Finance & Banking Fraud Detection"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🔍"
+  documentTitle: "Finance & Banking Fraud Detection"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Finance & Banking Fraud Detection"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🔍"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13012 · Habits v1.0"
+    port: 13012
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: 1.2M, label: Transactions monitored today }
+      - { value: "7", label: Fraud alerts raised }
+      - { value: "<2s", label: Median detection latency }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Transaction Monitoring
+            description: Analyse incoming transactions in real time using AI and flag statistical anomalies.
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Alert Generation
+            description: Create structured fraud alerts and route them to the investigation team immediately.
+            trigger: webhook
+            tags: [webhook, slack, email]
+          - name: Customer Notification
+            description: Notify the customer of suspicious activity via SMS and request confirmation or denial.
+            trigger: webhook
+            tags: [webhook, sms, email]
+          - name: Account Freeze
+            description: Automatically freeze the affected account when a confirmed fraud signal is received.
+            trigger: webhook
+            tags: [webhook, http, slack]
+          - name: Case Management
+            description: Open a structured investigation case and assign it to an available analyst.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Fraud Report Filing
+            description: Compile mandatory fraud reports and submit to the relevant regulatory authority.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

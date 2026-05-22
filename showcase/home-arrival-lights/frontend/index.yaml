@@ -1,0 +1,91 @@
+version: 1
+meta:
+  id: home-arrival-lights
+  title: Home Arrival Lights
+  subtitle: Automatic light control based on location
+  icon: "💡"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Home Arrival Lights, subtitle: "Geofence demo", icon: "💡" }
+
+state:
+  latitude: 37.7749
+  longitude: -122.4194
+  radius: 100
+  brightness: 75
+  locationStatus: Monitoring
+  geofenceStatus: Outside
+  lightsStatus: Off
+  log: []
+  error: null
+
+actions:
+  simulateArrival:
+    method: POST
+    endpoint: /api/home-arrival-lights
+    body:
+      config:
+        home_latitude: "{{state.latitude}}"
+        home_longitude: "{{state.longitude}}"
+        geofence_radius: "{{state.radius}}"
+        brightness: "{{state.brightness}}"
+    onSuccess:
+      set: { geofenceStatus: "Inside", lightsStatus: "On" }
+      append: { log: { ts: "{{now | iso}}", message: "Arrival simulated" } }
+  simulateDeparture:
+    method: POST
+    endpoint: /api/home-departure-lights
+    body:
+      config:
+        home_latitude: "{{state.latitude}}"
+        home_longitude: "{{state.longitude}}"
+        geofence_radius: "{{state.radius}}"
+    onSuccess:
+      set: { geofenceStatus: "Outside", lightsStatus: "Off" }
+      append: { log: { ts: "{{now | iso}}", message: "Departure simulated" } }
+  useCurrentLocation:
+    geolocate:
+      latitudeTo: state.latitude
+      longitudeTo: state.longitude
+
+widgets:
+  - kind: card
+    title: Status
+    children:
+      - kind: kv-grid
+        items:
+          - { label: Location, value: "{{state.locationStatus}}" }
+          - { label: Geofence, value: "{{state.geofenceStatus}}" }
+          - { label: Lights, value: "{{state.lightsStatus}}" }
+  - kind: card
+    title: Configuration
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: latitude, type: number, label: Home latitude, step: 0.0001 }
+          - { name: longitude, type: number, label: Home longitude, step: 0.0001 }
+          - { name: radius, type: number, label: Geofence radius (m) }
+          - { name: brightness, type: range, label: "Brightness (%)", min: 0, max: 100, showValue: true }
+      - kind: button-row
+        buttons:
+          - { label: Use current location, action: useCurrentLocation, variant: secondary }
+          - { label: Simulate arrival, action: simulateArrival, variant: primary }
+          - { label: Simulate departure, action: simulateDeparture, variant: danger }
+  - kind: card
+    title: Activity log
+    children:
+      - kind: list
+        source: state.log
+        empty: "No activity yet."
+        template:
+          - { kind: text, value: "{{item.ts | date}} · {{item.message}}", muted: true }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

@@ -90,6 +90,12 @@ export async function runCLI(): Promise<void> {
         type: 'string',
         demandOption: true,
       },
+      'dry-run': {
+        alias: 'd',
+        describe: 'Simulate all workflow executions without running any bit',
+        type: 'boolean',
+        default: false,
+      },
     })
     .command('execute [workflow]', 'Execute a workflow from file or config', {
       workflow: {
@@ -285,6 +291,7 @@ async function runServerCommand(argv: any): Promise<void> {
   const server = await startHabitsServer({
     configPath,
     port: argv.port,
+    dryRun: argv['dry-run'],
   });
   
   // Keep the process running

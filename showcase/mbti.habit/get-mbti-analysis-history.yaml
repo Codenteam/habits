@@ -1,0 +1,22 @@
+id: get-mbti-analysis-history
+name: Get MBTI Analysis History
+description: |
+  Retrieve the full history of all past MBTI personality analyses. Returns records sorted by most recent first, including name (if provided), the original text samples, and the full analysis result.
+nodes:
+  - id: query-history
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: query-history
+      operation: query
+      params:
+        collection: mbti_history
+        filter: {}
+        sort:
+          analyzedAt: -1
+        limit: "{{habits.input.limit || 50}}"
+output:
+  records: "{{query-history.results}}"
+  count: "{{query-history.count}}"

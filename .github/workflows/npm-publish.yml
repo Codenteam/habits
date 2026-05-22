@@ -55,5 +55,10 @@ jobs:
           PROD_HUB_SSH_USER: ${{ secrets.PROD_HUB_SSH_USER }}
           PROD_HUB_SSH_PORT: ${{ secrets.PROD_HUB_SSH_PORT }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
-        run: npx tsx scripts/deploy.ts | npx tsx scripts/log-sanitizer.ts
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            npx tsx scripts/deploy.ts --habits-tag next | npx tsx scripts/log-sanitizer.ts
+          else
+            npx tsx scripts/deploy.ts | npx tsx scripts/log-sanitizer.ts
+          fi
 

@@ -17,6 +17,8 @@ export interface HabitsServerOptions {
   configPath: string;
   /** Port to listen on (optional, defaults to 3000) */
   port?: number;
+  /** When true, /api/:workflowId returns a SimulationReport instead of executing */
+  dryRun?: boolean;
 }
 
 
@@ -114,7 +116,7 @@ async function setupUiRoutes(app: Application): Promise<void> {
  * Start the Habits server with UI support
  */
 export async function startHabitsServer(options: HabitsServerOptions): Promise<WorkflowExecutorServer> {
-  const server = await startCortexServer(options.configPath, options.port);
+  const server = await startCortexServer(options.configPath, options.port, { dryRun: options.dryRun });
   
   // Get the express app from the server and add UI routes
   const app = (server as any).app as Application;

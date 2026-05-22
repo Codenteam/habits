@@ -197,23 +197,28 @@ pub fn run() {
         TEST_MODE.store(true, Ordering::SeqCst);
     }
 
-    let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // When a second instance is launched (e.g., via habits-cortex:// deep link on macOS),
-            // forward the URL arguments to the already-running instance by emitting a deep-link event.
-            let urls: Vec<String> = args
-                .iter()
-                .filter(|a| a.starts_with("habits-cortex://"))
-                .cloned()
-                .collect();
-            if !urls.is_empty() {
-                let _ = app.emit("deep-link://new-url", urls);
-            }
-            // Bring the existing window to the front.
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_focus();
-            }
-        }))
+    let builder = tauri::Builder::default();
+
+    // single-instance is desktop-only (not supported on iOS/Android)
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+        // When a second instance is launched (e.g., via habits-cortex:// deep link on macOS),
+        // forward the URL arguments to the already-running instance by emitting a deep-link event.
+        let urls: Vec<String> = args
+            .iter()
+            .filter(|a: &&String| a.starts_with("habits-cortex://"))
+            .cloned()
+            .collect();
+        if !urls.is_empty() {
+            let _ = app.emit("deep-link://new-url", urls);
+        }
+        // Bring the existing window to the front.
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.set_focus();
+        }
+    }));
+
+    let builder = builder
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_keyring::init())
         .plugin(tauri_plugin_email::init())

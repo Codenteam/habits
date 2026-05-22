@@ -1,0 +1,101 @@
+version: 1
+meta:
+  id: email-demo
+  title: Email Demo
+  subtitle: IMAP & SMTP testing interface
+  icon: "✉️"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Email Demo, subtitle: "Send · poll · round-trip", icon: "✉️" }
+
+state:
+  to: ""
+  subject: "Message from Habits"
+  body: ""
+  emails: []
+  roundTripResult: null
+  sendStatus: null
+  pollStatus: null
+  error: null
+
+actions:
+  sendEmail:
+    method: POST
+    endpoint: /api/send-email
+    body: { to: "{{state.to}}", subject: "{{state.subject}}", body: "{{state.body}}" }
+    onSuccess:
+      set: { sendStatus: "Email sent successfully", error: null, body: "" }
+      toast: "Email sent"
+    onError: { set: { error: "$error.message", sendStatus: null } }
+  pollEmails:
+    method: POST
+    endpoint: /api/poll-emails
+    body: {}
+    responsePath: output.emails.emails
+    onSuccess:
+      set:
+        emails: "$response"
+        pollStatus: "Inbox updated"
+        error: null
+      toast: "Emails fetched"
+    onError: { set: { error: "$error.message" } }
+  roundTrip:
+    method: POST
+    endpoint: /api/email-forward-demo
+    body: {}
+    responsePath: output
+    onSuccess: { set: { roundTripResult: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Send an email
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: to, type: email, label: Recipient, placeholder: "recipient@example.com", required: true }
+          - { name: subject, type: text, label: Subject, default: "Message from Habits" }
+          - { name: body, type: textarea, label: Body, rows: 5, required: true }
+        submit: { label: Send, action: sendEmail, loadingLabel: "Sending..." }
+      - kind: status-banner
+        showWhen: state.sendStatus
+        source: state.sendStatus
+  - kind: card
+    title: Round-trip test
+    children:
+      - kind: button
+        label: Run forward-demo
+        action: roundTrip
+        loadingLabel: "Running..."
+      - kind: result-panel
+        showWhen: state.roundTripResult
+        source: state.roundTripResult
+        title: Round-trip result
+        sections:
+          - { kind: json-dump, source: state.roundTripResult, copy: true }
+  - kind: card
+    title: Inbox
+    children:
+      - kind: button
+        label: Fetch now
+        action: pollEmails
+        loadingLabel: "Fetching..."
+      - kind: status-banner
+        showWhen: state.pollStatus
+        source: state.pollStatus
+      - kind: data-table
+        source: state.emails
+        empty: "No emails yet. Click Fetch now to poll the inbox."
+        columns:
+          - { key: subject, label: Subject }
+          - { key: from, label: From }
+          - { key: date, label: Date }
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error

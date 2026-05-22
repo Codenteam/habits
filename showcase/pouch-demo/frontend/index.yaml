@@ -1,0 +1,43 @@
+version: 1
+meta:
+  id: pouch-demo
+  title: PouchDB Demo
+  subtitle: Document store CRUD
+  icon: "🪶"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: PouchDB Demo, subtitle: "Insert a doc and see the response", icon: "🪶" }
+
+state:
+  name: "John Doe"
+  email: "john@example.com"
+  result: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/pouch-demo
+    body: { name: "{{state.name}}", email: "{{state.email}}" }
+    responsePath: output
+    onSuccess: { set: { result: "$response" } }
+
+widgets:
+  - kind: card
+    title: New record
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: name, type: text, label: Name, placeholder: "John Doe", required: true }
+          - { name: email, type: email, label: Email, placeholder: "john@example.com", required: true }
+        submit: { label: Save document, action: run, loadingLabel: "Saving..." }
+  - kind: result-panel
+    source: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

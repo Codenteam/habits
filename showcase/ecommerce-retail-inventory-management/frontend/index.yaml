@@ -1,0 +1,64 @@
+# Ecommerce & Retail Inventory Management — converted from ecommerce-retail-inventory-management.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: ecommerce-retail-inventory-management
+  title: "Ecommerce & Retail Inventory Management"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🏪"
+  documentTitle: "Ecommerce & Retail Inventory Management"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Ecommerce & Retail Inventory Management"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🏪"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13021 · Habits v1.0"
+    port: 13021
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "12,400", label: SKUs monitored }
+      - { value: "4", label: Low stock alerts today }
+      - { value: "99.3%", label: Inventory accuracy rate }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Low Stock Alert
+            description: Notify the purchasing team automatically when a SKU drops below its reorder point.
+            trigger: scheduler
+            tags: [scheduler, slack, email]
+          - name: Reorder Automation
+            description: Auto-raise purchase orders for critical SKUs based on reorder rules and lead times.
+            trigger: scheduler
+            tags: [scheduler, http, email]
+          - name: Supplier Notification
+            description: Send purchase order confirmations and delivery date requests to suppliers automatically.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Inventory Reconciliation
+            description: Reconcile warehouse physical counts against system records and flag discrepancies.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Demand Forecasting Alert
+            description: Trigger a planning review when AI forecast deviation exceeds the configured threshold.
+            trigger: scheduler
+            tags: [scheduler, ai, slack]
+          - name: Shrinkage Report
+            description: Compile daily shrinkage and loss data and distribute the summary report to management.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

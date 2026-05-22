@@ -1,0 +1,190 @@
+version: 1
+meta:
+  id: qr-database
+  title: QR Code Database
+  subtitle: Create / Scan / Manage
+  icon: "🔳"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: QR Database, subtitle: "Create · scan · archive", icon: "🔳" }
+  nav:
+    - { id: scan, label: Scan, icon: "🔎" }
+    - { id: create, label: Generate, icon: "✨" }
+    - { id: gallery, label: Archive, icon: "🗂️" }
+
+state:
+  dataType: text
+  data: ""
+  firstName: ""
+  lastName: ""
+  phone: ""
+  email: ""
+  organization: ""
+  ssid: ""
+  password: ""
+  encryption: WPA
+  title: ""
+  startDate: ""
+  endDate: ""
+  location: ""
+  description: ""
+  label: ""
+  scanImage: ""
+  scanLabel: ""
+  galleryItems: []
+  selectedItem: null
+  createResult: null
+  scanResult: null
+  error: null
+
+actions:
+  createQr:
+    method: POST
+    endpoint: /api/create-qr
+    body:
+      dataType: "{{state.dataType}}"
+      data: "{{state.data}}"
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      phone: "{{state.phone}}"
+      email: "{{state.email}}"
+      organization: "{{state.organization}}"
+      ssid: "{{state.ssid}}"
+      password: "{{state.password}}"
+      encryption: "{{state.encryption}}"
+      title: "{{state.title}}"
+      startDate: "{{state.startDate}}"
+      endDate: "{{state.endDate}}"
+      location: "{{state.location}}"
+      description: "{{state.description}}"
+      label: "{{state.label}}"
+    responsePath: output
+    onSuccess: { set: { createResult: "$response", error: null }, dispatch: listQrs, toast: "QR code created" }
+    onError: { set: { error: "$error.message" } }
+  scanQr:
+    method: POST
+    endpoint: /api/scan-qr
+    body: { image: "{{state.scanImage}}", label: "{{state.scanLabel}}" }
+    responsePath: output
+    onSuccess: { set: { scanResult: "$response", error: null }, dispatch: listQrs, toast: "QR decoded" }
+    onError: { set: { error: "$error.message" } }
+  listQrs:
+    method: GET
+    endpoint: /api/list-qrs
+    responsePath: output.items
+    onSuccess: { set: { galleryItems: "$response" } }
+  deleteQr:
+    method: POST
+    endpoint: /api/delete-qr
+    body: { id: "{{state.selectedItem._id}}" }
+    onSuccess: { set: { selectedItem: null }, dispatch: listQrs, toast: "Deleted" }
+    onError: { set: { error: "$error.message" } }
+  clearSelection:
+    set: { selectedItem: null }
+
+defaultView: scan
+
+views:
+  scan:
+    widgets:
+      - kind: card
+        title: Scan a QR image
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: scanImage, type: image-upload, label: QR image, accept: "image/*", asBase64: true, required: true }
+              - { name: scanLabel, type: text, label: Label (optional), placeholder: "Optional identifier" }
+            submit: { label: Decode, action: scanQr, loadingLabel: "Decoding..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.scanResult
+        source: state.scanResult
+        title: Decoded
+        sections:
+          - { kind: pre, source: state.scanResult.content }
+          - { kind: kv-grid, source: state.scanResult }
+  create:
+    widgets:
+      - kind: card
+        title: Generate a QR code
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: dataType
+                type: select
+                label: Data type
+                default: text
+                options: [text, url, vcard, wifi, calendar]
+              - { name: data, type: textarea, label: Content, placeholder: "Enter text or URL", rows: 3, showWhen: "['text','url'].includes(state.dataType)" }
+              - { name: firstName, type: text, label: First name, showWhen: "state.dataType === 'vcard'" }
+              - { name: lastName, type: text, label: Last name, showWhen: "state.dataType === 'vcard'" }
+              - { name: phone, type: text, label: Phone, showWhen: "state.dataType === 'vcard'" }
+              - { name: email, type: email, label: Email, showWhen: "state.dataType === 'vcard'" }
+              - { name: organization, type: text, label: Organization, showWhen: "state.dataType === 'vcard'" }
+              - { name: ssid, type: text, label: Network SSID, showWhen: "state.dataType === 'wifi'" }
+              - { name: password, type: text, label: Password, showWhen: "state.dataType === 'wifi'" }
+              - { name: encryption, type: select, label: Encryption, options: [WPA, WEP, nopass], default: WPA, showWhen: "state.dataType === 'wifi'" }
+              - { name: title, type: text, label: Event title, showWhen: "state.dataType === 'calendar'" }
+              - { name: startDate, type: datetime-local, label: Start, showWhen: "state.dataType === 'calendar'" }
+              - { name: endDate, type: datetime-local, label: End, showWhen: "state.dataType === 'calendar'" }
+              - { name: location, type: text, label: Location, showWhen: "state.dataType === 'calendar'" }
+              - { name: description, type: textarea, label: Description, showWhen: "state.dataType === 'calendar'" }
+              - { name: label, type: text, label: Label, placeholder: "Give your QR code a name" }
+            submit: { label: Generate, action: createQr, loadingLabel: "Generating..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.createResult
+        source: state.createResult
+        title: New QR code
+        sections:
+          - { kind: image, source: state.createResult.image, alt: "QR code" }
+          - { kind: pre, source: state.createResult.content }
+  gallery:
+    widgets:
+      - kind: history-grid
+        loadAction: listQrs
+        dataPath: items
+        reloadAfter: [createQr, scanQr, deleteQr]
+        columns: 2
+        itemTemplate:
+          title: "{{item.label || item.content | truncate:32 || 'Untitled'}}"
+          subtitle: "{{item.dataType}}"
+          meta: "{{item._createdAt | date}}"
+          image: "{{item.image}}"
+        onClick:
+          set: { selectedItem: $item }
+        empty: "No QR codes yet. Generate or scan one to get started."
+      - kind: modal
+        openWhen: state.selectedItem
+        title: QR code details
+        children:
+          - { kind: image, source: state.selectedItem.image, alt: "QR code" }
+          - { kind: pre, source: state.selectedItem.content }
+          - kind: kv-grid
+            source: state.selectedItem
+            fields:
+              - { key: label, label: Label }
+              - { key: dataType, label: Type }
+              - { key: _createdAt, label: Created }
+          - kind: button
+            label: Delete
+            tone: danger
+            action: deleteQr
+          - kind: button
+            label: Close
+            variant: secondary
+            action: clearSelection
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error

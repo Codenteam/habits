@@ -1,0 +1,64 @@
+# Finance & Banking Loan Processing — converted from finance-banking-loan-processing.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: finance-banking-loan-processing
+  title: "Finance & Banking Loan Processing"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "📄"
+  documentTitle: "Finance & Banking Loan Processing"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Finance & Banking Loan Processing"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "📄"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13011 · Habits v1.0"
+    port: 13011
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "52", label: Applications in pipeline }
+      - { value: 1.8d, label: Average processing time }
+      - { value: "89%", label: Applicant satisfaction score }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Application Intake
+            description: Receive incoming loan applications via webhook and route to the underwriting queue.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Document Verification
+            description: Validate submitted documents with AI and automatically request any missing items.
+            trigger: webhook
+            tags: [webhook, ai, email]
+          - name: Credit Evaluation
+            description: "Pull credit bureau data, score the applicant, and produce a structured evaluation summary."
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Approval Routing
+            description: Route approval or decline decisions to the applicant and relevant internal teams.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: Disbursement Confirmation
+            description: Confirm fund disbursement with the bank and notify the customer via SMS and email.
+            trigger: webhook
+            tags: [webhook, email, sms]
+          - name: Status Update Notification
+            description: Keep applicants informed at every stage of the processing pipeline automatically.
+            trigger: scheduler
+            tags: [scheduler, email, sms]

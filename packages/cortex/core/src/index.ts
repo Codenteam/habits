@@ -5,6 +5,10 @@
 // Core workflow execution
 export { WorkflowExecutor, InitFromDataOptions } from './WorkflowExecutor';
 
+// Simulation (dry-run) support
+export { SimulationExecutor, printSimulationReport } from './simulation/SimulationExecutor';
+export type { SimulationReport, SimulationStatus, SimulationIssue, NodeSimulation, SimulateOptions } from './simulation/types';
+
 // ESM/Browser-compatible executor
 export { HabitsExecutor, StartWorkflowOptions } from './esm';
 
@@ -145,3 +149,23 @@ export * from '@habits/shared/types';
 
 // Re-export logger from core/logger
 export { LoggerFactory } from '@ha-bits/core/logger';
+
+// YAML-driven UI engine (compile UiSpec -> self-contained HTML document)
+export { compileUiSpec, compileUiYaml, parseUiSpec } from './ui';
+export type {
+  CompileOptions,
+  CompiledUi,
+  UiSpec,
+  MetaSpec,
+  ThemeSpec,
+  ThemePreset,
+  LayoutSpec,
+  LayoutType,
+  ActionSpec,
+  ActionsMap,
+  ViewSpec,
+  ViewsMap,
+  WidgetSpec,
+  FieldSpec,
+  FieldType,
+} from './ui';

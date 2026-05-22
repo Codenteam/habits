@@ -1,0 +1,72 @@
+version: 1
+meta:
+  id: invoices-processing
+  title: Invoice Processor
+  subtitle: Scan your Gmail inbox and extract invoice details with AI
+  icon: "🧾"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Invoice Processor, subtitle: "Gmail → AI → Google Sheets", icon: "🧾" }
+
+state:
+  result: null
+  lastRun: null
+  error: null
+
+actions:
+  process:
+    method: POST
+    endpoint: /api/invoices-processing
+    body: {}
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastRun: "{{new Date().toLocaleString()}}"
+        error: null
+      toast: "Scan complete"
+    onError: { set: { error: "$error.message", result: null } }
+
+widgets:
+  - kind: status-banner
+    source: "Scan Gmail inbox → AI extract invoice fields from attachments → save rows to Google Sheets"
+  - kind: card
+    title: Inbox scan
+    children:
+      - kind: button
+        label: Scan Gmail now
+        action: process
+        loadingLabel: "Scanning..."
+        fullWidth: true
+      - kind: status-banner
+        showWhen: state.lastRun
+        source: state.lastRun
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Run summary
+    sections:
+      - kind: metric-grid
+        columns: 3
+        metrics:
+          - { value: "{{state.result.totalEmails}}", label: "Emails scanned" }
+          - { value: "{{state.result.processed}}", label: Processed }
+          - { value: "{{state.result.sheetsSaved}}", label: "Saved to Sheets" }
+      - kind: data-table
+        source: state.result.invoices
+        empty: "No invoice extractions in this run."
+        columns:
+          - { key: output.vendorName, label: Vendor }
+          - { key: output.invoiceNumber, label: "Invoice #" }
+          - { key: output.invoiceDate, label: Date }
+          - { key: output.totalAmount, label: Amount }
+          - { key: output.currency, label: Currency }
+          - { key: output.hasInvoice, label: "Has invoice" }

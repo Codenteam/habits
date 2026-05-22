@@ -13,14 +13,14 @@ import 'reactflow/dist/style.css';
 import yaml from 'js-yaml';
 
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { setNodes, setEdges, addNode, deleteNode, setSelectedNode, selectNodes, selectEdges, selectSelectedNode, selectExportedWorkflow, selectAllExportedHabits, selectActiveHabitDescription, setHabitDescription } from '../store/slices/workflowSlice';
-import { setFrontendHtml } from '../store/slices/uiSlice';
+import { setNodes, setEdges, addNode, deleteNode, setSelectedNode, selectNodes, selectEdges, selectSelectedNode, selectExportedWorkflow, selectAllExportedHabits, selectActiveHabitDescription, setHabitDescription, selectActiveHabit } from '../store/slices/workflowSlice';
+import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
 import CustomNode from './CustomNode';
 import LeftSidebar from './LeftSidebar';
 import NodeConfigPanel from './NodeConfigPanel';
 import Toolbar from './Toolbar';
 import { NodeFactory } from '../lib/NodeFactory';
-import { FrontendBuilderVanilla } from '@ha-bits/frontend-builder';
+import { FrontendBuilderVanilla, UiSpecBuilderVanilla } from '@ha-bits/frontend-builder';
 import { WorkflowCanvas, applyDagreLayout, WorkflowCanvasRef, WorkflowNode } from '@ha-bits/workflow-canvas';
 
 const nodeTypes: NodeTypes = {
@@ -34,6 +34,8 @@ export default function WorkflowEditor() {
   const selectedNode = useAppSelector(selectSelectedNode);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
+  const frontendYaml = useAppSelector(state => state.ui.frontendYaml);
+  const activeHabit = useAppSelector(selectActiveHabit);
   const habitDescription = useAppSelector(selectActiveHabitDescription);
   const [nodes, setNodesState, onNodesChange] = useNodesState(storeNodes);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState(storeEdges);
@@ -57,6 +59,10 @@ export default function WorkflowEditor() {
   // Handle saving frontend HTML
   const handleSaveFrontendHtml = useCallback((html: string) => {
     dispatch(setFrontendHtml(html));
+  }, [dispatch]);
+
+  const handleSaveFrontendYaml = useCallback((yaml: string) => {
+    dispatch(setFrontendYaml(yaml));
   }, [dispatch]);
   
   // Handle saving habit description
@@ -333,16 +339,32 @@ export default function WorkflowEditor() {
             />
           )}
         </div>
-      ) : (
-        /* Frontend Mode - FrontendBuilder with toggle */
+      ) : viewMode === 'frontend' ? (
+        /* Frontend Mode - classic HTML builder */
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
-          {/* FrontendBuilder */}
           <div className="flex-1 overflow-hidden">
             <FrontendBuilderVanilla
               initialHtml={frontendHtml}
               onChange={handleSaveFrontendHtml}
               height="100%"
               habitData={allHabits}
+            />
+          </div>
+        </div>
+      ) : (
+        /* Frontend YAML Mode - new declarative UiSpec builder */
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
+          <div className="flex-1 overflow-hidden">
+            <UiSpecBuilderVanilla
+              initialYaml={frontendYaml}
+              onChange={handleSaveFrontendYaml}
+              height="100%"
+              defaultMetaId={
+                activeHabit?.name
+                  ? activeHabit.name.toLowerCase().replace(/\s+/g, '-')
+                  : undefined
+              }
+              defaultMetaTitle={activeHabit?.name}
             />
           </div>
         </div>

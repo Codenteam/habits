@@ -1,0 +1,76 @@
+version: 1
+meta:
+  id: hello-world
+  title: Hello World Demo
+  subtitle: Test inputs vs environment-variable habits
+  icon: "👋"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: Hello World Demo1
+    subtitle: Send parameters and see the greeting come back
+    icon: "👋"
+  nav:
+    - { id: input, label: With inputs, icon: "✍️" }
+    - { id: env, label: From env, icon: "🌱" }
+
+state:
+  param1: ""
+  param2: ""
+  inputResult: null
+  envResult: null
+
+actions:
+  callInput:
+    method: POST
+    endpoint: /api/hello-world
+    body: { param1: "{{state.param1}}", param2: "{{state.param2}}" }
+    responsePath: output
+    onSuccess: { set: { inputResult: "$response" }, toast: "Done" }
+  callEnv:
+    method: POST
+    endpoint: /api/hello-world-env
+    body: { param2: "{{state.param2}}" }
+    responsePath: output
+    onSuccess: { set: { envResult: "$response" }, toast: "Done" }
+
+defaultView: input
+
+views:
+  input:
+    widgets:
+      - kind: card
+        title: With inputs
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: param1, type: text, label: Param 1, placeholder: "anything", required: true }
+              - { name: param2, type: text, label: Param 2, placeholder: "anything", required: true }
+            submit: { label: Say hello, action: callInput, loadingLabel: "Saying hello..." }
+      - kind: result-panel
+        source: state.inputResult
+        title: Result
+        sections:
+          - { kind: json-dump, source: state.inputResult }
+  env:
+    widgets:
+      - kind: card
+        title: From env
+        subtitle: param1 comes from the server environment
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: param2, type: text, label: Param 2, placeholder: "anything", required: true }
+            submit: { label: Say hello, action: callEnv, loadingLabel: "Saying hello..." }
+      - kind: result-panel
+        source: state.envResult
+        title: Result
+        sections:
+          - { kind: json-dump, source: state.envResult }

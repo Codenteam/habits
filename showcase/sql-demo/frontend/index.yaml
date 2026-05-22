@@ -1,0 +1,49 @@
+version: 1
+meta:
+  id: sql-demo
+  title: SQLite / Drizzle Demo
+  subtitle: Run the SQL CRUD workflow
+  icon: "🗄️"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: SQLite / Drizzle Demo, subtitle: "Create, read, update, delete in one workflow", icon: "🗄️" }
+
+state:
+  name: ""
+  email: ""
+  result: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/sql-demo
+    body: { name: "{{state.name}}", email: "{{state.email}}" }
+    responsePath: output
+    onSuccess: { set: { result: "$response" } }
+
+widgets:
+  - kind: card
+    title: New record
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: name, type: text, label: Name, placeholder: "Enter a name", required: true }
+          - { name: email, type: email, label: Email, placeholder: "Enter an email", required: true }
+        submit: { label: Run SQL workflow, action: run, loadingLabel: "Running..." }
+  - kind: result-panel
+    source: state.result
+    title: Result
+    sections:
+      - kind: kv-grid
+        source: state.result.summary
+        fields:
+          - { key: userId, label: User id }
+          - { key: finalStatus, label: Final status }
+          - { key: operationsCount, label: Operations }
+      - { kind: json-dump, source: state.result, copy: true }

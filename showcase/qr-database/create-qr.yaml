@@ -5,7 +5,67 @@ id: create-qr
 name: Create QR Code
 
 nodes:
-  # Generate the QR code directly
+  - id: prepare-data
+    type: action
+    data:
+      framework: script
+      source: inline
+      label: Prepare QR Payload
+      params:
+        input: "{{habits.input}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(input) {
+            const i = input || {};
+            const type = i.dataType || "text";
+            if (type === "text" || type === "url") {
+              const data = String(i.data || "").trim();
+              if (!data) throw new Error("Content is required for text/URL QR codes");
+              return { data, dataType: type };
+            }
+            if (type === "vcard") {
+              const fn = String(i.firstName || "").trim();
+              if (!fn) throw new Error("First name is required for vCard QR codes");
+              const ln = String(i.lastName || "").trim();
+              const lines = ["BEGIN:VCARD", "VERSION:3.0"];
+              if (ln) {
+                lines.push("N:" + ln + ";" + fn + ";;;", "FN:" + fn + " " + ln);
+              } else {
+                lines.push("N:;" + fn + ";;;", "FN:" + fn);
+              }
+              if (i.organization) lines.push("ORG:" + i.organization);
+              if (i.phone) lines.push("TEL:" + i.phone);
+              if (i.email) lines.push("EMAIL:" + i.email);
+              lines.push("END:VCARD");
+              return { data: lines.join("\n"), dataType: type };
+            }
+            if (type === "wifi") {
+              const ssid = String(i.ssid || "").trim();
+              if (!ssid) throw new Error("Network SSID is required for WiFi QR codes");
+              const esc = (s) => String(s || "").split("\\").join("\\\\").split(";").join("\\;").split(",").join("\\,").split(":").join("\\:");
+              const enc = i.encryption || "WPA";
+              let wifi = "WIFI:T:" + enc + ";S:" + esc(ssid) + ";";
+              if (i.password && enc !== "nopass") wifi += "P:" + esc(i.password) + ";";
+              wifi += ";";
+              return { data: wifi, dataType: type };
+            }
+            if (type === "calendar") {
+              const title = String(i.title || "").trim();
+              const startDate = String(i.startDate || "").trim();
+              if (!title || !startDate) throw new Error("Event title and start date are required for calendar QR codes");
+              const toICal = (iso) => new Date(iso).toISOString().replace(/-/g, "").replace(/:/g, "").replace(/\.\d{3}/, "");
+              const lines = ["BEGIN:VEVENT", "DTSTART:" + toICal(startDate)];
+              if (i.endDate) lines.push("DTEND:" + toICal(i.endDate));
+              lines.push("SUMMARY:" + title);
+              if (i.location) lines.push("LOCATION:" + i.location);
+              if (i.description) lines.push("DESCRIPTION:" + i.description);
+              lines.push("END:VEVENT");
+              return { data: lines.join("\n"), dataType: type };
+            }
+            return { data: String(i.data || "").trim(), dataType: type };
+          }
+
   - id: generate-qr
     type: bit
     data:
@@ -14,13 +74,12 @@ nodes:
       operation: generate
       source: npm
       params:
-        data: "{{habits.input.data}}"
-        dataType: "{{habits.input.dataType}}"
+        data: "{{prepare-data.result.data}}"
+        dataType: "{{prepare-data.result.dataType}}"
         format: dataUrl
         size: 256
         errorCorrection: M
 
-  # Store in database
   - id: store-qr
     type: bit
     data:
@@ -32,11 +91,13 @@ nodes:
         collection: qr_codes
         document:
           label: "{{habits.input.label}}"
-          dataType: "{{habits.input.dataType}}"
-          content: "{{habits.input.data}}"
+          dataType: "{{prepare-data.result.dataType}}"
+          content: "{{prepare-data.result.data}}"
           image: "{{generate-qr.data}}"
 
 edges:
+  - source: prepare-data
+    target: generate-qr
   - source: generate-qr
     target: store-qr
 
@@ -44,6 +105,6 @@ output:
   success: true
   id: "{{store-qr.id}}"
   label: "{{habits.input.label}}"
-  dataType: "{{habits.input.dataType}}"
-  content: "{{habits.input.data}}"
+  dataType: "{{prepare-data.result.dataType}}"
+  content: "{{prepare-data.result.data}}"
   image: "{{generate-qr.data}}"

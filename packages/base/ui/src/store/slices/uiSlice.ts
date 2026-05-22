@@ -6,8 +6,8 @@ interface UIState {
   isNodePaletteOpen: boolean;
   showDownloadPrompt: boolean;
   
-  // View mode (backend workflow editor or frontend builder)
-  viewMode: 'backend' | 'frontend';
+  // View mode (backend workflow editor, classic HTML frontend, or YAML UiSpec builder)
+  viewMode: 'backend' | 'frontend' | 'frontend-yaml';
   
   // Loading states
   isLoadingWorkflow: boolean;
@@ -25,6 +25,9 @@ interface UIState {
   
   // Frontend HTML state
   frontendHtml: string;
+
+  // Frontend YAML (UiSpec) state
+  frontendYaml: string;
   
   // Env content state
   envContent: string;
@@ -51,6 +54,8 @@ const initialState: UIState = {
   showUnsavedChangesDialog: false,
   
   frontendHtml: '',
+
+  frontendYaml: '',
   
   envContent: '',
 };
@@ -73,7 +78,7 @@ export const uiSlice = createSlice({
     },
     
     // View mode actions
-    setViewMode: (state, action: PayloadAction<'backend' | 'frontend'>) => {
+    setViewMode: (state, action: PayloadAction<'backend' | 'frontend' | 'frontend-yaml'>) => {
       state.viewMode = action.payload;
     },
     
@@ -142,6 +147,14 @@ export const uiSlice = createSlice({
     clearFrontendHtml: (state) => {
       state.frontendHtml = '';
     },
+
+    setFrontendYaml: (state, action: PayloadAction<string>) => {
+      state.frontendYaml = action.payload;
+    },
+
+    clearFrontendYaml: (state) => {
+      state.frontendYaml = '';
+    },
     
     // Env content actions
     setEnvContent: (state, action: PayloadAction<string>) => {
@@ -166,6 +179,7 @@ export const uiSlice = createSlice({
       if (savedState.formErrors) state.formErrors = savedState.formErrors;
       if (savedState.formValues) state.formValues = savedState.formValues;
       if (savedState.frontendHtml) state.frontendHtml = savedState.frontendHtml;
+      if (savedState.frontendYaml) state.frontendYaml = savedState.frontendYaml;
       if (savedState.envContent) state.envContent = savedState.envContent;
       // Don't restore dialog states as they should start closed
     },
@@ -192,6 +206,8 @@ export const {
   setShowUnsavedChangesDialog,
   setFrontendHtml,
   clearFrontendHtml,
+  setFrontendYaml,
+  clearFrontendYaml,
   setEnvContent,
   clearEnvContent,
 } = uiSlice.actions;

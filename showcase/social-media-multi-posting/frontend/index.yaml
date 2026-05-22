@@ -1,0 +1,140 @@
+version: 1
+meta:
+  id: social-media-multi-posting
+  title: Social Media Multi-Posting
+  subtitle: Generate and schedule for Twitter + LinkedIn
+  icon: "🌐"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Social Media Multi-Posting, subtitle: "Twitter · LinkedIn · scheduled", icon: "🌐" }
+  nav:
+    - { id: generate, label: "Generate Posts", icon: "✨" }
+    - { id: queue, label: "Scheduled Queue", icon: "🗓️", badge: "{{state.queue.length}}" }
+
+state:
+  topic: ""
+  brand: ""
+  audience: ""
+  tone: casual
+  scheduledAt: ""
+  scheduleTimezone: UTC
+  generatedPost: null
+  activePlatform: twitter
+  queue: []
+  cronCheckedAt: null
+  cronNextExecution: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-social-content
+    body:
+      topic: "{{state.topic}}"
+      brand: "{{state.brand}}"
+      tone: "{{state.tone}}"
+      targetAudience: "{{state.audience}}"
+      scheduledAt: "{{state.scheduledAt}}"
+      scheduleTimezone: "{{state.scheduleTimezone}}"
+      createdAt: "{{now | iso}}"
+    responsePath: output
+    onSuccess: { set: { generatedPost: "$response" }, dispatch: getQueue, toast: "Scheduled" }
+    onError: { set: { error: "$error.message" } }
+  checkPending:
+    method: POST
+    endpoint: /api/check-pending-posts
+    body: {}
+    responsePath: output
+    onSuccess: { set: { cronCheckedAt: "$response.checkedAt", cronNextExecution: "$response.nextExecution" } }
+  getQueue:
+    method: POST
+    endpoint: /api/get-queue
+    body: {}
+    responsePath: output.posts
+    onSuccess: { set: { queue: "$response" } }
+  publishNow:
+    method: POST
+    endpoint: /api/publish-post-now
+    body: { postId: "{{item._id}}" }
+    confirm: "Publish to Twitter and LinkedIn now?"
+    onSuccess: { dispatch: getQueue, toast: "Published" }
+  deletePost:
+    method: POST
+    endpoint: /api/delete-post
+    body: { postId: "{{item._id}}" }
+    confirm: "Delete this scheduled post?"
+    onSuccess: { dispatch: getQueue, toast: "Deleted" }
+
+onMount:
+  - checkPending
+  - getQueue
+
+defaultView: generate
+
+views:
+  generate:
+    widgets:
+      - kind: card
+        title: Create a multi-platform post
+        hideWhen: state.generatedPost
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: topic, type: textarea, label: Content topic, rows: 4, required: true }
+              - { name: brand, type: text, label: Brand name, required: true }
+              - { name: audience, type: text, label: Target audience }
+              - { name: tone, type: chip-group, label: Tone, default: casual, options: [professional, casual, humorous, inspirational, educational] }
+              - { name: scheduledAt, type: datetime-local, label: Schedule for, required: true }
+              - { name: scheduleTimezone, type: select, label: Timezone, options: [UTC], default: UTC }
+            submit: { label: Generate & schedule, action: generate, loadingLabel: "Generating..." }
+      - kind: result-panel
+        source: state.generatedPost
+        title: Scheduled post
+        sections:
+          - kind: alert
+            level: success
+            text: "Scheduled for {{state.generatedPost.scheduledAt | date}} ({{state.generatedPost.scheduleTimezone}})"
+          - kind: tabs
+            bindTo: state.activePlatform
+            tabs:
+              - { id: twitter, label: Twitter / X, children: [{ kind: pre, source: state.generatedPost.twitter, copy: true }] }
+              - { id: linkedin, label: LinkedIn, children: [{ kind: pre, source: state.generatedPost.linkedin, copy: true }] }
+          - kind: button
+            label: Generate another
+            action: { reset: ["generatedPost"] }
+            variant: secondary
+  queue:
+    widgets:
+      - kind: card
+        title: Cron status
+        children:
+          - kind: kv-grid
+            items:
+              - { label: Last check, value: "{{state.cronCheckedAt | date}}" }
+              - { label: Next run, value: "{{state.cronNextExecution | date}}" }
+              - { label: Pending posts, value: "{{state.queue.length}}" }
+      - kind: card
+        title: Scheduled posts
+        children:
+          - kind: list
+            source: state.queue
+            empty: "No posts queued."
+            itemKey: _id
+            template:
+              - { kind: text, value: "{{item.topic | truncate:120}}", strong: true }
+              - { kind: text, value: "{{item.scheduledAt | date}} · {{item.brand}}", muted: true }
+              - { kind: badge-list, values: [Twitter, LinkedIn] }
+              - kind: button-row
+                buttons:
+                  - { label: Publish now, action: publishNow, variant: primary }
+                  - { label: Delete, action: deletePost, variant: danger }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

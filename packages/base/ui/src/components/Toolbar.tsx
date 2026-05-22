@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send, KeyRound } from 'lucide-react';
+import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send, KeyRound, Blocks } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
 import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectHasValidationErrors, selectExportBundle, selectActiveEnvVariables } from '../store/slices/workflowSlice';
@@ -27,6 +27,7 @@ export default function Toolbar() {
   const habits = useAppSelector(selectHabits);
   const activeHabit = useAppSelector(selectActiveHabit);
   const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
+  const frontendYaml = useAppSelector(state => state.ui.frontendYaml);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const hasValidationErrors = useAppSelector(selectHasValidationErrors);
   const serverFlags = useAppSelector(selectServerFlags);
@@ -205,7 +206,7 @@ export default function Toolbar() {
             <img src="/habits/base/assets/logo.png" className="w-5 h-5"></img>
             
             <span className="text-white font-extralight">Habits Base </span>
-            <span className="text-slate-400 text-xs font-mono">v{__APP_VERSION__}</span>
+            <span className="text-slate-400 text-xs font-mono app-version">v{__APP_VERSION__}</span>
 
               <span className="relative group font-light underline text-white decoration-1 cursor-pointer">
                             <span className=" ">Alpha <span
@@ -307,18 +308,13 @@ export default function Toolbar() {
                 {/* Generate with AI */}
         <div className="relative group">
           <button
-            onClick={() => serverFlags.allowAIGen && setShowGenerateModal(true)}
-            disabled={!serverFlags.allowAIGen}
-            className={`flex items-center justify-center w-9 h-9 rounded-md transition-colors border ${
-              serverFlags.allowAIGen
-                ? 'text-purple-300 bg-purple-900/50 hover:bg-purple-800/50 border-purple-700/50 cursor-pointer'
-                : 'text-slate-500 bg-slate-800 border-slate-700 cursor-not-allowed opacity-50'
-            }`}
+            onClick={() => setShowGenerateModal(true)}
+            className="flex items-center justify-center w-9 h-9 rounded-md transition-colors border text-purple-300 bg-purple-900/50 hover:bg-purple-800/50 border-purple-700/50"
           >
             <Wand2 className="w-4 h-4" />
           </button>
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-            {serverFlags.allowAIGen ? 'Generate with AI' : 'AI generation is disabled. Set HABITS_AI_GEN=true (habits command or Admin panel service settings)'}
+            Generate with AI
           </div>
         </div>
 
@@ -375,9 +371,20 @@ export default function Toolbar() {
           >
             <WallpaperIcon className="w-4 h-4" />
             <span className="hidden sm:inline">UI</span>
-            {/* {frontendHtml && viewMode !== 'frontend' && (
-              <span className="w-2 h-2 bg-purple-400 rounded-full" />
-            )} */}
+          </button>
+          <button
+            onClick={() => dispatch(setViewMode('frontend-yaml'))}
+            title="Declarative YAML UI builder (no HTML/CSS)"
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors border-l border-slate-600 ${
+              viewMode === 'frontend-yaml'
+                ? 'bg-emerald-600 text-white'
+                : frontendYaml
+                  ? 'text-emerald-300 hover:bg-slate-600'
+                  : 'text-slate-300 hover:bg-slate-600'
+            }`}
+          >
+            <Blocks className="w-4 h-4" />
+            <span className="hidden sm:inline">UI (New)</span>
           </button>
         </div>
 
@@ -604,6 +611,7 @@ export default function Toolbar() {
             stackName: state.workflow.stackName,
             envContent: bundle.envFile,
             frontendHtml: bundle.frontendHtml,
+            frontendYaml: bundle.frontendYaml,
           });
         }}
       />

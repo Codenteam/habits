@@ -1,0 +1,133 @@
+version: 1
+meta:
+  id: client-invoice-manager
+  title: Client Invoice Manager
+  subtitle: Save clients with AI extraction · Generate PDFs · Upload to Google Drive
+  icon: "🧾"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Client Invoice Manager, subtitle: "Clients · invoices · Drive", icon: "🧾" }
+  nav:
+    - { id: clients, label: "Add Client", icon: "👤" }
+    - { id: invoices, label: "Generate Invoice", icon: "📄" }
+
+state:
+  clientText: ""
+  clientResult: null
+  clientList: []
+  invoiceText: ""
+  customer: ""
+  clientId: ""
+  invoiceResult: null
+  error: null
+
+actions:
+  checkAuth:
+    type: oauth
+    oauth:
+      statusUrl: /oauth/status
+      initUrl: /oauth/bit-google-drive/init
+  saveClient:
+    method: POST
+    endpoint: /api/save-client
+    body: { text: "{{state.clientText}}" }
+    responsePath: output
+    onSuccess:
+      set: { clientResult: "$response", clientText: "", error: null }
+      dispatch: listClients
+      toast: "Client saved"
+    onError: { set: { error: "$error.message" } }
+  listClients:
+    method: POST
+    endpoint: /api/list-clients
+    body: {}
+    responsePath: output.clients
+    onSuccess: { set: { clientList: "$response" } }
+  generateInvoice:
+    method: POST
+    endpoint: /api/generate-invoice
+    body:
+      invoiceText: "{{state.invoiceText}}"
+      clientId: "{{state.clientId}}"
+      customer: "{{state.customer}}"
+      invoiceDate: "{{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}}"
+    responsePath: output
+    onSuccess: { set: { invoiceResult: "$response", error: null }, toast: "Invoice ready" }
+    onError: { set: { error: "$error.message" } }
+  openDrive:
+    type: navigate
+    endpoint: "{{state.invoiceResult.driveLink}}"
+
+defaultView: clients
+
+views:
+  clients:
+    widgets:
+      - kind: card
+        title: Add a client
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: clientText, type: textarea, label: Paste client info, rows: 6, required: true, placeholder: "Any text — AI extracts name, email, phone, company, address, notes." }
+            submit: { label: Save client, action: saveClient, loadingLabel: "Extracting..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        source: state.clientResult
+        title: Extracted
+        sections:
+          - { kind: kv-grid, source: state.clientResult }
+  invoices:
+    onEnter: listClients
+    widgets:
+      - kind: oauth-status-card
+        action: checkAuth
+        provider: Google Drive
+        connectedLabel: Connected to Google Drive
+        disconnectedLabel: Connect Google Drive to upload invoices
+      - kind: card
+        title: Generate an invoice
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: invoiceText, type: textarea, label: Invoice details, rows: 6, required: true, placeholder: "Line items, amounts, tax, due date..." }
+              - { name: customer, type: text, label: "Your company / name", placeholder: "e.g. Acme Corp", required: true }
+              - { name: clientId, type: select, label: Send to client, optionsFrom: state.clientList, optionLabel: name, optionValue: _id, required: true }
+            submit:
+              label: Generate
+              action: generateInvoice
+              loadingLabel: "Generating..."
+              disabledWhen: "!state.__oauth.checkAuth || !state.__oauth.checkAuth.tokens || !state.__oauth.checkAuth.tokens.some(function(t){ return t.bitId === 'bit-google-drive' && t.hasValidToken && !t.isExpired; })"
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        source: state.invoiceResult
+        title: Invoice
+        sections:
+          - kind: metric-grid
+            columns: 3
+            metrics:
+              - { value: "{{state.invoiceResult.subtotal}}", label: Subtotal }
+              - { value: "{{state.invoiceResult.totalTax}}", label: Tax }
+              - { value: "{{state.invoiceResult.total}}", label: Total }
+          - { kind: kv-grid, source: state.invoiceResult }
+          - kind: download-button
+            label: "Download PDF"
+            dataPath: state.invoiceResult.pdfBase64
+            fileName: "{{state.invoiceResult.invoiceId}}.pdf"
+            mimeType: application/pdf
+            showWhen: state.invoiceResult.pdfBase64
+          - kind: button
+            label: "Open in Google Drive"
+            action: openDrive
+            variant: secondary
+            showWhen: "state.invoiceResult.driveLink && String(state.invoiceResult.driveLink).indexOf('http') === 0"

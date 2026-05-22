@@ -1,0 +1,64 @@
+# Finance & Banking Customer Onboarding — converted from finance-banking-customer-onboarding.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: finance-banking-customer-onboarding
+  title: "Finance & Banking Customer Onboarding"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "🏦"
+  documentTitle: "Finance & Banking Customer Onboarding"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Finance & Banking Customer Onboarding"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "🏦"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13010 · Habits v1.0"
+    port: 13010
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "38", label: Applications processed today }
+      - { value: "94%", label: Same-day approval rate }
+      - { value: 2.1h, label: Average onboarding time }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: KYC Document Collection
+            description: Request and validate identity documents from new customers upon application submission.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Risk Scoring
+            description: Run automated risk scoring on new applications and flag high-risk cases for review.
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Account Creation
+            description: Provision customer accounts after approval and trigger the welcome email sequence.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Credit Check
+            description: Initiate credit bureau enquiries automatically and parse results into the application record.
+            trigger: webhook
+            tags: [webhook, http, ai]
+          - name: Welcome Sequence
+            description: Send personalised onboarding emails to new customers over the first 30 days.
+            trigger: scheduler
+            tags: [scheduler, email, ai]
+          - name: Onboarding Status Tracker
+            description: Update the CRM automatically at each milestone of the onboarding journey.
+            trigger: webhook
+            tags: [webhook, http, slack]

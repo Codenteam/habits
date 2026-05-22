@@ -74,6 +74,7 @@ export interface ParsedStack {
   config: StackConfig;
   habits: ParsedHabit[];
   frontendHtml?: string;
+  frontendYaml?: string;
   envVariables?: Record<string, string>;
   errors: string[];
 }
@@ -324,6 +325,7 @@ export async function parseStack(
   const errors: string[] = [];
   const habits: ParsedHabit[] = [];
   let frontendHtml: string | undefined;
+  let frontendYaml: string | undefined;
   
   // Find and parse the config file
   const configFile = files.find(f => f.path === configFilePath);
@@ -356,17 +358,26 @@ export async function parseStack(
     }
   }
   
-  // Try to load frontend HTML if specified
+  // Try to load frontend artifacts if specified. We support both the
+  // classic `frontend/index.html` and the new declarative
+  // `frontend/index.yaml` (UiSpec). Either or both may be present.
   if (config.server?.frontend) {
     const frontendPath = resolvePath(configFilePath, config.server.frontend);
-    // Look for index.html in the frontend directory
-    const indexPath = frontendPath.endsWith('.html') 
-      ? frontendPath 
-      : `${frontendPath}/index.html`;
-    
-    const frontendFile = files.find(f => f.path === indexPath);
-    if (frontendFile) {
-      frontendHtml = frontendFile.content;
+    if (frontendPath.endsWith('.html')) {
+      const f = files.find((x) => x.path === frontendPath);
+      if (f) frontendHtml = f.content;
+    } else if (frontendPath.endsWith('.yaml') || frontendPath.endsWith('.yml')) {
+      const f = files.find((x) => x.path === frontendPath);
+      if (f) frontendYaml = f.content;
+    } else {
+      // Directory mode: prefer YAML, fall back to HTML.
+      const yamlCandidates = [`${frontendPath}/index.yaml`, `${frontendPath}/index.yml`, `${frontendPath}/ui.yaml`, `${frontendPath}/ui.yml`];
+      for (const p of yamlCandidates) {
+        const f = files.find((x) => x.path === p);
+        if (f) { frontendYaml = f.content; break; }
+      }
+      const htmlFile = files.find((x) => x.path === `${frontendPath}/index.html`);
+      if (htmlFile) frontendHtml = htmlFile.content;
     }
   }
   
@@ -389,6 +400,7 @@ export async function parseStack(
     config,
     habits,
     frontendHtml,
+    frontendYaml,
     envVariables,
     errors,
   };

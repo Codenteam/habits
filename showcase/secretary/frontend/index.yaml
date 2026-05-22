@@ -1,0 +1,92 @@
+version: 1
+meta:
+  id: secretary
+  title: Secretary
+  subtitle: Your AI assistant
+  icon: "🤖"
+
+theme:
+  preset: mobile-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Secretary, subtitle: "Your AI assistant", icon: "🤖" }
+  nav:
+    - { id: briefing, label: Briefing, icon: "☀️" }
+    - { id: doIt, label: Do It, icon: "⚡" }
+
+state:
+  doItPrompt: ""
+  briefingText: ""
+  briefingToolsUsed: []
+  doItText: ""
+  doItToolCalls: []
+  doItIterations: 0
+  error: null
+
+actions:
+  runBriefing:
+    method: POST
+    endpoint: /api/briefing
+    body: {}
+    stream: ndjson
+    onSuccess: { set: { briefingText: "$response.briefing", briefingToolsUsed: "$response.toolsUsed" } }
+    onError: { set: { error: "$error.message" } }
+  runDoIt:
+    method: POST
+    endpoint: /api/do-it
+    body: { prompt: "{{state.doItPrompt}}" }
+    stream: ndjson
+    onSuccess: { set: { doItText: "$response.result", doItToolCalls: "$response.toolCalls", doItIterations: "$response.iterations" } }
+    onError: { set: { error: "$error.message" } }
+
+defaultView: briefing
+
+views:
+  briefing:
+    widgets:
+      - kind: card
+        title: Morning briefing
+        children:
+          - { kind: text, value: "One-tap summary of files, Slack, and notes." }
+          - kind: button
+            label: Run morning briefing
+            action: runBriefing
+            loadingLabel: "Working..."
+            fullWidth: true
+      - kind: streaming-panel
+        source: state.briefingText
+        title: Brief
+      - kind: section
+        title: Tools used
+        showWhen: state.briefingToolsUsed.length
+        children:
+          - { kind: badge-list, source: state.briefingToolsUsed }
+  doIt:
+    widgets:
+      - kind: card
+        title: What can I do for you?
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: doItPrompt, type: textarea, label: Task, placeholder: "Send a Slack message summarising today's headlines...", rows: 4, required: true }
+            submit: { label: Do it, action: runDoIt, loadingLabel: "Working..." }
+          - kind: button
+            label: Clear
+            variant: secondary
+            action: { reset: ["doItText", "doItToolCalls", "doItIterations"] }
+      - kind: streaming-panel
+        source: state.doItText
+        title: Result
+      - kind: section
+        title: Iterations & tools
+        showWhen: state.doItToolCalls.length
+        children:
+          - { kind: text, value: "{{state.doItIterations}} iterations", muted: true }
+          - { kind: badge-list, source: state.doItToolCalls }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

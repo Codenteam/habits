@@ -10,20 +10,14 @@ Accept: application/json
 
 ### Run email forward workflow
 # @name runEmailForward  
-POST {{baseUrl}}/api/workflows/email-forward-demo/run
+POST {{baseUrl}}/api/email-forward-demo
 Content-Type: application/json
 
 {}
 
-### Get workflow result (replace with actual run ID)
-# @name getWorkflowResult
-GET {{baseUrl}}/api/workflows/email-forward-demo/runs/latest
-Accept: application/json
-
 ### Manual test: Fetch emails only
-# This tests the IMAP fetch action directly
 # @name testFetchEmails
-POST {{baseUrl}}/api/workflows/email-forward-demo/run
+POST {{baseUrl}}/api/email-forward-demo
 Content-Type: application/json
 
 {
@@ -32,9 +26,8 @@ Content-Type: application/json
 }
 
 ### Manual test: Send test email
-# This tests the SMTP send action directly
 # @name testSendEmail
-POST {{baseUrl}}/api/workflows/email-forward-demo/run
+POST {{baseUrl}}/api/email-forward-demo
 Content-Type: application/json
 
 {
@@ -59,7 +52,7 @@ Content-Type: application/json
 
 ### Send email with custom body and recipient
 # @name sendEmail
-POST {{baseUrl}}/api/workflows/send-email/run
+POST {{baseUrl}}/api/send-email
 Content-Type: application/json
 
 {
@@ -76,7 +69,7 @@ Content-Type: application/json
 
 ### Start polling emails (runs once manually, or enable schedule trigger)
 # @name pollEmails
-POST {{baseUrl}}/api/workflows/poll-emails/run
+POST {{baseUrl}}/api/poll-emails
 Content-Type: application/json
 
 {
@@ -89,7 +82,7 @@ Content-Type: application/json
 
 ### Poll emails with defaults
 # @name pollEmailsDefaults
-POST {{baseUrl}}/api/workflows/poll-emails/run
+POST {{baseUrl}}/api/poll-emails
 Content-Type: application/json
 
 {}

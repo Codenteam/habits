@@ -14,13 +14,13 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database"
-      operation: findOne
+      operation: get
       params:
         collection: "journal_entries"
-        filter: '{"_id": "{{habits.input.id}}"}'
+        key: "{{habits.input.id}}"
 
 edges: []
 
 output:
-  entry: "{{fetch-entry.document}}"
+  entry: "{{fetch-entry.value}}"
   found: "{{fetch-entry.found}}"

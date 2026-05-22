@@ -10,7 +10,6 @@ before public exposure using the environment variables listed below.
 |---|---|---|
 | `HABITS_ALLOW_MODULES_INSTALL` | `true` | Disables `POST /api/modules/install` and `POST /api/modules/add`. Prevents anyone from cloning GitHub repos or installing npm packages onto the server. |
 | `HABITS_ALLOW_SERVE` | `true` | Disables all `POST /api/serve/start`, `/stop`, `/kill-port`, `/kill-process`, `/openapi` routes. Prevents subprocess spawning and arbitrary process killing. |
-| `HABITS_AI_GEN` | `false` | Already guards creator endpoints, but must remain `false` (or unset) in public mode. When `true`, callers can trigger a Claude agent with unrestricted `Bash` tool access. |
 | `HABITS_ALLOW_EXPORT` | `true` | Disables `POST /api/export/binary`, `/export/pack/desktop`, `/mobile`, `/docker`, `/habit`, and `GET /api/export/binary/support`. Prevents build tooling (`cargo`, `gradle`, `xcodebuild`, etc.) from being invoked by callers and stops SDK path/version disclosure. |
 | `HABITS_ALLOW_EXECUTE` | `true` | Disables `POST /api/execute`. Only disable if you do not need workflow execution on this instance. If execution is the public feature, leave this enabled but add sandboxing. |
 | `HABITS_ALLOW_FORMS_AUTH` | `true` | Disables `POST /api/forms/verify-auth` and `/api/forms/populate-options`. Prevents credential-stuffing attacks against connected third-party services. |
@@ -23,7 +22,6 @@ before public exposure using the environment variables listed below.
 ```env
 HABITS_ALLOW_MODULES_INSTALL=false
 HABITS_ALLOW_SERVE=false
-HABITS_AI_GEN=false
 HABITS_ALLOW_EXPORT=false
 HABITS_ALLOW_EXECUTE=true        # keep true only if execution is the intended feature
 HABITS_ALLOW_FORMS_AUTH=false

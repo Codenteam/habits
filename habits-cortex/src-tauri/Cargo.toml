@@ -39,6 +39,10 @@ tauri-plugin-webdriver = { version = "0.2", optional = true }
 base64 = "0.22"
 tauri-plugin-deep-link = "2"
 
+# Desktop-only dependencies (macOS/Windows/Linux)
+[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
+tauri-plugin-single-instance = "2"
+
 # Mobile-only dependencies (iOS/Android)
 [target.'cfg(any(target_os = "ios", target_os = "android"))'.dependencies]
 # Commented out for initial release - permissions require Google Play declaration form

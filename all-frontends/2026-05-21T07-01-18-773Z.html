@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Habit</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      max-width: 560px;
+      width: 100%;
+      padding: 36px;
+    }
+
+    .card header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      background: #e8f0fe;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    h1 { font-size: 1.35rem; color: #1a1a2e; }
+    p.subtitle { font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    input[type="url"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="url"]:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+
+    button {
+      margin-top: 18px;
+      width: 100%;
+      padding: 11px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover:not(:disabled) { background: #4338ca; }
+    button:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .result {
+      margin-top: 24px;
+      display: none;
+    }
+
+    .result.visible { display: block; }
+
+    .badges {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .badge.ok    { background: #d1fae5; color: #065f46; }
+    .badge.error { background: #fee2e2; color: #991b1b; }
+    .badge.status { background: #e0e7ff; color: #3730a3; }
+
+    pre {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.8rem;
+      overflow: auto;
+      max-height: 280px;
+      color: #1e293b;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <header>
+      <div class="icon">🧪</div>
+      <div>
+        <h1>Test Habit</h1>
+        <p class="subtitle">Send an HTTP GET request and inspect the response.</p>
+      </div>
+    </header>
+
+    <label for="urlInput">Target URL</label>
+    <input
+      type="url"
+      id="urlInput"
+      value="https://httpbin.org/get"
+      placeholder="https://httpbin.org/get"
+    />
+
+    <button id="runBtn" onclick="runTest()">Run Test</button>
+
+    <div class="result" id="result">
+      <div class="badges" id="badges"></div>
+      <pre id="bodyOutput"></pre>
+    </div>
+
+    <div class="error-msg" id="errorMsg" style="display:none;margin-top:16px;"></div>
+  </div>
+
+  <script>
+    async function runTest() {
+      const btn = document.getElementById('runBtn');
+      const resultEl = document.getElementById('result');
+      const badgesEl = document.getElementById('badges');
+      const bodyEl = document.getElementById('bodyOutput');
+      const errorEl = document.getElementById('errorMsg');
+      const url = document.getElementById('urlInput').value.trim();
+
+      if (!url) { alert('Please enter a URL.'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Running…';
+      resultEl.classList.remove('visible');
+      errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/workflows/test/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { url } }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || 'Workflow execution failed.');
+
+        const output = data.output || data;
+        const statusCode = output.status ?? '—';
+        const isOk = output.ok;
+        const body = output.body;
+
+        badgesEl.innerHTML = `
+          <span class="badge status">HTTP ${statusCode}</span>
+          <span class="badge ${isOk ? 'ok' : 'error'}">${isOk ? '✓ Success' : '✗ Failed'}</span>
+        `;
+
+        bodyEl.textContent = typeof body === 'object'
+          ? JSON.stringify(body, null, 2)
+          : String(body ?? '(empty)');
+
+        resultEl.classList.add('visible');
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Test';
+      }
+    }
+  </script>
+</body>
+</html>

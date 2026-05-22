@@ -1,0 +1,57 @@
+version: 1
+meta:
+  id: ai-agent-lead-enrichment
+  title: AI Lead Enrichment
+  subtitle: Powered by Habits
+  icon: "✨"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: single
+  header: { title: AI Lead Enrichment, subtitle: "Capture leads — Habits enriches them in the background", icon: "✨" }
+
+state:
+  firstName: ""
+  lastName: ""
+  email: ""
+  company: ""
+  phone: ""
+  result: null
+  error: null
+
+actions:
+  enrich:
+    method: POST
+    endpoint: /api/enrich-lead
+    body:
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      company: "{{state.company}}"
+      phone: "{{state.phone}}"
+    onSuccess: { set: { result: "$response", error: null }, toast: "Lead submitted" }
+    onError: { set: { error: "$error.message", result: null }, toast: "Submission failed" }
+
+widgets:
+  - kind: card
+    title: Contact form
+    children:
+      - kind: form
+        bindTo: state
+        layout: two-column
+        fields:
+          - { name: firstName, type: text, label: First Name, placeholder: "John" }
+          - { name: lastName, type: text, label: Last Name, placeholder: "Doe" }
+          - { name: email, type: email, label: Email, placeholder: "john@acme.com", required: true }
+          - { name: company, type: text, label: Company, placeholder: "Acme Inc", required: true }
+          - { name: phone, type: text, label: Phone, placeholder: "+1 555 000 0000" }
+        submit: { label: Submit, action: enrich, loadingLabel: "Submitting..." }
+  - kind: status-banner
+    showWhen: state.result
+    source: "Lead submitted — enrichment will run in the background."
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error

@@ -1,0 +1,64 @@
+# Ecommerce & Retail Finance Reporting — converted from ecommerce-retail-finance-reporting.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: ecommerce-retail-finance-reporting
+  title: "Ecommerce & Retail Finance Reporting"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "💰"
+  documentTitle: "Ecommerce & Retail Finance Reporting"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Ecommerce & Retail Finance Reporting"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "💰"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13024 · Habits v1.0"
+    port: 13024
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "100%", label: Daily reconciliation coverage }
+      - { value: "$0", label: Unreconciled variance today }
+      - { value: 3d, label: Days to period close }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Revenue Reconciliation
+            description: Match all sales transactions to bank deposit records automatically every day.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Tax Reporting Prep
+            description: Aggregate tax data by jurisdiction and prepare structured packs for each reporting period.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Invoice Generation
+            description: Auto-generate compliant B2B invoices on order completion and deliver via email.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Expense Categorisation
+            description: Classify expense submissions using AI and route to the correct approver automatically.
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Financial Alert
+            description: Alert the CFO immediately when daily revenue or gross margin deviates from forecast.
+            trigger: scheduler
+            tags: [scheduler, ai, slack]
+          - name: Period Close Checklist
+            description: Trigger month-end close tasks automatically and track completion status across the team.
+            trigger: scheduler
+            tags: [scheduler, email, http]

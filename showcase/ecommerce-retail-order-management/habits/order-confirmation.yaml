@@ -1,0 +1,22 @@
+id: order-confirmation
+name: Order Confirmation
+description: Placeholder workflow for showcase dashboard (tailored deployment required)
+
+input: []
+
+nodes:
+  - id: ready
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        type: script
+        language: javascript
+        script: |
+          async function main() {
+            return { status: 'ready' };
+          }
+
+output:
+  status: "{{ready.result.status}}"

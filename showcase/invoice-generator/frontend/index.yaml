@@ -1,0 +1,134 @@
+version: 1
+meta:
+  id: invoice-generator
+  title: Invoice Generator
+  subtitle: Create professional invoices with AI-enhanced descriptions
+  icon: "📄"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Invoice Generator, subtitle: "AI-enhanced descriptions", icon: "📄" }
+  nav:
+    - { id: create, label: Create, icon: "✨" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  businessName: ""
+  clientName: ""
+  clientEmail: ""
+  clientAddress: ""
+  items: [{ name: "", description: "", quantity: 1, unitPrice: 0 }]
+  taxRate: 0
+  dueDate: ""
+  notes: ""
+  invoiceResult: null
+  invoices: []
+  selectedId: ""
+  error: null
+
+actions:
+  createInvoice:
+    method: POST
+    endpoint: /api/create-invoice
+    body:
+      businessName: "{{state.businessName}}"
+      clientName: "{{state.clientName}}"
+      clientEmail: "{{state.clientEmail}}"
+      clientAddress: "{{state.clientAddress}}"
+      items: "{{state.items}}"
+      taxRate: "{{state.taxRate}}"
+      dueDate: "{{state.dueDate}}"
+      notes: "{{state.notes}}"
+    onSuccess: { set: { invoiceResult: "$response" }, dispatch: listInvoices }
+    onError: { set: { error: "$error.message" } }
+  listInvoices:
+    method: GET
+    endpoint: /api/list-invoices?limit=6
+    responsePath: invoices
+    onSuccess: { set: { invoices: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-invoice?id={{state.selectedId}}"
+    responsePath: invoice
+    onSuccess: { set: { invoiceResult: "$response", __view: create } }
+
+onMount:
+  - listInvoices
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: New invoice
+        hideWhen: state.invoiceResult
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: businessName, type: text, label: Your business name }
+              - { name: clientName, type: text, label: Client name, required: true }
+              - { name: clientEmail, type: email, label: Client email }
+              - { name: clientAddress, type: text, label: Client address }
+              - kind: repeatable
+                name: items
+                label: Line items
+                min: 1
+                addLabel: "Add line item"
+                fields:
+                  - { name: name, type: text, label: Item, required: true }
+                  - { name: description, type: text, label: Description }
+                  - { name: quantity, type: number, label: Qty, default: 1, min: 1 }
+                  - { name: unitPrice, type: number, label: Price, step: 0.01 }
+              - { name: taxRate, type: number, label: "Tax Rate (%)", default: 0, step: 0.1 }
+              - { name: dueDate, type: date, label: Due date }
+              - { name: notes, type: textarea, label: Notes, rows: 2 }
+            submit: { label: Create invoice, action: createInvoice, loadingLabel: "Working..." }
+      - kind: result-panel
+        source: state.invoiceResult
+        title: Invoice preview
+        sections:
+          - kind: hero
+            title: "Invoice {{state.invoiceResult.invoiceNumber}}"
+            description: "{{state.invoiceResult.businessName}} → {{state.invoiceResult.clientName}}"
+          - kind: data-table
+            source: state.invoiceResult.items
+            columns:
+              - { key: name, label: Item }
+              - { key: description, label: Description }
+              - { key: quantity, label: Qty }
+              - { key: unitPrice, label: Price }
+              - { key: total, label: Total }
+          - kind: metric-grid
+            columns: 3
+            metrics:
+              - { value: "{{state.invoiceResult.subtotal}}", label: Subtotal }
+              - { value: "{{state.invoiceResult.tax}}", label: Tax }
+              - { value: "{{state.invoiceResult.total}}", label: Total }
+          - kind: button-row
+            buttons:
+              - { label: New invoice, action: { reset: ["invoiceResult"] }, variant: secondary }
+              - { kind: print-button, label: Print }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Recent invoices
+        children:
+          - kind: list
+            source: state.invoices
+            empty: "No invoices yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.invoiceNumber}} · {{item.clientName}}", strong: true }
+              - { kind: text, value: "{{item.total}}", muted: true }
+              - { kind: badge, value: "{{item.status}}" }

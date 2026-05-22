@@ -1,0 +1,95 @@
+version: 1
+meta:
+  id: newsletter-generator
+  title: Newsletter Generator
+  subtitle: Create engaging newsletters with AI
+  icon: "📰"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Newsletter Generator, subtitle: "AI-assisted newsletters", icon: "📰" }
+
+state:
+  title: ""
+  audience: ""
+  topics: []
+  tone: friendly
+  articles: ""
+  newsletterData: null
+  selectedSubject: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-newsletter
+    body:
+      title: "{{state.title}}"
+      audience: "{{state.audience}}"
+      topics: "{{state.topics}}"
+      tone: "{{state.tone}}"
+      articles: "{{state.articles}}"
+    onSuccess: { set: { newsletterData: "$response" } }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: split
+    leftWidth: 400
+    left:
+      - kind: card
+        title: Newsletter details
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: title, type: text, label: Newsletter title, placeholder: "e.g. TechWeekly, Marketing Pulse", required: true }
+              - { name: audience, type: text, label: Target audience, placeholder: "Startup founders, marketers", required: true }
+              - { name: topics, type: tag-input, label: Topics, placeholder: "Add topic and press Enter", required: true }
+              - { name: tone, type: select, label: Tone, default: friendly, options: [professional, friendly, casual, authoritative] }
+              - { name: articles, type: textarea, label: Additional content, placeholder: "Paste article URLs or key points...", rows: 5 }
+            submit: { label: Generate newsletter, action: generate, loadingLabel: "Writing..." }
+    right:
+      - kind: result-panel
+        source: state.newsletterData
+        title: Preview
+        sections:
+          - kind: section
+            title: Subject lines
+            children:
+              - kind: list
+                source: state.newsletterData.subjectLines
+                onItemClick: { set: { selectedSubject: "$item" } }
+                template:
+                  - { kind: text, value: "{{item.subject}}", strong: true }
+                  - { kind: badge, value: "{{item.style}}" }
+          - kind: section
+            title: Newsletter
+            children:
+              - kind: hero
+                title: "{{state.title}}"
+                description: "{{state.selectedSubject.subject ?? state.newsletterData.subjectLines[0].subject}}"
+              - { kind: markdown, source: state.newsletterData.intro }
+              - kind: section
+                title: Articles
+                children:
+                  - kind: list
+                    source: state.newsletterData.articles
+                    template:
+                      - { kind: heading, level: 4, value: "{{item.title}}" }
+                      - { kind: markdown, source: item.summary }
+              - kind: section
+                title: Tips
+                children:
+                  - { kind: bullet-list, source: state.newsletterData.tips }
+              - kind: section
+                title: Closing
+                children:
+                  - { kind: markdown, source: state.newsletterData.closing }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

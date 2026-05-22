@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello World Greeting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --ha-bg-base: #0f172a;
+      --ha-bg-surface: #1e293b;
+      --ha-bg-elevated: #334155;
+      --ha-border: #334155;
+      --ha-text-primary: #ffffff;
+      --ha-text-body: #cbd5e1;
+      --ha-text-muted: #94a3b8;
+      --ha-accent-blue: #3b82f6;
+      --ha-accent-cyan: #22d3ee;
+      --ha-accent-emerald: #34d399;
+      --ha-status-success: #4ade80;
+      --ha-status-error: #f87171;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.1); }
+      to   { box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.2); }
+    }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); filter: blur(6px); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    filter: blur(0);   }
+    }
+
+    @keyframes scan {
+      0%   { transform: translateY(-100%); opacity: 0; }
+      50%  { opacity: 1; }
+      100% { transform: translateY(100%);  opacity: 0; }
+    }
+
+    @keyframes dots {
+      0%   { content: '';    }
+      25%  { content: '.';   }
+      50%  { content: '..';  }
+      75%  { content: '...'; }
+      100% { content: '';    }
+    }
+
+    @keyframes particle-float {
+      0%, 100% { transform: translateY(0) translateX(0);    opacity: 0.3; }
+      25%       { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+      50%       { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+      75%       { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .neon-border {
+      position: relative;
+    }
+
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 1rem;
+      padding: 2px;
+      background: linear-gradient(135deg, #3b82f6, #22d3ee, #c084fc, #3b82f6);
+      background-size: 300% 300%;
+      animation: gradient-rotate 4s linear infinite;
+      -webkit-mask: linear-gradient(#0f172a 0 0) content-box, linear-gradient(#0f172a 0 0);
+      mask: linear-gradient(#0f172a 0 0) content-box, linear-gradient(#0f172a 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.6;
+    }
+
+    @keyframes gradient-rotate {
+      0%   { background-position: 0% 50%;   }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%;   }
+    }
+
+    .input-glow:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn-glow {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .btn-glow::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-glow:hover::before { left: 100%; }
+    .btn-glow:hover  { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .btn-glow:active { transform: translateY(0); }
+
+    .result-reveal { animation: reveal 0.45s ease-out forwards; }
+
+    .loading-dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: rgba(59, 130, 246, 0.55);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .scan-line {
+      position: absolute;
+      inset-x: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(34,211,238,0.5), transparent);
+      animation: scan 2.5s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-4 font-sans overflow-hidden">
+
+  <!-- Background layers -->
+  <div class="fixed inset-0 bg-gradient-to-br from-blue-950/30 via-slate-950 to-purple-950/30"></div>
+  <div class="fixed top-1/4 left-1/4  w-96 h-96 bg-blue-500/10   rounded-full blur-3xl animate-pulse-slow"></div>
+  <div class="fixed bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style="animation-delay:1.5s;"></div>
+
+  <!-- Floating particles -->
+  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+  <!-- Main card -->
+  <div class="relative z-10 animate-float" style="animation-duration:8s;">
+    <div class="glass-card neon-border rounded-2xl p-8 w-full max-w-sm">
+
+      <!-- Scan line -->
+      <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div class="scan-line"></div>
+      </div>
+
+      <!-- Header -->
+      <div class="text-center mb-8 relative">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 mb-4 animate-pulse-slow">
+          <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
+          Hello World
+        </h1>
+        <div class="h-px mt-2 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
+        <p class="text-slate-400 mt-2 text-xs tracking-wider uppercase">Greeting Generator</p>
+      </div>
+
+      <!-- Input -->
+      <div class="mb-6">
+        <label for="nameInput" class="block text-slate-300 text-sm font-medium mb-2 tracking-wide">
+          Your Name
+        </label>
+        <div class="relative group">
+          <span class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="nameInput"
+            placeholder="Enter your name..."
+            value="World"
+            class="w-full pl-10 pr-4 py-3.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500
+                   focus:outline-none focus:border-blue-500/50 transition-all duration-300 input-glow font-mono text-sm"
+          />
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0
+                      opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+        </div>
+        <p class="text-slate-500 text-xs mt-1.5 ml-1">Press Execute to generate your greeting.</p>
+      </div>
+
+      <!-- Execute button -->
+      <button
+        id="runBtn"
+        onclick="runWorkflow()"
+        class="btn-glow w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400
+               text-white font-bold py-4 px-6 rounded-xl transition-all duration-300
+               focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-900
+               shadow-lg shadow-blue-500/25"
+      >
+        <span class="flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <span id="btnText">Execute</span>
+        </span>
+      </button>
+
+      <!-- Status -->
+      <div id="status" class="mt-5 p-4 rounded-xl text-sm text-center hidden transition-all duration-500"></div>
+
+      <!-- Result -->
+      <div id="result" class="mt-5 hidden">
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-800/40
+                    border border-slate-600/30 rounded-xl p-6">
+          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"></div>
+          <div class="text-center">
+            <p class="text-slate-400 text-xs uppercase tracking-widest mb-3">Greeting</p>
+            <div id="greetingText"
+                 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent tracking-wide">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Floating particles
+    (function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 28; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top  = Math.random() * 100 + '%';
+        p.style.animation = `particle-float ${3 + Math.random() * 4}s ease-in-out infinite`;
+        p.style.animationDelay = `${Math.random() * 2}s`;
+        container.appendChild(p);
+      }
+    })();
+
+    // Allow Enter key to trigger execution
+    document.getElementById('nameInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') runWorkflow();
+    });
+
+    async function runWorkflow() {
+      const btn        = document.getElementById('runBtn');
+      const btnText    = document.getElementById('btnText');
+      const statusEl   = document.getElementById('status');
+      const resultEl   = document.getElementById('result');
+      const greetingEl = document.getElementById('greetingText');
+
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) {
+        statusEl.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-yellow-500/10 border border-yellow-500/30 text-yellow-300';
+        statusEl.innerHTML = '<span class="flex items-center justify-center gap-2">'
+          + '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+          + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>'
+          + '</svg>Please enter a name first.</span>';
+        return;
+      }
+
+      // Loading state
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btnText.innerHTML = '<span class="loading-dots">Processing</span>';
+      statusEl.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-slate-800/50 border border-slate-600/30 text-slate-300';
+      statusEl.innerHTML = '<span class="flex items-center justify-center gap-2">'
+        + '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">'
+        + '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>'
+        + '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>'
+        + '</svg>Executing workflow...</span>';
+      resultEl.className = 'mt-5 hidden';
+
+      try {
+        const response = await fetch('/api/hello-world-greeting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          statusEl.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
+          statusEl.innerHTML = '<span class="flex items-center justify-center gap-2">'
+            + '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+            + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+            + '</svg>Completed successfully!</span>';
+
+          // Extract greeting from response
+          const greeting = data?.output?.greeting ?? data?.greeting ?? JSON.stringify(data);
+          greetingEl.textContent = typeof greeting === 'object' ? greeting.value ?? JSON.stringify(greeting) : greeting;
+
+          resultEl.className = 'mt-5 block result-reveal';
+        } else {
+          throw new Error(data?.message || `Request failed with status ${response.status}`);
+        }
+      } catch (err) {
+        statusEl.className = 'mt-5 p-4 rounded-xl text-sm text-center block bg-red-500/10 border border-red-500/30 text-red-300';
+        statusEl.innerHTML = '<span class="flex items-center justify-center gap-2">'
+          + '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+          + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>'
+          + '</svg>' + err.message + '</span>';
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btnText.innerHTML = '<span class="flex items-center justify-center gap-2">'
+          + '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+          + '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>'
+          + '</svg>Execute</span>';
+      }
+    }
+  </script>
+</body>
+</html>

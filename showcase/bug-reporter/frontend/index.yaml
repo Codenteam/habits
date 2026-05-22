@@ -1,0 +1,131 @@
+version: 1
+meta:
+  id: bug-reporter
+  title: AI Bug Reporter
+  subtitle: Report, enrich, and triage bugs with AI
+  icon: "🐞"
+
+theme:
+  preset: ha-bits-red
+  mode: dark
+
+layout:
+  type: sidebar
+  header: { title: AI Bug Reporter, subtitle: "Capture · enrich · triage", icon: "🐞" }
+  nav:
+    - { id: report, label: Report Bug, icon: "✍️" }
+    - { id: list, label: Bug List, icon: "📋" }
+    - { id: screenshot, label: Screenshot Analysis, icon: "🖼️" }
+
+state:
+  title: ""
+  description: ""
+  steps: ""
+  expected: ""
+  environment: ""
+  enhanced: null
+  screenshotUrl: ""
+  screenshotContext: ""
+  screenshotAnalysis: null
+  bugs: []
+  error: null
+
+actions:
+  reportBug:
+    method: POST
+    endpoint: /api/report-bug
+    body:
+      title: "{{state.title}}"
+      description: "{{state.description}}"
+      stepsToReproduce: "{{state.steps}}"
+      expectedBehavior: "{{state.expected}}"
+      environment: "{{state.environment}}"
+    onSuccess:
+      set: { enhanced: "$response", title: "", description: "", steps: "", expected: "", environment: "" }
+      dispatch: listBugs
+      toast: "Bug submitted"
+    onError: { set: { error: "$error.message" } }
+  listBugs:
+    method: POST
+    endpoint: /api/list-bugs
+    body: { limit: 50 }
+    responsePath: bugs
+    onSuccess: { set: { bugs: "$response" } }
+  analyzeScreenshot:
+    method: POST
+    endpoint: /api/analyze-screenshot
+    body: { imageUrls: "{{state.screenshotUrl}}", context: "{{state.screenshotContext}}" }
+    responsePath: analysis
+    onSuccess: { set: { screenshotAnalysis: "$response" } }
+
+onMount:
+  - listBugs
+
+defaultView: report
+
+views:
+  report:
+    widgets:
+      - kind: metric-grid
+        columns: 3
+        metrics:
+          - { value: "{{state.bugs | filterBy:status=open | length}}", label: "Open" }
+          - { value: "{{state.bugs | filterBy:severity=critical | length}}", label: "Critical" }
+          - { value: "{{state.bugs | filterBy:severity=high | length}}", label: "High" }
+      - kind: card
+        title: Report a bug
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: title, type: text, label: Bug title, placeholder: "Brief description of the issue", required: true }
+              - { name: description, type: textarea, label: Description, placeholder: "Describe what happened...", rows: 4, required: true }
+              - { name: steps, type: textarea, label: Steps to reproduce, placeholder: "1. Go to...\n2. Click on...\n3. See error", rows: 4 }
+              - { name: expected, type: textarea, label: Expected vs Actual, placeholder: "Expected: ...\nActual: ...", rows: 3 }
+              - { name: environment, type: text, label: Environment, placeholder: "Browser, OS, app version..." }
+            submit: { label: Submit, action: reportBug, loadingLabel: "Enriching..." }
+      - kind: result-panel
+        source: state.enhanced
+        title: AI-enhanced report
+        sections:
+          - kind: badge-list
+            values: ["{{state.enhanced.severity}}", "{{state.enhanced.priority}}", "{{state.enhanced.category}}"]
+          - { kind: kv-grid, source: state.enhanced }
+          - kind: section
+            title: Acceptance criteria
+            children:
+              - { kind: bullet-list, source: state.enhanced.acceptanceCriteria }
+  list:
+    widgets:
+      - kind: card
+        title: All bugs
+        children:
+          - kind: list
+            source: state.bugs
+            empty: "No bugs yet."
+            template:
+              - { kind: text, value: "{{item.enhancedTitle ?? item.title}}", strong: true }
+              - { kind: badge-list, values: ["{{item.category}}", "{{item.severity}}", "{{item.priority}}"] }
+              - { kind: text, value: "{{item.description | truncate:200}}", muted: true }
+  screenshot:
+    widgets:
+      - kind: card
+        title: Screenshot analysis
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: screenshotUrl, type: url, label: Screenshot URL, required: true, placeholder: "Paste image URL..." }
+              - { name: screenshotContext, type: textarea, label: Additional context, placeholder: "Any context about the bug...", rows: 3 }
+            submit: { label: Analyse, action: analyzeScreenshot, loadingLabel: "Analysing..." }
+      - kind: result-panel
+        source: state.screenshotAnalysis
+        title: Analysis
+        sections:
+          - kind: badge-list
+            values: ["{{state.screenshotAnalysis.severity}}", "{{state.screenshotAnalysis.category}}"]
+          - { kind: kv-grid, source: state.screenshotAnalysis }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

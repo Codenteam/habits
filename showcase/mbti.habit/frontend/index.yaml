@@ -1,0 +1,128 @@
+version: 1
+meta:
+  id: mbti-habit
+  title: MBTI Personality Analyzer
+  subtitle: Submit up to 10 text samples — AI ranks all 16 personality types
+  icon: "🧠"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: MBTI Analyzer, subtitle: "Text-based personality typing", icon: "🧠" }
+  nav:
+    - { id: analyze, label: Analyze, icon: "🔬" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  personName: ""
+  texts: [""]
+  analysisResult: null
+  historyRecords: []
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/analyze-mbti-personality
+    body:
+      name: "{{state.personName}}"
+      text1: "{{state.texts[0]}}"
+      text2: "{{state.texts[1]}}"
+      text3: "{{state.texts[2]}}"
+      text4: "{{state.texts[3]}}"
+      text5: "{{state.texts[4]}}"
+      text6: "{{state.texts[5]}}"
+      text7: "{{state.texts[6]}}"
+      text8: "{{state.texts[7]}}"
+      text9: "{{state.texts[8]}}"
+      text10: "{{state.texts[9]}}"
+    responsePath: output.analysis
+    onSuccess: { set: { analysisResult: "$response" }, dispatch: getHistory }
+    onError: { set: { error: "$error.message" } }
+  getHistory:
+    method: GET
+    endpoint: /api/get-mbti-analysis-history?limit=20
+    responsePath: output.records
+    onSuccess: { set: { historyRecords: "$response" } }
+
+onMount:
+  - getHistory
+
+defaultView: analyze
+
+views:
+  analyze:
+    widgets:
+      - kind: card
+        title: Submit text samples
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: personName, type: text, label: Name (optional), placeholder: "e.g. Jane Doe" }
+              - kind: repeatable
+                name: texts
+                label: Text samples
+                min: 1
+                max: 10
+                addLabel: "Add another sample"
+                fields:
+                  - { type: textarea, label: "Sample {{index+1}}", placeholder: "Paste or type a text sample...", rows: 5, required: "{{index === 0}}" }
+            submit: { label: Analyze personality, action: analyze, loadingLabel: "Analysing..." }
+      - kind: result-panel
+        source: state.analysisResult
+        title: Analysis
+        sections:
+          - kind: hero
+            title: "{{state.analysisResult.conclusion.type}}"
+            description: "{{state.analysisResult.conclusion.label}} · confidence {{state.analysisResult.conclusion.confidence}}"
+          - kind: markdown
+            source: state.analysisResult.conclusion.summary
+          - kind: section
+            title: Strengths
+            children:
+              - { kind: badge-list, source: state.analysisResult.strengths, tone: success }
+          - kind: section
+            title: Growth areas
+            children:
+              - { kind: badge-list, source: state.analysisResult.growthAreas, tone: warning }
+          - kind: section
+            title: Famous examples
+            children:
+              - { kind: badge-list, source: state.analysisResult.famousExamples }
+          - kind: section
+            title: Dimensions
+            children:
+              - kind: kv-grid
+                items:
+                  - { label: "E vs I", value: "{{state.analysisResult.dimensions.EI.E}}% / {{state.analysisResult.dimensions.EI.I}}%" }
+                  - { label: "S vs N", value: "{{state.analysisResult.dimensions.SN.S}}% / {{state.analysisResult.dimensions.SN.N}}%" }
+                  - { label: "T vs F", value: "{{state.analysisResult.dimensions.TF.T}}% / {{state.analysisResult.dimensions.TF.F}}%" }
+                  - { label: "J vs P", value: "{{state.analysisResult.dimensions.JP.J}}% / {{state.analysisResult.dimensions.JP.P}}%" }
+          - kind: section
+            title: All 16 types
+            children:
+              - kind: list
+                source: state.analysisResult.rankedTypes
+                template:
+                  - { kind: text, value: "{{item.type}}", strong: true }
+                  - { kind: progress-bar, value: "{{item.score}}", max: 100 }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Previous analyses
+        children:
+          - kind: list
+            source: state.historyRecords
+            empty: "No analyses yet."
+            template:
+              - { kind: text, value: "{{item.name}} · {{item.createdAt | date}}", strong: true }
+              - { kind: badge, value: "{{item.analysis.conclusion.type}}" }
+              - { kind: text, value: "{{item.analysis.conclusion.summary | truncate:200}}", muted: true }

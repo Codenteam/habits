@@ -1,0 +1,147 @@
+version: 1
+meta:
+  id: ai-journal
+  title: AI Journal
+  subtitle: Your mindful companion for daily reflection
+  icon: "📓"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Journal, subtitle: "Reflect · understand · grow", icon: "📓" }
+  nav:
+    - { id: write, label: Write, icon: "✍️" }
+    - { id: history, label: History, icon: "🗂️" }
+    - { id: insights, label: Insights, icon: "📈" }
+
+state:
+  content: ""
+  currentEntry: null
+  weeklyInsights: null
+  error: null
+
+actions:
+  saveEntry:
+    method: POST
+    endpoint: /api/save-entry
+    body: { content: "{{state.content}}" }
+    responsePath: output
+    onSuccess:
+      set: { currentEntry: "$response", content: "", error: null }
+      dispatch: getEntries
+      toast: "Entry saved"
+    onError: { set: { error: "$error.message" } }
+  getEntries:
+    method: POST
+    endpoint: /api/get-entries
+    body: { limit: 50 }
+    responsePath: output
+  reopenEntry:
+    method: POST
+    endpoint: /api/get-entry
+    body:
+      id: "{{params.id}}"
+    responsePath: output.entry
+    onSuccess:
+      set: { currentEntry: "$response", error: null }
+      goto: write
+      toast: "Entry loaded"
+  clearEntry:
+    set: { currentEntry: null, error: null }
+  weeklyInsights:
+    method: POST
+    endpoint: /api/weekly-insights
+    body: {}
+    responsePath: output.insights
+    onSuccess:
+      set:
+        weeklyInsights: "(function(v){ if(v==null) return null; if(typeof v==='object') return v; var s=String(v).trim().replace(/^```(?:json)?\\s*/i,'').replace(/```\\s*$/,''); try{return JSON.parse(s);}catch(e){return {weekSummary:String(v)};} })($response)"
+        error: null
+    onError: { set: { error: "$error.message" } }
+
+defaultView: write
+
+views:
+  write:
+    widgets:
+      - kind: card
+        title: Today's reflection
+        hideWhen: state.currentEntry
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: content, type: textarea, label: Journal entry, placeholder: "Start writing... What's on your mind today?", rows: 8, required: true, showWordCount: true }
+            submit: { label: Save & analyse, action: saveEntry, loadingLabel: "Analysing your entry..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.currentEntry
+        source: state.currentEntry
+        title: Your reflection
+        sections:
+          - kind: section
+            title: AI response
+            children:
+              - { kind: markdown, source: state.currentEntry.response }
+          - kind: button
+            label: New entry
+            action: clearEntry
+            variant: secondary
+  history:
+    onEnter: getEntries
+    widgets:
+      - kind: history-grid
+        loadAction: getEntries
+        dataPath: entries
+        reloadAfter: [saveEntry]
+        columns: 1
+        itemTemplate:
+          title: "{{item.content | truncate:80}}"
+          meta: "{{item._createdAt | date}}"
+        onClick:
+          action: reopenEntry
+          params: { id: "{{item._id}}" }
+        empty: "No entries yet. Start writing!"
+  insights:
+    widgets:
+      - kind: card
+        title: Weekly insights
+        children:
+          - kind: button
+            label: Generate weekly insights
+            action: weeklyInsights
+            loadingLabel: "Looking back at your week..."
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.weeklyInsights
+        source: state.weeklyInsights
+        title: This week
+        sections:
+          - kind: metric-grid
+            columns: 2
+            metrics:
+              - { value: "{{state.weeklyInsights.averageMood}}", label: Average mood }
+              - { value: "{{state.weeklyInsights.moodTrend}}", label: Mood trend }
+          - kind: section
+            title: Dominant themes
+            children:
+              - { kind: bullet-list, source: state.weeklyInsights.dominantThemes }
+          - kind: section
+            title: Positive patterns
+            children:
+              - { kind: bullet-list, source: state.weeklyInsights.positivePatterns }
+          - kind: section
+            title: Summary
+            children:
+              - { kind: markdown, source: state.weeklyInsights.weekSummary }
+          - kind: section
+            title: Encouragement
+            children:
+              - { kind: markdown, source: state.weeklyInsights.encouragement }

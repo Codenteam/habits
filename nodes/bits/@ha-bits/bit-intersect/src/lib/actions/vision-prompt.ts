@@ -128,14 +128,18 @@ export const visionPrompt = createAction({
       };
     });
 
-    /**
-     * If starts with data:, use it as is
-     * If not starting with data assume jpeg
-     */
-    const base64 = propsValue.image;
-    const extension = 'jpeg';
+    const image = propsValue.image;
+    if (!image) {
+      throw new Error('Image is required');
+    }
 
-    const base64Url = base64.startsWith('data:') ? base64 : `data:image/${extension};base64,${base64}`;
+    /** data: URLs, http(s) URLs, or raw base64 */
+    const imageUrl =
+      image.startsWith('data:') ||
+      image.startsWith('http://') ||
+      image.startsWith('https://')
+        ? image
+        : `data:image/jpeg;base64,${image}`;
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -150,7 +154,7 @@ export const visionPrompt = createAction({
             {
               type: 'image_url',
               image_url: {
-                url: base64Url,
+                url: imageUrl,
               },
             },
           ],

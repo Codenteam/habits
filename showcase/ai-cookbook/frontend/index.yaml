@@ -1,0 +1,145 @@
+version: 1
+meta:
+  id: ai-cookbook
+  title: AI Cookbook
+  subtitle: Turn your ingredients into delicious recipes
+  icon: "🍳"
+
+theme:
+  preset: ha-bits-warn
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Cookbook, subtitle: "Recipe Generator", icon: "🍳" }
+  nav:
+    - { id: create, label: Create, icon: "✨" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  ingredients: []
+  mealType: ""
+  cuisine: ""
+  restrictions: ""
+  servings: "4"
+  currentRecipe: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-recipe
+    body:
+      ingredients: "{{state.ingredients}}"
+      restrictions: "{{state.restrictions}}"
+      cuisine: "{{state.cuisine}}"
+      mealType: "{{state.mealType}}"
+      servings: "{{state.servings}}"
+    responsePath: output
+    onSuccess:
+      set: { currentRecipe: "$response", error: null }
+      dispatch: listHistory
+      toast: "Recipe ready"
+    onError: { set: { error: "$error.message" } }
+  listHistory:
+    method: POST
+    endpoint: /api/list-recipes
+    body: { limit: 12 }
+    responsePath: output
+  reopenRecipe:
+    method: GET
+    endpoint: /api/get-recipe
+    query:
+      id: "{{params.id}}"
+    responsePath: output.recipe
+    onSuccess:
+      set: { currentRecipe: "$response", error: null }
+      goto: create
+      toast: "Recipe loaded"
+  clearRecipe:
+    set: { currentRecipe: null, error: null }
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Generate a recipe
+        hideWhen: state.currentRecipe
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: ingredients, type: tag-input, label: Available ingredients, placeholder: "Type and press Enter", required: true }
+              - { name: mealType, type: select, label: Meal type, options: ["", breakfast, lunch, dinner, snack, dessert] }
+              - { name: cuisine, type: select, label: Cuisine, options: ["", Italian, Mexican, Asian, Indian, Mediterranean, American, French] }
+              - { name: restrictions, type: text, label: Dietary restrictions, placeholder: "vegetarian, gluten-free, dairy-free..." }
+              - { name: servings, type: select, label: Servings, default: "4", options: ["1", "2", "4", "6", "8"] }
+            submit: { label: Generate recipe, action: generate, loadingLabel: "Cooking up something..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.currentRecipe
+        source: state.currentRecipe
+        title: Your recipe
+        sections:
+          - kind: hero
+            title: "{{state.currentRecipe.recipe.title}}"
+            description: "{{state.currentRecipe.recipe.description}}"
+            chips:
+              - { label: "{{state.currentRecipe.recipe.prepTime}}", icon: "⏱️" }
+              - { label: "{{state.currentRecipe.recipe.cookTime}}", icon: "🔥" }
+              - { label: "{{state.currentRecipe.recipe.servings}} servings", icon: "🍽️" }
+              - { label: "{{state.currentRecipe.recipe.difficulty}}", icon: "📈" }
+          - kind: section
+            title: Ingredients
+            children:
+              - { kind: bullet-list, source: state.currentRecipe.recipe.ingredients, itemTemplate: "{{item.amount}} {{item.item}}" }
+          - kind: section
+            title: Instructions
+            children:
+              - { kind: numbered-list, source: state.currentRecipe.recipe.instructions, itemTemplate: "{{item.instruction}}" }
+          - kind: section
+            title: Nutrition per serving
+            showWhen: state.currentRecipe.nutrition
+            children:
+              - kind: metric-grid
+                columns: 5
+                metrics:
+                  - { value: "{{state.currentRecipe.nutrition.perServing.calories}}", label: kcal }
+                  - { value: "{{state.currentRecipe.nutrition.perServing.protein}}", label: protein }
+                  - { value: "{{state.currentRecipe.nutrition.perServing.carbs}}", label: carbs }
+                  - { value: "{{state.currentRecipe.nutrition.perServing.fat}}", label: fat }
+                  - { value: "{{state.currentRecipe.nutrition.perServing.fiber}}", label: fiber }
+          - kind: section
+            title: Shopping list
+            showWhen: state.currentRecipe.shoppingList.needed
+            children:
+              - { kind: bullet-list, source: state.currentRecipe.shoppingList.needed, itemTemplate: "{{item.amount}} {{item.item}}" }
+          - kind: section
+            title: Chef tips
+            showWhen: state.currentRecipe.recipe.tips
+            children:
+              - { kind: bullet-list, source: state.currentRecipe.recipe.tips, itemTemplate: "{{item}}" }
+          - kind: button
+            label: Generate another
+            action: clearRecipe
+            variant: secondary
+  history:
+    onEnter: listHistory
+    widgets:
+      - kind: history-grid
+        loadAction: listHistory
+        dataPath: recipes
+        reloadAfter: [generate]
+        columns: 2
+        itemTemplate:
+          title: "{{item.recipe.title}}"
+          subtitle: "{{item.recipe.cuisine}} · {{item.recipe.totalTime}}"
+          meta: "{{item._createdAt | date}}"
+        onClick:
+          action: reopenRecipe
+          params: { id: "{{item._id}}" }
+        empty: "No recipes yet."

@@ -324,6 +324,8 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   // Frontend is optional - if not specified, Cortex app will auto-generate UI from schema
   const hasFrontend = !!config.server?.frontend;
   let frontendPath: string | null = null;
+  let hasIndexHtml = false;
+  let hasIndexYaml = false;
 
   if (hasFrontend) {
     // Resolve frontend path
@@ -339,13 +341,19 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
       };
     }
 
-    const indexPath = path.join(frontendPath, 'index.html');
-    if (!fs.existsSync(indexPath)) {
+    const indexHtmlPath = path.join(frontendPath, 'index.html');
+    const indexYamlPath = path.join(frontendPath, 'index.yaml');
+    hasIndexHtml = fs.existsSync(indexHtmlPath);
+    hasIndexYaml = fs.existsSync(indexYamlPath) || fs.existsSync(path.join(frontendPath, 'index.yml'));
+    if (!hasIndexHtml && !hasIndexYaml) {
       return {
         success: false,
-        error: `index.html not found in frontend directory: ${frontendPath}`,
+        error: `No frontend entry found in ${frontendPath} (expected index.yaml or index.html)`,
         format: 'habit',
       };
+    }
+    if (hasIndexYaml && !hasIndexHtml) {
+      console.log('   📄 Using declarative frontend (index.yaml)');
     }
   } else {
     console.log('   📱 No frontend specified - Cortex app will auto-generate UI from schema');
@@ -405,37 +413,34 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
     // The fetch-proxy and cortex-bundle are ONLY for Tauri apps and are injected in runtime.
     const injectScripts: InjectScript[] = [];
 
-    // Process all HTML files in the frontend directory
-    console.log('   🔧 Processing HTML files for offline use...');
-    const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
+    // When index.yaml exists it is the source of truth — do not bundle HTML
+    // (avoids express.static serving index.html ahead of the YAML compiler).
+    if (hasIndexHtml && !hasIndexYaml) {
+      console.log('   🔧 Processing HTML files for offline use...');
+      const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
 
-    // Process each HTML file (inline CSS/JS/images but don't inject bundle scripts)
-    for (const [relativePath, processedResult] of processedHtmlFiles) {
-      const processedHtml = processedResult.html;
+      for (const [relativePath, processedResult] of processedHtmlFiles) {
+        const processedHtml = processedResult.html;
 
-      // Log processing results
-      if (processedResult.tailwindProcessed) {
-        console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+        if (processedResult.tailwindProcessed) {
+          console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+        }
+
+        const htmlZipPath = path.join(frontendDirName, relativePath);
+        zip.file(htmlZipPath, processedHtml);
+
+        const originalHtmlPath = path.join(frontendPath, relativePath);
+        const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
+        const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
+        zip.file(srcHtmlZipPath, originalHtml);
       }
 
-      // Add processed (inlined) HTML files under the frontend directory for offline use
-      // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
-      const htmlZipPath = path.join(frontendDirName, relativePath);
-      zip.file(htmlZipPath, processedHtml);
-
-      // Also add original HTML files under frontend-src/ for base server to use if needed
-      const originalHtmlPath = path.join(frontendPath, relativePath);
-      const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
-      const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
-      zip.file(srcHtmlZipPath, originalHtml);
+      addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
+      addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
+    } else {
+      // YAML-only frontend: copy all non-HTML assets verbatim.
+      addFrontendFilesToZip(frontendPath, zip, inlinedFiles, new Map(), undefined, frontendDirName);
     }
-
-    // Add remaining frontend files (excluding already processed HTML and inlined assets)
-    // Store under the original frontend directory name to preserve structure
-    addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
-    
-    // Also add original frontend files under frontend-src/ (including CSS, JS that were inlined)
-    addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
   }
 
   // Add a marker file to indicate auto-UI should be used (no frontend)

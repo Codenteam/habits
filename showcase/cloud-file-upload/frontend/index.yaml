@@ -1,0 +1,76 @@
+version: 1
+meta:
+  id: cloud-file-upload
+  title: Cloud Upload
+  subtitle: Upload files to Google Drive
+  icon: "☁️"
+
+theme:
+  preset: mobile-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Cloud Upload, subtitle: "Google Drive", icon: "☁️" }
+
+state:
+  fileBase64: ""
+  uploadResult: null
+  error: null
+
+actions:
+  checkAuth:
+    type: oauth
+    oauth:
+      statusUrl: /oauth/status
+      initUrl: /oauth/bit-google-drive/init
+  upload:
+    method: POST
+    endpoint: /api/cloud-file-upload
+    body:
+      fileName: "{{state.fileBase64__name}}"
+      content: "{{state.fileBase64}}"
+      mimeType: "{{state.fileBase64__type}}"
+    responsePath: output.result
+    onSuccess: { set: { uploadResult: "$response" }, toast: "Uploaded" }
+    onError: { set: { error: "$error.message" } }
+  openInDrive:
+    type: navigate
+    endpoint: "{{state.uploadResult.file.webViewLink}}"
+
+widgets:
+  - kind: oauth-status-card
+    action: checkAuth
+    provider: Google Drive
+    connectedLabel: Connected to Google Drive
+    disconnectedLabel: Connect Google Drive to upload
+  - kind: card
+    title: Choose a file
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: fileBase64, type: file-upload, label: "Tap to select file", asBase64: true, required: true }
+        submit:
+          label: Upload to Drive
+          action: upload
+          disabledWhen: "!state.__oauth.checkAuth || !state.__oauth.checkAuth.tokens || !state.__oauth.checkAuth.tokens.some(function(t){ return t.bitId === 'bit-google-drive' && t.hasValidToken && !t.isExpired; }) || !state.fileBase64"
+          loadingLabel: "Uploading..."
+  - kind: result-panel
+    source: state.uploadResult
+    title: Uploaded
+    sections:
+      - kind: kv-grid
+        source: state.uploadResult
+        fields:
+          - { key: file.name, label: File name }
+          - { key: file.id, label: File ID }
+          - { key: file.webViewLink, label: Drive link }
+      - kind: button
+        label: Open in Drive
+        action: openInDrive
+        tone: primary
+        showWhen: state.uploadResult.file.webViewLink
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error

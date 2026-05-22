@@ -1,0 +1,171 @@
+version: 1
+meta:
+  id: resume-analyzer
+  title: Resume Analyzer
+  subtitle: ATS, experience, match, summary, and interview prep
+  icon: "📄"
+
+theme:
+  preset: mobile-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Resume Analyzer, subtitle: "AI screening assistant", icon: "📄" }
+  nav:
+    - { id: home, label: New, icon: "➕" }
+    - { id: history, label: History, icon: "🗂️" }
+
+state:
+  resumeImage: ""
+  targetRole: ""
+  jobDescription: ""
+  result: null
+  selectedId: ""
+  activeResultTab: ats
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/analyze-resume
+    body:
+      resumeImage: "{{state.resumeImage}}"
+      targetRole: "{{state.targetRole}}"
+      jobDescription: "{{state.jobDescription}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "(function(r){ if(!r) return null; var c=Object.assign({},r); ['atsScore','jobMatch','parsed'].forEach(function(k){ if(typeof c[k]==='string'){ try{c[k]=JSON.parse(c[k]);}catch(e){} } }); return c; })($response)"
+        error: null
+      dispatch: listAnalyses
+      toast: "Analysis complete"
+    onError: { set: { error: "$error.message" } }
+  listAnalyses:
+    method: GET
+    endpoint: /api/list-analyses
+    query: { limit: "10" }
+    responsePath: output.analyses
+  openAnalysis:
+    method: GET
+    endpoint: /api/get-analysis
+    query: { id: "{{params.id}}" }
+    responsePath: output.analysis
+    onSuccess:
+      set:
+        result: "(function(r){ if(!r) return null; var c=Object.assign({},r); ['atsScore','jobMatch','parsed'].forEach(function(k){ if(typeof c[k]==='string'){ try{c[k]=JSON.parse(c[k]);}catch(e){} } }); return c; })($response)"
+        error: null
+      goto: home
+    onError: { set: { error: "$error.message" } }
+  newAnalysis:
+    set: { result: null, error: null, resumeImage: "", targetRole: "", jobDescription: "" }
+
+defaultView: home
+
+views:
+  home:
+    widgets:
+      - kind: card
+        title: Upload resume
+        hideWhen: state.result
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: resumeImage, type: image-upload, label: Resume image, accept: ".png,.jpg,.jpeg,.webp", asBase64: true, required: true }
+              - { name: targetRole, type: text, label: Target role, placeholder: "e.g. Senior Software Engineer" }
+              - { name: jobDescription, type: textarea, label: Job description, rows: 6 }
+            submit: { label: Analyze, action: analyze, loadingLabel: "Analysing..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        showWhen: state.result
+        source: state.result
+        title: Analysis results
+        sections:
+          - kind: metric-grid
+            columns: 2
+            metrics:
+              - { value: "{{state.result.atsScore.overallScore}}%", label: ATS }
+              - { value: "{{state.result.atsScore.keywordScore}}%", label: Keywords }
+              - { value: "{{state.result.atsScore.formatScore}}%", label: Format }
+              - { value: "{{state.result.jobMatch.matchScore}}%", label: Match }
+          - kind: tabs
+            variant: segmented
+            tabs:
+              - id: ats
+                label: ATS
+                children:
+                  - kind: section
+                    title: Missing keywords
+                    children:
+                      - { kind: badge-list, source: state.result.atsScore.missingKeywords, tone: warn }
+                  - kind: section
+                    title: Format issues
+                    children:
+                      - { kind: bullet-list, source: state.result.atsScore.formatIssues }
+                  - kind: section
+                    title: Suggestions
+                    children:
+                      - { kind: bullet-list, source: state.result.atsScore.suggestions }
+              - id: exp
+                label: Experience
+                children:
+                  - { kind: html-preview, source: state.result.experienceAnalysisHtml }
+                  - { kind: markdown, source: state.result.experienceAnalysis, showWhen: "!state.result.experienceAnalysisHtml" }
+              - id: match
+                label: Match
+                children:
+                  - kind: section
+                    title: Matching skills
+                    children:
+                      - { kind: badge-list, source: state.result.jobMatch.matchingSkills, tone: success }
+                  - kind: section
+                    title: Missing skills
+                    children:
+                      - { kind: badge-list, source: state.result.jobMatch.missingSkills, tone: danger }
+                  - kind: section
+                    title: Strengths
+                    children:
+                      - { kind: bullet-list, source: state.result.jobMatch.strengthsForRole }
+                  - kind: section
+                    title: Gaps
+                    children:
+                      - { kind: bullet-list, source: state.result.jobMatch.experienceGaps }
+                  - kind: section
+                    title: Recommendations
+                    children:
+                      - { kind: bullet-list, source: state.result.jobMatch.recommendations }
+              - id: summary
+                label: Summary
+                children:
+                  - { kind: html-preview, source: state.result.improvedSummaryHtml }
+                  - { kind: markdown, source: state.result.improvedSummary, showWhen: "!state.result.improvedSummaryHtml" }
+              - id: interview
+                label: Interview
+                children:
+                  - { kind: html-preview, source: state.result.interviewPrepHtml }
+                  - { kind: markdown, source: state.result.interviewPrep, showWhen: "!state.result.interviewPrepHtml" }
+          - kind: button
+            label: New analysis
+            action: newAnalysis
+            variant: secondary
+  history:
+    onEnter: listAnalyses
+    widgets:
+      - kind: history-grid
+        loadAction: listAnalyses
+        dataPath: analyses
+        reloadAfter: [analyze]
+        columns: 1
+        itemTemplate:
+          title: "{{item.targetRole || 'Resume Analysis'}}"
+          meta: "{{item._createdAt | date}}"
+        onClick:
+          action: openAnalysis
+          params: { id: "{{item._id}}" }
+        empty: "No analyses yet. Upload a resume to get started."
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error

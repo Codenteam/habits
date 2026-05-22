@@ -3,7 +3,7 @@ import { X, Wand2, Loader2, Check, AlertCircle, AlertTriangle, Sparkles, Code2, 
 import JSZip from 'jszip';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addHabit, setActiveHabit, clearWorkflow, selectHabits } from '../store/slices/workflowSlice';
-import { setFrontendHtml, clearFrontendHtml } from '../store/slices/uiSlice';
+import { setFrontendHtml, clearFrontendHtml, setFrontendYaml, clearFrontendYaml } from '../store/slices/uiSlice';
 import { api } from '../lib/api';
 import {
   FileEntry,
@@ -103,6 +103,7 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
     // Replace entire state with generated content
     dispatch(clearWorkflow());
     dispatch(clearFrontendHtml());
+    dispatch(clearFrontendYaml());
 
     if (parsed.habits.length > 0) {
       // Add each habit to the store
@@ -120,11 +121,16 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
     if (parsed.frontendHtml) {
       dispatch(setFrontendHtml(parsed.frontendHtml));
     }
+
+    // Load frontend YAML if available
+    if (parsed.frontendYaml) {
+      dispatch(setFrontendYaml(parsed.frontendYaml));
+    }
     
     setResult({
       habitsLoaded: parsed.habits.length,
       errors: parsed.errors,
-      frontendLoaded: !!parsed.frontendHtml,
+      frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
     });
   };
 

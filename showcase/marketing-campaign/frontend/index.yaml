@@ -1,0 +1,84 @@
+version: 1
+meta:
+  id: marketing-campaign
+  title: Campaign Generator
+  subtitle: Intersect AI workflow streamed live
+  icon: "🎯"
+  documentTitle: Campaign Generator
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Campaign Generator
+    subtitle: Streaming workflow nodes
+    icon: "🎯"
+
+state:
+  prompt: ""
+  error: ""
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/marketing-campaign
+    query:
+      stream: "true"
+    body:
+      prompt: "{{state.prompt}}"
+    stream: ndjson
+    clear:
+      - state.__stream.generate
+    onError:
+      set:
+        error: "{{error.message}}"
+
+  reset:
+    set:
+      prompt: "''"
+      error: "''"
+    clear:
+      - state.__stream.generate
+
+widgets:
+  - kind: card
+    title: Campaign brief
+    hideWhen: state.__stream.generate.length
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: prompt
+            type: textarea
+            label: Campaign prompt
+            placeholder: "Describe your marketing campaign..."
+            rows: 6
+            required: true
+            submitOnCtrlEnter: true
+        submit:
+          label: Generate (Ctrl+Enter)
+          action: generate
+          loadingLabel: "Generating..."
+  - kind: spinner
+    label: Generating campaign…
+    showWhen: state.__loading.generate
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: card
+    title: Workflow nodes
+    showWhen: state.__stream.generate.length
+    children:
+      - kind: streaming-panel
+        source: state.__stream.generate
+        itemTemplate:
+          title: "{{item.nodeName | default:item.nodeId}}"
+          status: "{{item.status}}"
+          body: "{{item.output | json}}"
+      - kind: button
+        label: New campaign
+        action: reset
+        tone: secondary

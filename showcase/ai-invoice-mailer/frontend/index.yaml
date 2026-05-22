@@ -1,0 +1,124 @@
+version: 1
+meta:
+  id: ai-invoice-mailer
+  title: AI Invoice Mailer
+  subtitle: Save clients, generate invoices, deliver to your inbox
+  icon: "✉️"
+
+theme:
+  preset: aurora
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Invoice Mailer, subtitle: "Clients · invoices · delivery", icon: "✉️" }
+  nav:
+    - { id: add, label: Add Client, icon: "👤" }
+    - { id: clients, label: My Clients, icon: "📋" }
+    - { id: invoice, label: Generate Invoice, icon: "📄" }
+
+state:
+  clientText: ""
+  clientResult: null
+  clientSearch: ""
+  allClients: []
+  invoiceText: ""
+  customerName: ""
+  clientId: ""
+  invoiceResult: null
+  error: null
+
+actions:
+  saveClient:
+    method: POST
+    endpoint: /api/save-client
+    body: { text: "{{state.clientText}}" }
+    responsePath: output
+    onSuccess: { set: { clientResult: "$response", clientText: "", error: null }, dispatch: listClients, toast: "Client saved" }
+    onError: { set: { error: "$error.message" } }
+  listClients:
+    method: POST
+    endpoint: /api/list-clients
+    body: {}
+    responsePath: output.clients
+    onSuccess: { set: { allClients: "$response" } }
+  generateInvoice:
+    method: POST
+    endpoint: /api/generate-invoice
+    body:
+      invoiceText: "{{state.invoiceText}}"
+      clientId: "{{state.clientId}}"
+      customer: "{{state.customerName}}"
+    responsePath: output
+    onSuccess: { set: { invoiceResult: "$response", error: null }, toast: "Invoice sent" }
+    onError: { set: { error: "$error.message" } }
+
+defaultView: add
+
+views:
+  add:
+    widgets:
+      - kind: status-banner
+        source: "Paste any client information — AI will extract structured fields."
+      - kind: card
+        title: Client information
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: clientText, type: textarea, label: Paste client info, placeholder: "Name, email, phone, company, address, notes...", rows: 6, required: true }
+            submit: { label: Extract & save, action: saveClient, loadingLabel: "Saving..." }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+      - kind: result-panel
+        source: state.clientResult
+        title: Saved
+        sections:
+          - { kind: kv-grid, source: state.clientResult }
+  clients:
+    onEnter: listClients
+    widgets:
+      - kind: card
+        title: All clients
+        children:
+          - kind: data-table
+            source: state.allClients
+            empty: "No clients yet."
+            columns:
+              - { key: name, label: Name }
+              - { key: company, label: Company }
+              - { key: email, label: Email }
+              - { key: phone, label: Phone }
+  invoice:
+    onEnter: listClients
+    widgets:
+      - kind: card
+        title: Invoice details
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: invoiceText, type: textarea, label: Invoice details, placeholder: "Line items, total, tax, due date...", rows: 6, required: true }
+              - { name: customerName, type: text, label: Product / project, placeholder: "e.g. Acme Studios", required: true }
+              - { name: clientId, type: select, label: Send to client, optionsFrom: state.allClients, optionLabel: name, optionValue: _id, required: true }
+            submit: { label: Generate & email, action: generateInvoice, loadingLabel: "Generating..." }
+      - kind: result-panel
+        source: state.invoiceResult
+        title: Invoice
+        sections:
+          - kind: metric-grid
+            columns: 3
+            metrics:
+              - { value: "{{state.invoiceResult.invoiceDate | date}}", label: "Issued" }
+              - { value: "{{state.invoiceResult.dueDate | date}}", label: "Due" }
+              - { value: "{{state.invoiceResult.total}}", label: "Total" }
+          - { kind: kv-grid, source: state.invoiceResult }
+          - kind: download-button
+            label: "Download PDF"
+            source: state.invoiceResult.pdfBase64
+            fileName: "{{state.invoiceResult.invoiceNumber}}.pdf"
+            mimeType: application/pdf
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
