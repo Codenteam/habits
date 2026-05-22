@@ -21,6 +21,7 @@ import NodeConfigPanel from './NodeConfigPanel';
 import Toolbar from './Toolbar';
 import { NodeFactory } from '../lib/NodeFactory';
 import { FrontendBuilderVanilla, UiSpecBuilderVanilla } from '@ha-bits/frontend-builder';
+import { compilePreviewHtml } from '@/lib/uiPreviewCompile';
 import { WorkflowCanvas, applyDagreLayout, WorkflowCanvasRef, WorkflowNode } from '@ha-bits/workflow-canvas';
 
 const nodeTypes: NodeTypes = {
@@ -359,6 +360,7 @@ export default function WorkflowEditor() {
               initialYaml={frontendYaml}
               onChange={handleSaveFrontendYaml}
               height="100%"
+              compilePreviewHtml={compilePreviewHtml}
               defaultMetaId={
                 activeHabit?.name
                   ? activeHabit.name.toLowerCase().replace(/\s+/g, '-')

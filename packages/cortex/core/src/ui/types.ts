@@ -210,6 +210,8 @@ export interface BaseWidget {
   kind: string;
   id?: string;
   className?: string;
+  /** Internal builder-only id for WYSIWYG preview selection (stripped on export). */
+  _builderId?: string;
   /** Template expression evaluating to truthy renders the widget. */
   showWhen?: string;
   /** Template expression evaluating to falsy hides the widget. */

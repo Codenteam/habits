@@ -170,7 +170,9 @@ button { font-family: inherit; }
   border: 1px solid var(--ha-border);
   border-radius: var(--ha-radius);
   padding: var(--ha-pad-lg);
+  margin-bottom: var(--ha-pad);
 }
+.ha-card:last-child { margin-bottom: 0; }
 .ha-card__title { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
 .ha-card__subtitle { color: var(--ha-text-muted); font-size: 13px; margin: 0 0 12px; }
 

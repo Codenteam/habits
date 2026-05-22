@@ -15,13 +15,10 @@
  *     HTML preview powered by the `/api/ui/compile-yaml` endpoint.
  *
  * Layout:
- *   ┌──────────────── header (meta + theme) ───────────────┐
- *   │ [Title] [Id]    [Theme preset] [Mode]                │
- *   ├───────────┬─────────────────────┬────────────────────┤
- *   │ palette   │ canvas (widgets)    │ preview / yaml     │
- *   │ (drag)    │ (drop, reorder,     │ (iframe + monaco-  │
- *   │           │  click to edit)     │  free textarea)    │
- *   └───────────┴─────────────────────┴────────────────────┘
+ *   ┌───────────┬─────────────────────┬─────────────────┬──────────────────────────┐
+ *   │ palette   │ canvas (widgets)    │ live preview    │ settings / yaml / app    │
+ *   │ (drag)    │ (drop, reorder)     │ (iframe)        │ settings tabs            │
+ *   └───────────┴─────────────────────┴─────────────────┴──────────────────────────┘
  */
 
 import React, {
@@ -55,6 +52,7 @@ import {
   Database,
   Zap,
   LayoutTemplate,
+  Settings,
 } from 'lucide-react';
 import { parseYamlToSpecState } from './uiSpecYaml';
 
@@ -75,6 +73,8 @@ export interface UiSpecBuilderProps {
   defaultMetaId?: string;
   /** Convenience to seed `meta.title`. */
   defaultMetaTitle?: string;
+  /** Compile preview HTML in-browser (must pass `builderPreview: true`). */
+  compilePreviewHtml?: (yaml: string) => Promise<string>;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -612,14 +612,13 @@ function widgetNodeToObject(node: WidgetNode): any {
   return out;
 }
 
-function objectToWidgetNode(obj: any): WidgetNode {
-  const { kind, children, ...props } = obj ?? {};
-  return {
-    uid: uid(),
-    kind: kind || 'text',
-    props,
-    children: Array.isArray(children) ? children.map(objectToWidgetNode) : undefined,
-  };
+/** Preview compile payload — includes builder-only `_builderId` for click-to-select. */
+function widgetNodeToPreviewObject(node: WidgetNode): any {
+  const out: any = { kind: node.kind, _builderId: node.uid, ...node.props };
+  if (node.children && node.children.length > 0) {
+    out.children = node.children.map(widgetNodeToPreviewObject);
+  }
+  return out;
 }
 
 function specStateToSpec(s: SpecState): any {
@@ -633,6 +632,12 @@ function specStateToSpec(s: SpecState): any {
   if (s.state && Object.keys(s.state).length > 0) spec.state = s.state;
   if (s.actions && Object.keys(s.actions).length > 0) spec.actions = s.actions;
   spec.widgets = s.widgets.map(widgetNodeToObject);
+  return spec;
+}
+
+function specStateToPreviewSpec(s: SpecState): any {
+  const spec = specStateToSpec(s);
+  spec.widgets = s.widgets.map(widgetNodeToPreviewObject);
   return spec;
 }
 
@@ -671,25 +676,33 @@ export function UiSpecBuilderVanilla({
   compileEndpoint = '/habits/base/api/ui/compile-yaml',
   defaultMetaId,
   defaultMetaTitle,
+  compilePreviewHtml,
 }: UiSpecBuilderProps) {
   const [spec, setSpec] = useState<SpecState>(() =>
     tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle),
   );
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
-  const [rightTab, setRightTab] = useState<'preview' | 'yaml'>('preview');
+  const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>('settings');
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CATEGORIES.map((c) => [c, true])),
   );
-  const [showDataPanel, setShowDataPanel] = useState(false);
   // Drag state — kept in refs to avoid re-renders mid-drag.
   const dragRef = useRef<{ kind?: string; sourceUid?: string }>({});
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   // YAML preview (always derived; cheap enough to compute on every render).
   const yamlText = useMemo(() => {
     const spec2 = specStateToSpec(spec);
+    const head = '# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml\n';
+    return head + emitYaml(spec2);
+  }, [spec]);
+
+  // Preview compile YAML includes `_builderId` on each widget for click-to-select.
+  const previewYamlText = useMemo(() => {
+    const spec2 = specStateToPreviewSpec(spec);
     const head = '# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml\n';
     return head + emitYaml(spec2);
   }, [spec]);
@@ -700,31 +713,57 @@ export function UiSpecBuilderVanilla({
   const debouncedEmit = useMemo(() => debounce((y: string) => onChangeRef.current(y), 250), []);
   useEffect(() => { debouncedEmit(yamlText); }, [yamlText, debouncedEmit]);
 
-  // Live HTML preview via the compile endpoint, debounced.
+  // Live HTML preview — compiled in-browser so builder selection markup is always present.
   const compile = useCallback(async (yaml: string) => {
     setPreviewLoading(true);
     setPreviewError(null);
     try {
+      if (compilePreviewHtml) {
+        setPreviewHtml(await compilePreviewHtml(yaml));
+        return;
+      }
       const res = await fetch(compileEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ yaml }),
+        body: JSON.stringify({ yaml, builderPreview: true }),
       });
       const data = await res.json();
       if (data?.success && data?.data?.html) {
         setPreviewHtml(data.data.html);
       } else {
-        setPreviewError(data?.error || `Compile failed (HTTP ${res.status})`);
+        throw new Error(data?.error || `Compile failed (HTTP ${res.status})`);
       }
     } catch (e: any) {
-      setPreviewError(e?.message || 'Compile request failed');
+      setPreviewError(e?.message || 'Preview compile failed');
     } finally {
       setPreviewLoading(false);
     }
-  }, [compileEndpoint]);
+  }, [compileEndpoint, compilePreviewHtml]);
 
   const debouncedCompile = useMemo(() => debounce(compile, 400), [compile]);
-  useEffect(() => { debouncedCompile(yamlText); }, [yamlText, debouncedCompile]);
+  useEffect(() => { debouncedCompile(previewYamlText); }, [previewYamlText, debouncedCompile]);
+
+  const highlightPreviewSelection = useCallback((id: string | null) => {
+    previewIframeRef.current?.contentWindow?.postMessage(
+      { type: 'ha-builder-highlight', id },
+      '*',
+    );
+  }, []);
+
+  useEffect(() => {
+    highlightPreviewSelection(selectedUid);
+  }, [selectedUid, previewHtml, highlightPreviewSelection]);
+
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'ha-builder-select' && typeof e.data.id === 'string') {
+        setSelectedUid(e.data.id);
+        setRightTab('settings');
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   // ----------------- mutation helpers -----------------
 
@@ -890,141 +929,7 @@ export function UiSpecBuilderVanilla({
       className="flex flex-col bg-slate-950 text-slate-100"
       style={{ height: typeof height === 'number' ? `${height}px` : height }}
     >
-      {/* ============== Header: meta + theme ============== */}
-      <div className="flex-shrink-0 flex flex-wrap items-end gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900">
-        <Field label="Title">
-          <input
-            className={INPUT}
-            value={spec.meta.title}
-            onChange={(e) => {
-              const title = e.target.value;
-              updateMeta({ title, id: spec.meta.id || slugify(title) });
-            }}
-            placeholder="Habit title"
-          />
-        </Field>
-        <Field label="Subtitle">
-          <input
-            className={INPUT}
-            value={spec.meta.subtitle ?? ''}
-            onChange={(e) => updateMeta({ subtitle: e.target.value || undefined })}
-            placeholder="Short description"
-          />
-        </Field>
-        <Field label="App ID" help="Short name used in URLs and exports">
-          <input
-            className={INPUT}
-            value={spec.meta.id}
-            onChange={(e) => updateMeta({ id: slugify(e.target.value) })}
-            placeholder="my-app"
-          />
-        </Field>
-        <Field label="Icon">
-          <input
-            className={`${INPUT} w-16 text-center`}
-            value={spec.meta.icon ?? ''}
-            onChange={(e) => updateMeta({ icon: e.target.value || undefined })}
-            placeholder="✨"
-          />
-        </Field>
-        <div className="flex-1" />
-        <Field label="Color theme">
-          <select
-            className={INPUT}
-            value={spec.theme.preset ?? 'ha-bits-blue'}
-            onChange={(e) => updateTheme({ preset: e.target.value as any })}
-          >
-            {[
-              'ha-bits-blue', 'ha-bits-cyan', 'ha-bits-purple', 'ha-bits-red',
-              'ha-bits-emerald', 'ha-bits-warn', 'aurora', 'cyberpunk',
-              'mobile-blue', 'tailwind-dark', 'showcase-flat',
-            ].map((p) => <option key={p} value={p}>{p.replace(/^ha-bits-/, '').replace(/-/g, ' ')}</option>)}
-          </select>
-        </Field>
-        <Field label="Light or dark">
-          <select
-            className={INPUT}
-            value={spec.theme.mode ?? 'dark'}
-            onChange={(e) => updateTheme({ mode: e.target.value as any })}
-          >
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </Field>
-        <Field label="Page layout">
-          <select
-            className={INPUT}
-            value={spec.layout.type}
-            onChange={(e) => updateLayoutType(e.target.value as any)}
-          >
-            <option value="single">Single page</option>
-            <option value="tabs">Tabs</option>
-            <option value="sidebar">Sidebar</option>
-            <option value="mobile-shell">Mobile app</option>
-            <option value="showcase">Showcase</option>
-          </select>
-        </Field>
-        <button
-          type="button"
-          className={
-            'inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ' +
-            (showDataPanel
-              ? 'border-blue-500/50 bg-blue-500/10 text-blue-200'
-              : 'border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600')
-          }
-          onClick={() => setShowDataPanel((v) => !v)}
-        >
-          <Database className="w-3.5 h-3.5" />
-          {showDataPanel ? 'Hide page data' : 'Page data & interactions'}
-        </button>
-      </div>
-
-      {showDataPanel && (
-        <div className="flex-shrink-0 border-b border-slate-800 bg-slate-900/80 px-4 py-4 space-y-4 max-h-[45vh] overflow-y-auto">
-          <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <LayoutTemplate className="w-4 h-4 text-blue-400" />
-              <div>
-                <h3 className="text-sm font-semibold text-slate-100">Page header</h3>
-                <p className="text-xs text-slate-500">Title bar shown at the top of your app</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-end gap-3">
-              <Field label="Page title">
-                <input
-                  className={INPUT}
-                  value={spec.layout.header?.title ?? ''}
-                  onChange={(e) => updateLayoutHeader({ title: e.target.value || undefined })}
-                  placeholder="Same as habit title"
-                />
-              </Field>
-              <Field label="Page subtitle">
-                <input
-                  className={INPUT}
-                  value={spec.layout.header?.subtitle ?? ''}
-                  onChange={(e) => updateLayoutHeader({ subtitle: e.target.value || undefined })}
-                  placeholder="Short tagline under the title"
-                />
-              </Field>
-              <Field label="Page icon">
-                <input
-                  className={`${INPUT} w-16 text-center`}
-                  value={spec.layout.header?.icon ?? ''}
-                  onChange={(e) => updateLayoutHeader({ icon: e.target.value || undefined })}
-                  placeholder="✨"
-                />
-              </Field>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <StartingValuesEditor state={spec.state} onChange={updateState} />
-            <InteractionsEditor actions={spec.actions} onChange={updateActions} stateKeys={Object.keys(spec.state)} />
-          </div>
-        </div>
-      )}
-
-      {/* ============== Body: palette / canvas / preview ============== */}
+      {/* ============== Body: palette / canvas / preview / yaml-settings ============== */}
       <div className="flex flex-1 min-h-0">
 
         {/* Palette */}
@@ -1068,10 +973,10 @@ export function UiSpecBuilderVanilla({
         </aside>
 
         {/* Canvas */}
-        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-950">
+        <main className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-slate-950">
           <div className="px-4 py-3 text-xs text-slate-500 flex items-center gap-2">
             <PanelsTopLeft className="w-3.5 h-3.5" />
-            Drag widgets from the palette. Click to edit. Drag the handle to reorder.
+            Drag widgets from the palette. Click to select. Drag the handle to reorder.
           </div>
           <CanvasList
             nodes={spec.widgets}
@@ -1085,51 +990,69 @@ export function UiSpecBuilderVanilla({
           />
         </main>
 
-        {/* Right pane: preview + yaml + properties */}
-        <aside className="w-[420px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col">
+        {/* Live preview */}
+        <aside className="w-[380px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0">
+          <div className="px-3 py-2 text-xs text-slate-500 flex items-center gap-2 border-b border-slate-800 flex-shrink-0">
+            {previewLoading ? (
+              <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiling…</>
+            ) : previewError ? (
+              <><AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> <span className="truncate text-amber-300" title={previewError}>{previewError}</span></>
+            ) : (
+              <><Eye className="w-3.5 h-3.5" /> Live preview — click to select</>
+            )}
+          </div>
+          <iframe
+            ref={previewIframeRef}
+            title="ui-spec-preview"
+            srcDoc={previewHtml}
+            sandbox="allow-scripts allow-forms allow-same-origin"
+            className="flex-1 w-full min-h-0 bg-white"
+            onLoad={() => highlightPreviewSelection(selectedUid)}
+          />
+        </aside>
 
-          <div className="flex border-b border-slate-800">
-            <PaneTab active={rightTab === 'preview'} onClick={() => setRightTab('preview')} icon={Eye} label="Preview" />
+        {/* YAML + widget settings + app settings */}
+        <aside className="w-[420px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0">
+          <div className="flex border-b border-slate-800 flex-shrink-0">
+            <PaneTab active={rightTab === 'settings'} onClick={() => setRightTab('settings')} icon={FormInput} label="Settings" />
             <PaneTab active={rightTab === 'yaml'} onClick={() => setRightTab('yaml')} icon={FileCode} label="YAML" />
+            <PaneTab active={rightTab === 'app-settings'} onClick={() => setRightTab('app-settings')} icon={Settings} label="App Settings" />
           </div>
 
-          {rightTab === 'preview' ? (
-            <div className="flex-1 flex flex-col min-h-0">
-              <div className="px-3 py-1.5 text-xs text-slate-500 flex items-center gap-2 border-b border-slate-800">
-                {previewLoading ? (
-                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiling…</>
-                ) : previewError ? (
-                  <><AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> <span className="truncate text-amber-300" title={previewError}>{previewError}</span></>
-                ) : (
-                  <><Eye className="w-3.5 h-3.5" /> Live preview</>
-                )}
-              </div>
-              <iframe
-                title="ui-spec-preview"
-                srcDoc={previewHtml}
-                sandbox="allow-scripts allow-forms allow-same-origin"
-                className="flex-1 w-full bg-white"
-              />
-            </div>
-          ) : (
-            <pre className="flex-1 overflow-auto p-3 text-xs text-slate-200 font-mono whitespace-pre">
+          {rightTab === 'yaml' && (
+            <pre className="flex-1 overflow-auto p-3 text-xs text-slate-200 font-mono whitespace-pre min-h-0">
 {yamlText}
             </pre>
           )}
 
-          {/* Property editor for selected widget */}
-          {selectedNode && (
-            <PropertyPanel
-              node={selectedNode}
-              onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
-              onRemove={() => removeWidget(selectedNode.uid)}
-            />
+          {rightTab === 'settings' && (
+            selectedNode ? (
+              <PropertyPanel
+                node={selectedNode}
+                onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
+                onRemove={() => removeWidget(selectedNode.uid)}
+              />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center min-h-0">
+                <MousePointerClick className="w-8 h-8 text-slate-600" />
+                <p className="text-sm text-slate-400">No widget selected</p>
+                <p className="text-xs text-slate-500 max-w-[240px]">
+                  Click a widget on the canvas or in the live preview to edit its properties here.
+                </p>
+              </div>
+            )
           )}
 
-          {!selectedNode && (
-            <div className="border-t border-slate-800 px-3 py-2 text-xs text-slate-500 flex items-center gap-2">
-              <MousePointerClick className="w-3.5 h-3.5" /> Select a widget on the canvas to edit its properties.
-            </div>
+          {rightTab === 'app-settings' && (
+            <SpecSettingsPanel
+              spec={spec}
+              onUpdateMeta={updateMeta}
+              onUpdateTheme={updateTheme}
+              onUpdateLayoutType={updateLayoutType}
+              onUpdateLayoutHeader={updateLayoutHeader}
+              onUpdateState={updateState}
+              onUpdateActions={updateActions}
+            />
           )}
         </aside>
       </div>
@@ -1173,6 +1096,7 @@ function CanvasList({ nodes, parentUid, onDropAt, onDragStartNode, onSelect, sel
             <div
               className={
                 'group rounded-lg border transition-colors cursor-pointer ' +
+                (node.kind === 'card' ? 'mb-3 ' : '') +
                 (selected
                   ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30'
                   : 'border-slate-800 bg-slate-900 hover:border-slate-700')
@@ -1239,6 +1163,158 @@ function CanvasList({ nodes, parentUid, onDropAt, onDragStartNode, onSelect, sel
 }
 
 // ---------------------------------------------------------------------------
+// Spec settings — meta, theme, layout, state, actions (App Settings tab)
+// ---------------------------------------------------------------------------
+
+interface SpecSettingsPanelProps {
+  spec: SpecState;
+  onUpdateMeta: (patch: Partial<SpecState['meta']>) => void;
+  onUpdateTheme: (patch: Partial<SpecState['theme']>) => void;
+  onUpdateLayoutType: (type: SpecState['layout']['type']) => void;
+  onUpdateLayoutHeader: (patch: Partial<NonNullable<SpecState['layout']['header']>>) => void;
+  onUpdateState: (state: Record<string, any>) => void;
+  onUpdateActions: (actions: Record<string, any>) => void;
+}
+
+function SpecSettingsPanel({
+  spec,
+  onUpdateMeta,
+  onUpdateTheme,
+  onUpdateLayoutType,
+  onUpdateLayoutHeader,
+  onUpdateState,
+  onUpdateActions,
+}: SpecSettingsPanelProps) {
+  return (
+    <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-100">App metadata</h3>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Title">
+            <input
+              className={INPUT}
+              value={spec.meta.title}
+              onChange={(e) => {
+                const title = e.target.value;
+                onUpdateMeta({ title, id: spec.meta.id || slugify(title) });
+              }}
+              placeholder="Habit title"
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              className={INPUT}
+              value={spec.meta.subtitle ?? ''}
+              onChange={(e) => onUpdateMeta({ subtitle: e.target.value || undefined })}
+              placeholder="Short description"
+            />
+          </Field>
+          <Field label="App ID" help="Short name used in URLs and exports">
+            <input
+              className={INPUT}
+              value={spec.meta.id}
+              onChange={(e) => onUpdateMeta({ id: slugify(e.target.value) })}
+              placeholder="my-app"
+            />
+          </Field>
+          <Field label="Icon">
+            <input
+              className={`${INPUT} w-16 text-center`}
+              value={spec.meta.icon ?? ''}
+              onChange={(e) => onUpdateMeta({ icon: e.target.value || undefined })}
+              placeholder="✨"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-100">Theme & layout</h3>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Color theme">
+            <select
+              className={INPUT}
+              value={spec.theme.preset ?? 'ha-bits-blue'}
+              onChange={(e) => onUpdateTheme({ preset: e.target.value as SpecState['theme']['preset'] })}
+            >
+              {[
+                'ha-bits-blue', 'ha-bits-cyan', 'ha-bits-purple', 'ha-bits-red',
+                'ha-bits-emerald', 'ha-bits-warn', 'aurora', 'cyberpunk',
+                'mobile-blue', 'tailwind-dark', 'showcase-flat',
+              ].map((p) => <option key={p} value={p}>{p.replace(/^ha-bits-/, '').replace(/-/g, ' ')}</option>)}
+            </select>
+          </Field>
+          <Field label="Light or dark">
+            <select
+              className={INPUT}
+              value={spec.theme.mode ?? 'dark'}
+              onChange={(e) => onUpdateTheme({ mode: e.target.value as SpecState['theme']['mode'] })}
+            >
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </Field>
+          <Field label="Page layout">
+            <select
+              className={INPUT}
+              value={spec.layout.type}
+              onChange={(e) => onUpdateLayoutType(e.target.value as SpecState['layout']['type'])}
+            >
+              <option value="single">Single page</option>
+              <option value="tabs">Tabs</option>
+              <option value="sidebar">Sidebar</option>
+              <option value="mobile-shell">Mobile app</option>
+              <option value="showcase">Showcase</option>
+            </select>
+          </Field>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <LayoutTemplate className="w-4 h-4 text-blue-400" />
+          <div>
+            <h3 className="text-sm font-semibold text-slate-100">Page header</h3>
+            <p className="text-xs text-slate-500">Title bar shown at the top of your app</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Page title">
+            <input
+              className={INPUT}
+              value={spec.layout.header?.title ?? ''}
+              onChange={(e) => onUpdateLayoutHeader({ title: e.target.value || undefined })}
+              placeholder="Same as habit title"
+            />
+          </Field>
+          <Field label="Page subtitle">
+            <input
+              className={INPUT}
+              value={spec.layout.header?.subtitle ?? ''}
+              onChange={(e) => onUpdateLayoutHeader({ subtitle: e.target.value || undefined })}
+              placeholder="Short tagline under the title"
+            />
+          </Field>
+          <Field label="Page icon">
+            <input
+              className={`${INPUT} w-16 text-center`}
+              value={spec.layout.header?.icon ?? ''}
+              onChange={(e) => onUpdateLayoutHeader({ icon: e.target.value || undefined })}
+              placeholder="✨"
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <StartingValuesEditor state={spec.state} onChange={onUpdateState} />
+        <InteractionsEditor actions={spec.actions} onChange={onUpdateActions} stateKeys={Object.keys(spec.state)} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Property panel — fields rendered per the widget definition
 // ---------------------------------------------------------------------------
 
@@ -1252,13 +1328,13 @@ function PropertyPanel({ node, onChange, onRemove }: PropertyPanelProps) {
   const def = CATALOG_BY_KIND.get(node.kind);
   if (!def) {
     return (
-      <div className="border-t border-slate-800 p-3 text-xs text-slate-400">
+      <div className="flex-1 overflow-y-auto p-3 text-xs text-slate-400 min-h-0">
         Unknown widget kind: <code>{node.kind}</code>
       </div>
     );
   }
   return (
-    <div className="border-t border-slate-800 bg-slate-900 max-h-[40%] overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0 bg-slate-900">
       <div className="px-3 py-2 flex items-center gap-2 sticky top-0 bg-slate-900 border-b border-slate-800 z-10">
         <span className="text-sm font-semibold text-slate-100">{def.label}</span>
         <code className="text-xs text-slate-500">{node.kind}</code>

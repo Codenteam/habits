@@ -23,6 +23,8 @@
       "@ha-bits/frontend-builder/*": ["../frontend-builder/src/*"],
       "@ha-bits/workflow-canvas": ["../../workflow-canvas/src/index.ts"],
       "@ha-bits/workflow-canvas/*": ["../../workflow-canvas/src/*"],
+      "@ha-bits/cortex-core/ui": ["../../cortex/core/src/ui/index.ts"],
+      "@ha-bits/cortex-core/ui/*": ["../../cortex/core/src/ui/*"],
       "@habits/shared/types": ["../../../packages/core/src/types.ts"],
       "@habits/shared/*": ["../../../packages/core/src/*"],
       "@/*": ["./src/*"]

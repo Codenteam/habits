@@ -6,9 +6,16 @@ import {
   convertHabitYamlToHabit,
   resolvePath,
   parseStack,
+  parseHabitFile,
+  isHabitArchiveFile,
   FileEntry,
   HabitYaml,
 } from './stackParser';
+import { readFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const JSZip = require('jszip') as typeof import('jszip');
 
 describe('stackParser', () => {
   describe('isStackConfigFile', () => {
@@ -192,6 +199,16 @@ edges: []
 `;
       expect(() => parseHabitYaml(invalidHabit, 'habit.yaml'))
         .toThrow('Habit must have a "nodes" array');
+    });
+
+    it('should default missing edges to an empty array', () => {
+      const habitWithoutEdges = `
+id: test
+name: Test
+nodes: []
+`;
+      const result = parseHabitYaml(habitWithoutEdges, 'habit.yaml');
+      expect(result.edges).toEqual([]);
     });
   });
 
@@ -429,6 +446,55 @@ server:
       expect(result.frontendHtml).toBe('<html><body>Hello</body></html>');
     });
 
+    it('should load frontend YAML if specified in directory mode', async () => {
+      const files: FileEntry[] = [
+        {
+          name: 'stack.yaml',
+          path: 'stack.yaml',
+          content: `
+version: "1.0"
+workflows: []
+server:
+  frontend: ./frontend
+`
+        },
+        {
+          name: 'index.yaml',
+          path: 'frontend/index.yaml',
+          content: 'version: 1\nmeta:\n  title: Test UI'
+        }
+      ];
+
+      const result = await parseStack(files, 'stack.yaml');
+
+      expect(result.frontendYaml).toBe('version: 1\nmeta:\n  title: Test UI');
+      expect(result.frontendHtml).toBeUndefined();
+    });
+
+    it('should prefer frontend YAML path when server.frontend points to a yaml file', async () => {
+      const files: FileEntry[] = [
+        {
+          name: 'stack.yaml',
+          path: 'stack.yaml',
+          content: `
+version: "1.0"
+workflows: []
+server:
+  frontend: ./frontend/index.yaml
+`
+        },
+        {
+          name: 'index.yaml',
+          path: 'frontend/index.yaml',
+          content: 'version: 1\nmeta:\n  title: Direct YAML'
+        }
+      ];
+
+      const result = await parseStack(files, 'stack.yaml');
+
+      expect(result.frontendYaml).toBe('version: 1\nmeta:\n  title: Direct YAML');
+    });
+
     it('should handle invalid habit YAML and report error', async () => {
       const files: FileEntry[] = [
         {
@@ -456,6 +522,69 @@ without: required fields
       expect(result.habits).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain('bad.yaml');
+    });
+  });
+
+  describe('isHabitArchiveFile', () => {
+    it('should detect .habit files', () => {
+      expect(isHabitArchiveFile('hello-world.habit')).toBe(true);
+      expect(isHabitArchiveFile('Hello.HABIT')).toBe(true);
+      expect(isHabitArchiveFile('workflow.yaml')).toBe(false);
+    });
+  });
+
+  describe('parseHabitFile', () => {
+    it('should parse a .habit archive with frontend/index.yaml', async () => {
+      const zip = new JSZip();
+      zip.file('stack.yaml', `
+version: "1.0"
+workflows:
+  - id: demo
+    path: ./demo.yaml
+    enabled: true
+server:
+  frontend: ./frontend
+`);
+      zip.file('demo.yaml', `
+id: demo
+name: Demo Habit
+nodes: []
+edges: []
+`);
+      zip.file('frontend/index.yaml', 'version: 1\nmeta:\n  title: Packed UI');
+
+      const buffer = await zip.generateAsync({ type: 'arraybuffer' });
+      const result = await parseHabitFile(buffer);
+
+      expect(result.habits).toHaveLength(1);
+      expect(result.habits[0].name).toBe('Demo Habit');
+      expect(result.frontendYaml).toBe('version: 1\nmeta:\n  title: Packed UI');
+    });
+
+    it('should throw when stack.yaml is missing from archive', async () => {
+      const zip = new JSZip();
+      zip.file('demo.yaml', 'id: demo\nname: Demo\nnodes: []\nedges: []');
+      const buffer = await zip.generateAsync({ type: 'arraybuffer' });
+
+      await expect(parseHabitFile(buffer)).rejects.toThrow('No stack.yaml found');
+    });
+
+    it('should parse the hello-world showcase .habit file', async () => {
+      const habitPath = resolve(
+        __dirname,
+        '../../../../../showcase/hello-world/dist/hello-world.habit'
+      );
+      if (!existsSync(habitPath)) {
+        return;
+      }
+
+      const buf = readFileSync(habitPath);
+      const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+      const result = await parseHabitFile(arrayBuffer);
+
+      expect(result.habits.length).toBeGreaterThan(0);
+      expect(result.frontendYaml).toContain('version:');
+      expect(result.errors).toHaveLength(0);
     });
   });
 });

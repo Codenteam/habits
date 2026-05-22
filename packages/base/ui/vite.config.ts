@@ -17,6 +17,7 @@ export default defineConfig({
       '@ha-bits/core': path.resolve(__dirname, '../../core/src/index.ts'),
       '@ha-bits/frontend-builder': path.resolve(__dirname, '../frontend-builder/src/index.ts'),
       '@ha-bits/workflow-canvas': path.resolve(__dirname, '../../workflow-canvas/src/index.ts'),
+      '@ha-bits/cortex-core/ui': path.resolve(__dirname, '../../cortex/core/src/ui/index.ts'),
       '@habits/shared': path.resolve(__dirname, '../../core/src'),
     },
   },

@@ -1,6 +1,6 @@
-import type { LayoutSpec, NavItemSpec, UiSpec, ViewSpec, WidgetSpec } from './types';
+import type { NavItemSpec, UiSpec, ViewSpec, WidgetSpec } from './types';
 import { renderWidgets } from './widgets';
-import { attrs, cls, escapeAttr, escapeHtml, safeJson, tmplText } from './helpers';
+import { attrs, cls, escapeAttr, escapeHtml, tmplText } from './helpers';
 
 function viewsFromSpec(spec: UiSpec): Record<string, ViewSpec> {
   const out: Record<string, ViewSpec> = {};

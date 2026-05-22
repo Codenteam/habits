@@ -1,12 +1,21 @@
 import { useState, useRef, useCallback } from 'react';
 import { FolderOpen, FileJson, AlertCircle, Check, X, Loader2, Upload } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
-import { addHabit, setActiveHabit, clearWorkflow } from '../store/slices/workflowSlice';
-import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
+import { addHabit, setActiveHabit, clearWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
+import {
+  setFrontendHtml,
+  setFrontendYaml,
+  clearFrontendHtml,
+  clearFrontendYaml,
+  clearEnvContent,
+} from '../store/slices/uiSlice';
 import {
   FileEntry,
+  ParsedStack,
   detectConfigFiles,
   parseStack,
+  parseHabitFile,
+  isHabitArchiveFile,
   readFilesFromFileList,
   getRootFolderName,
   parseHabitYaml,
@@ -31,7 +40,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
   const [selectedConfig, setSelectedConfig] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
   const [result, setResult] = useState<{
-    type: 'file' | 'folder';
+    type: 'file' | 'folder' | 'habit';
     habitsLoaded: number;
     errors: string[];
     frontendLoaded: boolean;
@@ -51,7 +60,42 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
     onClose();
   }, [onClose, resetState]);
 
-  // Handle single file selection (JSON or YAML workflow)
+  const applyParsedStack = useCallback((parsed: ParsedStack, resultType: 'folder' | 'habit') => {
+    dispatch(clearWorkflow());
+    dispatch(clearFrontendHtml());
+    dispatch(clearFrontendYaml());
+    dispatch(clearEnvContent());
+
+    if (parsed.habits.length > 0) {
+      parsed.habits.forEach((habit, index) => {
+        dispatch(addHabit(habit));
+        if (index === 0) {
+          dispatch(setActiveHabit(habit.id));
+        }
+      });
+    }
+
+    if (parsed.frontendHtml) {
+      dispatch(setFrontendHtml(parsed.frontendHtml));
+    }
+    if (parsed.frontendYaml) {
+      dispatch(setFrontendYaml(parsed.frontendYaml));
+    }
+
+    if (parsed.envVariables && Object.keys(parsed.envVariables).length > 0) {
+      dispatch(setEnvVariables(parsed.envVariables));
+    }
+
+    setResult({
+      type: resultType,
+      habitsLoaded: parsed.habits.length,
+      errors: parsed.errors,
+      frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
+    });
+    setMode('result');
+  }, [dispatch]);
+
+  // Handle single file selection (JSON, YAML workflow, or .habit archive)
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -59,26 +103,33 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
     setMode('loading');
 
     try {
-      const content = await file.text();
-      // Parse YAML habit file and convert to workflow format
-      const habitYaml = parseHabitYaml(content, file.name);
-      const parsedHabit = convertHabitYamlToHabit(habitYaml);
-      
-      // Clear existing workflow and add the parsed habit
-      dispatch(clearWorkflow());
-      dispatch(addHabit(parsedHabit));
-      dispatch(setActiveHabit(parsedHabit.id));
-      
-      setResult({
-        type: 'file',
-        habitsLoaded: 1,
-        errors: [],
-        frontendLoaded: false,
-      });
-      setMode('result');
+      if (isHabitArchiveFile(file.name)) {
+        const buffer = await file.arrayBuffer();
+        const parsed = await parseHabitFile(buffer);
+        applyParsedStack(parsed, 'habit');
+      } else {
+        const content = await file.text();
+        const habitYaml = parseHabitYaml(content, file.name);
+        const parsedHabit = convertHabitYamlToHabit(habitYaml);
+
+        dispatch(clearWorkflow());
+        dispatch(clearFrontendHtml());
+        dispatch(clearFrontendYaml());
+        dispatch(clearEnvContent());
+        dispatch(addHabit(parsedHabit));
+        dispatch(setActiveHabit(parsedHabit.id));
+
+        setResult({
+          type: 'file',
+          habitsLoaded: 1,
+          errors: [],
+          frontendLoaded: false,
+        });
+        setMode('result');
+      }
     } catch (error) {
       setResult({
-        type: 'file',
+        type: isHabitArchiveFile(file.name) ? 'habit' : 'file',
         habitsLoaded: 0,
         errors: [error instanceof Error ? error.message : 'Failed to parse workflow file'],
         frontendLoaded: false,
@@ -86,11 +137,10 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
       setMode('result');
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [dispatch]);
+  }, [dispatch, applyParsedStack]);
 
   // Handle folder selection
   const handleFolderSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,42 +191,10 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
 
   const loadStackFromConfig = useCallback(async (fileEntries: FileEntry[], configPath: string) => {
     setMode('loading');
-    
+
     try {
       const parsed = await parseStack(fileEntries, configPath);
-      
-      // Clear existing workflow and load habits
-      if (parsed.habits.length > 0) {
-        dispatch(clearWorkflow());
-        
-        // Add each habit to the store
-        parsed.habits.forEach((habit, index) => {
-          dispatch(addHabit(habit));
-          
-          // Set the first habit as active
-          if (index === 0) {
-            dispatch(setActiveHabit(habit.id));
-          }
-        });
-      }
-      
-      // Load frontend HTML if available
-      if (parsed.frontendHtml) {
-        dispatch(setFrontendHtml(parsed.frontendHtml));
-      }
-
-      // Load frontend YAML if available
-      if (parsed.frontendYaml) {
-        dispatch(setFrontendYaml(parsed.frontendYaml));
-      }
-      
-      setResult({
-        type: 'folder',
-        habitsLoaded: parsed.habits.length,
-        errors: parsed.errors,
-        frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
-      });
-      setMode('result');
+      applyParsedStack(parsed, 'folder');
     } catch (error) {
       setResult({
         type: 'folder',
@@ -186,7 +204,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
       });
       setMode('result');
     }
-  }, [dispatch]);
+  }, [applyParsedStack]);
 
   const handleConfigSelect = useCallback(() => {
     if (selectedConfig) {
@@ -225,7 +243,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,.yaml,.yml"
+                accept=".json,.yaml,.yml,.habit"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -249,7 +267,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
                   <FileJson className="w-10 h-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
                   <div className="text-center">
                     <div className="text-white font-medium">Single File</div>
-                    <div className="text-slate-400 text-xs mt-1">JSON or YAML workflow</div>
+                    <div className="text-slate-400 text-xs mt-1">JSON, YAML, or .habit</div>
                   </div>
                 </button>
                 
@@ -266,7 +284,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
               </div>
               
               <div className="text-xs text-slate-500 mt-4 space-y-1">
-                <p><strong>Single File:</strong> Load a .json or .yaml workflow file directly</p>
+                <p><strong>Single File:</strong> Load a .json, .yaml workflow, or packed .habit archive</p>
                 <p><strong>Folder:</strong> Open a habits stack with stack.yaml/config.json and multiple habit files</p>
               </div>
             </div>
@@ -343,8 +361,12 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
                   <div>
                     <p className="text-green-400 font-medium">Successfully loaded!</p>
                     <p className="text-green-300 text-sm mt-1">
-                      {result.type === 'file' ? 'Workflow' : `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''}`} loaded
-                      {result.frontendLoaded && ' • Frontend loaded'}
+                      {result.type === 'file'
+                        ? 'Workflow'
+                        : result.type === 'habit'
+                          ? `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''} from .habit`
+                          : `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''}`} loaded
+                      {result.frontendLoaded && ' • UI (New) frontend loaded'}
                     </p>
                   </div>
                 </div>

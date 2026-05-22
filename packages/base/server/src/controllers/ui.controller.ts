@@ -16,12 +16,12 @@ export class UiController {
    */
   compileYaml = (req: Request, res: Response): void => {
     try {
-      const { yaml } = req.body ?? {};
+      const { yaml, builderPreview } = req.body ?? {};
       if (typeof yaml !== 'string' || !yaml.trim()) {
         res.status(400).json(createResponse(false, undefined, 'yaml string is required'));
         return;
       }
-      const { html } = compileUiYaml(yaml);
+      const { html } = compileUiYaml(yaml, { builderPreview: !!builderPreview });
       res.json(createResponse(true, { html }));
     } catch (err: any) {
       const message = err && err.message ? err.message : String(err);

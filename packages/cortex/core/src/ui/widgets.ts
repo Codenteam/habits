@@ -49,6 +49,15 @@ export function renderWidgets(widgets: WidgetSpec[] | undefined): string {
 }
 
 export function renderWidget(w: WidgetSpec): string {
+  const html = renderWidgetInner(w);
+  if (!w._builderId) return html;
+  return `<div${attrs({
+    class: 'ha-builder-target',
+    'data-ha-builder-id': w._builderId,
+  })}>${html}</div>`;
+}
+
+function renderWidgetInner(w: WidgetSpec): string {
   // Common wrapper attributes (visibility gates apply to every widget).
   const wrap = (inner: string, extraCls?: string): string => {
     const visAttrs: Record<string, string | undefined> = {};

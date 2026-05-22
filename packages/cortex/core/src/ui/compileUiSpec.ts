@@ -2,6 +2,7 @@ import type { UiSpec } from './types';
 import { renderThemeCss } from './theme';
 import { renderLayout } from './layouts';
 import { RUNTIME_JS } from './runtime';
+import { BUILDER_PREVIEW_CSS, BUILDER_PREVIEW_JS } from './builderPreview';
 import { escapeHtml, resetIdCounter, safeJson } from './helpers';
 import { parseUiSpec } from './parseSpec';
 
@@ -14,6 +15,8 @@ export interface CompileOptions {
   documentTitle?: string;
   /** Pretty-print the output. Default true. */
   pretty?: boolean;
+  /** WYSIWYG builder preview: inject selection overlays and disable interactions. */
+  builderPreview?: boolean;
 }
 
 export interface CompiledUi {
@@ -43,12 +46,14 @@ export function compileUiSpec(spec: UiSpec, opts: CompileOptions = {}): Compiled
 ${opts.extraHead ?? ''}
 <style>
 ${themeCss}
+${opts.builderPreview ? BUILDER_PREVIEW_CSS : ''}
 </style>
 </head>
 <body>
 ${body}
 <script type="application/json" id="__ha_cfg">${safeJson(cfg)}</script>
 <script>${RUNTIME_JS}</script>
+${opts.builderPreview ? `<script>${BUILDER_PREVIEW_JS}</script>` : ''}
 </body>
 </html>`;
   return { html };
