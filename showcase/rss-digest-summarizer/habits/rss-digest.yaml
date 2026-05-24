@@ -33,7 +33,7 @@ nodes:
         language: javascript
         script: |
           async function main(items, feedTitle) {
-            const contents = (Array.isArray(items) ? items : []).map(item => ({
+            const contents = (Array.isArray(items) ? items : (items ? [items] : [])).map(item => ({
               id:    item.guid  || item.link  || item.title || '',
               type:  'rss',
               title: item.title || '(Untitled)',
@@ -61,7 +61,7 @@ nodes:
         continueOnError: true
         collectResults: true
 
-  # Step 4: Post the complete digest to Slack via send-digest
+  # Step 4: Post one Slack message per summary via send-digest
   - id: digest
     type: action
     data:
@@ -70,12 +70,7 @@ nodes:
       module: "@ha-bits/bit-loop"
       operation: forEach
       params:
-        items: |
-          [{
-            "summariesJson": {{summarize-all.results}},
-            "contentCount": "{{map-items.result.count}}",
-            "digestDate": "{{habits.input.digestDate}}"
-          }]
+        items: "{{summarize-all.results}}"
         habitId: send-digest
         inputKey: digestInput
         collectResults: true

@@ -1,24 +1,26 @@
 ---
-title: "AI Agent Lead Enrichment"
-description: "Score and enrich leads with AI, then automatically sync them to HubSpot CRM. Submit a lead form, let OpenAI evaluate the contact quality, and push enriched data in one workflow."
+title: "RSS Digest Summarizer"
+description: "Poll any RSS/Atom feed for new articles, summarize each with AI, and post a curated digest to a Slack channel automatically."
 aside: false
 ---
 
 <script setup>
-import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
+import { Brain, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-1.webp', caption: 'AI Agent Lead Enrichment' },
-    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-2.webp', caption: 'AI Agent Lead Enrichment' },
-    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-3.webp', caption: 'AI Agent Lead Enrichment' }
+    { img: '/showcase/rss-digest-summarizer/rss-digest-summarizer-1.webp', caption: 'RSS Digest Summarizer' },
+    { img: '/showcase/rss-digest-summarizer/rss-digest-summarizer-2.webp', caption: 'RSS Digest Summarizer' },
+    { img: '/showcase/rss-digest-summarizer/rss-digest-summarizer-3.webp', caption: 'RSS Digest Summarizer' }
 ]
 
 const habitTabs = [
-    { label: 'enrich-lead', url: '/showcase/ai-agent-lead-enrichment/enrich-lead.yaml' }
+    { label: 'rss-digest', url: '/showcase/rss-digest-summarizer/rss-digest.yaml' },
+    { label: 'summarize-content', url: '/showcase/rss-digest-summarizer/summarize-content.yaml' },
+    { label: 'send-digest', url: '/showcase/rss-digest-summarizer/send-digest.yaml' }
 ]
 </script>
 
-# AI Agent Lead Enrichment
+# RSS Digest Summarizer
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -28,10 +30,10 @@ const habitTabs = [
         Beginner
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-crm"><component :is="Tag" :size="12" /> crm</span> <span class="showcase-tag tag-hubspot"><component :is="Tag" :size="12" /> hubspot</span> <span class="showcase-tag tag-sales"><component :is="Tag" :size="12" /> sales</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-rss"><component :is="Tag" :size="12" /> rss</span> <span class="showcase-tag tag-slack"><component :is="Tag" :size="12" /> slack</span> <span class="showcase-tag tag-productivity"><component :is="Tag" :size="12" /> productivity</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="ai-agent-lead-enrichment" />
+      <DownloadExample examplePath="rss-digest-summarizer" />
     </div>
   </div>
 </div>
@@ -42,37 +44,41 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Score and enrich leads with AI, then automatically sync them to HubSpot CRM. Submit a lead form, let OpenAI evaluate the contact quality, and push enriched data in one workflow.</p>
+<p class="showcase-description">Poll any RSS/Atom feed for new articles, summarize each with AI, and post a curated digest to a Slack channel automatically.</p>
 
-**AI Agent Lead Enrichment** is a full-stack automation that combines AI-powered lead scoring
-with HubSpot CRM integration to qualify and store leads with minimal effort.
+**RSS Digest Summarizer** is an automation that polls any RSS or Atom feed for new articles,
+uses OpenAI to summarise each item, and delivers a clean digest report to a Slack channel on
+a configurable schedule.
 
 ## What it does
 
-- **Lead intake** : Accepts lead details (email, name, company, phone) via an interactive frontend form
-- **AI lead scoring** : Uses OpenAI to analyse the email domain and company name and assign a quality score between 0 and 100
-- **CRM sync** : Creates or updates the contact in HubSpot with the enriched score via the `enrich-lead` habit
+- **RSS monitoring**: Polls any RSS/Atom feed for new articles with `rss-digest` (every 3 minutes by default)
+- **AI summarisation**: Passes each article through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
+- **Slack delivery**: Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
 
 ## Environment variables (`.env` / keyring on apps)
 
 | Variable | Purpose |
 |---|---|
-| `HABITS_OPENAI_API_KEY` | OpenAI API key for AI-powered lead scoring |
-| `HABITS_HUBSPOT_ACCESS_TOKEN` | HubSpot Private App access token for CRM sync |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for content summarisation |
+| `HABITS_SLACK_BOT_TOKEN` | Slack Bot User OAuth Token (`xoxb-...`) |
+| `HABITS_SLACK_DIGEST_CHANNEL` | Slack channel ID to post the digest to |
+| `HABITS_RSS_FEED_URL` | RSS/Atom feed URL to monitor for new articles |
 
 ## How to set up
 
 1. Copy `.env.example` to `.env` and fill in your credentials.
-2. Create a HubSpot Private App with the required CRM scopes and paste the token as `HABITS_HUBSPOT_ACCESS_TOKEN`.
-3. On desktop/mobile apps, the same keys are stored securely in the system keyring.
-4. Run the `enrich-lead` habit, fill in the lead form, and the contact will be scored and synced to HubSpot automatically.
+2. Set any RSS/Atom feed URL in `HABITS_RSS_FEED_URL`.
+3. Create a Slack app, add `chat:write` and `channels:read` bot scopes, install it to your workspace, and copy the `xoxb-` token.
+4. Invite the bot to your target channel and copy the Channel ID into `HABITS_SLACK_DIGEST_CHANNEL`.
+5. Click **Start Automation** in the UI — articles will be discovered, summarized, and posted to Slack every 3 minutes.
 
 ## Tech stack
 
 - **habits framework** for workflow orchestration
-- **OpenAI** (`@ha-bits/bit-openai`) for natural-language lead scoring
-- **HubSpot** (`@ha-bits/bit-hubspot`) for CRM contact creation and updates
-- **Frontend habit** for interactive lead submission UI
+- **OpenAI** (`@ha-bits/bit-openai`) for natural-language article summarisation
+- **RSS** (`@ha-bits/bit-rss`) for feed polling
+- **Slack** (`@ha-bits/bit-slack`) for digest delivery
 
 
 
@@ -112,23 +118,29 @@ with HubSpot CRM integration to qualify and store leads with minimal effort.
 ## Requirements
 
 - OPENAI_API_KEY (OpenAI API key)
-- HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
+- SLACK_BOT_TOKEN (Slack Bot User OAuth Token)
+- SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
+- RSS_FEED_URL (RSS/Atom feed URL to monitor for new articles)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/ai-agent-lead-enrichment/stack.yaml [stack.yaml]
+<<< @/../showcase/rss-digest-summarizer/stack.yaml [stack.yaml]
 
-<<< @/../showcase/ai-agent-lead-enrichment/.env.example [.env.example]
+<<< @/../showcase/rss-digest-summarizer/.env.example [.env.example]
 
-<<< @/../showcase/ai-agent-lead-enrichment/habits/enrich-lead.yaml [enrich-lead.yaml]
+<<< @/../showcase/rss-digest-summarizer/habits/rss-digest.yaml [rss-digest.yaml]
+
+<<< @/../showcase/rss-digest-summarizer/habits/send-digest.yaml [send-digest.yaml]
+
+<<< @/../showcase/rss-digest-summarizer/habits/summarize-content.yaml [summarize-content.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="ai-agent-lead-enrichment" />
+<ExampleRunner examplePath="rss-digest-summarizer" />
 
-<DownloadExample examplePath="ai-agent-lead-enrichment" />
+<DownloadExample examplePath="rss-digest-summarizer" />
 
 
 <ContactForm

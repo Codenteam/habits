@@ -1,7 +1,7 @@
 version: "1.0"
-name: "Content Digest Summarizer"
+name: "Email Digest Summarizer"
 description: >
-  Fetches contents (emails, RSS articles, or news), summarizes each one with OpenAI,
+  Fetches unread emails from Gmail via IMAP, summarizes each one with OpenAI,
   and posts a digest of all summaries to a Slack channel.
 
 workflows:
@@ -23,10 +23,6 @@ workflows:
 
   - id: content-digest
     path: ./habits/content-digest.yaml
-    enabled: true
-
-  - id: rss-digest
-    path: ./habits/rss-digest.yaml
     enabled: true
 
 server:

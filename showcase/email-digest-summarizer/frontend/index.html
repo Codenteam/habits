@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Content Digest Summarizer</title>
+  <title>Email Digest Summarizer</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -199,7 +199,7 @@
       .auto-btn { justify-content: center; }
     }
 
-    #run-btn, #run-rss-btn {
+    #run-btn {
       flex: 1;
       padding: 16px 24px;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
@@ -217,12 +217,12 @@
       letter-spacing: 0.01em;
     }
 
-    #run-btn:hover:not(:disabled), #run-rss-btn:hover:not(:disabled) {
+    #run-btn:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(59,130,246,0.38);
     }
 
-    #run-btn:disabled, #run-rss-btn:disabled {
+    #run-btn:disabled {
       opacity: 0.55;
       cursor: not-allowed;
       transform: none;
@@ -284,81 +284,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Mode selection ─────────────────────────────────────────────────────── */
-    .mode-select {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .mode-btn-card {
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      padding: 28px 20px;
-      cursor: pointer;
-      text-align: center;
-      transition: border-color 0.2s, background 0.2s, transform 0.15s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      color: var(--text);
-    }
-
-    .mode-btn-card:hover {
-      border-color: var(--accent);
-      background: rgba(59,130,246,0.07);
-      transform: translateY(-2px);
-    }
-
-    .mode-btn-card .mode-icon  { font-size: 2rem; }
-    .mode-btn-card .mode-label { font-size: 1rem; font-weight: 700; }
-    .mode-btn-card .mode-desc  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
-
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      cursor: pointer;
-      margin-bottom: 16px;
-      transition: color 0.15s;
-      background: none;
-      border: none;
-      padding: 0;
-    }
-    .back-link:hover { color: var(--accent); }
-
-    .input-label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 8px;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 12px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-size: 0.92rem;
-      margin-bottom: 14px;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-    .input-field:focus { border-color: var(--accent); }
-    .input-field::placeholder { color: var(--muted); }
-
-    @media (max-width: 480px) { .mode-select { grid-template-columns: 1fr; } }
-
-    #status-log, #rss-status-log {
+    #status-log {
       display: none;
       margin-top: 16px;
       background: #050a14;
@@ -374,11 +300,11 @@
       line-height: 1.9;
     }
 
-    #status-log .ll, #rss-status-log .ll             { display: block; }
-    #status-log .ll.info, #rss-status-log .ll.info   { color: var(--cyan); }
-    #status-log .ll.ok, #rss-status-log .ll.ok       { color: var(--green); }
-    #status-log .ll.warn, #rss-status-log .ll.warn   { color: var(--yellow); }
-    #status-log .ll.err, #rss-status-log .ll.err     { color: var(--red); }
+    #status-log .ll             { display: block; }
+    #status-log .ll.info   { color: var(--cyan); }
+    #status-log .ll.ok     { color: var(--green); }
+    #status-log .ll.warn   { color: var(--yellow); }
+    #status-log .ll.err    { color: var(--red); }
 
     .stats-grid {
       display: none;
@@ -437,17 +363,6 @@
     .slack-info { flex: 1; min-width: 0; }
     .slack-info h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
     .slack-info p  { font-size: 0.78rem; color: var(--muted); }
-
-    .slack-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    .slack-tag {
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-    .slack-tag span { color: var(--green); font-weight: 600; }
 
     #summaries-section { display: none; }
     #summaries-section.visible { display: block; }
@@ -614,150 +529,14 @@
       .badges { width: 100%; }
       .slack-card.visible { flex-direction: column; gap: 12px; }
     }
-
-    /* ── RSS Digest card: social-poster style ──────────────────────────── */
-    .rss-platforms {
-      display: flex; justify-content: center; gap: 10px;
-      margin-bottom: 20px; flex-wrap: wrap;
-    }
-    .rss-badge {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 999px;
-      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; border: 1px solid;
-    }
-    .rss-badge-rss    { background: rgba(245,158,11,0.1);  border-color: rgba(245,158,11,0.35); color: #f59e0b; }
-    .rss-badge-openai { background: rgba(99,102,241,0.1);  border-color: rgba(99,102,241,0.35); color: #818cf8; }
-    .rss-badge-slack  { background: rgba(74,21,75,0.15);   border-color: rgba(168,85,247,0.35); color: #c084fc; }
-
-    .rss-info-card {
-      background: var(--surface2); border: 1px solid var(--border2);
-      border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 20px;
-    }
-    .rss-info-row {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 8px 0; border-bottom: 1px solid var(--border);
-    }
-    .rss-info-row:last-child { border-bottom: none; }
-    .rss-info-label {
-      flex-shrink: 0; width: 80px; font-size: 0.73rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
-    }
-    .rss-info-value { font-size: 0.87rem; color: var(--text); }
-    .rss-info-value code {
-      background: var(--surface); border: 1px solid var(--border2); border-radius: 4px;
-      padding: 1px 7px; font-family: 'SF Mono','Fira Code',monospace;
-      font-size: 0.79rem; color: #a5f3fc;
-    }
-
-    /* animated dots pipeline */
-    .rss-pipe {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0; margin-bottom: 24px; padding: 24px 8px; overflow-x: auto;
-    }
-    .rss-pipe-step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
-    .rss-pipe-dot {
-      width: 38px; height: 38px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; border: 2px solid var(--border2); background: var(--surface2);
-    }
-    .rss-dot-rss   { border-color: rgba(245,158,11,0.5); }
-    .rss-dot-ai    { border-color: rgba(99,102,241,0.5); }
-    .rss-dot-slack { border-color: rgba(168,85,247,0.5); }
-
-    @keyframes rdot-wave-rss {
-      0%,22%,100% { box-shadow:none; opacity:0.6; transform:scale(1); }
-      11% { box-shadow:0 0 0 7px rgba(245,158,11,0.18),0 0 18px rgba(245,158,11,0.45); opacity:1; transform:scale(1.12); }
-    }
-    @keyframes rdot-wave-ai {
-      0%,22%,100% { box-shadow:none; opacity:0.6; transform:scale(1); }
-      11% { box-shadow:0 0 0 7px rgba(99,102,241,0.18),0 0 18px rgba(99,102,241,0.45); opacity:1; transform:scale(1.12); }
-    }
-    @keyframes rdot-wave-slack {
-      0%,22%,100% { box-shadow:none; opacity:0.6; transform:scale(1); }
-      11% { box-shadow:0 0 0 7px rgba(168,85,247,0.18),0 0 18px rgba(168,85,247,0.45); opacity:1; transform:scale(1.12); }
-    }
-    @keyframes rarrow-flow {
-      0%,22%,100% { opacity:0.25; }
-      11% { opacity:1; background: var(--accent); }
-    }
-
-    #rdot-rss   { animation: rdot-wave-rss   3.6s ease-in-out infinite 0s; }
-    #rdot-ai    { animation: rdot-wave-ai    3.6s ease-in-out infinite 1.2s; }
-    #rdot-slack { animation: rdot-wave-slack 3.6s ease-in-out infinite 2.4s; }
-    .rss-pipe > div:nth-child(2) { animation: rarrow-flow 3.6s ease-in-out infinite 0.6s; }
-    .rss-pipe > div:nth-child(4) { animation: rarrow-flow 3.6s ease-in-out infinite 1.8s; }
-
-    .rss-pipe-label { font-size: 0.68rem; color: var(--muted); text-align: center; max-width: 60px; }
-    .rss-pipe-arrow { width: 28px; height: 2px; background: var(--border2); flex-shrink: 0; position: relative; top: -10px; }
-
-    /* start / stop buttons */
-    .rss-btn-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 0; margin-bottom: 0; }
-    .rss-btn-start {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 36px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff; font-size: 1rem; font-weight: 700;
-      border: none; border-radius: 999px; cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      box-shadow: 0 4px 20px rgba(59,130,246,0.35);
-      letter-spacing: 0.02em; margin-bottom: 20px;
-    }
-    .rss-btn-start:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); }
-    .rss-btn-start:active:not(:disabled) { transform:translateY(0); }
-    .rss-btn-start:disabled { opacity:0.55; cursor:not-allowed; }
-    .rss-btn-start.live {
-      background: linear-gradient(135deg, #15803d, #22c55e);
-      box-shadow: 0 4px 28px rgba(34,197,94,0.45); cursor: default;
-    }
-    .rss-btn-start.live:hover { opacity:1; transform:none; }
-
-    .rss-btn-stop {
-      display: none; align-items: center; gap: 10px;
-      padding: 14px 36px;
-      background: linear-gradient(135deg, #7f1d1d, #ef4444);
-      color: #fff; font-size: 1rem; font-weight: 700;
-      border: none; border-radius: 999px; cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      box-shadow: 0 4px 20px rgba(239,68,68,0.35);
-      letter-spacing: 0.02em; margin-bottom: 20px; margin-left: 12px;
-    }
-    .rss-btn-stop:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); }
-    .rss-btn-stop:active:not(:disabled) { transform:translateY(0); }
-    .rss-btn-stop:disabled { opacity:0.55; cursor:not-allowed; }
-    .rss-btn-stop.visible { display: inline-flex; }
-
-    .rss-live-dot {
-      width: 9px; height: 9px; background: #fff; border-radius: 50%; flex-shrink: 0;
-      animation: rss-live-blink 1.8s ease-in-out infinite;
-    }
-    @keyframes rss-live-blink {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.35; transform:scale(0.75); }
-    }
-
-    .rss-spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
-    }
-    .rss-spinner.visible { display: block; }
-
-    .rss-status-msg {
-      display: none; padding: 14px 20px; border-radius: var(--radius-sm);
-      font-size: 0.9rem; text-align: left; border: 1px solid; line-height: 1.55; margin-top: 4px;
-    }
-    .rss-status-msg.info    { display:block; background:rgba(34,197,94,0.08);  border-color:rgba(34,197,94,0.3);  color:#86efac; }
-    .rss-status-msg.error   { display:block; background:rgba(239,68,68,0.08);  border-color:rgba(239,68,68,0.3);  color:#fca5a5; }
-    .rss-status-msg.running { display:block; background:rgba(59,130,246,0.08); border-color:rgba(59,130,246,0.3); color:#93c5fd; }
-    .rss-status-msg strong  { font-weight:700; }
   </style>
 </head>
 <body>
 
 <header class="topbar">
   <a class="topbar-brand" href="#">
-    <span class="logo">&#128236;</span>
-    Content Digest
+    <span class="logo">&#128231;</span>
+    Email Digest
   </a>
   <span class="badge-pill" id="status-pill">Ready</span>
 </header>
@@ -765,14 +544,14 @@
 <main class="page">
 
   <div class="hero">
-    <span class="hero-icon">&#128236;</span>
-    <h1>Content Digest Summarizer</h1>
-    <p>Fetches contents, summarizes each one, and posts a curated digest to Slack &mdash; in one click.</p>
+    <span class="hero-icon">&#128231;</span>
+    <h1>Email Digest Summarizer</h1>
+    <p>Fetches unread Gmail emails, summarizes each one with AI, and posts a curated digest to Slack &mdash; in one click.</p>
   </div>
 
   <div class="pipeline">
     <div class="pipe-step" data-step="fetch">
-      <span class="dot"></span> Fetch Contents
+      <span class="dot"></span> Fetch Emails
     </div>
     <span class="pipe-arrow">&#8594;</span>
     <div class="pipe-step" data-step="process">
@@ -788,96 +567,21 @@
     </div>
   </div>
 
-  <!-- Mode selection -->
-  <div class="card" id="mode-card">
-    <div class="card-title">Choose Your Content Source</div>
-    <div class="mode-select">
-      <button class="mode-btn-card" id="btn-mode-email">
-        <span class="mode-icon">&#128231;</span>
-        <span class="mode-label">Email Digest</span>
-        <span class="mode-desc">Fetch unread emails from Gmail and summarize them into a digest</span>
-      </button>
-      <button class="mode-btn-card" id="btn-mode-rss">
-        <span class="mode-icon">&#128225;</span>
-        <span class="mode-label">RSS Feed Digest</span>
-        <span class="mode-desc">Fetch articles from any RSS or Atom feed URL and summarize them</span>
-      </button>
-    </div>
-  </div>
-
   <!-- Email run card -->
-  <div class="card" id="email-card" style="display:none">
-    <button class="back-link" id="back-from-email">&#8592; Back</button>
+  <div class="card" id="email-card">
     <div class="card-title">Email Digest Pipeline</div>
     <div class="run-actions">
       <button id="run-btn">
         <span class="spinner" id="spinner"></span>
         <span id="btn-label">&#9654; Run Email Digest</span>
       </button>
-      <button id="auto-email-btn" class="auto-btn" title="Auto-fetch every 1 minute">
+      <button id="auto-email-btn" class="auto-btn" title="Auto-fetch every 5 minutes">
         <span class="auto-icon">&#8635;</span>
         <span id="auto-email-label">Auto Fetch</span>
       </button>
     </div>
     <div class="auto-timer" id="email-auto-timer"></div>
     <div id="status-log"></div>
-  </div>
-
-  <!-- RSS run card -->
-  <div class="card" id="rss-card" style="display:none">
-    <button class="back-link" id="back-from-rss">&#8592; Back</button>
-    <div class="card-title">RSS Feed Digest Pipeline</div>
-
-    <!-- Platform badges -->
-    <div class="rss-platforms">
-      <span class="rss-badge rss-badge-rss">&#128225; RSS Feed</span>
-      <span class="rss-badge rss-badge-openai">&#10022; OpenAI</span>
-      <span class="rss-badge rss-badge-slack">&#128172; Slack</span>
-    </div>
-
-    <!-- Info card -->
-    <div class="rss-info-card">
-      <div class="rss-info-row">
-        <span class="rss-info-label">Schedule</span>
-        <span class="rss-info-value"><code>*/3 * * * *</code>&nbsp;&nbsp;every 3 minutes</span>
-      </div>
-      <div class="rss-info-row">
-        <span class="rss-info-label">Pipeline</span>
-        <span class="rss-info-value">RSS &#8594; OpenAI &#8594; Slack</span>
-      </div>
-    </div>
-
-    <!-- Animated dots pipeline -->
-    <div class="rss-pipe" id="rss-pipe">
-      <div class="rss-pipe-step">
-        <div class="rss-pipe-dot rss-dot-rss" id="rdot-rss">&#128225;</div>
-        <div class="rss-pipe-label">Fetch RSS</div>
-      </div>
-      <div class="rss-pipe-arrow"></div>
-      <div class="rss-pipe-step">
-        <div class="rss-pipe-dot rss-dot-ai" id="rdot-ai">&#10022;</div>
-        <div class="rss-pipe-label">Summarize</div>
-      </div>
-      <div class="rss-pipe-arrow"></div>
-      <div class="rss-pipe-step">
-        <div class="rss-pipe-dot rss-dot-slack" id="rdot-slack">&#128172;</div>
-        <div class="rss-pipe-label">Post to Slack</div>
-      </div>
-    </div>
-
-    <!-- Buttons -->
-    <div class="rss-btn-row">
-      <button class="rss-btn-start" id="rss-btn-start">
-        <div class="rss-spinner" id="rss-spin"></div>
-        <span id="rss-start-label">&#9654; Start Automation</span>
-      </button>
-      <button class="rss-btn-stop" id="rss-btn-stop">
-        <span>&#9209; Stop</span>
-      </button>
-    </div>
-
-    <!-- Status message -->
-    <div class="rss-status-msg" id="rss-status-msg"></div>
   </div>
 
   <div class="error-card" id="error-card">
@@ -891,7 +595,7 @@
   <div class="stats-grid" id="stats-grid">
     <div class="stat-box blue">
       <div class="val" id="stat-fetched">0</div>
-      <div class="lbl">Contents Fetched</div>
+      <div class="lbl">Emails Fetched</div>
     </div>
     <div class="stat-box green">
       <div class="val" id="stat-summarized">0</div>
@@ -911,13 +615,13 @@
     <div class="slack-icon-box">&#128172;</div>
     <div class="slack-info">
       <h3>Digest Posted to Slack &#10003;</h3>
-      <p>&#9989; Your content digest was successfully delivered &#127881;</p>
+      <p>&#9989; Your email digest was successfully delivered &#127881;</p>
     </div>
   </div>
 
   <div id="summaries-section">
     <div class="section-header">
-      <h2>Content Summaries</h2>
+      <h2>Email Summaries</h2>
       <div class="filter-bar" id="filter-bar">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="high">High</button>
@@ -931,15 +635,13 @@
 
 </main>
 
-<footer class="footer">Powered by Habits &middot; Content Digest Summarizer</footer>
+<footer class="footer">Powered by Habits &middot; Email Digest Summarizer</footer>
 
 <script>
   var $ = function(id) { return document.getElementById(id); };
 
-  var logTarget = 'status-log';
-
   function log(text, type) {
-    var el = $(logTarget);
+    var el = $('status-log');
     el.style.display = 'block';
     var line = document.createElement('span');
     line.className = 'll ' + (type || 'info');
@@ -998,56 +700,49 @@
     });
 
     if (!filtered.length) {
-      container.innerHTML = '<div class="empty-state"><span class="icon">&#128269;</span><p>No contents match this filter.</p></div>';
+      container.innerHTML = '<div class="empty-state"><span class="icon">&#128231;</span><p>No emails match this filter.</p></div>';
       return;
     }
 
     filtered.forEach(function(s) {
       var d = s.output || s;
-      var importance = (d.importance || 'low').toLowerCase();
-      var sentiment  = (d.sentiment  || 'neutral').toLowerCase();
-      var category   = (d.category   || 'other').toLowerCase();
-      var actionRequired = d.actionRequired === true || d.actionRequired === 'true';
-
-      var sentimentEmoji  = { positive: '&#128522;', neutral: '&#128528;', negative: '&#128543;' }[sentiment] || '&#128528;';
-      var importanceEmoji = { high: '&#128204;', medium: '&#128196;', low: '&#128564;' }[importance] || '&#128196;';
+      var imp = (d.importance || 'low').toLowerCase();
+      var sent = (d.sentiment || 'neutral').toLowerCase();
+      var cat  = d.category || 'other';
 
       var keyPointsHtml = '';
       if (Array.isArray(d.keyPoints) && d.keyPoints.length) {
-        keyPointsHtml = '<ul class="key-points">' + d.keyPoints.map(function(p) {
-          return '<li>' + esc(p) + '</li>';
-        }).join('') + '</ul>';
+        keyPointsHtml = '<ul class="key-points">' +
+          d.keyPoints.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('') +
+          '</ul>';
       }
 
       var actionHtml = '';
-      if (actionRequired && d.actionItem) {
-        actionHtml = '<div class="action-banner">&#9889; <strong>Action:</strong>&nbsp;' + esc(d.actionItem) + '</div>';
+      if ((d.actionRequired === true || d.actionRequired === 'true') && d.actionItem) {
+        actionHtml = '<div class="action-banner">&#9889; <span><strong>Action required:</strong> ' + esc(d.actionItem) + '</span></div>';
       }
 
-      var dateStr = '';
-      if (d.date) {
-        try {
-          dateStr = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-        } catch(e) { dateStr = d.date; }
+      var urlHtml = '';
+      if (d.url) {
+        urlHtml = '<a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem;color:var(--accent);">&#128279; View source</a>';
       }
 
-      var urlHtml = d.url ? '<a href="' + esc(d.url) + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.75rem;word-break:break-all;">' + esc(d.url) + '</a>' : '';
+      var metaHtml = '';
+      if (d.source) metaHtml += '<span>From: ' + esc(d.source) + '</span>';
+      if (d.date)   metaHtml += '<span>' + esc(d.date) + '</span>';
 
       var card = document.createElement('div');
-      card.className = 'email-card importance-' + importance;
+      card.className = 'email-card importance-' + imp;
       card.innerHTML =
         '<div class="email-card-top">' +
-          '<div class="email-card-title">' + importanceEmoji + ' ' + esc(d.title || '(Untitled)') + '</div>' +
+          '<div class="email-card-title">' + esc(d.title || '(Untitled)') + '</div>' +
           '<div class="badges">' +
-            '<span class="badge badge-category">' + esc(category) + '</span>' +
-            '<span class="badge badge-' + importance + '">' + esc(importance) + '</span>' +
-            '<span class="badge badge-' + sentiment + '">' + sentimentEmoji + ' ' + esc(sentiment) + '</span>' +
+            '<span class="badge badge-category">' + esc(cat) + '</span>' +
+            '<span class="badge badge-' + imp + '">' + imp + '</span>' +
+            '<span class="badge badge-' + sent + '">' + sent + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="email-meta">' +
-          (d.source ? '<span>' + esc(d.source) + '</span>' : '') +
-          (dateStr ? '<span>' + dateStr + '</span>' : '') +
-        '</div>' +
+        (metaHtml ? '<div class="email-meta">' + metaHtml + '</div>' : '') +
         (urlHtml ? '<div style="margin-bottom:10px">' + urlHtml + '</div>' : '') +
         '<p class="email-summary-text">' + esc(d.summary || '') + '</p>' +
         keyPointsHtml +
@@ -1057,62 +752,18 @@
     });
   }
 
-  // ── Mode selection ────────────────────────────────────────────────────────────
-
-  function resetResultsUI() {
-    $('error-card').classList.remove('visible');
-    $('slack-card').classList.remove('visible');
-    $('stats-grid').classList.remove('visible');
-    $('summaries-section').classList.remove('visible');
-    allSummaries = [];
-    resetPipes();
-    setStatus('Ready', '');
-  }
-
-  function showModeCard() {
-    $('mode-card').style.display = '';
-    $('email-card').style.display = 'none';
-    $('rss-card').style.display = 'none';
-    stopEmailAuto();
-    setRssIdleState();
-    $('rss-status-msg').className = 'rss-status-msg';
-    resetResultsUI();
-  }
-
-  $('btn-mode-email').addEventListener('click', function() {
-    $('mode-card').style.display = 'none';
-    $('email-card').style.display = '';
-    logTarget = 'status-log';
-    $('status-log').innerHTML = '';
-    $('status-log').style.display = 'none';
-    resetResultsUI();
-  });
-
-  $('btn-mode-rss').addEventListener('click', function() {
-    $('mode-card').style.display = 'none';
-    $('rss-card').style.display = '';
-    setRssIdleState();
-    $('rss-status-msg').className = 'rss-status-msg';
-    resetResultsUI();
-  });
-
-  $('back-from-email').addEventListener('click', showModeCard);
-  $('back-from-rss').addEventListener('click', showModeCard);
-
-  // ── Shared result handler ─────────────────────────────────────────────────────
-
-  function handleDigestResult(output, spinnerId, labelId, btnId, defaultLabel) {
+  function handleDigestResult(output) {
     setPipe('fetch', 'done');
     var fetchedCount = Number(output.contentsFetched) || 0;
-    log('Fetched ' + fetchedCount + ' content' + (fetchedCount !== 1 ? 's' : '') + '.', 'ok');
+    log('Fetched ' + fetchedCount + ' email' + (fetchedCount !== 1 ? 's' : '') + '.', 'ok');
 
     setPipe('process', 'active');
-    log('Running per-content analysis pipeline\u2026');
+    log('Running per-email analysis pipeline\u2026');
     setPipe('process', 'done');
 
     setPipe('summarize', 'active');
     var summarizedCount = Number(output.contentsSummarized) || 0;
-    log('AI summarized ' + summarizedCount + ' content' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
+    log('AI summarized ' + summarizedCount + ' email' + (summarizedCount !== 1 ? 's' : '') + ' successfully.', 'ok');
     setPipe('summarize', 'done');
 
     setPipe('slack', 'active');
@@ -1141,12 +792,11 @@
       renderCards(summaries);
     }
 
-    $(spinnerId).style.display = 'none';
-    $(labelId).textContent = defaultLabel;
-    $(btnId).disabled = false;
+    $('spinner').style.display = 'none';
+    $('btn-label').textContent = '\u25BA Run Email Digest';
+    $('run-btn').disabled = false;
+    $('auto-email-btn').disabled = false;
   }
-
-  // ── Email run ─────────────────────────────────────────────────────────────────
 
   async function runEmailFetch() {
     var btn   = $('run-btn');
@@ -1182,7 +832,7 @@
         throw new Error('API error ' + resp.status + ': ' + txt);
       }
       var result = await resp.json();
-      handleDigestResult(result.output || result, 'spinner', 'btn-label', 'run-btn', '\u25BA Run Email Digest');
+      handleDigestResult(result.output || result);
       $('auto-email-btn').disabled = false;
     } catch (err) {
       console.error(err);
@@ -1248,106 +898,6 @@
       }, 300000);
     }
   });
-
-  // ── RSS Automation (social-poster style) ──────────────────────────────────────
-
-  var RSS_TRIGGER_WORKFLOW_ID = 'rss-digest';
-  var RSS_TRIGGER_NODE_ID     = 'fetch-rss';
-
-  function showRssStatus(type, html) {
-    var el = $('rss-status-msg');
-    el.className = 'rss-status-msg ' + type;
-    el.innerHTML = html;
-  }
-
-  function setRssLiveState() {
-    var btn     = $('rss-btn-start');
-    var btnStop = $('rss-btn-stop');
-    var spin    = $('rss-spin');
-    var label   = $('rss-start-label');
-    spin.classList.remove('visible');
-    btn.disabled = true;
-    btn.classList.add('live');
-    if (!btn.querySelector('.rss-live-dot')) {
-      var ind = document.createElement('div');
-      ind.className = 'rss-live-dot';
-      btn.insertBefore(ind, btn.firstChild);
-    }
-    label.textContent = 'Live';
-    btnStop.classList.add('visible');
-  }
-
-  function setRssIdleState(labelText) {
-    labelText = labelText || '\u25BA Start Automation';
-    var btn     = $('rss-btn-start');
-    var btnStop = $('rss-btn-stop');
-    var spin    = $('rss-spin');
-    var label   = $('rss-start-label');
-    btn.disabled = false;
-    btn.classList.remove('live');
-    var ind = btn.querySelector('.rss-live-dot');
-    if (ind) btn.removeChild(ind);
-    label.textContent = labelText;
-    spin.classList.remove('visible');
-    btnStop.classList.remove('visible');
-    btnStop.disabled = false;
-  }
-
-  async function stopRssAutomation() {
-    var btnStop = $('rss-btn-stop');
-    btnStop.disabled = true;
-    showRssStatus('running', '\u29d3 <strong>Stopping\u2026</strong> Disabling the RSS polling trigger.');
-    try {
-      var res = await fetch('/misc/trigger/' + RSS_TRIGGER_WORKFLOW_ID + '/' + RSS_TRIGGER_NODE_ID, { method: 'DELETE' });
-      if (!res.ok) {
-        var t = await res.text();
-        throw new Error('Server responded ' + res.status + ': ' + t);
-      }
-      setRssIdleState();
-      showRssStatus('info', '\u23f9 <strong>Automation stopped.</strong> The RSS polling trigger has been disabled. Click Start to resume.');
-    } catch (err) {
-      console.error(err);
-      showRssStatus('error', '\u274c <strong>Could not stop automation.</strong> ' + (err.message || 'Unknown error'));
-      btnStop.disabled = false;
-    }
-  }
-
-  async function startRssAutomation() {
-    var btn     = $('rss-btn-start');
-    var spin    = $('rss-spin');
-    var label   = $('rss-start-label');
-    btn.disabled = true;
-    spin.classList.add('visible');
-    label.textContent = 'Starting\u2026';
-    showRssStatus('running', '\u29d3 <strong>Connecting\u2026</strong> Setting up your automation pipeline.');
-
-    try {
-      var res = await fetch('/api/rss-digest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ digestDate: new Date().toISOString() })
-      });
-      if (!res.ok) {
-        var t = await res.text();
-        throw new Error('Server responded ' + res.status + ': ' + t);
-      }
-      await res.json().catch(function() { return {}; });
-      setRssLiveState();
-      showRssStatus('info',
-        '\ud83d\udfe2 <strong>Automation is live!</strong> Your RSS feed is now being monitored \u2014 every 3 minutes, new articles will be discovered, summarized by AI, and posted as a digest to Slack automatically.'
-      );
-    } catch (err) {
-      console.error(err);
-      showRssStatus('error',
-        '\u274c <strong>Could not start automation.</strong> ' + (err.message || 'Unknown error') +
-        '<br><br>Make sure the habits server is running and your <code>.env</code> credentials are set correctly.'
-      );
-      setRssIdleState();
-    }
-  }
-
-  $('rss-btn-start').addEventListener('click', startRssAutomation);
-  $('rss-btn-stop').addEventListener('click', stopRssAutomation);
 </script>
 </body>
 </html>
