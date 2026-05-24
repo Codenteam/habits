@@ -1,0 +1,82 @@
+version: 1
+configPath: showcase/ai-agent-lead-enrichment/stack.yaml
+capturedAt: 2026-05-24T09:57:45.816Z
+workflows:
+  enrich-lead:
+    workflowName: Enrich Lead
+    executionId: d508a6e1-1722-4d61-abc6-f26e5edb9a9e
+    habitInput:
+      email: demo@acme.com
+      firstName: Jane
+      lastName: Doe
+      company: Acme Corp
+      phone: "+15551234567"
+    nodes:
+      - nodeId: openai-score-lead
+        framework: bits
+        module: "@ha-bits/bit-openai"
+        operation: ask_chatgpt
+        input:
+          model: gpt-4o-mini
+          cast: true
+          prompt: >
+            You are a B2B lead scoring assistant. Based on the lead's email
+            domain and company name, evaluate the quality of the lead.
+
+            Score this lead:
+            - Email: demo@acme.com
+            - First Name: Jane
+            - Last Name: Doe
+            - Company: Acme Corp
+            - Phone: +15551234567
+
+            Analyze the email domain (demo@acme.com) and company name
+            (Acme Corp) to determine lead score.
+
+            Respond with ONLY a single integer between 0 and 100. No
+            explanation, no JSON, just the number.
+          temperature: 0.3
+          operation: ask_chatgpt
+        output: "85"
+        success: true
+        durationMs: 2147
+      - nodeId: hubspot-sync
+        framework: bits
+        module: "@ha-bits/bit-hubspot"
+        operation: createOrUpdate
+        input:
+          email: demo@acme.com
+          firstName: Jane
+          lastName: Doe
+          company: Acme Corp
+          phone: "+15551234567"
+          score: "85"
+          operation: createOrUpdate
+        output:
+          success: true
+          lead:
+            id: "784409942226"
+            email: demo@acme.com
+            firstName: Jane
+            lastName: Doe
+            company: Acme Corp
+            phone: "+15551234567"
+            status: lead
+            createdAt: 2026-05-24T09:57:45.569Z
+            updatedAt: 2026-05-24T09:57:45.569Z
+        success: true
+        durationMs: 1263
+    workflowOutput:
+      enriched: "85"
+      hubspot:
+        success: true
+        lead:
+          id: "784409942226"
+          email: demo@acme.com
+          firstName: Jane
+          lastName: Doe
+          company: Acme Corp
+          phone: "+15551234567"
+          status: lead
+          createdAt: 2026-05-24T09:57:45.569Z
+          updatedAt: 2026-05-24T09:57:45.569Z
