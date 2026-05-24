@@ -12,11 +12,10 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-database-sql"
-      operation: delete
+      operation: deleteDoc
       params:
         collection: smmp_scheduled_posts
-        filter:
-          _id: "{{habits.input.postId}}"
+        id: "{{habits.input.postId}}"
 
 edges: []
 
