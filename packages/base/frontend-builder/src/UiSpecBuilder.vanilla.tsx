@@ -54,7 +54,7 @@ import {
   LayoutTemplate,
   Settings,
 } from 'lucide-react';
-import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui';
+import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui/icons';
 import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
 
 // ---------------------------------------------------------------------------
