@@ -9,6 +9,7 @@ import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
+    { img: '/showcase/social-media-multi-posting/social-media-posting-1.webp', caption: 'Social Media Multi-Posting' },
     { img: '/showcase/social-media-multi-posting/social-media-posting-2.webp', caption: 'Social Media Multi-Posting' },
     { img: '/showcase/social-media-multi-posting/social-media-posting-3.webp', caption: 'Social Media Multi-Posting' },
     { img: '/showcase/social-media-multi-posting/social-media-posting-4.webp', caption: 'Social Media Multi-Posting' },
