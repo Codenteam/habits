@@ -1,0 +1,61 @@
+{
+  "name": "@ha-bits/cortex-lab",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/cortex/lab/src",
+  "projectType": "library",
+  "tags": [
+    "scope:executor",
+    "type:lab"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": [
+        "{workspaceRoot}/dist/packages/cortex/lab"
+      ],
+      "options": {
+        "outputPath": "dist/packages/cortex/lab",
+        "main": "packages/cortex/lab/src/index.ts",
+        "outputFileName": "index",
+        "tsConfig": "packages/cortex/lab/tsconfig.lib.json",
+        "platform": "node",
+        "format": ["cjs", "esm"],
+        "bundle": true,
+        "sourcemap": true,
+        "declaration": true,
+        "assets": [
+          {
+            "input": "packages/cortex/lab",
+            "glob": "package.json",
+            "output": "."
+          }
+        ],
+        "esbuildOptions": {
+          "packages": "bundle"
+        }
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc -p packages/cortex/lab/tsconfig.lib.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm jest --config packages/cortex/lab/jest.config.js",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["packages/cortex/lab/**/*.ts"]
+      }
+    }
+  }
+}
