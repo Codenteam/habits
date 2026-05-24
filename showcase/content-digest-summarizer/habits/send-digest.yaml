@@ -28,13 +28,13 @@ nodes:
             const source     = s.source  || '';
             const summary    = s.summary || '';
 
-            const header = '*📬 New Article — ' + new Date().toLocaleString() + '*';
+            const header = '*📬 New Content — ' + new Date().toLocaleString() + '*';
 
             const lines = [
               header,
               '*' + importanceEmoji(importance) + ' ' + title + '*',
               source ? 'Source: ' + source : null,
-              s.url  ? '<' + s.url + '|View article>' : null,
+              s.url  ? '<' + s.url + '|View content>' : null,
               category + ' ' + sentimentEmoji(sentiment),
               summary,
             ].filter(l => l !== null);

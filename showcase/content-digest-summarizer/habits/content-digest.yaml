@@ -21,7 +21,7 @@ nodes:
         collectResults: true
 
   # Step 2: Post the complete digest to Slack via send-digest
-  # Pass summariesJson (serialized results) and metadata as top-level inputs
+  # Pass each summary directly, same as rss-digest
   - id: digest
     type: action
     data:
@@ -30,12 +30,7 @@ nodes:
       module: "@ha-bits/bit-loop"
       operation: forEach
       params:
-        items: |
-          [{
-            "summariesJson": {{process.results[0].output.summaries}},
-            "contentCount": "{{process.results[0].output.contentsFetched}}",
-            "digestDate": "{{habits.input.digestDate}}"
-          }]
+        items: "{{process.results[0].output.summaries}}"
         habitId: send-digest
         inputKey: digestInput
         collectResults: true
