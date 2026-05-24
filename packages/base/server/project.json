@@ -75,6 +75,7 @@
       },
       "dependsOn": [
         "^build",
+        "@ha-bits/cortex-lab:build",
         "@ha-bits/base-ui:build"
       ]
     },

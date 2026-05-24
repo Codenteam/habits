@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { FolderOpen, FileJson, AlertCircle, Check, X, Loader2, Upload } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { AlertCircle, Check, X, Loader2, Upload } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { addHabit, setActiveHabit, clearWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
 import {
@@ -10,14 +10,9 @@ import {
   clearEnvContent,
 } from '../store/slices/uiSlice';
 import {
-  FileEntry,
   ParsedStack,
-  detectConfigFiles,
-  parseStack,
   parseHabitFile,
   isHabitArchiveFile,
-  readFilesFromFileList,
-  getRootFolderName,
   parseHabitYaml,
   convertHabitYamlToHabit,
 } from '../lib/stackParser';
@@ -27,52 +22,43 @@ interface OpenModalProps {
   onClose: () => void;
 }
 
-type Mode = 'choose' | 'loading' | 'select-config' | 'result';
+type Mode = 'loading' | 'result';
+
+let pendingOpenTrigger: number | null = null;
 
 export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
   const dispatch = useAppDispatch();
-  const folderInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [mode, setMode] = useState<Mode>('choose');
-  const [files, setFiles] = useState<FileEntry[]>([]);
-  const [configFiles, setConfigFiles] = useState<FileEntry[]>([]);
-  const [selectedConfig, setSelectedConfig] = useState<string | null>(null);
-  const [folderName, setFolderName] = useState<string>('');
+  const awaitingFileRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const [mode, setMode] = useState<Mode>('loading');
   const [result, setResult] = useState<{
-    type: 'file' | 'folder' | 'habit';
+    type: 'file' | 'habit';
     habitsLoaded: number;
     errors: string[];
     frontendLoaded: boolean;
   } | null>(null);
 
-  const resetState = useCallback(() => {
-    setMode('choose');
-    setFiles([]);
-    setConfigFiles([]);
-    setSelectedConfig(null);
-    setFolderName('');
+  const handleClose = useCallback(() => {
+    awaitingFileRef.current = false;
+    setMode('loading');
     setResult(null);
+    onCloseRef.current();
   }, []);
 
-  const handleClose = useCallback(() => {
-    resetState();
-    onClose();
-  }, [onClose, resetState]);
-
-  const applyParsedStack = useCallback((parsed: ParsedStack, resultType: 'folder' | 'habit') => {
+  const applyParsedStack = useCallback((parsed: ParsedStack) => {
     dispatch(clearWorkflow());
     dispatch(clearFrontendHtml());
     dispatch(clearFrontendYaml());
     dispatch(clearEnvContent());
 
     if (parsed.habits.length > 0) {
-      parsed.habits.forEach((habit, index) => {
+      parsed.habits.forEach((habit) => {
         dispatch(addHabit(habit));
-        if (index === 0) {
-          dispatch(setActiveHabit(habit.id));
-        }
       });
+      dispatch(setActiveHabit(parsed.habits[0].id));
     }
 
     if (parsed.frontendHtml) {
@@ -87,7 +73,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
     }
 
     setResult({
-      type: resultType,
+      type: 'habit',
       habitsLoaded: parsed.habits.length,
       errors: parsed.errors,
       frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
@@ -95,10 +81,14 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
     setMode('result');
   }, [dispatch]);
 
-  // Handle single file selection (JSON, YAML workflow, or .habit archive)
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    awaitingFileRef.current = false;
+
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      handleClose();
+      return;
+    }
 
     setMode('loading');
 
@@ -106,7 +96,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
       if (isHabitArchiveFile(file.name)) {
         const buffer = await file.arrayBuffer();
         const parsed = await parseHabitFile(buffer);
-        applyParsedStack(parsed, 'habit');
+        applyParsedStack(parsed);
       } else {
         const content = await file.text();
         const habitYaml = parseHabitYaml(content, file.name);
@@ -140,77 +130,45 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [dispatch, applyParsedStack]);
+  }, [dispatch, applyParsedStack, handleClose]);
 
-  // Handle folder selection
-  const handleFolderSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = event.target.files;
-    if (!fileList || fileList.length === 0) return;
-
-    setMode('loading');
-    
-    try {
-      const fileEntries = await readFilesFromFileList(fileList);
-      setFiles(fileEntries);
-      setFolderName(getRootFolderName(fileEntries));
-      
-      const configs = detectConfigFiles(fileEntries);
-      setConfigFiles(configs);
-      
-      if (configs.length === 0) {
-        setResult({
-          type: 'folder',
-          habitsLoaded: 0,
-          errors: ['No configuration files found. Please ensure your folder contains a stack.yaml, config.json, or habits.json file.'],
-          frontendLoaded: false,
-        });
-        setMode('result');
-      } else if (configs.length === 1) {
-        // Auto-select if only one config file
-        await loadStackFromConfig(fileEntries, configs[0].path);
-      } else {
-        // Let user choose
-        setSelectedConfig(configs[0].path);
-        setMode('select-config');
+  useEffect(() => {
+    if (!isOpen) {
+      if (pendingOpenTrigger !== null) {
+        window.clearTimeout(pendingOpenTrigger);
+        pendingOpenTrigger = null;
       }
-    } catch (error) {
-      setResult({
-        type: 'folder',
-        habitsLoaded: 0,
-        errors: [error instanceof Error ? error.message : 'Failed to read folder'],
-        frontendLoaded: false,
-      });
-      setMode('result');
+      return;
     }
-    
-    // Reset input
-    if (folderInputRef.current) {
-      folderInputRef.current.value = '';
-    }
-  }, []);
 
-  const loadStackFromConfig = useCallback(async (fileEntries: FileEntry[], configPath: string) => {
     setMode('loading');
+    setResult(null);
+    awaitingFileRef.current = true;
 
-    try {
-      const parsed = await parseStack(fileEntries, configPath);
-      applyParsedStack(parsed, 'folder');
-    } catch (error) {
-      setResult({
-        type: 'folder',
-        habitsLoaded: 0,
-        errors: [error instanceof Error ? error.message : 'Failed to parse stack'],
-        frontendLoaded: false,
-      });
-      setMode('result');
-    }
-  }, [applyParsedStack]);
+    const input = fileInputRef.current;
+    const onNativeCancel = () => {
+      if (!awaitingFileRef.current) return;
+      handleClose();
+    };
+    input?.addEventListener('cancel', onNativeCancel);
 
-  const handleConfigSelect = useCallback(() => {
-    if (selectedConfig) {
-      loadStackFromConfig(files, selectedConfig);
+    if (pendingOpenTrigger !== null) {
+      return () => input?.removeEventListener('cancel', onNativeCancel);
     }
-  }, [selectedConfig, files, loadStackFromConfig]);
+
+    pendingOpenTrigger = window.setTimeout(() => {
+      pendingOpenTrigger = null;
+      fileInputRef.current?.click();
+    }, 0);
+
+    return () => {
+      input?.removeEventListener('cancel', onNativeCancel);
+      if (pendingOpenTrigger !== null) {
+        window.clearTimeout(pendingOpenTrigger);
+        pendingOpenTrigger = null;
+      }
+    };
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
 
@@ -233,123 +191,18 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
 
         {/* Content */}
         <div className="p-6">
-          {mode === 'choose' && (
-            <div className="space-y-4">
-              <p className="text-slate-300 text-sm mb-6">
-                Choose how you want to open your habits:
-              </p>
-              
-              {/* Hidden inputs */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,.yaml,.yml,.habit"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <input
-                ref={folderInputRef}
-                type="file"
-                // @ts-ignore - webkitdirectory is not in the type definition
-                webkitdirectory=""
-                directory=""
-                multiple
-                onChange={handleFolderSelect}
-                className="hidden"
-              />
-              
-              {/* Options */}
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center gap-3 p-6 bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-blue-500 rounded-lg transition-all group"
-                >
-                  <FileJson className="w-10 h-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
-                  <div className="text-center">
-                    <div className="text-white font-medium">Single File</div>
-                    <div className="text-slate-400 text-xs mt-1">JSON, YAML, or .habit</div>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={() => folderInputRef.current?.click()}
-                  className="flex flex-col items-center gap-3 p-6 bg-slate-700/50 hover:bg-slate-700 border-2 border-slate-600 hover:border-purple-500 rounded-lg transition-all group"
-                >
-                  <FolderOpen className="w-10 h-10 text-slate-400 group-hover:text-purple-400 transition-colors" />
-                  <div className="text-center">
-                    <div className="text-white font-medium">Folder</div>
-                    <div className="text-slate-400 text-xs mt-1">Stack with multiple habits</div>
-                  </div>
-                </button>
-              </div>
-              
-              <div className="text-xs text-slate-500 mt-4 space-y-1">
-                <p><strong>Single File:</strong> Load a .json, .yaml workflow, or packed .habit archive</p>
-                <p><strong>Folder:</strong> Open a habits stack with stack.yaml/config.json and multiple habit files</p>
-              </div>
-            </div>
-          )}
-
-          {mode === 'select-config' && (
-            <div className="space-y-4">
-              <p className="text-slate-300">
-                Multiple configuration files found in <span className="text-blue-400 font-mono">{folderName}</span>.
-                Please select which one to use:
-              </p>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {configFiles.map((file) => (
-                  <label
-                    key={file.path}
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors
-                      ${selectedConfig === file.path 
-                        ? 'bg-blue-600/20 border-2 border-blue-500' 
-                        : 'bg-slate-700/50 border-2 border-transparent hover:bg-slate-700'
-                      }
-                    `}
-                  >
-                    <input
-                      type="radio"
-                      name="configFile"
-                      value={file.path}
-                      checked={selectedConfig === file.path}
-                      onChange={(e) => setSelectedConfig(e.target.value)}
-                      className="sr-only"
-                    />
-                    <FileJson className={`w-5 h-5 ${selectedConfig === file.path ? 'text-blue-400' : 'text-slate-400'}`} />
-                    <span className={`font-mono text-sm ${selectedConfig === file.path ? 'text-white' : 'text-slate-300'}`}>
-                      {file.path}
-                    </span>
-                    {selectedConfig === file.path && (
-                      <Check className="w-4 h-4 text-blue-400 ml-auto" />
-                    )}
-                  </label>
-                ))}
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={resetState}
-                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleConfigSelect}
-                  disabled={!selectedConfig}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Load Stack
-                </button>
-              </div>
-            </div>
-          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.yaml,.yml,.habit"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
 
           {mode === 'loading' && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-              <p className="text-slate-300">Loading...</p>
+              <p className="text-slate-300">Select a file to open...</p>
             </div>
           )}
 
@@ -363,15 +216,13 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
                     <p className="text-green-300 text-sm mt-1">
                       {result.type === 'file'
                         ? 'Workflow'
-                        : result.type === 'habit'
-                          ? `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''} from .habit`
-                          : `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''}`} loaded
+                        : `${result.habitsLoaded} habit${result.habitsLoaded !== 1 ? 's' : ''} from .habit`} loaded
                       {result.frontendLoaded && ' • UI (New) frontend loaded'}
                     </p>
                   </div>
                 </div>
               ) : null}
-              
+
               {result.errors.length > 0 && (
                 <div className="flex items-start gap-3 p-4 bg-red-900/20 border border-red-700 rounded-lg">
                   <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
@@ -387,7 +238,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
                   </div>
                 </div>
               )}
-              
+
               <button
                 onClick={handleClose}
                 className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"

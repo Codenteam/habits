@@ -1165,7 +1165,7 @@ export const selectHabitValidationErrorsById = (habitId: string) => (state: { wo
  * Check if there are any errors (for quick validation checks)
  */
 export const selectHasValidationErrors = (state: { workflow: WorkflowState }): boolean => {
-  const hasErrors =  selectHabitValidationErrors(state).some(error => error.severity === 'error');
+  const hasErrors = selectHabitValidationErrors(state).some(error => error.severity === 'error');
   return hasErrors;
 };
 

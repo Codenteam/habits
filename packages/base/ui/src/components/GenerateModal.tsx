@@ -14,12 +14,13 @@ import {
 interface GenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenValidation?: () => void;
 }
 
 type Mode = 'input' | 'generating' | 'loading' | 'result';
 type GenerationType = 'habit' | 'bit';
 
-export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
+export default function GenerateModal({ isOpen, onClose, onOpenValidation }: GenerateModalProps) {
   const dispatch = useAppDispatch();
   const existingHabits = useAppSelector(selectHabits);
   
@@ -392,6 +393,18 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
               )}
               
               <div className="flex gap-3">
+                {result.habitsLoaded > 0 && onOpenValidation && (
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      onOpenValidation();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Validate Habit
+                  </button>
+                )}
                 {result.habitsLoaded === 0 && !result.bitFilesCount && (
                   <button
                     onClick={resetState}
