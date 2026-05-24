@@ -72,6 +72,11 @@ export {
   extractHabitsEnvFields,
   extractNodeRefs,
   declaredInputFields,
+  buildEditorGraphInput,
+  habitsToGraphInput,
+  parseEnvKeysFromContent,
+  buildPropagationSteps,
+  describePropagationStep,
 } from './graph';
 export type {
   HabitGraph,
@@ -82,6 +87,10 @@ export type {
   GraphHabitInput,
   BuildHabitGraphInput,
   ValidateGraphOptions,
+  EditorHabitLike,
+  PropagationDisplayNode,
+  PropagationDisplayEdge,
+  PropagationStep,
 } from './graph';
 
 export {

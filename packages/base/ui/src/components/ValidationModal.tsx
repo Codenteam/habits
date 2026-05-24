@@ -29,14 +29,14 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { validateHabit, type ValidatableHabit } from '../store/validation/habitValidation';
 import type { HabitGraphReport, HabitGraphNode } from '@ha-bits/cortex-lab/graph';
-import { buildEditorGraphInput } from '../lib/validation/buildEditorGraphInput';
 import {
+  buildEditorGraphInput,
   buildPropagationSteps,
   describePropagationStep,
   type PropagationStep,
   type PropagationDisplayNode,
   type PropagationDisplayEdge,
-} from '@/lib/validation/buildPropagation';
+} from '@ha-bits/cortex-lab/graph';
 import type { UnifiedValidationIssue } from '../store/selectors/validationSelectors';
 import { api } from '../lib/api';
 

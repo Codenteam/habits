@@ -364,6 +364,12 @@ button { font-family: inherit; }
 .ha-card:last-child { margin-bottom: 0; }
 .ha-card__title { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
 .ha-card__subtitle { color: var(--ha-text-muted); font-size: 13px; margin: 0 0 12px; }
+.ha-text--strong { font-weight: 600; color: var(--ha-text); margin: 0; }
+.ha-list { display: flex; flex-direction: column; gap: var(--ha-pad); }
+.ha-list__item { padding: var(--ha-pad); border: 1px solid var(--ha-border); border-radius: var(--ha-radius-sm); background: var(--ha-bg-surface); }
+.ha-markdown { font-size: 14px; color: var(--ha-text-muted); line-height: 1.6; }
+.ha-markdown p { margin: 0 0 8px; }
+.ha-markdown p:last-child { margin-bottom: 0; }
 
 /* Inputs */
 .ha-field { display: flex; flex-direction: column; gap: 6px; }

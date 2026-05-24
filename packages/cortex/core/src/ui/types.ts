@@ -411,6 +411,35 @@ export interface PreWidget extends BaseWidget {
 export interface MarkdownWidget extends BaseWidget {
   kind: 'markdown';
   source: string;
+  truncate?: number;
+}
+
+export interface TextWidget extends BaseWidget {
+  kind: 'text';
+  value: string;
+  strong?: boolean;
+  muted?: boolean;
+}
+
+export interface HeadingWidget extends BaseWidget {
+  kind: 'heading';
+  level?: number;
+  value: string;
+}
+
+export interface AlertWidget extends BaseWidget {
+  kind: 'alert';
+  level?: Tone | 'error';
+  text: string;
+}
+
+export interface ListWidget extends BaseWidget {
+  kind: 'list';
+  source: string;
+  empty?: string;
+  limit?: number;
+  itemKey?: string;
+  template?: WidgetSpec[];
 }
 
 export interface HtmlPreviewWidget extends BaseWidget {
@@ -465,7 +494,9 @@ export interface MetricGridWidget extends BaseWidget {
 
 export interface BadgeListWidget extends BaseWidget {
   kind: 'badge-list';
-  source: string;
+  source?: string;
+  /** Static or templated badge labels (alternative to source). */
+  values?: string[];
   tone?: Tone;
   labelKey?: string;
 }
@@ -658,6 +689,10 @@ export type WidgetSpec =
   | ResultPanelWidget
   | PreWidget
   | MarkdownWidget
+  | TextWidget
+  | HeadingWidget
+  | AlertWidget
+  | ListWidget
   | HtmlPreviewWidget
   | ImageWidget
   | ScoreRingWidget
@@ -714,4 +749,6 @@ export interface UiSpec {
   widgets?: WidgetSpec[];
   /** Default view id for tabs/sidebar/mobile-shell layouts. */
   defaultView?: string;
+  /** Action ids dispatched once when the page first loads. */
+  onMount?: string | string[];
 }

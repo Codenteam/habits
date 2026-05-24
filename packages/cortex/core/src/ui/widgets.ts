@@ -1,5 +1,6 @@
 import type {
   AccordionWidget,
+  AlertWidget,
   BadgeListWidget,
   BarChartWidget,
   ButtonRowButton,
@@ -13,11 +14,13 @@ import type {
   FieldSpec,
   FormWidget,
   HabitGridWidget,
+  HeadingWidget,
   HeroWidget,
   HistoryGridWidget,
   HtmlPreviewWidget,
   ImageWidget,
   KvGridWidget,
+  ListWidget,
   MarkdownWidget,
   MetricGridWidget,
   ModalWidget,
@@ -36,6 +39,7 @@ import type {
   StreamingPanelWidget,
   StreamingTextWidget,
   TabsWidget,
+  TextWidget,
   Tone,
   WidgetSpec,
 } from './types';
@@ -108,6 +112,14 @@ function renderWidgetInner(w: WidgetSpec): string {
       return renderPre(w);
     case 'markdown':
       return renderMarkdown(w);
+    case 'text':
+      return wrap(renderText(w));
+    case 'heading':
+      return wrap(renderHeading(w));
+    case 'alert':
+      return wrap(renderAlert(w));
+    case 'list':
+      return wrap(renderList(w));
     case 'html-preview':
       return renderHtmlPreview(w);
     case 'image':
@@ -580,7 +592,55 @@ ${copy}<pre class="ha-mono" data-pre-from="${escapeAttr(w.source)}" style="white
 }
 
 function renderMarkdown(w: MarkdownWidget): string {
-  return `<div${attrs({ class: cls('ha-card', w.className), 'data-markdown-from': w.source, 'data-show-when': w.showWhen, 'data-hide-when': w.hideWhen })}></div>`;
+  return `<div${attrs({
+    class: cls('ha-card', w.className),
+    'data-markdown-from': w.source,
+    'data-markdown-truncate': w.truncate,
+    'data-show-when': w.showWhen,
+    'data-hide-when': w.hideWhen,
+  })}></div>`;
+}
+
+function renderText(w: TextWidget): string {
+  return `<p${attrs({
+    class: cls(w.muted ? 'ha-help' : w.strong ? 'ha-text--strong' : '', w.className),
+    'data-text-tmpl': w.value,
+    'data-show-when': w.showWhen,
+    'data-hide-when': w.hideWhen,
+  })}></p>`;
+}
+
+function renderHeading(w: HeadingWidget): string {
+  const level = Math.min(6, Math.max(1, w.level ?? 2));
+  return `<h${level}${attrs({
+    class: w.className,
+    'data-heading-tmpl': w.value,
+    'data-show-when': w.showWhen,
+    'data-hide-when': w.hideWhen,
+  })}></h${level}>`;
+}
+
+function renderAlert(w: AlertWidget): string {
+  const level = w.level === 'error' ? 'danger' : (w.level ?? 'info');
+  return `<div${attrs({
+    class: cls('ha-status', `ha-status--${level}`, w.className),
+    'data-alert-tmpl': w.text,
+    'data-show-when': w.showWhen,
+    'data-hide-when': w.hideWhen,
+  })}></div>`;
+}
+
+function renderList(w: ListWidget): string {
+  return `<div${attrs({
+    class: cls('ha-list', w.className),
+    'data-ha-list-from': w.source,
+    'data-ha-list-empty': w.empty,
+    'data-ha-list-limit': w.limit,
+    'data-ha-list-key': w.itemKey,
+    'data-ha-list-tmpl': safeJson(w.template ?? []),
+    'data-show-when': w.showWhen,
+    'data-hide-when': w.hideWhen,
+  })}></div>`;
 }
 
 function renderHtmlPreview(w: HtmlPreviewWidget): string {
@@ -665,6 +725,7 @@ function renderBadgeList(w: BadgeListWidget): string {
   return `<div${attrs({
     class: 'ha-chip-group',
     'data-badge-from': w.source,
+    'data-badge-values': w.values ? safeJson(w.values) : undefined,
     'data-badge-tone': w.tone ?? 'primary',
     'data-badge-label-key': w.labelKey,
   })}></div>`;

@@ -37,6 +37,7 @@ export function compileUiSpec(spec: UiSpec, opts: CompileOptions = {}): Compiled
     state: spec.state ?? {},
     actions: spec.actions ?? {},
     defaultView: spec.defaultView,
+    onMount: spec.onMount,
   };
   const html = `<!DOCTYPE html>
 <html lang="en"${spec.theme?.mode === 'light' ? '' : ' class="dark"'}>

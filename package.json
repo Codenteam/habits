@@ -10,6 +10,7 @@
   "scripts": {
     "r": "tsx scripts/dev.ts",
     "d": "tsx scripts/tui.tsx",
+    "sync:lucide-icons": "node scripts/sync-lucide-icons.mjs",
     "cmd": "tsx packages/manage/forge/src/mcp/commands.ts",
     "docs:dev": "pnpm nx dev @ha-bits/habit-viewer & cd docs && pnpm dev",
     "prepare": "husky",
@@ -57,6 +58,7 @@
     "esbuild": "^0.24.2",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
+    "lucide-static": "^0.575.0",
     "nodemon": "^3.1.11",
     "nx": "^22.4.5",
     "postject": "^1.0.0-alpha.6",

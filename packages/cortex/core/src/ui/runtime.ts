@@ -777,8 +777,14 @@ function render() {
     el.textContent = typeof v === 'string' ? v : JSON.stringify(v, null, 2);
   });
   qa('[data-markdown-from]').forEach(function (el) {
-    var v = getPath({ state: state }, el.getAttribute('data-markdown-from'));
-    el.innerHTML = v ? renderMarkdown(typeof v === 'string' ? v : JSON.stringify(v, null, 2)) : '';
+    var src = el.getAttribute('data-markdown-from');
+    var scope = el.getAttribute('data-item-scope') ? safeParseJson(el.getAttribute('data-item-scope')) : null;
+    var v = scope ? getPath(scope, src) : getPath({ state: state }, src);
+    if (v == null && scope) v = getPath(scope, 'item.' + src);
+    var truncate = parseInt(el.getAttribute('data-markdown-truncate') || '', 10);
+    var text = v ? (typeof v === 'string' ? v : JSON.stringify(v, null, 2)) : '';
+    if (truncate && text.length > truncate) text = text.slice(0, truncate) + '…';
+    el.innerHTML = text ? renderMarkdown(text) : '';
   });
   qa('[data-html-from]').forEach(function (el) {
     var v = getPath({ state: state }, el.getAttribute('data-html-from'));
@@ -880,11 +886,20 @@ function render() {
   });
 
   // 7o. Badge list
-  qa('[data-badge-from]').forEach(function (el) {
-    var arr = getPath({ state: state }, el.getAttribute('data-badge-from')) || [];
-    if (!Array.isArray(arr)) {
-      if (typeof arr === 'string') arr = arr.split(/[,;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
-      else arr = [];
+  qa('[data-badge-from], [data-badge-values]').forEach(function (el) {
+    var valuesRaw = el.getAttribute('data-badge-values');
+    var arr;
+    if (valuesRaw) {
+      var labels = safeParseJson(valuesRaw) || [];
+      var scopeRaw = el.getAttribute('data-item-scope');
+      var scope = scopeRaw ? safeParseJson(scopeRaw) : {};
+      arr = labels.map(function (lbl) { return renderTemplate(String(lbl), scope); }).filter(Boolean);
+    } else {
+      arr = getPath({ state: state }, el.getAttribute('data-badge-from')) || [];
+      if (!Array.isArray(arr)) {
+        if (typeof arr === 'string') arr = arr.split(/[,;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+        else arr = [];
+      }
     }
     var tone = el.getAttribute('data-badge-tone') || 'primary';
     var labelKey = el.getAttribute('data-badge-label-key');
@@ -905,6 +920,77 @@ function render() {
     el.innerHTML = arr.map(function (item, i) {
       return '<li>' + renderTemplate(tmpl, { item: item, index: i }) + '</li>';
     }).join('');
+  });
+
+  // 7p2. Structured list (template widgets per item)
+  qa('[data-ha-list-from]').forEach(function (el) {
+    var arr = getPath({ state: state }, el.getAttribute('data-ha-list-from')) || [];
+    if (!Array.isArray(arr)) arr = [];
+    var limit = parseInt(el.getAttribute('data-ha-list-limit') || '', 10);
+    if (limit > 0) arr = arr.slice(0, limit);
+    var empty = el.getAttribute('data-ha-list-empty') || '';
+    var keyField = el.getAttribute('data-ha-list-key');
+    var tmpl = safeParseJson(el.getAttribute('data-ha-list-tmpl')) || [];
+    var sig = el.getAttribute('data-ha-list-from') + '::' + arr.length + '::' + arr.map(function (it, i) {
+      if (keyField && it && typeof it === 'object') return String(it[keyField]);
+      return String(i);
+    }).join('|');
+    if (el.getAttribute('data-ha-list-sig') === sig) return;
+    el.setAttribute('data-ha-list-sig', sig);
+    if (arr.length === 0) {
+      el.innerHTML = empty
+        ? '<div class="ha-empty"><div class="ha-empty__title">' + escapeHtml(empty) + '</div></div>'
+        : '';
+      return;
+    }
+    el.innerHTML = arr.map(function (item, index) {
+      var scope = { item: item, index: index };
+      var parts = tmpl.map(function (w) {
+        if (!w || !w.kind) return '';
+        if (w.kind === 'text') {
+          var textCls = w.muted ? 'ha-help' : w.strong ? 'ha-text--strong' : '';
+          return '<p class="' + textCls + '">' + escapeHtml(renderTemplate(w.value || '', scope)) + '</p>';
+        }
+        if (w.kind === 'heading') {
+          var lvl = Math.min(6, Math.max(1, w.level || 2));
+          return '<h' + lvl + '>' + escapeHtml(renderTemplate(w.value || '', scope)) + '</h' + lvl + '>';
+        }
+        if (w.kind === 'markdown') {
+          var src = w.source || '';
+          var mdVal = getPath(scope, src);
+          if (mdVal == null) mdVal = getPath(scope, 'item.' + src);
+          var mdText = mdVal ? (typeof mdVal === 'string' ? mdVal : JSON.stringify(mdVal, null, 2)) : '';
+          if (w.truncate && mdText.length > w.truncate) mdText = mdText.slice(0, w.truncate) + '…';
+          return '<div class="ha-markdown">' + (mdText ? renderMarkdown(mdText) : '') + '</div>';
+        }
+        if (w.kind === 'badge-list') {
+          var labels = w.values || [];
+          var badges = labels.map(function (lbl) { return renderTemplate(String(lbl), scope); }).filter(Boolean);
+          var tone = w.tone || 'primary';
+          return '<div class="ha-chip-group">' + badges.map(function (lbl) {
+            return '<span class="ha-tag ha-tag--' + tone + '">' + escapeHtml(lbl) + '</span>';
+          }).join('') + '</div>';
+        }
+        return '';
+      }).join('');
+      var keyAttr = keyField && item && typeof item === 'object' && item[keyField] != null
+        ? ' data-ha-list-item-key="' + escapeHtml(String(item[keyField])) + '"'
+        : '';
+      return '<div class="ha-list__item ha-stack"' + keyAttr + '>' + parts + '</div>';
+    }).join('');
+  });
+
+  // 7p3. Standalone text / heading / alert templates
+  qa('[data-text-tmpl]').forEach(function (el) {
+    if (el.closest('[data-ha-list-from]')) return;
+    el.textContent = renderTemplate(el.getAttribute('data-text-tmpl') || '', {});
+  });
+  qa('[data-heading-tmpl]').forEach(function (el) {
+    if (el.closest('[data-ha-list-from]')) return;
+    el.textContent = renderTemplate(el.getAttribute('data-heading-tmpl') || '', {});
+  });
+  qa('[data-alert-tmpl]').forEach(function (el) {
+    el.textContent = renderTemplate(el.getAttribute('data-alert-tmpl') || '', {});
   });
 
   // 7q. Streaming panel
@@ -1502,6 +1588,12 @@ function boot() {
     if (action && action.type === 'oauth') dispatch(actId, {});
   });
   // onEnter for default view
+  if (CFG.onMount) {
+    var mountActions = Array.isArray(CFG.onMount) ? CFG.onMount : [CFG.onMount];
+    mountActions.forEach(function (a) {
+      if (typeof a === 'string' && a) dispatch(a, {});
+    });
+  }
   schedule();
   // Polling actions
   for (var aid in ACTIONS) {

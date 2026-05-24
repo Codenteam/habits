@@ -122,4 +122,4 @@ Frontend: `showcase/hello-world/frontend/index.yaml`
 
 ## Implementation
 
-Graph is built by `buildHabitGraph()` in `buildGraph.ts` and validated by `validateHabitGraph()` in `validateGraph.ts`. The Base UI **Habit Validation → Connection Graph** tab renders the same structure interactively.
+Graph is built by `buildHabitGraph()` in `buildGraph.ts` and validated by `validateHabitGraph()` in `validateGraph.ts`. The Base UI **Habit Validation → Connection Graph** tab imports the same module via `@ha-bits/cortex-lab/graph` and renders it interactively with `buildPropagationSteps()`.

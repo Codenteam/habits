@@ -5,8 +5,11 @@ import {
   type HabitLabValidationReport,
   type HabitLabDryRunReport,
 } from '@ha-bits/cortex-lab';
-import type { BuildHabitGraphInput } from '@ha-bits/cortex-lab/graph';
-import { buildEditorGraphInput } from '../../../ui/src/lib/validation/buildEditorGraphInput';
+import {
+  buildEditorGraphInput,
+  type BuildHabitGraphInput,
+  type EditorHabitLike,
+} from '@ha-bits/cortex-lab/graph';
 import { createResponse } from '../helpers';
 
 function parseGraphInput(body: unknown): BuildHabitGraphInput | { error: string } {
@@ -21,7 +24,7 @@ function parseGraphInput(body: unknown): BuildHabitGraphInput | { error: string 
   }
 
   return buildEditorGraphInput({
-    habits: habits as Parameters<typeof buildEditorGraphInput>[0]['habits'],
+    habits: habits as EditorHabitLike[],
     frontendYaml: (frontendYaml as string | null | undefined) ?? null,
     envContent: (envContent as string | undefined) ?? '',
   });

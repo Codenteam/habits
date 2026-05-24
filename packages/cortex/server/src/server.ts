@@ -1151,6 +1151,18 @@ class WorkflowExecutorServer {
         if (yamlEntry) {
           this.app.get('/', (_req: Request, res: Response) => sendCompiledYaml(res));
           this.app.get('/index.html', (_req: Request, res: Response) => sendCompiledYaml(res));
+
+          // Subdirectory index.html (e.g. /admin/) — static index is disabled at root when YAML is active.
+          this.app.use((req: Request, res: Response, next) => {
+            if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+            const rel = req.path.replace(/\/$/, '').replace(/^\//, '');
+            if (!rel || rel.includes('.')) return next();
+            const subIndex = path.join(frontendDir, rel, 'index.html');
+            if (nativeFs.existsSync(subIndex)) {
+              return res.sendFile(subIndex);
+            }
+            next();
+          });
         }
 
         // Static assets only — never auto-serve index.html when YAML is active.
