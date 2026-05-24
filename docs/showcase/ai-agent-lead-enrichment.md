@@ -8,9 +8,9 @@ aside: false
 import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichmend-3.webp', caption: 'AI Agent Lead Enrichment' },
     { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-1.webp', caption: 'AI Agent Lead Enrichment' },
-    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-2.webp', caption: 'AI Agent Lead Enrichment' }
+    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-2.webp', caption: 'AI Agent Lead Enrichment' },
+    { img: '/showcase/ai-agent-lead-enrichment/ai-agent-lead-enrichment-3.webp', caption: 'AI Agent Lead Enrichment' }
 ]
 
 const habitTabs = [
