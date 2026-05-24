@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AvailableModuleDefinition, ExecutionRequest, Workflow } from '../types/workflow';
 import { ExportBundle } from '@ha-bits/core';
+import type { BuildHabitGraphInput } from '@ha-bits/cortex-lab/graph';
 
 // API-specific execution result (different from shared workflow ExecutionResult)
 interface APIExecutionResult {
@@ -455,7 +456,7 @@ export const api = {
   },
 
   async validateHabitLabDryRun(payload: {
-    graphInput: Record<string, unknown>;
+    graphInput: BuildHabitGraphInput;
   }): Promise<{ ok: boolean; data?: any; error?: string }> {
     try {
       const response = await axios.post(`${API_BASE_URL}/lab/dry-run`, payload);

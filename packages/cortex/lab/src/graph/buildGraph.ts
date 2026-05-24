@@ -1,4 +1,4 @@
-import { parseUiSpec } from '@ha-bits/cortex-core/ui';
+import { parseUiSpec } from '@ha-bits/cortex-core/ui/parseSpec';
 import { analyzeUiSpec } from './analyzeUiSpec';
 import type {
   BuildHabitGraphInput,

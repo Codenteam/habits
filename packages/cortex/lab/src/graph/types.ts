@@ -1,4 +1,4 @@
-import type { UiSpec } from '@ha-bits/cortex-core/ui';
+import type { UiSpec } from '@ha-bits/cortex-core/ui/types';
 
 export type GraphLayer =
   | 'source'

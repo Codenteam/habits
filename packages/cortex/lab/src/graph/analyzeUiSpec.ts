@@ -1,4 +1,4 @@
-import type { ActionSpec, UiSpec, WidgetSpec } from '@ha-bits/cortex-core/ui';
+import type { ActionSpec, UiSpec, WidgetSpec } from '@ha-bits/cortex-core/ui/types';
 import { extractBodyKeys, extractStateRefs, parseWorkflowIdFromEndpoint } from './templateUtils';
 
 export interface UiFormField {

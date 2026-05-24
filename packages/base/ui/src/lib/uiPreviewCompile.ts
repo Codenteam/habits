@@ -11,7 +11,7 @@ let compileUiYamlFn: CompileUiYaml | null = null;
 
 async function getCompiler(): Promise<CompileUiYaml> {
   if (!compileUiYamlFn) {
-    const mod = await import('@ha-bits/cortex-core/ui');
+    const mod = await import('@ha-bits/cortex-core/ui/compileUiSpec');
     compileUiYamlFn = mod.compileUiYaml;
   }
   return compileUiYamlFn;

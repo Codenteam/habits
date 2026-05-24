@@ -1,6 +1,6 @@
 import { analyzeUiSpec } from './analyzeUiSpec';
 import { buildHabitGraph, declaredInputFields, extractHabitsInputFields } from './buildGraph';
-import { parseUiSpec } from '@ha-bits/cortex-core/ui';
+import { parseUiSpec } from '@ha-bits/cortex-core/ui/parseSpec';
 import type {
   BuildHabitGraphInput,
   GraphIssue,
