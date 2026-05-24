@@ -1,4 +1,4 @@
-import type { BuildHabitGraphInput, GraphHabitInput } from '../graph';
+import type { BuildHabitGraphInput, GraphHabitInput } from '@ha-bits/cortex-lab/graph';
 
 export interface EditorHabitLike {
   id: string;

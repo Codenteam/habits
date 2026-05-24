@@ -28,7 +28,12 @@ import {
   convertWorkflowWithConnections,
   getWorkflowTypeName,
 } from '@ha-bits/core';
-import { WorkflowExecutor, IWebhookHandler, SimulationExecutor } from '@ha-bits/cortex-core';
+import { WorkflowExecutor, IWebhookHandler } from '@ha-bits/cortex-core';
+import {
+  runDryRunSession,
+  discoverDataFlow,
+  runWorkflowWithLabOptions,
+} from '@ha-bits/cortex-lab';
 import { discoverOAuthRequirements, printOAuthRequirements, OAuthRequirement } from '@ha-bits/cortex-core';
 import { compileUiYaml } from '@ha-bits/cortex-core';
 import { WebhookTriggerServer } from './WebhookTriggerServer';
@@ -102,15 +107,52 @@ class WorkflowExecutorServer {
   private webhookServerUrl: string | null = null;
   private oauthCallbackServer: OAuthCallbackServer | null = null;
   private dryRun: boolean = false;
+  private capture: boolean = false;
+  private dataFlowPath: string | null = null;
+  private replayPath: string | null = null;
+  private liveNodes: string[] = [];
+  private assertInputs: boolean = false;
   
   /** Webhook registry for vendor-based webhook routing */
   public readonly webhookRegistry: WebhookRegistry = webhookRegistry;
 
-  constructor(options?: { dryRun?: boolean }) {
+  constructor(options?: {
+    dryRun?: boolean;
+    capture?: boolean;
+    dataFlowPath?: string;
+    replay?: string;
+    liveNodes?: string[];
+    assertInputs?: boolean;
+  }) {
     this.app = express();
     this.dryRun = options?.dryRun ?? false;
-    this.executor = this.dryRun ? new SimulationExecutor() : new WorkflowExecutor();
+    this.capture = options?.capture ?? false;
+    this.dataFlowPath = options?.dataFlowPath ?? null;
+    this.replayPath = options?.replay ?? null;
+    this.liveNodes = options?.liveNodes ?? [];
+    this.assertInputs = options?.assertInputs ?? false;
+    if (this.capture && this.replayPath) {
+      throw new Error('Use either capture or replay server mode, not both');
+    }
+    this.executor = new WorkflowExecutor();
     this.setupMiddleware();
+  }
+
+  private async executeWithLabSession(
+    workflow: Workflow,
+    options: Parameters<WorkflowExecutor['executeWorkflow']>[1] = {},
+  ): Promise<WorkflowExecution> {
+    return runWorkflowWithLabOptions({
+      capture: this.capture,
+      configPath: this.configPath ?? undefined,
+      configDir: this.configDir ?? undefined,
+      dataFlowPath: this.dataFlowPath ?? undefined,
+      replay: this.replayPath,
+      liveNodes: this.liveNodes,
+      assertInputs: this.assertInputs,
+      habitInput: options.initialContext?.habits?.input,
+      workflow,
+    }, () => this.executor.executeWorkflow(workflow, options));
   }
 
   /**
@@ -726,6 +768,20 @@ class WorkflowExecutorServer {
       });
     });
 
+    // Discover data-flow wiring without runtime input (static graph validation)
+    this.app.get('/misc/discover', (req: Request, res: Response) => {
+      try {
+        if (!this.configPath) {
+          return res.status(400).json({ error: 'Server has no loaded config' });
+        }
+        const strict = req.query.strict === 'true' || req.query.strict === '1';
+        const report = discoverDataFlow(this.configPath, { strict });
+        res.status(report.ok ? 200 : 422).json(report);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message || String(error) });
+      }
+    });
+
     // Execute a specific workflow by ID
     // Supports GET (params from query) and POST (params from body)
     // Supports streaming mode via ?stream=true query param or Accept: application/x-ndjson header
@@ -748,12 +804,20 @@ class WorkflowExecutorServer {
           const inputData = ['POST', 'PUT', 'PATCH'].includes(req.method)
             ? (req.body || {})
             : queryParams;
-          const simExecutor = this.executor as SimulationExecutor;
-          const report = await simExecutor.simulate(workflowId, inputData, {
-            habitPath: this.configPath ?? undefined,
-            configDir: this.configDir ?? undefined,
+          const habitsContext = {
+            habits: {
+              input: inputData,
+              headers: req.headers || {},
+              cookies: this.parseCookies(req.headers.cookie || ''),
+            },
+          };
+          const { report } = await runDryRunSession({
+            workflow: loadedWorkflow.workflow,
+            configPath: this.configPath ?? undefined,
             printSummary: true,
-          });
+          }, () => this.executor.executeWorkflow(loadedWorkflow.workflow, {
+            initialContext: habitsContext,
+          }));
           return res.status(200).json(report);
         }
 
@@ -853,7 +917,7 @@ class WorkflowExecutorServer {
             }
           };
 
-          const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
+          const execution = await this.executeWithLabSession(loadedWorkflow.workflow, {
             webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
@@ -872,7 +936,7 @@ class WorkflowExecutorServer {
           }
         } else {
           // Non-streaming mode - return complete JSON response
-          const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
+          const execution = await this.executeWithLabSession(loadedWorkflow.workflow, {
             webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
@@ -1216,6 +1280,7 @@ class WorkflowExecutorServer {
           console.log(`📋 Available endpoints:`);
           console.log(`   GET  /misc/workflows - List all loaded workflows`);
           console.log(`   GET  /misc/workflow/:id - Get workflow details`);
+          console.log(`   GET  /misc/discover - Discover data-flow wiring (no input required)`);
           console.log(`   GET|POST /api/:id - Execute a workflow (GET: query params, POST: body)`);
           console.log(`        (supports streaming via ?stream=true or Accept: application/x-ndjson)`);
           console.log(`   GET  /misc/execution/:id - Get execution status`);
@@ -1951,9 +2016,23 @@ async function runCLI() {
 export async function startServer(
   configPath: string,
   portOverride?: number,
-  options?: { dryRun?: boolean },
+  options?: {
+    dryRun?: boolean;
+    capture?: boolean;
+    dataFlowPath?: string;
+    replay?: string;
+    liveNodes?: string[];
+    assertInputs?: boolean;
+  },
 ): Promise<WorkflowExecutorServer> {
-  const server = new WorkflowExecutorServer({ dryRun: options?.dryRun });
+  const server = new WorkflowExecutorServer({
+    dryRun: options?.dryRun,
+    capture: options?.capture,
+    dataFlowPath: options?.dataFlowPath,
+    replay: options?.replay,
+    liveNodes: options?.liveNodes,
+    assertInputs: options?.assertInputs,
+  });
   
   await server.loadConfig(configPath);
   const config = server['executor'].getConfig();

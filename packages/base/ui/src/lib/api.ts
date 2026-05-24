@@ -422,4 +422,56 @@ export const api = {
       return { enabled: false, hasApiKey: false };
     }
   },
+
+  async validateHabitLab(payload: {
+    habits: Array<{
+      id: string;
+      name: string;
+      nodes: Array<{ id: string; data?: Record<string, unknown> }>;
+      edges: Array<{ source: string; target: string }>;
+      output?: Record<string, string>;
+      input?: Array<{ name?: string; id?: string }>;
+    }>;
+    frontendYaml?: string;
+    envContent?: string;
+    strict?: boolean;
+  }): Promise<{ ok: boolean; data?: any; error?: string }> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/lab/validate`, payload);
+      return {
+        ok: response.data?.success === true,
+        data: response.data?.data,
+      };
+    } catch (err: any) {
+      const data = err?.response?.data?.data;
+      if (data) {
+        return { ok: false, data };
+      }
+      return {
+        ok: false,
+        error: err?.response?.data?.error || err?.message || 'Validation request failed',
+      };
+    }
+  },
+
+  async validateHabitLabDryRun(payload: {
+    graphInput: Record<string, unknown>;
+  }): Promise<{ ok: boolean; data?: any; error?: string }> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/lab/dry-run`, payload);
+      return {
+        ok: response.data?.success === true,
+        data: response.data?.data,
+      };
+    } catch (err: any) {
+      const data = err?.response?.data?.data;
+      if (data) {
+        return { ok: false, data };
+      }
+      return {
+        ok: false,
+        error: err?.response?.data?.error || err?.message || 'Dry-run request failed',
+      };
+    }
+  },
 };

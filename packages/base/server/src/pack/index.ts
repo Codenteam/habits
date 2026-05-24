@@ -29,6 +29,7 @@ import { getTauriLib, getTauriMain } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriCapabilities } from './templates/tauri/tauri-config';
 import JSZip from 'jszip';
+import { compileUiYaml } from '@ha-bits/cortex-core';
 import { addDirectoryToZip } from './utils';
 import { processHtmlFile, InjectScript } from './html-asset-inliner';
 
@@ -438,8 +439,21 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
       addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
       addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
     } else {
-      // YAML-only frontend: copy all non-HTML assets verbatim.
+      // YAML frontend: copy non-HTML assets and compile index.yaml → index.html
+      // for Tauri/.habit import (Cortex app requires index.html in the archive).
       addFrontendFilesToZip(frontendPath, zip, inlinedFiles, new Map(), undefined, frontendDirName);
+
+      const yamlPath =
+        fs.existsSync(path.join(frontendPath, 'index.yaml'))
+          ? path.join(frontendPath, 'index.yaml')
+          : path.join(frontendPath, 'index.yml');
+      if (fs.existsSync(yamlPath)) {
+        const yamlSource = fs.readFileSync(yamlPath, 'utf8');
+        const { html } = compileUiYaml(yamlSource);
+        const htmlZipPath = path.join(frontendDirName, 'index.html');
+        zip.file(htmlZipPath, html);
+        console.log('   ✨ Compiled index.yaml → index.html for .habit package');
+      }
     }
   }
 

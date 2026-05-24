@@ -96,10 +96,10 @@ version: 1
 meta:
   id: hello-world
   title: Hello World Demo
-  icon: "👋"
+  icon: "lucide:Hand"
 
 theme:
-  preset: ha-bits-blue
+  preset: neural
   mode: dark
 
 state:
@@ -131,6 +131,28 @@ widgets:
 ```
 
 That single file gives you a themed page, a validated form, a POST to `/api/hello-world`, a toast on success, a conditional result panel, and a JSON viewer with a copy button. No CSS, no JS.
+
+## Icons
+
+Icon fields (`meta.icon`, `layout.header.icon`, `layout.nav[].icon`, widget `icon` props) accept:
+
+| Format | Example | Notes |
+|--------|---------|-------|
+| **Lucide name** (recommended) | `lucide:Zap` | 47 curated icons; inherits theme primary color |
+| **Image URL** | `/assets/logo.svg` | Rendered as `<img>` |
+| **Inline SVG** | `<svg viewBox="0 0 24 24">…</svg>` | Sanitized at compile time |
+| **Plain text** | `◆` or `H` | Escaped text fallback |
+| **Omit** | _(no field)_ | Header/nav show labels only |
+
+Lucide icons use the full set synced from `lucide-react` into [`packages/cortex/core/icons/lucide/`](../../packages/cortex/core/icons/lucide/) (see auto-generated [`manifest.json`](../../packages/cortex/core/icons/manifest.json)). Reference any icon as `lucide:IconName` (PascalCase, e.g. `lucide:Hand`, `lucide:TriangleAlert`). Legacy kebab names like `lucide:alert-triangle` also resolve when an alias SVG exists. Re-sync after upgrading lucide: `pnpm --filter @ha-bits/cortex-core sync-lucide-icons`.
+
+**No emoji required.** Prefer `lucide:Name` or omit the icon entirely.
+
+**Alternatives without icons:**
+
+- **Labels only** — drop `icon` from nav items; tabs and sidebar use text alone.
+- **Hero / image widgets** — use `kind: hero` with `imageSource` for a logo instead of `meta.icon`.
+- **Hide header icon slot** — `theme.customCss: ".ha-header__icon { display: none; }"`
 
 For richer examples, browse `showcase/*/frontend/index.yaml` — every habit in this repo now has one. Notable patterns:
 
@@ -239,8 +261,10 @@ Both live in `@ha-bits/cortex-core`:
 | Themes / CSS     | `packages/cortex/core/src/ui/theme.ts`        |
 | Server-side render of widgets | `packages/cortex/core/src/ui/widgets.ts` |
 | Layout shells    | `packages/cortex/core/src/ui/layouts.ts`      |
-| Client runtime   | `packages/cortex/core/src/ui/runtime.ts`      |
-| Entry point      | `packages/cortex/core/src/ui/index.ts`        |
+  | Client runtime   | `packages/cortex/core/src/ui/runtime.ts`      |
+  | Icon rendering   | `packages/cortex/core/src/ui/icons.ts`        |
+  | Lucide subset    | `packages/cortex/core/icons/lucide/*.svg` + `lucideIcons.ts` |
+  | Entry point      | `packages/cortex/core/src/ui/index.ts`        |
 
 After changing the engine, rebuild and re-run the smoke test:
 

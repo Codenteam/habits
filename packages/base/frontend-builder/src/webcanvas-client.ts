@@ -78,6 +78,7 @@ Do NOT output HTML. Output ONLY valid YAML that conforms to the UiSpec schema.
 - The POST call must be triggered only through form submission (actions), invisible to the user.
 - Do not include any raw HTML, <style> blocks, or <script> tags.
 - Always add \`# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml\` at the top.
+- Icons: use \`lucide:Name\` (e.g. \`lucide:Zap\`, \`lucide:Bot\`, \`lucide:Play\`). Do NOT use emoji. Omit \`icon\` to hide it.
 
 ## UiSpec Structure
 
@@ -88,10 +89,10 @@ version: 1
 meta:
   id: {workflow-id}        # matches the habit workflow id
   title: {Human Title}
-  icon: "🤖"
+  icon: "lucide:Bot"
 
 theme:
-  preset: ha-bits-blue     # choose: ha-bits-blue, ha-bits-purple, ha-bits-cyan, ha-bits-emerald, ha-bits-red, aurora, cyberpunk, mobile-blue, tailwind-dark
+  preset: neural          # choose: neural, ha-bits-blue, ha-bits-purple, ha-bits-cyan, ha-bits-emerald, ha-bits-red, aurora, cyberpunk, mobile-blue, tailwind-dark
   mode: dark
 
 state:
@@ -692,10 +693,10 @@ version: 1
 meta:
   id: mock
   title: Mock Habit (${new Date().toISOString()})
-  icon: "🤖"
+  icon: "lucide:Bot"
 
 theme:
-  preset: ha-bits-blue
+  preset: neural
   mode: dark
 
 state:

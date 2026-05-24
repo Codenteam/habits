@@ -2,6 +2,7 @@ export {
   runCaptureSession,
   runReplaySession,
   runDryRunSession,
+  runWorkflowWithLabOptions,
   defaultDataFlowPath,
 } from './sessions';
 
@@ -10,6 +11,7 @@ export type {
   ReplaySessionOptions,
   DryRunSessionOptions,
   SimulationReport,
+  LabExecutionOptions,
 } from './sessions';
 
 export {
@@ -32,10 +34,34 @@ export type { SimulationReport as SimulationReportType, SimulationStatus } from 
 export {
   discoverDataFlow,
   discoverDataFlowFromInput,
+  discoverDataFlowBlueprint,
+  discoverDataFlowBlueprintFromInput,
+  stringifyDataFlowBlueprint,
+  writeDataFlowBlueprintFile,
   loadStackGraphInput,
   printDiscoveryReport,
+  printDataFlowBlueprint,
+  buildWorkflowBlueprint,
+  buildHabitInputBlueprint,
+  buildEnvBlueprint,
+  buildNodeBlueprint,
+  buildWorkflowOutputBlueprint,
+  orderWorkflowNodes,
+  discoverNodeOutputPlaceholder,
+  DISCOVER_PLACEHOLDER_PREFIX,
+  DATA_FLOW_BLUEPRINT_VERSION,
+  DATA_FLOW_BLUEPRINT_KIND,
 } from './discovery';
-export type { DataFlowDiscoveryReport, DiscoverDataFlowOptions } from './discovery';
+export type {
+  DataFlowDiscoveryReport,
+  DiscoverDataFlowOptions,
+  DataFlowBlueprintFile,
+  DataFlowBlueprintReport,
+  DataFlowWorkflowBlueprint,
+  DataFlowNodeBlueprint,
+  DataFlowInputFieldBlueprint,
+  DiscoverDataFlowBlueprintOptions,
+} from './discovery';
 
 export {
   buildHabitGraph,
@@ -61,11 +87,9 @@ export type {
 export {
   validateHabitLab,
   validateHabitLabDiscovery,
-  buildEditorGraphInput,
-  habitsToGraphInput,
-  parseEnvKeysFromContent,
+  validateHabitLabDryRun,
 } from './validate';
 export type {
   HabitLabValidationReport,
-  EditorHabitLike,
+  HabitLabDryRunReport,
 } from './validate';

@@ -7,12 +7,15 @@ import {
   type HabitGraphReport,
   type ValidateGraphOptions,
 } from '../graph';
+import { discoverDataFlowBlueprintFromInput } from '../discovery/discoverDataFlowBlueprint';
+import type { DataFlowBlueprintFile } from '../discovery/blueprintTypes';
 import { runDryRunSession } from '../sessions';
 import type { SimulationReport } from '../simulation/types';
 
 export interface HabitLabValidationReport {
   ok: boolean;
   discovery: HabitGraphReport;
+  blueprint: DataFlowBlueprintFile;
   dryRun: Array<{
     workflowId: string;
     workflowName: string;
@@ -59,12 +62,14 @@ export async function validateHabitLab(
   options: ValidateGraphOptions = {},
 ): Promise<HabitLabValidationReport> {
   const discovery = buildAndValidateHabitGraph(input, options);
-  const dryRun: HabitLabValidationReport['dryRun'] = [];
+  const { blueprint } = discoverDataFlowBlueprintFromInput(input);
+  const dryRun = await runHabitLabDryRun(input);
 
   if (input.habits.length === 0) {
     return {
       ok: discovery.ok,
       discovery,
+      blueprint,
       dryRun,
       summary: {
         discoveryErrors: discovery.summary.errorCount,
@@ -73,6 +78,64 @@ export async function validateHabitLab(
         dryRunWarnings: 0,
       },
     };
+  }
+
+  const dryRunErrors = dryRun.reduce(
+    (n, item) => n + item.report.errors.length + (item.report.status === 'error' ? 1 : 0),
+    0,
+  );
+  const dryRunWarnings = dryRun.reduce((n, item) => n + item.report.warnings.length, 0);
+
+  return {
+    ok: discovery.ok && dryRun.every((item) => item.report.status !== 'error'),
+    discovery,
+    blueprint,
+    dryRun,
+    summary: {
+      discoveryErrors: discovery.summary.errorCount,
+      discoveryWarnings: discovery.summary.warningCount,
+      dryRunErrors,
+      dryRunWarnings,
+    },
+  };
+}
+
+export interface HabitLabDryRunReport {
+  ok: boolean;
+  dryRun: HabitLabValidationReport['dryRun'];
+  summary: {
+    dryRunErrors: number;
+    dryRunWarnings: number;
+  };
+}
+
+export async function validateHabitLabDryRun(
+  input: BuildHabitGraphInput,
+): Promise<HabitLabDryRunReport> {
+  const dryRun = await runHabitLabDryRun(input);
+  const dryRunErrors = dryRun.reduce(
+    (n, item) => n + item.report.errors.length + (item.report.status === 'error' ? 1 : 0),
+    0,
+  );
+  const dryRunWarnings = dryRun.reduce((n, item) => n + item.report.warnings.length, 0);
+
+  return {
+    ok: dryRun.every((item) => item.report.status !== 'error'),
+    dryRun,
+    summary: {
+      dryRunErrors,
+      dryRunWarnings,
+    },
+  };
+}
+
+async function runHabitLabDryRun(
+  input: BuildHabitGraphInput,
+): Promise<HabitLabValidationReport['dryRun']> {
+  const dryRun: HabitLabValidationReport['dryRun'] = [];
+
+  if (input.habits.length === 0) {
+    return dryRun;
   }
 
   const executor = new WorkflowExecutor();
@@ -112,23 +175,7 @@ export async function validateHabitLab(
     });
   }
 
-  const dryRunErrors = dryRun.reduce(
-    (n, item) => n + item.report.errors.length + (item.report.status === 'error' ? 1 : 0),
-    0,
-  );
-  const dryRunWarnings = dryRun.reduce((n, item) => n + item.report.warnings.length, 0);
-
-  return {
-    ok: discovery.ok && dryRun.every((item) => item.report.status !== 'error'),
-    discovery,
-    dryRun,
-    summary: {
-      discoveryErrors: discovery.summary.errorCount,
-      discoveryWarnings: discovery.summary.warningCount,
-      dryRunErrors,
-      dryRunWarnings,
-    },
-  };
+  return dryRun;
 }
 
 export function validateHabitLabDiscovery(

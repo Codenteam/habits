@@ -28,6 +28,8 @@ describe('hello-world lab validation', () => {
     const input = loadStackGraphInput(stackPath);
     const report = await validateHabitLab(input);
     expect(report.ok).toBe(true);
+    expect(report.blueprint.kind).toBe('blueprint');
+    expect(report.blueprint.workflows['hello-world']).toBeDefined();
     expect(report.dryRun.length).toBeGreaterThanOrEqual(2);
     expect(report.dryRun.every((item) => item.report.status !== 'error')).toBe(true);
   });

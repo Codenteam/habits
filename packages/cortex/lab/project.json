@@ -16,7 +16,9 @@
       "options": {
         "outputPath": "dist/packages/cortex/lab",
         "main": "packages/cortex/lab/src/index.ts",
-        "outputFileName": "index",
+        "additionalEntryPoints": [
+          "packages/cortex/lab/src/graph/index.ts"
+        ],
         "tsConfig": "packages/cortex/lab/tsconfig.lib.json",
         "platform": "node",
         "format": ["cjs", "esm"],

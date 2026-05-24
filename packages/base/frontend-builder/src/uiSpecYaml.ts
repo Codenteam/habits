@@ -2,7 +2,13 @@
  * Pure UiSpec YAML parse/emit utilities (no React deps).
  * Shared by UiSpecBuilder and tests.
  */
-import yaml from 'yaml';
+import { parse as yamlParse } from 'yaml';
+
+export interface NavItemSpec {
+  id: string;
+  label?: string;
+  icon?: string;
+}
 
 export interface SpecState {
   meta: { id: string; title: string; subtitle?: string; icon?: string };
@@ -14,10 +20,16 @@ export interface SpecState {
   layout: {
     type: 'single' | 'tabs' | 'sidebar' | 'mobile-shell' | 'showcase';
     header?: { title?: string; subtitle?: string; icon?: string };
+    nav?: NavItemSpec[];
   };
   state: Record<string, unknown>;
   actions: Record<string, unknown>;
   widgets: WidgetNode[];
+  /** Tab/sidebar view definitions. The active view's widgets are mirrored in `widgets`. */
+  views?: Record<string, Record<string, unknown>>;
+  defaultView?: string;
+  /** View id currently being edited in the builder canvas. */
+  activeViewId?: string;
 }
 
 export interface WidgetNode {
@@ -122,7 +134,7 @@ export function emitYaml(value: unknown, indent = 0): string {
   return emitYamlString(String(value));
 }
 
-function widgetNodeToObject(node: WidgetNode): Record<string, unknown> {
+export function widgetNodeToObject(node: WidgetNode): Record<string, unknown> {
   const out: Record<string, unknown> = { kind: node.kind, ...node.props };
   if (node.children && node.children.length > 0) {
     out.children = node.children.map(widgetNodeToObject);
@@ -130,7 +142,7 @@ function widgetNodeToObject(node: WidgetNode): Record<string, unknown> {
   return out;
 }
 
-function objectToWidgetNode(obj: Record<string, unknown>): WidgetNode {
+export function objectToWidgetNode(obj: Record<string, unknown>): WidgetNode {
   const { kind, children, ...props } = obj ?? {};
   return {
     uid: uid(),
@@ -140,17 +152,63 @@ function objectToWidgetNode(obj: Record<string, unknown>): WidgetNode {
   };
 }
 
+export function resolveActiveViewId(
+  s: Pick<SpecState, 'activeViewId' | 'defaultView' | 'layout' | 'views'>,
+): string | undefined {
+  if (s.activeViewId) return s.activeViewId;
+  if (s.defaultView) return s.defaultView;
+  if (s.layout?.nav?.[0]?.id) return s.layout.nav[0].id;
+  if (s.views) return Object.keys(s.views)[0];
+  return undefined;
+}
+
+function widgetsFromView(
+  views: Record<string, Record<string, unknown>> | undefined,
+  viewId: string | undefined,
+): WidgetNode[] {
+  if (!views || !viewId) return [];
+  const raw = views[viewId]?.widgets;
+  return Array.isArray(raw)
+    ? raw.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+    : [];
+}
+
+/** Persist the canvas widget tree into the active view (or top-level widgets). */
+export function syncWidgetsToSpecState(s: SpecState): SpecState {
+  if (!s.views || Object.keys(s.views).length === 0) return s;
+  const viewId = resolveActiveViewId(s);
+  if (!viewId) return s;
+  return {
+    ...s,
+    activeViewId: viewId,
+    views: {
+      ...s.views,
+      [viewId]: {
+        ...(s.views[viewId] ?? {}),
+        widgets: s.widgets.map(widgetNodeToObject),
+      },
+    },
+  };
+}
+
 export function specStateToSpec(s: SpecState): Record<string, unknown> {
   const spec: Record<string, unknown> = { version: 1, meta: pruneEmpty(s.meta), theme: pruneEmpty(s.theme) };
   const header = s.layout?.header ? pruneEmpty(s.layout.header) : undefined;
+  const nav = s.layout?.nav && s.layout.nav.length > 0 ? s.layout.nav : undefined;
   if (s.layout?.type && s.layout.type !== 'single') {
-    spec.layout = { type: s.layout.type, ...(header ? { header } : {}) };
-  } else if (header) {
-    spec.layout = { type: 'single', header };
+    spec.layout = { type: s.layout.type, ...(header ? { header } : {}), ...(nav ? { nav } : {}) };
+  } else if (header || nav) {
+    spec.layout = { type: 'single', ...(header ? { header } : {}), ...(nav ? { nav } : {}) };
   }
   if (s.state && Object.keys(s.state).length > 0) spec.state = s.state;
   if (s.actions && Object.keys(s.actions).length > 0) spec.actions = s.actions;
-  spec.widgets = s.widgets.map(widgetNodeToObject);
+  if (s.defaultView) spec.defaultView = s.defaultView;
+  if (s.views && Object.keys(s.views).length > 0) {
+    const synced = syncWidgetsToSpecState(s);
+    spec.views = synced.views;
+  } else if (s.widgets.length > 0) {
+    spec.widgets = s.widgets.map(widgetNodeToObject);
+  }
   return spec;
 }
 
@@ -161,7 +219,7 @@ export function parseYamlToSpecState(
 ): SpecState {
   const fallback: SpecState = {
     meta: { id: defaultMetaId || 'my-habit', title: defaultMetaTitle || 'My Habit' },
-    theme: { preset: 'ha-bits-blue', mode: 'dark' },
+    theme: { preset: 'neural', mode: 'dark' },
     layout: { type: 'single' },
     state: {},
     actions: {},
@@ -170,22 +228,37 @@ export function parseYamlToSpecState(
   if (!yamlText || !yamlText.trim()) return fallback;
   let parsed: Record<string, unknown> | null = null;
   try {
-    parsed = yaml.parse(yamlText.replace(/^#.*\n/, '')) as Record<string, unknown>;
+    parsed = yamlParse(yamlText.replace(/^#.*\n/, '')) as Record<string, unknown>;
   } catch {
     return fallback;
   }
   if (!parsed || typeof parsed !== 'object') return fallback;
   const layout = parsed.layout as SpecState['layout'] | undefined;
-  return {
+  const views =
+    parsed.views && typeof parsed.views === 'object' && !Array.isArray(parsed.views)
+      ? (parsed.views as Record<string, Record<string, unknown>>)
+      : undefined;
+  const defaultView = typeof parsed.defaultView === 'string' ? parsed.defaultView : undefined;
+  const draft: SpecState = {
     meta: { ...fallback.meta, ...((parsed.meta as SpecState['meta']) ?? {}) },
     theme: { ...fallback.theme, ...((parsed.theme as SpecState['theme']) ?? {}) },
-    layout: { type: layout?.type ?? 'single', header: layout?.header },
+    layout: {
+      type: layout?.type ?? 'single',
+      header: layout?.header,
+      nav: layout?.nav,
+    },
     state: (parsed.state as Record<string, unknown>) ?? {},
     actions: (parsed.actions as Record<string, unknown>) ?? {},
-    widgets: Array.isArray(parsed.widgets)
-      ? parsed.widgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
-      : [],
+    widgets: [],
+    views,
+    defaultView,
   };
+  const activeViewId = views ? resolveActiveViewId(draft) : undefined;
+  draft.activeViewId = activeViewId;
+  draft.widgets = Array.isArray(parsed.widgets)
+    ? parsed.widgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+    : widgetsFromView(views, activeViewId);
+  return draft;
 }
 
 export function builderRoundTripYaml(

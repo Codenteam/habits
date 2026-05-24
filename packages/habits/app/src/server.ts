@@ -19,6 +19,16 @@ export interface HabitsServerOptions {
   port?: number;
   /** When true, /api/:workflowId returns a SimulationReport instead of executing */
   dryRun?: boolean;
+  /** Capture node I/O to data-flow.yaml on each workflow execution */
+  capture?: boolean;
+  /** Override path for data-flow.yaml */
+  dataFlowPath?: string;
+  /** Replay workflow execution from a data-flow.yaml file */
+  replay?: string;
+  /** Node IDs to run for real during replay */
+  liveNodes?: string[];
+  /** Fail replay when resolved input differs from capture */
+  assertInputs?: boolean;
 }
 
 
@@ -116,7 +126,14 @@ async function setupUiRoutes(app: Application): Promise<void> {
  * Start the Habits server with UI support
  */
 export async function startHabitsServer(options: HabitsServerOptions): Promise<WorkflowExecutorServer> {
-  const server = await startCortexServer(options.configPath, options.port, { dryRun: options.dryRun });
+  const server = await startCortexServer(options.configPath, options.port, {
+    dryRun: options.dryRun,
+    capture: options.capture,
+    dataFlowPath: options.dataFlowPath,
+    replay: options.replay,
+    liveNodes: options.liveNodes,
+    assertInputs: options.assertInputs,
+  });
   
   // Get the express app from the server and add UI routes
   const app = (server as any).app as Application;

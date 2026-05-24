@@ -9,23 +9,23 @@ Tracked habits from the **Next batch** request. **Builds** = `frontend/index.yam
 | Habit | Builds | Agent tested | User tested | Issues |
 |--------|--------|--------------|-------------|--------|
 | ai-agent-lead-enrichment | Yes | Yes | No | 0 |
-| ai-cookbook | Yes | Yes | No | 0 |
+| ai-cookbook | Yes | Yes | Yes | 0 |
 | ai-invoice-mailer | Yes | Yes | No | 0 |
-| ai-journal | Yes | Yes | No | 0 |
+| ai-journal | Yes | Yes | Yes | 0 |
 | client-invoice-manager | Yes | Yes | No | 0 |
 | content-digest-summarizer | Yes | Yes | No | 0 |
-| email-demo | Yes | Yes | No | 0 |
+| email-demo | Yes | Yes | Yes | 0 |
 | email-ticket-routing | Yes | Partial | No | 1 |
 | emails-categorization | Yes | Partial | No | 1 |
 | hello-world | Yes | Yes | Yes | 0 |
 | invoices-processing | Yes | Partial | No | 1 |
-| marketing-campaign | Yes | Skipped | No | 1 |
-| qr-database | Yes | Yes | Partial | 0 |
-| resume-analyzer | Yes | Yes | Partial | 0 |
-| rss-social-poster | Yes | No | No | 0 |
-| social-media-multi-posting | Yes | No | No | 0 |
+| marketing-campaign | Yes | Yes | Yes | 1 |
+| qr-database | Yes | Yes | Yes | 0 |
+| resume-analyzer | Yes | Yes | Yes | 0 |
+| rss-social-poster | Yes | Skipped | — | 0 |
+| social-media-multi-posting | Yes | Skipped | — | 0 |
 
-**Legend:** Partial (agent) = YAML migrated but marked needs double-check, or E2E not finished. Partial (user) = you exercised the habit and reported feedback (e.g. qr-database Archive, resume-analyzer tab overflow — both fixed). Skipped = known blocker; migration not validated end-to-end.
+**Legend:** Partial (agent) = YAML migrated but marked needs double-check, or E2E not finished. Partial (user) = you exercised the habit and reported feedback (e.g. qr-database Archive, resume-analyzer tab overflow — both fixed). Skipped = not validated end-to-end (blocker or intentionally deferred). **—** = not applicable (habit skipped before user testing).
 
 Last compile check: all 16 habits — **16 ok, 0 failed**.
 
@@ -66,6 +66,13 @@ Prompt used to gate progress — **wait for your verification on each habit befo
 **Rule:** Do not start the next habit until you have tested the current one on port 13000 and explicitly said OK (or reported issues to fix first).
 
 ---
+
+## Social-media habits — skipped (batch E2E)
+
+The following habits in this batch are **intentionally skipped** for pack → port 13000 → agent/user E2E validation. YAML compiles; no further migration testing unless requested.
+
+- **rss-social-poster** — RSS → OpenAI → Twitter/X + LinkedIn; requires social OAuth and feed env vars.
+- **social-media-multi-posting** — scheduled multi-platform posting; same OAuth/scheduling stack.
 
 ## marketing-campaign — canvas node output shown as JSON
 

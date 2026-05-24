@@ -54,7 +54,8 @@ import {
   LayoutTemplate,
   Settings,
 } from 'lucide-react';
-import { parseYamlToSpecState } from './uiSpecYaml';
+import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui';
+import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,6 +90,7 @@ interface SpecState {
   meta: { id: string; title: string; subtitle?: string; icon?: string };
   theme: {
     preset?:
+      | 'neural'
       | 'ha-bits-blue' | 'ha-bits-cyan' | 'ha-bits-purple' | 'ha-bits-red'
       | 'ha-bits-emerald' | 'ha-bits-warn' | 'aurora' | 'cyberpunk'
       | 'mobile-blue' | 'tailwind-dark' | 'showcase-flat';
@@ -98,10 +100,14 @@ interface SpecState {
   layout: {
     type: 'single' | 'tabs' | 'sidebar' | 'mobile-shell' | 'showcase';
     header?: { title?: string; subtitle?: string; icon?: string };
+    nav?: Array<{ id: string; label?: string; icon?: string }>;
   };
   state: Record<string, any>;
   actions: Record<string, any>;
   widgets: WidgetNode[];
+  views?: Record<string, Record<string, any>>;
+  defaultView?: string;
+  activeViewId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +130,8 @@ type FieldKind =
   | 'kv-array' // for kv-grid.fields
   | 'columns-array' // for data-table.columns
   | 'options-array' // for select / chip-group / radio-cards options
-  | 'string-array';
+  | 'string-array'
+  | 'icon';
 
 interface FieldDef {
   key: string;
@@ -212,9 +219,9 @@ const CATALOG: WidgetDef[] = [
     label: 'Hero',
     category: 'Layout',
     icon: Megaphone,
-    defaults: () => ({ icon: '✨', title: 'Welcome', subtitle: 'A short tagline' }),
+    defaults: () => ({ icon: 'lucide:Sparkles', title: 'Welcome', subtitle: 'A short tagline' }),
     fields: [
-      { key: 'icon', label: 'Icon (emoji)', type: 'text' },
+      { key: 'icon', label: 'Icon', type: 'icon' },
       { key: 'title', label: 'Title', type: 'text' },
       { key: 'subtitle', label: 'Subtitle', type: 'text' },
       { key: 'description', label: 'Description', type: 'textarea' },
@@ -378,6 +385,74 @@ const CATALOG: WidgetDef[] = [
     ],
   },
   {
+    kind: 'bullet-list',
+    label: 'Bullet list',
+    category: 'Output',
+    icon: ListChecks,
+    defaults: () => ({ source: 'state.items' }),
+    fields: [
+      { key: 'source', label: 'Source (state path)', type: 'text' },
+      { key: 'itemTemplate', label: 'Item template', type: 'text' },
+    ],
+    preview: (p) => `List · ${p.source || ''}`,
+  },
+  {
+    kind: 'numbered-list',
+    label: 'Numbered list',
+    category: 'Output',
+    icon: ListChecks,
+    defaults: () => ({ source: 'state.items' }),
+    fields: [
+      { key: 'source', label: 'Source (state path)', type: 'text' },
+      { key: 'itemTemplate', label: 'Item template', type: 'text' },
+    ],
+    preview: (p) => `List · ${p.source || ''}`,
+  },
+  {
+    kind: 'history-grid',
+    label: 'History grid',
+    category: 'Output',
+    icon: LayoutGrid,
+    defaults: () => ({
+      loadAction: 'loadItems',
+      dataPath: 'entries',
+      columns: 1,
+      itemTemplate: { title: '{{item.title}}', meta: '{{item.date}}' },
+      empty: 'No items yet.',
+    }),
+    fields: [
+      { key: 'loadAction', label: 'Load action id', type: 'text' },
+      { key: 'dataPath', label: 'Data path in response', type: 'text', placeholder: 'entries' },
+      { key: 'columns', label: 'Columns', type: 'number' },
+      { key: 'empty', label: 'Empty state text', type: 'text' },
+      { key: 'reloadAfter', label: 'Reload after actions', type: 'string-array' },
+      { key: 'itemTemplate', label: 'Item template', type: 'json' },
+      { key: 'onClick', label: 'On click handler', type: 'json' },
+    ],
+    preview: (p) => `History · ${p.loadAction || ''}`,
+  },
+  {
+    kind: 'history-list',
+    label: 'History list',
+    category: 'Output',
+    icon: LayoutGrid,
+    defaults: () => ({
+      loadAction: 'loadItems',
+      dataPath: 'entries',
+      itemTemplate: { title: '{{item.title}}', meta: '{{item.date}}' },
+      empty: 'No items yet.',
+    }),
+    fields: [
+      { key: 'loadAction', label: 'Load action id', type: 'text' },
+      { key: 'dataPath', label: 'Data path in response', type: 'text', placeholder: 'entries' },
+      { key: 'empty', label: 'Empty state text', type: 'text' },
+      { key: 'reloadAfter', label: 'Reload after actions', type: 'string-array' },
+      { key: 'itemTemplate', label: 'Item template', type: 'json' },
+      { key: 'onClick', label: 'On click handler', type: 'json' },
+    ],
+    preview: (p) => `History · ${p.loadAction || ''}`,
+  },
+  {
     kind: 'data-table',
     label: 'Data table',
     category: 'Output',
@@ -435,9 +510,9 @@ const CATALOG: WidgetDef[] = [
     label: 'Empty state',
     category: 'Feedback',
     icon: Activity,
-    defaults: () => ({ icon: '📭', title: 'Nothing yet', subtitle: 'Get started by adding an item.' }),
+    defaults: () => ({ icon: 'lucide:Inbox', title: 'Nothing yet', subtitle: 'Get started by adding an item.' }),
     fields: [
-      { key: 'icon', label: 'Icon (emoji)', type: 'text' },
+      { key: 'icon', label: 'Icon', type: 'icon' },
       { key: 'title', label: 'Title', type: 'text' },
       { key: 'subtitle', label: 'Subtitle', type: 'text' },
     ],
@@ -604,14 +679,6 @@ function emitYamlString(s: string): string {
 // Spec ↔ widget tree round-trip
 // ---------------------------------------------------------------------------
 
-function widgetNodeToObject(node: WidgetNode): any {
-  const out: any = { kind: node.kind, ...node.props };
-  if (node.children && node.children.length > 0) {
-    out.children = node.children.map(widgetNodeToObject);
-  }
-  return out;
-}
-
 /** Preview compile payload — includes builder-only `_builderId` for click-to-select. */
 function widgetNodeToPreviewObject(node: WidgetNode): any {
   const out: any = { kind: node.kind, _builderId: node.uid, ...node.props };
@@ -624,20 +691,41 @@ function widgetNodeToPreviewObject(node: WidgetNode): any {
 function specStateToSpec(s: SpecState): any {
   const spec: any = { version: 1, meta: pruneEmpty(s.meta), theme: pruneEmpty(s.theme) };
   const header = s.layout?.header ? pruneEmpty(s.layout.header) : undefined;
+  const nav = s.layout?.nav && s.layout.nav.length > 0 ? s.layout.nav : undefined;
   if (s.layout?.type && s.layout.type !== 'single') {
-    spec.layout = { type: s.layout.type, ...(header ? { header } : {}) };
-  } else if (header) {
-    spec.layout = { type: 'single', header };
+    spec.layout = { type: s.layout.type, ...(header ? { header } : {}), ...(nav ? { nav } : {}) };
+  } else if (header || nav) {
+    spec.layout = { type: 'single', ...(header ? { header } : {}), ...(nav ? { nav } : {}) };
   }
   if (s.state && Object.keys(s.state).length > 0) spec.state = s.state;
   if (s.actions && Object.keys(s.actions).length > 0) spec.actions = s.actions;
-  spec.widgets = s.widgets.map(widgetNodeToObject);
+  if (s.defaultView) spec.defaultView = s.defaultView;
+  if (s.views && Object.keys(s.views).length > 0) {
+    const synced = syncWidgetsToSpecState(s as Parameters<typeof syncWidgetsToSpecState>[0]);
+    spec.views = synced.views;
+  } else if (s.widgets.length > 0) {
+    spec.widgets = s.widgets.map(widgetNodeToObject);
+  }
   return spec;
 }
 
 function specStateToPreviewSpec(s: SpecState): any {
   const spec = specStateToSpec(s);
-  spec.widgets = s.widgets.map(widgetNodeToPreviewObject);
+  const viewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
+  if (viewId) {
+    spec.defaultView = viewId;
+    if (spec.views?.[viewId]) {
+      spec.views = {
+        ...spec.views,
+        [viewId]: {
+          ...spec.views[viewId],
+          widgets: s.widgets.map(widgetNodeToPreviewObject),
+        },
+      };
+    }
+  } else if (s.widgets.length > 0) {
+    spec.widgets = s.widgets.map(widgetNodeToPreviewObject);
+  }
   return spec;
 }
 
@@ -682,6 +770,12 @@ export function UiSpecBuilderVanilla({
     tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle),
   );
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
+
+  // Reload when a new habit/stack is opened while this builder is mounted.
+  useEffect(() => {
+    setSpec(tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle));
+    setSelectedUid(null);
+  }, [initialYaml, defaultMetaId, defaultMetaTitle]);
   const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>('settings');
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -692,6 +786,7 @@ export function UiSpecBuilderVanilla({
   // Drag state — kept in refs to avoid re-renders mid-drag.
   const dragRef = useRef<{ kind?: string; sourceUid?: string }>({});
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
+  const previewSelectCleanupRef = useRef<(() => void) | null>(null);
 
   // YAML preview (always derived; cheap enough to compute on every render).
   const yamlText = useMemo(() => {
@@ -750,19 +845,67 @@ export function UiSpecBuilderVanilla({
     );
   }, []);
 
+  const attachPreviewSelectHandlers = useCallback(() => {
+    previewSelectCleanupRef.current?.();
+    previewSelectCleanupRef.current = null;
+    const doc = previewIframeRef.current?.contentDocument;
+    if (!doc) return;
+    const onPointer = (e: Event) => {
+      let el = e.target as Element | null;
+      while (el && el !== doc.body) {
+        const builderId = el.getAttribute?.('data-ha-builder-id');
+        if (builderId) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof (e as Event & { stopImmediatePropagation?: () => void }).stopImmediatePropagation === 'function') {
+            (e as Event & { stopImmediatePropagation: () => void }).stopImmediatePropagation();
+          }
+          setSelectedUid(builderId);
+          setRightTab('settings');
+          highlightPreviewSelection(builderId);
+          return;
+        }
+        el = el.parentElement;
+      }
+    };
+    const types = ['pointerdown', 'mousedown', 'click'] as const;
+    types.forEach((type) => doc.addEventListener(type, onPointer, true));
+    previewSelectCleanupRef.current = () => {
+      types.forEach((type) => doc.removeEventListener(type, onPointer, true));
+    };
+  }, [highlightPreviewSelection]);
+
+  useEffect(() => () => previewSelectCleanupRef.current?.(), []);
+
+  useEffect(() => {
+    if (!previewHtml || previewLoading) return;
+    const t = window.setTimeout(() => attachPreviewSelectHandlers(), 0);
+    return () => window.clearTimeout(t);
+  }, [previewHtml, previewLoading, attachPreviewSelectHandlers]);
+
   useEffect(() => {
     highlightPreviewSelection(selectedUid);
   }, [selectedUid, previewHtml, highlightPreviewSelection]);
 
   useEffect(() => {
+    const bridge = {
+      select(id: string) {
+        setSelectedUid(id);
+        setRightTab('settings');
+      },
+    };
+    (window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge }).__HA_BUILDER_BRIDGE__ = bridge;
     const onMessage = (e: MessageEvent) => {
       if (e.data?.type === 'ha-builder-select' && typeof e.data.id === 'string') {
-        setSelectedUid(e.data.id);
-        setRightTab('settings');
+        bridge.select(e.data.id);
       }
     };
     window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      const w = window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge };
+      if (w.__HA_BUILDER_BRIDGE__ === bridge) delete w.__HA_BUILDER_BRIDGE__;
+    };
   }, []);
 
   // ----------------- mutation helpers -----------------
@@ -788,6 +931,38 @@ export function UiSpecBuilderVanilla({
   const updateActions = useCallback((actions: Record<string, any>) => {
     setSpec((s) => ({ ...s, actions }));
   }, []);
+
+  const switchView = useCallback((newViewId: string) => {
+    setSpec((s) => {
+      if (!s.views) return s;
+      const currentViewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
+      if (!currentViewId || currentViewId === newViewId) {
+        return { ...s, activeViewId: newViewId };
+      }
+      const savedViews = {
+        ...s.views,
+        [currentViewId]: {
+          ...(s.views[currentViewId] ?? {}),
+          widgets: s.widgets.map(widgetNodeToObject),
+        },
+      };
+      const targetView = savedViews[newViewId];
+      const rawWidgets = targetView?.widgets;
+      const newWidgets = Array.isArray(rawWidgets)
+        ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+        : [];
+      return { ...s, views: savedViews, widgets: newWidgets, activeViewId: newViewId };
+    });
+    setSelectedUid(null);
+  }, []);
+
+  const viewNavItems = useMemo(() => {
+    if (!spec.views) return [];
+    if (spec.layout.nav?.length) return spec.layout.nav;
+    return Object.keys(spec.views).map((id) => ({ id, label: id, icon: undefined as string | undefined }));
+  }, [spec.views, spec.layout.nav]);
+
+  const activeViewId = resolveActiveViewId(spec as Parameters<typeof resolveActiveViewId>[0]);
 
   const addWidget = useCallback((kind: string, atIndex?: number, parentUid?: string | null) => {
     const def = CATALOG_BY_KIND.get(kind);
@@ -974,6 +1149,28 @@ export function UiSpecBuilderVanilla({
 
         {/* Canvas */}
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-slate-950">
+          {viewNavItems.length > 1 && (
+            <div className="px-4 pt-3 flex flex-wrap gap-1 border-b border-slate-800">
+              {viewNavItems.map((nav) => {
+                const active = nav.id === activeViewId;
+                return (
+                  <button
+                    key={nav.id}
+                    type="button"
+                    onClick={() => switchView(nav.id)}
+                    className={
+                      'px-3 py-1.5 rounded-md text-xs font-medium transition-colors ' +
+                      (active
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800')
+                    }
+                  >
+                    {nav.icon ? `${nav.icon} ` : ''}{nav.label ?? nav.id}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div className="px-4 py-3 text-xs text-slate-500 flex items-center gap-2">
             <PanelsTopLeft className="w-3.5 h-3.5" />
             Drag widgets from the palette. Click to select. Drag the handle to reorder.
@@ -998,7 +1195,7 @@ export function UiSpecBuilderVanilla({
             ) : previewError ? (
               <><AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> <span className="truncate text-amber-300" title={previewError}>{previewError}</span></>
             ) : (
-              <><Eye className="w-3.5 h-3.5" /> Live preview — click to select</>
+              <><Eye className="w-3.5 h-3.5" /> Live preview: click to select</>
             )}
           </div>
           <iframe
@@ -1006,8 +1203,11 @@ export function UiSpecBuilderVanilla({
             title="ui-spec-preview"
             srcDoc={previewHtml}
             sandbox="allow-scripts allow-forms allow-same-origin"
-            className="flex-1 w-full min-h-0 bg-white"
-            onLoad={() => highlightPreviewSelection(selectedUid)}
+            className="flex-1 w-full min-h-0 bg-black"
+            onLoad={() => {
+              attachPreviewSelectHandlers();
+              highlightPreviewSelection(selectedUid);
+            }}
           />
         </aside>
 
@@ -1218,11 +1418,9 @@ function SpecSettingsPanel({
             />
           </Field>
           <Field label="Icon">
-            <input
-              className={`${INPUT} w-16 text-center`}
-              value={spec.meta.icon ?? ''}
-              onChange={(e) => onUpdateMeta({ icon: e.target.value || undefined })}
-              placeholder="✨"
+            <IconPicker
+              value={spec.meta.icon}
+              onChange={(v) => onUpdateMeta({ icon: v })}
             />
           </Field>
         </div>
@@ -1234,10 +1432,11 @@ function SpecSettingsPanel({
           <Field label="Color theme">
             <select
               className={INPUT}
-              value={spec.theme.preset ?? 'ha-bits-blue'}
+              value={spec.theme.preset ?? 'neural'}
               onChange={(e) => onUpdateTheme({ preset: e.target.value as SpecState['theme']['preset'] })}
             >
               {[
+                'neural',
                 'ha-bits-blue', 'ha-bits-cyan', 'ha-bits-purple', 'ha-bits-red',
                 'ha-bits-emerald', 'ha-bits-warn', 'aurora', 'cyberpunk',
                 'mobile-blue', 'tailwind-dark', 'showcase-flat',
@@ -1296,11 +1495,9 @@ function SpecSettingsPanel({
             />
           </Field>
           <Field label="Page icon">
-            <input
-              className={`${INPUT} w-16 text-center`}
-              value={spec.layout.header?.icon ?? ''}
-              onChange={(e) => onUpdateLayoutHeader({ icon: e.target.value || undefined })}
-              placeholder="✨"
+            <IconPicker
+              value={spec.layout.header?.icon}
+              onChange={(v) => onUpdateLayoutHeader({ icon: v })}
             />
           </Field>
         </div>
@@ -1380,6 +1577,17 @@ function PropertyPanel({ node, onChange, onRemove }: PropertyPanelProps) {
             })
           }
         />
+        <PropertyField
+          field={{ key: 'hideWhen', label: 'Hide when (template)', type: 'text', placeholder: 'state.loading' }}
+          value={node.props.hideWhen}
+          onChange={(v) =>
+            onChange((props) => {
+              const next = { ...props };
+              if (v) next.hideWhen = v; else delete next.hideWhen;
+              return next;
+            })
+          }
+        />
       </div>
     </div>
   );
@@ -1392,6 +1600,13 @@ interface PropertyFieldProps {
 }
 
 function PropertyField({ field, value, onChange }: PropertyFieldProps) {
+  if (field.type === 'icon') {
+    return (
+      <Field label={field.label} help={field.help ?? 'Lucide icon name, or leave empty'}>
+        <IconPicker value={value} onChange={onChange} />
+      </Field>
+    );
+  }
   if (field.type === 'text' || field.type === 'number') {
     return (
       <Field label={field.label} help={field.help}>
@@ -1541,6 +1756,26 @@ function FieldsArrayEditor({ value, onChange }: { value: any[]; onChange: (v: an
             <input className={`${INPUT} flex-1`} value={f.placeholder ?? ''} placeholder="placeholder"
                    onChange={(e) => update(i, { placeholder: e.target.value || undefined })} />
           </div>
+          {f.type === 'textarea' && (
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <label className="inline-flex items-center gap-1 whitespace-nowrap">
+                rows
+                <input
+                  className={`${INPUT} w-16`}
+                  type="number"
+                  min={1}
+                  value={f.rows ?? ''}
+                  placeholder="4"
+                  onChange={(e) => update(i, { rows: e.target.value === '' ? undefined : Number(e.target.value) })}
+                />
+              </label>
+              <label className="inline-flex items-center gap-1">
+                <input type="checkbox" checked={!!f.showWordCount}
+                       onChange={(e) => update(i, { showWordCount: e.target.checked || undefined })} />
+                word count
+              </label>
+            </div>
+          )}
         </div>
       ))}
       <button type="button" className={BTN_SECONDARY}
@@ -2211,6 +2446,30 @@ function KvRowsEditor({
 // ---------------------------------------------------------------------------
 
 const INPUT = 'bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-slate-100 focus:outline-none focus:border-blue-500 placeholder-slate-500';
+
+function IconPicker({
+  value,
+  onChange,
+  className,
+}: {
+  value?: string;
+  onChange: (v: string | undefined) => void;
+  className?: string;
+}) {
+  const selectValue = value?.startsWith('lucide:') ? value : '';
+  return (
+    <select
+      className={className ?? `${INPUT} w-full`}
+      value={selectValue}
+      onChange={(e) => onChange(e.target.value || undefined)}
+    >
+      <option value="">None</option>
+      {LUCIDE_ICON_NAMES.map((name) => (
+        <option key={name} value={`lucide:${name}`}>{name}</option>
+      ))}
+    </select>
+  );
+}
 const BTN_SECONDARY = 'inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:bg-slate-800';
 
 function Field({ label, help, children, inline }: { label: string; help?: string; children: React.ReactNode; inline?: boolean }) {

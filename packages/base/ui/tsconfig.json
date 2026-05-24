@@ -25,6 +25,7 @@
       "@ha-bits/workflow-canvas/*": ["../../workflow-canvas/src/*"],
       "@ha-bits/cortex-core/ui": ["../../cortex/core/src/ui/index.ts"],
       "@ha-bits/cortex-core/ui/*": ["../../cortex/core/src/ui/*"],
+      "@ha-bits/cortex-lab/*": ["../../cortex/lab/src/*"],
       "@habits/shared/types": ["../../../packages/core/src/types.ts"],
       "@habits/shared/*": ["../../../packages/core/src/*"],
       "@/*": ["./src/*"]

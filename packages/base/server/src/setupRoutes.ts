@@ -13,6 +13,7 @@ import {
   ExportController,
   CreatorController,
   UiController,
+  LabController,
 } from './controllers';
 import { setupServeRoutes } from './serve';
 import { createResponse } from './helpers';
@@ -44,6 +45,7 @@ export function setupRoutes(
   const exportController = new ExportController();
   const creatorController = new CreatorController();
   const uiController = new UiController();
+  const labController = new LabController();
 
   // Root route
   app.get(basePath + '/', rootController.getRoot);
@@ -95,6 +97,10 @@ export function setupRoutes(
   // UI builder routes (compile a UiSpec YAML to a self-contained HTML
   // document for the new YAML-driven builder's live preview).
   app.post(basePath + '/ui/compile-yaml', uiController.compileYaml);
+
+  // Lab validation (discovery + dry-run without runtime input)
+  app.post(basePath + '/lab/validate', labController.validate);
+  app.post(basePath + '/lab/dry-run', labController.dryRun);
 
   // Creator routes (AI generation) - also gated by HABITS_AI_GEN inside the controller
   app.get(basePath + '/creator/status', creatorController.getStatus);

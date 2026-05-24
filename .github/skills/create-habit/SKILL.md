@@ -175,10 +175,10 @@ version: 1
 meta:
   id: {habit-id}
   title: {Habit Title}
-  icon: "🤖"
+  icon: "lucide:Bot"
 
 theme:
-  preset: ha-bits-blue
+  preset: neural
   mode: dark
 
 state:
@@ -227,11 +227,16 @@ widgets:
 | `mobile-shell` | Mobile-first app feel |
 | `chat` | Conversational interface |
 
+### Icons
+
+Use `lucide:Name` (e.g. `lucide:Zap`, `lucide:Bot`) for `meta.icon`, nav icons, and widget icons. Do **not** use emoji. Omit `icon` to hide it.
+
 ### Theme Presets
 
 | Preset | Look |
 |--------|------|
-| `ha-bits-blue` | Default blue, dark |
+| `neural` | Default futuristic blue, dark |
+| `ha-bits-blue` | Classic blue, dark |
 | `ha-bits-purple` | Purple, dark |
 | `ha-bits-cyan` | Cyan, dark |
 | `ha-bits-emerald` | Green, dark |

@@ -1,4 +1,5 @@
 import type { WorkflowExecution } from '@habits/shared/types';
+import * as path from 'path';
 import {
   runWithExecutionOverrides,
   type BitsExecutionParams,
@@ -6,6 +7,7 @@ import {
 } from '@ha-bits/cortex-core';
 import { DataFlowRecorder } from '../dataFlow/recorder';
 import { DataFlowReplayer } from '../dataFlow/replayer';
+import { defaultDataFlowPath } from '../dataFlow/io';
 import type { CaptureSessionOptions, DryRunSessionOptions, ReplaySessionOptions } from '../dataFlow/types';
 import { createBitsProxy } from '../proxy/createBitsProxy';
 import { createProxyMock } from '../simulation/MockOutputFactory';
@@ -110,3 +112,56 @@ function mockBitsResult(
 export { defaultDataFlowPath } from '../dataFlow/io';
 export type { CaptureSessionOptions, ReplaySessionOptions, DryRunSessionOptions } from '../dataFlow/types';
 export type { SimulationReport } from '../simulation/types';
+
+export interface LabExecutionOptions {
+  capture?: boolean;
+  configPath?: string;
+  configDir?: string;
+  dataFlowPath?: string;
+  replay?: string | null;
+  liveNodes?: string[];
+  assertInputs?: boolean;
+  habitInput?: Record<string, unknown>;
+  env?: NodeJS.ProcessEnv;
+  workflow: import('@habits/shared/types').Workflow;
+}
+
+/**
+ * Dispatch capture/replay session modes for a workflow execution callback.
+ * Shared by the habits CLI and cortex server.
+ */
+export async function runWorkflowWithLabOptions(
+  options: LabExecutionOptions,
+  run: () => Promise<WorkflowExecution>,
+): Promise<WorkflowExecution> {
+  if (options.capture && options.replay) {
+    throw new Error('Use either capture or replay, not both');
+  }
+
+  if (options.capture) {
+    const resolvedConfigPath = options.configPath ? path.resolve(options.configPath) : undefined;
+    const configDir = options.configDir
+      ?? (resolvedConfigPath ? path.dirname(resolvedConfigPath) : undefined);
+    if (!resolvedConfigPath) {
+      throw new Error('Capture mode requires configPath so capture metadata can be written');
+    }
+    return runCaptureSession({
+      configPath: resolvedConfigPath,
+      filePath: options.dataFlowPath || (configDir ? defaultDataFlowPath(configDir) : undefined),
+      workflow: options.workflow,
+      env: options.env ?? process.env,
+      habitInput: options.habitInput,
+    }, run);
+  }
+
+  if (options.replay) {
+    return runReplaySession({
+      filePath: path.resolve(options.replay),
+      liveNodes: options.liveNodes,
+      assertInputs: options.assertInputs === true,
+      workflow: options.workflow,
+    }, run);
+  }
+
+  return run();
+}

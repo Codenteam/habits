@@ -112,8 +112,8 @@ definitions:
       icon:
         type: string
         description: |
-          Emoji, URL, or inline SVG string. Rendered in the header and as
-          the document favicon hint.
+          Icon for the header. Prefer `lucide:Name` (e.g. `lucide:Zap`), or an
+          image URL, inline SVG string, or plain text. Omit to hide the icon.
       documentTitle:
         type: string
         description: Overrides the `<title>`; defaults to `title`.
@@ -126,6 +126,7 @@ definitions:
         description: One of the bundled palette presets.
         type: string
         enum:
+          - neural
           - ha-bits-blue
           - ha-bits-cyan
           - ha-bits-purple
