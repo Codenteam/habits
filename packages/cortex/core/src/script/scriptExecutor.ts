@@ -20,6 +20,7 @@ import {
   ScriptState,
 } from './types';
 import { LoggerFactory } from '@ha-bits/core/logger';
+import { getExecutionOverrides } from '../execution/overrides';
 
 const logger = LoggerFactory.getRoot();
 
@@ -463,16 +464,9 @@ function loadLocalScript(moduleName: string): ScriptDefinition | null {
 // ============================================================================
 
 /**
- * Execute a Script module
+ * Execute a Script module (default implementation).
  */
-export async function executeScriptModule(
-  params: ScriptExecutionParams
-): Promise<ScriptExecutionResult>;
-export async function executeScriptModule(
-  moduleName: string,
-  params: Record<string, any>
-): Promise<ScriptExecutionResult>;
-export async function executeScriptModule(
+export async function defaultExecuteScriptModule(
   paramsOrModuleName: ScriptExecutionParams | string,
   maybeParams?: Record<string, any>
 ): Promise<ScriptExecutionResult> {
@@ -560,6 +554,39 @@ export async function executeScriptModule(
       },
     };
   }
+}
+
+function normalizeScriptParams(
+  paramsOrModuleName: ScriptExecutionParams | string,
+  maybeParams?: Record<string, any>,
+): ScriptExecutionParams {
+  if (typeof paramsOrModuleName === 'string') {
+    return {
+      framework: 'script',
+      moduleName: paramsOrModuleName,
+      params: maybeParams || {},
+    };
+  }
+  return paramsOrModuleName;
+}
+
+export async function executeScriptModule(
+  params: ScriptExecutionParams
+): Promise<ScriptExecutionResult>;
+export async function executeScriptModule(
+  moduleName: string,
+  params: Record<string, any>
+): Promise<ScriptExecutionResult>;
+export async function executeScriptModule(
+  paramsOrModuleName: ScriptExecutionParams | string,
+  maybeParams?: Record<string, any>
+): Promise<ScriptExecutionResult> {
+  const normalized = normalizeScriptParams(paramsOrModuleName, maybeParams);
+  const override = getExecutionOverrides()?.executeScript;
+  if (override) {
+    return override(normalized);
+  }
+  return defaultExecuteScriptModule(paramsOrModuleName, maybeParams);
 }
 
 /**

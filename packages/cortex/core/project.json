@@ -35,6 +35,11 @@
             "output": "."
           },
           {
+            "input": "packages/cortex/core",
+            "glob": "assets/**/*",
+            "output": "."
+          },
+          {
             "input": "packages/cortex/core/src",
             "glob": "**/*.d.ts",
             "output": "."

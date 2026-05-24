@@ -1,6 +1,7 @@
 import type { NavItemSpec, UiSpec, ViewSpec, WidgetSpec } from './types';
 import { renderWidgets } from './widgets';
 import { attrs, cls, escapeAttr, escapeHtml, tmplText } from './helpers';
+import { renderIcon, renderIconPrefix, renderIconTmpl } from './icons';
 
 function viewsFromSpec(spec: UiSpec): Record<string, ViewSpec> {
   const out: Record<string, ViewSpec> = {};
@@ -23,7 +24,7 @@ function renderHeader(spec: UiSpec): string {
     : '';
   const actions = h?.actions ? renderWidgets(h.actions) : '';
   return `<header class="${cls('ha-header', sticky)}">
-${icon ? `<div class="ha-header__icon">${tmplText(icon)}</div>` : ''}
+${icon ? `<div class="ha-header__icon">${renderIconTmpl(icon)}</div>` : ''}
 <div>
   <h1 class="ha-header__title">${tmplText(title ?? '')} ${badge}</h1>
   ${subtitle ? `<p class="ha-header__subtitle">${tmplText(subtitle)}</p>` : ''}
@@ -111,7 +112,7 @@ function renderTabsLayout(spec: UiSpec, views: Record<string, ViewSpec>): string
           type: 'button',
           class: cls('ha-tab', n.id === def && 'ha-tab--active'),
           'data-view-link': n.id,
-        })}>${n.icon ? escapeHtml(n.icon) + ' ' : ''}${escapeHtml(n.label)}</button>`,
+        })}>${renderIconPrefix(n.icon)}${escapeHtml(n.label)}</button>`,
     )
     .join('');
   const panels = nav
@@ -137,7 +138,7 @@ function renderSidebarLayout(spec: UiSpec, views: Record<string, ViewSpec>): str
           type: 'button',
           class: cls('ha-sidebar__item', n.id === def && 'ha-sidebar__item--active'),
           'data-view-link': n.id,
-        })}>${n.icon ? `<span>${escapeHtml(n.icon)}</span>` : ''}<span>${escapeHtml(n.label)}</span></button>`,
+        })}>${n.icon ? renderIcon(n.icon, 'ha-icon ha-icon--nav') : ''}<span>${escapeHtml(n.label)}</span></button>`,
     )
     .join('');
   const panels = nav
@@ -145,7 +146,7 @@ function renderSidebarLayout(spec: UiSpec, views: Record<string, ViewSpec>): str
     .join('');
   return `<div class="ha-shell">
 <aside class="ha-sidebar">
-${spec.meta?.icon || spec.meta?.title ? `<div style="padding:var(--ha-pad-sm) var(--ha-pad);font-weight:700">${escapeHtml(spec.meta?.icon ?? '')} ${escapeHtml(spec.meta?.title ?? '')}</div>` : ''}
+${spec.meta?.icon || spec.meta?.title ? `<div style="padding:var(--ha-pad-sm) var(--ha-pad);font-weight:700;display:flex;align-items:center;gap:8px">${spec.meta?.icon ? renderIcon(spec.meta.icon, 'ha-icon ha-icon--inline') : ''}${escapeHtml(spec.meta?.title ?? '')}</div>` : ''}
 ${items}
 </aside>
 <div style="flex:1;display:flex;flex-direction:column;min-width:0">
@@ -167,7 +168,7 @@ function renderMobileShellLayout(spec: UiSpec, views: Record<string, ViewSpec>):
           type: 'button',
           class: cls('ha-bottom-nav__item', n.id === def && 'ha-bottom-nav__item--active'),
           'data-view-link': n.id,
-        })}><span style="font-size:18px">${escapeHtml(n.icon ?? '•')}</span><span>${escapeHtml(n.label)}</span></button>`,
+        })}>${n.icon ? renderIcon(n.icon, 'ha-icon ha-icon--nav') : `<span class="ha-icon ha-icon--text ha-icon--nav-fallback">•</span>`}<span>${escapeHtml(n.label)}</span></button>`,
     )
     .join('');
   return `<div class="ha-app" style="max-width:480px;margin:0 auto">

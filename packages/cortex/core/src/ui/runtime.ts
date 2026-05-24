@@ -5,9 +5,13 @@
  *
  * Exported as a string so the compiler can embed it without bundling.
  */
-export const RUNTIME_JS = String.raw`
+import { buildRuntimeIconJs } from './icons';
+
+const RUNTIME_JS_TEMPLATE = String.raw`
 (function () {
 'use strict';
+
+__ICON_RUNTIME__
 
 // ---------------------------------------------------------------------------
 // 1. Boot config
@@ -142,6 +146,7 @@ var _SIMPLE_PATH_OR_FILTER = /^[a-zA-Z_$][\w.$]*(\s*\|\s*[a-zA-Z_$]\w*(\s*:\s*[^
 /** Evaluate an expression that may include JS operators (! && || === etc). */
 function evalAny(expr, scope) {
   if (expr == null) return undefined;
+  if (typeof expr === 'boolean' || typeof expr === 'number') return expr;
   var s = String(expr).trim();
   if (s === '') return '';
   if (s.indexOf('{{') >= 0) return renderTemplate(s, scope);
@@ -326,7 +331,14 @@ function applySuccess(actionId, action, response, scope) {
   if (s.set) {
     for (var k in s.set) {
       var expr = s.set[k];
-      var v = expr === '$response' ? resolved : evalAny(expr, Object.assign({}, scope, { $response: resolved, response: response }));
+      var scopeWithResponse = Object.assign({}, scope, { $response: resolved, response: response });
+      var v;
+      if (expr === '$response') v = resolved;
+      else if (expr == null || typeof expr === 'boolean' || typeof expr === 'number') v = expr;
+      else {
+        var ev = evalAny(expr, scopeWithResponse);
+        v = ev !== undefined ? ev : (typeof expr === 'string' ? expr : ev);
+      }
       setPath(state, k, v);
     }
   }
@@ -733,6 +745,18 @@ function render() {
     var tpl = el.getAttribute('data-tmpl-text');
     el.textContent = renderTemplate(tpl, null);
   });
+  qa('[data-tmpl-icon]').forEach(function (el) {
+    var tpl = el.getAttribute('data-tmpl-icon');
+    var val = renderTemplate(tpl, null);
+    var html = renderIcon(val, 'ha-icon');
+    if (html) {
+      var wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      if (wrap.firstElementChild) el.replaceWith(wrap.firstElementChild);
+    } else {
+      el.remove();
+    }
+  });
   qa('*').forEach(function (el) {
     // attribute templating: data-tmpl-attr-<name>
     for (var i = 0; i < el.attributes.length; i++) {
@@ -803,7 +827,7 @@ function render() {
     var arr = getPath({ state: state }, el.getAttribute('data-metric-from')) || [];
     if (!Array.isArray(arr)) arr = [];
     el.innerHTML = arr.map(function (m) {
-      var icon = m.icon ? '<div style="font-size:20px;margin-bottom:4px">' + escapeHtml(m.icon) + '</div>' : '';
+      var icon = m.icon ? renderIcon(m.icon, 'ha-icon ha-icon--metric') : '';
       var sub = m.sublabel ? '<div class="ha-metric__sublabel">' + escapeHtml(String(m.sublabel)) + '</div>' : '';
       return '<div class="ha-metric">' + icon + '<div class="ha-metric__value">' + escapeHtml(String(m.value)) + '</div><div class="ha-metric__label">' + escapeHtml(String(m.label)) + '</div>' + sub + '</div>';
     }).join('');
@@ -935,7 +959,7 @@ function render() {
     if (!Array.isArray(arr)) arr = [];
     var tmpl = safeParseJson(el.getAttribute('data-history-tmpl')) || {};
     if (arr.length === 0) {
-      el.innerHTML = '<div class="ha-empty"><div class="ha-empty__icon">📭</div><div class="ha-empty__title">' + escapeHtml(el.getAttribute('data-history-empty') || '') + '</div></div>';
+      el.innerHTML = '<div class="ha-empty">' + renderIcon('lucide:Inbox', 'ha-icon ha-empty__icon') + '<div class="ha-empty__title">' + escapeHtml(el.getAttribute('data-history-empty') || '') + '</div></div>';
       return;
     }
     el.innerHTML = arr.map(function (item, i) {
@@ -1503,3 +1527,8 @@ window.__ha = { state: state, dispatch: dispatch, schedule: schedule };
 
 })();
 `;
+
+/** Build browser runtime JS (path-based icons, no Node fs). */
+export function getRuntimeJs(): string {
+  return RUNTIME_JS_TEMPLATE.replace('__ICON_RUNTIME__', buildRuntimeIconJs());
+}

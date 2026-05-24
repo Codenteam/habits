@@ -44,6 +44,17 @@ export const BUILDER_PREVIEW_JS = `
     highlight(e.data.id || null);
   });
 
+  function notifySelect(id) {
+    try {
+      var bridge = window.parent && window.parent.__HA_BUILDER_BRIDGE__;
+      if (bridge && typeof bridge.select === 'function') {
+        bridge.select(id);
+        return;
+      }
+    } catch (err) { /* cross-origin — fall back to postMessage */ }
+    window.parent.postMessage({ type: 'ha-builder-select', id: id }, '*');
+  }
+
   function onBuilderPointer(e) {
     var target = findBuilderTarget(e.target);
     if (!target) return;
@@ -52,7 +63,7 @@ export const BUILDER_PREVIEW_JS = `
     if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
     var id = target.getAttribute('data-ha-builder-id');
     if (!id) return;
-    window.parent.postMessage({ type: 'ha-builder-select', id: id }, '*');
+    notifySelect(id);
     highlight(id);
   }
 

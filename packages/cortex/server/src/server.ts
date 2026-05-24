@@ -35,7 +35,7 @@ import {
   runWorkflowWithLabOptions,
 } from '@ha-bits/cortex-lab';
 import { discoverOAuthRequirements, printOAuthRequirements, OAuthRequirement } from '@ha-bits/cortex-core';
-import { compileUiYaml } from '@ha-bits/cortex-core';
+import { compileUiYaml, resolveCortexCoreAssetsDir, HA_ASSETS_WEB_ROOT } from '@ha-bits/cortex-core';
 import { WebhookTriggerServer } from './WebhookTriggerServer';
 import { WebhookRegistry, webhookRegistry } from './WebhookRegistry';
 import { OAuthCallbackServer, initOAuthCallbackServer } from './OAuthCallbackServer';
@@ -1073,6 +1073,14 @@ class WorkflowExecutorServer {
         res.status(500).json({ success: false, items: [], message: error.message });
       }
     });
+
+    // ========================================================================
+    // Cortex UI assets (icons + fonts for YAML frontends)
+    // ========================================================================
+    const haAssetsDir = resolveCortexCoreAssetsDir();
+    if (haAssetsDir) {
+      this.app.use(`/${HA_ASSETS_WEB_ROOT}`, express.static(haAssetsDir));
+    }
 
     // ========================================================================
     // Frontend Static Files (at / if configured)

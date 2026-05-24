@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'async_hooks';
 import type { BitsExecutionParams, BitsExecutionResult } from '../bits/bitsRoutine';
 import type { ScriptExecutionParams, ScriptExecutionResult } from '../script/types';
 
@@ -15,15 +14,22 @@ export interface ExecutionOverrides {
   executeScript?: ScriptExecutionFn;
 }
 
-const storage = new AsyncLocalStorage<ExecutionOverrides>();
+const overrideStack: ExecutionOverrides[] = [];
 
+/**
+ * Portable override scope (Node, browser/Tauri bundle, and lab).
+ * Replaces Node-only AsyncLocalStorage so cortex-bundle loads in Tauri.
+ */
 export function runWithExecutionOverrides<T>(
   overrides: ExecutionOverrides | null | undefined,
-  fn: () => Promise<T>,
+  fn: () => T | Promise<T>,
 ): Promise<T> {
-  return storage.run(overrides ?? {}, fn);
+  overrideStack.push(overrides ?? {});
+  return Promise.resolve(fn()).finally(() => {
+    overrideStack.pop();
+  });
 }
 
 export function getExecutionOverrides(): ExecutionOverrides | undefined {
-  return storage.getStore();
+  return overrideStack[overrideStack.length - 1];
 }

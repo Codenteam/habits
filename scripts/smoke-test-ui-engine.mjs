@@ -27,6 +27,11 @@ const { createRequire } = await import('node:module');
 const requireCjs = createRequire(import.meta.url);
 const { compileUiYaml } = requireCjs(corePkg);
 
+async function syncHaAssets(outDir) {
+  const { copyHaAssetsTo } = requireCjs(corePkg);
+  copyHaAssetsTo(outDir);
+}
+
 const inputs = process.argv.slice(2);
 let files = [];
 if (inputs.length > 0) {
@@ -43,6 +48,7 @@ if (inputs.length > 0) {
 
 const outDir = path.join(repoRoot, '.compiled-frontends');
 await mkdir(outDir, { recursive: true });
+await syncHaAssets(outDir);
 
 function outName(file) {
   // showcase/<id>/frontend/index.yaml → <id>.html

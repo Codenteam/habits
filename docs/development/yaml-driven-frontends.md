@@ -144,7 +144,7 @@ Icon fields (`meta.icon`, `layout.header.icon`, `layout.nav[].icon`, widget `ico
 | **Plain text** | `◆` or `H` | Escaped text fallback |
 | **Omit** | _(no field)_ | Header/nav show labels only |
 
-Lucide icons use the full set synced from `lucide-react` into [`packages/cortex/core/icons/lucide/`](../../packages/cortex/core/icons/lucide/) (see auto-generated [`manifest.json`](../../packages/cortex/core/icons/manifest.json)). Reference any icon as `lucide:IconName` (PascalCase, e.g. `lucide:Hand`, `lucide:TriangleAlert`). Legacy kebab names like `lucide:alert-triangle` also resolve when an alias SVG exists. Re-sync after upgrading lucide: `pnpm --filter @ha-bits/cortex-core sync-lucide-icons`.
+Lucide icons use SVG files bundled once in [`packages/cortex/core/assets/icons/lucide/`](../../packages/cortex/core/assets/icons/lucide/) (see [`manifest.json`](../../packages/cortex/core/assets/icons/manifest.json)). The Cortex runtime serves them at `/ha-assets/icons/lucide/` (Node server or Tauri `www/ha-assets/`). Reference any icon as `lucide:IconName` (PascalCase, e.g. `lucide:Hand`, `lucide:TriangleAlert`).
 
 **No emoji required.** Prefer `lucide:Name` or omit the icon entirely.
 
@@ -263,7 +263,8 @@ Both live in `@ha-bits/cortex-core`:
 | Layout shells    | `packages/cortex/core/src/ui/layouts.ts`      |
   | Client runtime   | `packages/cortex/core/src/ui/runtime.ts`      |
   | Icon rendering   | `packages/cortex/core/src/ui/icons.ts`        |
-  | Lucide subset    | `packages/cortex/core/icons/lucide/*.svg` + `lucideIcons.ts` |
+  | Lucide icons     | `packages/cortex/core/assets/icons/lucide/*.svg` + `lucideIcons.ts` |
+  | Bundled assets   | `packages/cortex/core/assets/` (icons + fonts), served once at `/ha-assets/` by the runtime |
   | Entry point      | `packages/cortex/core/src/ui/index.ts`        |
 
 After changing the engine, rebuild and re-run the smoke test:

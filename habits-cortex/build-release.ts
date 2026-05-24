@@ -130,6 +130,14 @@ async function main(): Promise<void> {
     } else {
       console.log('warn', 'bundle-all.js not found, skipping bundle generation');
     }
+
+    const syncAssetsScript = path.resolve(__dirname, '..', 'scripts', 'sync-cortex-ha-assets.mjs');
+    if (fs.existsSync(syncAssetsScript)) {
+      exec(`node "${syncAssetsScript}" "${path.resolve(__dirname, 'www')}"`, {
+        cwd: path.resolve(__dirname, '..'),
+      });
+      console.log('success', 'Synced ha-assets to habits-cortex/www/');
+    }
     
     // Generate icons before building any platform
     logSection('Generating icons');

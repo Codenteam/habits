@@ -17,6 +17,7 @@
 // ============================================================================
 
 export type ThemePreset =
+  | 'neural'
   | 'ha-bits-blue'
   | 'ha-bits-cyan'
   | 'ha-bits-purple'
@@ -28,6 +29,9 @@ export type ThemePreset =
   | 'mobile-blue'
   | 'tailwind-dark'
   | 'showcase-flat';
+
+/** Default preset when YAML omits `theme.preset`. */
+export const DEFAULT_THEME_PRESET: ThemePreset = 'neural';
 
 export type Density = 'comfortable' | 'compact' | 'mobile';
 
@@ -64,7 +68,7 @@ export interface MetaSpec {
   title?: string;
   subtitle?: string;
   description?: string;
-  /** Emoji, URL, or inline SVG. */
+  /** Lucide name (`lucide:Zap`), image URL, inline SVG, or plain text. */
   icon?: string;
   /** Page <title>; falls back to `title`. */
   documentTitle?: string;
@@ -355,6 +359,8 @@ export interface ButtonWidget extends BaseWidget {
   label: string;
   icon?: string;
   tone?: Tone;
+  /** Alias for `tone` used in YAML habits (e.g. `variant: primary`). */
+  variant?: Tone;
   action?: string;
   /** Inline params merged into action body. */
   params?: Record<string, unknown>;
@@ -488,10 +494,32 @@ export interface DataTableWidget extends BaseWidget {
 
 export interface KvGridWidget extends BaseWidget {
   kind: 'kv-grid';
-  source: string;
+  /** State path to an object whose keys are rendered as rows. */
+  source?: string;
   columns?: number;
   /** If omitted, all top-level keys of the source object are shown. */
   fields?: Array<{ key: string; label: string; format?: string }>;
+  /** Static label/value rows (supports `{{state.*}}` templates). */
+  items?: Array<{ label: string; value: string }>;
+}
+
+export interface ButtonRowButton extends BaseWidget {
+  label: string;
+  icon?: string;
+  tone?: Tone;
+  variant?: Tone;
+  action?: string;
+  params?: Record<string, unknown>;
+  loadingLabel?: string;
+  size?: 'sm' | 'md' | 'lg';
+  disabledWhen?: string;
+}
+
+export interface ButtonRowWidget extends BaseWidget {
+  kind: 'button-row';
+  buttons: Array<
+    ButtonRowButton | CopyButtonWidget | DownloadButtonWidget | PrintButtonWidget
+  >;
 }
 
 // ---------- Feedback ----------
@@ -641,6 +669,7 @@ export type WidgetSpec =
   | QuizQuestionsWidget
   | DataTableWidget
   | KvGridWidget
+  | ButtonRowWidget
   | StatusBannerWidget
   | EmptyStateWidget
   | SpinnerWidget

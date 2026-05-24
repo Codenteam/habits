@@ -5,9 +5,14 @@
 // Core workflow execution
 export { WorkflowExecutor, InitFromDataOptions } from './WorkflowExecutor';
 
-// Simulation (dry-run) support
-export { SimulationExecutor, printSimulationReport } from './simulation/SimulationExecutor';
-export type { SimulationReport, SimulationStatus, SimulationIssue, NodeSimulation, SimulateOptions } from './simulation/types';
+// Execution override slot (used by @ha-bits/cortex-lab for capture/replay/dry-run)
+export {
+  runWithExecutionOverrides,
+  getExecutionOverrides,
+  type ExecutionOverrides,
+  type BitsExecutionFn,
+  type ScriptExecutionFn,
+} from './execution/overrides';
 
 // ESM/Browser-compatible executor
 export { HabitsExecutor, StartWorkflowOptions } from './esm';
@@ -16,8 +21,10 @@ export { HabitsExecutor, StartWorkflowOptions } from './esm';
 export { IWebhookHandler } from './WebhookHandler';
 
 // Module execution
+export type { BitsExecutionParams, BitsExecutionResult } from './bits/bitsRoutine';
 export { 
-  executeBitsModule, 
+  executeBitsModule,
+  defaultExecuteBitsModule,
   extractBitsPieceFromModule, 
   pieceFromModule, 
   BitsPiece,
@@ -46,7 +53,7 @@ export {
   bitsTriggerHelper, 
   TriggerHookType 
 } from './bits/bitsCue';
-export { executeScriptModule } from './script/scriptExecutor';
+export { executeScriptModule, defaultExecuteScriptModule } from './script/scriptExecutor';
 
 // Polling store for trigger deduplication
 export { PollingStore, createPollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, PollingStoreOptions } from './store';
@@ -151,7 +158,7 @@ export * from '@habits/shared/types';
 export { LoggerFactory } from '@ha-bits/core/logger';
 
 // YAML-driven UI engine (compile UiSpec -> self-contained HTML document)
-export { compileUiSpec, compileUiYaml, parseUiSpec } from './ui';
+export { compileUiSpec, compileUiYaml, parseUiSpec, copyHaAssetsTo, resolveCortexCoreAssetsDir, HA_ASSETS_WEB_ROOT } from './ui';
 export type {
   CompileOptions,
   CompiledUi,

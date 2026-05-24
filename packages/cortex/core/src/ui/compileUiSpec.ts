@@ -1,7 +1,7 @@
 import type { UiSpec } from './types';
 import { renderThemeCss } from './theme';
 import { renderLayout } from './layouts';
-import { RUNTIME_JS } from './runtime';
+import { getRuntimeJs } from './runtime';
 import { BUILDER_PREVIEW_CSS, BUILDER_PREVIEW_JS } from './builderPreview';
 import { escapeHtml, resetIdCounter, safeJson } from './helpers';
 import { parseUiSpec } from './parseSpec';
@@ -28,6 +28,7 @@ export function compileUiSpec(spec: UiSpec, opts: CompileOptions = {}): Compiled
   resetIdCounter();
   const themeCss = renderThemeCss(spec.theme);
   const body = renderLayout(spec);
+  const runtimeJs = getRuntimeJs();
   const title = opts.documentTitle ?? spec.meta?.documentTitle ?? spec.meta?.title ?? 'Habit';
   const workflowId = opts.workflowId ?? spec.meta?.id ?? '';
   const meta = { id: workflowId, title: spec.meta?.title ?? '', icon: spec.meta?.icon ?? '' };
@@ -52,7 +53,7 @@ ${opts.builderPreview ? BUILDER_PREVIEW_CSS : ''}
 <body>
 ${body}
 <script type="application/json" id="__ha_cfg">${safeJson(cfg)}</script>
-<script>${RUNTIME_JS}</script>
+<script>${runtimeJs}</script>
 ${opts.builderPreview ? `<script>${BUILDER_PREVIEW_JS}</script>` : ''}
 </body>
 </html>`;

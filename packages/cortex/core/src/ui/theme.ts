@@ -1,4 +1,5 @@
-import type { ThemePreset, ThemeSpec } from './types';
+import { DEFAULT_THEME_PRESET, type ThemePreset, type ThemeSpec } from './types';
+import { fontAssetUrl } from './assetPaths';
 
 interface ThemeColors {
   bgBase: string;
@@ -39,6 +40,24 @@ const DARK_BLUE: ThemeColors = {
 };
 
 const PRESETS: Record<ThemePreset, ThemeColors> = {
+  neural: {
+    bgBase: '#050818',
+    bgSurface: '#0a1028',
+    bgElevated: '#121a38',
+    border: 'rgba(79, 124, 255, 0.14)',
+    borderStrong: 'rgba(124, 156, 255, 0.28)',
+    text: '#eef4ff',
+    textMuted: '#8899bb',
+    textDim: '#5a6a8a',
+    primary: '#4f7cff',
+    primaryHover: '#3b5fdb',
+    secondary: '#0f1630',
+    accent: '#7c9cff',
+    success: '#34d399',
+    warn: '#fbbf24',
+    danger: '#f87171',
+    info: '#60a5fa',
+  },
   'ha-bits-blue': { ...DARK_BLUE },
   'ha-bits-cyan': { ...DARK_BLUE, primary: '#22d3ee', primaryHover: '#06b6d4', accent: '#67e8f9' },
   'ha-bits-purple': { ...DARK_BLUE, primary: '#a78bfa', primaryHover: '#8b5cf6', accent: '#c084fc' },
@@ -82,7 +101,7 @@ const PRESETS: Record<ThemePreset, ThemeColors> = {
 };
 
 function colorsFromTheme(theme: ThemeSpec | undefined): ThemeColors {
-  const base = PRESETS[theme?.preset ?? 'ha-bits-blue'] ?? PRESETS['ha-bits-blue'];
+  const base = PRESETS[theme?.preset ?? DEFAULT_THEME_PRESET] ?? PRESETS[DEFAULT_THEME_PRESET];
   const c: ThemeColors = { ...base };
   if (theme?.primary) c.primary = theme.primary;
   if (theme?.secondary) c.secondary = theme.secondary;
@@ -91,13 +110,155 @@ function colorsFromTheme(theme: ThemeSpec | undefined): ThemeColors {
   return c;
 }
 
+function isNeuralPreset(theme: ThemeSpec | undefined): boolean {
+  return (theme?.preset ?? DEFAULT_THEME_PRESET) === 'neural';
+}
+
+const NEURAL_FONT_FACE_CSS = `
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('${fontAssetUrl('orbitron-latin-500-normal.woff2')}') format('woff2');
+}
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('${fontAssetUrl('orbitron-latin-700-normal.woff2')}') format('woff2');
+}
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('${fontAssetUrl('exo-2-latin-400-normal.woff2')}') format('woff2');
+}
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('${fontAssetUrl('exo-2-latin-500-normal.woff2')}') format('woff2');
+}
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('${fontAssetUrl('exo-2-latin-600-normal.woff2')}') format('woff2');
+}
+`.trim();
+
+const NEURAL_ENHANCEMENTS_CSS = `
+body {
+  background: var(--ha-bg-base);
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M48 0H0v48' fill='none' stroke='rgba(79,124,255,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+.ha-app { position: relative; z-index: 1; }
+
+.ha-header {
+  background: rgba(10, 14, 36, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(79, 124, 255, 0.18);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.45);
+}
+.ha-header__title {
+  font-family: 'Orbitron', var(--ha-font-body);
+  letter-spacing: 0.05em;
+  color: var(--ha-primary);
+}
+
+.ha-card, .ha-metric, .ha-history__item, .ha-habit-card, .ha-mode__opt {
+  background: rgba(10, 14, 36, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(79, 124, 255, 0.14);
+  box-shadow: 0 0 28px rgba(79, 124, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.ha-card:hover, .ha-history__item:hover {
+  border-color: rgba(79, 124, 255, 0.28);
+  box-shadow: 0 0 36px rgba(79, 124, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ha-btn {
+  background: var(--ha-primary);
+  box-shadow: 0 0 22px rgba(79, 124, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.ha-btn:hover {
+  background: var(--ha-primary-hover);
+  box-shadow: 0 0 32px rgba(79, 124, 255, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.ha-btn--accent {
+  background: var(--ha-accent);
+  color: #fff;
+  box-shadow: 0 0 22px rgba(124, 156, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.ha-input, .ha-textarea, .ha-select {
+  background: rgba(5, 8, 24, 0.65);
+  border-color: rgba(79, 124, 255, 0.12);
+}
+.ha-input:focus, .ha-textarea:focus, .ha-select:focus {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ha-primary) 22%, transparent),
+    0 0 18px rgba(79, 124, 255, 0.12);
+}
+
+.ha-tab--active {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--ha-primary) 55%, transparent);
+}
+.ha-pills .ha-tab--active {
+  box-shadow: 0 0 16px rgba(79, 124, 255, 0.35);
+}
+
+.ha-sidebar {
+  background: rgba(6, 10, 28, 0.96);
+  border-right: 1px solid rgba(79, 124, 255, 0.12);
+}
+.ha-sidebar__item--active {
+  box-shadow: inset 0 0 20px rgba(79, 124, 255, 0.06);
+}
+
+.ha-footer-status__dot {
+  animation: ha-neural-pulse 2.4s ease-in-out infinite;
+}
+@keyframes ha-neural-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--ha-success); opacity: 1; }
+  50% { box-shadow: 0 0 16px var(--ha-success), 0 0 24px rgba(0, 255, 163, 0.4); opacity: 0.85; }
+}
+
+.ha-score-ring {
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--ha-primary) 40%, transparent));
+}
+.ha-bar-row__fill, .ha-progress__fill {
+  background: var(--ha-primary);
+  box-shadow: 0 0 12px rgba(79, 124, 255, 0.35);
+}
+
+.ha-bubble--user {
+  background: var(--ha-primary);
+  box-shadow: 0 0 16px rgba(79, 124, 255, 0.2);
+}
+`.trim();
+
 /** Returns CSS variable block + reset + base widget styles. */
 export function renderThemeCss(theme: ThemeSpec | undefined): string {
   const c = colorsFromTheme(theme);
-  const radius = theme?.radius ?? 12;
+  const neural = isNeuralPreset(theme);
+  const radius = theme?.radius ?? (neural ? 10 : 12);
   const density = theme?.density ?? 'comfortable';
   const padBase = density === 'compact' ? 12 : density === 'mobile' ? 14 : 16;
-  const bodyFont = theme?.font?.body ?? 'system-ui, -apple-system, "Segoe UI", Inter, sans-serif';
+  const bodyFont = theme?.font?.body ?? (neural ? '"Exo 2", system-ui, sans-serif' : 'system-ui, -apple-system, "Segoe UI", Inter, sans-serif');
   const monoFont = theme?.font?.mono ?? '"JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace';
 
   return `
@@ -159,7 +320,35 @@ button { font-family: inherit; }
   border-bottom: 1px solid var(--ha-border);
 }
 .ha-header--sticky { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px); }
-.ha-header__icon { font-size: 28px; }
+.ha-header__icon { font-size: 28px; display: flex; align-items: center; }
+.ha-icon {
+  width: 1.25em; height: 1.25em;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle; color: var(--ha-primary); flex-shrink: 0;
+}
+.ha-icon svg { width: 100%; height: 100%; display: block; }
+.ha-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ha-icon--inline { width: 1em; height: 1em; }
+.ha-header__icon .ha-icon { width: 28px; height: 28px; }
+.ha-icon--hero { width: 36px; height: 36px; }
+.ha-icon.ha-empty__icon { width: 36px; height: 36px; margin: 0 auto 8px; display: flex; color: var(--ha-text-muted); }
+.ha-icon--dropzone { width: 32px; height: 32px; margin: 0 auto 8px; }
+.ha-icon--nav { width: 18px; height: 18px; }
+.ha-icon--lucide {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+.ha-icon--nav-fallback { width: auto; height: auto; font-size: 18px; line-height: 1; color: var(--ha-text-muted); }
+.ha-icon--metric { width: 20px; height: 20px; margin-bottom: 4px; }
+.ha-mode__opt-icon.ha-icon { width: 22px; height: 22px; margin: 0 auto 6px; display: flex; }
+.ha-icon--text { width: auto; height: auto; font-size: inherit; color: inherit; }
+.ha-bottom-nav__item .ha-icon { width: 20px; height: 20px; margin-bottom: 2px; }
 .ha-header__title { font-size: 20px; font-weight: 700; margin: 0; }
 .ha-header__subtitle { color: var(--ha-text-muted); font-size: 13px; margin: 2px 0 0; }
 .ha-header__actions { margin-left: auto; display: flex; gap: 8px; }
@@ -490,6 +679,8 @@ button { font-family: inherit; }
   .ha-app__main, .ha-shell__main { padding: var(--ha-pad); }
 }
 
+${neural ? NEURAL_FONT_FACE_CSS : ''}
+${neural ? NEURAL_ENHANCEMENTS_CSS : ''}
 ${theme?.customCss ?? ''}
 `.trim();
 }

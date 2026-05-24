@@ -2,6 +2,8 @@ import type {
   AccordionWidget,
   BadgeListWidget,
   BarChartWidget,
+  ButtonRowButton,
+  ButtonRowWidget,
   ButtonWidget,
   ChatPanelWidget,
   CopyButtonWidget,
@@ -38,6 +40,7 @@ import type {
   WidgetSpec,
 } from './types';
 import { attrs, cls, escapeAttr, escapeHtml, joinHtml, safeJson, tmplText, uniqueId } from './helpers';
+import { renderIcon, renderIconPrefix, renderIconTmpl } from './icons';
 
 // ============================================================================
 // Public entry
@@ -89,6 +92,8 @@ function renderWidgetInner(w: WidgetSpec): string {
     case 'action-button':
     case 'submit-button':
       return wrap(renderButton(w));
+    case 'button-row':
+      return wrap(renderButtonRow(w));
     case 'copy-button':
       return wrap(renderCopyButton(w));
     case 'download-button':
@@ -198,7 +203,7 @@ function renderTabs(w: TabsWidget): string {
         type: 'button',
         'data-tab-group': groupId,
         'data-tab': t.id,
-      })}>${t.icon ? escapeHtml(t.icon) + ' ' : ''}${escapeHtml(t.label)}</button>`,
+      })}>${renderIconPrefix(t.icon)}${escapeHtml(t.label)}</button>`,
     )
     .join('');
   const panels = w.tabs
@@ -260,7 +265,7 @@ function renderForm(w: FormWidget): string {
         'data-submit-label': w.submit.label,
         'data-loading-label': w.submit.loadingLabel ?? 'Working...',
         'data-disabled-when': w.submit.disabledWhen,
-      })}>${w.submit.icon ? escapeHtml(w.submit.icon) + ' ' : ''}${escapeHtml(w.submit.label)}</button>`
+      })}>${renderIconPrefix(w.submit.icon)}${escapeHtml(w.submit.label)}</button>`
     : '';
   const secondary = (w.secondary ?? [])
     .map(
@@ -369,7 +374,7 @@ function renderField(f: FieldSpec, bindTo: string): string {
           const v = typeof o === 'object' ? o.value : o;
           const lbl = typeof o === 'object' ? (o.label ?? String(v)) : String(o);
           const desc = typeof o === 'object' && o.description ? `<div class="ha-mode__opt-desc">${escapeHtml(o.description)}</div>` : '';
-          const icon = typeof o === 'object' && o.icon ? `<span class="ha-mode__opt-icon">${escapeHtml(o.icon)}</span>` : '';
+          const icon = typeof o === 'object' && o.icon ? renderIcon(o.icon, 'ha-icon ha-mode__opt-icon') : '';
           if (f.type === 'radio-cards') {
             return `<button type="button"${attrs({
               class: 'ha-mode__opt',
@@ -435,7 +440,7 @@ function renderField(f: FieldSpec, bindTo: string): string {
         'data-as-base64': f.asBase64 !== false ? 'true' : undefined,
         'data-as-image': f.type === 'image-upload' ? 'true' : undefined,
       })}>
-  <div class="ha-dropzone__icon">${f.type === 'image-upload' ? '🖼️' : '📄'}</div>
+  <div class="ha-dropzone__icon">${renderIcon(f.type === 'image-upload' ? 'lucide:Image' : 'lucide:File', 'ha-icon ha-icon--dropzone')}</div>
   <div>Drop or click to upload</div>
   <div class="ha-dropzone__hint" data-dropzone-hint>${accept ? escapeHtml(accept) : 'Any file'}</div>
   <img class="ha-dropzone__preview" hidden data-dropzone-preview />
@@ -472,19 +477,56 @@ function renderRepeatable(r: NonNullable<FormWidget['repeatable']>, bindTo: stri
 // Buttons
 // ============================================================================
 
+function buttonToneClass(tone?: Tone): string {
+  if (!tone || tone === 'primary') return '';
+  return `ha-btn--${tone}`;
+}
+
 function renderButton(w: ButtonWidget): string {
+  const tone = w.variant ?? w.tone;
   const size = w.size === 'sm' ? 'ha-btn--sm' : w.size === 'lg' ? 'ha-btn--lg' : '';
-  const tone = w.tone ? `ha-btn--${w.tone}` : '';
+  const toneCls = buttonToneClass(tone);
   return `<button${attrs({
     type: w.kind === 'submit-button' ? 'submit' : 'button',
-    class: cls('ha-btn', size, tone, w.fullWidth && 'ha-btn--block', w.className),
+    class: cls('ha-btn', size, toneCls, w.fullWidth && 'ha-btn--block', w.className),
     id: w.id,
     'data-action-click': w.action,
     'data-action-params': w.params ? safeJson(w.params) : undefined,
     'data-disabled-when': w.disabledWhen,
     'data-loading-label': w.loadingLabel,
     'data-submit-label': w.label,
-  })}>${w.icon ? escapeHtml(w.icon) + ' ' : ''}${escapeHtml(w.label)}</button>`;
+  })}>${renderIconPrefix(w.icon)}${escapeHtml(w.label)}</button>`;
+}
+
+function renderButtonRowButton(w: ButtonRowButton): string {
+  const tone = w.variant ?? w.tone;
+  const size = w.size === 'sm' ? 'ha-btn--sm' : w.size === 'lg' ? 'ha-btn--lg' : '';
+  const btn = `<button${attrs({
+    type: 'button',
+    class: cls('ha-btn', size, buttonToneClass(tone), w.className),
+    'data-action-click': w.action,
+    'data-action-params': w.params ? safeJson(w.params) : undefined,
+    'data-disabled-when': w.disabledWhen,
+    'data-loading-label': w.loadingLabel,
+    'data-submit-label': w.label,
+  })}>${renderIconPrefix(w.icon)}${escapeHtml(w.label)}</button>`;
+  if (w.showWhen || w.hideWhen) {
+    return `<span${attrs({ 'data-show-when': w.showWhen, 'data-hide-when': w.hideWhen })}>${btn}</span>`;
+  }
+  return btn;
+}
+
+function renderButtonRow(w: ButtonRowWidget): string {
+  const buttons = (w.buttons ?? [])
+    .map((btn) => {
+      const kind = 'kind' in btn ? btn.kind : undefined;
+      if (kind === 'copy-button') return renderCopyButton(btn as CopyButtonWidget);
+      if (kind === 'download-button') return renderDownloadButton(btn as DownloadButtonWidget);
+      if (kind === 'print-button') return renderPrintButton(btn as PrintButtonWidget);
+      return renderButtonRowButton(btn as ButtonRowButton);
+    })
+    .join('');
+  return `<div class="ha-row">${buttons}</div>`;
 }
 
 function renderCopyButton(w: CopyButtonWidget): string {
@@ -609,7 +651,7 @@ function renderMetricGrid(w: MetricGridWidget): string {
   const items = (w.metrics ?? [])
     .map((m) =>
       `<div class="ha-metric">
-  ${m.icon ? `<div style="font-size:20px;margin-bottom:4px">${escapeHtml(m.icon)}</div>` : ''}
+  ${m.icon ? renderIcon(m.icon, 'ha-icon ha-icon--metric') : ''}
   <div class="ha-metric__value">${tmplText(m.value)}</div>
   <div class="ha-metric__label">${tmplText(m.label)}</div>
   ${m.sublabel ? `<div class="ha-metric__sublabel">${tmplText(m.sublabel)}</div>` : ''}
@@ -661,6 +703,15 @@ function renderDataTable(w: DataTableWidget): string {
 
 function renderKvGrid(w: KvGridWidget): string {
   const cols = w.columns ?? 2;
+  if (w.items?.length) {
+    const rows = w.items
+      .map(
+        (item) =>
+          `<div class="ha-kv__row"><div class="ha-kv__key">${tmplText(item.label)}</div><div class="ha-kv__val">${tmplText(item.value)}</div></div>`,
+      )
+      .join('');
+    return `<div class="ha-kv" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${rows}</div>`;
+  }
   return `<div${attrs({
     class: 'ha-kv',
     'data-kv-from': w.source,
@@ -682,7 +733,7 @@ function renderStatusBanner(w: StatusBannerWidget): string {
 
 function renderEmptyState(w: EmptyStateWidget): string {
   return `<div class="ha-empty"${attrs({ 'data-show-when': w.showWhen, 'data-hide-when': w.hideWhen })}>
-${w.icon ? `<div class="ha-empty__icon">${escapeHtml(w.icon)}</div>` : ''}
+${w.icon ? renderIcon(w.icon, 'ha-icon ha-empty__icon') : ''}
 ${w.title ? `<div class="ha-empty__title">${escapeHtml(w.title)}</div>` : ''}
 ${w.subtitle ? `<div class="ha-empty__sub">${escapeHtml(w.subtitle)}</div>` : ''}
 ${w.cta ? `<button type="button" class="ha-btn" style="margin-top:12px" data-action-click="${escapeAttr(w.cta.action)}">${escapeHtml(w.cta.label)}</button>` : ''}
@@ -782,10 +833,10 @@ function renderHero(w: HeroWidget): string {
   const chips = (w as { chips?: Array<{ label?: string; icon?: string }> }).chips;
   return `<div class="ha-card" style="text-align:center;padding:var(--ha-pad-lg)">
 ${imageSource ? `<img class="ha-hero__img" data-bind-src="${escapeAttr(imageSource)}" alt="" style="max-width:100%;border-radius:12px;margin-bottom:12px" />` : ''}
-${w.icon ? `<div style="font-size:36px;margin-bottom:8px">${tmplText(w.icon)}</div>` : ''}
+${w.icon ? `<div style="margin-bottom:8px">${renderIconTmpl(w.icon, 'ha-icon ha-icon--hero')}</div>` : ''}
 ${w.title ? `<h2 style="margin:0">${tmplText(w.title)}</h2>` : ''}
 ${description ? `<p style="color:var(--ha-text-muted);margin:6px 0 0">${tmplText(description)}</p>` : ''}
-${chips && chips.length ? `<div class="ha-row" style="justify-content:center;gap:8px;margin-top:12px">${chips.map((c) => `<span class="ha-pill">${c.icon ? tmplText(c.icon) + ' ' : ''}${tmplText(c.label ?? '')}</span>`).join('')}</div>` : ''}
+${chips && chips.length ? `<div class="ha-row" style="justify-content:center;gap:8px;margin-top:12px">${chips.map((c) => `<span class="ha-pill">${c.icon ? renderIconPrefix(c.icon) : ''}${tmplText(c.label ?? '')}</span>`).join('')}</div>` : ''}
 ${w.cta ? `<button class="ha-btn" style="margin-top:14px" data-action-click="${escapeAttr(w.cta.action)}">${tmplText(w.cta.label)}</button>` : ''}
 </div>`;
 }
@@ -794,7 +845,7 @@ function renderModeSelector(w: ModeSelectorWidget): string {
   const opts = w.options
     .map(
       (o) => `<button type="button" class="ha-mode__opt"${attrs({ 'data-chip-group': w.bind, 'data-chip-value': String(o.value) })}>
-${o.icon ? `<span class="ha-mode__opt-icon">${escapeHtml(o.icon)}</span>` : ''}
+${o.icon ? renderIcon(o.icon, 'ha-icon ha-mode__opt-icon') : ''}
 <span class="ha-mode__opt-label">${escapeHtml(o.label)}</span>
 ${o.description ? `<div class="ha-mode__opt-desc">${escapeHtml(o.description)}</div>` : ''}
 </button>`,

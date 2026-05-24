@@ -47,6 +47,7 @@
     "@ha-bits/bindings": "workspace:*",
     "@ha-bits/core": "workspace:*",
     "@ha-bits/cortex-core": "workspace:*",
+    "@ha-bits/cortex-lab": "workspace:*",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",
     "@types/uuid": "^9.0.7",

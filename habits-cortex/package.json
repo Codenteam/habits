@@ -4,7 +4,7 @@
   "description": "Habits Cortex - Run habit workflows locally",
   "scripts": {
     "tauri": "tauri",
-    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "dev": "node ../scripts/sync-cortex-ha-assets.mjs www && tauri dev --config src-tauri/tauri.dev.conf.json",
     "build": "tauri build",
     "build:debug": "tauri build --debug --config src-tauri/tauri.debug.conf.json",
     "android:init": "tauri android init",

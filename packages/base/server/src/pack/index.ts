@@ -29,7 +29,7 @@ import { getTauriLib, getTauriMain } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriCapabilities } from './templates/tauri/tauri-config';
 import JSZip from 'jszip';
-import { compileUiYaml } from '@ha-bits/cortex-core';
+import { compileUiYaml, copyHaAssetsTo } from '@ha-bits/cortex-core';
 import { addDirectoryToZip } from './utils';
 import { processHtmlFile, InjectScript } from './html-asset-inliner';
 
@@ -1101,6 +1101,21 @@ async function packTauri(options: PackTauriOptions): Promise<PackResult> {
       // Copy all frontend files
       copyDirRecursive(frontendDir, wwwDir);
       console.log(`   📁 Copied frontend from: ${frontendDir}`);
+
+      const yamlPath =
+        fs.existsSync(path.join(frontendDir, 'index.yaml'))
+          ? path.join(frontendDir, 'index.yaml')
+          : path.join(frontendDir, 'index.yml');
+      if (fs.existsSync(yamlPath)) {
+        const yamlSource = fs.readFileSync(yamlPath, 'utf8');
+        const { html } = compileUiYaml(yamlSource);
+        fs.writeFileSync(path.join(wwwDir, 'index.html'), html);
+        console.log('   ✨ Compiled index.yaml → index.html for Tauri www/');
+      }
+
+      if (copyHaAssetsTo(wwwDir)) {
+        console.log('   📦 Copied ha-assets (icons + fonts) to Tauri www/');
+      }
     } else {
       console.warn(`   ⚠️  Frontend path not found: ${frontendDir}, using default`);
       fs.writeFileSync(path.join(wwwDir, 'index.html'), generateDefaultHtml(appName));

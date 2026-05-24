@@ -45,6 +45,7 @@
       },
       "dependsOn": [
         "^build",
+        "@ha-bits/cortex-lab:build",
         "@ha-bits/cortex-ui:build"
       ]
     },
@@ -106,6 +107,7 @@
       },
       "dependsOn": [
         "^build",
+        "@ha-bits/cortex-lab:build",
         "@ha-bits/cortex-ui:build"
       ]
     }
