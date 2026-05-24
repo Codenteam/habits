@@ -3,7 +3,7 @@ meta:
   id: fs-demo
   title: Filesystem Demo
   subtitle: Write a file via a habit
-  icon: "📁"
+  icon: "lucide:FolderOpen"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Filesystem Demo, subtitle: "Send a message and have the workflow write it to disk", icon: "📁" }
+  header: { title: Filesystem Demo, subtitle: "Send a message and have the workflow write it to disk", icon: "lucide:FolderOpen" }
 
 state:
   name: ""

@@ -3,7 +3,7 @@ meta:
   id: content-repurpose
   title: Content Repurposer
   subtitle: Transform blog content into LinkedIn, Twitter, and Instagram posts
-  icon: "♻️"
+  icon: "lucide:Recycle"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Content Repurposer, subtitle: "Blog → social", icon: "♻️" }
+  header: { title: Content Repurposer, subtitle: "Blog → social", icon: "lucide:Recycle" }
 
 state:
   blogContent: ""

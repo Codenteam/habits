@@ -3,7 +3,7 @@ meta:
   id: code-review
   title: AI Code Review
   subtitle: Instant reviews for quality, security, and performance
-  icon: "🛡️"
+  icon: "lucide:Shield"
 
 theme:
   preset: ha-bits-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Code Review, subtitle: "Quality · security · performance", icon: "🛡️" }
+  header: { title: AI Code Review, subtitle: "Quality · security · performance", icon: "lucide:Shield" }
   nav:
-    - { id: review, label: Review, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: review, label: Review, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   code: ""

@@ -6,7 +6,7 @@ meta:
   id: real-estate-lead-management
   title: Real Estate Lead Management
   subtitle: "Automation suite · 6 habits active"
-  icon: "🎯"
+  icon: "lucide:Target"
   documentTitle: Real Estate Lead Management
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Real Estate Lead Management
     subtitle: "Automation suite · 6 habits active"
-    icon: "🎯"
+    icon: "lucide:Target"
   footerStatus:
     dot: live
     text: "All habits running · Port 13040 · Habits v1.0"

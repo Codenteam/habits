@@ -11,7 +11,7 @@ meta:
   id: ai-quiz
   title: AI Quiz Generator
   subtitle: Create quizzes on any topic
-  icon: "🧠"
+  icon: "lucide:Brain"
   documentTitle: AI Quiz Generator
 
 theme:
@@ -23,13 +23,13 @@ layout:
   header:
     title: AI Quiz Generator
     subtitle: Create quizzes on any topic with AI
-    icon: "🧠"
+    icon: "lucide:Brain"
     sticky: true
   nav:
-    - { id: create, label: Create Quiz, icon: "✨" }
-    - { id: take, label: Take Quiz, icon: "📝" }
-    - { id: results, label: Results, icon: "🏆" }
-    - { id: history, label: History, icon: "🕘" }
+    - { id: create, label: Create Quiz, icon: "lucide:Sparkles" }
+    - { id: take, label: Take Quiz, icon: "lucide:PenLine" }
+    - { id: results, label: Results, icon: "lucide:Trophy" }
+    - { id: history, label: History, icon: "lucide:Clock" }
 
 state:
   topic: ""
@@ -139,7 +139,7 @@ views:
     widgets:
       - kind: empty-state
         showWhen: "!state.currentQuiz"
-        icon: "📭"
+        icon: "lucide:Inbox"
         title: No quiz yet
         subtitle: Generate one from the Create tab.
       - kind: card
@@ -166,7 +166,7 @@ views:
     widgets:
       - kind: empty-state
         showWhen: "!state.results"
-        icon: "🏆"
+        icon: "lucide:Trophy"
         title: No results yet
         subtitle: Submit a quiz to see your score.
       - kind: result-panel

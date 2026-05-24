@@ -6,7 +6,7 @@ meta:
   id: ecommerce-retail-customer-support
   title: "Ecommerce & Retail Customer Support"
   subtitle: "Automation suite · 6 habits active"
-  icon: "🎧"
+  icon: "lucide:Headphones"
   documentTitle: "Ecommerce & Retail Customer Support"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Ecommerce & Retail Customer Support"
     subtitle: "Automation suite · 6 habits active"
-    icon: "🎧"
+    icon: "lucide:Headphones"
   footerStatus:
     dot: live
     text: "All habits running · Port 13023 · Habits v1.0"

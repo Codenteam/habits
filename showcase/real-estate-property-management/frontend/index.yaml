@@ -6,7 +6,7 @@ meta:
   id: real-estate-property-management
   title: Real Estate Property Management
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏢"
+  icon: "lucide:Building2"
   documentTitle: Real Estate Property Management
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Real Estate Property Management
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏢"
+    icon: "lucide:Building2"
   footerStatus:
     dot: live
     text: "All habits running · Port 13044 · Habits v1.0"

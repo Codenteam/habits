@@ -3,7 +3,7 @@ meta:
   id: sql-demo
   title: SQLite / Drizzle Demo
   subtitle: Run the SQL CRUD workflow
-  icon: "🗄️"
+  icon: "lucide:Database"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: SQLite / Drizzle Demo, subtitle: "Create, read, update, delete in one workflow", icon: "🗄️" }
+  header: { title: SQLite / Drizzle Demo, subtitle: "Create, read, update, delete in one workflow", icon: "lucide:Database" }
 
 state:
   name: ""

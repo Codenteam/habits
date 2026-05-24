@@ -3,7 +3,7 @@ meta:
   id: research-paper-assistant
   title: Research Paper Assistant
   subtitle: Analyze, summarize, and plan your academic research
-  icon: "📚"
+  icon: "lucide:BookOpen"
 
 theme:
   preset: showcase-flat
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Research Paper Assistant, subtitle: "Three lenses on your work", icon: "📚" }
+  header: { title: Research Paper Assistant, subtitle: "Three lenses on your work", icon: "lucide:BookOpen" }
   nav:
-    - { id: analyze, label: Analyze, icon: "🔬" }
-    - { id: summarize, label: Summarize, icon: "📝" }
-    - { id: outline, label: Outline, icon: "🗺️" }
+    - { id: analyze, label: Analyze, icon: "lucide:Microscope" }
+    - { id: summarize, label: Summarize, icon: "lucide:PenLine" }
+    - { id: outline, label: Outline, icon: "lucide:Map" }
 
 state:
   analyzeTitle: ""

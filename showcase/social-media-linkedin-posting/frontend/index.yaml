@@ -3,7 +3,7 @@ meta:
   id: social-media-linkedin-posting
   title: LinkedIn Posting
   subtitle: Generate and schedule LinkedIn posts
-  icon: "💼"
+  icon: "lucide:Briefcase"
 
 theme:
   preset: ha-bits-purple
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: LinkedIn Posting, subtitle: "Schedule with one click", icon: "💼" }
+  header: { title: LinkedIn Posting, subtitle: "Schedule with one click", icon: "lucide:Briefcase" }
   nav:
-    - { id: generate, label: "Generate Posts", icon: "✨" }
-    - { id: queue, label: "Scheduled Queue", icon: "🗓️", badge: "{{state.queue.length}}" }
+    - { id: generate, label: "Generate Posts", icon: "lucide:Sparkles" }
+    - { id: queue, label: "Scheduled Queue", icon: "lucide:Calendar", badge: "{{state.queue.length}}" }
 
 state:
   topic: ""

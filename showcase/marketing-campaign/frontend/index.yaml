@@ -3,7 +3,7 @@ meta:
   id: marketing-campaign
   title: Campaign Generator
   subtitle: Intersect AI workflow streamed live
-  icon: "🎯"
+  icon: "lucide:Target"
   documentTitle: Campaign Generator
 
 theme:
@@ -15,7 +15,7 @@ layout:
   header:
     title: Campaign Generator
     subtitle: Streaming workflow nodes
-    icon: "🎯"
+    icon: "lucide:Target"
 
 state:
   prompt: ""

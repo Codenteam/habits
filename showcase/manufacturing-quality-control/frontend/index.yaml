@@ -6,7 +6,7 @@ meta:
   id: manufacturing-quality-control
   title: Manufacturing Quality Control
   subtitle: "Automation suite · 6 habits active"
-  icon: "✅"
+  icon: "lucide:Check"
   documentTitle: Manufacturing Quality Control
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Manufacturing Quality Control
     subtitle: "Automation suite · 6 habits active"
-    icon: "✅"
+    icon: "lucide:Check"
   footerStatus:
     dot: live
     text: "All habits running · Port 13031 · Habits v1.0"

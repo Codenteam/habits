@@ -6,7 +6,7 @@ meta:
   id: finance-banking-loan-processing
   title: "Finance & Banking Loan Processing"
   subtitle: "Automation suite · 6 habits active"
-  icon: "📄"
+  icon: "lucide:FileText"
   documentTitle: "Finance & Banking Loan Processing"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Finance & Banking Loan Processing"
     subtitle: "Automation suite · 6 habits active"
-    icon: "📄"
+    icon: "lucide:FileText"
   footerStatus:
     dot: live
     text: "All habits running · Port 13011 · Habits v1.0"

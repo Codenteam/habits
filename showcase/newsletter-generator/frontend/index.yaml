@@ -3,7 +3,7 @@ meta:
   id: newsletter-generator
   title: Newsletter Generator
   subtitle: Create engaging newsletters with AI
-  icon: "📰"
+  icon: "lucide:Newspaper"
 
 theme:
   preset: ha-bits-purple
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: split
-  header: { title: Newsletter Generator, subtitle: "AI-assisted newsletters", icon: "📰" }
+  header: { title: Newsletter Generator, subtitle: "AI-assisted newsletters", icon: "lucide:Newspaper" }
 
 state:
   title: ""

@@ -3,7 +3,7 @@ meta:
   id: email-ticket-routing
   title: Email Ticket Routing
   subtitle: Fetch support emails, analyze each with AI, and route tickets to the right team
-  icon: "📬"
+  icon: "lucide:Inbox"
 
 theme:
   preset: ha-bits-cyan
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Email Ticket Routing, subtitle: "Run the full pipeline", icon: "📬" }
+  header: { title: Email Ticket Routing, subtitle: "Run the full pipeline", icon: "lucide:Inbox" }
 
 state:
   result: null

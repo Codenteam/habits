@@ -3,7 +3,7 @@ meta:
   id: social-media-manager
   title: Social Media Manager
   subtitle: Generate content for all platforms in one click
-  icon: "📣"
+  icon: "lucide:Megaphone"
 
 theme:
   preset: ha-bits-red
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Social Media Manager, subtitle: "All platforms · one click", icon: "📣" }
+  header: { title: Social Media Manager, subtitle: "All platforms · one click", icon: "lucide:Megaphone" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   topic: ""

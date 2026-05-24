@@ -3,10 +3,10 @@ meta:
   id: hello-world
   title: Hello World Demo
   subtitle: Test inputs vs environment-variable habits
-  icon: "👋"
+  icon: "lucide:Hand"
 
 theme:
-  preset: ha-bits-blue
+  preset: neural
   mode: dark
 
 layout:
@@ -14,10 +14,10 @@ layout:
   header:
     title: Hello World Demo1
     subtitle: Send parameters and see the greeting come back
-    icon: "👋"
+    icon: "lucide:Hand"
   nav:
-    - { id: input, label: With inputs, icon: "✍️" }
-    - { id: env, label: From env, icon: "🌱" }
+    - { id: input, label: With inputs, icon: "lucide:PenLine" }
+    - { id: env, label: From env, icon: "lucide:Leaf" }
 
 state:
   param1: ""

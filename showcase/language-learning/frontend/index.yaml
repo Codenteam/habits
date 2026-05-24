@@ -3,7 +3,7 @@ meta:
   id: language-learning
   title: Language Learning Assistant
   subtitle: Your AI-powered language tutor
-  icon: "🗣️"
+  icon: "lucide:Languages"
 
 theme:
   preset: ha-bits-purple
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Language Learning, subtitle: "Conversation · lessons · translation", icon: "🗣️" }
+  header: { title: Language Learning, subtitle: "Conversation · lessons · translation", icon: "lucide:Languages" }
   nav:
-    - { id: conversation, label: Conversation, icon: "💬" }
-    - { id: lesson, label: Lessons, icon: "📚" }
-    - { id: translate, label: Translate, icon: "🌐" }
+    - { id: conversation, label: Conversation, icon: "lucide:MessageSquare" }
+    - { id: lesson, label: Lessons, icon: "lucide:BookOpen" }
+    - { id: translate, label: Translate, icon: "lucide:Globe" }
 
 state:
   selectedLanguage: Spanish

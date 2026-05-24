@@ -3,7 +3,7 @@ meta:
   id: home-arrival-lights
   title: Home Arrival Lights
   subtitle: Automatic light control based on location
-  icon: "💡"
+  icon: "lucide:Lightbulb"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Home Arrival Lights, subtitle: "Geofence demo", icon: "💡" }
+  header: { title: Home Arrival Lights, subtitle: "Geofence demo", icon: "lucide:Lightbulb" }
 
 state:
   latitude: 37.7749

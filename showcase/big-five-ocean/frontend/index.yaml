@@ -3,7 +3,7 @@ meta:
   id: big-five-ocean
   title: Big Five OCEAN Personality
   subtitle: Discover your personality through a science-backed assessment or AI social media analysis
-  icon: "🌊"
+  icon: "lucide:Waves"
 
 theme:
   preset: ha-bits-purple
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Big Five OCEAN, subtitle: "Personality assessment", icon: "🌊" }
+  header: { title: Big Five OCEAN, subtitle: "Personality assessment", icon: "lucide:Waves" }
   nav:
-    - { id: exam, label: Exam Mode, icon: "📋" }
-    - { id: social, label: Social Mode, icon: "📱" }
+    - { id: exam, label: Exam Mode, icon: "lucide:ListChecks" }
+    - { id: social, label: Social Mode, icon: "lucide:Smartphone" }
 
 state:
   answers:

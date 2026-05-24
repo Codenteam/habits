@@ -6,7 +6,7 @@ meta:
   id: finance-banking-compliance-audit
   title: "Finance & Banking Compliance & Audit"
   subtitle: "Automation suite · 6 habits active"
-  icon: "⚖️"
+  icon: "lucide:Scale"
   documentTitle: "Finance & Banking Compliance & Audit"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Finance & Banking Compliance & Audit"
     subtitle: "Automation suite · 6 habits active"
-    icon: "⚖️"
+    icon: "lucide:Scale"
   footerStatus:
     dot: live
     text: "All habits running · Port 13013 · Habits v1.0"

@@ -3,7 +3,7 @@ meta:
   id: ai-cookbook
   title: AI Cookbook
   subtitle: Turn your ingredients into delicious recipes
-  icon: "🍳"
+  icon: "lucide:ChefHat"
 
 theme:
   preset: ha-bits-warn
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Cookbook, subtitle: "Recipe Generator", icon: "🍳" }
+  header: { title: AI Cookbook, subtitle: "Recipe Generator", icon: "lucide:ChefHat" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   ingredients: []
@@ -89,10 +89,10 @@ views:
             title: "{{state.currentRecipe.recipe.title}}"
             description: "{{state.currentRecipe.recipe.description}}"
             chips:
-              - { label: "{{state.currentRecipe.recipe.prepTime}}", icon: "⏱️" }
-              - { label: "{{state.currentRecipe.recipe.cookTime}}", icon: "🔥" }
-              - { label: "{{state.currentRecipe.recipe.servings}} servings", icon: "🍽️" }
-              - { label: "{{state.currentRecipe.recipe.difficulty}}", icon: "📈" }
+              - { label: "{{state.currentRecipe.recipe.prepTime}}", icon: "lucide:Timer" }
+              - { label: "{{state.currentRecipe.recipe.cookTime}}", icon: "lucide:Flame" }
+              - { label: "{{state.currentRecipe.recipe.servings}} servings", icon: "lucide:Utensils" }
+              - { label: "{{state.currentRecipe.recipe.difficulty}}", icon: "lucide:TrendingUp" }
           - kind: section
             title: Ingredients
             children:

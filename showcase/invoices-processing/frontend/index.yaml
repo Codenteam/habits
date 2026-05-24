@@ -3,7 +3,7 @@ meta:
   id: invoices-processing
   title: Invoice Processor
   subtitle: Scan your Gmail inbox and extract invoice details with AI
-  icon: "🧾"
+  icon: "lucide:Receipt"
 
 theme:
   preset: ha-bits-emerald
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Invoice Processor, subtitle: "Gmail → AI → Google Sheets", icon: "🧾" }
+  header: { title: Invoice Processor, subtitle: "Gmail → AI → Google Sheets", icon: "lucide:Receipt" }
 
 state:
   result: null

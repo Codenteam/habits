@@ -3,7 +3,7 @@ meta:
   id: calorie-tracker-and-recipes
   title: AI Calorie Tracker
   subtitle: Count calories from photos or generate calorie-conscious recipes
-  icon: "🥗"
+  icon: "lucide:Salad"
 
 theme:
   preset: ha-bits-emerald
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Calorie Tracker, subtitle: "Photos · macros · low-cal recipes", icon: "🥗" }
+  header: { title: AI Calorie Tracker, subtitle: "Photos · macros · low-cal recipes", icon: "lucide:Salad" }
   nav:
-    - { id: count, label: Count Calories, icon: "📸" }
-    - { id: recipe, label: Generate Recipe, icon: "🍳" }
+    - { id: count, label: Count Calories, icon: "lucide:Camera" }
+    - { id: recipe, label: Generate Recipe, icon: "lucide:ChefHat" }
 
 state:
   imageBase64: ""

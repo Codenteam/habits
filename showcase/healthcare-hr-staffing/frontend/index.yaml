@@ -6,7 +6,7 @@ meta:
   id: healthcare-hr-staffing
   title: "Healthcare HR & Staffing"
   subtitle: "Automation suite · 6 habits active"
-  icon: "👥"
+  icon: "lucide:Users"
   documentTitle: "Healthcare HR & Staffing"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Healthcare HR & Staffing"
     subtitle: "Automation suite · 6 habits active"
-    icon: "👥"
+    icon: "lucide:Users"
   footerStatus:
     dot: live
     text: "All habits running · Port 13003 · Habits v1.0"

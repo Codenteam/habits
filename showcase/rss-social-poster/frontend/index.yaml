@@ -3,7 +3,7 @@ meta:
   id: rss-social-poster
   title: RSS Social Poster
   subtitle: Automatically fetch your feed, craft posts with AI, and publish to Twitter/X and LinkedIn on a schedule
-  icon: "📡"
+  icon: "lucide:Rss"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: RSS Social Poster, subtitle: "Always-on social distribution", icon: "📡" }
+  header: { title: RSS Social Poster, subtitle: "Always-on social distribution", icon: "lucide:Rss" }
 
 state:
   running: false

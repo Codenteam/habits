@@ -3,7 +3,7 @@ meta:
   id: email-classification
   title: Email Classification API
   subtitle: AI-powered email classification
-  icon: "📧"
+  icon: "lucide:Mail"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Email Classification, subtitle: "Send an email body and get back its category", icon: "📧" }
+  header: { title: Email Classification, subtitle: "Send an email body and get back its category", icon: "lucide:Mail" }
 
 state:
   email: ""

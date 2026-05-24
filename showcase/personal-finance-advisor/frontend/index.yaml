@@ -3,7 +3,7 @@ meta:
   id: personal-finance-advisor
   title: Personal Finance Advisor
   subtitle: AI-powered personal finance guidance
-  icon: "💰"
+  icon: "lucide:Wallet"
 
 theme:
   preset: ha-bits-cyan
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Personal Finance Advisor, subtitle: "Analyse · budget · ask", icon: "💰" }
+  header: { title: Personal Finance Advisor, subtitle: "Analyse · budget · ask", icon: "lucide:Wallet" }
   nav:
-    - { id: analyze, label: Analyze, icon: "📊" }
-    - { id: budget, label: Budget, icon: "📅" }
-    - { id: advice, label: Advice, icon: "💬" }
+    - { id: analyze, label: Analyze, icon: "lucide:BarChart" }
+    - { id: budget, label: Budget, icon: "lucide:Calendar" }
+    - { id: advice, label: Advice, icon: "lucide:MessageSquare" }
 
 state:
   income: 5000

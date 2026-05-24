@@ -6,7 +6,7 @@ meta:
   id: ecommerce-retail-finance-reporting
   title: "Ecommerce & Retail Finance Reporting"
   subtitle: "Automation suite · 6 habits active"
-  icon: "💰"
+  icon: "lucide:Wallet"
   documentTitle: "Ecommerce & Retail Finance Reporting"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Ecommerce & Retail Finance Reporting"
     subtitle: "Automation suite · 6 habits active"
-    icon: "💰"
+    icon: "lucide:Wallet"
   footerStatus:
     dot: live
     text: "All habits running · Port 13024 · Habits v1.0"

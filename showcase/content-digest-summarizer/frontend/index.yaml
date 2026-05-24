@@ -3,7 +3,7 @@ meta:
   id: content-digest-summarizer
   title: Content Digest Summarizer
   subtitle: Fetches contents, summarizes each one, and posts a curated digest to Slack — in one click
-  icon: "📬"
+  icon: "lucide:Inbox"
 
 theme:
   preset: aurora
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Content Digest, subtitle: "Email or RSS to Slack", icon: "📬" }
+  header: { title: Content Digest, subtitle: "Email or RSS to Slack", icon: "lucide:Inbox" }
   nav:
-    - { id: email, label: Email Digest, icon: "📧" }
-    - { id: rss, label: RSS Digest, icon: "📡" }
+    - { id: email, label: Email Digest, icon: "lucide:Mail" }
+    - { id: rss, label: RSS Digest, icon: "lucide:Rss" }
 
 state:
   rssLive: false

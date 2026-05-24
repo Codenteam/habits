@@ -3,7 +3,7 @@ meta:
   id: ai-invoice-mailer
   title: AI Invoice Mailer
   subtitle: Save clients, generate invoices, deliver to your inbox
-  icon: "✉️"
+  icon: "lucide:Mail"
 
 theme:
   preset: aurora
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Invoice Mailer, subtitle: "Clients · invoices · delivery", icon: "✉️" }
+  header: { title: AI Invoice Mailer, subtitle: "Clients · invoices · delivery", icon: "lucide:Mail" }
   nav:
-    - { id: add, label: Add Client, icon: "👤" }
-    - { id: clients, label: My Clients, icon: "📋" }
-    - { id: invoice, label: Generate Invoice, icon: "📄" }
+    - { id: add, label: Add Client, icon: "lucide:User" }
+    - { id: clients, label: My Clients, icon: "lucide:ListChecks" }
+    - { id: invoice, label: Generate Invoice, icon: "lucide:FileText" }
 
 state:
   clientText: ""

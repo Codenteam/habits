@@ -3,7 +3,7 @@ meta:
   id: basic-habit-demo
   title: Basic Habit Demo
   subtitle: A single button kicks off the whole workflow
-  icon: "🧪"
+  icon: "lucide:FlaskConical"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Basic Habit Demo, subtitle: "Validation, string ops, loops, summary", icon: "🧪" }
+  header: { title: Basic Habit Demo, subtitle: "Validation, string ops, loops, summary", icon: "lucide:FlaskConical" }
 
 state:
   result: null

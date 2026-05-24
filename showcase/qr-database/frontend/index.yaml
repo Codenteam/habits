@@ -3,7 +3,7 @@ meta:
   id: qr-database
   title: QR Code Database
   subtitle: Create / Scan / Manage
-  icon: "🔳"
+  icon: "lucide:QrCode"
 
 theme:
   preset: ha-bits-emerald
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: QR Database, subtitle: "Create · scan · archive", icon: "🔳" }
+  header: { title: QR Database, subtitle: "Create · scan · archive", icon: "lucide:QrCode" }
   nav:
-    - { id: scan, label: Scan, icon: "🔎" }
-    - { id: create, label: Generate, icon: "✨" }
-    - { id: gallery, label: Archive, icon: "🗂️" }
+    - { id: scan, label: Scan, icon: "lucide:Search" }
+    - { id: create, label: Generate, icon: "lucide:Sparkles" }
+    - { id: gallery, label: Archive, icon: "lucide:FolderOpen" }
 
 state:
   dataType: text

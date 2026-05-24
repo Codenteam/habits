@@ -6,7 +6,7 @@ meta:
   id: ecommerce-retail-inventory-management
   title: "Ecommerce & Retail Inventory Management"
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏪"
+  icon: "lucide:Store"
   documentTitle: "Ecommerce & Retail Inventory Management"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Ecommerce & Retail Inventory Management"
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏪"
+    icon: "lucide:Store"
   footerStatus:
     dot: live
     text: "All habits running · Port 13021 · Habits v1.0"

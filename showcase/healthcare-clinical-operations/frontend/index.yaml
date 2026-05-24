@@ -6,7 +6,7 @@ meta:
   id: healthcare-clinical-operations
   title: Healthcare Clinical Operations
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏥"
+  icon: "lucide:Stethoscope"
   documentTitle: Healthcare Clinical Operations
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Healthcare Clinical Operations
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏥"
+    icon: "lucide:Stethoscope"
   footerStatus:
     dot: live
     text: "All habits running · Port 13002 · Habits v1.0"

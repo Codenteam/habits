@@ -6,7 +6,7 @@ meta:
   id: ecommerce-retail-marketing-crm
   title: "Ecommerce & Retail Marketing & CRM"
   subtitle: "Automation suite · 6 habits active"
-  icon: "📣"
+  icon: "lucide:Megaphone"
   documentTitle: "Ecommerce & Retail Marketing & CRM"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Ecommerce & Retail Marketing & CRM"
     subtitle: "Automation suite · 6 habits active"
-    icon: "📣"
+    icon: "lucide:Megaphone"
   footerStatus:
     dot: live
     text: "All habits running · Port 13022 · Habits v1.0"

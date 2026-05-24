@@ -3,7 +3,7 @@ meta:
   id: client-invoice-manager
   title: Client Invoice Manager
   subtitle: Save clients with AI extraction · Generate PDFs · Upload to Google Drive
-  icon: "🧾"
+  icon: "lucide:Receipt"
 
 theme:
   preset: ha-bits-purple
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Client Invoice Manager, subtitle: "Clients · invoices · Drive", icon: "🧾" }
+  header: { title: Client Invoice Manager, subtitle: "Clients · invoices · Drive", icon: "lucide:Receipt" }
   nav:
-    - { id: clients, label: "Add Client", icon: "👤" }
-    - { id: invoices, label: "Generate Invoice", icon: "📄" }
+    - { id: clients, label: "Add Client", icon: "lucide:User" }
+    - { id: invoices, label: "Generate Invoice", icon: "lucide:FileText" }
 
 state:
   clientText: ""

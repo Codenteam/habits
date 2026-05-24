@@ -3,7 +3,7 @@ meta:
   id: pouch-demo
   title: PouchDB Demo
   subtitle: Document store CRUD
-  icon: "🪶"
+  icon: "lucide:Feather"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: PouchDB Demo, subtitle: "Insert a doc and see the response", icon: "🪶" }
+  header: { title: PouchDB Demo, subtitle: "Insert a doc and see the response", icon: "lucide:Feather" }
 
 state:
   name: "John Doe"

@@ -3,7 +3,7 @@ meta:
   id: real-estate
   title: Real Estate Listing Generator
   subtitle: Create professional property listings from photos
-  icon: "🏡"
+  icon: "lucide:Home"
 
 theme:
   preset: ha-bits-cyan
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Real Estate Listing Generator, subtitle: "Photo to listing", icon: "🏡" }
+  header: { title: Real Estate Listing Generator, subtitle: "Photo to listing", icon: "lucide:Home" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   imageBase64: ""

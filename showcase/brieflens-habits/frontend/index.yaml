@@ -3,7 +3,7 @@ meta:
   id: brieflens-habits
   title: Brieflens
   subtitle: Your Intelligent Calendar Assistant
-  icon: "📅"
+  icon: "lucide:Calendar"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Brieflens, subtitle: "AI calendar digest", icon: "📅" }
+  header: { title: Brieflens, subtitle: "AI calendar digest", icon: "lucide:Calendar" }
 
 state:
   email: ""

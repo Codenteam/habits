@@ -3,7 +3,7 @@ meta:
   id: video-shorts
   title: Video Shorts Generator
   subtitle: Create viral TikToks, YouTube Shorts & Reels
-  icon: "🎬"
+  icon: "lucide:Clapperboard"
 
 theme:
   preset: ha-bits-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Video Shorts Generator, subtitle: "Hooks · scripts · captions", icon: "🎬" }
+  header: { title: Video Shorts Generator, subtitle: "Hooks · scripts · captions", icon: "lucide:Clapperboard" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   topic: ""

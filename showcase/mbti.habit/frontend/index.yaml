@@ -3,7 +3,7 @@ meta:
   id: mbti-habit
   title: MBTI Personality Analyzer
   subtitle: Submit up to 10 text samples — AI ranks all 16 personality types
-  icon: "🧠"
+  icon: "lucide:Brain"
 
 theme:
   preset: ha-bits-purple
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: MBTI Analyzer, subtitle: "Text-based personality typing", icon: "🧠" }
+  header: { title: MBTI Analyzer, subtitle: "Text-based personality typing", icon: "lucide:Brain" }
   nav:
-    - { id: analyze, label: Analyze, icon: "🔬" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: analyze, label: Analyze, icon: "lucide:Microscope" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   personName: ""

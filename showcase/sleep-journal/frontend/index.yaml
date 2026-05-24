@@ -1,0 +1,257 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: sleep-journal
+  title: Sleep Journal
+  subtitle: Track your sleep. Improve your rest.
+  icon: "lucide:Moon"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: Sleep Journal
+    subtitle: "Log · Review · Improve"
+    icon: "lucide:Moon"
+  nav:
+    - { id: log-sleep, label: Log Sleep, icon: "lucide:Moon" }
+    - { id: history, label: History, icon: "lucide:ListChecks" }
+    - { id: insights, label: Insights, icon: "lucide:BarChart" }
+
+defaultView: log-sleep
+
+state:
+  # Log Sleep form fields
+  date: ""
+  bedtime: ""
+  wakeTime: ""
+  quality: "5"
+  notes: ""
+  # Results
+  logResult: null
+  weeklyInsights: null
+  insightsEntriesAnalyzed: 0
+  # Error
+  error: null
+
+actions:
+  # Submit a new sleep entry for storage + AI analysis
+  logSleep:
+    method: POST
+    endpoint: /api/log-sleep
+    body:
+      date: "{{state.date}}"
+      bedtime: "{{state.bedtime}}"
+      wakeTime: "{{state.wakeTime}}"
+      quality: "{{state.quality}}"
+      notes: "{{state.notes}}"
+    responsePath: output
+    onSuccess:
+      set:
+        logResult: "$response"
+        error: null
+      dispatch: loadHistory
+      toast:
+        message: "Sleep entry saved!"
+        level: success
+    onError:
+      set: { error: "$error.message" }
+      toast:
+        message: "Failed to save entry"
+        level: error
+
+  # Default date to today when opening the log form
+  initToday:
+    set:
+      date: "new Date().toISOString().slice(0, 10)"
+
+  # Clear the log form to start fresh
+  clearLog:
+    set:
+      logResult: null
+      error: null
+      date: "new Date().toISOString().slice(0, 10)"
+      bedtime: ""
+      wakeTime: ""
+      quality: "5"
+      notes: ""
+
+  # Load sleep history (used by history-grid)
+  loadHistory:
+    method: POST
+    endpoint: /api/get-sleep-history
+    body: { limit: 50 }
+    responsePath: output
+
+  # Generate AI weekly insights
+  generateInsights:
+    method: POST
+    endpoint: /api/sleep-insights
+    body: {}
+    responsePath: output
+    onSuccess:
+      set:
+        weeklyInsights: "(function(v){ if(v==null) return null; if(typeof v==='object') return v; var s=String(v).trim().replace(/^```(?:json)?\\s*/i,'').replace(/```\\s*$/,''); try{return JSON.parse(s);}catch(e){return {summary:String(v)};} })($response.insights)"
+        insightsEntriesAnalyzed: "$response.entriesAnalyzed"
+        error: null
+      toast:
+        message: "Insights generated!"
+        level: success
+    onError:
+      set: { error: "$error.message" }
+      toast:
+        message: "Failed to generate insights"
+        level: error
+
+views:
+  # ─── TAB 1: Log Sleep ──────────────────────────────────────────────────────
+  log-sleep:
+    onEnter: initToday
+    widgets:
+      # Entry form (shown when no result yet)
+      - kind: card
+        title: "Log Tonight's Sleep"
+        hideWhen: state.logResult
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: date
+                type: date
+                label: Date
+                required: true
+              - name: bedtime
+                type: time
+                label: Bedtime
+                required: true
+                placeholder: "e.g. 23:00"
+              - name: wakeTime
+                type: time
+                label: Wake Time
+                required: true
+                placeholder: "e.g. 07:00"
+              - name: quality
+                type: select
+                label: Sleep Quality
+                required: true
+                options:
+                  - { value: "1", label: "1 — Very Poor" }
+                  - { value: "2", label: "2 — Poor" }
+                  - { value: "3", label: "3 — Fair" }
+                  - { value: "4", label: "4 — Good" }
+                  - { value: "5", label: "5 — Excellent" }
+              - name: notes
+                type: textarea
+                label: Notes (optional)
+                placeholder: "How did you feel? Any dreams or disturbances?"
+                rows: 3
+            submit:
+              label: "Save & Analyze"
+              action: logSleep
+              loadingLabel: "Analyzing your sleep..."
+
+      # Error banner
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+
+      # Result panel (shown after successful save)
+      - kind: result-panel
+        showWhen: state.logResult
+        source: state.logResult
+        title: "Sleep Entry Saved"
+        sections:
+          - kind: kv-grid
+            items:
+              - { label: "Date", value: "{{state.logResult.date}}" }
+              - { label: "Bedtime", value: "{{state.logResult.bedtime}}" }
+              - { label: "Wake Time", value: "{{state.logResult.wakeTime}}" }
+              - { label: "Quality", value: "{{state.logResult.quality}} / 5" }
+              - { label: "Notes", value: "{{state.logResult.notes}}" }
+          - kind: section
+            title: "AI Sleep Tips"
+            children:
+              - kind: markdown
+                source: state.logResult.aiAnalysis
+          - kind: button
+            label: "Log Another Night"
+            action: clearLog
+            variant: secondary
+
+  # ─── TAB 2: History ────────────────────────────────────────────────────────
+  history:
+    onEnter: loadHistory
+    widgets:
+      - kind: card
+        title: "Sleep History"
+        children:
+          - kind: history-grid
+            loadAction: loadHistory
+            dataPath: entries
+            reloadAfter: [logSleep]
+            columns: 1
+            itemTemplate:
+              title: "{{item.date}}  ·  Quality {{item.quality}}/5"
+              meta: "Bedtime {{item.bedtime}}  →  Wake {{item.wakeTime}}"
+            empty: "No sleep entries yet. Head to Log Sleep to record your first night!"
+
+  # ─── TAB 3: Insights ───────────────────────────────────────────────────────
+  insights:
+    widgets:
+      # Trigger button
+      - kind: card
+        title: "Weekly Sleep Analysis"
+        children:
+          - kind: text
+            value: "Get a personalized summary of your recent sleep patterns, quality trends, and AI-powered recommendations based on your last 7 nights."
+          - kind: button
+            label: "Generate Weekly Insights"
+            action: generateInsights
+            loadingLabel: "Analyzing your sleep patterns..."
+
+      # Error banner
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+
+      # Insights result panel
+      - kind: result-panel
+        showWhen: state.weeklyInsights
+        source: state.weeklyInsights
+        title: "Your Sleep Insights"
+        sections:
+          - kind: metric-grid
+            columns: 2
+            metrics:
+              - { value: "{{state.weeklyInsights.avgDuration}}", label: "Avg Duration" }
+              - { value: "{{state.weeklyInsights.avgQuality}}", label: "Avg Quality (1-5)" }
+              - { value: "{{state.weeklyInsights.qualityTrend}}", label: "Quality Trend" }
+              - { value: "{{state.weeklyInsights.durationTrend}}", label: "Duration Trend" }
+          - kind: kv-grid
+            items:
+              - { label: "Best Night", value: "{{state.weeklyInsights.bestNight}}" }
+              - { label: "Worst Night", value: "{{state.weeklyInsights.worstNight}}" }
+          - kind: section
+            title: "Patterns Observed"
+            children:
+              - kind: bullet-list
+                source: state.weeklyInsights.patterns
+          - kind: section
+            title: "Recommendations"
+            children:
+              - kind: bullet-list
+                source: state.weeklyInsights.recommendations
+          - kind: section
+            title: "Week Summary"
+            children:
+              - kind: markdown
+                source: state.weeklyInsights.summary
+          - kind: section
+            title: "Encouragement"
+            children:
+              - kind: markdown
+                source: state.weeklyInsights.encouragement

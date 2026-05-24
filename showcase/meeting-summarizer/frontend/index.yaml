@@ -3,7 +3,7 @@ meta:
   id: meeting-summarizer
   title: Meeting Summarizer
   subtitle: Audio → summary, decisions, and action items
-  icon: "🎧"
+  icon: "lucide:Headphones"
 
 theme:
   preset: ha-bits-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Meeting Summarizer, subtitle: "Audio in, structured notes out", icon: "🎧" }
+  header: { title: Meeting Summarizer, subtitle: "Audio in, structured notes out", icon: "lucide:Headphones" }
   nav:
-    - { id: upload, label: New meeting, icon: "🎤" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: upload, label: New meeting, icon: "lucide:Mic" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   meetingTitle: ""

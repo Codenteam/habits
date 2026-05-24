@@ -6,7 +6,7 @@ meta:
   id: real-estate-transaction-management
   title: Real Estate Transaction Management
   subtitle: "Automation suite · 6 habits active"
-  icon: "🤝"
+  icon: "lucide:Handshake"
   documentTitle: Real Estate Transaction Management
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Real Estate Transaction Management
     subtitle: "Automation suite · 6 habits active"
-    icon: "🤝"
+    icon: "lucide:Handshake"
   footerStatus:
     dot: live
     text: "All habits running · Port 13042 · Habits v1.0"

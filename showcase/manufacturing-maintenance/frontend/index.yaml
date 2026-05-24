@@ -6,7 +6,7 @@ meta:
   id: manufacturing-maintenance
   title: Manufacturing Maintenance
   subtitle: "Automation suite · 6 habits active"
-  icon: "🔧"
+  icon: "lucide:Wrench"
   documentTitle: Manufacturing Maintenance
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Manufacturing Maintenance
     subtitle: "Automation suite · 6 habits active"
-    icon: "🔧"
+    icon: "lucide:Wrench"
   footerStatus:
     dot: live
     text: "All habits running · Port 13032 · Habits v1.0"

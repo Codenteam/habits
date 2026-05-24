@@ -3,7 +3,7 @@ meta:
   id: ai-journal
   title: AI Journal
   subtitle: Your mindful companion for daily reflection
-  icon: "📓"
+  icon: "lucide:BookOpen"
 
 theme:
   preset: ha-bits-purple
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Journal, subtitle: "Reflect · understand · grow", icon: "📓" }
+  header: { title: AI Journal, subtitle: "Reflect · understand · grow", icon: "lucide:BookOpen" }
   nav:
-    - { id: write, label: Write, icon: "✍️" }
-    - { id: history, label: History, icon: "🗂️" }
-    - { id: insights, label: Insights, icon: "📈" }
+    - { id: write, label: Write, icon: "lucide:PenLine" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+    - { id: insights, label: Insights, icon: "lucide:TrendingUp" }
 
 state:
   content: ""

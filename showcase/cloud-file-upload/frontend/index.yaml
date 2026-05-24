@@ -3,7 +3,7 @@ meta:
   id: cloud-file-upload
   title: Cloud Upload
   subtitle: Upload files to Google Drive
-  icon: "☁️"
+  icon: "lucide:Cloud"
 
 theme:
   preset: mobile-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Cloud Upload, subtitle: "Google Drive", icon: "☁️" }
+  header: { title: Cloud Upload, subtitle: "Google Drive", icon: "lucide:Cloud" }
 
 state:
   fileBase64: ""

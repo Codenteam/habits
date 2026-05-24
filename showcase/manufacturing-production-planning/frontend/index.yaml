@@ -6,7 +6,7 @@ meta:
   id: manufacturing-production-planning
   title: Manufacturing Production Planning
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏭"
+  icon: "lucide:Factory"
   documentTitle: Manufacturing Production Planning
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Manufacturing Production Planning
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏭"
+    icon: "lucide:Factory"
   footerStatus:
     dot: live
     text: "All habits running · Port 13034 · Habits v1.0"

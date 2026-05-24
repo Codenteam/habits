@@ -3,7 +3,7 @@ meta:
   id: openclaw-clone
   title: Claw
   subtitle: Your personal AI assistant that actually does things
-  icon: "🦾"
+  icon: "lucide:Bot"
 
 theme:
   preset: ha-bits-red
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: split
-  header: { title: Claw, subtitle: "AI assistant", icon: "🦾" }
+  header: { title: Claw, subtitle: "AI assistant", icon: "lucide:Bot" }
   split:
     left: sidebar
     right: chat
@@ -106,7 +106,7 @@ views:
     onEnter: heartbeat
     widgets:
       - kind: empty-state
-        icon: "🦾"
+        icon: "lucide:Bot"
         title: "Hi, I'm Claw."
         subtitle: "I can send Slack messages, create tasks, browse the web, schedule meetings, and more."
         showWhen: "!state.messages.length"

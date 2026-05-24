@@ -3,7 +3,7 @@ meta:
   id: product-describer
   title: Product Describer
   subtitle: SEO-optimised descriptions, bullets, and social copy from product images
-  icon: "🛍️"
+  icon: "lucide:ShoppingBag"
   documentTitle: Product Describer
 
 theme:
@@ -15,10 +15,10 @@ layout:
   header:
     title: Product Describer
     subtitle: AI E-commerce Content
-    icon: "🛍️"
+    icon: "lucide:ShoppingBag"
   nav:
-    - { id: describe, label: Describe, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: describe, label: Describe, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   imageBase64: ""

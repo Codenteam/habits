@@ -3,7 +3,7 @@ meta:
   id: support-ticket-router
   title: Support Ticket Router
   subtitle: AI-powered ticket triage
-  icon: "🎫"
+  icon: "lucide:Ticket"
 
 theme:
   preset: ha-bits-purple
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: sidebar
-  header: { title: Support Tickets, subtitle: "AI triage", icon: "🎫" }
+  header: { title: Support Tickets, subtitle: "AI triage", icon: "lucide:Ticket" }
   nav:
-    - { id: dashboard, label: Dashboard, icon: "📊" }
-    - { id: new, label: New Ticket, icon: "➕" }
-    - { id: all, label: All Tickets, icon: "📋" }
+    - { id: dashboard, label: Dashboard, icon: "lucide:BarChart" }
+    - { id: new, label: New Ticket, icon: "lucide:Plus" }
+    - { id: all, label: All Tickets, icon: "lucide:ListChecks" }
 
 state:
   customerName: ""

@@ -3,7 +3,7 @@ meta:
   id: image-calories-calculator
   title: Calorie Calculator
   subtitle: Upload a photo of your food to analyze its nutritional content
-  icon: "🥗"
+  icon: "lucide:Salad"
   documentTitle: Calorie Calculator
 
 theme:
@@ -15,7 +15,7 @@ layout:
   header:
     title: Calorie Calculator
     subtitle: Analyze your food
-    icon: "🥗"
+    icon: "lucide:Salad"
 
 state:
   imageBase64: ""

@@ -3,7 +3,7 @@ meta:
   id: ai-podcast
   title: AI Podcast Generator
   subtitle: Episodes, scripts, and show notes in one shot
-  icon: "🎙️"
+  icon: "lucide:Mic"
 
 theme:
   preset: ha-bits-cyan
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: AI Podcast Generator, subtitle: "Scripts · chapters · show notes", icon: "🎙️" }
+  header: { title: AI Podcast Generator, subtitle: "Scripts · chapters · show notes", icon: "lucide:Mic" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: Recent, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: Recent, icon: "lucide:FolderOpen" }
 
 state:
   topic: ""

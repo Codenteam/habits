@@ -3,7 +3,7 @@ meta:
   id: app-mobile-automation
   title: Mobile Automation Suite
   subtitle: WiFi · Geofence · Smart Home
-  icon: "📱"
+  icon: "lucide:Smartphone"
 
 theme:
   preset: mobile-blue
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Mobile Automation Suite, subtitle: "Context-aware automations", icon: "📱" }
+  header: { title: Mobile Automation Suite, subtitle: "Context-aware automations", icon: "lucide:Smartphone" }
   nav:
-    - { id: wifi, label: WiFi, icon: "📶" }
-    - { id: geofence, label: Geofence, icon: "📍" }
-    - { id: smarthome, label: Smart Home, icon: "🏠" }
+    - { id: wifi, label: WiFi, icon: "lucide:Signal" }
+    - { id: geofence, label: Geofence, icon: "lucide:MapPin" }
+    - { id: smarthome, label: Smart Home, icon: "lucide:Home" }
 
 state:
   currentWifi: "Not connected"

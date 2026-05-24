@@ -6,7 +6,7 @@ meta:
   id: real-estate-property-listings
   title: Real Estate Property Listings
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏘️"
+  icon: "lucide:Home"
   documentTitle: Real Estate Property Listings
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Real Estate Property Listings
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏘️"
+    icon: "lucide:Home"
   footerStatus:
     dot: live
     text: "All habits running · Port 13041 · Habits v1.0"

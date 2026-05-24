@@ -6,7 +6,7 @@ meta:
   id: healthcare-billing-insurance
   title: "Healthcare Billing & Insurance"
   subtitle: "Automation suite · 6 habits active"
-  icon: "💳"
+  icon: "lucide:CreditCard"
   documentTitle: "Healthcare Billing & Insurance"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Healthcare Billing & Insurance"
     subtitle: "Automation suite · 6 habits active"
-    icon: "💳"
+    icon: "lucide:CreditCard"
   footerStatus:
     dot: live
     text: "All habits running · Port 13001 · Habits v1.0"

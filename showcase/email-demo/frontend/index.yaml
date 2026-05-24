@@ -3,7 +3,7 @@ meta:
   id: email-demo
   title: Email Demo
   subtitle: IMAP & SMTP testing interface
-  icon: "✉️"
+  icon: "lucide:Mail"
 
 theme:
   preset: ha-bits-blue
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Email Demo, subtitle: "Send · poll · round-trip", icon: "✉️" }
+  header: { title: Email Demo, subtitle: "Send · poll · round-trip", icon: "lucide:Mail" }
 
 state:
   to: ""

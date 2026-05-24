@@ -3,7 +3,7 @@ meta:
   id: secretary
   title: Secretary
   subtitle: Your AI assistant
-  icon: "🤖"
+  icon: "lucide:Bot"
 
 theme:
   preset: mobile-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Secretary, subtitle: "Your AI assistant", icon: "🤖" }
+  header: { title: Secretary, subtitle: "Your AI assistant", icon: "lucide:Bot" }
   nav:
-    - { id: briefing, label: Briefing, icon: "☀️" }
-    - { id: doIt, label: Do It, icon: "⚡" }
+    - { id: briefing, label: Briefing, icon: "lucide:Sun" }
+    - { id: doIt, label: Do It, icon: "lucide:Zap" }
 
 state:
   doItPrompt: ""

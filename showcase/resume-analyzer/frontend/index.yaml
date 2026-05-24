@@ -3,7 +3,7 @@ meta:
   id: resume-analyzer
   title: Resume Analyzer
   subtitle: ATS, experience, match, summary, and interview prep
-  icon: "📄"
+  icon: "lucide:FileText"
 
 theme:
   preset: mobile-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Resume Analyzer, subtitle: "AI screening assistant", icon: "📄" }
+  header: { title: Resume Analyzer, subtitle: "AI screening assistant", icon: "lucide:FileText" }
   nav:
-    - { id: home, label: New, icon: "➕" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: home, label: New, icon: "lucide:Plus" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   resumeImage: ""

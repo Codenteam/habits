@@ -6,7 +6,7 @@ meta:
   id: healthcare-compliance-reporting
   title: "Healthcare Compliance & Reporting"
   subtitle: "Automation suite · 6 habits active"
-  icon: "📋"
+  icon: "lucide:ListChecks"
   documentTitle: "Healthcare Compliance & Reporting"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Healthcare Compliance & Reporting"
     subtitle: "Automation suite · 6 habits active"
-    icon: "📋"
+    icon: "lucide:ListChecks"
   footerStatus:
     dot: live
     text: "All habits running · Port 13004 · Habits v1.0"

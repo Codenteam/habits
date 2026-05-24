@@ -6,7 +6,7 @@ meta:
   id: ecommerce-retail-order-management
   title: "Ecommerce & Retail Order Management"
   subtitle: "Automation suite · 6 habits active"
-  icon: "📦"
+  icon: "lucide:Package"
   documentTitle: "Ecommerce & Retail Order Management"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Ecommerce & Retail Order Management"
     subtitle: "Automation suite · 6 habits active"
-    icon: "📦"
+    icon: "lucide:Package"
   footerStatus:
     dot: live
     text: "All habits running · Port 13020 · Habits v1.0"

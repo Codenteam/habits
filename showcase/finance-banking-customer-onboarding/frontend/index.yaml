@@ -6,7 +6,7 @@ meta:
   id: finance-banking-customer-onboarding
   title: "Finance & Banking Customer Onboarding"
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏦"
+  icon: "lucide:Landmark"
   documentTitle: "Finance & Banking Customer Onboarding"
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: "Finance & Banking Customer Onboarding"
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏦"
+    icon: "lucide:Landmark"
   footerStatus:
     dot: live
     text: "All habits running · Port 13010 · Habits v1.0"

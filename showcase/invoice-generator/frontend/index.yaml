@@ -3,7 +3,7 @@ meta:
   id: invoice-generator
   title: Invoice Generator
   subtitle: Create professional invoices with AI-enhanced descriptions
-  icon: "📄"
+  icon: "lucide:FileText"
 
 theme:
   preset: ha-bits-blue
@@ -11,10 +11,10 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Invoice Generator, subtitle: "AI-enhanced descriptions", icon: "📄" }
+  header: { title: Invoice Generator, subtitle: "AI-enhanced descriptions", icon: "lucide:FileText" }
   nav:
-    - { id: create, label: Create, icon: "✨" }
-    - { id: history, label: History, icon: "🗂️" }
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
 
 state:
   businessName: ""

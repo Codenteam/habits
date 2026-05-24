@@ -3,7 +3,7 @@ meta:
   id: emails-categorization
   title: Email Categorizer
   subtitle: Fetch emails from your inbox, categorize them, and send the report to Telegram
-  icon: "🤖"
+  icon: "lucide:Bot"
 
 theme:
   preset: aurora
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: Email Categorizer, subtitle: "AI inbox triage", icon: "🤖" }
+  header: { title: Email Categorizer, subtitle: "AI inbox triage", icon: "lucide:Bot" }
 
 state:
   result: null

@@ -6,7 +6,7 @@ meta:
   id: healthcare-patient-management
   title: Healthcare Patient Management
   subtitle: "Automation suite · 6 habits active"
-  icon: "🏥"
+  icon: "lucide:Stethoscope"
   documentTitle: Healthcare Patient Management
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Healthcare Patient Management
     subtitle: "Automation suite · 6 habits active"
-    icon: "🏥"
+    icon: "lucide:Stethoscope"
 
 widgets:
   - kind: metric-grid

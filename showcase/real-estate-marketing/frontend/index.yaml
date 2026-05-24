@@ -6,7 +6,7 @@ meta:
   id: real-estate-marketing
   title: Real Estate Marketing
   subtitle: "Automation suite · 6 habits active"
-  icon: "📢"
+  icon: "lucide:Megaphone"
   documentTitle: Real Estate Marketing
 
 theme:
@@ -18,7 +18,7 @@ layout:
   header:
     title: Real Estate Marketing
     subtitle: "Automation suite · 6 habits active"
-    icon: "📢"
+    icon: "lucide:Megaphone"
   footerStatus:
     dot: live
     text: "All habits running · Port 13043 · Habits v1.0"

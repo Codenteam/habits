@@ -3,7 +3,7 @@ meta:
   id: stripe-google-payment-invoice-processor
   title: Invoice Hub
   subtitle: Stripe → Google Drive
-  icon: "💸"
+  icon: "lucide:Banknote"
 
 theme:
   preset: cyberpunk
@@ -11,13 +11,13 @@ theme:
 
 layout:
   type: mobile-shell
-  header: { title: Invoice Hub, subtitle: "Stripe · Drive", icon: "💸" }
+  header: { title: Invoice Hub, subtitle: "Stripe · Drive", icon: "lucide:Banknote" }
   nav:
-    - { id: dashboard, label: Home, icon: "🏠" }
-    - { id: create, label: Create, icon: "➕" }
-    - { id: scan, label: Scan, icon: "📷" }
-    - { id: history, label: History, icon: "🗂️" }
-    - { id: settings, label: Settings, icon: "⚙️" }
+    - { id: dashboard, label: Home, icon: "lucide:Home" }
+    - { id: create, label: Create, icon: "lucide:Plus" }
+    - { id: scan, label: Scan, icon: "lucide:Camera" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+    - { id: settings, label: Settings, icon: "lucide:Settings" }
 
 state:
   invoices: []

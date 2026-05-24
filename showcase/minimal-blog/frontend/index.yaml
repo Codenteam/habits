@@ -3,7 +3,7 @@ meta:
   id: minimal-blog
   title: My Blog - Home
   subtitle: Welcome to my blog
-  icon: "📝"
+  icon: "lucide:PenLine"
 
 theme:
   preset: cyberpunk
@@ -11,7 +11,7 @@ theme:
 
 layout:
   type: single
-  header: { title: My Blog, subtitle: "Welcome to my blog", icon: "📝" }
+  header: { title: My Blog, subtitle: "Welcome to my blog", icon: "lucide:PenLine" }
 
 state:
   posts: []

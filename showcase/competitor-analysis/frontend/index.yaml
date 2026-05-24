@@ -3,7 +3,7 @@ meta:
   id: competitor-analysis
   title: Competitor Analysis Dashboard
   subtitle: Strategic intelligence and competitive insights
-  icon: "🎯"
+  icon: "lucide:Target"
 
 theme:
   preset: ha-bits-purple
@@ -11,11 +11,11 @@ theme:
 
 layout:
   type: tabs
-  header: { title: Competitor Analysis, subtitle: "Strategic intelligence and competitive insights", icon: "🎯" }
+  header: { title: Competitor Analysis, subtitle: "Strategic intelligence and competitive insights", icon: "lucide:Target" }
   nav:
-    - { id: analyze, label: Analyze, icon: "🔬" }
-    - { id: compare, label: Compare, icon: "⚖️" }
-    - { id: strategy, label: Strategy, icon: "♟️" }
+    - { id: analyze, label: Analyze, icon: "lucide:Microscope" }
+    - { id: compare, label: Compare, icon: "lucide:Scale" }
+    - { id: strategy, label: Strategy, icon: "lucide:Crown" }
 
 state:
   companyName: ""
