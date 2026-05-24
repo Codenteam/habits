@@ -1,6 +1,6 @@
 ---
-title: "Content Digest Summarizer"
-description: "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click."
+title: "Email Digest Summarizer"
+description: "Fetch unread Gmail emails, summarize each with AI, and post a curated digest to a Slack channel in one click."
 aside: false
 ---
 
@@ -8,25 +8,21 @@ aside: false
 import { Brain, Mail, Tag, Zap } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-1.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-2.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-3.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-4.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-5.webp', caption: 'Content Digest Summarizer' },
-    { img: '/showcase/content-digest-summarizer/content-digest-summarizer-6.webp', caption: 'Content Digest Summarizer' }
+    { img: '/showcase/email-digest-summarizer/email-digest-summarizer-1.webp', caption: 'Email Digest Summarizer' },
+    { img: '/showcase/email-digest-summarizer/email-digest-summarizer-2.webp', caption: 'Email Digest Summarizer' },
+    { img: '/showcase/email-digest-summarizer/email-digest-summarizer-3.webp', caption: 'Email Digest Summarizer' }
 ]
 
 const habitTabs = [
-    { label: 'content-digest', url: '/showcase/content-digest-summarizer/content-digest.yaml' },
-    { label: 'process-content', url: '/showcase/content-digest-summarizer/process-content.yaml' },
-    { label: 'fetch-emails', url: '/showcase/content-digest-summarizer/fetch-emails.yaml' },
-    { label: 'summarize-content', url: '/showcase/content-digest-summarizer/summarize-content.yaml' },
-    { label: 'send-digest', url: '/showcase/content-digest-summarizer/send-digest.yaml' },
-    { label: 'rss-digest', url: '/showcase/content-digest-summarizer/rss-digest.yaml' }
+    { label: 'content-digest', url: '/showcase/email-digest-summarizer/content-digest.yaml' },
+    { label: 'process-content', url: '/showcase/email-digest-summarizer/process-content.yaml' },
+    { label: 'fetch-emails', url: '/showcase/email-digest-summarizer/fetch-emails.yaml' },
+    { label: 'summarize-content', url: '/showcase/email-digest-summarizer/summarize-content.yaml' },
+    { label: 'send-digest', url: '/showcase/email-digest-summarizer/send-digest.yaml' }
 ]
 </script>
 
-# Content Digest Summarizer
+# Email Digest Summarizer
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -36,10 +32,10 @@ const habitTabs = [
         Beginner
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-rss"><component :is="Tag" :size="12" /> rss</span> <span class="showcase-tag tag-slack"><component :is="Tag" :size="12" /> slack</span> <span class="showcase-tag tag-productivity"><component :is="Tag" :size="12" /> productivity</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-email"><component :is="Mail" :size="12" /> email</span> <span class="showcase-tag tag-slack"><component :is="Tag" :size="12" /> slack</span> <span class="showcase-tag tag-productivity"><component :is="Tag" :size="12" /> productivity</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="content-digest-summarizer" />
+      <DownloadExample examplePath="email-digest-summarizer" />
     </div>
   </div>
 </div>
@@ -50,20 +46,18 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click.</p>
+<p class="showcase-description">Fetch unread Gmail emails, summarize each with AI, and post a curated digest to a Slack channel in one click.</p>
 
-**Content Digest Summarizer** is an automation that aggregates content from multiple sources
-(Gmail inbox and RSS/Atom feeds), uses OpenAI to summarise each item, and delivers a clean
-digest report to a Slack channel.
+**Email Digest Summarizer** is an automation that fetches unread emails from your Gmail inbox via IMAP,
+uses OpenAI to summarise each message, and delivers a clean digest report to a Slack channel.
 
 ## What it does
 
-- **Email fetching** : Retrieves unread Gmail messages via IMAP with `fetch-emails`
-- **RSS monitoring** : Polls any RSS/Atom feed for new articles with `rss-digest`
-- **AI summarisation** : Passes each content item (email or article) through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
-- **Content processing** : `process-content` orchestrates the fetch → summarise loop for all email items
-- **Slack delivery** : Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
-- **Full pipeline** : `content-digest` ties everything together: process all content sources then send the digest
+- **Email fetching**: Retrieves unread Gmail messages via IMAP with `fetch-emails`
+- **AI summarisation**: Passes each email through OpenAI (`gpt-4o-mini`) for a concise summary via `summarize-content`
+- **Content processing**: `process-content` orchestrates the fetch → summarise loop for all emails
+- **Slack delivery**: Formats all summaries into a rich Slack message and posts it to a channel via `send-digest`
+- **Full pipeline**: `content-digest` ties everything together: process all emails then send the digest
 
 ## Environment variables (`.env` / keyring on apps)
 
@@ -72,11 +66,10 @@ digest report to a Slack channel.
 | `HABITS_OPENAI_API_KEY` | OpenAI API key for content summarisation |
 | `HABITS_GMAIL_IMAP_HOST` | IMAP host (e.g. `imap.gmail.com`) |
 | `HABITS_GMAIL_IMAP_PORT` | IMAP port (typically `993` for SSL) |
-| `HABITS_GMAIL_IMAP_USER` | Gmail address to read content emails from |
+| `HABITS_GMAIL_IMAP_USER` | Gmail address to read emails from |
 | `HABITS_GMAIL_IMAP_APP_PASSWORD` | Gmail App Password for the IMAP account |
 | `HABITS_SLACK_BOT_TOKEN` | Slack Bot User OAuth Token (`xoxb-...`) |
 | `HABITS_SLACK_DIGEST_CHANNEL` | Slack channel ID to post the digest to |
-| `HABITS_RSS_FEED_URL` | RSS/Atom feed URL to monitor for new articles |
 
 ## How to set up
 
@@ -84,15 +77,13 @@ digest report to a Slack channel.
 2. For Gmail, enable 2-Step Verification and generate a 16-character App Password for `HABITS_GMAIL_IMAP_APP_PASSWORD`.
 3. Create a Slack app, add `chat:write` and `channels:read` bot scopes, install it to your workspace, and copy the `xoxb-` token.
 4. Invite the bot to your target channel and copy the Channel ID into `HABITS_SLACK_DIGEST_CHANNEL`.
-5. Set any RSS/Atom feed URL in `HABITS_RSS_FEED_URL`.
-6. Run `content-digest` for a full email + RSS digest, or `rss-digest` for RSS only.
+5. Run `content-digest` for a full email digest, or enable auto-fetch for continuous monitoring.
 
 ## Tech stack
 
 - **habits framework** for workflow orchestration
-- **OpenAI** (`@ha-bits/bit-openai`) for natural-language content summarisation
+- **OpenAI** (`@ha-bits/bit-openai`) for natural-language email summarisation
 - **IMAP** (`@ha-bits/bit-email`) for Gmail inbox access
-- **RSS** (`@ha-bits/bit-rss`) for feed polling
 - **Slack** (`@ha-bits/bit-slack`) for digest delivery
 
 
@@ -135,31 +126,30 @@ digest report to a Slack channel.
 - OPENAI_API_KEY (OpenAI API key)
 - GMAIL_IMAP_HOST (IMAP host for Gmail)
 - GMAIL_IMAP_PORT (IMAP port for Gmail)
-- GMAIL_IMAP_USER (Gmail address to read content emails from)
+- GMAIL_IMAP_USER (Gmail address to read emails from)
 - GMAIL_IMAP_APP_PASSWORD (Gmail App Password for the IMAP account)
 - SLACK_BOT_TOKEN (Slack Bot User OAuth Token)
 - SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
-- RSS_FEED_URL (RSS/Atom feed URL to monitor for new articles)
 
 ## Key Files
 
 ::: code-group
-<<< @/../showcase/content-digest-summarizer/stack.yaml [stack.yaml]
+<<< @/../showcase/email-digest-summarizer/stack.yaml [stack.yaml]
 
-<<< @/../showcase/content-digest-summarizer/.env.example [.env.example]
+<<< @/../showcase/email-digest-summarizer/.env.example [.env.example]
 
-<<< @/../showcase/content-digest-summarizer/habits/content-digest.yaml [content-digest.yaml]
+<<< @/../showcase/email-digest-summarizer/habits/content-digest.yaml [content-digest.yaml]
 
-<<< @/../showcase/content-digest-summarizer/habits/fetch-emails.yaml [fetch-emails.yaml]
+<<< @/../showcase/email-digest-summarizer/habits/fetch-emails.yaml [fetch-emails.yaml]
 
-<<< @/../showcase/content-digest-summarizer/habits/process-content.yaml [process-content.yaml]
+<<< @/../showcase/email-digest-summarizer/habits/process-content.yaml [process-content.yaml]
 :::
 
 ## Quick Start
 
-<ExampleRunner examplePath="content-digest-summarizer" />
+<ExampleRunner examplePath="email-digest-summarizer" />
 
-<DownloadExample examplePath="content-digest-summarizer" />
+<DownloadExample examplePath="email-digest-summarizer" />
 
 
 <ContactForm

@@ -1,0 +1,69 @@
+id: send-digest
+name: Send Digest to Slack
+description: >
+  Formats a single email summary and posts it as an individual Slack message.
+
+nodes:
+  # Format one summary into a single Slack message
+  - id: assemble
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: slack-assembler
+      label: Assemble Slack Message
+      params:
+        summaryItem: "{{digestInput}}"
+        language: javascript
+        script: |
+          async function main(summaryItem) {
+            const importanceEmoji = (i) => i === 'high' ? '📌' : i === 'medium' ? '📄' : '💤';
+            const sentimentEmoji = (s) => s === 'positive' ? '😊' : s === 'neutral' ? '😐' : '😟';
+
+            const s = (summaryItem && (summaryItem.output || summaryItem)) || {};
+            const importance = s.importance || 'low';
+            const sentiment  = s.sentiment  || 'neutral';
+            const category   = s.category   || 'other';
+            const title      = s.title   || '(Untitled)';
+            const source     = s.source  || '';
+            const summary    = s.summary || '';
+
+            const header = '*📬 New Email — ' + new Date().toLocaleString() + '*';
+
+            const lines = [
+              header,
+              '*' + importanceEmoji(importance) + ' ' + title + '*',
+              source ? 'Source: ' + source : null,
+              s.url  ? '<' + s.url + '|View content>' : null,
+              category + ' ' + sentimentEmoji(sentiment),
+              summary,
+            ].filter(l => l !== null);
+            if (Array.isArray(s.keyPoints) && s.keyPoints.length > 0) {
+              lines.push(s.keyPoints.map(p => '• ' + (p || '')).join('\n'));
+            }
+            if (s.actionRequired && s.actionItem) {
+              lines.push('⚡ *Action:* ' + s.actionItem);
+            }
+            lines.push('─────────────────────────');
+            return { message: lines.join('\n') };
+          }
+
+  - id: post-slack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        text: "{{assemble.result.message}}"
+
+edges:
+  - source: assemble
+    target: post-slack
+
+output:
+  success: "{{post-slack.success}}"
+  digestText: "{{assemble.result.message}}"
