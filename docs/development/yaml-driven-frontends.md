@@ -144,7 +144,7 @@ Icon fields (`meta.icon`, `layout.header.icon`, `layout.nav[].icon`, widget `ico
 | **Plain text** | `◆` or `H` | Escaped text fallback |
 | **Omit** | _(no field)_ | Header/nav show labels only |
 
-Lucide icons use SVG files bundled once in [`packages/cortex/core/assets/icons/lucide/`](../../packages/cortex/core/assets/icons/lucide/) (see [`manifest.json`](../../packages/cortex/core/assets/icons/manifest.json)). The Cortex runtime serves them at `/ha-assets/icons/lucide/` (Node server or Tauri `www/ha-assets/`). Reference any icon as `lucide:IconName` (PascalCase, e.g. `lucide:Hand`, `lucide:TriangleAlert`).
+Lucide icons are generated from [`lucide-static`](https://www.npmjs.com/package/lucide-static) via [`scripts/sync-lucide-icons.mjs`](../../scripts/sync-lucide-icons.mjs) into `packages/cortex/core/assets/icons/lucide/` (not committed; run automatically before `@ha-bits/cortex-core` builds). The Cortex runtime serves them at `/ha-assets/icons/lucide/` (Node server or Tauri `www/ha-assets/`). Reference any icon as `lucide:IconName` (PascalCase, e.g. `lucide:Hand`, `lucide:TriangleAlert`). See [`lucideIcons.ts`](../../packages/cortex/core/src/ui/lucideIcons.ts) for lookup helpers.
 
 **No emoji required.** Prefer `lucide:Name` or omit the icon entirely.
 
@@ -263,7 +263,7 @@ Both live in `@ha-bits/cortex-core`:
 | Layout shells    | `packages/cortex/core/src/ui/layouts.ts`      |
   | Client runtime   | `packages/cortex/core/src/ui/runtime.ts`      |
   | Icon rendering   | `packages/cortex/core/src/ui/icons.ts`        |
-  | Lucide icons     | `packages/cortex/core/assets/icons/lucide/*.svg` + `lucideIcons.ts` |
+  | Lucide icons     | `scripts/sync-lucide-icons.mjs` → `assets/icons/lucide/*.svg` + `lucideIcons.ts` |
   | Bundled assets   | `packages/cortex/core/assets/` (icons + fonts), served once at `/ha-assets/` by the runtime |
   | Entry point      | `packages/cortex/core/src/ui/index.ts`        |
 
