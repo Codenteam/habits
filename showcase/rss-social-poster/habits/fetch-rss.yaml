@@ -39,7 +39,7 @@ nodes:
         language: javascript
         script: |
           async function main(items) {
-            const list = Array.isArray(items) ? items : [];
+            const list = Array.isArray(items) ? items : (items ? [items] : []);
             return list.map(item => ({
               title:  item.title       || '(Untitled)',
               body:   item.description || item.content || '',
