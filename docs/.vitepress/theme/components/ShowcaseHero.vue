@@ -54,7 +54,7 @@
     </div>
     
     <!-- Thumbnail Strip -->
-    <div v-if="images.length > 1" class="thumbnail-strip">
+    <div v-if="images.length > 1" class="thumbnail-strip" :class="{ scrollable: images.length >= 5 }">
       <button 
         v-for="(image, index) in images"
         :key="index"
@@ -312,6 +312,10 @@ onUnmounted(() => {
   padding: 8px;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.thumbnail-strip.scrollable {
+  justify-content: flex-start;
 }
 
 .thumbnail {
