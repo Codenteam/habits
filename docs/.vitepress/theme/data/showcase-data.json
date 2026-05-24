@@ -79,21 +79,20 @@
     "imageCount": 6
   },
   {
-    "slug": "content-digest-summarizer",
-    "name": "Content Digest Summarizer",
-    "description": "Fetch emails and RSS articles, summarize each piece of content with AI, and post a curated digest to a Slack channel in one click.",
+    "slug": "email-digest-summarizer",
+    "name": "Email Digest Summarizer",
+    "description": "Fetch unread Gmail emails, summarize each with AI, and post a curated digest to a Slack channel in one click.",
     "tags": [
       "ai",
       "email",
-      "rss",
       "slack",
       "productivity",
       "automation"
     ],
     "difficulty": "beginner",
     "featured": true,
-    "thumbnail": "/showcase/content-digest-summarizer/content-digest-summarizer-1.webp",
-    "imageCount": 6
+    "thumbnail": "/showcase/email-digest-summarizer/email-digest-summarizer-1.webp",
+    "imageCount": 3
   },
   {
     "slug": "email-demo",
@@ -217,6 +216,22 @@
     "featured": true,
     "thumbnail": "/showcase/resume-analyzer/1.webp",
     "imageCount": 4
+  },
+  {
+    "slug": "rss-digest-summarizer",
+    "name": "RSS Digest Summarizer",
+    "description": "Poll any RSS/Atom feed for new articles, summarize each with AI, and post a curated digest to a Slack channel automatically.",
+    "tags": [
+      "ai",
+      "rss",
+      "slack",
+      "productivity",
+      "automation"
+    ],
+    "difficulty": "beginner",
+    "featured": true,
+    "thumbnail": "/showcase/rss-digest-summarizer/rss-digest-summarizer-1.webp",
+    "imageCount": 3
   },
   {
     "slug": "rss-social-poster",
