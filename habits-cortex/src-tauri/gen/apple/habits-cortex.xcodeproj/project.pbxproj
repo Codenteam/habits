@@ -18,7 +18,6 @@
 		A04D7E8B149B2C4DF7E4DC94 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1395CD0ED14FB0953419D6C /* Metal.framework */; };
 		A3F1E057D299C9C57617468D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 066D3F7E7582A45A40081B76 /* Assets.xcassets */; };
 		BE5B27E30665DFCDD142672F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 800053FD82E6AFF53A4B507F /* Security.framework */; };
-		C2E47731A1C5EC9E8C307A3B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 204360A6433422F2CCB6600A /* LaunchScreen.storyboard */; };
 		E2463ABCAE70DB094F03809C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B85928E07234C124F9A91FA /* CoreGraphics.framework */; };
 /* End PBXBuildFile section */
 
@@ -28,7 +27,6 @@
 		0D26664CF9F3C32B84A631F6 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		0FEA683A7AFE17737A2E7ED4 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		1FE5AD5BC89F2050F55E856B /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
-		204360A6433422F2CCB6600A /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		44E5732F969683C0F4D65A4E /* automation.rs */ = {isa = PBXFileReference; path = automation.rs; sourceTree = "<group>"; };
 		4F8EF9E9DCBDA724EF78E13C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		56270C6B292D67653FDC0B24 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -40,6 +38,7 @@
 		A8FC6E15E9EFF35C15736EC4 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
 		B30F7452BDD9BA9F69DA3F4B /* fs_test_runner.rs */ = {isa = PBXFileReference; path = fs_test_runner.rs; sourceTree = "<group>"; };
 		C1395CD0ED14FB0953419D6C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		CCBB2BF934BF33B65BF5974C /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
 		D085D0AEA268DAA5CDC62167 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		E23D509BE02A69732768F807 /* habits-cortex_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "habits-cortex_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EEF9089F8635CEF23840F5F4 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -75,6 +74,14 @@
 			path = Externals;
 			sourceTree = "<group>";
 		};
+		11B7EAC837F2F95280605179 /* debug */ = {
+			isa = PBXGroup;
+			children = (
+				CCBB2BF934BF33B65BF5974C /* libapp.a */,
+			);
+			path = debug;
+			sourceTree = "<group>";
+		};
 		1E46180FAA777C938420251E /* bindings */ = {
 			isa = PBXGroup;
 			children = (
@@ -86,6 +93,7 @@
 		3DADF3799E21AB470CACB516 /* arm64 */ = {
 			isa = PBXGroup;
 			children = (
+				11B7EAC837F2F95280605179 /* debug */,
 				FB5F2C518FCD07ACDD461608 /* release */,
 			);
 			path = arm64;
@@ -133,7 +141,6 @@
 			children = (
 				84CE3BAFFAA883C5006E0A86 /* assets */,
 				066D3F7E7582A45A40081B76 /* Assets.xcassets */,
-				204360A6433422F2CCB6600A /* LaunchScreen.storyboard */,
 				0C1ACE1AB766B088C2BA29E9 /* Externals */,
 				C3E7FA4040DA6ECBE974C881 /* habits-cortex_iOS */,
 				83F9161E348480F6422D70AE /* Sources */,
@@ -176,7 +183,7 @@
 			path = release;
 			sourceTree = "<group>";
 		};
-		"TEMP_951916E0-C24D-490B-944E-DD02E0308997" /* x86_64 */ = {
+		"TEMP_7CD1AA03-69FA-4FBA-9C47-787FC1C313E4" /* x86_64 */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -245,7 +252,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A3F1E057D299C9C57617468D /* Assets.xcassets in Resources */,
-				C2E47731A1C5EC9E8C307A3B /* LaunchScreen.storyboard in Resources */,
 				638659CC22CFDBF281DB1233 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

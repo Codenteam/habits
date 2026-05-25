@@ -81,7 +81,7 @@ export interface HabitContext {
 /**
  * Callback for streaming progress updates
  */
-export type AIStreamProgressCallback = (partialHtml: string, isDone: boolean) => void;
+export type AIStreamProgressCallback = (partialYaml: string, isDone: boolean) => void;
 
 /**
  * AI generation request payload
@@ -104,7 +104,8 @@ export interface AIGenerationRequest {
  * AI generation response
  */
 export interface AIGenerationResponse {
-  html?: string;
+  yaml?: string;
+  html?: string;  // kept for backward compatibility
   result?: string;
   content?: string;
   output?: string;

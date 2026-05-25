@@ -696,6 +696,13 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Get the current environment variables map
+   */
+  protected getEnv(): Record<string, string | undefined> {
+    return this.env;
+  }
+
+  /**
    * Execute a complete workflow using dependency-based execution
    */
   async executeWorkflow(workflowOrId: Workflow | string, options?: {
@@ -1239,7 +1246,7 @@ export class WorkflowExecutor {
    * Build dependency map from workflow nodes and edges
    * Now includes detailed edge information for flow control
    */
-  private buildDependencyMap(nodes: WorkflowNode[], edges: WorkflowEdge[]): Map<string, NodeDependencies> {
+  protected buildDependencyMap(nodes: WorkflowNode[], edges: WorkflowEdge[]): Map<string, NodeDependencies> {
     const dependencyMap = new Map<string, NodeDependencies>();
 
     // Initialize dependency map for all nodes
@@ -1293,7 +1300,7 @@ export class WorkflowExecutor {
   /**
    * Find all nodes that can be executed (no pending dependencies)
    */
-  private findRunnableNodes(nodeStatuses: NodeExecutionStatus[], dependencies: Map<string, NodeDependencies>): string[] {
+  protected findRunnableNodes(nodeStatuses: NodeExecutionStatus[], dependencies: Map<string, NodeDependencies>): string[] {
     return nodeStatuses
       .filter(status =>
         status.status === 'pending' &&
@@ -1568,7 +1575,7 @@ export class WorkflowExecutor {
   /**
    * Resolve dynamic parameters using context
    */
-  private resolveParameters(params: Record<string, any>, context: Record<string, any>): Record<string, any> {
+  protected resolveParameters(params: Record<string, any>, context: Record<string, any>): Record<string, any> {
     const resolved: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(params)) {
@@ -1630,7 +1637,7 @@ export class WorkflowExecutor {
    * Evaluate a JavaScript expression in the given context
    * Supports default values with || operator: {{habits.input.value || 'default'}}
    */
-  private evaluateExpression(expression: string, context: Record<string, any>): any {
+  protected evaluateExpression(expression: string, context: Record<string, any>): any {
     try {
       // Handle default value syntax: expression || 'default' or expression || "default"
       // Match || followed by a quoted string or number
@@ -1651,8 +1658,12 @@ export class WorkflowExecutor {
         const [, mainExpr, defaultValue] = defaultUnquotedMatch;
         const result = this.evaluateExpression(mainExpr.trim(), context);
         if (result === undefined || result === null || result === '' || result === mainExpr.trim()) {
-          // Try to parse the default as number/boolean
           const trimmedDefault = defaultValue.trim();
+          // Evaluate fallback when it looks like a path/expression (e.g. habits.input.imageUrls)
+          if (trimmedDefault.includes('.') || trimmedDefault.includes('[')) {
+            return this.evaluateExpression(trimmedDefault, context);
+          }
+          // Try to parse the default as number/boolean
           if (trimmedDefault === 'true') return true;
           if (trimmedDefault === 'false') return false;
           if (trimmedDefault === 'null') return null;

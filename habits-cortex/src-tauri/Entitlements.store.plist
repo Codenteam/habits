@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Store Required Identifiers -->
+    <key>com.apple.application-identifier</key>
+    <string>S54SCFZ347.com.codenteam-oss.habits</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>S54SCFZ347</string>
+
+    <!-- Required for Mac App Store and iOS App Store -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Network access for API calls -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- File access for workflow files -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- Microphone access for voice trigger
+    <key>com.apple.security.device.microphone</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    -->
+
+</dict>
+</plist>

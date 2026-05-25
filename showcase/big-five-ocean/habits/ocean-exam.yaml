@@ -1,0 +1,106 @@
+id: ocean-exam
+name: OCEAN Personality Exam
+description: >
+  Big Five (OCEAN) personality assessment via 20 Likert-scale questions.
+  Accepts an array of 20 integer answers (1–5), grouped 4 per trait
+  (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism),
+  and returns scored results with descriptions and a personality summary.
+
+env:
+  - id: HABITS_OPENAI_API_KEY
+    displayName: OpenAI API Key
+    description: API key for OpenAI GPT models
+    type: secret
+    required: true
+    secret: true
+
+input:
+  - id: answers
+    type: array
+    displayName: Exam Answers
+    description: >
+      Array of exactly 20 integers (1–5). Questions 1–4 map to Openness,
+      5–8 to Conscientiousness, 9–12 to Extraversion, 13–16 to Agreeableness,
+      and 17–20 to Neuroticism.
+    required: true
+
+nodes:
+  - id: score-traits
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        maxTokens: 1800
+        temperature: 0.3
+        roles:
+          - role: system
+            content: >
+              You are an expert psychologist specialising in the Big Five (OCEAN)
+              personality model. When given raw Likert-scale answers you compute
+              trait scores precisely and produce rich, empathetic descriptions.
+              Always respond with valid JSON only — no prose, no markdown fences.
+        prompt: |
+          The user completed a 20-question Big Five personality assessment.
+          Each question was answered on a 1-to-5 Likert scale where:
+            1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree
+
+          Question groupings:
+            Openness            : questions 1–4   (answers[0]–answers[3])
+            Conscientiousness   : questions 5–8   (answers[4]–answers[7])
+            Extraversion        : questions 9–12  (answers[8]–answers[11])
+            Agreeableness       : questions 13–16 (answers[12]–answers[15])
+            Neuroticism         : questions 17–20 (answers[16]–answers[19])
+
+          Raw answers (0-indexed array of 20 numbers): {{habits.input.answers}}
+
+          Instructions:
+          1. Compute the mean score (1.0–5.0, two decimal places) for each trait.
+          2. Convert each mean to a percentage: ((mean - 1) / 4) * 100, rounded to nearest integer.
+          3. Write a 2–3 sentence description for each trait based on the score level.
+          4. Write a 3–4 sentence overall personality profile.
+          5. List 3 key strengths and 2 growth areas implied by the profile.
+
+          Return ONLY valid JSON matching this exact structure:
+          {
+            "scores": {
+              "openness": 0.0,
+              "conscientiousness": 0.0,
+              "extraversion": 0.0,
+              "agreeableness": 0.0,
+              "neuroticism": 0.0
+            },
+            "percentages": {
+              "openness": 0,
+              "conscientiousness": 0,
+              "extraversion": 0,
+              "agreeableness": 0,
+              "neuroticism": 0
+            },
+            "descriptions": {
+              "openness": "...",
+              "conscientiousness": "...",
+              "extraversion": "...",
+              "agreeableness": "...",
+              "neuroticism": "..."
+            },
+            "personalityProfile": "...",
+            "strengths": ["...", "...", "..."],
+            "growthAreas": ["...", "..."]
+          }
+
+edges: []
+
+output:
+  - id: result
+    value: "{{score-traits}}"
+    type: json
+    displayAs: json
+    displayName: OCEAN Assessment Result
+    description: Full scored OCEAN personality report

@@ -1,0 +1,61 @@
+version: 1
+meta:
+  id: emails-categorization
+  title: Email Categorizer
+  subtitle: Fetch emails from your inbox, categorize them, and send the report to Telegram
+  icon: "lucide:Bot"
+
+theme:
+  preset: aurora
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Email Categorizer, subtitle: "AI inbox triage", icon: "lucide:Bot" }
+
+state:
+  result: null
+  error: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/categorize-emails
+    body: {}
+    responsePath: output
+    onSuccess: { set: { result: "$response", error: null }, toast: "Report sent to Telegram" }
+    onError: { set: { error: "$error.message", result: null } }
+
+widgets:
+  - kind: status-banner
+    source: "Fetch inbox → AI categorize each email → send summary to Telegram"
+  - kind: card
+    title: Run categorization
+    children:
+      - kind: button
+        label: Categorize now
+        action: run
+        loadingLabel: "Categorizing..."
+        fullWidth: true
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Categorized emails
+    sections:
+      - kind: metric-grid
+        columns: 2
+        metrics:
+          - { value: "{{state.result.categories.successCount}}", label: Categorized }
+          - { value: "{{state.result.categories.totalItems}}", label: Total }
+      - kind: data-table
+        source: state.result.categories.results
+        empty: "No emails returned."
+        columns:
+          - { key: output.subject, label: Subject }
+          - { key: output.from, label: From }
+          - { key: output.category, label: Category }
+          - { key: output.priority, label: Priority }
+          - { key: output.summary, label: Summary }

@@ -18,7 +18,7 @@
       "command": "npx",
       "args": [
         "tsx",
-        "./packages/manage/forge/src/mcp/habits-mcp.ts"
+        "./packages/manage/forge/src/mcp/index.ts"
       ],
       "env": {
         "WEBDRIVER_PORT": "4445",
@@ -27,7 +27,7 @@
         "MANAGE_PDNS_API_URL": "http://localhost:8081",
         "MANAGE_PDNS_SERVER_ID": "localhost",
         "MANAGE_ROOT_DOMAIN": "habits.local",
-        "WORKSPACE_ROOT": "."
+        "WORKSPACE_ROOT": "${workspaceFolder}"
       }
     }
   }

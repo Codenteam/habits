@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { FolderOpen, FileJson, AlertCircle, Check, X, Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { addHabit, setActiveHabit, clearWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
-import { setFrontendHtml } from '../store/slices/uiSlice';
+import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
 import {
   FileEntry,
   detectConfigFiles,
@@ -116,6 +116,11 @@ export default function OpenFolderModal({ isOpen, onClose }: OpenFolderModalProp
       if (parsed.frontendHtml) {
         dispatch(setFrontendHtml(parsed.frontendHtml));
       }
+
+      // Load frontend YAML if available
+      if (parsed.frontendYaml) {
+        dispatch(setFrontendYaml(parsed.frontendYaml));
+      }
       
       // Load environment variables if available
       if (parsed.envVariables && Object.keys(parsed.envVariables).length > 0) {
@@ -125,7 +130,7 @@ export default function OpenFolderModal({ isOpen, onClose }: OpenFolderModalProp
       setResult({
         habitsLoaded: parsed.habits.length,
         errors: parsed.errors,
-        frontendLoaded: !!parsed.frontendHtml,
+        frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
       });
       setStep('result');
     } catch (error) {

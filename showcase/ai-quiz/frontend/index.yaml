@@ -1,0 +1,212 @@
+# AI Quiz Generator — YAML equivalent of ai-quiz.html.
+#
+# Reference this YAML from your habit's stack.yaml via:
+#   server:
+#     frontend: ./frontend/index.yaml
+#
+# The Cortex server compiles this to a self-contained HTML document.
+
+version: 1
+meta:
+  id: ai-quiz
+  title: AI Quiz Generator
+  subtitle: Create quizzes on any topic
+  icon: "lucide:Brain"
+  documentTitle: AI Quiz Generator
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: AI Quiz Generator
+    subtitle: Create quizzes on any topic with AI
+    icon: "lucide:Brain"
+    sticky: true
+  nav:
+    - { id: create, label: Create Quiz, icon: "lucide:Sparkles" }
+    - { id: take, label: Take Quiz, icon: "lucide:PenLine" }
+    - { id: results, label: Results, icon: "lucide:Trophy" }
+    - { id: history, label: History, icon: "lucide:Clock" }
+
+state:
+  topic: ""
+  numQuestions: 5
+  difficulty: medium
+  questionType: multiple-choice
+  userName: ""
+  currentQuiz: null
+  currentQuizId: null
+  currentAnswers: []
+  results: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-quiz
+    body:
+      topic: "{{state.topic}}"
+      numQuestions: "{{state.numQuestions}}"
+      difficulty: "{{state.difficulty}}"
+      questionType: "{{state.questionType}}"
+    responsePath: output
+    onSuccess:
+      set:
+        currentQuiz: "$response.quiz | parseJson"
+        currentQuizId: "$response.quizId"
+        currentAnswers: "[]"
+      goto: take
+      toast: "Quiz generated"
+    onError:
+      toast: "Failed to generate: {{error.message}}"
+
+  submit:
+    method: POST
+    endpoint: /api/submit-answers
+    body:
+      quizId: "{{state.currentQuizId}}"
+      userName: "{{state.userName | default:Anonymous}}"
+      answers: "{{state.currentAnswers | stringify}}"
+    responsePath: output
+    onSuccess:
+      set:
+        results: "$response.results | parseJson"
+      goto: results
+      toast: "Quiz submitted"
+
+  listHistory:
+    method: POST
+    endpoint: /api/list-quizzes
+    body:
+      limit: 10
+    responsePath: output
+
+  reopenQuiz:
+    method: POST
+    endpoint: /api/get-quiz
+    body:
+      id: "{{params.id}}"
+    responsePath: output
+    onSuccess:
+      set:
+        currentQuiz: "$response.quiz.content | parseJson"
+        currentQuizId: "$response.quiz._id"
+        currentAnswers: "[]"
+      goto: take
+      toast: "Quiz loaded"
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Generate a new quiz
+        children:
+          - kind: form
+            id: createForm
+            bindTo: state
+            fields:
+              - { name: topic, type: text, label: Topic, placeholder: "e.g. World capitals", required: true }
+              - name: numQuestions
+                type: select
+                label: Number of questions
+                options: [3, 5, 10, 15, 20]
+                default: 5
+              - name: difficulty
+                type: chip-group
+                label: Difficulty
+                options:
+                  - { value: easy, label: Easy }
+                  - { value: medium, label: Medium }
+                  - { value: hard, label: Hard }
+              - name: questionType
+                type: chip-group
+                label: Question type
+                options:
+                  - { value: multiple-choice, label: Multiple choice }
+                  - { value: true-false, label: True / false }
+                  - { value: short-answer, label: Short answer }
+            submit:
+              label: "Generate quiz"
+              action: generate
+              loadingLabel: "Generating..."
+
+  take:
+    onEnter: []
+    widgets:
+      - kind: empty-state
+        showWhen: "!state.currentQuiz"
+        icon: "lucide:Inbox"
+        title: No quiz yet
+        subtitle: Generate one from the Create tab.
+      - kind: card
+        showWhen: "state.currentQuiz"
+        title: "{{state.currentQuiz.title}}"
+        children:
+          - kind: markdown
+            showWhen: "state.currentQuiz.description"
+            source: state.currentQuiz.description
+          - kind: quiz-questions
+            source: state.currentQuiz.questions
+            answersPath: state.currentAnswers
+          - kind: form
+            id: takeForm
+            bindTo: state
+            fields:
+              - { name: userName, type: text, label: Your name, placeholder: Anonymous }
+            submit:
+              label: "Submit answers"
+              action: submit
+              loadingLabel: "Scoring..."
+
+  results:
+    widgets:
+      - kind: empty-state
+        showWhen: "!state.results"
+        icon: "lucide:Trophy"
+        title: No results yet
+        subtitle: Submit a quiz to see your score.
+      - kind: result-panel
+        showWhen: "state.results"
+        title: Your results
+        sections:
+          - kind: score-ring
+            source: state.results.percentage
+            max: 100
+            label: Score
+          - kind: kv-grid
+            source: state.results
+            columns: 2
+            fields:
+              - { key: score, label: Correct }
+              - { key: total, label: Total }
+              - { key: grade, label: Grade }
+              - { key: percentage, label: Percentage }
+          - kind: numbered-list
+            source: state.results.results
+            itemTemplate: "{{item.userAnswer | default:Not answered}} — {{item.feedback}}"
+          - kind: bullet-list
+            showWhen: "state.results.studyTips"
+            source: state.results.studyTips
+            itemTemplate: "{{item}}"
+
+  history:
+    onEnter: listHistory
+    widgets:
+      - kind: history-grid
+        loadAction: listHistory
+        dataPath: quizzes
+        reloadAfter: [generate]
+        columns: 2
+        itemTemplate:
+          title: "{{item.topic}}"
+          subtitle: "{{item.difficulty}} · {{item.numQuestions}} questions"
+          meta: "{{item._createdAt | date}}"
+          badge: "{{item.questionType}}"
+        onClick:
+          action: reopenQuiz
+          params: { id: "{{item._id}}" }
+        empty: "No quizzes yet."

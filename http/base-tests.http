@@ -141,3 +141,16 @@ Content-Type: application/json
   "fieldName": "model",
   "currentValues": {}
 }
+
+# =============================================================================
+# UI Builder — compile UiSpec YAML to HTML preview
+# =============================================================================
+
+### Compile frontend YAML (UiSpec → HTML for live preview)
+# @name compileUiYaml
+POST {{host}}:{{port}}/habits/base/api/ui/compile-yaml
+Content-Type: application/json
+
+{
+  "yaml": "version: 1\nmeta:\n  id: test\n  title: Test\nlayout:\n  type: single\nstate: {}\nactions: {}\nwidgets: []\n"
+}

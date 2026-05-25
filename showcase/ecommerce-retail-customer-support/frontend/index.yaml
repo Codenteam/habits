@@ -1,0 +1,64 @@
+# Ecommerce & Retail Customer Support — converted from ecommerce-retail-customer-support.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: ecommerce-retail-customer-support
+  title: "Ecommerce & Retail Customer Support"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Headphones"
+  documentTitle: "Ecommerce & Retail Customer Support"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Ecommerce & Retail Customer Support"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Headphones"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13023 · Habits v1.0"
+    port: 13023
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "640", label: Tickets resolved today }
+      - { value: "58%", label: Auto-resolved without agent }
+      - { value: "4.7", label: Average CSAT score }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Ticket Classification
+            description: Auto-classify inbound support tickets by type and urgency using AI before routing.
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Return Approval
+            description: Validate return eligibility against policy rules and issue authorisation automatically.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Escalation Routing
+            description: Route complex complaints to senior agents with full ticket context pre-loaded.
+            trigger: webhook
+            tags: [webhook, slack, email]
+          - name: FAQ Auto-Response
+            description: Detect common queries and send instant AI-generated responses without agent involvement.
+            trigger: webhook
+            tags: [webhook, ai, email]
+          - name: Sentiment Monitoring
+            description: Score all support interactions for sentiment and flag customers showing negative trends.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Agent Handoff Summary
+            description: Generate a concise context summary with AI whenever a ticket is transferred between agents.
+            trigger: webhook
+            tags: [webhook, ai, http]

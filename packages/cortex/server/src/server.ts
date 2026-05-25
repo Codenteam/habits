@@ -29,7 +29,13 @@ import {
   getWorkflowTypeName,
 } from '@ha-bits/core';
 import { WorkflowExecutor, IWebhookHandler } from '@ha-bits/cortex-core';
+import {
+  runDryRunSession,
+  discoverDataFlow,
+  runWorkflowWithLabOptions,
+} from '@ha-bits/cortex-lab';
 import { discoverOAuthRequirements, printOAuthRequirements, OAuthRequirement } from '@ha-bits/cortex-core';
+import { compileUiYaml, resolveCortexCoreAssetsDir, HA_ASSETS_WEB_ROOT } from '@ha-bits/cortex-core';
 import { WebhookTriggerServer } from './WebhookTriggerServer';
 import { WebhookRegistry, webhookRegistry } from './WebhookRegistry';
 import { OAuthCallbackServer, initOAuthCallbackServer } from './OAuthCallbackServer';
@@ -100,14 +106,53 @@ class WorkflowExecutorServer {
   private webhookServer: WebhookTriggerServer | null = null;
   private webhookServerUrl: string | null = null;
   private oauthCallbackServer: OAuthCallbackServer | null = null;
+  private dryRun: boolean = false;
+  private capture: boolean = false;
+  private dataFlowPath: string | null = null;
+  private replayPath: string | null = null;
+  private liveNodes: string[] = [];
+  private assertInputs: boolean = false;
   
   /** Webhook registry for vendor-based webhook routing */
   public readonly webhookRegistry: WebhookRegistry = webhookRegistry;
 
-  constructor() {
+  constructor(options?: {
+    dryRun?: boolean;
+    capture?: boolean;
+    dataFlowPath?: string;
+    replay?: string;
+    liveNodes?: string[];
+    assertInputs?: boolean;
+  }) {
     this.app = express();
+    this.dryRun = options?.dryRun ?? false;
+    this.capture = options?.capture ?? false;
+    this.dataFlowPath = options?.dataFlowPath ?? null;
+    this.replayPath = options?.replay ?? null;
+    this.liveNodes = options?.liveNodes ?? [];
+    this.assertInputs = options?.assertInputs ?? false;
+    if (this.capture && this.replayPath) {
+      throw new Error('Use either capture or replay server mode, not both');
+    }
     this.executor = new WorkflowExecutor();
     this.setupMiddleware();
+  }
+
+  private async executeWithLabSession(
+    workflow: Workflow,
+    options: Parameters<WorkflowExecutor['executeWorkflow']>[1] = {},
+  ): Promise<WorkflowExecution> {
+    return runWorkflowWithLabOptions({
+      capture: this.capture,
+      configPath: this.configPath ?? undefined,
+      configDir: this.configDir ?? undefined,
+      dataFlowPath: this.dataFlowPath ?? undefined,
+      replay: this.replayPath,
+      liveNodes: this.liveNodes,
+      assertInputs: this.assertInputs,
+      habitInput: options.initialContext?.habits?.input,
+      workflow,
+    }, () => this.executor.executeWorkflow(workflow, options));
   }
 
   /**
@@ -723,6 +768,20 @@ class WorkflowExecutorServer {
       });
     });
 
+    // Discover data-flow wiring without runtime input (static graph validation)
+    this.app.get('/misc/discover', (req: Request, res: Response) => {
+      try {
+        if (!this.configPath) {
+          return res.status(400).json({ error: 'Server has no loaded config' });
+        }
+        const strict = req.query.strict === 'true' || req.query.strict === '1';
+        const report = discoverDataFlow(this.configPath, { strict });
+        res.status(report.ok ? 200 : 422).json(report);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message || String(error) });
+      }
+    });
+
     // Execute a specific workflow by ID
     // Supports GET (params from query) and POST (params from body)
     // Supports streaming mode via ?stream=true query param or Accept: application/x-ndjson header
@@ -737,6 +796,29 @@ class WorkflowExecutorServer {
 
         if (loadedWorkflow.reference.enabled === false) {
           return res.status(403).json({ error: `Workflow is disabled: ${workflowId}` });
+        }
+
+        // Dry-run: skip real execution and return SimulationReport
+        if (this.dryRun) {
+          const { stream, ...queryParams } = req.query as Record<string, any>;
+          const inputData = ['POST', 'PUT', 'PATCH'].includes(req.method)
+            ? (req.body || {})
+            : queryParams;
+          const habitsContext = {
+            habits: {
+              input: inputData,
+              headers: req.headers || {},
+              cookies: this.parseCookies(req.headers.cookie || ''),
+            },
+          };
+          const { report } = await runDryRunSession({
+            workflow: loadedWorkflow.workflow,
+            configPath: this.configPath ?? undefined,
+            printSummary: true,
+          }, () => this.executor.executeWorkflow(loadedWorkflow.workflow, {
+            initialContext: habitsContext,
+          }));
+          return res.status(200).json(report);
         }
 
         // Check if streaming mode is requested
@@ -835,7 +917,7 @@ class WorkflowExecutorServer {
             }
           };
 
-          const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
+          const execution = await this.executeWithLabSession(loadedWorkflow.workflow, {
             webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
@@ -854,7 +936,7 @@ class WorkflowExecutorServer {
           }
         } else {
           // Non-streaming mode - return complete JSON response
-          const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
+          const execution = await this.executeWithLabSession(loadedWorkflow.workflow, {
             webhookHandler: this.getWebhookHandler(),
             webhookTimeout: loadedWorkflow.reference.webhookTimeout || config?.defaults?.webhookTimeout,
             initialContext: habitsContext,
@@ -993,39 +1075,121 @@ class WorkflowExecutorServer {
     });
 
     // ========================================================================
+    // Cortex UI assets (icons + fonts for YAML frontends)
+    // ========================================================================
+    const haAssetsDir = resolveCortexCoreAssetsDir();
+    if (haAssetsDir) {
+      this.app.use(`/${HA_ASSETS_WEB_ROOT}`, express.static(haAssetsDir));
+    }
+
+    // ========================================================================
     // Frontend Static Files (at / if configured)
     // ========================================================================
     
     if (config?.server?.frontend) {
       // Resolve frontend path relative to config directory
-      const frontendPath = path.isAbsolute(config.server.frontend)
-        ? config.server.frontend
-        : path.resolve(this.configDir || process.cwd(), config.server.frontend);
+      const rawFrontend = config.server.frontend;
+      const frontendPath = path.isAbsolute(rawFrontend)
+        ? rawFrontend
+        : path.resolve(this.configDir || process.cwd(), rawFrontend);
 
-      if (fs.existsSync(frontendPath)) {
-        console.log(`🌐 Serving frontend from: ${frontendPath}`);
-        
-        // Serve static files
-        this.app.use(express.static(frontendPath));
-        
-        // For SPA: serve index.html for any unmatched routes (except /api, /misc, /webhook, /habits)
+      // Determine entry: explicit .yaml/.html file path, or directory.
+      const isYamlEntry = /\.(ya?ml)$/i.test(rawFrontend) || /\.(ya?ml)$/i.test(frontendPath);
+      const isHtmlEntry = /\.html?$/i.test(rawFrontend);
+
+      let frontendDir = frontendPath;
+      let yamlEntry: string | null = null;
+      let htmlEntry: string | null = null;
+
+      if (isYamlEntry && fs.existsSync(frontendPath)) {
+        yamlEntry = frontendPath;
+        frontendDir = path.dirname(frontendPath);
+      } else if (isHtmlEntry && fs.existsSync(frontendPath)) {
+        htmlEntry = frontendPath;
+        frontendDir = path.dirname(frontendPath);
+      } else if (fs.existsSync(frontendPath)) {
+        // Directory mode: prefer index.yaml > ui.yaml > index.html.
+        const candidates = ['index.yaml', 'index.yml', 'ui.yaml', 'ui.yml'];
+        for (const c of candidates) {
+          const p = path.join(frontendPath, c);
+          if (fs.existsSync(p)) { yamlEntry = p; break; }
+        }
+        if (!yamlEntry) {
+          const h = path.join(frontendPath, 'index.html');
+          if (fs.existsSync(h)) htmlEntry = h;
+        }
+      }
+
+      if (yamlEntry || htmlEntry) {
+        const entryLabel = yamlEntry ? `YAML (${path.basename(yamlEntry)})` : `HTML (${path.basename(htmlEntry!)})`;
+        console.log(`🌐 Serving frontend from: ${frontendDir} [${entryLabel}]`);
+
+        // Cache for compiled YAML keyed by mtime.
+        let compiledCache: { mtime: number; html: string } | null = null;
+        const compileYaml = (yamlPath: string): string => {
+          const stat = nativeFs.statSync(yamlPath);
+          if (compiledCache && compiledCache.mtime === stat.mtimeMs) return compiledCache.html;
+          const source = nativeFs.readFileSync(yamlPath, 'utf-8');
+          const { html } = compileUiYaml(source);
+          compiledCache = { mtime: stat.mtimeMs, html };
+          return html;
+        };
+
+        const sendCompiledYaml = (res: Response): void => {
+          if (!yamlEntry) return;
+          try {
+            res.type('html').send(compileYaml(yamlEntry));
+          } catch (err: any) {
+            console.error('Failed to compile UI YAML:', err);
+            res.status(500).send(`UI YAML compilation failed: ${err && err.message ? err.message : err}`);
+          }
+        };
+
+        // When YAML is the entry, register explicit routes BEFORE express.static.
+        // express.static auto-serves index.html for "/" by default, which would
+        // bypass the YAML compiler even though the log says "YAML (index.yaml)".
+        if (yamlEntry) {
+          this.app.get('/', (_req: Request, res: Response) => sendCompiledYaml(res));
+          this.app.get('/index.html', (_req: Request, res: Response) => sendCompiledYaml(res));
+
+          // Subdirectory index.html (e.g. /admin/) — static index is disabled at root when YAML is active.
+          this.app.use((req: Request, res: Response, next) => {
+            if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+            const rel = req.path.replace(/\/$/, '').replace(/^\//, '');
+            if (!rel || rel.includes('.')) return next();
+            const subIndex = path.join(frontendDir, rel, 'index.html');
+            if (nativeFs.existsSync(subIndex)) {
+              return res.sendFile(subIndex);
+            }
+            next();
+          });
+        }
+
+        // Static assets only — never auto-serve index.html when YAML is active.
+        this.app.use(express.static(frontendDir, { index: yamlEntry ? false : 'index.html' }));
+
+        // SPA fallback for unmatched routes.
         this.app.get('{*splat}', (req: Request, res: Response, next) => {
-          // Skip if it's an API, misc, webhook, or habits UI route (let later middleware handle)
           if (req.path.startsWith('/api') || req.path.startsWith('/misc') || req.path.startsWith('/webhook') || req.path === '/health' || req.path.startsWith('/habits')) {
             return next();
           }
-          
-          const indexPath = path.join(frontendPath, 'index.html');
-          if (fs.existsSync(indexPath)) {
-            res.sendFile(indexPath);
-          } else {
-            console.log(`⚠️  Frontend index.html not found at: ${indexPath}`);
-            res.status(404).send('Frontend index.html not found');
+          if (yamlEntry) {
+            try {
+              res.type('html').send(compileYaml(yamlEntry));
+            } catch (err: any) {
+              console.error('Failed to compile UI YAML:', err);
+              res.status(500).send(`UI YAML compilation failed: ${err && err.message ? err.message : err}`);
+            }
+            return;
           }
+          if (htmlEntry && fs.existsSync(htmlEntry)) {
+            res.sendFile(htmlEntry);
+            return;
+          }
+          res.status(404).send('Frontend entry not found');
         });
       } else {
-        console.warn(`⚠️  Frontend path not found: ${frontendPath}`);
-        // Fall back to simple text response
+        console.warn(`⚠️  Frontend path not found or no index.yaml/index.html present: ${frontendPath}`);
         this.app.get('/', (req: Request, res: Response) => {
           res.send('Habits Cortex - Frontend path configured but not found');
         });
@@ -1136,6 +1300,7 @@ class WorkflowExecutorServer {
           console.log(`📋 Available endpoints:`);
           console.log(`   GET  /misc/workflows - List all loaded workflows`);
           console.log(`   GET  /misc/workflow/:id - Get workflow details`);
+          console.log(`   GET  /misc/discover - Discover data-flow wiring (no input required)`);
           console.log(`   GET|POST /api/:id - Execute a workflow (GET: query params, POST: body)`);
           console.log(`        (supports streaming via ?stream=true or Accept: application/x-ndjson)`);
           console.log(`   GET  /misc/execution/:id - Get execution status`);
@@ -1309,10 +1474,11 @@ async function loadFromHabitFile(habitPath: string, externalEnvPath?: string): P
   
   zip.forEach((relativePath, file) => {
     if (!file.dir && (relativePath.endsWith('.yaml') || relativePath.endsWith('.yml'))) {
-      // Skip stack/config files - we'll synthesize the config
-      if (!excludePatterns.some(p => relativePath.toLowerCase().includes(p.toLowerCase()))) {
-        workflowFiles.push(relativePath);
-      }
+      const norm = relativePath.replace(/\\/g, '/');
+      // Skip stack/config and declarative UI specs under frontend/
+      if (excludePatterns.some(p => norm.toLowerCase().includes(p.toLowerCase()))) return;
+      if (/^frontend\//i.test(norm)) return;
+      workflowFiles.push(relativePath);
     }
   });
   
@@ -1360,8 +1526,15 @@ async function loadFromHabitFile(habitPath: string, externalEnvPath?: string): P
   }
   
   // Override with external .env if provided or if one exists beside the .habit file
-  const sideEnvPath = externalEnvPath || path.join(originalConfigDir, '.env');
-  if (fs.existsSync(sideEnvPath)) {
+  const sideEnvCandidates = externalEnvPath
+    ? [externalEnvPath]
+    : [
+        path.join(originalConfigDir, '.env'),
+        // When .habit lives in dist/ (e.g. showcase/foo/dist/foo.habit), also check the showcase root
+        path.join(path.dirname(originalConfigDir), '.env'),
+      ];
+  const sideEnvPath = sideEnvCandidates.find((p) => fs.existsSync(p));
+  if (sideEnvPath) {
     console.log(`   🔐 Loading external .env: ${sideEnvPath}`);
     const externalEnvContent = fs.readFileSync(sideEnvPath, 'utf8');
     const externalEnv = parseEnvContent(externalEnvContent);
@@ -1370,14 +1543,41 @@ async function loadFromHabitFile(habitPath: string, externalEnvPath?: string): P
     console.log(`   🔄 External .env overrides applied (${Object.keys(externalEnv).length} vars)`);
   }
   
-  // Load frontend HTML if exists
-  // First try to load from the frontend path specified in stack config, then fall back to root
+  // Load frontend HTML if exists, or compile from index.yaml.
+  // First try to load from the frontend path specified in stack config, then fall back to root.
   let frontendHtml: string | undefined;
-  const frontendDir = stackConfig?.server?.frontend?.replace(/^\.[\/\\]/, '') || '';
-  const indexFilePath = frontendDir ? `${frontendDir}/index.html` : 'index.html';
-  const indexFile = zip.file(indexFilePath) || zip.file('index.html');
-  if (indexFile) {
-    frontendHtml = await indexFile.async('text');
+  const frontendRaw = stackConfig?.server?.frontend?.replace(/^\.[\/\\]/, '') || '';
+  const frontendIsYaml = /\.(ya?ml)$/i.test(frontendRaw);
+  const frontendDir = frontendIsYaml
+    ? frontendRaw.replace(/[\/\\][^\/\\]+$/, '')
+    : frontendRaw;
+  const yamlCandidates = frontendIsYaml
+    ? [frontendRaw]
+    : [
+        frontendDir ? `${frontendDir}/index.yaml` : 'index.yaml',
+        frontendDir ? `${frontendDir}/index.yml` : 'index.yml',
+        frontendDir ? `${frontendDir}/ui.yaml` : 'ui.yaml',
+        frontendDir ? `${frontendDir}/ui.yml` : 'ui.yml',
+      ];
+  let yamlFile: JSZip.JSZipObject | null = null;
+  for (const c of yamlCandidates) {
+    const f = zip.file(c);
+    if (f) { yamlFile = f; break; }
+  }
+  if (yamlFile) {
+    const yamlSource = await yamlFile.async('text');
+    try {
+      frontendHtml = compileUiYaml(yamlSource).html;
+    } catch (err: any) {
+      console.warn(`⚠️  Failed to compile UI YAML from .habit: ${err && err.message}`);
+    }
+  }
+  if (!frontendHtml) {
+    const indexFilePath = frontendDir ? `${frontendDir}/index.html` : 'index.html';
+    const indexFile = zip.file(indexFilePath) || zip.file('index.html');
+    if (indexFile) {
+      frontendHtml = await indexFile.async('text');
+    }
   }
   
   // Load bundle JS if exists
@@ -1833,8 +2033,26 @@ async function runCLI() {
 }
 
 // Export startServer for programmatic use and CLI
-export async function startServer(configPath: string, portOverride?: number): Promise<WorkflowExecutorServer> {
-  const server = new WorkflowExecutorServer();
+export async function startServer(
+  configPath: string,
+  portOverride?: number,
+  options?: {
+    dryRun?: boolean;
+    capture?: boolean;
+    dataFlowPath?: string;
+    replay?: string;
+    liveNodes?: string[];
+    assertInputs?: boolean;
+  },
+): Promise<WorkflowExecutorServer> {
+  const server = new WorkflowExecutorServer({
+    dryRun: options?.dryRun,
+    capture: options?.capture,
+    dataFlowPath: options?.dataFlowPath,
+    replay: options?.replay,
+    liveNodes: options?.liveNodes,
+    assertInputs: options?.assertInputs,
+  });
   
   await server.loadConfig(configPath);
   const config = server['executor'].getConfig();

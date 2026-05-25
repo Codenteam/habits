@@ -1,0 +1,64 @@
+# Manufacturing Maintenance — converted from manufacturing-maintenance.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: manufacturing-maintenance
+  title: Manufacturing Maintenance
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Wrench"
+  documentTitle: Manufacturing Maintenance
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Manufacturing Maintenance
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Wrench"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13032 · Habits v1.0"
+    port: 13032
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "99.2%", label: Equipment uptime this month }
+      - { value: "1", label: Open work orders }
+      - { value: 14m, label: Median alert-to-dispatch time }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Equipment Alert
+            description: Receive sensor alerts from connected equipment and automatically create maintenance work orders.
+            trigger: webhook
+            tags: [webhook, http, slack]
+          - name: Preventive Maintenance Scheduling
+            description: Schedule preventive maintenance tasks based on equipment runtime hours or fixed calendar intervals.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Work Order Creation
+            description: Generate structured work orders and assign them to available maintenance engineers automatically.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Part Ordering
+            description: Auto-order replacement parts from approved suppliers when spare parts stock falls below minimum.
+            trigger: scheduler
+            tags: [scheduler, http, email]
+          - name: Downtime Reporting
+            description: Log all unplanned downtime events automatically and notify the production planner in real time.
+            trigger: webhook
+            tags: [webhook, slack, email]
+          - name: Technician Dispatch
+            description: Notify the on-call maintenance technician via SMS with full job details when a fault is confirmed.
+            trigger: webhook
+            tags: [webhook, sms, http]

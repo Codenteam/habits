@@ -5,6 +5,7 @@
  *   npx habits init
  *   npx habits cortex --config ./config.json
  *   npx habits execute --config ./config.json --id <workflow-id>
+ *   npx habits discover --config ./stack.yaml
  *   npx habits convert --input ./workflow.json --output ./habits.json
  *   npx habits edit [--port 3000]
  *   npx habits base [--port 3000]  (alias for edit)
@@ -18,6 +19,7 @@
  *   init     Initialize a new Habits project with .env and modules.json
  *   cortex   Start the Habits server (Cortex mode)
  *   execute  Execute a workflow from file or config
+ *   discover Discover and validate data-flow wiring (no input required)
  *   convert  Convert a workflow from Script format to Habits format
  *   edit|base     Start the Base server for editing modules and workflows
  *   bundle   Generate cortex-bundle.js for browser/Tauri (shortcut for pack --format bundle)
@@ -32,8 +34,18 @@ import * as path from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import dotenv from 'dotenv';
+import { parse as parseYaml } from 'yaml';
 import { startHabitsServer, startBaseServer } from './server';
 import { WorkflowExecutor } from '@ha-bits/cortex';
+import {
+  runWorkflowWithLabOptions,
+  discoverDataFlow,
+  discoverDataFlowBlueprint,
+  printDiscoveryReport,
+  printDataFlowBlueprint,
+  writeDataFlowBlueprintFile,
+  stringifyDataFlowBlueprint,
+} from '@ha-bits/cortex-lab';
 import { convertWorkflow, convertWorkflowWithConnections } from '@ha-bits/core';
 import { defaultModules } from './modules';
 import {
@@ -47,6 +59,46 @@ import {
 
 // Load environment variables
 dotenv.config();
+
+function parseConfigFile(configPath: string): any {
+  const content = fs.readFileSync(configPath, 'utf-8');
+  if (configPath.endsWith('.yaml') || configPath.endsWith('.yml')) {
+    return parseYaml(content);
+  }
+  return JSON.parse(content);
+}
+
+function parseWorkflowFile(workflowPath: string): any {
+  const content = fs.readFileSync(workflowPath, 'utf-8');
+  if (workflowPath.endsWith('.yaml') || workflowPath.endsWith('.yml')) {
+    return parseYaml(content);
+  }
+  return JSON.parse(content);
+}
+
+function parseLiveNodes(value?: string): string[] | undefined {
+  if (!value) return undefined;
+  return value.split(',').map(id => id.trim()).filter(Boolean);
+}
+
+async function executeWithLabSession(
+  executor: WorkflowExecutor,
+  workflow: any,
+  execOptions: Parameters<WorkflowExecutor['executeWorkflow']>[1],
+  argv: any,
+  configPath?: string,
+): Promise<import('@habits/shared/types').WorkflowExecution> {
+  return runWorkflowWithLabOptions({
+    capture: argv.capture,
+    configPath,
+    dataFlowPath: argv['data-flow'],
+    replay: argv.replay,
+    liveNodes: parseLiveNodes(argv['live-nodes']),
+    assertInputs: argv['assert-inputs'] === true,
+    habitInput: execOptions?.initialContext?.habits?.input,
+    workflow,
+  }, () => executor.executeWorkflow(workflow, execOptions));
+}
 
 export interface HabitsCommandOptions {
   /** Port for server */
@@ -90,6 +142,34 @@ export async function runCLI(): Promise<void> {
         type: 'string',
         demandOption: true,
       },
+      'dry-run': {
+        alias: 'd',
+        describe: 'Simulate all workflow executions without running any bit',
+        type: 'boolean',
+        default: false,
+      },
+      capture: {
+        describe: 'Capture node I/O to data-flow.yaml on each workflow execution',
+        type: 'boolean',
+        default: false,
+      },
+      'data-flow': {
+        describe: 'Path to data-flow.yaml for capture or replay',
+        type: 'string',
+      },
+      replay: {
+        describe: 'Replay workflow execution from a data-flow.yaml file (mock recorded nodes)',
+        type: 'string',
+      },
+      'live-nodes': {
+        describe: 'Comma-separated node IDs to run for real during replay (others are mocked)',
+        type: 'string',
+      },
+      'assert-inputs': {
+        describe: 'During replay, fail if resolved node input differs from the capture',
+        type: 'boolean',
+        default: false,
+      },
     })
     .command('execute [workflow]', 'Execute a workflow from file or config', {
       workflow: {
@@ -113,6 +193,55 @@ export async function runCLI(): Promise<void> {
       input: {
         alias: 'i',
         describe: 'Input data as JSON string or path to JSON file',
+        type: 'string',
+      },
+      capture: {
+        describe: 'Capture node I/O to data-flow.yaml after execution',
+        type: 'boolean',
+        default: false,
+      },
+      'data-flow': {
+        describe: 'Path to data-flow.yaml for capture or replay',
+        type: 'string',
+      },
+      replay: {
+        describe: 'Replay workflow execution from a data-flow.yaml file (mock recorded nodes)',
+        type: 'string',
+      },
+      'live-nodes': {
+        describe: 'Comma-separated node IDs to run for real during replay (others are mocked)',
+        type: 'string',
+      },
+      'assert-inputs': {
+        describe: 'During replay, fail if resolved node input differs from the capture',
+        type: 'boolean',
+        default: false,
+      },
+    })
+    .command('discover', 'Discover and validate data-flow wiring without runtime input', {
+      config: {
+        alias: 'c',
+        describe: 'Path to stack.yaml config file',
+        type: 'string',
+        demandOption: true,
+      },
+      strict: {
+        describe: 'Treat warnings as failures',
+        type: 'boolean',
+        default: false,
+      },
+      json: {
+        describe: 'Print JSON report to stdout',
+        type: 'boolean',
+        default: false,
+      },
+      blueprint: {
+        describe: 'Include static data-flow blueprint (templates, no runtime values)',
+        type: 'boolean',
+        default: false,
+      },
+      'blueprint-out': {
+        describe: 'Write data-flow blueprint YAML to this path',
         type: 'string',
       },
     })
@@ -244,6 +373,9 @@ export async function runCLI(): Promise<void> {
       case 'execute':
         await runExecuteCommand(argv);
         break;
+      case 'discover':
+        await runDiscoverCommand(argv);
+        break;
       case 'convert':
         await runConvertCommand(argv);
         break;
@@ -285,6 +417,12 @@ async function runServerCommand(argv: any): Promise<void> {
   const server = await startHabitsServer({
     configPath,
     port: argv.port,
+    dryRun: argv['dry-run'],
+    capture: argv.capture,
+    dataFlowPath: argv['data-flow'],
+    replay: argv.replay,
+    liveNodes: parseLiveNodes(argv['live-nodes']),
+    assertInputs: argv['assert-inputs'],
   });
   
   // Keep the process running
@@ -324,23 +462,73 @@ async function runEditCommand(argv: any): Promise<void> {
 }
 
 /**
+ * Discover data-flow wiring from stack config (no runtime input).
+ */
+async function runDiscoverCommand(argv: any): Promise<void> {
+  const configPath = path.resolve(argv.config);
+
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Config file not found: ${configPath}`);
+  }
+
+  const report = discoverDataFlow(configPath, { strict: argv.strict === true });
+  const blueprintReport = (argv.blueprint || argv['blueprint-out'])
+    ? discoverDataFlowBlueprint(configPath)
+    : null;
+
+  if (argv['blueprint-out']) {
+    writeDataFlowBlueprintFile(path.resolve(argv['blueprint-out']), blueprintReport!.blueprint);
+  }
+
+  if (argv.json) {
+    const payload: Record<string, unknown> = { ...report };
+    if (blueprintReport) payload.blueprint = blueprintReport.blueprint;
+    console.log(JSON.stringify(payload, null, 2));
+  } else {
+    printDiscoveryReport(report);
+    if (blueprintReport) {
+      printDataFlowBlueprint(blueprintReport.blueprint);
+      if (argv['blueprint-out']) {
+        console.log(`Blueprint written to ${path.resolve(argv['blueprint-out'])}`);
+      } else if (argv.blueprint) {
+        console.log('--- Blueprint YAML ---\n');
+        console.log(stringifyDataFlowBlueprint(blueprintReport.blueprint));
+      }
+    }
+  }
+
+  if (!report.ok) {
+    process.exit(1);
+  }
+}
+
+/**
  * Run the execute command
  */
 async function runExecuteCommand(argv: any): Promise<void> {
   let workflows: any[] = [];
-  
+  let configPath: string | undefined;
+  let configDir: string | undefined;
+  let config: any;
+  let envVars: Record<string, string> | undefined;
+
   // Load workflows from config or individual file
   if (argv.config) {
-    const configPath = path.resolve(argv.config);
-    const configDir = path.dirname(configPath);
-    
+    configPath = path.resolve(argv.config);
+    configDir = path.dirname(configPath);
+
     if (!fs.existsSync(configPath)) {
       throw new Error(`Config file not found: ${configPath}`);
     }
-    
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    config = parseConfigFile(configPath);
     let workflowRefs = config.workflows || [];
-    
+
+    const envPath = path.join(configDir, '.env');
+    if (fs.existsSync(envPath)) {
+      envVars = dotenv.parse(fs.readFileSync(envPath, 'utf-8'));
+    }
+
     // Filter by ID if specified
     if (argv.id) {
       workflowRefs = workflowRefs.filter((w: any) => w.id === argv.id);
@@ -348,7 +536,7 @@ async function runExecuteCommand(argv: any): Promise<void> {
         throw new Error(`Workflow with ID '${argv.id}' not found in config`);
       }
     }
-    
+
     // If not --all and no ID, just take the first one
     if (!argv.all && !argv.id) {
       workflowRefs = workflowRefs.slice(0, 1);
@@ -356,17 +544,16 @@ async function runExecuteCommand(argv: any): Promise<void> {
 
     // Load actual workflow files from references
     for (const ref of workflowRefs) {
-      const workflowPath = path.isAbsolute(ref.path) 
-        ? ref.path 
-        : path.resolve(configDir, ref.path);
-      
+      const workflowPath = path.isAbsolute(ref.path)
+        ? ref.path
+        : path.resolve(configDir!, ref.path);
+
       if (!fs.existsSync(workflowPath)) {
         console.error(`⚠️ Workflow file not found: ${workflowPath}`);
         continue;
       }
-      
-      const workflow = JSON.parse(fs.readFileSync(workflowPath, 'utf-8'));
-      // Use config id if provided, otherwise workflow's own id
+
+      const workflow = parseWorkflowFile(workflowPath);
       workflow.id = ref.id || workflow.id;
       workflows.push(workflow);
     }
@@ -375,23 +562,23 @@ async function runExecuteCommand(argv: any): Promise<void> {
     if (!fs.existsSync(workflowPath)) {
       throw new Error(`Workflow file not found: ${workflowPath}`);
     }
-    
-    const workflow = JSON.parse(fs.readFileSync(workflowPath, 'utf-8'));
+
+    const workflow = parseWorkflowFile(workflowPath);
     workflows = [workflow];
   } else {
     throw new Error('Either --config or a workflow file path is required');
   }
 
   // Parse input if provided
-  let input: any = {};
+  let inputData: any = {};
   if (argv.input) {
     if (fs.existsSync(argv.input)) {
-      input = JSON.parse(fs.readFileSync(argv.input, 'utf-8'));
+      inputData = JSON.parse(fs.readFileSync(argv.input, 'utf-8'));
     } else {
       try {
-        input = JSON.parse(argv.input);
+        inputData = JSON.parse(argv.input);
       } catch {
-        input = { value: argv.input };
+        inputData = { value: argv.input };
       }
     }
   }
@@ -400,11 +587,25 @@ async function runExecuteCommand(argv: any): Promise<void> {
 
   const executor = new WorkflowExecutor();
 
+  if (config && configDir) {
+    const workflowsMap = new Map<string, any>();
+    for (const workflow of workflows) {
+      workflowsMap.set(workflow.id, workflow);
+    }
+    await executor.initFromData({ config, workflows: workflowsMap, env: envVars });
+  }
+
   for (const workflow of workflows) {
     console.log(`\n▶️  Executing: ${workflow.id || workflow.name || 'unnamed'}\n`);
-    
-    const result = await executor.executeWorkflow(workflow, { initialContext: input });
-    
+
+    const result = await executeWithLabSession(
+      executor,
+      workflow,
+      { initialContext: { habits: { input: inputData } } },
+      argv,
+      configPath,
+    );
+
     console.log('\n✅ Result:');
     console.log(JSON.stringify(result, null, 2));
   }

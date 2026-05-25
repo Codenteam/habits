@@ -74,6 +74,7 @@ export interface ParsedStack {
   config: StackConfig;
   habits: ParsedHabit[];
   frontendHtml?: string;
+  frontendYaml?: string;
   envVariables?: Record<string, string>;
   errors: string[];
 }
@@ -184,8 +185,10 @@ function validateHabitYaml(habit: any): asserts habit is HabitYaml {
   if (!Array.isArray(habit.nodes)) {
     throw new Error('Habit must have a "nodes" array');
   }
-  
-  if (!Array.isArray(habit.edges)) {
+
+  if (habit.edges == null) {
+    habit.edges = [];
+  } else if (!Array.isArray(habit.edges)) {
     throw new Error('Habit must have an "edges" array');
   }
 }
@@ -324,6 +327,7 @@ export async function parseStack(
   const errors: string[] = [];
   const habits: ParsedHabit[] = [];
   let frontendHtml: string | undefined;
+  let frontendYaml: string | undefined;
   
   // Find and parse the config file
   const configFile = files.find(f => f.path === configFilePath);
@@ -356,17 +360,26 @@ export async function parseStack(
     }
   }
   
-  // Try to load frontend HTML if specified
+  // Try to load frontend artifacts if specified. We support both the
+  // classic `frontend/index.html` and the new declarative
+  // `frontend/index.yaml` (UiSpec). Either or both may be present.
   if (config.server?.frontend) {
     const frontendPath = resolvePath(configFilePath, config.server.frontend);
-    // Look for index.html in the frontend directory
-    const indexPath = frontendPath.endsWith('.html') 
-      ? frontendPath 
-      : `${frontendPath}/index.html`;
-    
-    const frontendFile = files.find(f => f.path === indexPath);
-    if (frontendFile) {
-      frontendHtml = frontendFile.content;
+    if (frontendPath.endsWith('.html')) {
+      const f = files.find((x) => x.path === frontendPath);
+      if (f) frontendHtml = f.content;
+    } else if (frontendPath.endsWith('.yaml') || frontendPath.endsWith('.yml')) {
+      const f = files.find((x) => x.path === frontendPath);
+      if (f) frontendYaml = f.content;
+    } else {
+      // Directory mode: prefer YAML, fall back to HTML.
+      const yamlCandidates = [`${frontendPath}/index.yaml`, `${frontendPath}/index.yml`, `${frontendPath}/ui.yaml`, `${frontendPath}/ui.yml`];
+      for (const p of yamlCandidates) {
+        const f = files.find((x) => x.path === p);
+        if (f) { frontendYaml = f.content; break; }
+      }
+      const htmlFile = files.find((x) => x.path === `${frontendPath}/index.html`);
+      if (htmlFile) frontendHtml = htmlFile.content;
     }
   }
   
@@ -389,9 +402,60 @@ export async function parseStack(
     config,
     habits,
     frontendHtml,
+    frontendYaml,
     envVariables,
     errors,
   };
+}
+
+/**
+ * Returns true when the filename is a .habit archive (zip).
+ */
+export function isHabitArchiveFile(filename: string): boolean {
+  return filename.toLowerCase().endsWith('.habit');
+}
+
+/**
+ * Extracts text files from a .habit zip archive into FileEntry objects.
+ */
+export async function extractFilesFromHabitZip(data: ArrayBuffer): Promise<FileEntry[]> {
+  const zipModule = await import('jszip');
+  const JSZip = zipModule.default ?? zipModule;
+  const zip = await JSZip.loadAsync(data);
+  const files: FileEntry[] = [];
+
+  for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+    if (zipEntry.dir) continue;
+    const path = relativePath.replace(/\\/g, '/');
+    const name = path.split('/').pop() || path;
+    const content = await zipEntry.async('text');
+    files.push({ name, path, content });
+  }
+
+  return files;
+}
+
+/**
+ * Parses a .habit zip archive (stack.yaml, workflow YAML, frontend/index.yaml, .env).
+ */
+export async function parseHabitFile(data: ArrayBuffer): Promise<ParsedStack> {
+  const files = await extractFilesFromHabitZip(data);
+  const configFile = files.find(
+    (f) =>
+      f.path === 'stack.yaml' ||
+      f.path === 'stack.yml' ||
+      f.path === 'config.json' ||
+      f.path === 'habits.json' ||
+      f.path === 'stack.json'
+  );
+
+  if (!configFile) {
+    throw new Error(
+      'No stack.yaml found in .habit file. The archive must contain a stack configuration.'
+    );
+  }
+
+  return parseStack(files, configFile.path);
 }
 
 /**

@@ -1,0 +1,43 @@
+version: 1
+meta:
+  id: fs-demo
+  title: Filesystem Demo
+  subtitle: Write a file via a habit
+  icon: "lucide:FolderOpen"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Filesystem Demo, subtitle: "Send a message and have the workflow write it to disk", icon: "lucide:FolderOpen" }
+
+state:
+  name: ""
+  message: ""
+  result: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/fs-demo
+    body: { name: "{{state.name}}", message: "{{state.message}}" }
+    responsePath: output
+    onSuccess: { set: { result: "$response" } }
+
+widgets:
+  - kind: card
+    title: Submit a message
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: name, type: text, label: Your name, placeholder: "Enter your name", required: true }
+          - { name: message, type: textarea, label: Message, placeholder: "Enter a message to write to the file", required: true, rows: 4 }
+        submit: { label: Save to filesystem, action: run, loadingLabel: "Saving..." }
+  - kind: result-panel
+    source: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

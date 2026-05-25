@@ -29,10 +29,10 @@
  */
 
 import { execSync } from 'child_process';
-import { appendFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { appendFileSync, writeFileSync, unlinkSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { homedir } from 'os';
+import { homedir, tmpdir } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, '..');
@@ -181,12 +181,64 @@ function deployAdmin(opts: SshOpts): boolean {
   return buildRes.success;
 }
 
-function rollingRestart(opts: SshOpts): boolean {
-  log('\n==> Rolling-restarting admin containers (picks up new habits@next)...');
-  const res = run(
-    `ssh ${opts.sshFlags} ${opts.user}@${opts.host} "docker ps --filter ancestor=habits-admin:latest -q | xargs -r docker restart"`,
-  );
-  return res.success;
+/**
+ * Recreates all habits-admin containers on the server with the new image.
+ * Uses docker inspect to capture existing config so env vars, volumes, and ports are preserved.
+ * Adds NS_MANAGER_HABITS_DEFAULT_TAG if a habitsTag is provided.
+ */
+function recreateAdminContainers(opts: SshOpts, habitsTag: string): boolean {
+  log(`\n==> Recreating admin containers with new image${habitsTag ? ` (habits tag: ${habitsTag})` : ''}...`);
+
+  const pyScript = `
+import subprocess, json
+tag = ${JSON.stringify(habitsTag)}
+result = subprocess.check_output(['docker','ps','--filter','name=codenteam-service-','--format','{{.Names}}']).decode().strip()
+containers = [c for c in result.split('\\n') if c.strip()]
+if not containers:
+    print('No codenteam-service-* containers found')
+for name in containers:
+    info = json.loads(subprocess.check_output(['docker','inspect',name]))[0]
+    if 'habits-admin' not in info['Config']['Image']:
+        print(f'Skipping {name} (not habits-admin)')
+        continue
+    envs = [e for e in info['Config']['Env'] if not e.startswith('NS_MANAGER_HABITS_DEFAULT_TAG=')]
+    if tag:
+        envs.append('NS_MANAGER_HABITS_DEFAULT_TAG=' + tag)
+    binds = info['HostConfig']['Binds'] or []
+    ports = info['HostConfig']['PortBindings'] or {}
+    nets = list((info['NetworkSettings']['Networks'] or {}).keys())
+    restart = info['HostConfig']['RestartPolicy']['Name']
+    args = ['docker', 'run', '-d', '--name', name]
+    for e in envs:
+        args += ['-e', e]
+    for b in binds:
+        args += ['-v', b]
+    for p, cs in ports.items():
+        for c in (cs or []):
+            args += ['-p', c['HostPort'] + ':' + p]
+    for n in nets:
+        args += ['--network', n]
+    if restart and restart != 'no':
+        args += ['--restart', restart]
+    args.append('habits-admin:latest')
+    print(f'Recreating {name}...')
+    subprocess.run(['docker', 'stop', name], check=True)
+    subprocess.run(['docker', 'rm', name], check=True)
+    subprocess.run(args, check=True)
+    print(f'Done: {name}')
+`;
+
+  const localPy = join(tmpdir(), `habits-recreate-${Date.now()}.py`);
+  const remotePy = '/tmp/habits-recreate.py';
+  writeFileSync(localPy, pyScript, { encoding: 'utf8' });
+  try {
+    const rsync = run(`rsync -e "ssh ${opts.sshFlags}" "${localPy}" "${opts.user}@${opts.host}:${remotePy}"`);
+    if (!rsync.success) return false;
+    const exec = run(`ssh ${opts.sshFlags} ${opts.user}@${opts.host} "python3 ${remotePy}; rm -f ${remotePy}"`);
+    return exec.success;
+  } finally {
+    try { unlinkSync(localPy); } catch { /* ignore */ }
+  }
 }
 
 function healthCheck(host: string): boolean {
@@ -198,19 +250,23 @@ function healthCheck(host: string): boolean {
   return res.success;
 }
 
-function parseArgs(): { env?: string; force?: boolean } {
+function parseArgs(): { env?: string; force?: boolean; habitsTag?: string } {
   const args = process.argv.slice(2);
   let env: string | undefined;
   let force = false;
+  let habitsTag: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--env' || args[i] === '-e') {
       env = args[i + 1];
       i++;
     } else if (args[i] === '--force' || args[i] === '-f') {
       force = true;
+    } else if (args[i] === '--habits-tag' || args[i] === '-t') {
+      habitsTag = args[i + 1];
+      i++;
     }
   }
-  return { env, force };
+  return { env, force, habitsTag };
 }
 
 async function main(): Promise<void> {
@@ -218,7 +274,7 @@ async function main(): Promise<void> {
   log(`  Deploy Script`);
   log(`${'═'.repeat(60)}\n`);
 
-  const { env: overrideEnv, force } = parseArgs();
+  const { env: overrideEnv, force, habitsTag = '' } = parseArgs();
 
   const target = determineTarget(overrideEnv);
   if (!target) {
@@ -228,6 +284,7 @@ async function main(): Promise<void> {
 
   log(`Target: ${target.label} (${target.sshHost})`);
   log(`Git ref: ${process.env.GITHUB_REF_NAME || getCurrentGitRef()}`);
+  if (habitsTag) log(`Habits tag: ${habitsTag}`);
 
   const sshBaseFlags = setupSshKey(target.sshKey);
   const sshFlags = `${sshBaseFlags} -p ${target.sshPort}`;
@@ -261,9 +318,9 @@ async function main(): Promise<void> {
     log('No admin changes detected, skipping admin deploy.');
   }
 
-  const restartOk = rollingRestart(opts);
+  const restartOk = recreateAdminContainers(opts, habitsTag);
   if (!restartOk) {
-    log('Warning: rolling restart had issues, but continuing.');
+    log('Warning: container recreation had issues, but continuing.');
   }
 
   const healthy = healthCheck(target.sshHost);

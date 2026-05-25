@@ -1,0 +1,92 @@
+version: 1
+meta:
+  id: image-calories-calculator
+  title: Calorie Calculator
+  subtitle: Upload a photo of your food to analyze its nutritional content
+  icon: "lucide:Salad"
+  documentTitle: Calorie Calculator
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Calorie Calculator
+    subtitle: Analyze your food
+    icon: "lucide:Salad"
+
+state:
+  imageBase64: ""
+  imageUrl: ""
+  result: null
+  error: ""
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/calculate-calories-in-images
+    body:
+      imageBase64: "{{state.imageBase64}}"
+      imageUrl: "{{state.imageUrl}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: "''"
+      toast: "Analysis complete"
+    onError:
+      set:
+        error: "{{error.message}}"
+
+  reset:
+    set:
+      imageBase64: "''"
+      imageUrl: "''"
+      result: null
+      error: "''"
+
+widgets:
+  - kind: card
+    title: Food image
+    hideWhen: state.result
+    children:
+      - kind: form
+        bindTo: state
+        validate:
+          - when: "!state.imageBase64 && !state.imageUrl"
+            message: Please upload a food photo or provide an image URL
+        fields:
+          - name: imageBase64
+            type: image-upload
+            label: Drop an image here, or click to browse
+            accept: "image/*"
+            asBase64: true
+          - name: imageUrl
+            type: url
+            label: Or paste an image URL
+            placeholder: "https://example.com/food.jpg"
+        submit:
+          label: Analyze calories
+          action: analyze
+          loadingLabel: "Analyzing..."
+          disabledWhen: "!state.imageBase64 && !state.imageUrl"
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Nutritional analysis
+    sections:
+      - kind: markdown
+        source: state.result.analysis
+      - kind: button
+        label: Analyze another image
+        action: reset
+        tone: secondary
+  - kind: image
+    showWhen: state.imageBase64 && !state.result
+    source: state.imageBase64
+    alt: Food preview

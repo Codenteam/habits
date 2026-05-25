@@ -1,0 +1,119 @@
+id: ocean-social
+name: OCEAN Social Media Analysis
+description: >
+  Infer Big Five (OCEAN) personality traits by analysing the language
+  patterns, vocabulary, emotional tone, and themes in a user's social
+  media posts. Accepts raw post text and returns scored OCEAN results
+  with detected linguistic patterns and a full personality profile.
+
+env:
+  - id: HABITS_OPENAI_API_KEY
+    displayName: OpenAI API Key
+    description: API key for OpenAI GPT models
+    type: secret
+    required: true
+    secret: true
+
+input:
+  - id: posts
+    type: string
+    displayAs: textarea
+    displayName: Social Media Posts
+    description: >
+      Paste 10 social media posts (one per line or separated by blank lines).
+      The AI will analyse language patterns to infer personality traits.
+    required: true
+    placeholder: "Post 1: ...\nPost 2: ..."
+
+nodes:
+  - id: analyze-language
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        maxTokens: 2000
+        temperature: 0.4
+        roles:
+          - role: system
+            content: >
+              You are an expert psycholinguist and computational personality
+              researcher specialising in the Big Five (OCEAN) model. You infer
+              personality traits from natural language using validated LIWC-style
+              and narrative analysis techniques. Always respond with valid JSON
+              only — no prose, no markdown fences.
+        prompt: |
+          Analyse the following social media posts to infer the author's Big Five
+          (OCEAN) personality profile based on psycholinguistic patterns.
+
+          Social media posts:
+          ---
+          {{habits.input.posts}}
+          ---
+
+          Analyse for these linguistic signals:
+          - Openness         : diverse vocabulary, abstract concepts, creativity, curiosity, cultural references
+          - Conscientiousness: goal language, planning words, orderliness, achievement, self-discipline references
+          - Extraversion     : social references, enthusiasm, positive affect, action verbs, crowd/party language
+          - Agreeableness    : empathy markers, prosocial language, cooperation, trust, kindness expressions
+          - Neuroticism      : negative emotion words, anxiety, self-doubt, complaint framing, stress language
+
+          Instructions:
+          1. Score each trait on a 1.0–5.0 scale (two decimal places).
+          2. Convert to percentage: ((score - 1) / 4) * 100, rounded to nearest integer.
+          3. Write a 2–3 sentence description for each trait grounded in specific post evidence.
+          4. List 2 specific linguistic patterns detected per trait.
+          5. Write a 3–4 sentence overall personality profile.
+          6. Rate your overall confidence (high / medium / low) based on post quantity and richness.
+          7. Include a brief ethical disclaimer about the limits of text-based inference.
+
+          Return ONLY valid JSON matching this exact structure:
+          {
+            "scores": {
+              "openness": 0.0,
+              "conscientiousness": 0.0,
+              "extraversion": 0.0,
+              "agreeableness": 0.0,
+              "neuroticism": 0.0
+            },
+            "percentages": {
+              "openness": 0,
+              "conscientiousness": 0,
+              "extraversion": 0,
+              "agreeableness": 0,
+              "neuroticism": 0
+            },
+            "descriptions": {
+              "openness": "...",
+              "conscientiousness": "...",
+              "extraversion": "...",
+              "agreeableness": "...",
+              "neuroticism": "..."
+            },
+            "languagePatterns": {
+              "openness": ["...", "..."],
+              "conscientiousness": ["...", "..."],
+              "extraversion": ["...", "..."],
+              "agreeableness": ["...", "..."],
+              "neuroticism": ["...", "..."]
+            },
+            "personalityProfile": "...",
+            "confidence": "high|medium|low",
+            "disclaimer": "..."
+          }
+
+edges: []
+
+output:
+  - id: result
+    value: "{{analyze-language}}"
+    type: json
+    displayAs: json
+    displayName: OCEAN Social Media Analysis Result
+    description: Full inferred OCEAN personality report from social media posts

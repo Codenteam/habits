@@ -1,0 +1,60 @@
+version: 1
+meta:
+  id: email-ticket-routing
+  title: Email Ticket Routing
+  subtitle: Fetch support emails, analyze each with AI, and route tickets to the right team
+  icon: "lucide:Inbox"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Email Ticket Routing, subtitle: "Run the full pipeline", icon: "lucide:Inbox" }
+
+state:
+  result: null
+  error: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/ticket-routing
+    body: {}
+    responsePath: output
+    onSuccess: { set: { result: "$response", error: null }, toast: "Pipeline complete" }
+    onError: { set: { error: "$error.message", result: null } }
+
+widgets:
+  - kind: status-banner
+    source: "Pipeline: fetch unread emails → AI classify & prioritize → assign to team inbox"
+  - kind: card
+    title: Pipeline
+    children:
+      - kind: button
+        label: Run pipeline now
+        action: run
+        loadingLabel: "Running pipeline..."
+        fullWidth: true
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Run summary
+    sections:
+      - kind: metric-grid
+        columns: 2
+        metrics:
+          - { value: "{{state.result.ticketsAnalyzed}}", label: "Tickets analyzed" }
+          - { value: "{{state.result.ticketsAssigned}}", label: "Tickets assigned" }
+      - kind: data-table
+        source: state.result.results
+        empty: "No tickets in this run."
+        columns:
+          - { key: output.subject, label: Subject }
+          - { key: output.sentFrom, label: From }
+          - { key: output.routeCategory, label: Category }
+          - { key: output.priority, label: Priority }

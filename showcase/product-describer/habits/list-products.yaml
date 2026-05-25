@@ -21,7 +21,7 @@ nodes:
       params:
         collection: "products"
         limit: "{{habits.input.limit}}"
-        sort: '{"createdAt": -1}'
+        sort: '{"_createdAt": -1}'
 
 edges: []
 

@@ -1,0 +1,59 @@
+{
+  "name": "@ha-bits/cortex-lab",
+  "version": "1.0.0",
+  "description": "Capture, replay, and dry-run sessions for Habits workflow execution",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./index.cjs",
+      "import": "./index.js"
+    },
+    "./graph": {
+      "types": "./graph/index.d.ts",
+      "require": "./graph/index.cjs",
+      "import": "./graph/index.js"
+    }
+  },
+  "files": [
+    "index.cjs",
+    "index.cjs.map",
+    "index.js",
+    "index.js.map",
+    "index.d.ts",
+    "graph/**/*",
+    "package.json"
+  ],
+  "keywords": [
+    "habits",
+    "workflow",
+    "capture",
+    "replay",
+    "dry-run"
+  ],
+  "author": "Codenteam",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenteam/habits.git",
+    "directory": "packages/cortex/lab"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ha-bits/cortex-core": "workspace:*",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@ha-bits/core": "workspace:*",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.5",
+    "esbuild": "^0.20.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  }
+}

@@ -15,6 +15,7 @@ export interface ValidatableHabit {
   nodes: CanvasNode[];
   edges: CanvasEdge[];
   output?: Record<string, string>;
+  input?: Array<{ name?: string; id?: string }>;
 }
 
 export interface HabitValidationError {

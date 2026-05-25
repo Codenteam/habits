@@ -1,0 +1,64 @@
+# Ecommerce & Retail Marketing & CRM — converted from ecommerce-retail-marketing-crm.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: ecommerce-retail-marketing-crm
+  title: "Ecommerce & Retail Marketing & CRM"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Megaphone"
+  documentTitle: "Ecommerce & Retail Marketing & CRM"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Ecommerce & Retail Marketing & CRM"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Megaphone"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13022 · Habits v1.0"
+    port: 13022
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "18%", label: Cart recovery rate }
+      - { value: 4.2k, label: Review requests sent this week }
+      - { value: "32%", label: Win-back campaign open rate }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Abandoned Cart Recovery
+            description: Send personalised recovery emails with a time-limited incentive to customers who abandoned carts.
+            trigger: scheduler
+            tags: [scheduler, email, ai]
+          - name: Loyalty Points Notification
+            description: Notify customers of newly earned loyalty points and their available redemption options.
+            trigger: webhook
+            tags: [webhook, email, sms]
+          - name: Customer Segmentation
+            description: "Segment customers by purchase behaviour and RFM signals, then update CRM tags automatically."
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Win-Back Campaign
+            description: Re-engage customers who have not purchased in 90 days with AI-personalised offers.
+            trigger: scheduler
+            tags: [scheduler, email, ai]
+          - name: Review Request
+            description: Request product reviews from customers 7 days after confirmed delivery automatically.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Campaign Performance Report
+            description: Compile key marketing metrics daily and distribute a digest to the marketing team.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

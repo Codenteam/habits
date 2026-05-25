@@ -221,10 +221,24 @@ export async function ensureModuleReady(
       }
       return modulePath;
     }
+
+    // Prefer local workspace sources (monorepo dev) before hitting npm
+    const localPath = await linkLocalWorkspaceModule(moduleDefinition, moduleName, modulePath);
+    if (localPath) {
+      return localPath;
+    }
     
-    const installedPath = await installNpmModule(moduleDefinition, baseDir);
-    
-    return installedPath;
+    try {
+      const installedPath = await installNpmModule(moduleDefinition, baseDir);
+      return installedPath;
+    } catch (npmError: any) {
+      const fallbackPath = await linkLocalWorkspaceModule(moduleDefinition, moduleName, modulePath);
+      if (fallbackPath) {
+        console.log(`   ⚠️  npm install failed; using local workspace module instead`);
+        return fallbackPath;
+      }
+      throw npmError;
+    }
   } else {
     throw new Error(`Unknown source type: ${moduleDefinition.source}`);
   }
@@ -288,6 +302,39 @@ async function detectBuildCommand(modulePath: string): Promise<string | null> {
 }
 
 // Helper function to check if module is already built
+/**
+ * Symlink a module from the local workspace (nodes/bits/@ha-bits/…) into the
+ * habits-nodes install tree so npm failures don't block monorepo development.
+ */
+async function linkLocalWorkspaceModule(
+  moduleDefinition: ModuleDefinition,
+  moduleName: string,
+  targetModulePath: string,
+): Promise<string | null> {
+  const localPath = getLocalModulePath(moduleDefinition.framework, moduleName);
+  if (!localPath) {
+    return null;
+  }
+
+  console.log(`   🏠 Using local workspace module: ${localPath}`);
+
+  if (!fs.existsSync(targetModulePath)) {
+    fs.mkdirSync(path.dirname(targetModulePath), { recursive: true });
+    fs.symlinkSync(localPath, targetModulePath, 'dir');
+    console.log(`   🔗 Symlinked to ${targetModulePath}`);
+  }
+
+  if (!(await isAlreadyBuilt(localPath))) {
+    await buildModule(moduleDefinition, localPath);
+  }
+
+  if (moduleDefinition.framework === 'bits') {
+    await ensureBitsDepsLinked(targetModulePath, moduleName);
+  }
+
+  return targetModulePath;
+}
+
 async function isAlreadyBuilt(modulePath: string): Promise<boolean> {
   const commonBuildDirs = ['dist', 'build', 'lib', 'out'];
   const commonMainFiles = [

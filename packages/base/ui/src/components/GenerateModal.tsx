@@ -3,7 +3,7 @@ import { X, Wand2, Loader2, Check, AlertCircle, AlertTriangle, Sparkles, Code2, 
 import JSZip from 'jszip';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { addHabit, setActiveHabit, clearWorkflow, selectHabits } from '../store/slices/workflowSlice';
-import { setFrontendHtml, clearFrontendHtml } from '../store/slices/uiSlice';
+import { setFrontendHtml, clearFrontendHtml, setFrontendYaml, clearFrontendYaml } from '../store/slices/uiSlice';
 import { api } from '../lib/api';
 import {
   FileEntry,
@@ -14,12 +14,13 @@ import {
 interface GenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenValidation?: () => void;
 }
 
 type Mode = 'input' | 'generating' | 'loading' | 'result';
 type GenerationType = 'habit' | 'bit';
 
-export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
+export default function GenerateModal({ isOpen, onClose, onOpenValidation }: GenerateModalProps) {
   const dispatch = useAppDispatch();
   const existingHabits = useAppSelector(selectHabits);
   
@@ -103,6 +104,7 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
     // Replace entire state with generated content
     dispatch(clearWorkflow());
     dispatch(clearFrontendHtml());
+    dispatch(clearFrontendYaml());
 
     if (parsed.habits.length > 0) {
       // Add each habit to the store
@@ -120,11 +122,16 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
     if (parsed.frontendHtml) {
       dispatch(setFrontendHtml(parsed.frontendHtml));
     }
+
+    // Load frontend YAML if available
+    if (parsed.frontendYaml) {
+      dispatch(setFrontendYaml(parsed.frontendYaml));
+    }
     
     setResult({
       habitsLoaded: parsed.habits.length,
       errors: parsed.errors,
-      frontendLoaded: !!parsed.frontendHtml,
+      frontendLoaded: !!(parsed.frontendHtml || parsed.frontendYaml),
     });
   };
 
@@ -386,6 +393,18 @@ export default function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
               )}
               
               <div className="flex gap-3">
+                {result.habitsLoaded > 0 && onOpenValidation && (
+                  <button
+                    onClick={() => {
+                      handleClose();
+                      onOpenValidation();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Validate Habit
+                  </button>
+                )}
                 {result.habitsLoaded === 0 && !result.bitFilesCount && (
                   <button
                     onClick={resetState}

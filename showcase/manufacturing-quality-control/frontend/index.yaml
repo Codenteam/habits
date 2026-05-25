@@ -1,0 +1,64 @@
+# Manufacturing Quality Control — converted from manufacturing-quality-control.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: manufacturing-quality-control
+  title: Manufacturing Quality Control
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Check"
+  documentTitle: Manufacturing Quality Control
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Manufacturing Quality Control
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Check"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13031 · Habits v1.0"
+    port: 13031
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "0.4%", label: Defect rate this week }
+      - { value: "2", label: Open NCRs }
+      - { value: 18d, label: Days to next audit }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Defect Report Routing
+            description: Capture defect reports from the production line and route them to the QC team instantly.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Inspection Scheduling
+            description: Schedule quality inspections automatically based on production milestone completions.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Non-Conformance Routing
+            description: Route NCRs to the responsible team with deadline assignment and severity classification.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: Corrective Action Tracking
+            description: Monitor CAPA completion progress and send escalating reminders as deadlines approach.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Certification Tracking
+            description: Alert the QC manager automatically when product or process certifications are due for renewal.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Audit Preparation
+            description: Compile evidence packs and assign preparation tasks to the team ahead of scheduled audits.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

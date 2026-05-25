@@ -44,6 +44,29 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
   // Store original fetch
   var originalFetch = window?.__TAURI__?.http?.fetch ? window?.__TAURI__?.http?.fetch : window.fetch;
 
+  /** Load habit secrets from the Tauri keyring (same store as the app Secrets UI). */
+  async function loadSecretsEnv() {
+    var env = {};
+    try {
+      var invoke = window.__TAURI__ && window.__TAURI__.core ? window.__TAURI__.core.invoke : null;
+      if (!invoke) return env;
+      var indexRaw = await invoke('plugin:keyring|get_password', { service: 'habits', user: '__secrets_index__' });
+      var keys = [];
+      try { keys = JSON.parse(indexRaw || '[]'); } catch (e) { keys = []; }
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (k === '__secrets_index__') continue;
+        try {
+          var v = await invoke('plugin:keyring|get_password', { service: 'habits', user: k });
+          if (v) env[k] = v;
+        } catch (e) { /* key missing */ }
+      }
+    } catch (e) {
+      console.warn('[Habits] Could not load secrets from keyring:', e);
+    }
+    return env;
+  }
+
   /**
    * Parse workflow ID from API path
    * Handles: /api/workflow-id, /api/workflow-id/execute, etc.
@@ -139,8 +162,9 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
       console.log('[Habits] GET workflow execution:', workflowId, 'input:', queryInput);
       
       try {
+        var env = await loadSecretsEnv();
         // HabitsBundle.executeWorkflow wraps input internally as habits.input
-        var execution = await window.HabitsBundle.executeWorkflow(workflowId, queryInput);
+        var execution = await window.HabitsBundle.executeWorkflow(workflowId, queryInput, { env: env });
         
         console.log('[Habits] Execution result:', execution);
         console.log('[Habits] Execution output:', execution.output);
@@ -236,8 +260,9 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
 
       // Non-streaming mode
       try {
+        var env = await loadSecretsEnv();
         // HabitsBundle.executeWorkflow wraps input internally as habits.input
-        var execution = await window.HabitsBundle.executeWorkflow(workflowId, input);
+        var execution = await window.HabitsBundle.executeWorkflow(workflowId, input, { env: env });
         
         return new Response(JSON.stringify({ 
           success: true,

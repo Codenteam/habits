@@ -1,0 +1,112 @@
+version: 1
+meta:
+  id: support-ticket-router
+  title: Support Ticket Router
+  subtitle: AI-powered ticket triage
+  icon: "lucide:Ticket"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: sidebar
+  header: { title: Support Tickets, subtitle: "AI triage", icon: "lucide:Ticket" }
+  nav:
+    - { id: dashboard, label: Dashboard, icon: "lucide:BarChart" }
+    - { id: new, label: New Ticket, icon: "lucide:Plus" }
+    - { id: all, label: All Tickets, icon: "lucide:ListChecks" }
+
+state:
+  customerName: ""
+  customerEmail: ""
+  subject: ""
+  message: ""
+  tickets: []
+  lastTicket: null
+  error: null
+
+actions:
+  submit:
+    method: POST
+    endpoint: /api/submit-ticket
+    body:
+      customerName: "{{state.customerName}}"
+      customerEmail: "{{state.customerEmail}}"
+      subject: "{{state.subject}}"
+      message: "{{state.message}}"
+    onSuccess:
+      set: { lastTicket: "$response", customerName: "", customerEmail: "", subject: "", message: "" }
+      dispatch: list
+      toast: "Ticket created"
+    onError: { set: { error: "$error.message" } }
+  list:
+    method: POST
+    endpoint: /api/list-tickets
+    body: { limit: 100 }
+    responsePath: tickets
+    onSuccess: { set: { tickets: "$response" } }
+
+onMount:
+  - list
+
+defaultView: dashboard
+
+views:
+  dashboard:
+    widgets:
+      - kind: metric-grid
+        columns: 4
+        metrics:
+          - { value: "{{state.tickets.length}}", label: "Total tickets" }
+          - { value: "{{state.tickets | filterBy:classification.urgency=urgent | length}}", label: "Urgent" }
+          - { value: "{{state.tickets | filterBy:classification.category=billing | length}}", label: "Billing" }
+          - { value: "{{state.tickets | filterBy:classification.category=technical | length}}", label: "Technical" }
+      - kind: card
+        title: Recent tickets
+        children:
+          - kind: list
+            source: state.tickets
+            empty: "No tickets yet."
+            limit: 5
+            template:
+              - { kind: text, value: "{{item.subject}}", strong: true }
+              - { kind: text, value: "{{item.customerEmail}}", muted: true }
+              - { kind: badge-list, values: ["{{item.classification.category}}", "{{item.classification.urgency}}"] }
+  new:
+    widgets:
+      - kind: card
+        title: Submit a ticket
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: customerName, type: text, label: Customer Name, required: true }
+              - { name: customerEmail, type: email, label: Email, required: true }
+              - { name: subject, type: text, label: Subject, placeholder: "Brief description of the issue", required: true }
+              - { name: message, type: textarea, label: Message, placeholder: "Describe the issue in detail...", rows: 6, required: true }
+            submit: { label: Submit ticket, action: submit, loadingLabel: "Submitting..." }
+      - kind: result-panel
+        source: state.lastTicket
+        title: AI triage result
+        sections:
+          - { kind: kv-grid, source: state.lastTicket.classification }
+          - kind: section
+            title: Suggested response
+            children:
+              - { kind: markdown, source: state.lastTicket.autoResponse, copy: true }
+          - kind: section
+            title: Suggested solutions
+            children:
+              - { kind: bullet-list, source: state.lastTicket.suggestedSolutions }
+  all:
+    widgets:
+      - kind: card
+        title: All tickets
+        children:
+          - kind: list
+            source: state.tickets
+            empty: "No tickets yet."
+            template:
+              - { kind: text, value: "{{item.subject}}", strong: true }
+              - { kind: text, value: "{{item.customerEmail}} · {{item.classification.category}} · {{item.classification.urgency}}", muted: true }

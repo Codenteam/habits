@@ -1,0 +1,60 @@
+# Healthcare Patient Management — converted from healthcare-patient-management.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: healthcare-patient-management
+  title: Healthcare Patient Management
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Stethoscope"
+  documentTitle: Healthcare Patient Management
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Healthcare Patient Management
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Stethoscope"
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "142", label: Reminders sent today }
+      - { value: "3", label: Risk alerts raised }
+      - { value: "98%", label: Survey delivery rate }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Appointment Reminder
+            description: Send automated SMS and email reminders to patients before each scheduled appointment.
+            trigger: scheduler
+            tags: [email, sms, scheduler]
+          - name: Discharge Summary
+            description: Generate AI-assisted discharge notes and deliver them to the patient and their GP.
+            trigger: webhook
+            tags: [ai, email, webhook]
+          - name: Readmission Risk Alert
+            description: Flag high-risk patients before they re-present using outcome data and AI scoring.
+            trigger: scheduler
+            tags: [ai, scheduler, slack]
+          - name: Referral Coordination
+            description: Route specialist referrals automatically and track acknowledgement status.
+            trigger: webhook
+            tags: [email, webhook, http]
+          - name: Satisfaction Survey
+            description: Send post-visit surveys and automatically analyse responses with AI.
+            trigger: scheduler
+            tags: [email, ai, scheduler]
+          - name: No-Show Follow-up
+            description: Re-engage patients who missed their appointment with a personalised follow-up message.
+            trigger: scheduler
+            tags: [email, sms, scheduler]

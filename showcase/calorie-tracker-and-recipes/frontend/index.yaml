@@ -1,0 +1,140 @@
+version: 1
+meta:
+  id: calorie-tracker-and-recipes
+  title: AI Calorie Tracker
+  subtitle: Count calories from photos or generate calorie-conscious recipes
+  icon: "lucide:Salad"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Calorie Tracker, subtitle: "Photos · macros · low-cal recipes", icon: "lucide:Salad" }
+  nav:
+    - { id: count, label: Count Calories, icon: "lucide:Camera" }
+    - { id: recipe, label: Generate Recipe, icon: "lucide:ChefHat" }
+
+state:
+  imageBase64: ""
+  imageUrl: ""
+  notes: ""
+  calorieResult: null
+  ingredients: ""
+  targetCalories: 450
+  servings: 2
+  dietaryRestrictions: ""
+  recipeResult: null
+  error: null
+
+actions:
+  count:
+    method: POST
+    endpoint: /api/count-calories
+    body:
+      notes: "{{state.notes}}"
+      imageBase64: "{{state.imageBase64}}"
+      imageUrl: "{{state.imageUrl}}"
+    responsePath: output
+    onSuccess: { set: { calorieResult: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+  recipe:
+    method: POST
+    endpoint: /api/recipe-by-calories
+    body:
+      ingredients: "{{state.ingredients}}"
+      targetCalories: "{{state.targetCalories}}"
+      servings: "{{state.servings}}"
+      dietaryRestrictions: "{{state.dietaryRestrictions}}"
+    responsePath: output
+    onSuccess: { set: { recipeResult: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+
+defaultView: count
+
+views:
+  count:
+    widgets:
+      - kind: card
+        title: Analyse your meal
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: imageBase64, type: image-upload, label: Food photo, accept: "image/*", asBase64: true }
+              - { name: imageUrl, type: url, label: "Or paste an image URL", placeholder: "https://example.com/food.jpg" }
+              - { name: notes, type: text, label: Notes (optional), placeholder: "homemade, restaurant portion, light sauce" }
+            submit: { label: Count calories, action: count, loadingLabel: "Analysing..." }
+      - kind: result-panel
+        source: state.calorieResult
+        title: Nutrition
+        sections:
+          - kind: metric-grid
+            columns: 5
+            metrics:
+              - { value: "{{state.calorieResult.totalCalories}}", label: "Total kcal" }
+              - { value: "{{state.calorieResult.protein}}", label: protein }
+              - { value: "{{state.calorieResult.carbs}}", label: carbs }
+              - { value: "{{state.calorieResult.fat}}", label: fat }
+              - { value: "{{state.calorieResult.fiber}}", label: fiber }
+          - kind: section
+            title: Detected foods
+            children:
+              - kind: list
+                source: state.calorieResult.foods
+                template:
+                  - { kind: text, value: "{{item.name}}", strong: true }
+                  - { kind: text, value: "{{item.portion}} · {{item.calories}} kcal", muted: true }
+          - kind: section
+            title: Insights
+            children:
+              - { kind: bullet-list, source: state.calorieResult.insights }
+  recipe:
+    widgets:
+      - kind: card
+        title: Generate a low-calorie recipe
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: ingredients, type: textarea, label: Available ingredients, placeholder: "chicken breast, broccoli, garlic...", rows: 3 }
+              - { name: targetCalories, type: number, label: Target calories per serving, min: 100, max: 2000 }
+              - { name: servings, type: number, label: Servings, min: 1, max: 12 }
+              - { name: dietaryRestrictions, type: text, label: Dietary restrictions, placeholder: "vegetarian, gluten-free, keto..." }
+            submit: { label: Generate recipe, action: recipe, loadingLabel: "Cooking..." }
+      - kind: result-panel
+        source: state.recipeResult
+        title: Recipe
+        sections:
+          - kind: hero
+            imageSource: state.recipeResult.imageUrl
+            title: "{{state.recipeResult.title}}"
+            description: "{{state.recipeResult.description}}"
+            chips:
+              - { label: "{{state.recipeResult.caloriesPerServing}} kcal/serving" }
+              - { label: "{{state.recipeResult.servings}} servings" }
+              - { label: "{{state.recipeResult.prepTime}}" }
+              - { label: "{{state.recipeResult.cookTime}}" }
+              - { label: "{{state.recipeResult.difficulty}}" }
+          - kind: section
+            title: Ingredients
+            children:
+              - kind: list
+                source: state.recipeResult.ingredients
+                template:
+                  - { kind: text, value: "{{item.name}} · {{item.amount}}", strong: true }
+                  - { kind: text, value: "{{item.calories}} kcal", muted: true }
+          - kind: section
+            title: Instructions
+            children:
+              - { kind: numbered-list, source: state.recipeResult.steps }
+          - kind: section
+            title: Calorie-reduction tips
+            showWhen: state.recipeResult.suggestions
+            children:
+              - { kind: bullet-list, source: state.recipeResult.suggestions }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

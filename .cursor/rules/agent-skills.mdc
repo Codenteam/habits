@@ -1,0 +1,36 @@
+---
+description: Use repo agent skills from .github/skills when tasks match their descriptions
+alwaysApply: true
+---
+
+# Agent Skills
+
+Skills live in `.github/skills/` and are mirrored at `.cursor/skills/` for Cursor. **Edit skills only under `.github/skills/`** so GitHub Copilot and Cursor stay in sync.
+
+When a task matches a skill, read and follow that skill's `SKILL.md` before proceeding:
+
+| Skill | Use when |
+|-------|----------|
+| `create-habit` | Creating habits, workflows, or YAML frontends |
+| `create-bit` | Creating bits, actions, or triggers |
+| `server-cortex-mode` | Node.js Cortex server / backend work — not Tauri |
+| `tauri-app-mode` | Tauri native app work — not Cortex server |
+| `manage-admin-mode` | `@ha-bits/admin` package |
+| `hub-mode` | `@codenteam/hub` package |
+| `app-publishing` | iOS/Android/macOS builds, signing, store uploads |
+
+`server-cortex-mode` and `tauri-app-mode` are mutually exclusive — pick one based on the runtime target.
+
+## MCP Servers
+
+Project MCP config lives at `.cursor/mcp.json` (Cursor), mirrored at `.mcp.json` (root) and `.vscode/mcp.json` (VS Code). **Edit `.cursor/mcp.json` first**, then keep the others in sync if needed.
+
+| Server | Purpose |
+|--------|---------|
+| `habits-mcp` | Full Habits MCP server (91 tools): admin, Cortex, Tauri WebDriver, shell commands. Entry: `packages/manage/forge/src/mcp/index.ts` → `mcp.ts` |
+| `wdio-mcp` | Generic WebDriver automation |
+| `chrome-devtools` | Chrome DevTools debugging |
+
+Tauri app tools (`run_app`, `pack_habit`, `run_workflow`, etc.) live in `packages/manage/forge/src/mcp/tauri-commands.ts` and are exposed via `habits-mcp`.
+
+After changing MCP config, restart Cursor (Settings → MCP) so servers reload.

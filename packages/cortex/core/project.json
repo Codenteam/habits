@@ -8,6 +8,13 @@
     "type:core"
   ],
   "targets": {
+    "sync-lucide-icons": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/sync-lucide-icons.mjs --clean",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": [
@@ -35,6 +42,11 @@
             "output": "."
           },
           {
+            "input": "packages/cortex/core",
+            "glob": "assets/**/*",
+            "output": "."
+          },
+          {
             "input": "packages/cortex/core/src",
             "glob": "**/*.d.ts",
             "output": "."
@@ -45,6 +57,7 @@
         }
       },
       "dependsOn": [
+        "sync-lucide-icons",
         "^build"
       ]
     },

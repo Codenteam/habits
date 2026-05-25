@@ -1165,7 +1165,7 @@ export const selectHabitValidationErrorsById = (habitId: string) => (state: { wo
  * Check if there are any errors (for quick validation checks)
  */
 export const selectHasValidationErrors = (state: { workflow: WorkflowState }): boolean => {
-  const hasErrors =  selectHabitValidationErrors(state).some(error => error.severity === 'error');
+  const hasErrors = selectHabitValidationErrors(state).some(error => error.severity === 'error');
   return hasErrors;
 };
 
@@ -1182,12 +1182,13 @@ export const selectHasValidationWarnings = (state: { workflow: WorkflowState }):
  * Generate export bundle from current state
  * This selector generates all files needed for export/deploy/serve
  */
-export const selectExportBundle = (state: { workflow: WorkflowState; ui: { frontendHtml: string | null; envContent: string } }): ExportBundle => {
+export const selectExportBundle = (state: { workflow: WorkflowState; ui: { frontendHtml: string | null; frontendYaml?: string | null; envContent: string } }): ExportBundle => {
   const stackId = state.workflow.id;
   const habits = state.workflow.habits;
   const serverConfig = state.workflow.serverConfig;
   const frontendHtml = state.ui.frontendHtml;
-  
+  const frontendYaml = state.ui.frontendYaml || '';
+
   // Get env variables from all habits (prefer stored envContent if available)
   let envContent = state.ui.envContent;
   
@@ -1205,7 +1206,7 @@ export const selectExportBundle = (state: { workflow: WorkflowState; ui: { front
     host: '0.0.0.0',
     openapi: serverConfig.openapi,
     webhookTimeout: serverConfig.webhookTimeout,
-    hasFrontend: !!frontendHtml,
+    hasFrontend: !!(frontendHtml || frontendYaml),
     security: serverConfig.security,
   };
   
@@ -1215,7 +1216,8 @@ export const selectExportBundle = (state: { workflow: WorkflowState; ui: { front
     envContent,
     serverOptions,
     frontendHtml || undefined,
-    stackId
+    stackId,
+    frontendYaml || undefined,
   );
 };
 

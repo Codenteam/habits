@@ -1,0 +1,118 @@
+version: 1
+meta:
+  id: real-estate
+  title: Real Estate Listing Generator
+  subtitle: Create professional property listings from photos
+  icon: "lucide:Home"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Real Estate Listing Generator, subtitle: "Photo to listing", icon: "lucide:Home" }
+  nav:
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+
+state:
+  imageBase64: ""
+  imageUrl: ""
+  propertyType: house
+  bedrooms: ""
+  bathrooms: ""
+  sqft: 2000
+  price: 450000
+  address: ""
+  features: ""
+  result: null
+  activeTab: description
+  history: []
+  selectedId: ""
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-listing
+    body:
+      propertyType: "{{state.propertyType}}"
+      bedrooms: "{{state.bedrooms}}"
+      bathrooms: "{{state.bathrooms}}"
+      sqft: "{{state.sqft}}"
+      price: "{{state.price}}"
+      address: "{{state.address}}"
+      features: "{{state.features}}"
+      imageUrls: "{{state.imageUrl}}"
+      imageBase64: "{{state.imageBase64}}"
+    onSuccess: { set: { result: "$response" }, dispatch: listProperties }
+    onError: { set: { error: "$error.message" } }
+  listProperties:
+    method: GET
+    endpoint: /api/list-properties?limit=12
+    responsePath: listings
+    onSuccess: { set: { history: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-property?id={{state.selectedId}}"
+    responsePath: listing
+    onSuccess: { set: { result: "$response", __view: create } }
+
+onMount:
+  - listProperties
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Property details
+        hideWhen: state.result
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: imageBase64, type: image-upload, label: Property photo, accept: "image/*", asBase64: true }
+              - { name: imageUrl, type: url, label: "Or paste image URL" }
+              - { name: propertyType, type: select, label: Property type, options: [house, apartment, condo, townhouse, land], default: house, required: true }
+              - { name: bedrooms, type: select, label: Bedrooms, options: ["", "1", "2", "3", "4", "5+"] }
+              - { name: bathrooms, type: select, label: Bathrooms, options: ["", "1", "1.5", "2", "2.5", "3+"] }
+              - { name: sqft, type: number, label: Square feet, placeholder: "2000" }
+              - { name: price, type: number, label: Price ($), placeholder: "450000" }
+              - { name: address, type: text, label: Address, placeholder: "123 Main St, City, State" }
+              - { name: features, type: text, label: Notable features, placeholder: "Pool, new kitchen, hardwood..." }
+            submit: { label: Generate listing, action: generate, loadingLabel: "Working..." }
+      - kind: result-panel
+        source: state.result
+        title: Listing
+        sections:
+          - kind: tabs
+            bindTo: state.activeTab
+            tabs:
+              - { id: description, label: Description, children: [{ kind: markdown, source: state.result.description, copy: true }] }
+              - { id: highlights, label: Highlights, children: [{ kind: bullet-list, source: state.result.highlights }] }
+              - { id: narration, label: Tour Script, children: [{ kind: markdown, source: state.result.narration, copy: true }] }
+              - { id: social, label: Social Media, children: [{ kind: kv-grid, source: state.result.socialPosts }] }
+          - kind: button
+            label: New listing
+            action: { reset: ["result"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Past listings
+        children:
+          - kind: list
+            source: state.history
+            empty: "No listings yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.address ?? item.propertyType}}", strong: true }
+              - { kind: text, value: "{{item.bedrooms}}bd · {{item.bathrooms}}ba · {{item.sqft}}sqft · ${{item.price}}", muted: true }

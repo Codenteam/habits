@@ -43,7 +43,6 @@ Configure Base by setting these variables before starting the server (inline, in
 | Variable | Default | Description |
 |---|---|---|
 | `HABITS_ALLOW_SERVE` | `false` | Set to `true` to allow running habits directly from the Base UI. Spawns a Cortex subprocess. Keep `false` on shared/public instances. |
-| `HABITS_AI_GEN` | `false` | Set to `true` to enable the AI habit generator. Also requires `CLAUDE_API_KEY`. Keep `false` on public instances (grants unrestricted shell access). |
 
 ### Security controls (enabled by default)
 
@@ -66,21 +65,20 @@ Configure Base by setting these variables before starting the server (inline, in
 
 | Variable | Required | Description |
 |---|---|---|
-| `CLAUDE_API_KEY` | When `HABITS_AI_GEN=true` | Your Anthropic API key (`sk-ant-...`). Used by the AI agent to generate workflows and UI. |
+| `CLAUDE_API_KEY` | No | Your Anthropic API key (`sk-ant-...`). Pre-configures AI generation for all users. If omitted, users can enter their own key in the Generate modal. |
 | `HABITS_AI_DEBUG` | No | Set to `true` to keep temporary staging directories on disk after generation. Useful for debugging generated files. |
 | `HABITS_REF_PATH` | No | Path to reference materials (bits and example habits). Defaults to `~/.habits/reference`. |
 
 ### Example: enabling serve and AI generation
 
 ```bash
-HABITS_ALLOW_SERVE=true HABITS_AI_GEN=true CLAUDE_API_KEY=sk-ant-... npx habits@latest base
+HABITS_ALLOW_SERVE=true CLAUDE_API_KEY=sk-ant-... npx habits@latest base
 ```
 
 Or add them to a `.env` file in the same directory:
 
 ```env
 HABITS_ALLOW_SERVE=true
-HABITS_AI_GEN=true
 CLAUDE_API_KEY=sk-ant-...
 ```
 

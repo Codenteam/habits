@@ -577,6 +577,14 @@ async function extractHabitFromBase64(base64Data, habitNameHint = null) {
     }
     const bundleJs = await bundleFile.async('string');
     
+    // Get habits-fetch-proxy.js (optional, but needed for direct HabitsBundle execution)
+    let fetchProxyJs = null;
+    const fetchProxyFile = zip.file('habits-fetch-proxy.js');
+    if (fetchProxyFile) {
+      fetchProxyJs = await fetchProxyFile.async('string');
+      console.log('[Habits] Found habits-fetch-proxy.js');
+    }
+    
     // Try to get habit name from stack.yaml inside zip
     let habitName = habitNameHint || 'Unknown';
     const stackFile = zip.file('stack.yaml') || zip.file('stack.yml');
@@ -619,6 +627,7 @@ async function extractHabitFromBase64(base64Data, habitNameHint = null) {
       habitName,
       indexHtml,
       bundleJs,
+      fetchProxyJs,
       files,
       filePath: null,
       useAutoUi,

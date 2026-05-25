@@ -59,7 +59,7 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
         );
       }
 
-      const { habitFiles, stackYaml, envFile, frontendHtml } = req.body as ExportBundle;
+      const { habitFiles, stackYaml, envFile, frontendHtml, frontendYaml } = req.body as ExportBundle;
 
       if (!habitFiles || !stackYaml) {
         return res.json(
@@ -111,13 +111,21 @@ export function setupServeRoutes(app: Express, options: ServeRoutesOptions) {
           fs.writeFileSync(envPath, envFile);
       }
 
-      // Write frontend HTML if provided
-      if (frontendHtml) {
+      // Write frontend artifacts if provided. YAML wins when both exist
+      // (Cortex's loader prefers index.yaml over index.html).
+      if (frontendHtml || frontendYaml) {
         const frontendDir = path.join(workflowServerTempDir, "frontend");
         fs.mkdirSync(frontendDir, { recursive: true });
-        const frontendPath = path.join(frontendDir, "index.html");
-        fs.writeFileSync(frontendPath, frontendHtml);
-        console.log("[Workflow Server] Frontend written to:", frontendPath);
+        if (frontendHtml) {
+          const htmlPath = path.join(frontendDir, "index.html");
+          fs.writeFileSync(htmlPath, frontendHtml);
+          console.log("[Workflow Server] Frontend HTML written to:", htmlPath);
+        }
+        if (frontendYaml) {
+          const yamlPath = path.join(frontendDir, "index.yaml");
+          fs.writeFileSync(yamlPath, frontendYaml);
+          console.log("[Workflow Server] Frontend YAML written to:", yamlPath);
+        }
       }
 
       // Spawn cortex server

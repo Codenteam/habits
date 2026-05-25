@@ -1,6 +1,6 @@
 /**
  * Feature flag helpers for the base server.
- * All flags default to enabled except HABITS_ALLOW_SERVE and HABITS_AI_GEN,
+ * All flags default to enabled except HABITS_ALLOW_SERVE,
  * which must be explicitly opted in.
  * See PUBLIC_MODE.md for the full hardening guide.
  */
@@ -19,7 +19,6 @@ export interface ServerFlags {
   allowExport: boolean;
   /** Controlled by HABITS_ALLOW_SERVE - defaults to false (opt-in) */
   allowServe: boolean;
-  /** Controlled by HABITS_AI_GEN - defaults to false (opt-in) */
   allowAIGen: boolean;
 }
 
@@ -30,8 +29,8 @@ export function getServerFlags(): ServerFlags {
     allowFormsAuth:      flagEnabled('HABITS_ALLOW_FORMS_AUTH'),
     allowSecurityApi:    flagEnabled('HABITS_ALLOW_SECURITY_API'),
     allowExport:         flagEnabled('HABITS_ALLOW_EXPORT'),
-    // These two are opt-in, so default false
+    // allowServe is opt-in (requires subprocess spawning)
     allowServe:          process.env.HABITS_ALLOW_SERVE === 'true',
-    allowAIGen:          process.env.HABITS_AI_GEN === 'true',
+    allowAIGen:          true,
   };
 }

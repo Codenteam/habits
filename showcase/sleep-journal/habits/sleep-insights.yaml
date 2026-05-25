@@ -1,0 +1,70 @@
+id: sleep-insights
+name: Weekly Sleep Insights
+description: Analyze the last 7 sleep entries and generate personalized weekly insights with trends and recommendations
+
+env:
+  - id: HABITS_OPENAI_API_KEY
+    displayName: OpenAI API Key
+    secret: true
+    required: true
+
+nodes:
+  # Step 1: Fetch the most recent 7 sleep entries
+  - id: get-recent
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: query
+      params:
+        collection: "sleep_entries"
+        limit: 7
+
+  # Step 2: AI weekly analysis
+  - id: generate-insights
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        maxTokens: 1000
+        temperature: 0.5
+        roles:
+          - role: system
+            content: "You are a sleep health coach. Analyze weekly sleep patterns and provide warm, personalized, evidence-based recommendations. Always return valid JSON only, with no markdown code fences."
+        prompt: |
+          Review these recent sleep entries and generate a comprehensive weekly analysis:
+
+          {{get-recent.results}}
+
+          Calculate averages and identify trends across all entries. If fewer than 7 entries are available, analyze what is present.
+
+          Return ONLY this JSON (no code fences):
+          {
+            "avgDuration": "X hours Y minutes",
+            "avgDurationHours": 7.2,
+            "avgQuality": 3.8,
+            "qualityTrend": "improving",
+            "durationTrend": "stable",
+            "patterns": ["pattern observed 1", "pattern observed 2"],
+            "recommendations": ["actionable recommendation 1", "recommendation 2", "recommendation 3"],
+            "summary": "2-3 sentence overview of the week's sleep",
+            "bestNight": "date of the best night (or N/A)",
+            "worstNight": "date of the worst night (or N/A)",
+            "encouragement": "personalized encouraging message for next week"
+          }
+
+edges:
+  - source: get-recent
+    target: generate-insights
+
+output:
+  insights: "{{generate-insights}}"
+  entriesAnalyzed: "{{get-recent.count}}"

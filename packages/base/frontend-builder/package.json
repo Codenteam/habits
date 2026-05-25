@@ -33,7 +33,8 @@
     "js-beautify": "^1.15.4",
     "lodash": "^4.17.23",
     "lucide-react": "^0.352.0",
-    "monaco-editor": "^0.55.1"
+    "monaco-editor": "^0.55.1",
+    "yaml": "^2.3.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",

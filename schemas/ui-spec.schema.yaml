@@ -1,0 +1,505 @@
+# UiSpec Schema — YAML-driven UI for Habits frontends
+#
+# Every habit ships a single `frontend/index.yaml` (a "UiSpec"). The Cortex
+# server compiles it to a self-contained HTML document at request time via
+# `compileUiSpec` / `compileUiYaml` in `@ha-bits/cortex-core`.
+#
+# This schema describes that YAML. Authoring tools (and humans) can lint
+# against it. Keep it in sync with
+# `packages/cortex/core/src/ui/types.ts`.
+
+$schema: http://json-schema.org/draft-07/schema#
+$id: https://habits.codenteam.com/schemas/ui-spec.schema.json
+title: Habits UI Spec
+description: |
+  A declarative spec for a habit's frontend. Compiled to HTML by
+  `@ha-bits/cortex-core`. Supports forms, tabs, sidebars, wizards, mobile
+  shells, chat threads, history grids, NDJSON streaming, OAuth gating,
+  polling, and static showcase dashboards.
+
+type: object
+additionalProperties: false
+
+required: []
+
+properties:
+  version:
+    description: Schema version. Currently always `1`.
+    type: integer
+    enum: [1]
+
+  meta:
+    $ref: "#/definitions/MetaSpec"
+
+  theme:
+    $ref: "#/definitions/ThemeSpec"
+
+  layout:
+    $ref: "#/definitions/LayoutSpec"
+
+  state:
+    description: |
+      Initial in-memory state. The runtime exposes this as `state.*` to
+      every template expression and binding (e.g. `{{state.foo}}`,
+      `bindTo: state`, `showWhen: state.result`).
+    type: object
+    additionalProperties: true
+
+  actions:
+    description: |
+      Map of named actions. Reference them from buttons/forms/onMount via
+      action id. Default endpoint is `/api/{meta.id}` if you omit
+      `endpoint`.
+    type: object
+    additionalProperties:
+      $ref: "#/definitions/ActionSpec"
+
+  onMount:
+    description: |
+      Action ids (or inline `{ set: {...} }` updates) dispatched when the
+      page first loads. May be a single id, an array of ids, or an array
+      mixing ids and inline ActionSpec fragments.
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          oneOf:
+            - type: string
+            - $ref: "#/definitions/ActionSpec"
+
+  defaultView:
+    description: |
+      View id rendered first for `tabs`, `sidebar`, `mobile-shell`,
+      `wizard`, and `chat` layouts.
+    type: string
+
+  views:
+    description: |
+      Named views keyed by id (matches `layout.nav[].id`). For `single`
+      layout, omit `views` and use top-level `widgets` instead.
+    type: object
+    additionalProperties:
+      $ref: "#/definitions/ViewSpec"
+
+  widgets:
+    description: |
+      Convenience for `single` layout. Alternative to `views.main.widgets`.
+    type: array
+    items:
+      $ref: "#/definitions/WidgetSpec"
+
+definitions:
+  # ---------------------------------------------------------------------
+  # Meta + theme
+  # ---------------------------------------------------------------------
+
+  MetaSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        description: |
+          Workflow id used to build the default `/api/{id}` endpoint for
+          actions. Should match the directory name (e.g. `ai-quiz`).
+      title:
+        type: string
+        description: Header title and document `<title>` fallback.
+      subtitle:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+        description: |
+          Icon for the header. Prefer `lucide:Name` (e.g. `lucide:Zap`), or an
+          image URL, inline SVG string, or plain text. Omit to hide the icon.
+      documentTitle:
+        type: string
+        description: Overrides the `<title>`; defaults to `title`.
+
+  ThemeSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      preset:
+        description: One of the bundled palette presets.
+        type: string
+        enum:
+          - neural
+          - ha-bits-blue
+          - ha-bits-cyan
+          - ha-bits-purple
+          - ha-bits-red
+          - ha-bits-emerald
+          - ha-bits-warn
+          - aurora
+          - cyberpunk
+          - mobile-blue
+          - tailwind-dark
+          - showcase-flat
+      mode:
+        type: string
+        enum: [dark, light]
+      primary:    { type: string, description: Hex override }
+      secondary:  { type: string, description: Hex override }
+      accent:     { type: string, description: Hex override }
+      background: { type: string, description: Hex override }
+      font:
+        type: object
+        additionalProperties: false
+        properties:
+          body:    { type: string }
+          mono:    { type: string }
+          display: { type: string }
+      radius:
+        type: integer
+        minimum: 0
+        maximum: 32
+      density:
+        type: string
+        enum: [comfortable, compact, mobile]
+      customCss:
+        type: string
+
+  # ---------------------------------------------------------------------
+  # Layout
+  # ---------------------------------------------------------------------
+
+  LayoutSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      type:
+        description: |
+          Top-level page shell. `showcase` renders a static dashboard with
+          metric grid + habit cards.
+        type: string
+        enum: [single, tabs, sidebar, wizard, mobile-shell, split, chat, showcase]
+        default: single
+      header:
+        $ref: "#/definitions/HeaderSpec"
+      footerStatus:
+        $ref: "#/definitions/FooterStatusSpec"
+      nav:
+        type: array
+        items:
+          $ref: "#/definitions/NavItemSpec"
+      navPosition:
+        type: string
+        enum: [top, bottom, left]
+      split:
+        type: object
+        required: [left, right]
+        properties:
+          left:  { type: string }
+          right: { type: string }
+          ratio: { type: string }
+
+  HeaderSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      title:    { type: string }
+      subtitle: { type: string }
+      icon:     { type: string }
+      sticky:   { type: boolean }
+      badge:
+        type: object
+        properties:
+          text: { type: string }
+          tone: { $ref: "#/definitions/Tone" }
+      actions:
+        type: array
+        items:
+          $ref: "#/definitions/WidgetSpec"
+
+  FooterStatusSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      dot:
+        type: string
+        enum: [live, idle, warn, error]
+      text:    { type: string }
+      port:    { oneOf: [{ type: integer }, { type: string }] }
+      version: { type: string }
+
+  NavItemSpec:
+    type: object
+    required: [id, label]
+    additionalProperties: false
+    properties:
+      id:    { type: string }
+      label: { type: string }
+      icon:  { type: string }
+      badge: { oneOf: [{ type: string }, { type: integer }] }
+
+  # ---------------------------------------------------------------------
+  # Actions
+  # ---------------------------------------------------------------------
+
+  ActionSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      type:
+        description: |
+          `http` (default), `oauth`, `navigate`, `reset`, `logout`.
+        type: string
+        enum: [http, oauth, navigate, reset, logout]
+      open:
+        description: |
+          Shorthand: open a URL (e.g. an OAuth init endpoint or external
+          page). Equivalent to `type: navigate` with a URL.
+        type: string
+      reset:
+        description: |
+          State keys to reset to their initial values. Useful for "Start
+          over" buttons.
+        type: array
+        items: { type: string }
+      geolocate:
+        description: |
+          Request the browser's geolocation and write the result into the
+          provided state paths.
+        type: object
+        additionalProperties: false
+        properties:
+          latitudeTo:  { type: string }
+          longitudeTo: { type: string }
+      set:
+        description: |
+          Shorthand: synchronously update state without making an HTTP
+          call. Equivalent to `type: reset` with `onSuccess.set`.
+        type: object
+        additionalProperties: true
+      method:
+        type: string
+        enum: [GET, POST, PUT, PATCH, DELETE]
+      endpoint:
+        description: Templated URL. Defaults to `/api/{meta.id}`.
+        type: string
+      body:
+        description: |
+          Templated body. Object whose leaf values are template strings.
+        oneOf:
+          - type: object
+            additionalProperties: true
+          - type: string
+      query:
+        type: object
+        additionalProperties: true
+      headers:
+        type: object
+        additionalProperties: { type: string }
+      responsePath:
+        description: |
+          Where in the JSON response the payload lives. Default `output`
+          with a fallback to root. Use `$` for the whole response.
+        type: string
+      stream:
+        description: |
+          Set to `ndjson` to parse a stream of newline-delimited JSON
+          events and dispatch them through `events[]`.
+        oneOf:
+          - { type: string, enum: [ndjson, tokens] }
+          - { type: boolean, enum: [false] }
+      events:
+        type: array
+        items:
+          $ref: "#/definitions/ActionEventHandler"
+      poll:
+        type: object
+        required: [intervalMs]
+        properties:
+          intervalMs: { type: integer, minimum: 100 }
+          auto:       { type: boolean }
+      oauth:
+        type: object
+        required: [statusUrl, initUrl]
+        properties:
+          statusUrl: { type: string }
+          initUrl:   { type: string }
+      confirm:
+        description: |
+          If set, prompts the user with this text before dispatching.
+        type: string
+      onSuccess:
+        $ref: "#/definitions/ActionSuccessSpec"
+      onError:
+        $ref: "#/definitions/ActionErrorSpec"
+
+  ActionEventHandler:
+    type: object
+    additionalProperties: false
+    properties:
+      match:
+        description: Partial-match object against the streamed event.
+        type: object
+        additionalProperties: true
+      append:    { type: string, description: State path to push the event onto }
+      set:
+        type: object
+        additionalProperties: true
+      increment:
+        type: string
+        description: State path of a counter to increment.
+
+  ActionSuccessSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      goto:
+        type: string
+        description: Navigate to this view id after success.
+      set:
+        description: |
+          State updates. Each value is a template string (e.g.
+          `"$response"`, `"{{state.foo}}"`), a literal, or null to clear.
+        type: object
+        additionalProperties: true
+      append:
+        description: |
+          Either a state path (string) to push the response into, or a
+          map of `{ statePath: itemTemplate }` for multi-list appends.
+        oneOf:
+          - type: string
+          - type: object
+            additionalProperties: true
+      toast:
+        oneOf:
+          - { type: string }
+          - type: object
+            additionalProperties: true
+            properties:
+              message: { type: string }
+              level:   { type: string, enum: [info, success, warn, error] }
+      reload:
+        description: Re-dispatch one or more action ids after this action succeeds.
+        oneOf:
+          - { type: string }
+          - { type: array, items: { type: string } }
+      dispatch:
+        description: Alias for `reload`. Either spelling works at runtime.
+        oneOf:
+          - { type: string }
+          - { type: array, items: { type: string } }
+      resetForm:
+        type: string
+      download:
+        type: object
+        required: [dataPath]
+        properties:
+          dataPath:     { type: string }
+          fileNamePath: { type: string }
+          mimeType:     { type: string }
+
+  ActionErrorSpec:
+    type: object
+    additionalProperties: false
+    properties:
+      toast:
+        oneOf:
+          - { type: string }
+          - type: object
+            additionalProperties: true
+            properties:
+              message: { type: string }
+              level:   { type: string, enum: [info, success, warn, error] }
+      set:
+        type: object
+        additionalProperties: true
+
+  # ---------------------------------------------------------------------
+  # Views + widgets
+  # ---------------------------------------------------------------------
+
+  ViewSpec:
+    type: object
+    additionalProperties: false
+    required: [widgets]
+    properties:
+      title: { type: string }
+      widgets:
+        type: array
+        items:
+          $ref: "#/definitions/WidgetSpec"
+      onEnter:
+        oneOf:
+          - type: string
+          - type: array
+            items: { type: string }
+
+  Tone:
+    type: string
+    enum: [primary, secondary, accent, success, warn, danger, info, muted]
+
+  # `WidgetSpec` is an open object — every widget shape has a `kind` plus
+  # widget-specific keys. The runtime ignores unknown keys, so the
+  # safest schema is "object with a string `kind` discriminator".
+  WidgetSpec:
+    type: object
+    required: [kind]
+    properties:
+      kind:
+        type: string
+        description: |
+          Widget discriminator. Common values include:
+          - layout: `section`, `card`, `row`, `column`, `tabs`,
+            `accordion`, `modal`, `bottom-sheet`, `split`
+          - input: `form`, `button`, `action-button`, `submit-button`,
+            `copy-button`, `download-button`, `print-button`,
+            `link-button`, `button-row`, `toggle`, `chip-group`,
+            `radio-cards`, `tag-input`
+          - output: `result-panel`, `pre`, `code-block`, `code`,
+            `json-dump`, `markdown`, `text`, `heading`, `html-preview`,
+            `image`, `hero`, `score-ring`, `bar-chart`, `progress-bar`,
+            `metric-grid`, `stat-row`, `badge`, `badge-list`,
+            `numbered-list`, `bullet-list`, `data-table`, `kv-grid`,
+            `list`, `checklist`, `trait-bars`, `step-list`,
+            `filter-bar`, `repeatable`
+          - feedback: `status-banner`, `alert`, `empty-state`, `spinner`,
+            `loading-steps`, `pipeline-indicator`
+          - realtime: `chat-panel`, `streaming-panel`, `streaming-text`
+          - app: `habit-grid`, `history-grid`, `history-list`,
+            `mode-selector`, `oauth-status-card`
+      id:        { type: string }
+      className: { type: string }
+      showWhen:
+        type: string
+        description: |
+          Template expression. The widget is rendered only when this
+          evaluates truthy at runtime (e.g. `state.result`,
+          `state.queue.length > 0`).
+      hideWhen:
+        type: string
+        description: Inverse of `showWhen`. Either may be used.
+    additionalProperties: true
+    # The full per-widget shape is documented in
+    # `packages/cortex/core/src/ui/types.ts`. A short reference of the
+    # most common widgets follows so editors can offer reasonable
+    # completions even without dependent-schema support.
+    examples:
+      - kind: card
+        title: A grouped section
+        children:
+          - { kind: text, value: "Hello" }
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: title, type: text, label: Title, required: true }
+        submit: { label: Save, action: save }
+      - kind: metric-grid
+        columns: 4
+        metrics:
+          - { value: "1,842", label: "Orders today" }
+      - kind: result-panel
+        source: state.result
+        title: Result
+        sections:
+          - { kind: json-dump, source: state.result, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

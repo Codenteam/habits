@@ -1,0 +1,88 @@
+version: 1
+meta:
+  id: content-repurpose
+  title: Content Repurposer
+  subtitle: Transform blog content into LinkedIn, Twitter, and Instagram posts
+  icon: "lucide:Recycle"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Content Repurposer, subtitle: "Blog → social", icon: "lucide:Recycle" }
+
+state:
+  blogContent: ""
+  brand: ""
+  tone: professional
+  hashtags: ""
+  output: null
+  activePlatform: linkedin
+  error: null
+
+actions:
+  repurpose:
+    method: POST
+    endpoint: /api/repurpose-blog
+    body:
+      blogContent: "{{state.blogContent}}"
+      brand: "{{state.brand}}"
+      tone: "{{state.tone}}"
+      hashtags: "{{state.hashtags}}"
+    responsePath: output
+    onSuccess: { set: { output: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Source content
+    hideWhen: state.output
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: blogContent, type: textarea, label: Blog content, placeholder: "Paste your blog post content here...", rows: 10, required: true }
+          - { name: brand, type: text, label: Brand name, placeholder: "Your brand or company" }
+          - name: tone
+            type: chip-group
+            label: Tone
+            default: professional
+            options: [professional, casual, humorous, inspirational, educational]
+          - { name: hashtags, type: text, label: Additional hashtags, placeholder: "#marketing #AI" }
+        submit: { label: Repurpose content, action: repurpose, loadingLabel: "Working..." }
+      - kind: alert
+        level: info
+        text: "Tip: more context yields better posts. Include hashtags relevant to your niche."
+  - kind: result-panel
+    source: state.output
+    title: Generated posts
+    sections:
+      - kind: tabs
+        bindTo: state.activePlatform
+        tabs:
+          - id: linkedin
+            label: LinkedIn
+            children:
+              - { kind: pre, source: state.output.linkedinContent, copy: true }
+          - id: twitter
+            label: Twitter / X
+            children:
+              - { kind: pre, source: state.output.twitterContent, copy: true }
+          - id: instagram
+            label: Instagram
+            children:
+              - { kind: pre, source: state.output.instagramContent, copy: true }
+          - id: summary
+            label: Summary
+            children:
+              - { kind: markdown, source: state.output.summary }
+      - kind: button
+        label: Repurpose another blog
+        action: { reset: ["output"] }
+        variant: secondary
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

@@ -46,6 +46,12 @@ planning
 !docs/public/showcase/index.json
 
 
+# Generated Lucide SVG assets (from scripts/sync-lucide-icons.mjs)
+packages/cortex/core/assets/icons/lucide/
+packages/cortex/core/assets/icons/manifest.json
+habits-cortex/www/ha-assets/icons/lucide/
+habits-cortex/www/ha-assets/icons/manifest.json
+
 # Tauri stuff
 target/
 habits-cortex/**/target/

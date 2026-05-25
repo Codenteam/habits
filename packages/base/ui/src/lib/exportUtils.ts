@@ -326,9 +326,10 @@ export function generateExportBundle(
   existingEnv: string = '',
   serverOptions: ServerOptions = {},
   frontendHtml?: string,
-  stackId?: string
+  stackId?: string,
+  frontendYaml?: string,
 ): ExportBundle {
-  const hasFrontend = !!frontendHtml;
+  const hasFrontend = !!(frontendHtml || frontendYaml);
 
   // Generate habit YAML files
   const habitFiles = habits.map(habit => ({
@@ -352,5 +353,6 @@ export function generateExportBundle(
     habitFiles,
     envFile,
     frontendHtml,
+    frontendYaml,
   };
 }

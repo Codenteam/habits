@@ -1,0 +1,104 @@
+version: 1
+meta:
+  id: code-review
+  title: AI Code Review
+  subtitle: Instant reviews for quality, security, and performance
+  icon: "lucide:Shield"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Code Review, subtitle: "Quality · security · performance", icon: "lucide:Shield" }
+  nav:
+    - { id: review, label: Review, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+
+state:
+  code: ""
+  language: javascript
+  context: ""
+  reviewResult: null
+  activeTab: quality
+  history: []
+  selectedId: ""
+  error: null
+
+actions:
+  review:
+    method: POST
+    endpoint: /api/review-code
+    body:
+      code: "{{state.code}}"
+      language: "{{state.language}}"
+      context: "{{state.context}}"
+    onSuccess: { set: { reviewResult: "$response" }, dispatch: listReviews }
+    onError: { set: { error: "$error.message" } }
+  listReviews:
+    method: GET
+    endpoint: /api/list-reviews?limit=12
+    responsePath: reviews
+    onSuccess: { set: { history: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-review?id={{state.selectedId}}"
+    responsePath: review
+    onSuccess: { set: { reviewResult: "$response", __view: review } }
+
+onMount:
+  - listReviews
+
+defaultView: review
+
+views:
+  review:
+    widgets:
+      - kind: card
+        title: Submit code
+        hideWhen: state.reviewResult
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: code, type: textarea, label: Paste your code, placeholder: "// Paste your code here...", rows: 14, monospace: true, tabInserts: 2, required: true }
+              - name: language
+                type: select
+                label: Language
+                default: javascript
+                options: [javascript, typescript, python, java, csharp, go, rust, php, ruby, sql, other]
+              - { name: context, type: text, label: Context (optional), placeholder: "What does this code do?" }
+            submit: { label: Review code, action: review, loadingLabel: "Reviewing..." }
+      - kind: result-panel
+        source: state.reviewResult
+        title: Review
+        sections:
+          - kind: tabs
+            bindTo: state.activeTab
+            tabs:
+              - { id: quality, label: Quality, children: [{ kind: markdown, source: state.reviewResult.qualityReview, copy: true }] }
+              - { id: security, label: Security, children: [{ kind: markdown, source: state.reviewResult.securityReview, copy: true }] }
+              - { id: performance, label: Performance, children: [{ kind: markdown, source: state.reviewResult.performanceReview, copy: true }] }
+              - { id: improved, label: Improved code, children: [{ kind: code, language: "{{state.language}}", source: state.reviewResult.improvedCode, copy: true }] }
+          - kind: button
+            label: Review another
+            action: { reset: ["reviewResult"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Previous reviews
+        children:
+          - kind: list
+            source: state.history
+            empty: "No reviews yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.language}}", strong: true }
+              - { kind: pre, source: item.codeSnippet, truncate: 200 }
