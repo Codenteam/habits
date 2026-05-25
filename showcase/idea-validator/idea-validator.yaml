@@ -1,0 +1,49 @@
+{
+  "id":idea-validator, 
+  "name":Idea-Validator, 
+  "nodes":[{
+    "id":openai, 
+    "type":bits, 
+    "data":{
+      "framework":bits, 
+      "source":npm, 
+      "module":"@ha-bits/bit-openai", 
+      "label":OpenAI, 
+      "operation":ask_chatgpt, 
+      "params":{
+        "model":gpt-5-mini, 
+        "prompt": "Act as a ruthless 'Devil's Advocate' and expert startup consultant. Your goal is to critically validate and challenge the following product idea: {{habits.input.idea}} Provide a structured 'Devil's Advocate Report' covering :1. **Critical Risks:** Identify technical, financial, or legal hurdles that could kill the project.2. **Audience Reality Check:** Why might the target audience REJECT this product? (e.g., price, friction, lack of real need).3. **Competitive Threats:** What existing alternatives (direct or indirect) already solve this better?4. **Flaws in Logic:** Point out any unrealistic assumptions in the idea's core concept.Tone: Brutally honest, analytical, and objective. Do not offer encouragement; offer cold, hard analysis to help the owner see the blind spots.\""}, 
+        "credentials":{
+          "openai":{"apiKey":"{{habits.env.OPENAI_API_KEY}}"}}}},
+          
+          
+          
+          
+          
+          
+{
+  "id":database, 
+  "type":bits, 
+  "data":{
+    "framework":bits, 
+    "source":npm, 
+    "module":"@ha-bits/bit-database", 
+    "label":Database, 
+    "operation":store, 
+    "params":{
+      "collection":Idea-Validator, 
+      "value":"{{openai}}", 
+      "key":idea}}}],
+
+
+
+ "edges":[{
+  "id":openai__database, 
+  "source":openai, 
+  "target":database, 
+  "sourceHandle":main, 
+  "targetHandle":main}],
+  
+  
+  
+  "output":{"Results":"{{openai}}"}}

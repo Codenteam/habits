@@ -1,0 +1,31 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: AI Resume Tailor
+description: An AI-powered optimization tool that reviews your current resume against any specific job description to dynamically tailor skills, experience logs, and highlights for maximum ATS alignment.
+
+longDescription: |
+  - Bridge the gap between your career history and your dream job. 
+  - This application processes dual inputs—the target job requirements and your current resume text—leveraging AI to pinpoint missing keywords, restructure professional experience descriptions, and highlight relevant skills to ensure your profile stands out to recruiters.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - Human Resource
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - resume-tailor.yaml
+
+quickDownload: true
+

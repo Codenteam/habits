@@ -1,0 +1,31 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Daily Standup
+description: AI-powered developer tool that transforms raw task lists into clean, management-ready standup updates.
+
+longDescription: |
+  - Take your daily development chaos and turn it into structured updates. 
+  - This application captures raw text inputs, filters out system contexts, 
+  and leverages AI to generate an organized breakdown of completed tasks, 
+  current focus areas, and active blockers alongside an executive summary paragraph.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - productivity
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - daily-standup.yaml
+quickDownload: true

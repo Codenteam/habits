@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idea Validator | AI Studio</title>
+    <style>
+        :root {
+            --bg-dark: #0b0f1a;
+            --card-bg: #151b28;
+            --accent-cyan: #22d3ee;
+            --accent-blue: #3b82f6;
+            --accent-glow: rgba(34, 211, 238, 0.3);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --input-bg: #0f172a;
+            --border: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #0b0f1a);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .validator-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px 30px;
+            border-radius: 32px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin: 0;
+            background: linear-gradient(to right, var(--accent-cyan), #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .header p {
+            color: var(--accent-cyan);
+            font-size: 13px;
+            margin: 8px 0 25px 0;
+            font-family: 'Fira Code', monospace;
+            opacity: 0.8;
+        }
+
+        .tab-indicator {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .instruction-box {
+            background: rgba(34, 211, 238, 0.05);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            padding: 15px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #bae6fd;
+            margin-bottom: 25px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .field-label {
+            display: block;
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            color: white;
+            font-size: 14px;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            margin-bottom: 25px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .validate-btn {
+            background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.4s;
+        }
+
+        .validate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
+
+        #reportArea {
+            margin-top: 30px;
+            background: #0f172a;
+            border-radius: 18px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.7;
+            border-left: 4px solid #ef4444;
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+
+        .loader {
+            display: none;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="validator-card">
+        <form id="ideaForm">
+            <div class="header">
+                <h1>Idea Validator</h1>
+                <br>
+            </div>
+
+            <div class="tab-indicator">
+                <span>🕵️‍♂️</span> Devil's Advocate Mode
+            </div>
+
+            <div class="instruction-box">
+                💡 Be as detailed as possible. The AI will look for flaws, risks, and reasons why this idea might fail.
+            </div>
+
+            <label class="field-label">PRODUCT IDEA DESCRIPTION</label>
+            <textarea id="ideaInput" rows="6"
+                placeholder="e.g. A subscription service for renting luxury watches..."></textarea>
+
+            <button id="validateBtn" class="validate-btn">
+                <span id="btnText">⚡ Validate Idea</span>
+            </button>
+
+            <div id="reportArea"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('ideaForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const ideaText = document.getElementById('ideaInput').value;
+            const result = document.getElementById('reportArea');
+            const btnText = document.getElementById('btnText');
+
+
+
+            // UI Updates
+            btnText.innerText = "Analyzing Risks...";
+            result.style.display = "none";
+            result.disabled = true;
+
+            try {
+                const response = await fetch('/api/idea-validator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "idea": ideaText })
+                });
+
+                const data = await response.json();
+
+                // Extracting results from output.Results
+                const results = data.output?.Results || data.output?.result || "Analysis finished. Check server logs.";
+
+                result.innerText = results;
+                result.style.display = "block";
+            } catch (err) {
+                result.innerText = "Connection failed. Make sure the workflow is running.";
+                result.style.display = "block";
+            } finally {
+                btnText.innerText = "⚡ Validate Idea";
+                this.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

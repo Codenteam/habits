@@ -1,0 +1,34 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Budget Analyst habit
+description: Advanced Habit showcasing how to analyze project budgets by leveraging mixed AI frameworks, securely reading from environment configurations and user inputs.
+
+longDescription: |
+  This habit demonstrates a comprehensive "Project Budget Analyst" automation using the mixed frameworks pipeline. It shows how to:
+
+  - Read user input parameters such as project spending, allocated limits, and timeline metrics.
+  - Output results, forecasting metrics, and variance alerts to both server logs (Backend) and clean UI components (Apps).
+  - Structure a robust habit configuration
+
+  Use this as a starting point for building complex financial automations and AI-assisted budgeting tools that interact smoothly with both backend and frontend components. All code and configuration adhere strictly to the project’s minimalistic.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - financial
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - budget-analyst.yaml
+  - stack.yaml
+quickDownload: true

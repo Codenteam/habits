@@ -1,0 +1,47 @@
+{
+  "id":product-changelog, 
+  "name":Product Changelog, 
+  "nodes":[{
+    "id":openai, 
+    "type":bits, 
+    "data":{
+      "framework":bits, 
+      "source":npm, 
+      "module":"@ha-bits/bit-openai", 
+      "label":OpenAI, 
+      "operation":ask_chatgpt, 
+      "params":{
+        "model":gpt-5-mini, 
+        "prompt":"Act as an expert Product Manager and Technical Copywriter. Review the following raw Git log between two tags: {{habits.input.commit}}.Your task is to rewrite these technical commits into polished, user-facing release notes in plain English. Group the changes into three clear categories: 🚀 What's New (New Features), ✨ Improvements (Performance/UI enhancements), and 🛠️ Bug Fixes. Ensure the tone is exciting, professional, and entirely free of low-level coding jargon."}, 
+        "credentials":{
+          "openai":{
+            "apiKey":"{{habits.env.OPENAI_API_KEY}}"}}}},
+            
+            
+{
+  "id":database, 
+  "type":bits, 
+  "data":{
+    "framework":bits, 
+    "source":npm, 
+    "module":"@ha-bits/bit-database", 
+    "label":Database, 
+    "operation":store, 
+    "params":{
+      "collection":Product Changelogs, 
+      "value":"{{openai}}", 
+      "key":Release_Notes}}}], 
+      
+      
+      
+      
+"edges":[{
+  "id":openai__database, 
+  "source":openai, 
+  "target":database, 
+  "sourceHandle":main, 
+  "targetHandle":main}], 
+  
+  
+  
+"output":{"Results":"{{openai}}"}}

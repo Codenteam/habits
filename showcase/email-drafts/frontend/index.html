@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Drafts | AI Studio</title>
+    <style>
+        :root {
+            --bg-deep: #161b22;
+            --card-bg: #1f242d;
+            --accent-blue: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --text-main: #ffffff;
+            --text-dim: #8b949e;
+            --input-bg: #242933;
+            --border-color: #30363d;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: #0d1117;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .main-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px 30px;
+            border-radius: 32px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin: 0 0 25px 0;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .input-tab {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .hint-box {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 14px;
+            color: #93c5fd;
+            margin-bottom: 30px;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .input-label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 18px;
+            color: white;
+            font-size: 15px;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            margin-bottom: 30px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .execute-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .execute-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px var(--accent-glow);
+        }
+
+        #resultArea {
+            margin-top: 30px;
+            background: #161b22;
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent-blue);
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-card">
+        <form id="emailForm">
+            <div class="header">
+                <h1>Email Drafts</h1>
+                <br>
+            </div>
+
+
+
+            <div class="hint-box">
+                💡 Describe the situation (e.g., "Requesting a meeting with my manager to discuss a raise").
+            </div>
+
+            <div class="input-label">EMAIL SITUATION</div>
+            <textarea id="situationInput" rows="5" placeholder="Enter the situation here..."></textarea>
+
+            <button id="executeBtn" class="execute-btn">
+                <span id="btnText">⚡ Execute</span>
+            </button>
+
+            <div id="resultArea"
+                style="display: none; white-space: pre-wrap; text-align: left; color: #cbd5e1; line-height: 1.7; font-size: 14.5px; padding: 20px; background: #131a26; border-radius: 12px; border: 1px solid #1e293b;">
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('emailForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const text = document.getElementById('situationInput').value;
+            const btn = document.getElementById('btnText');
+            const result = document.getElementById('resultArea');
+
+            if (!text.trim()) {
+                alert("Please type or paste the text first before pressing the button!");
+                return;
+            }
+
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+            result.style.display = "none";
+
+            try {
+                const response = await fetch('/api/email-drafts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "situation": text }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+
+
+                if (data.output && data.output.Results) {
+                    result.innerText = data.output.Results;
+                    result.style.display = "block";
+                    btn.innerHTML = "⚡ Execute";
+                } else {
+                    result.innerText = "Error: AI could not process the text correctly.";
+                    result.style.display = "block";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                btn.innerText = "Execution Failed";
+                btn.style.backgroundColor = "#f56565";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "⚡ Execute";
+            }
+        });
+    </script>
+
+</body>
+
+</html>

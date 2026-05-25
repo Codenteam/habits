@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Changelog | AI Studio</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: #111726;
+            --accent-purple: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.25);
+            --text-main: #94a3b8;
+            --text-white: #f8fafc;
+            --input-bg: #070a12;
+            --border: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, var(--bg-dark));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .changelog-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 460px;
+            padding: 40px 30px;
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin: 0;
+            color: var(--text-white);
+            font-weight: 700;
+            background: linear-gradient(to right, #f472b6, var(--accent-purple));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--accent-purple);
+            font-size: 13px;
+            margin: 8px 0 25px 0;
+            font-family: monospace;
+        }
+
+        .badge-bar {
+            background-color: #070a12;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 14px;
+            color: var(--text-white);
+            font-weight: 600;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-box {
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.15);
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 13px;
+            color: #d8b4fe;
+            margin-bottom: 25px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .field-label {
+            display: block;
+            text-align: left;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            color: var(--text-white);
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            margin-bottom: 25px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #7e22ce, var(--accent-purple));
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3);
+        }
+
+        #resultArea {
+            margin-top: 30px;
+            background: #070a12;
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent-purple);
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="changelog-card">
+        <form id="changelogForm">
+            <div class="header">
+                <h1>Product Changelog</h1>
+                <p></p>
+            </div>
+
+            <div class="badge-bar">
+                <span>📦</span> User-Facing Release Notes
+            </div>
+
+            <div class="info-box">
+                💡 Paste your raw git log output (between two tags) below to translate it into customer-friendly release
+                notes.
+            </div>
+
+            <label class="field-label">RAW GIT LOG (BETWEEN TWO TAGS)</label>
+            <textarea id="logInput" rows="6"
+                placeholder="e.g. - feat: added redis cache layer&#10;- fix: closed active socket leaks on timeout&#10;- refactor: changed response schema inside auth node"></textarea>
+
+            <button id="submitBtn" class="submit-btn">
+                <div class="spinner" id="loader"></div>
+                <span id="btnText">⚡ Generate Release Notes</span>
+            </button>
+
+            <div id="resultArea"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('changelogForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const rawLogs = document.getElementById('logInput').value;
+            const result = document.getElementById('resultArea');
+            const btn = document.getElementById('submitBtn');
+
+            if (!rawLogs) return alert("Please enter your git log first!");
+
+            btn.innerText = "Writing Release Notes...";
+            result.style.display = "none";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/product-changelog', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "commit": rawLogs })
+                });
+
+                const data = await response.json();
+                const results = data.output?.Results || data.output?.result || "Could not generate release notes.";
+
+                result.innerText = results;
+                result.style.display = "block";
+            } catch (err) {
+                result.innerText = "Error connecting to server. Please ensure the workflow is running.";
+                result.style.display = "block";
+            } finally {
+                btn.innerText = "⚡ Generate Release Notes";
+                btn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

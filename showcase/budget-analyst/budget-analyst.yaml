@@ -1,0 +1,53 @@
+{
+  "id":budget-analyst, 
+  "name":Budget Analyst, 
+  "nodes":[{
+    "id":openai, 
+    "type":bits, 
+    "data":{
+      "framework":bits, 
+      "source":npm, 
+      "module":"@ha-bits/bit-openai", 
+      "label":OpenAI, 
+      "operation":ask_chatgpt, 
+      "params":{
+        "model":gpt-5-mini, 
+        "prompt":"Act as a financial analyst. Wrap the entire response in <div style='direction:ltr; text-align:left; color:#e2e8f0;'>. Display the overall data first like this: <b>Financial Overview:</b><br> - Total Income: [Amount]<br> - Total Expenses: [Amount]<br> - Net Savings: [Amount]<br><br> After that, create a clean HTML table for categories like this: <b>Expense Breakdown:</b><br> <table style='width:100%; border-collapse:collapse; margin-top:10px; color:#e2e8f0;'> <tr style='background-color:#1e1e38; border-bottom:2px solid #3f3f6e;'> <th style='padding:8px; text-align:left;'>Category</th> <th style='padding:8px; text-align:left;'>Amount</th> <th style='padding:8px; text-align:left;'>% of Expenses</th> </tr> [Loop categories here inside rows like this] <tr style='border-bottom:1px solid #2d2d50;'> <td style='padding:8px; color:#63b3ed;'>Category Name</td> <td style='padding:8px;'>$Amount</td> <td style='padding:8px; color:#48bb78;'>Percent%</td> </tr> </table> </div>. {{habits.input.budget}} "}, 
+        "credentials":{
+          "openai":{
+            "apiKey":"{{habits.env.OPENAI_API_KEY}}"}}}},
+            
+            
+            
+            
+{
+  "id":database, 
+  "type":bits, 
+  "data":{
+    "framework":bits, 
+    "source":npm, 
+    "module":"@ha-bits/bit-database", 
+    "label":Database, 
+    "operation":store, 
+    "params":{
+      "collection":Budget Analyst, 
+      "value":"{{openai}}", 
+      "key":Analysis}
+      }}], 
+      
+      
+      
+      
+  "edges":[{
+    "id":openai__database, 
+    "source":openai, 
+    "target":database, 
+    "sourceHandle":main, 
+    "targetHandle":main}],
+
+
+
+"output":{"Results":"{{openai}}"}}
+
+
+
