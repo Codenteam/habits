@@ -44,7 +44,7 @@ nodes:
         type: script
         language: javascript
         script: |
-          async function main(categorizeResult: any) {
+          async function main(categorizeResult) {
             const results = categorizeResult?.results ?? [];
             const total = categorizeResult?.totalItems ?? 0;
             const success = categorizeResult?.successCount ?? 0;
