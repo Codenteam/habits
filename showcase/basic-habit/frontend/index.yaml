@@ -1,0 +1,43 @@
+version: 1
+meta:
+  id: basic-habit-demo
+  title: Basic Habit Demo
+  subtitle: A single button kicks off the whole workflow
+  icon: "lucide:FlaskConical"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Basic Habit Demo, subtitle: "Validation, string ops, loops, summary", icon: "lucide:FlaskConical" }
+
+state:
+  result: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/basic-habit-demo
+    body: {}
+    responsePath: output
+    onSuccess: { set: { result: "$response" }, toast: "Done" }
+
+widgets:
+  - kind: card
+    title: Run the demo workflow
+    children:
+      - kind: badge-list
+        source: "[]"
+      - kind: button
+        label: Run demo
+        action: run
+        loadingLabel: "Running..."
+        fullWidth: true
+  - kind: result-panel
+    source: state.result
+    title: Result
+    sections:
+      - { kind: kv-grid, source: state.result }
+      - { kind: json-dump, source: state.result, copy: true }

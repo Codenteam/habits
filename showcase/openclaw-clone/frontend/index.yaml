@@ -1,0 +1,120 @@
+version: 1
+meta:
+  id: openclaw-clone
+  title: Claw
+  subtitle: Your personal AI assistant that actually does things
+  icon: "lucide:Bot"
+
+theme:
+  preset: ha-bits-red
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Claw, subtitle: "AI assistant", icon: "lucide:Bot" }
+  split:
+    left: sidebar
+    right: chat
+    ratio: 280px 1fr
+
+state:
+  userId: web-user
+  messages: []
+  message: ""
+  error: null
+
+actions:
+  sendMessage:
+    method: POST
+    endpoint: /api/chat
+    body:
+      message: "{{state.message}}"
+      userId: "{{state.userId}}"
+      channel: web
+      history: "{{state.messages}}"
+    responsePath: output.response
+    onSuccess:
+      append:
+        messages:
+          role: assistant
+          content: "$response"
+      set: { message: "" }
+    onError: { set: { error: "$error.message" } }
+  heartbeat:
+    method: POST
+    endpoint: /api/heartbeat
+    body:
+      userId: "{{state.userId}}"
+      channel: web
+    responsePath: output.message
+    onSuccess:
+      append:
+        messages:
+          role: assistant
+          content: "$response"
+    onError: { set: { error: "$error.message" } }
+  seedMeeting:
+    set: { message: "Schedule a meeting with " }
+  seedSlack:
+    set: { message: "Send a Slack message to " }
+  seedTask:
+    set: { message: "Create a task: " }
+  seedBrowse:
+    set: { message: "Search the web for " }
+
+defaultView: chat
+
+views:
+  sidebar:
+    widgets:
+      - kind: card
+        title: Skills
+        children:
+          - kind: button
+            label: "📅 Schedule a meeting"
+            action: seedMeeting
+            tone: secondary
+            fullWidth: true
+          - kind: button
+            label: "💬 Send a Slack message"
+            action: seedSlack
+            tone: secondary
+            fullWidth: true
+          - kind: button
+            label: "📝 Create a task"
+            action: seedTask
+            tone: secondary
+            fullWidth: true
+          - kind: button
+            label: "🌐 Browse the web"
+            action: seedBrowse
+            tone: secondary
+            fullWidth: true
+          - kind: button
+            label: "☀️ Daily briefing"
+            action: heartbeat
+            tone: primary
+            fullWidth: true
+      - kind: card
+        title: Status
+        children:
+          - kind: metric-grid
+            metrics:
+              - { value: Connected, label: Connection, tone: success }
+              - { value: "{{state.userId}}", label: User }
+  chat:
+    onEnter: heartbeat
+    widgets:
+      - kind: empty-state
+        icon: "lucide:Bot"
+        title: "Hi, I'm Claw."
+        subtitle: "I can send Slack messages, create tasks, browse the web, schedule meetings, and more."
+        showWhen: "!state.messages.length"
+      - kind: chat-panel
+        messages: state.messages
+        inputAction: sendMessage
+        inputField: state.message
+        placeholder: "Ask me anything..."
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error

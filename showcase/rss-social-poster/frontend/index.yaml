@@ -1,0 +1,53 @@
+version: 1
+meta:
+  id: rss-social-poster
+  title: RSS Social Poster
+  subtitle: Automatically fetch your feed, craft posts with AI, and publish to Twitter/X and LinkedIn on a schedule
+  icon: "lucide:Rss"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: RSS Social Poster, subtitle: "Always-on social distribution", icon: "lucide:Rss" }
+
+state:
+  running: false
+  result: null
+  error: null
+
+actions:
+  start:
+    method: POST
+    endpoint: /api/fetch-rss
+    body: {}
+    onSuccess: { set: { running: true, result: "$response", error: null }, toast: "Automation started" }
+    onError: { set: { error: "$error.message" } }
+  stop:
+    method: DELETE
+    endpoint: /misc/trigger/fetch-rss/poll-feed
+    onSuccess: { set: { running: false }, toast: "Automation stopped" }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Schedule
+    children:
+      - kind: kv-grid
+        items:
+          - { label: Cron, value: "*/3 * * * *" }
+          - { label: Networks, value: "Twitter/X, LinkedIn" }
+          - { label: Status, value: "{{state.running ? 'Running' : 'Stopped'}}" }
+  - kind: card
+    title: Controls
+    children:
+      - kind: button-row
+        buttons:
+          - { label: Start automation, action: start, variant: primary, hideWhen: state.running }
+          - { label: Stop automation, action: stop, variant: danger, showWhen: state.running }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

@@ -1,0 +1,115 @@
+version: 1
+meta:
+  id: video-shorts
+  title: Video Shorts Generator
+  subtitle: Create viral TikToks, YouTube Shorts & Reels
+  icon: "lucide:Clapperboard"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Video Shorts Generator, subtitle: "Hooks · scripts · captions", icon: "lucide:Clapperboard" }
+  nav:
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+
+state:
+  topic: ""
+  duration: 30
+  style: entertaining
+  audience: ""
+  result: null
+  activeTab: hooks
+  history: []
+  selectedId: ""
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-short
+    body:
+      topic: "{{state.topic}}"
+      duration: "{{state.duration}}"
+      style: "{{state.style}}"
+      targetAudience: "{{state.audience}}"
+    onSuccess: { set: { result: "$response" }, dispatch: listShorts }
+    onError: { set: { error: "$error.message" } }
+  listShorts:
+    method: GET
+    endpoint: /api/list-shorts?limit=9
+    responsePath: shorts
+    onSuccess: { set: { history: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-short?id={{state.selectedId}}"
+    responsePath: short
+    onSuccess: { set: { result: "$response", __view: create } }
+
+onMount:
+  - listShorts
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Video brief
+        hideWhen: state.result
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: topic, type: textarea, label: "What's your video about?", placeholder: "e.g., 3 productivity hacks...", rows: 4, required: true }
+              - name: duration
+                type: chip-group
+                label: Length
+                default: 30
+                options:
+                  - { value: 15, label: "15s · Quick hit" }
+                  - { value: 30, label: "30s · Sweet spot" }
+                  - { value: 60, label: "60s · Deep dive" }
+              - name: style
+                type: chip-group
+                label: Style
+                default: entertaining
+                options: [educational, entertaining, storytime, how-to, dramatic, motivational]
+              - { name: audience, type: text, label: Target audience, placeholder: "Gen Z college students..." }
+            submit: { label: Generate, action: generate, loadingLabel: "Crafting..." }
+      - kind: result-panel
+        source: state.result
+        title: Your short
+        sections:
+          - kind: tabs
+            bindTo: state.activeTab
+            tabs:
+              - { id: hooks, label: Hooks, children: [{ kind: bullet-list, source: state.result.hooks }] }
+              - { id: script, label: Script, children: [{ kind: markdown, source: state.result.script, copy: true }] }
+              - { id: visuals, label: Shot List, children: [{ kind: markdown, source: state.result.visuals, copy: true }] }
+              - { id: captions, label: Captions, children: [{ kind: kv-grid, source: state.result.captions }] }
+              - { id: thumbnail, label: Thumbnails, children: [{ kind: bullet-list, source: state.result.thumbnails }] }
+          - kind: button
+            label: New short
+            action: { reset: ["result"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Recent shorts
+        children:
+          - kind: list
+            source: state.history
+            empty: "No shorts yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.topic | truncate:120}}", strong: true }
+              - { kind: text, value: "{{item.duration}}s · {{item.style}}", muted: true }

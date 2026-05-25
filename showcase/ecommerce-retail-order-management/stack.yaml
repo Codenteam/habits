@@ -24,6 +24,7 @@ workflows:
 server:
   port: 13020
   host: "0.0.0.0"
+  frontend: ./frontend
 
 logging:
   level: info

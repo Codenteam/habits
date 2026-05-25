@@ -1,0 +1,64 @@
+# Real Estate Marketing — converted from real-estate-marketing.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: real-estate-marketing
+  title: Real Estate Marketing
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Megaphone"
+  documentTitle: Real Estate Marketing
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Real Estate Marketing
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Megaphone"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13043 · Habits v1.0"
+    port: 13043
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "3,400", label: Newsletter subscribers }
+      - { value: "42%", label: Campaign open rate }
+      - { value: "18", label: Open house RSVPs this week }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Campaign Automation
+            description: Launch targeted email campaigns automatically when new listings are published or events are created.
+            trigger: scheduler
+            tags: [scheduler, email, ai]
+          - name: Social Media Posting
+            description: Schedule and post AI-crafted listing highlights across connected social media channels.
+            trigger: scheduler
+            tags: [scheduler, http, ai]
+          - name: Open House Promotion
+            description: Send automated reminders to registered attendees and track RSVPs for open house events.
+            trigger: scheduler
+            tags: [scheduler, email, sms]
+          - name: Newsletter Distribution
+            description: Compile local market updates with AI and distribute the newsletter to your subscriber list.
+            trigger: scheduler
+            tags: [scheduler, email, ai]
+          - name: Listing Performance Alert
+            description: Alert the marketing team when a listing is underperforming on views or enquiry metrics.
+            trigger: scheduler
+            tags: [scheduler, ai, slack]
+          - name: Competitor Analysis
+            description: Monitor competitor listings weekly and produce an AI-generated market intelligence summary.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

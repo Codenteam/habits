@@ -1,0 +1,164 @@
+version: 1
+meta:
+  id: language-learning
+  title: Language Learning Assistant
+  subtitle: Your AI-powered language tutor
+  icon: "lucide:Languages"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Language Learning, subtitle: "Conversation · lessons · translation", icon: "lucide:Languages" }
+  nav:
+    - { id: conversation, label: Conversation, icon: "lucide:MessageSquare" }
+    - { id: lesson, label: Lessons, icon: "lucide:BookOpen" }
+    - { id: translate, label: Translate, icon: "lucide:Globe" }
+
+state:
+  selectedLanguage: Spanish
+  convLevel: intermediate
+  convScenario: casual
+  chatMessages: []
+  userMessage: ""
+  lessonLang: Spanish
+  lessonLevel: beginner
+  lessonTopic: "General vocabulary"
+  lessonResult: null
+  translateText: ""
+  translateTarget: English
+  translateResult: null
+  error: null
+
+actions:
+  sendMessage:
+    method: POST
+    endpoint: /api/practice-conversation
+    body:
+      targetLanguage: "{{state.selectedLanguage}}"
+      nativeLanguage: English
+      level: "{{state.convLevel}}"
+      scenario: "{{state.convScenario}}"
+      userMessage: "{{state.userMessage}}"
+    responsePath: response
+    onSuccess:
+      append: { chatMessages: { role: assistant, content: "$response" } }
+      set: { userMessage: "" }
+  generateLesson:
+    method: POST
+    endpoint: /api/generate-lesson
+    body:
+      targetLanguage: "{{state.lessonLang}}"
+      level: "{{state.lessonLevel}}"
+      topic: "{{state.lessonTopic}}"
+    onSuccess: { set: { lessonResult: "$response" } }
+  translate:
+    method: POST
+    endpoint: /api/translate-explain
+    body:
+      text: "{{state.translateText}}"
+      targetLanguage: "{{state.translateTarget}}"
+    responsePath: analysis
+    onSuccess: { set: { translateResult: "$response" } }
+
+defaultView: conversation
+
+views:
+  conversation:
+    widgets:
+      - kind: card
+        title: Conversation settings
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: selectedLanguage
+                type: chip-group
+                label: Language
+                default: Spanish
+                options: [Spanish, French, German, Italian, Portuguese, Japanese, Korean, Mandarin]
+              - { name: convLevel, type: select, label: Level, default: intermediate, options: [beginner, intermediate, advanced] }
+              - { name: convScenario, type: select, label: Scenario, default: casual, options: [casual, restaurant, travel, shopping, business] }
+      - kind: chat-panel
+        messagesSource: state.chatMessages
+        inputBindTo: state.userMessage
+        sendAction: sendMessage
+        placeholder: "Type in your target language..."
+        renderTemplate:
+          - { kind: markdown, source: item.content.response }
+          - kind: section
+            title: Translation
+            showWhen: item.content.translation
+            children:
+              - { kind: text, value: "{{item.content.translation}}", muted: true }
+          - kind: section
+            title: Corrections
+            showWhen: item.content.corrections
+            children:
+              - { kind: bullet-list, source: item.content.corrections }
+          - kind: section
+            title: New vocab
+            showWhen: item.content.newVocab
+            children:
+              - { kind: badge-list, source: item.content.newVocab }
+  lesson:
+    widgets:
+      - kind: card
+        title: Generate a lesson
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: lessonLang, type: select, label: Language, options: [Spanish, French, German, Italian, Japanese, Korean, Mandarin], required: true }
+              - { name: lessonLevel, type: select, label: Level, options: [beginner, intermediate, advanced] }
+              - { name: lessonTopic, type: text, label: Topic, placeholder: "Past tense, food vocabulary, greetings...", default: "General vocabulary" }
+            submit: { label: Generate lesson, action: generateLesson, loadingLabel: "Building lesson..." }
+      - kind: result-panel
+        source: state.lessonResult
+        title: Lesson
+        sections:
+          - { kind: markdown, source: state.lessonResult.lesson, copy: true }
+          - kind: section
+            title: Quiz
+            children:
+              - kind: list
+                source: state.lessonResult.quiz
+                template:
+                  - { kind: text, value: "{{item.question}}", strong: true }
+                  - { kind: bullet-list, source: item.options }
+  translate:
+    widgets:
+      - kind: card
+        title: Translate
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: translateText, type: textarea, label: Text to translate, placeholder: "Enter text in any language...", rows: 4, required: true }
+              - { name: translateTarget, type: select, label: Translate to, options: [English, Spanish, French, German, Japanese], default: English, required: true }
+            submit: { label: Translate, action: translate, loadingLabel: "Translating..." }
+      - kind: result-panel
+        source: state.translateResult
+        title: Translation
+        sections:
+          - kind: hero
+            title: "{{state.translateResult.translation}}"
+            description: "{{state.translateResult.literal}}"
+          - kind: section
+            title: Word breakdown
+            children:
+              - kind: list
+                source: state.translateResult.breakdown
+                template:
+                  - { kind: text, value: "{{item.word}} → {{item.meaning}}", strong: true }
+                  - { kind: text, value: "{{item.partOfSpeech}}", muted: true }
+          - kind: section
+            title: Grammar
+            children:
+              - { kind: bullet-list, source: state.translateResult.grammar }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

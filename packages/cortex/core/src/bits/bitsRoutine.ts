@@ -22,6 +22,7 @@ export { PollingStore, DedupStrategy, PollingItemContext, SeenItemRecord, Pollin
 import { oauthTokenStore } from './oauthTokenStore';
 import { OAuth2TokenSet } from './oauth2Types';
 import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
+import { getExecutionOverrides } from '../execution/overrides';
 
 const logger = LoggerFactory.getRoot();
 
@@ -839,10 +840,9 @@ async function executeGenericBitsPiece(
 // ============================================================================
 
 /**
- * Execute a bits module.
- * This is the main entry point for running bits modules.
+ * Execute a bits module (default implementation).
  */
-export async function executeBitsModule(params: BitsExecutionParams): Promise<BitsExecutionResult> {
+export async function defaultExecuteBitsModule(params: BitsExecutionParams): Promise<BitsExecutionResult> {
   // Get module definition from config
   const moduleDefinition: ModuleDefinition = {
     framework: params.framework,
@@ -866,6 +866,18 @@ export async function executeBitsModule(params: BitsExecutionParams): Promise<Bi
     const errorMsg = error?.message || (typeof error === 'string' ? error : JSON.stringify(error));
     throw new Error(`Failed to load Bits module from '${moduleDefinition.repository}': ${errorMsg}`);
   }
+}
+
+/**
+ * Execute a bits module.
+ * Delegates to an active execution override when one is installed (e.g. by @ha-bits/cortex-lab).
+ */
+export async function executeBitsModule(params: BitsExecutionParams): Promise<BitsExecutionResult> {
+  const override = getExecutionOverrides()?.executeBits;
+  if (override) {
+    return override(params);
+  }
+  return defaultExecuteBitsModule(params);
 }
 
 /**

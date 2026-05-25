@@ -4,6 +4,7 @@ packages:
   - packages/*/ui
   - packages/*/server
   - packages/*/core
+  - packages/*/lab
   - packages/*/app
   - packages/*/frontend-builder
 

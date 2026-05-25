@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import WorkflowEditor from './components/WorkflowEditor';
+import DevStackLoader from './components/DevStackLoader';
 import { setupStatePersistence } from './store/persistence';
 import { loadState } from './store/middleware/persistenceMiddleware';
 import { store } from './store/store';
@@ -10,7 +11,8 @@ import { fetchServerFlags } from './store/slices/serverFlagsSlice';
 function App() {
   useEffect(() => {
     // Load initial state from localStorage if it exists
-    const savedState = loadState();
+    const loadParam = new URLSearchParams(window.location.search).get('load');
+    const savedState = loadParam ? null : loadState();
     if (savedState) {
       // Dispatch actions to restore state for each slice
       if (savedState.workflow) {
@@ -31,6 +33,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <DevStackLoader />
       <WorkflowEditor />
     </div>
   );

@@ -1,0 +1,140 @@
+version: 1
+meta:
+  id: ai-podcast
+  title: AI Podcast Generator
+  subtitle: Episodes, scripts, and show notes in one shot
+  icon: "lucide:Mic"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: AI Podcast Generator, subtitle: "Scripts · chapters · show notes", icon: "lucide:Mic" }
+  nav:
+    - { id: create, label: Create, icon: "lucide:Sparkles" }
+    - { id: history, label: Recent, icon: "lucide:FolderOpen" }
+
+state:
+  topic: ""
+  format: solo
+  podcastName: ""
+  duration: "30"
+  hostName: ""
+  guestName: ""
+  notes: ""
+  episodeResult: null
+  recentEpisodes: []
+  selectedId: ""
+  resultsTab: script
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/generate-episode
+    body:
+      topic: "{{state.topic}}"
+      format: "{{state.format}}"
+      duration: "{{state.duration}}"
+      podcastName: "{{state.podcastName}}"
+      hostName: "{{state.hostName}}"
+      guestName: "{{state.guestName}}"
+      notes: "{{state.notes}}"
+    onSuccess: { set: { episodeResult: "$response", error: null }, dispatch: listEpisodes }
+    onError: { set: { error: "$error.message" } }
+  listEpisodes:
+    method: GET
+    endpoint: /api/list-episodes?limit=12
+    responsePath: episodes
+    onSuccess: { set: { recentEpisodes: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-episode?id={{state.selectedId}}"
+    responsePath: episode
+    onSuccess: { set: { episodeResult: "$response", __view: create } }
+
+onMount:
+  - listEpisodes
+
+defaultView: create
+
+views:
+  create:
+    widgets:
+      - kind: card
+        title: Episode details
+        hideWhen: state.episodeResult
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: topic, type: textarea, label: Episode topic, placeholder: "What's this episode about?", rows: 3, required: true }
+              - name: format
+                type: radio-cards
+                label: Format
+                default: solo
+                options:
+                  - { value: solo, label: Solo, description: "One host, deep focus" }
+                  - { value: interview, label: Interview, description: "Host + guest" }
+                  - { value: educational, label: Educational, description: "Teach a topic" }
+                  - { value: storytelling, label: Storytelling, description: "Narrative" }
+                  - { value: debate, label: Debate, description: "Two perspectives" }
+              - { name: podcastName, type: text, label: Podcast name, placeholder: "Your podcast name" }
+              - { name: duration, type: select, label: Duration (min), default: "30", options: ["10", "20", "30", "45", "60"] }
+              - { name: hostName, type: text, label: Host name, placeholder: "Your name" }
+              - { name: guestName, type: text, label: Guest name, placeholder: "Guest name", showWhen: "['interview','debate'].includes(state.format)" }
+              - { name: notes, type: textarea, label: Notes, placeholder: "Points to cover, style, context...", rows: 4 }
+            submit: { label: Generate episode, action: generate, loadingLabel: "Crafting your episode..." }
+      - kind: result-panel
+        source: state.episodeResult
+        title: Generated episode
+        sections:
+          - kind: tabs
+            bindTo: state.resultsTab
+            tabs:
+              - id: script
+                label: Script
+                children:
+                  - kind: section
+                    title: Intro
+                    children:
+                      - { kind: markdown, source: state.episodeResult.intro, copy: true }
+                  - kind: section
+                    title: Full script
+                    children:
+                      - { kind: markdown, source: state.episodeResult.script, copy: true }
+              - id: chapters
+                label: Chapters
+                children:
+                  - { kind: markdown, source: state.episodeResult.chapters, copy: true }
+              - id: shownotes
+                label: Show Notes
+                children:
+                  - { kind: markdown, source: state.episodeResult.shownotes, copy: true }
+              - id: social
+                label: Promo
+                children:
+                  - { kind: kv-grid, source: state.episodeResult.social }
+          - kind: button
+            label: Generate another
+            action: { reset: ["episodeResult"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Recent episodes
+        children:
+          - kind: list
+            source: state.recentEpisodes
+            empty: "No episodes yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.topic | truncate:120}}", strong: true }
+              - { kind: text, value: "{{item.format}} · {{item.duration}} min · {{item.podcastName}}", muted: true }

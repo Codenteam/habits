@@ -1,0 +1,83 @@
+# Data-flow capture file schema (data-flow.yaml)
+$schema: http://json-schema.org/draft-07/schema#
+title: DataFlowFile
+description: Captured habit execution I/O for replay and mixed testing
+
+type: object
+required:
+  - version
+  - configPath
+  - capturedAt
+  - workflows
+
+properties:
+  version:
+    type: integer
+    const: 1
+  configPath:
+    type: string
+    description: Path to stack.yaml relative to the cwd used during capture (never absolute)
+  capturedAt:
+    type: string
+    format: date-time
+  workflows:
+    type: object
+    description: Map of workflowId to captured execution data
+    additionalProperties:
+      $ref: "#/definitions/DataFlowWorkflowRecord"
+
+definitions:
+  DataFlowNodeRecord:
+    type: object
+    required:
+      - nodeId
+      - framework
+      - input
+      - success
+      - durationMs
+    properties:
+      nodeId:
+        type: string
+      framework:
+        type: string
+      module:
+        type: string
+      operation:
+        type: string
+      input:
+        type: object
+        additionalProperties: true
+      output: {}
+      success:
+        type: boolean
+      durationMs:
+        type: number
+      error:
+        type: string
+      replayed:
+        type: boolean
+
+  DataFlowWorkflowRecord:
+    type: object
+    required:
+      - workflowName
+      - executionId
+      - habitInput
+      - nodes
+    properties:
+      workflowName:
+        type: string
+      executionId:
+        type: string
+      habitInput:
+        type: object
+        additionalProperties: true
+      env:
+        type: object
+        additionalProperties:
+          type: string
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/DataFlowNodeRecord"
+      workflowOutput: {}

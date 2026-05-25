@@ -17,10 +17,10 @@ nodes:
       operation: get
       params:
         collection: "quizzes"
-        filter: '{"_id": "{{habits.input.id}}"}'
+        key: "{{habits.input.id}}"
 
 edges: []
 
 output:
-  quiz: "{{fetch-quiz.document}}"
+  quiz: "{{fetch-quiz.value}}"
   found: "{{fetch-quiz.found}}"

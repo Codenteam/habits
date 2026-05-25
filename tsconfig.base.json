@@ -21,6 +21,8 @@
       "@ha-bits/cortex/*": ["packages/cortex/server/src/*"],
       "@ha-bits/cortex-core": ["packages/cortex/core/src/index.ts"],
       "@ha-bits/cortex-core/*": ["packages/cortex/core/src/*"],
+      "@ha-bits/cortex-lab": ["packages/cortex/lab/src/index.ts"],
+      "@ha-bits/cortex-lab/*": ["packages/cortex/lab/src/*"],
       "@ha-bits/base": ["packages/base/server/src/index.ts"],
       "@ha-bits/base/*": ["packages/base/server/src/*"],
       "@ha-bits/frontend-builder": ["packages/base/frontend-builder/src/index.ts"],

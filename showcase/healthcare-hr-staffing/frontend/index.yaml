@@ -1,0 +1,64 @@
+# Healthcare HR & Staffing — converted from healthcare-hr-staffing.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: healthcare-hr-staffing
+  title: "Healthcare HR & Staffing"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Users"
+  documentTitle: "Healthcare HR & Staffing"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Healthcare HR & Staffing"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Users"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13003 · Habits v1.0"
+    port: 13003
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "124", label: Staff notified this week }
+      - { value: "3", label: Credentials expiring soon }
+      - { value: "100%", label: Onboarding tasks tracked }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Nurse Shift Scheduling
+            description: Auto-generate shift rosters and notify staff of their assignments each week.
+            trigger: scheduler
+            tags: [scheduler, email, sms]
+          - name: Credential Tracking
+            description: Monitor professional licence expiry dates and trigger renewal reminders automatically.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Staff Onboarding
+            description: Send structured onboarding checklists to new hires and track their completion.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Shift Coverage Request
+            description: Alert available qualified staff via SMS when a shift becomes vacant.
+            trigger: webhook
+            tags: [webhook, sms, slack]
+          - name: Compliance Training
+            description: Assign mandatory training modules to staff and track completion against deadlines.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Performance Review
+            description: Schedule annual performance reviews and collect structured feedback from managers.
+            trigger: scheduler
+            tags: [scheduler, email, http]

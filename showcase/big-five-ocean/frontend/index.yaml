@@ -1,0 +1,131 @@
+version: 1
+meta:
+  id: big-five-ocean
+  title: Big Five OCEAN Personality
+  subtitle: Discover your personality through a science-backed assessment or AI social media analysis
+  icon: "lucide:Waves"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Big Five OCEAN, subtitle: "Personality assessment", icon: "lucide:Waves" }
+  nav:
+    - { id: exam, label: Exam Mode, icon: "lucide:ListChecks" }
+    - { id: social, label: Social Mode, icon: "lucide:Smartphone" }
+
+state:
+  answers:
+    q1: null
+    q2: null
+    q3: null
+    q4: null
+    q5: null
+    q6: null
+    q7: null
+    q8: null
+    q9: null
+    q10: null
+    q11: null
+    q12: null
+    q13: null
+    q14: null
+    q15: null
+    q16: null
+    q17: null
+    q18: null
+    q19: null
+    q20: null
+  posts: ""
+  result: null
+  error: null
+
+actions:
+  examSubmit:
+    method: POST
+    endpoint: /api/ocean-exam
+    body: { answers: "{{state.answers}}" }
+    responsePath: "output[0].value"
+    onSuccess: { set: { result: "$response" } }
+    onError: { set: { error: "$error.message" } }
+  socialSubmit:
+    method: POST
+    endpoint: /api/ocean-social
+    body: { posts: "{{state.posts}}" }
+    responsePath: "output[0].value"
+    onSuccess: { set: { result: "$response" } }
+    onError: { set: { error: "$error.message" } }
+
+defaultView: exam
+
+views:
+  exam:
+    widgets:
+      - kind: card
+        title: Answer 20 questions
+        children:
+          - kind: form
+            bindTo: state.answers
+            fields:
+              - { name: q1, type: likert, label: "1. I am the life of the party.", min: 1, max: 5, leftLabel: "Strongly disagree", rightLabel: "Strongly agree" }
+              - { name: q2, type: likert, label: "2. I sympathize with others' feelings.", min: 1, max: 5 }
+              - { name: q3, type: likert, label: "3. I get chores done right away.", min: 1, max: 5 }
+              - { name: q4, type: likert, label: "4. I have frequent mood swings.", min: 1, max: 5 }
+              - { name: q5, type: likert, label: "5. I have a vivid imagination.", min: 1, max: 5 }
+              - { name: q6, type: likert, label: "6. I don't talk a lot.", min: 1, max: 5 }
+              - { name: q7, type: likert, label: "7. I am not interested in other people's problems.", min: 1, max: 5 }
+              - { name: q8, type: likert, label: "8. I often forget to put things back.", min: 1, max: 5 }
+              - { name: q9, type: likert, label: "9. I am relaxed most of the time.", min: 1, max: 5 }
+              - { name: q10, type: likert, label: "10. I am not interested in abstract ideas.", min: 1, max: 5 }
+              - { name: q11, type: likert, label: "11. I talk to many different people at parties.", min: 1, max: 5 }
+              - { name: q12, type: likert, label: "12. I feel others' emotions.", min: 1, max: 5 }
+              - { name: q13, type: likert, label: "13. I like order.", min: 1, max: 5 }
+              - { name: q14, type: likert, label: "14. I get upset easily.", min: 1, max: 5 }
+              - { name: q15, type: likert, label: "15. I have difficulty understanding abstract ideas.", min: 1, max: 5 }
+              - { name: q16, type: likert, label: "16. I keep in the background.", min: 1, max: 5 }
+              - { name: q17, type: likert, label: "17. I am not really interested in others.", min: 1, max: 5 }
+              - { name: q18, type: likert, label: "18. I make a mess of things.", min: 1, max: 5 }
+              - { name: q19, type: likert, label: "19. I seldom feel blue.", min: 1, max: 5 }
+              - { name: q20, type: likert, label: "20. I do not have a good imagination.", min: 1, max: 5 }
+            submit: { label: Submit answers, action: examSubmit, loadingLabel: "Scoring..." }
+  social:
+    widgets:
+      - kind: card
+        title: Paste social posts
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: posts, type: textarea, label: Your social posts, placeholder: "One post per line — at least 50 characters", rows: 10, required: true, minLength: 50 }
+            submit: { label: Analyse posts, action: socialSubmit, loadingLabel: "Analysing..." }
+
+widgets:
+  - kind: result-panel
+    source: state.result
+    title: Your OCEAN profile
+    sections:
+      - kind: trait-bars
+        traits:
+          - { letter: O, name: Openness, value: "{{state.result.openness.score}}", description: "{{state.result.openness.description}}" }
+          - { letter: C, name: Conscientiousness, value: "{{state.result.conscientiousness.score}}", description: "{{state.result.conscientiousness.description}}" }
+          - { letter: E, name: Extraversion, value: "{{state.result.extraversion.score}}", description: "{{state.result.extraversion.description}}" }
+          - { letter: A, name: Agreeableness, value: "{{state.result.agreeableness.score}}", description: "{{state.result.agreeableness.description}}" }
+          - { letter: N, name: Neuroticism, value: "{{state.result.neuroticism.score}}", description: "{{state.result.neuroticism.description}}" }
+      - kind: section
+        title: Profile
+        children:
+          - { kind: markdown, source: state.result.profile }
+      - kind: section
+        title: Strengths
+        children:
+          - { kind: bullet-list, source: state.result.strengths }
+      - kind: section
+        title: Growth areas
+        children:
+          - { kind: bullet-list, source: state.result.growthAreas }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

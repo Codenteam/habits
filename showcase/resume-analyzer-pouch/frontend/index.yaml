@@ -1,0 +1,109 @@
+version: 1
+meta:
+  id: resume-analyzer-pouch
+  title: Resume Analyzer
+  subtitle: ATS, experience, match, summary, and interview prep
+  icon: "lucide:FileText"
+
+theme:
+  preset: mobile-blue
+  mode: dark
+
+layout:
+  type: mobile-shell
+  header: { title: Resume Analyzer, subtitle: "AI screening assistant", icon: "lucide:FileText" }
+  nav:
+    - { id: home, label: New, icon: "lucide:Plus" }
+    - { id: history, label: History, icon: "lucide:FolderOpen" }
+
+state:
+  resumeImage: ""
+  targetRole: ""
+  jobDescription: ""
+  result: null
+  history: []
+  selectedId: ""
+  activeResultTab: ats
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/analyze-resume
+    body:
+      resumeImage: "{{state.resumeImage}}"
+      targetRole: "{{state.targetRole}}"
+      jobDescription: "{{state.jobDescription}}"
+    responsePath: output
+    onSuccess: { set: { result: "$response" }, dispatch: listAnalyses }
+    onError: { set: { error: "$error.message" } }
+  listAnalyses:
+    method: GET
+    endpoint: /api/list-analyses?limit=10
+    responsePath: output.analyses
+    onSuccess: { set: { history: "$response" } }
+  open:
+    method: GET
+    endpoint: "/api/get-analysis?id={{state.selectedId}}&includeAttachment=true"
+    responsePath: output.analysis
+    onSuccess: { set: { result: "$response", __view: home } }
+
+onMount:
+  - listAnalyses
+
+defaultView: home
+
+views:
+  home:
+    widgets:
+      - kind: card
+        title: Upload resume
+        hideWhen: state.result
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: resumeImage, type: image-upload, label: Resume image, accept: ".png,.jpg,.jpeg,.webp", asBase64: true, required: true }
+              - { name: targetRole, type: text, label: Target role, placeholder: "e.g. Senior Software Engineer" }
+              - { name: jobDescription, type: textarea, label: Job description, rows: 6 }
+            submit: { label: Analyze, action: analyze, loadingLabel: "Analysing..." }
+      - kind: result-panel
+        source: state.result
+        title: Score
+        sections:
+          - kind: metric-grid
+            columns: 2
+            metrics:
+              - { value: "{{state.result.atsScore}}%", label: ATS }
+              - { value: "{{state.result.keywordsScore}}%", label: Keywords }
+              - { value: "{{state.result.formatScore}}%", label: Format }
+              - { value: "{{state.result.matchScore}}%", label: Match }
+          - kind: tabs
+            bindTo: state.activeResultTab
+            tabs:
+              - { id: ats, label: ATS, children: [{ kind: markdown, source: state.result.ats }] }
+              - { id: exp, label: Experience, children: [{ kind: markdown, source: state.result.experience }] }
+              - { id: match, label: Match, children: [{ kind: badge-list, source: state.result.matchSkills }, { kind: markdown, source: state.result.matchDetails }] }
+              - { id: summary, label: Summary, children: [{ kind: markdown, source: state.result.summary, copy: true }] }
+              - { id: interview, label: Interview, children: [{ kind: bullet-list, source: state.result.interview }] }
+          - kind: button
+            label: New analysis
+            action: { reset: ["result"] }
+            variant: secondary
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"
+  history:
+    widgets:
+      - kind: card
+        title: Past analyses
+        children:
+          - kind: list
+            source: state.history
+            empty: "No analyses yet."
+            itemKey: _id
+            onItemClick: { set: { selectedId: "$item._id" }, dispatch: open }
+            template:
+              - { kind: text, value: "{{item.targetRole}}", strong: true }
+              - { kind: text, value: "ATS {{item.atsScore}}% · {{item.createdAt | date}}", muted: true }

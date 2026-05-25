@@ -46,7 +46,7 @@ You can manually trigger the workflow via HTTP:
 
 ```bash
 # Trigger polling
-curl http://localhost:13000/api/workflows/email-forward-demo/run
+curl http://localhost:13000/api/email-forward-demo
 
 # Check workflow status
 curl http://localhost:13000/misc/workflows

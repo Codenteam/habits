@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/base",
-  "version": "1.0.2",
+  "version": "1.5.122",
   "description": "Base - Habits Workflow Builder API Server with integrated UI",
   "main": "./server/main.cjs",
   "bin": {

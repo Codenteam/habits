@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AvailableModuleDefinition, ExecutionRequest, Workflow } from '../types/workflow';
 import { ExportBundle } from '@ha-bits/core';
+import type { BuildHabitGraphInput } from '@ha-bits/cortex-lab/graph';
 
 // API-specific execution result (different from shared workflow ExecutionResult)
 interface APIExecutionResult {
@@ -24,6 +25,19 @@ export interface ServerFlags {
 const API_BASE_URL = '/habits/base/api';
 
 export const api = {
+  // UI builder
+  async compileUiYaml(yamlSource: string): Promise<{ success: boolean; html?: string; error?: string }> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/ui/compile-yaml`, { yaml: yamlSource });
+      const payload = response.data;
+      if (payload?.success) return { success: true, html: payload.data?.html };
+      return { success: false, error: payload?.error || 'Unknown compile error' };
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Compile request failed';
+      return { success: false, error: msg };
+    }
+  },
+
   // Feature flags
   async getServerFlags(): Promise<ServerFlags> {
     try {
@@ -296,6 +310,7 @@ export const api = {
     stackName?: string;
     envContent?: string;
     frontendHtml?: string;
+    frontendYaml?: string;
   }): Promise<Blob> {
     const response = await axios.post(`${API_BASE_URL}/export/pack/habit`, data, {
       responseType: 'blob',
@@ -316,11 +331,12 @@ export const api = {
     prompt: string,
     onProgress: (step: string) => void,
     signal?: AbortSignal,
+    apiKey?: string,
   ): Promise<Blob> {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, ...(apiKey ? { claudeApiKey: apiKey } : {}) }),
       signal,
     });
 
@@ -390,11 +406,73 @@ export const api = {
     });
   },
 
-  generateHabit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal): Promise<Blob> {
-    return this._streamGenerate('/creator/create-habit', prompt, onProgress, signal);
+  generateHabit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal, apiKey?: string): Promise<Blob> {
+    return this._streamGenerate('/creator/create-habit', prompt, onProgress, signal, apiKey);
   },
 
-  generateBit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal): Promise<Blob> {
-    return this._streamGenerate('/creator/create-bit', prompt, onProgress, signal);
+  generateBit(prompt: string, onProgress: (step: string) => void, signal?: AbortSignal, apiKey?: string): Promise<Blob> {
+    return this._streamGenerate('/creator/create-bit', prompt, onProgress, signal, apiKey);
+  },
+
+  async getCreatorStatus(): Promise<{ enabled: boolean; hasApiKey: boolean }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/creator/status`);
+      if (!res.ok) return { enabled: false, hasApiKey: false };
+      return res.json();
+    } catch {
+      return { enabled: false, hasApiKey: false };
+    }
+  },
+
+  async validateHabitLab(payload: {
+    habits: Array<{
+      id: string;
+      name: string;
+      nodes: Array<{ id: string; data?: Record<string, unknown> }>;
+      edges: Array<{ source: string; target: string }>;
+      output?: Record<string, string>;
+      input?: Array<{ name?: string; id?: string }>;
+    }>;
+    frontendYaml?: string;
+    envContent?: string;
+    strict?: boolean;
+  }): Promise<{ ok: boolean; data?: any; error?: string }> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/lab/validate`, payload);
+      return {
+        ok: response.data?.success === true,
+        data: response.data?.data,
+      };
+    } catch (err: any) {
+      const data = err?.response?.data?.data;
+      if (data) {
+        return { ok: false, data };
+      }
+      return {
+        ok: false,
+        error: err?.response?.data?.error || err?.message || 'Validation request failed',
+      };
+    }
+  },
+
+  async validateHabitLabDryRun(payload: {
+    graphInput: BuildHabitGraphInput;
+  }): Promise<{ ok: boolean; data?: any; error?: string }> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/lab/dry-run`, payload);
+      return {
+        ok: response.data?.success === true,
+        data: response.data?.data,
+      };
+    } catch (err: any) {
+      const data = err?.response?.data?.data;
+      if (data) {
+        return { ok: false, data };
+      }
+      return {
+        ok: false,
+        error: err?.response?.data?.error || err?.message || 'Dry-run request failed',
+      };
+    }
   },
 };

@@ -60,60 +60,125 @@ async function enrichHabitContextWithOpenAPI(context: HabitContext): Promise<Hab
 }
 
 /**
- * System prompt rules for UI generation - ensures AI generates proper website UIs, not API clients
+ * System prompt rules for UI generation - ensures AI generates proper YAML-driven UiSpec, not raw HTML
  */
 const UI_GENERATION_RULES = `
-You are a senior product designer + front-end engineer.
+You are a senior product designer + front-end engineer working with the Habits YAML-driven UI system.
 
-Create a real HTML interface with primary call-to-action form that submits data via a specific POST request implemented in code.
+Generate a \`frontend/index.yaml\` file (a UiSpec) — NOT raw HTML.
+The YAML is compiled to a self-contained HTML page at request time by \`@ha-bits/cortex-core\`.
 
-Don't put any parts to the page that aren't necessary for the functionality.
+Do NOT output HTML. Output ONLY valid YAML that conforms to the UiSpec schema.
+
 ## Hard Constraints (MUST FOLLOW)
 
-The user must interact with a normal form (human-friendly labels).
+- Output MUST be a single YAML document starting with \`version: 1\`.
+- No CSS gradients anywhere — the YAML engine uses only solid colors.
+- Use human-friendly labels for all form fields (e.g., "email_address" → "Email Address").
+- The POST call must be triggered only through form submission (actions), invisible to the user.
+- Do not include any raw HTML, <style> blocks, or <script> tags.
+- Always add \`# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml\` at the top.
+- Icons: use \`lucide:Name\` (e.g. \`lucide:Zap\`, \`lucide:Bot\`, \`lucide:Play\`). Do NOT use emoji. Omit \`icon\` to hide it.
 
-The POST request must be triggered only as part of the form submission flow, invisible to the user.
+## UiSpec Structure
 
-If you violate any of the above, the output is invalid.
+\`\`\`yaml
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
 
-IMPORTANT: Make sure to add the javascript code that will submit any forms if needed.
+meta:
+  id: {workflow-id}        # matches the habit workflow id
+  title: {Human Title}
+  icon: "lucide:Bot"
 
-## Website UI Requirements
+theme:
+  preset: neural          # choose: neural, ha-bits-blue, ha-bits-purple, ha-bits-cyan, ha-bits-emerald, ha-bits-red, aurora, cyberpunk, mobile-blue, tailwind-dark
+  mode: dark
 
-- A full page layout
-- Modern premium visual style: dark + glassmorphism OR clean light + bold typography
-- Responsive layout (desktop-first + mobile)
-- Polished states: hover/focus, inline validation errors, loading, success, failure
-- Micro-interactions (subtle animations)
-- No gradients at all. 
+state:
+  result: null             # all reactive state goes here
 
-## Form Requirements (Human UX, Not Developer UX)
+actions:
+  run:
+    method: POST
+    endpoint: /api/{workflow-id}
+    body: { field: "{{state.field}}" }
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Done!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
 
-- Validation:
-  - Required fields
-  - Show inline error messages with professional styling
-- Use human-friendly labels derived from API field names (e.g., "email_address" → "Email Address")
-- Include proper form feedback: loading spinners, success messages, error handling
+widgets:
+  - kind: card
+    title: {Title}
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: field, type: text, label: Your Input, required: true }
+        submit: { label: Run, action: run, loadingLabel: "Running..." }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }
+\`\`\`
+
+## API Response Parsing (CRITICAL)
+
+The response from \`POST /api/{workflow-id}\` always has \`output\` at the top level.
+In the YAML, use \`responsePath: output\` and \`set: { result: "$response" }\` to capture it.
+Access fields in templates as \`{{state.result.fieldName}}\`.
+
+## Available Widget Kinds
+
+- Layout: \`section\`, \`card\`, \`row\`, \`column\`, \`tabs\`, \`accordion\`, \`modal\`, \`split\`
+- Input: \`form\`, \`button\`, \`action-button\`, \`copy-button\`, \`download-button\`, \`toggle\`, \`chip-group\`, \`radio-cards\`, \`tag-input\`
+- Output: \`result-panel\`, \`pre\`, \`code-block\`, \`json-dump\`, \`markdown\`, \`text\`, \`heading\`, \`image\`, \`score-ring\`, \`bar-chart\`, \`progress-bar\`, \`metric-grid\`, \`stat-row\`, \`badge-list\`, \`data-table\`, \`kv-grid\`, \`list\`, \`checklist\`
+- Feedback: \`status-banner\`, \`alert\`, \`empty-state\`, \`spinner\`, \`loading-steps\`
+- Realtime: \`chat-panel\`, \`streaming-panel\`, \`streaming-text\`
+
+## Form Field Types
+
+\`text\`, \`email\`, \`number\`, \`date\`, \`textarea\`, \`select\`, \`chip-group\`, \`radio-cards\`, \`tag-input\`, \`file\`, \`image\`
+
+## showWhen / hideWhen
+
+Use template expressions for conditional rendering:
+\`showWhen: state.result\` — shows widget when result is truthy
+\`showWhen: "state.queue.length > 0"\` — JS expression
+\`hideWhen: state.loading\` — hides when loading
 `;
 
 /**
- * Extract HTML from markdown code blocks if present, otherwise return the whole content
+ * Extract YAML from markdown code blocks if present, otherwise return the whole content
  */
-function extractHtmlFromResponse(content: string): string {
+function extractYamlFromResponse(content: string): string {
   if (!content) return '';
   
-  // Try to extract from ```html ... ``` blocks
-  const htmlBlockMatch = content.match(/```html\s*([\s\S]*?)```/i);
-  if (htmlBlockMatch && htmlBlockMatch[1]) {
-    return htmlBlockMatch[1].trim();
+  // Try to extract from ```yaml ... ``` blocks
+  const yamlBlockMatch = content.match(/```yaml\s*([\s\S]*?)```/i);
+  if (yamlBlockMatch && yamlBlockMatch[1]) {
+    return yamlBlockMatch[1].trim();
+  }
+
+  // Try to extract from ```yml ... ``` blocks
+  const ymlBlockMatch = content.match(/```yml\s*([\s\S]*?)```/i);
+  if (ymlBlockMatch && ymlBlockMatch[1]) {
+    return ymlBlockMatch[1].trim();
   }
   
-  // Try to extract from generic ``` ... ``` blocks that contain HTML
+  // Try to extract from generic ``` ... ``` blocks that contain YAML
   const genericBlockMatch = content.match(/```\s*([\s\S]*?)```/);
   if (genericBlockMatch && genericBlockMatch[1]) {
     const blockContent = genericBlockMatch[1].trim();
-    // Check if it looks like HTML (starts with < or contains common HTML tags)
-    if (blockContent.startsWith('<') || /<(html|head|body|div|style|script|form|input|button)/i.test(blockContent)) {
+    // Check if it looks like YAML (starts with version: or # yaml-language-server)
+    if (blockContent.startsWith('version:') || blockContent.startsWith('# yaml-language-server')) {
       return blockContent;
     }
   }
@@ -510,8 +575,8 @@ async function generateWithOpenAICompatible(
         
         if (done) {
           if (request.onProgress) {
-            const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-            request.onProgress(extractedHtml, true);
+            const extractedYaml = extractYamlFromResponse(accumulatedContent);
+            request.onProgress(extractedYaml, true);
           }
           break;
         }
@@ -531,8 +596,8 @@ async function generateWithOpenAICompatible(
               accumulatedContent += content;
               
               if (request.onProgress) {
-                const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-                request.onProgress(extractedHtml, false);
+                const extractedYaml = extractYamlFromResponse(accumulatedContent);
+                request.onProgress(extractedYaml, false);
               }
             }
           } catch (e) {
@@ -545,12 +610,12 @@ async function generateWithOpenAICompatible(
     }
   }
   
-  const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-  return { html: extractedHtml };
+  const extractedYaml = extractYamlFromResponse(accumulatedContent);
+  return { yaml: extractedYaml };
 }
 
 /**
- * Generate frontend HTML using AI
+ * Generate frontend YAML UiSpec using AI
  */
 export async function generateWithAI(
   request: AIGenerationRequest,
@@ -597,44 +662,57 @@ ${request.prompt}
 
 # Backend Context & API Endpoints
 
-The following define the backend behavior. 
+The following define the backend behavior.
 ${contextContent}
 
 ---
 
 ## Generation Instructions
 
-Generate a professional website frontend that:
+Generate a \`frontend/index.yaml\` UiSpec that:
 1. Provides user-friendly forms for each /api endpoint
-2. Handles all required input fields based on the API specs
-3. Displays appropriate feedback for API execution results
-4. If multiple APIs exist, consider a navigation or tabbed interface
-5. The frontend and the backend are on the same host, so use /api without hostname for backend stuff
-6. Don't add any buttons that aren't necessary for a real website UI. 
-7. Add tailwind to the html
-8. Don't include any technical details, raw JSON, or HTTP request information in the visible UI. Nor technical works like API, workflow, node, endpoint, etc. The user should only see a polished website interface with forms and feedback, not any developer-centric information.
+2. Maps all required input fields to form fields based on the API specs
+3. Displays appropriate feedback for API execution results (result-panel, metric-grid, etc.)
+4. If multiple APIs exist, use a \`tabs\` or \`sidebar\` layout
+5. All endpoints use /api without hostname (same host)
+6. Only include widgets necessary for the functionality
+7. Use human-friendly labels, no technical terms (API, workflow, node, endpoint, etc.) visible to the user
+8. After the action succeeds, use \`set: { result: "$response" }\` to capture the output
+9. Access output fields in templates as \`{{state.result.fieldName}}\`
 
-Remember: this must be a real website UI, NOT an API testing tool. The user should never see raw JSON, HTTP methods, or request details on the screen.`;
+Remember: the output MUST be valid YAML (a UiSpec), NOT HTML.`;
     }
   }
 
-  // Return mock HTML if mock mode is enabled
+  // Return mock YAML if mock mode is enabled
   const forceMock = false;
   if (forceMock) {
-    const mockHtml = `<!DOCTYPE html>
-<html lang="en">
-Test HTML Date: ${new Date().toISOString()}
-<script type="text/javascript">
+    const mockYaml = `# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
 
-</script>
-</html>`;
+meta:
+  id: mock
+  title: Mock Habit (${new Date().toISOString()})
+  icon: "lucide:Bot"
+
+theme:
+  preset: neural
+  mode: dark
+
+state:
+  result: null
+
+widgets:
+  - kind: text
+    value: Mock YAML generated at ${new Date().toISOString()}
+`;
 
     // Call progress callback if provided
     if (request.onProgress) {
-      request.onProgress(mockHtml, true);
+      request.onProgress(mockYaml, true);
     }
     console.log(enhancedPrompt);
-    return { html: mockHtml };
+    return { yaml: mockYaml };
   }
 
   // Use OpenAI-compatible direct mode for external providers
@@ -675,8 +753,8 @@ Test HTML Date: ${new Date().toISOString()}
         if (done) {
           // Final progress callback
           if (request.onProgress) {
-            const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-            request.onProgress(extractedHtml, true);
+            const extractedYaml = extractYamlFromResponse(accumulatedContent);
+            request.onProgress(extractedYaml, true);
           }
           break;
         }
@@ -685,10 +763,10 @@ Test HTML Date: ${new Date().toISOString()}
         const chunk = decoder.decode(value, { stream: true });
         accumulatedContent += chunk;
         
-        // Send progress update with extracted HTML
+        // Send progress update with extracted YAML
         if (request.onProgress) {
-          const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-          request.onProgress(extractedHtml, false);
+          const extractedYaml = extractYamlFromResponse(accumulatedContent);
+          request.onProgress(extractedYaml, false);
         }
       }
     } finally {
@@ -698,13 +776,13 @@ Test HTML Date: ${new Date().toISOString()}
     // Fallback if no reader (shouldn't happen in browsers)
     accumulatedContent = await response.text();
     if (request.onProgress) {
-      const extractedHtml = extractHtmlFromResponse(accumulatedContent);
-      request.onProgress(extractedHtml, true);
+      const extractedYaml = extractYamlFromResponse(accumulatedContent);
+      request.onProgress(extractedYaml, true);
     }
   }
   
-  // Extract HTML from markdown code blocks if present
-  const extractedHtml = extractHtmlFromResponse(accumulatedContent);
+  // Extract YAML from markdown code blocks if present
+  const extractedYaml = extractYamlFromResponse(accumulatedContent);
   
   // Check if the response is a JSON error from the Intersect API
   try {
@@ -721,7 +799,7 @@ Test HTML Date: ${new Date().toISOString()}
   
   // Normalize the response
   return {
-    html: extractedHtml,
+    yaml: extractedYaml,
   };
 }
 

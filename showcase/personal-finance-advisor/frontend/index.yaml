@@ -1,0 +1,158 @@
+version: 1
+meta:
+  id: personal-finance-advisor
+  title: Personal Finance Advisor
+  subtitle: AI-powered personal finance guidance
+  icon: "lucide:Wallet"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Personal Finance Advisor, subtitle: "Analyse · budget · ask", icon: "lucide:Wallet" }
+  nav:
+    - { id: analyze, label: Analyze, icon: "lucide:BarChart" }
+    - { id: budget, label: Budget, icon: "lucide:Calendar" }
+    - { id: advice, label: Advice, icon: "lucide:MessageSquare" }
+
+state:
+  income: 5000
+  expenses:
+    housing: 1500
+    food: 500
+    transportation: 300
+    utilities: 200
+    entertainment: 200
+    other: 300
+  savings: 10000
+  debt: 5000
+  analysis: null
+  budgetIncome: 5000
+  budgetStyle: balanced
+  budgetGoals: ""
+  budget: null
+  question: ""
+  chatMessages: []
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/analyze-finances
+    body:
+      income: "{{state.income}}"
+      expenses: "{{state.expenses}}"
+      savings: "{{state.savings}}"
+      debt: { total: "{{state.debt}}" }
+    onSuccess: { set: { analysis: "$response" } }
+    onError: { set: { error: "$error.message" } }
+  createBudget:
+    method: POST
+    endpoint: /api/create-budget
+    body:
+      income: "{{state.budgetIncome}}"
+      budgetStyle: "{{state.budgetStyle}}"
+      goals: "{{state.budgetGoals | splitCsv}}"
+    responsePath: budget
+    onSuccess: { set: { budget: "$response" } }
+  getAdvice:
+    method: POST
+    endpoint: /api/get-advice
+    body: { question: "{{state.question}}" }
+    responsePath: advice
+    onSuccess:
+      append:
+        chatMessages: [{ role: user, content: "{{state.question}}" }, { role: advisor, content: "$response" }]
+      set: { question: "" }
+
+defaultView: analyze
+
+views:
+  analyze:
+    widgets:
+      - kind: card
+        title: Snapshot
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: income, type: number, label: "Monthly income ($)", required: true }
+              - kind: section
+                title: Expenses
+                children:
+                  - kind: form
+                    bindTo: state.expenses
+                    layout: two-column
+                    fields:
+                      - { name: housing, type: number, label: Housing }
+                      - { name: food, type: number, label: Food }
+                      - { name: transportation, type: number, label: Transportation }
+                      - { name: utilities, type: number, label: Utilities }
+                      - { name: entertainment, type: number, label: Entertainment }
+                      - { name: other, type: number, label: Other }
+              - { name: savings, type: number, label: "Current savings ($)" }
+              - { name: debt, type: number, label: "Total debt ($)" }
+            submit: { label: Analyze, action: analyze, loadingLabel: "Crunching numbers..." }
+      - kind: result-panel
+        source: state.analysis
+        title: Health
+        sections:
+          - kind: score-ring
+            value: "{{state.analysis.healthScore}}"
+            max: 100
+            label: "Health score"
+          - kind: metric-grid
+            columns: 3
+            metrics:
+              - { value: "{{state.analysis.netIncome}}", label: Net income }
+              - { value: "{{state.analysis.savingsRate}}", label: Savings rate }
+              - { value: "{{state.analysis.debtToIncome}}", label: Debt-to-income }
+          - kind: section
+            title: Recommendations
+            children:
+              - { kind: bullet-list, source: state.analysis.recommendations }
+  budget:
+    widgets:
+      - kind: card
+        title: Create a budget
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: budgetIncome, type: number, label: "Monthly income ($)", required: true }
+              - { name: budgetStyle, type: select, label: Budget style, options: [balanced, aggressive-saving, flexible], default: balanced }
+              - { name: budgetGoals, type: text, label: "Financial goals (comma-separated)", placeholder: "Emergency fund, vacation..." }
+            submit: { label: Create budget, action: createBudget, loadingLabel: "Building..." }
+      - kind: result-panel
+        source: state.budget
+        title: Budget plan
+        sections:
+          - kind: hero
+            title: "{{state.budget.budgetName}}"
+            description: "{{state.budget.methodology}}"
+          - kind: list
+            source: state.budget.categories
+            template:
+              - { kind: text, value: "{{item.name}}", strong: true }
+              - { kind: progress-bar, value: "{{item.budgetAmount}}", max: "{{state.budget.income}}" }
+  advice:
+    widgets:
+      - kind: chat-panel
+        messagesSource: state.chatMessages
+        inputBindTo: state.question
+        sendAction: getAdvice
+        placeholder: "Ask a financial question..."
+        renderTemplate:
+          - { kind: markdown, source: item.content.summary }
+          - { kind: markdown, source: item.content.explanation }
+          - kind: section
+            title: Action steps
+            children:
+              - { kind: bullet-list, source: item.content.actionSteps }
+          - { kind: text, value: "{{item.content.disclaimer}}", muted: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

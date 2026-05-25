@@ -21,7 +21,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@habits/shared/*": ["../../core/src/*"]
+      "@habits/shared/*": ["../../core/src/*"],
+      "@ha-bits/cortex-core/ui": ["../../cortex/core/src/ui/index.ts"],
+      "@ha-bits/cortex-core/ui/*": ["../../cortex/core/src/ui/*"]
     }
   },
   "include": ["src"],

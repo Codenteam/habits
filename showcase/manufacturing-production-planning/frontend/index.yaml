@@ -1,0 +1,64 @@
+# Manufacturing Production Planning — converted from manufacturing-production-planning.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: manufacturing-production-planning
+  title: Manufacturing Production Planning
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Factory"
+  documentTitle: Manufacturing Production Planning
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Manufacturing Production Planning
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Factory"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13034 · Habits v1.0"
+    port: 13034
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "97%", label: Schedule adherence this week }
+      - { value: "0", label: Active bottleneck alerts }
+      - { value: "4,200", label: Units produced today }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Capacity Alert
+            description: Flag capacity constraints automatically when confirmed order volume exceeds production threshold.
+            trigger: scheduler
+            tags: [scheduler, ai, slack]
+          - name: Production Order Creation
+            description: Auto-create structured production orders in the MES when sales orders are confirmed.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Material Requirements Planning
+            description: Calculate material requirements from the production plan and alert purchasing on shortfalls.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Schedule Change Notification
+            description: Notify all affected teams immediately when changes are made to the production schedule.
+            trigger: webhook
+            tags: [webhook, slack, email]
+          - name: Bottleneck Alert
+            description: Detect workstation bottlenecks in real time using throughput data and escalate to the planner.
+            trigger: scheduler
+            tags: [scheduler, ai, slack]
+          - name: Output Reporting
+            description: Compile actual vs planned production output daily and distribute the report to management.
+            trigger: scheduler
+            tags: [scheduler, ai, email]

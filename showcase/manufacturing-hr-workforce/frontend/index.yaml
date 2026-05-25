@@ -1,0 +1,64 @@
+# Manufacturing HR & Workforce — converted from manufacturing-hr-workforce.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: manufacturing-hr-workforce
+  title: "Manufacturing HR & Workforce"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:HardHat"
+  documentTitle: "Manufacturing HR & Workforce"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Manufacturing HR & Workforce"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:HardHat"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13033 · Habits v1.0"
+    port: 13033
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "480", label: Workers on roster this week }
+      - { value: "0", label: Open safety incidents }
+      - { value: "100%", label: Payroll submissions on time }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Shift Scheduling
+            description: Generate weekly shift schedules based on headcount rules and notify workers of assignments.
+            trigger: scheduler
+            tags: [scheduler, email, sms]
+          - name: Time and Attendance
+            description: Process time sheet submissions automatically and flag anomalies for manager review.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Safety Incident Reporting
+            description: Capture safety incident reports via webhook and route to HR and HSE for investigation.
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Training Compliance
+            description: Track mandatory safety training completion and send automated reminders ahead of deadlines.
+            trigger: scheduler
+            tags: [scheduler, email, http]
+          - name: Payroll Preparation
+            description: Compile approved payroll data and submit it to the payroll system on the scheduled run date.
+            trigger: scheduler
+            tags: [scheduler, http, email]
+          - name: Headcount Planning Alert
+            description: Alert HR automatically when any department headcount falls below the configured target level.
+            trigger: scheduler
+            tags: [scheduler, slack, email]

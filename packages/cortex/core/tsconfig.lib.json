@@ -5,6 +5,7 @@
     "declaration": true,
     "declarationMap": true,
     "baseUrl": "../../..",
+    "resolveJsonModule": true,
     "noEmit": true
   },
   "include": ["src/**/*.ts"],

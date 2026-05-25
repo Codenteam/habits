@@ -1,0 +1,79 @@
+version: 1
+meta:
+  id: brieflens-habits
+  title: Brieflens
+  subtitle: Your Intelligent Calendar Assistant
+  icon: "lucide:Calendar"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Brieflens, subtitle: "AI calendar digest", icon: "lucide:Calendar" }
+
+state:
+  email: ""
+  connected: false
+  stats:
+    events: 0
+    participants: 0
+    researched: 0
+    emailsSent: 0
+  result: null
+  error: null
+  userEmail: ""
+
+actions:
+  connect:
+    open: "/api/auth-callback?login=1"
+  sync:
+    method: POST
+    endpoint: /api/sync-events
+    body: {}
+    onSuccess: { set: { result: "$response" }, toast: "Sync started" }
+    onError: { set: { error: "$error.message" } }
+  sendDigest:
+    method: POST
+    endpoint: /api/send-user-digest
+    body: { userEmail: "{{state.userEmail}}" }
+    onSuccess: { toast: "Digest sent" }
+    onError: { set: { error: "$error.message" } }
+  disconnect:
+    set: { connected: false, email: "", userEmail: "" }
+
+widgets:
+  - kind: card
+    title: Connect your Google Calendar
+    hideWhen: state.connected
+    children:
+      - kind: text
+        value: "Authorise Brieflens to read your calendar so we can prepare your daily digest."
+      - kind: button
+        label: Connect Google Calendar
+        action: connect
+        fullWidth: true
+  - kind: card
+    title: Connected account
+    showWhen: state.connected
+    children:
+      - kind: kv-grid
+        items:
+          - { label: Email, value: "{{state.email}}" }
+          - { label: Events tracked, value: "{{state.stats.events}}" }
+          - { label: Participants researched, value: "{{state.stats.researched}}" }
+          - { label: Digests sent, value: "{{state.stats.emailsSent}}" }
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: userEmail, type: email, label: Send test digest to, placeholder: "you@example.com" }
+        submit: { label: Send test digest, action: sendDigest, loadingLabel: "Sending..." }
+      - kind: button-row
+        buttons:
+          - { label: Sync now, action: sync, variant: secondary }
+          - { label: Disconnect, action: disconnect, variant: danger }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

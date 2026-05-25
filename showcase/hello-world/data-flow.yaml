@@ -1,0 +1,53 @@
+version: 1
+configPath: showcase/hello-world/stack.yaml
+capturedAt: 2026-05-24T07:59:29.734Z
+workflows:
+  hello-world:
+    workflowName: Hello World Demo
+    executionId: 6f8e21fc-697e-42ef-92f1-e7836c9aa8ea
+    habitInput:
+      param1: hello
+      param2: world
+    nodes:
+      - nodeId: say-hello
+        framework: bits
+        module: "@ha-bits/bit-hello-world"
+        operation: greet
+        input:
+          param1: hello
+          param2: world
+          operation: greet
+        output: HELLO_THERE
+        success: true
+        durationMs: 10
+    workflowOutput:
+      greeting:
+        value: HELLO_THERE
+        type: string
+        displayAs: text
+        label: Greeting
+  hello-world-env:
+    workflowName: Hello World (Env)
+    executionId: 87353ee4-9e29-4005-b5f4-23b63e33ff1f
+    habitInput:
+      param2: world
+    env:
+      PARAM1: hello
+    nodes:
+      - nodeId: say-hello
+        framework: bits
+        module: "@ha-bits/bit-hello-world"
+        operation: greet
+        input:
+          param1: hello
+          param2: world
+          operation: greet
+        output: HELLO_THERE
+        success: true
+        durationMs: 10
+    workflowOutput:
+      greeting:
+        value: HELLO_THERE
+        type: string
+        displayAs: text
+        label: Greeting

@@ -1,0 +1,101 @@
+id: log-sleep
+name: Log Sleep Entry
+description: Record a nightly sleep entry and receive AI-powered tips based on that night's data
+
+input:
+  - id: date
+    type: string
+    required: true
+    description: Date of the sleep night (YYYY-MM-DD)
+  - id: bedtime
+    type: string
+    required: true
+    description: Time you went to bed (HH:MM)
+  - id: wakeTime
+    type: string
+    required: true
+    description: Time you woke up (HH:MM)
+  - id: quality
+    type: string
+    required: true
+    description: Sleep quality rating (1-5)
+  - id: notes
+    type: string
+    required: false
+    description: Optional notes (how you felt, dreams, disturbances)
+
+env:
+  - id: HABITS_OPENAI_API_KEY
+    displayName: OpenAI API Key
+    secret: true
+    required: true
+
+nodes:
+  # Step 1: AI analysis of this specific night's sleep
+  - id: analyze-sleep
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        maxTokens: 600
+        temperature: 0.3
+        roles:
+          - role: system
+            content: "You are a sleep health expert. Analyze sleep entries and provide concise, practical tips. Always return valid JSON only, with no markdown code fences."
+        prompt: |
+          Analyze this sleep entry and provide a brief, personalized assessment:
+
+          - Date: {{habits.input.date}}
+          - Bedtime: {{habits.input.bedtime}}
+          - Wake time: {{habits.input.wakeTime}}
+          - Quality rating: {{habits.input.quality}}/5
+          - Notes: {{habits.input.notes || 'None provided'}}
+
+          Calculate the sleep duration accurately (account for crossing midnight if bedtime is after wake time).
+          Provide 2-3 actionable, evidence-based tips specific to this night's data.
+
+          Return ONLY this JSON (no code fences):
+          {
+            "duration": "X hours Y minutes",
+            "durationHours": 7.5,
+            "tips": ["specific tip 1", "specific tip 2"],
+            "summary": "One sentence insight about this night's sleep"
+          }
+
+  # Step 2: Persist the entry with AI analysis attached
+  - id: save-entry
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      params:
+        collection: "sleep_entries"
+        document:
+          date: "{{habits.input.date}}"
+          bedtime: "{{habits.input.bedtime}}"
+          wakeTime: "{{habits.input.wakeTime}}"
+          quality: "{{habits.input.quality}}"
+          notes: "{{habits.input.notes || ''}}"
+          aiAnalysis: "{{analyze-sleep}}"
+
+edges:
+  - source: analyze-sleep
+    target: save-entry
+
+output:
+  entryId: "{{save-entry.id}}"
+  aiAnalysis: "{{analyze-sleep}}"
+  date: "{{habits.input.date}}"
+  bedtime: "{{habits.input.bedtime}}"
+  wakeTime: "{{habits.input.wakeTime}}"
+  quality: "{{habits.input.quality}}"
+  notes: "{{habits.input.notes || ''}}"

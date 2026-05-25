@@ -1,0 +1,64 @@
+# Manufacturing Supply Chain — converted from manufacturing-supply-chain.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: manufacturing-supply-chain
+  title: Manufacturing Supply Chain
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:Link"
+  documentTitle: Manufacturing Supply Chain
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: Manufacturing Supply Chain
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:Link"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13030 · Habits v1.0"
+    port: 13030
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "98%", label: On-time delivery rate }
+      - { value: "24", label: Active supplier relationships }
+      - { value: "3", label: POs raised automatically today }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Purchase Order Automation
+            description: Auto-raise purchase orders when inventory drops below the configured safety stock level.
+            trigger: scheduler
+            tags: [scheduler, http, email]
+          - name: Supplier Communication
+            description: "Send order updates, confirmations, and delivery date requests to suppliers automatically."
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Delivery Tracking
+            description: Monitor inbound shipments in real time and alert operations on any delays or exceptions.
+            trigger: scheduler
+            tags: [scheduler, http, slack]
+          - name: Vendor Performance Report
+            description: Compile on-time delivery rates and quality scores monthly and share with procurement.
+            trigger: scheduler
+            tags: [scheduler, ai, email]
+          - name: Quality Inspection Alert
+            description: Notify the QC team automatically when an inbound shipment is ready for inspection.
+            trigger: webhook
+            tags: [webhook, email, slack]
+          - name: Inventory Replenishment
+            description: Trigger replenishment workflows automatically based on the live production schedule.
+            trigger: scheduler
+            tags: [scheduler, http, email]

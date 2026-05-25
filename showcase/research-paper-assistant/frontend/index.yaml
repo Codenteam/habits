@@ -1,0 +1,137 @@
+version: 1
+meta:
+  id: research-paper-assistant
+  title: Research Paper Assistant
+  subtitle: Analyze, summarize, and plan your academic research
+  icon: "lucide:BookOpen"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Research Paper Assistant, subtitle: "Three lenses on your work", icon: "lucide:BookOpen" }
+  nav:
+    - { id: analyze, label: Analyze, icon: "lucide:Microscope" }
+    - { id: summarize, label: Summarize, icon: "lucide:PenLine" }
+    - { id: outline, label: Outline, icon: "lucide:Map" }
+
+state:
+  analyzeTitle: ""
+  analyzeContent: ""
+  analysis: null
+  summarizeTitle: ""
+  summarizeType: executive
+  summarizeContent: ""
+  summary: null
+  outlineTopic: ""
+  outlineResearchQuestion: ""
+  outlinePaperType: empirical
+  outlineField: ""
+  outline: null
+  error: null
+
+actions:
+  analyzePaper:
+    method: POST
+    endpoint: /api/analyze-paper
+    body:
+      title: "{{state.analyzeTitle}}"
+      paperContent: "{{state.analyzeContent}}"
+    onSuccess: { set: { analysis: "$response" } }
+    onError: { set: { error: "$error.message" } }
+  summarizePaper:
+    method: POST
+    endpoint: /api/summarize-paper
+    body:
+      title: "{{state.summarizeTitle}}"
+      paperContent: "{{state.summarizeContent}}"
+      summaryType: "{{state.summarizeType}}"
+    responsePath: summary
+    onSuccess: { set: { summary: "$response" } }
+  generateOutline:
+    method: POST
+    endpoint: /api/generate-outline
+    body:
+      topic: "{{state.outlineTopic}}"
+      researchQuestion: "{{state.outlineResearchQuestion}}"
+      paperType: "{{state.outlinePaperType}}"
+      fieldOfStudy: "{{state.outlineField}}"
+    responsePath: outline
+    onSuccess: { set: { outline: "$response" } }
+
+defaultView: analyze
+
+views:
+  analyze:
+    widgets:
+      - kind: card
+        title: Paper to analyse
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: analyzeTitle, type: text, label: Paper title }
+              - { name: analyzeContent, type: textarea, label: Paper content, rows: 14, required: true }
+            submit: { label: Analyze, action: analyzePaper, loadingLabel: "Reading..." }
+      - kind: result-panel
+        source: state.analysis
+        title: Analysis
+        sections:
+          - kind: section
+            title: Methodology
+            children:
+              - { kind: markdown, source: state.analysis.methodology }
+          - kind: section
+            title: Key findings
+            children:
+              - { kind: bullet-list, source: state.analysis.keyFindings }
+          - kind: section
+            title: Strengths / weaknesses
+            children:
+              - { kind: badge-list, source: state.analysis.criticalAnalysis.strengths, tone: success }
+              - { kind: badge-list, source: state.analysis.criticalAnalysis.weaknesses, tone: warning }
+          - kind: section
+            title: Academic context
+            children:
+              - { kind: kv-grid, source: state.analysis.academicContext }
+  summarize:
+    widgets:
+      - kind: card
+        title: Summarize a paper
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: summarizeTitle, type: text, label: Paper title }
+              - { name: summarizeType, type: select, label: Summary type, options: [executive, technical, layperson], default: executive }
+              - { name: summarizeContent, type: textarea, label: Paper content, rows: 12, required: true }
+            submit: { label: Summarize, action: summarizePaper, loadingLabel: "Summarising..." }
+      - kind: result-panel
+        source: state.summary
+        title: Summary
+        sections:
+          - { kind: markdown, source: state.summary, copy: true }
+  outline:
+    widgets:
+      - kind: card
+        title: Generate an outline
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: outlineTopic, type: text, label: Research topic, required: true }
+              - { name: outlineResearchQuestion, type: text, label: Research question }
+              - { name: outlinePaperType, type: select, label: Paper type, options: ["empirical", "literature review", theoretical, "case study"] }
+              - { name: outlineField, type: text, label: Field of study, placeholder: "Psychology, Computer Science..." }
+            submit: { label: Generate outline, action: generateOutline, loadingLabel: "Drafting..." }
+      - kind: result-panel
+        source: state.outline
+        title: Outline
+        sections:
+          - { kind: markdown, source: state.outline, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

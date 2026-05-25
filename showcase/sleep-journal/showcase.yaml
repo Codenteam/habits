@@ -1,0 +1,36 @@
+# Marketplace metadata for Sleep Journal
+
+name: Sleep Journal
+description: Track nightly sleep, review history, and get AI-powered tips and weekly insights.
+
+longDescription: |
+  Sleep Journal helps you log bedtime, wake time, sleep quality, and notes each night.
+  Entries are stored locally and analyzed with OpenAI for per-night tips and weekly
+  pattern summaries.
+
+  ## Features
+
+  - **Log Sleep** — date (defaults to today), bedtime, wake time, quality 1–5, optional notes
+  - **AI tips** — OpenAI analyzes each entry and suggests actionable sleep hygiene improvements
+  - **History** — browse past nights with quality and duration at a glance
+  - **Weekly insights** — trends, averages, patterns, and recommendations across recent entries
+
+tags:
+  - ai
+  - health
+  - productivity
+  - frontend
+
+difficulty: beginner
+
+featured: false
+
+requirements:
+  - OpenAI API key (HABITS_OPENAI_API_KEY)
+
+habits:
+  - habits/log-sleep.yaml
+  - habits/get-sleep-history.yaml
+  - habits/sleep-insights.yaml
+
+quickDownload: true

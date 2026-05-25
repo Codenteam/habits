@@ -1,0 +1,27 @@
+id: get-sleep-history
+name: Get Sleep History
+description: Retrieve past sleep entries from the database
+
+input:
+  - id: limit
+    type: number
+    required: false
+    description: Maximum number of entries to return (defaults to 50)
+
+nodes:
+  - id: query-entries
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: query
+      params:
+        collection: "sleep_entries"
+        limit: "{{habits.input.limit || 50}}"
+
+edges: []
+
+output:
+  entries: "{{query-entries.results}}"
+  count: "{{query-entries.count}}"

@@ -1,6 +1,6 @@
 {
   "name": "@ha-bits/base",
-  "version": "1.0.2",
+  "version": "1.5.123",
   "description": "Base - Habits Workflow Builder UI for creating and exporting habits",
   "type": "module",
   "scripts": {

@@ -29,6 +29,7 @@ import { getTauriLib, getTauriMain } from './templates/tauri/tauri-main';
 import { getTauriCargo } from './templates/tauri/tauri-cargo';
 import { getTauriCapabilities } from './templates/tauri/tauri-config';
 import JSZip from 'jszip';
+import { compileUiYaml, copyHaAssetsTo } from '@ha-bits/cortex-core';
 import { addDirectoryToZip } from './utils';
 import { processHtmlFile, InjectScript } from './html-asset-inliner';
 
@@ -324,6 +325,8 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
   // Frontend is optional - if not specified, Cortex app will auto-generate UI from schema
   const hasFrontend = !!config.server?.frontend;
   let frontendPath: string | null = null;
+  let hasIndexHtml = false;
+  let hasIndexYaml = false;
 
   if (hasFrontend) {
     // Resolve frontend path
@@ -339,13 +342,19 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
       };
     }
 
-    const indexPath = path.join(frontendPath, 'index.html');
-    if (!fs.existsSync(indexPath)) {
+    const indexHtmlPath = path.join(frontendPath, 'index.html');
+    const indexYamlPath = path.join(frontendPath, 'index.yaml');
+    hasIndexHtml = fs.existsSync(indexHtmlPath);
+    hasIndexYaml = fs.existsSync(indexYamlPath) || fs.existsSync(path.join(frontendPath, 'index.yml'));
+    if (!hasIndexHtml && !hasIndexYaml) {
       return {
         success: false,
-        error: `index.html not found in frontend directory: ${frontendPath}`,
+        error: `No frontend entry found in ${frontendPath} (expected index.yaml or index.html)`,
         format: 'habit',
       };
+    }
+    if (hasIndexYaml && !hasIndexHtml) {
+      console.log('   📄 Using declarative frontend (index.yaml)');
     }
   } else {
     console.log('   📱 No frontend specified - Cortex app will auto-generate UI from schema');
@@ -405,37 +414,47 @@ async function packHabitFile(options: PackHabitFileOptions): Promise<PackResult>
     // The fetch-proxy and cortex-bundle are ONLY for Tauri apps and are injected in runtime.
     const injectScripts: InjectScript[] = [];
 
-    // Process all HTML files in the frontend directory
-    console.log('   🔧 Processing HTML files for offline use...');
-    const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
+    // When index.yaml exists it is the source of truth — do not bundle HTML
+    // (avoids express.static serving index.html ahead of the YAML compiler).
+    if (hasIndexHtml && !hasIndexYaml) {
+      console.log('   🔧 Processing HTML files for offline use...');
+      const processedHtmlFiles = await processHtmlFilesInDirectory(frontendPath, inlinedFiles, injectScripts);
 
-    // Process each HTML file (inline CSS/JS/images but don't inject bundle scripts)
-    for (const [relativePath, processedResult] of processedHtmlFiles) {
-      const processedHtml = processedResult.html;
+      for (const [relativePath, processedResult] of processedHtmlFiles) {
+        const processedHtml = processedResult.html;
 
-      // Log processing results
-      if (processedResult.tailwindProcessed) {
-        console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+        if (processedResult.tailwindProcessed) {
+          console.log(`   ✨ ${relativePath}: Tailwind CSS generated`);
+        }
+
+        const htmlZipPath = path.join(frontendDirName, relativePath);
+        zip.file(htmlZipPath, processedHtml);
+
+        const originalHtmlPath = path.join(frontendPath, relativePath);
+        const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
+        const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
+        zip.file(srcHtmlZipPath, originalHtml);
       }
 
-      // Add processed (inlined) HTML files under the frontend directory for offline use
-      // Scripts (cortex-bundle, fetch-proxy) are already inlined by processHtmlFile
-      const htmlZipPath = path.join(frontendDirName, relativePath);
-      zip.file(htmlZipPath, processedHtml);
+      addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
+      addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
+    } else {
+      // YAML frontend: copy non-HTML assets and compile index.yaml → index.html
+      // for Tauri/.habit import (Cortex app requires index.html in the archive).
+      addFrontendFilesToZip(frontendPath, zip, inlinedFiles, new Map(), undefined, frontendDirName);
 
-      // Also add original HTML files under frontend-src/ for base server to use if needed
-      const originalHtmlPath = path.join(frontendPath, relativePath);
-      const originalHtml = fs.readFileSync(originalHtmlPath, 'utf8');
-      const srcHtmlZipPath = path.join(`${frontendDirName}-src`, relativePath);
-      zip.file(srcHtmlZipPath, originalHtml);
+      const yamlPath =
+        fs.existsSync(path.join(frontendPath, 'index.yaml'))
+          ? path.join(frontendPath, 'index.yaml')
+          : path.join(frontendPath, 'index.yml');
+      if (fs.existsSync(yamlPath)) {
+        const yamlSource = fs.readFileSync(yamlPath, 'utf8');
+        const { html } = compileUiYaml(yamlSource);
+        const htmlZipPath = path.join(frontendDirName, 'index.html');
+        zip.file(htmlZipPath, html);
+        console.log('   ✨ Compiled index.yaml → index.html for .habit package');
+      }
     }
-
-    // Add remaining frontend files (excluding already processed HTML and inlined assets)
-    // Store under the original frontend directory name to preserve structure
-    addFrontendFilesToZip(frontendPath, zip, inlinedFiles, processedHtmlFiles, undefined, frontendDirName);
-    
-    // Also add original frontend files under frontend-src/ (including CSS, JS that were inlined)
-    addOriginalFrontendFilesToZip(frontendPath, zip, `${frontendDirName}-src`);
   }
 
   // Add a marker file to indicate auto-UI should be used (no frontend)
@@ -1082,6 +1101,21 @@ async function packTauri(options: PackTauriOptions): Promise<PackResult> {
       // Copy all frontend files
       copyDirRecursive(frontendDir, wwwDir);
       console.log(`   📁 Copied frontend from: ${frontendDir}`);
+
+      const yamlPath =
+        fs.existsSync(path.join(frontendDir, 'index.yaml'))
+          ? path.join(frontendDir, 'index.yaml')
+          : path.join(frontendDir, 'index.yml');
+      if (fs.existsSync(yamlPath)) {
+        const yamlSource = fs.readFileSync(yamlPath, 'utf8');
+        const { html } = compileUiYaml(yamlSource);
+        fs.writeFileSync(path.join(wwwDir, 'index.html'), html);
+        console.log('   ✨ Compiled index.yaml → index.html for Tauri www/');
+      }
+
+      if (copyHaAssetsTo(wwwDir)) {
+        console.log('   📦 Copied ha-assets (icons + fonts) to Tauri www/');
+      }
     } else {
       console.warn(`   ⚠️  Frontend path not found: ${frontendDir}, using default`);
       fs.writeFileSync(path.join(wwwDir, 'index.html'), generateDefaultHtml(appName));

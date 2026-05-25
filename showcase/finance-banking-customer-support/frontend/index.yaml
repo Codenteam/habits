@@ -1,0 +1,64 @@
+# Finance & Banking Customer Support — converted from finance-banking-customer-support.html
+# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
+
+version: 1
+meta:
+  id: finance-banking-customer-support
+  title: "Finance & Banking Customer Support"
+  subtitle: "Automation suite · 6 habits active"
+  icon: "lucide:MessageSquare"
+  documentTitle: "Finance & Banking Customer Support"
+
+theme:
+  preset: showcase-flat
+  mode: dark
+
+layout:
+  type: showcase
+  header:
+    title: "Finance & Banking Customer Support"
+    subtitle: "Automation suite · 6 habits active"
+    icon: "lucide:MessageSquare"
+  footerStatus:
+    dot: live
+    text: "All habits running · Port 13014 · Habits v1.0"
+    port: 13014
+
+widgets:
+  - kind: metric-grid
+    columns: 4
+    metrics:
+      - { value: "6", label: Active habits }
+      - { value: "284", label: Tickets resolved today }
+      - { value: "4.8", label: Average CSAT score }
+      - { value: "<3m", label: Median first response time }
+  - kind: section
+    title: Habits
+    children:
+      - kind: habit-grid
+        columns: 3
+        items:
+          - name: Ticket Routing
+            description: Classify inbound support tickets using AI and route each to the correct team automatically.
+            trigger: webhook
+            tags: [webhook, ai, http]
+          - name: Account Enquiry Handler
+            description: Resolve common account balance and statement queries instantly without agent involvement.
+            trigger: webhook
+            tags: [webhook, http, email]
+          - name: Dispute Resolution
+            description: "Open transaction disputes, notify the customer of next steps, and track resolution progress."
+            trigger: webhook
+            tags: [webhook, email, http]
+          - name: Callback Scheduling
+            description: Book call-back time slots for customers with complex enquiries that need agent handling.
+            trigger: webhook
+            tags: [webhook, email, scheduler]
+          - name: Sentiment Analysis
+            description: Score all customer interactions for sentiment and flag persistently negative experiences.
+            trigger: scheduler
+            tags: [scheduler, ai, http]
+          - name: Escalation Handler
+            description: Automatically escalate tickets that breach SLA thresholds to senior support staff.
+            trigger: scheduler
+            tags: [scheduler, slack, email]

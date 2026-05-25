@@ -10,7 +10,7 @@ import { OAuth2Status, OAuth2Config } from './oauth2Types';
 import { oauthTokenStore } from './oauthTokenStore';
 import { pieceFromModule, extractBitsPieceFromModule } from './bitsRoutine';
 import { getModuleName, getBundledModule, isBundledModule } from '../utils/moduleLoader';
-import { getModuleMainFile, ModuleDefinition } from '../utils/moduleCloner';
+import { ensureModuleReady, getModuleMainFile, ModuleDefinition } from '../utils/moduleCloner';
 import { simpleRequire } from '../utils/customRequire';
 import { ILogger, LoggerFactory } from '@ha-bits/core/logger';
 import * as path from '@ha-bits/bindings/path';
@@ -91,6 +91,9 @@ async function getAuthFromModule(moduleDefinition: ModuleDefinition): Promise<{ 
       }
       return null;
     }
+
+    // Ensure module is installed (local workspace or npm) before resolving main file
+    await ensureModuleReady(moduleDefinition);
 
     // For non-bundled modules, use filesystem-based loading
     const mainFilePath = getModuleMainFile(moduleDefinition);

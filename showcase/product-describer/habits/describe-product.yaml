@@ -38,9 +38,7 @@ nodes:
           host: "{{habits.env.HABITS_INTERSECT_HOST}}"
           apiKey: "{{habits.env.HABITS_INTERSECT_API_KEY}}"
       params:
-        model: gpt-4o
-        imageUrl: "{{habits.input.imageUrls}}"
-        imageBase64: "{{habits.input.imageBase64}}"
+        image: "{{habits.input.imageBase64 || habits.input.imageUrls}}"
         prompt: |
           Analyze this product image in detail. Describe:
           1. What the product is
@@ -257,7 +255,6 @@ nodes:
           instagramCaption: "{{instagram-caption}}"
           amazonListing: "{{amazon-listing}}"
           taglines: "{{tagline}}"
-          createdAt: "{{habits.now}}"
 
 edges:
   - source: analyze-images

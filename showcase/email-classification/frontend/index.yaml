@@ -1,0 +1,49 @@
+version: 1
+meta:
+  id: email-classification
+  title: Email Classification API
+  subtitle: AI-powered email classification
+  icon: "lucide:Mail"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Email Classification, subtitle: "Send an email body and get back its category", icon: "lucide:Mail" }
+
+state:
+  email: ""
+  result: null
+  error: null
+
+actions:
+  classify:
+    method: POST
+    endpoint: /api/email-classification-test
+    body: { email: "{{state.email}}" }
+    onSuccess: { set: { result: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: alert
+    level: info
+    text: "Send POST requests to `/api/email-classification-test` to classify any email body."
+  - kind: card
+    title: Try it
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: email, type: textarea, label: Email body, rows: 8, placeholder: "Paste the email content here...", required: true }
+        submit: { label: Classify, action: classify, loadingLabel: "Classifying..." }
+  - kind: result-panel
+    source: state.result
+    title: Classification
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

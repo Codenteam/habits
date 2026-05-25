@@ -103,6 +103,12 @@ export interface ExportBundle {
   habitFiles: Array<{ filename: string; content: string }>;
   envFile: string;
   frontendHtml?: string;
+  /**
+   * Declarative UiSpec YAML. When provided it is written to
+   * `frontend/index.yaml` alongside (or instead of) `frontend/index.html`
+   * and is preferred by the Cortex server.
+   */
+  frontendYaml?: string;
 }
 
 // Frontend workflow definition (visual representation)

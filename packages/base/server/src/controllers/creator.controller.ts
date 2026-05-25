@@ -11,8 +11,7 @@
  *   error     : { message: string }       fatal error
  *
  * Requires:
- *   HABITS_AI_GEN=true    : enables the creator endpoints
- *   CLAUDE_API_KEY=sk-... : Anthropic API key
+ *   CLAUDE_API_KEY=sk-... : Anthropic API key (or user provides one per-request)
  *
  * Optional:
  *   HABITS_AI_DEBUG=true   : keeps staging directories after ZIP is sent
@@ -85,7 +84,7 @@ function resolveWorkspaceRoot(): string {
 // ── Reference material resolver / downloader ────────────────────────
 
 const REFERENCE_REPO = 'https://github.com/codenteam/habits.git';
-const SPARSE_PATHS = ['nodes/bits/@ha-bits', 'showcase'];
+const SPARSE_PATHS = ['nodes/bits/@ha-bits', 'showcase', 'schemas'];
 
 /** Stable cache dir: ~/.habits/reference (or HABITS_REF_PATH env override) */
 function getReferenceCacheDir(): string {
@@ -267,19 +266,20 @@ function extractProgress(msg: any, stagingDir: string): string | null {
 export class CreatorController {
   // ── Guards ──────────────────────────────────────────────────────────
 
-  private guardDisabled(res: Response): boolean {
-    if (process.env.HABITS_AI_GEN !== 'true') {
-      res.status(403).json(
-        createResponse(false, undefined,
-          'AI generation is not enabled. It can be enabled in several ways: ' +
-          '(1) habits command: set HABITS_AI_GEN=true when starting Base (e.g. HABITS_AI_GEN=true npx habits@latest base, or add it to a .env file in the same directory); ' +
-          '(2) Admin panel: open the service settings for this Base instance and add HABITS_AI_GEN=true to its environment variables. ' +
-          'See: https://codenteam.com/intersect/habits/tools/base.html#environment-variables and https://codenteam.com/intersect/habits/tools/admin.html'
-        ),
-      );
-      return true;
-    }
-    if (!process.env.CLAUDE_API_KEY) {
+  /**
+   * GET /api/creator/status
+   * Returns whether AI generation is enabled and whether an API key is pre-configured.
+   */
+  getStatus = (_req: Request, res: Response): void => {
+    res.json({
+      enabled: true,
+      hasApiKey: !!process.env.CLAUDE_API_KEY,
+    });
+  };
+
+  private guardDisabled(req: Request, res: Response): boolean {
+    // Accept env var or a key supplied by the client in the request body
+    if (!process.env.CLAUDE_API_KEY && !req.body?.claudeApiKey) {
       res.status(403).json(
         createResponse(false, undefined,
           'CLAUDE_API_KEY is not set. Provide an Anthropic API key. ' +
@@ -334,8 +334,9 @@ export class CreatorController {
     prompt: string,
     stagingDir: string,
     res: Response,
+    apiKey?: string,
   ): Promise<void> {
-    process.env.ANTHROPIC_API_KEY = process.env.CLAUDE_API_KEY;
+    process.env.ANTHROPIC_API_KEY = apiKey || process.env.CLAUDE_API_KEY;
 
     logger.info('Starting Claude agent execution', { stagingDir });
     sseEvent(res, 'progress', { step: 'Starting AI agent…' });
@@ -423,9 +424,9 @@ export class CreatorController {
    * Streams SSE progress events, then sends the ZIP as base64 in a `complete` event.
    */
   createHabit = async (req: Request, res: Response): Promise<void> => {
-    if (this.guardDisabled(res)) return;
+    if (this.guardDisabled(req, res)) return;
 
-    const { prompt } = req.body;
+    const { prompt, claudeApiKey } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       res.json(createResponse(false, undefined, 'A non-empty "prompt" field is required'));
       return;
@@ -453,9 +454,78 @@ export class CreatorController {
         `== OUTPUT RULES ==`,
         `• Create ALL files inside this directory: ${stagingDir}`,
         `• The output MUST include a stack.yaml and one or more habit YAML files.`,
-        `• Create a frontend/index.html if the habit benefits from a UI.`,
+        `• Create a frontend/index.yaml (YAML-driven UiSpec) if the habit benefits from a UI. NEVER create frontend/index.html.`,
         `• Do NOT create, modify, or delete any files outside ${stagingDir}.`,
         `Make sure to add edges to all habits, empty if needed. `,
+        ``,
+        `== FRONTEND: USE YAML UISPEC (CRITICAL) ==`,
+        `The frontend MUST be a \`frontend/index.yaml\` file (a UiSpec), NOT an HTML file.`,
+        `The YAML is compiled to a self-contained HTML page at request time by the Cortex server.`,
+        ``,
+        `UiSpec file MUST start with:`,
+        `  # yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml`,
+        `  version: 1`,
+        ``,
+        `UiSpec schema reference: ${path.join(root, 'schemas', 'ui-spec.schema.yaml')}`,
+        ``,
+        `Key UiSpec rules:`,
+        `  - Use solid colors only, NO CSS gradients.`,
+        `  - Default theme: preset: neural, mode: dark`,
+        `  - Use "responsePath: output" in actions to capture the workflow response.`,
+        `  - Use "set: { result: \\"$response\\" }" in onSuccess to store the output.`,
+        `  - Access output fields in templates as {{state.result.fieldName}}.`,
+        `  - Available layouts: single, tabs, sidebar, wizard, mobile-shell, chat`,
+        `  - Widget kinds include: card, form, button, result-panel, text, metric-grid, data-table,`,
+        `    json-dump, markdown, alert, empty-state, spinner, streaming-panel, kv-grid, badge-list`,
+        ``,
+        `Example minimal frontend/index.yaml:`,
+        `  # yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml`,
+        `  version: 1`,
+        `  meta:`,
+        `    id: {workflow-id}`,
+        `    title: {Habit Title}`,
+        `    icon: "lucide:Bot"`,
+        `  theme:`,
+        `    preset: neural`,
+        `    mode: dark`,
+        `  state:`,
+        `    result: null`,
+        `  actions:`,
+        `    run:`,
+        `      method: POST`,
+        `      endpoint: /api/{workflow-id}`,
+        `      body: { input: "{{state.input}}" }`,
+        `      responsePath: output`,
+        `      onSuccess:`,
+        `        set: { result: "$response" }`,
+        `        toast: "Done!"`,
+        `  widgets:`,
+        `    - kind: card`,
+        `      title: {Habit Title}`,
+        `      children:`,
+        `        - kind: form`,
+        `          bindTo: state`,
+        `          fields:`,
+        `            - { name: input, type: text, label: Your Input, required: true }`,
+        `          submit: { label: Run, action: run, loadingLabel: "Running..." }`,
+        `    - kind: result-panel`,
+        `      source: state.result`,
+        `      showWhen: state.result`,
+        `      title: Result`,
+        `      sections:`,
+        `        - { kind: json-dump, source: state.result, copy: true }`,
+        ``,
+        `== FRONTEND API ENDPOINT (CRITICAL) ==`,
+        `When the generated frontend/index.yaml calls a habit, use EXACTLY this pattern:`,
+        `  POST /api/{habit-id}   – submit JSON body with input fields`,
+        `  GET  /api/{habit-id}   – pass inputs as query parameters`,
+        `where {habit-id} is the habit's "id" field as declared in stack.yaml.`,
+        ``,
+        `NEVER use any of these – they do not exist:`,
+        `  /api/workflows/{id}/run   ← WRONG`,
+        `  /misc/execute/{id}        ← WRONG`,
+        `  /api/{id}/run             ← WRONG`,
+        `  /api/workflows/{id}       ← WRONG`,
         ``,
         `== HOW A BIT NODE LOOKS IN A HABIT (COPY THIS PATTERN) ==`,
         ``,
@@ -513,12 +583,15 @@ export class CreatorController {
         ``,
         `1. Habits schema: ${schemaFile}`,
         ``,
-        `2. Example habits that correctly use bits:`,
+        `2. UiSpec schema (for frontend/index.yaml): ${path.join(root, 'schemas', 'ui-spec.schema.yaml')}`,
+        ``,
+        `3. Example habits that correctly use bits and YAML frontends:`,
         `   • Hello-world (simplest):           ${path.join(examplesDir, 'hello-world')}`,
         `   • Personal finance (multi-habit):   ${path.join(examplesDir, 'personal-finance-advisor')}`,
         `   • Social media manager:             ${path.join(examplesDir, 'social-media-manager')}`,
         `   • Research paper assistant:          ${path.join(examplesDir, 'research-paper-assistant')}`,
         `   Browse ${examplesDir} for more examples.`,
+        `   For each example, read its frontend/index.yaml to see how the YAML UI is structured.`,
         ``,
         `== KEY PATTERNS ==`,
         `• stack.yaml lists workflows with id + path.`,
@@ -528,13 +601,39 @@ export class CreatorController {
         `• Use {{habits.input.field}} for workflow inputs.`,
         `• Use {{habits.env.VAR_NAME}} for environment variables / secrets.`,
         ``,
+        `== KNOWN PITFALLS — AVOID THESE ==`,
+        ``,
+        `1. ENV VAR NAMES: Use HABITS_ prefix for env vars, like HABITS_OPENAI_API_KEY (not OPENAI_API_KEY) for the OpenAI bit.`,
+        `   The standard prefix for all habit env vars is HABITS_. Example:`,
+        `     credentials:`,
+        `       openai:`,
+        `         apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"`,
+        ``,
+        `2. WORKFLOW ID MUST MATCH IN BOTH PLACES: The "id:" field inside a habit YAML file`,
+        `   must be identical to the "id:" registered for that file in stack.yaml.`,
+        `   Wrong:  stack.yaml says  id: get-history  but habit.yaml says  id: get-all-records`,
+        `   Right:  both say         id: get-history`,
+        ``,
+        `3. FRONTEND RESPONSE SHAPE: The response from POST /api/{habit-id} has data.output as a map.`,
+        `   In UiSpec, use responsePath: output and set: { result: "$response" }.`,
+        `   Then access fields as {{state.result.fieldName}} in templates.`,
+        ``,
+        `5. NO habits.now: The template expression {{habits.now}} is NOT supported and will`,
+        `   be stored as the literal string "habits.now". Never use it.`,
+        `   For timestamps, rely on the database bit's automatic _createdAt field instead.`,
+        ``,
+        `6. OPTIONAL INPUT DEFAULTS: Always provide a default for optional template fields to`,
+        `   prevent unresolved literals being stored in databases or sent to APIs:`,
+        `     "{{habits.input.name || ''}}"      // correct`,
+        `     "{{habits.input.name}}"            // WRONG if the field might be absent`,
+        ``,
         `Read the reference bits and examples above, then generate the habit files.`,
       ].join('\n');
 
       // Write prompt log to staging dir for debugging
       fs.writeFileSync(path.join(stagingDir, '_agent-prompt.log'), agentPrompt, 'utf-8');
 
-      await this.executeClaudeAgent(agentPrompt, stagingDir, res);
+      await this.executeClaudeAgent(agentPrompt, stagingDir, res, claudeApiKey);
       await this.zipAndComplete(res, stagingDir);
     } catch (error: any) {
       logger.warn('create-habit failed', { error: String(error) });
@@ -554,9 +653,9 @@ export class CreatorController {
    * Streams SSE progress events, then sends the ZIP as base64 in a `complete` event.
    */
   createBit = async (req: Request, res: Response): Promise<void> => {
-    if (this.guardDisabled(res)) return;
+    if (this.guardDisabled(req, res)) return;
 
-    const { prompt } = req.body;
+    const { prompt, claudeApiKey } = req.body;
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       res.json(createResponse(false, undefined, 'A non-empty "prompt" field is required'));
       return;
@@ -609,7 +708,7 @@ export class CreatorController {
       // Write prompt log to staging dir for debugging
       fs.writeFileSync(path.join(stagingDir, '_agent-prompt.log'), agentPrompt, 'utf-8');
 
-      await this.executeClaudeAgent(agentPrompt, stagingDir, res);
+      await this.executeClaudeAgent(agentPrompt, stagingDir, res, claudeApiKey);
       await this.zipAndComplete(res, stagingDir);
     } catch (error: any) {
       logger.warn('create-bit failed', { error: String(error) });

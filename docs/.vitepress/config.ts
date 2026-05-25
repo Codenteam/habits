@@ -205,6 +205,7 @@ export default defineConfig({
         text: 'Development',
         items: [
           { text: 'Testing Bits', link: '/development/testing-bits' },
+          { text: 'YAML-driven Frontends', link: '/development/yaml-driven-frontends' },
           { text: 'Versioning', link: '/development/versioning' },
           { text: 'Simulate npx', link: '/development/simulate-npx' },
         ]

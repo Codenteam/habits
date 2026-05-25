@@ -1,0 +1,129 @@
+version: 1
+meta:
+  id: competitor-analysis
+  title: Competitor Analysis Dashboard
+  subtitle: Strategic intelligence and competitive insights
+  icon: "lucide:Target"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: tabs
+  header: { title: Competitor Analysis, subtitle: "Strategic intelligence and competitive insights", icon: "lucide:Target" }
+  nav:
+    - { id: analyze, label: Analyze, icon: "lucide:Microscope" }
+    - { id: compare, label: Compare, icon: "lucide:Scale" }
+    - { id: strategy, label: Strategy, icon: "lucide:Crown" }
+
+state:
+  companyName: ""
+  industry: ""
+  yourCompany: ""
+  knownInfo: ""
+  competitors: []
+  compareIndustry: ""
+  strategyCompany: ""
+  strategyIndustry: ""
+  strategyCompetitors: ""
+  strategyStrengths: ""
+  goal: "market share growth"
+  analyzeResult: null
+  compareResult: null
+  strategyResult: null
+
+actions:
+  analyzeCompetitor:
+    method: POST
+    endpoint: /api/analyze-competitor
+    body:
+      companyName: "{{state.companyName}}"
+      yourCompany: "{{state.yourCompany}}"
+      industry: "{{state.industry}}"
+      knownInfo: "{{state.knownInfo}}"
+    onSuccess: { set: { analyzeResult: "$response" } }
+  compareCompetitors:
+    method: POST
+    endpoint: /api/compare-competitors
+    body:
+      competitors: "{{state.competitors}}"
+      industry: "{{state.compareIndustry}}"
+    responsePath: comparison
+    onSuccess: { set: { compareResult: "$response" } }
+  generateStrategy:
+    method: POST
+    endpoint: /api/generate-strategy
+    body:
+      yourCompany: "{{state.strategyCompany}}"
+      competitors: "{{state.strategyCompetitors}}"
+      yourStrengths: "{{state.strategyStrengths}}"
+      industry: "{{state.strategyIndustry}}"
+      goal: "{{state.goal}}"
+    responsePath: strategy
+    onSuccess: { set: { strategyResult: "$response" } }
+
+defaultView: analyze
+
+views:
+  analyze:
+    widgets:
+      - kind: card
+        title: Analyze a competitor
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: companyName, type: text, label: Competitor Name, placeholder: "Slack, Notion", required: true }
+              - { name: industry, type: text, label: Industry, placeholder: "SaaS, E-commerce", required: true }
+              - { name: yourCompany, type: text, label: "Your Company (for comparison)" }
+              - { name: knownInfo, type: textarea, label: Known information, placeholder: "Website, products, recent news", rows: 4 }
+            submit: { label: Analyze, action: analyzeCompetitor, loadingLabel: "Analyzing..." }
+      - kind: result-panel
+        source: state.analyzeResult
+        title: Analysis
+        sections:
+          - { kind: json-dump, source: state.analyzeResult, copy: true }
+  compare:
+    widgets:
+      - kind: card
+        title: Compare competitors
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: competitors, type: tag-input, label: Competitors, placeholder: "Add competitor and press Enter", required: true, minItems: 2 }
+              - { name: compareIndustry, type: text, label: Industry, required: true }
+            submit: { label: Compare, action: compareCompetitors, loadingLabel: "Comparing..." }
+      - kind: result-panel
+        source: state.compareResult
+        title: Comparison
+        sections:
+          - { kind: json-dump, source: state.compareResult, copy: true }
+  strategy:
+    widgets:
+      - kind: card
+        title: Generate strategy
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: strategyCompany, type: text, label: Your Company, required: true }
+              - { name: strategyIndustry, type: text, label: Industry, required: true }
+              - { name: strategyCompetitors, type: text, label: "Key Competitors (comma-separated)", placeholder: "Competitor A, Competitor B" }
+              - { name: strategyStrengths, type: text, label: "Your Strengths (comma-separated)", placeholder: "Better UX, lower price" }
+              - name: goal
+                type: select
+                label: Strategic goal
+                default: "market share growth"
+                options:
+                  - "market share growth"
+                  - differentiation
+                  - "cost leadership"
+                  - "market entry"
+            submit: { label: Generate strategy, action: generateStrategy, loadingLabel: "Working..." }
+      - kind: result-panel
+        source: state.strategyResult
+        title: Strategy
+        sections:
+          - { kind: json-dump, source: state.strategyResult, copy: true }

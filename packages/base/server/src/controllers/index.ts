@@ -10,3 +10,5 @@ export { TemplatesController } from './templates.controller';
 export { SecurityController } from './security.controller';
 export { ExportController } from './export.controller';
 export { CreatorController } from './creator.controller';
+export { UiController } from './ui.controller';
+export { LabController } from './lab.controller';
