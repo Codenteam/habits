@@ -1,43 +1,41 @@
-{
-  "id":resume-tailor,
-  "name":Resume Tailor,
+id: resume-tailor
+name: Resume Tailor
+nodes:
+  - id: openai-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          Rewrites resume bullets to match keywords and tone.
 
-  "nodes":[{
-    "id":database-1,
-    "type":bits,
-    "data":{
-        "framework":bits,
-        "source":npm,
-        "module":"@ha-bits/bit-database",
-        "label":Database,
-        "operation":store,
-        "params":{
-        "value":"{{openai-1}}",
-        "collection":Resume, "key":CV
-        }}},
-{
-    "id":openai-1,
-    "type":bits,
-    "data":{
-        "framework":bits,
-        "source":npm,
-        "module":"@ha-bits/bit-openai",
-        "label":OpenAI,
-        "operation":ask_chatgpt,
-        "params":{
-            "model":"gpt-5-mini",
-            "prompt":"Rewrites resume bullets to match keywords and toneJob description :{{habits.input.Job description}}current resume : {{habits.input.resume}}"},
-            "credentials":{
-                "openai":{"apiKey":"{{habits.env.OPENAI_API_KEY}}"
-        }}}}],
-
-
-  "edges":[{
-  "id":openai-1__database-1,
-  "source":openai-1,
-  "target":database-1,
-  "sourceHandle":main,
-  "targetHandle":main}],
-
-
-  "output":{"result":"{{openai-1}}"}}
+          Job description: {{habits.input.Job description}}
+          Current resume: {{habits.input.resume}}
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Resume
+        key: CV
+        value: "{{openai-1}}"
+edges:
+  - id: openai-1__database-1
+    source: openai-1
+    target: database-1
+    sourceHandle: main
+    targetHandle: main
+output:
+  result: "{{openai-1}}"

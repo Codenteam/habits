@@ -1,46 +1,47 @@
-{
-  "id":pr-review-brief, 
-  "name":PR Review Brief, 
-  "nodes":[{
-    "id":openai, 
-    "type":bits, 
-    "data":{
-      "framework":bits, 
-      "source":npm, 
-      "module":"@ha-bits/bit-openai", 
-      "label":OpenAI, 
-      "operation":ask_chatgpt, 
-      "params":{
-        "model":gpt-5-mini, 
-        "prompt":"Act as an expert Senior Software Engineer and Technical Writer. Analyze the following Git diff / PR description: {{habits.input.git_diff}}. Your task is to provide a comprehensive, high-quality summary explaining what changed and why in plain, clear English. Structure your response into: 1. Core Changes (High-level overview) 2. Key Technical Modifications (Which functions or modules were affected) 3. Why it matters (The purpose behind the change). Avoid technical jargon where possible and ensure it is easily understandable for project managers."}, 
-        "credentials":{
-          "openai":{"apiKey":"{{habits.env.OPENAI_API_KEY}}"}}}},
-          
-                    
-          
-{
-  "id":database, 
-  "type":bits, 
-  "data":{
-    "framework":bits, 
-    "source":npm, 
-    "module":"@ha-bits/bit-database", 
-    "label":Database, 
-    "operation":store, 
-    "params":{
-      "collection":git-different, 
-      "value":"{{openai}}", 
-      "key":code-different}}}],
+id: pr-review-brief
+name: PR Review Brief
+nodes:
+  - id: openai
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          Act as an expert Senior Software Engineer and Technical Writer. Analyze the following Git diff / PR
+          description: {{habits.input.git_diff}}.
 
+          Your task is to provide a comprehensive, high-quality summary explaining what changed and why in plain, clear
+          English. Structure your response into:
+          1. Core Changes (High-level overview)
+          2. Key Technical Modifications (Which functions or modules were affected)
+          3. Why it matters (The purpose behind the change)
 
-
-"edges":[{
-  "id":openai__database, 
-  "source":openai, 
-  "target":database, 
-  "sourceHandle":main, 
-  "targetHandle":main}], 
-  
-  
-  
-"output":{"Results":"{{openai}}"}}
+          Avoid technical jargon where possible and ensure it is easily understandable for project managers.
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: git-different
+        value: "{{openai}}"
+        key: code-different
+edges:
+  - id: openai__database
+    source: openai
+    target: database
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai}}"

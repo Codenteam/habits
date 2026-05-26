@@ -1,0 +1,27 @@
+### Smart Contact Form API Tests
+@baseUrl = https://contact-form.public.hub.codenteam.click
+
+### Health check
+GET {{baseUrl}}/health
+
+### Fetch public client config (reCAPTCHA site key)
+POST {{baseUrl}}/api/contact-config
+Content-Type: application/json
+
+{}
+
+### Submit contact (invalid recaptcha — expect verification failure)
+POST {{baseUrl}}/api/submit-contact
+Content-Type: application/json
+
+{
+  "referrer": "https://docs.example.com/showcase/hello-world",
+  "recaptchaToken": "invalid-token",
+  "formPurpose": "docs-showcase:hello-world",
+  "answers": {
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "company": "Acme Inc",
+    "message": "Interested in automating workflows with Habits."
+  }
+}

@@ -1,0 +1,144 @@
+id: submit-contact
+name: Submit Contact Form
+description: Validate reCAPTCHA, summarize submission with OpenAI, and email the notification.
+
+input:
+  - id: referrer
+    type: string
+    description: Page URL the user submitted from
+    required: false
+  - id: recaptchaToken
+    type: string
+    description: reCAPTCHA response token from the client
+    required: true
+  - id: answers
+    type: object
+    description: User-provided form answers (name, email, company, message, etc.)
+    required: true
+  - id: formPurpose
+    type: string
+    description: Form type or purpose identifier (e.g. docs-showcase:hello-world)
+    required: true
+
+nodes:
+  - id: verify-recaptcha
+    type: bits
+    data:
+      label: Verify reCAPTCHA Enterprise
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: request
+      params:
+        url: "https://recaptchaenterprise.googleapis.com/v1/projects/{{habits.env.HABITS_RECAPTCHA_PROJECT_ID}}/assessments?key={{habits.env.HABITS_RECAPTCHA_API_KEY}}"
+        method: POST
+        bodyType: json
+        body: '{"event":{"token":"{{habits.input.recaptchaToken}}","siteKey":"{{habits.env.HABITS_RECAPTCHA_SITE_KEY}}","expectedAction":"contact_form"}}'
+
+  - id: guard-recaptcha
+    type: bits
+    data:
+      label: Guard reCAPTCHA
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: if
+        branches:
+          - value1: "{{verify-recaptcha.body.tokenProperties.valid}}"
+            operator: equals
+            value2: true
+            output:
+              verified: true
+              score: "{{verify-recaptcha.body.riskAnalysis.score}}"
+        includeElse: true
+        defaultOutput:
+          verified: false
+          error: reCAPTCHA verification failed
+
+  - id: summarize-submission
+    type: bits
+    data:
+      label: Summarize Submission
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.3
+        maxTokens: 900
+        prompt: |
+          Summarize this contact form submission for an internal notification email.
+
+          Form purpose: {{habits.input.formPurpose}}
+          Referrer page: {{habits.input.referrer || 'unknown'}}
+
+          User answers (JSON):
+          {{habits.input.answers}}
+
+          Provide:
+          1. A concise subject line (one line, no prefix)
+          2. A brief summary (2-3 sentences)
+          3. Key contact details extracted from the answers
+          4. Recommended follow-up priority: low, medium, or high
+          5. Any notable signals (urgency, enterprise interest, technical depth)
+
+  - id: send-notification
+    type: bits
+    data:
+      label: Send Notification Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      params:
+        from: "{{habits.env.HABITS_SMTP_FROM || habits.env.HABITS_SMTP_USER}}"
+        to: "{{habits.env.HABITS_CONTACT_FORM_RECIPIENT}}"
+        replyTo: "{{habits.input.answers.email || ''}}"
+        subject: "[Contact] {{habits.input.formPurpose}} — {{habits.input.answers.name || 'Unknown'}}"
+        body: |
+          New contact form submission
+
+          Form purpose: {{habits.input.formPurpose}}
+          Referrer: {{habits.input.referrer || 'unknown'}}
+          Submitted at: {{habits.context.timestamp}}
+
+          --- AI Summary ---
+          {{summarize-submission}}
+
+          --- Contact Details ---
+          - Name: {{habits.input.answers.name}}
+          - Email: {{habits.input.answers.email}}
+          - Company: {{habits.input.answers.company || '—'}}
+          - Message: {{habits.input.answers.message}}
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{habits.env.HABITS_SMTP_USER}}"
+          password: "{{habits.env.HABITS_SMTP_PASSWORD}}"
+
+edges:
+  - source: verify-recaptcha
+    target: guard-recaptcha
+  - source: guard-recaptcha
+    target: summarize-submission
+    sourceHandle: branch-0
+  - source: guard-recaptcha
+    target: send-notification
+    sourceHandle: branch-0
+  - source: summarize-submission
+    target: send-notification
+
+output:
+  success: "{{send-notification.success}}"
+  verified: "{{guard-recaptcha.output.verified}}"
+  error: "{{guard-recaptcha.output.error}}"
+  summary: "{{summarize-submission}}"
+  messageId: "{{send-notification.messageId}}"
+  recaptchaScore: "{{guard-recaptcha.output.score}}"
