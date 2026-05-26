@@ -100,12 +100,6 @@ A collection of habits that enforce quality at every stage: from defect capture 
 </div>
 
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/manufacturing-quality-control/stack.yaml [stack.yaml]
-:::
-
 
 <div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>
 

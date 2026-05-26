@@ -60,6 +60,7 @@
     <ContactForm
       :heading="`Automate your ${industry.name} workflows`"
       subtext="These habits are examples of what's possible. Reach out and we'll tailor each one to your specific tools, processes, and team."
+      :form-purpose="`docs-industry:${industry.slug}`"
     />
   </div>
 </template>

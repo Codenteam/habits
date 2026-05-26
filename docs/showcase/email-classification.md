@@ -55,16 +55,6 @@ or any email processing automation.
 - OpenAI API key
 - IMAP-enabled email account
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/email-classification/stack.yaml [stack.yaml]
-
-<<< @/../showcase/email-classification/habit.yaml [habit.yaml]
-
-<<< @/../showcase/email-classification/.env.example [.env.example]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="email-classification" />

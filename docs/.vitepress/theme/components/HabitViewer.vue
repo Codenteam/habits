@@ -13,17 +13,11 @@ const props = defineProps<{
 const containerRef = ref<HTMLElement | null>(null)
 const containerWidth = ref<number>(0)
 
-// Use local viewer in dev mode, production URL otherwise
+// Use bundled static viewer from docs/public/viewer/
+// Must use index.html explicitly — VitePress dev intercepts /viewer/ as an SPA route.
 const baseUrl = computed(() => {
-  // VitePress dev mode detection
-  const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-
-  // Use prod viewer always for now.
-  // return 'https://codenteam.com/intersect/habits/viewer/';
-  return isDev 
-    ? 'http://localhost:3030/intersect/habits/viewer/'
-    : 'https://codenteam.com/intersect/habits/viewer/'
-  
+  if (typeof window === 'undefined') return withBase('/viewer/index.html')
+  return `${window.location.origin}${withBase('/viewer/index.html')}`
 })
 
 // Resolve URL to absolute, including VitePress base path

@@ -12,7 +12,18 @@ export default defineConfig({
 
   // Serve static assets from .vitepress/public
   vite: {
-    publicDir: 'public'
+    publicDir: 'public',
+    // Ignore build output so `vitepress build` + `vitepress dev` together
+    // don't trigger hundreds of broken HMR reloads (invalidateTypeCache).
+    server: {
+      watch: {
+        ignored: [
+          '**/.vitepress/dist/**',
+          '**/.vitepress/cache/**',
+          '**/.vitepress/.temp/**',
+        ]
+      }
+    }
   },
 
   // Ignore dead links for localhost URLs
@@ -25,6 +36,10 @@ export default defineConfig({
 
   // Configure markdown to escape Vue template syntax in code
   markdown: {
+    languageAlias: {
+      env: 'dotenv',
+      example: 'dotenv',
+    },
     config: (md) => {
       // Add v-pre to code element to prevent Vue interpolation (without wrapping in div)
       const fence = md.renderer.rules.fence!
@@ -77,6 +92,7 @@ export default defineConfig({
       { text: 'Docs', link: '/getting-started/introduction' },
       { component: 'UseCasesMegaMenu' },
       { text: 'Showcase', link: '/showcase/' },
+      { text: 'Pricing', link: '/pricing' },
       { text: 'Downloads', link: '/downloads' },
     ],
     

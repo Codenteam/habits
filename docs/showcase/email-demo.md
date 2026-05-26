@@ -67,16 +67,6 @@ or creating email-based workflows with Habits.
 - Email account with IMAP/SMTP access (Gmail, Outlook, etc.)
 - App password for Gmail users
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/email-demo/stack.yaml [stack.yaml]
-
-<<< @/../showcase/email-demo/habit.yaml [habit.yaml]
-
-<<< @/../showcase/email-demo/.env.example [.env.example]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="email-demo" />

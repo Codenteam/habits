@@ -1,5 +1,5 @@
 <template>
-  <div class="habit-viewer-tabs">
+  <div id="workflow-visualization" class="habit-viewer-tabs">
     <!-- Tab Headers -->
     <div class="tabs-header">
       <button
@@ -9,7 +9,9 @@
         :class="{ active: activeTab === index }"
         @click="activeTab = index"
       >
-        <span class="tab-icon">📋</span>
+        <span class="tab-icon">
+          <GitBranch :size="16" />
+        </span>
         <span class="tab-label">{{ tab.label }}</span>
       </button>
     </div>
@@ -35,6 +37,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { GitBranch } from 'lucide-vue-next'
 import HabitViewer from './HabitViewer.vue'
 
 interface HabitTab {
@@ -112,7 +115,14 @@ const activeTab = ref(0)
 }
 
 .tab-icon {
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.tab-btn.active .tab-icon {
+  opacity: 1;
 }
 
 .tab-label {

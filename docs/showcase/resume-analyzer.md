@@ -109,20 +109,6 @@ This showcase demonstrates:
 
 - OpenAI API key (for GPT-4o and Vision API)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/resume-analyzer/stack.yaml [stack.yaml]
-
-<<< @/../showcase/resume-analyzer/.env.example [.env.example]
-
-<<< @/../showcase/resume-analyzer/habits/analyze-resume.yaml [analyze-resume.yaml]
-
-<<< @/../showcase/resume-analyzer/habits/generate-cover-letter.yaml [generate-cover-letter.yaml]
-
-<<< @/../showcase/resume-analyzer/habits/get-analysis.yaml [get-analysis.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="resume-analyzer" />

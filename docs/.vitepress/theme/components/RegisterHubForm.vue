@@ -42,53 +42,188 @@
         </div>
 
         <div class="form-field">
+          <label class="field-label">Region <span class="required">*</span></label>
+          <select v-model="form.region" class="field-input field-select" required>
+            <option value="" disabled>Select a datacenter region</option>
+            <option value="us">United States (US East)</option>
+            <option value="eu">European Union (EU West)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
           <label class="field-label">Use Case <span class="required">*</span></label>
           <textarea v-model="form.useCase" class="field-textarea" rows="4" placeholder="Describe what you want to automate or run on your private instance..." required />
         </div>
 
         <div v-if="errorMsg" class="error-banner">{{ errorMsg }}</div>
 
-        <button type="submit" class="submit-btn" :disabled="sending">
-          <span v-if="sending" class="btn-spinner" />
-          {{ sending ? 'Sending...' : 'Request Private Instance' }}
+        <button type="submit" class="submit-btn" :disabled="sending || !apiConfigured || configLoading">
+          <span v-if="sending || configLoading" class="btn-spinner" />
+          {{ configLoading ? 'Loading...' : sending ? 'Sending...' : 'Request Private Instance' }}
         </button>
+
+        <p v-if="!API_URL" class="config-hint">
+          Registration API is not configured for this environment.
+        </p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 
-const form = reactive({ name: '', email: '', company: '', useCase: '' })
+declare global {
+  interface Window {
+    grecaptcha?: {
+      enterprise?: {
+        ready: (cb: () => void) => void
+        execute: (siteKey: string, options: { action: string }) => Promise<string>
+      }
+    }
+  }
+}
+
+const API_URL = import.meta.env.VITE_CONTACT_FORM_API_URL as string | undefined
+const FORM_PURPOSE = 'docs:register-hub'
+
+const REGION_LABELS: Record<string, string> = {
+  us: 'United States (US East)',
+  eu: 'European Union (EU West)',
+}
+
+function contactConfigUrl(submitUrl: string): string {
+  if (submitUrl.includes('/api/submit-contact')) {
+    return submitUrl.replace(/\/api\/submit-contact\/?$/, '/api/contact-config')
+  }
+  return `${submitUrl.replace(/\/$/, '')}/api/contact-config`
+}
+
+const recaptchaSiteKey = ref<string | null>(null)
+const configLoading = ref(false)
+const apiConfigured = computed(() => Boolean(API_URL && recaptchaSiteKey.value))
+
+const form = reactive({ name: '', email: '', company: '', region: '', useCase: '' })
 const sending = ref(false)
 const submitted = ref(false)
 const errorMsg = ref('')
 
-async function submit() {
-  sending.value = true
-  errorMsg.value = ''
-  try {
-    const payload = {
-      type: 'register-hub',
-      name: form.name,
-      email: form.email,
-      company: form.company,
-      useCase: form.useCase,
+function loadRecaptchaScript(siteKey: string): Promise<void> {
+  if (!siteKey) return Promise.resolve()
+  if (window.grecaptcha?.enterprise) return Promise.resolve()
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-recaptcha="register-hub"]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve())
+      return
     }
-    const res = await fetch('https://forms.codenteam.com/api/register-hub', {
+
+    const script = document.createElement('script')
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`
+    script.async = true
+    script.defer = true
+    script.dataset.recaptcha = 'register-hub'
+    script.onload = () => {
+      window.grecaptcha?.enterprise?.ready(() => resolve())
+    }
+    script.onerror = () => reject(new Error('Failed to load reCAPTCHA'))
+    document.head.appendChild(script)
+  })
+}
+
+async function getRecaptchaToken(): Promise<string> {
+  const siteKey = recaptchaSiteKey.value
+  const enterprise = window.grecaptcha?.enterprise
+  if (!siteKey || !enterprise) {
+    throw new Error('reCAPTCHA is not configured')
+  }
+  await loadRecaptchaScript(siteKey)
+  return enterprise.execute(siteKey, { action: 'register_hub' })
+}
+
+async function fetchContactConfig(): Promise<void> {
+  if (!API_URL) return
+  configLoading.value = true
+  try {
+    const response = await fetch(contactConfigUrl(API_URL), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: '{}',
     })
-    if (!res.ok) throw new Error(`Server error: ${res.status}`)
+    const data = await response.json().catch(() => ({}))
+    const output = data.output ?? data
+    const key = output.recaptchaSiteKey
+    if (!response.ok || !key) {
+      throw new Error('Registration form config unavailable')
+    }
+    recaptchaSiteKey.value = String(key)
+    await loadRecaptchaScript(recaptchaSiteKey.value)
+  } catch {
+    // recaptchaSiteKey stays null; hint shown in template
+  } finally {
+    configLoading.value = false
+  }
+}
+
+function buildMessage(): string {
+  const regionLabel = REGION_LABELS[form.region] ?? form.region
+  return `Preferred region: ${regionLabel}\n\nUse case:\n${form.useCase.trim()}`
+}
+
+async function submit() {
+  if (!API_URL || !recaptchaSiteKey.value) {
+    errorMsg.value = 'Registration form is not configured. Set VITE_CONTACT_FORM_API_URL.'
+    return
+  }
+
+  sending.value = true
+  errorMsg.value = ''
+
+  try {
+    const recaptchaToken = await getRecaptchaToken()
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referrer: window.location.href,
+        recaptchaToken,
+        formPurpose: FORM_PURPOSE,
+        answers: {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          company: form.company.trim(),
+          message: buildMessage(),
+        },
+      }),
+    })
+
+    const data = await response.json().catch(() => ({}))
+    const output = data.output ?? data
+
+    if (!response.ok || output.verified === false || output.verified === 'false' || (output.verified !== true && output.verified !== 'true')) {
+      const errMsg = output.error || data.error || (data.status === 'failed' ? 'Submission failed' : `Request failed (${response.status})`)
+      throw new Error(
+        String(errMsg).includes('reCAPTCHA') ? 'reCAPTCHA verification failed. Please try again.' : String(errMsg)
+      )
+    }
+
+    if (output.success === false || output.success === 'false') {
+      throw new Error('Failed to submit your request. Please try again later.')
+    }
+
     submitted.value = true
-  } catch (err: any) {
-    errorMsg.value = err?.message || 'Something went wrong. Please try again.'
+  } catch (err) {
+    errorMsg.value = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
   } finally {
     sending.value = false
   }
 }
+
+onMounted(() => {
+  fetchContactConfig()
+})
 </script>
 
 <style scoped>
@@ -200,6 +335,19 @@ async function submit() {
   border-color: var(--vp-c-brand-1);
 }
 
+.field-select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.field-select:invalid {
+  color: var(--vp-c-text-3);
+}
+
 .field-textarea {
   resize: vertical;
   min-height: 100px;
@@ -212,6 +360,13 @@ async function submit() {
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.9rem;
+}
+
+.config-hint {
+  font-size: 0.78rem;
+  color: var(--vp-c-text-3);
+  margin: 0;
+  text-align: center;
 }
 
 .submit-btn {

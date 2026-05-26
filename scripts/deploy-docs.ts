@@ -91,21 +91,13 @@ function buildPackages(): void {
   if (process.env.SKIP_BUILD === 'true') {
     return;
   }
-  return;
   run('pnpm nx build @ha-bits/habit-viewer');
   run('pnpm nx build @ha-bits/cortex');
   run('npx tsx scripts/link-local.cts');
 }
 
 function copyHabitViewer(): void {
-  console.log('\n=== Copying Habit Viewer ===\n');
-  const viewerSrc = join(DIST_DIR, 'packages/habit-viewer');
-  const viewerDest = join(DOCS_PUBLIC, 'viewer');
-  if (existsSync(viewerDest)) rmSync(viewerDest, { recursive: true });
-  ensureDir(viewerDest);
-  copyDir(viewerSrc, viewerDest);
-  const pkgJson = join(viewerDest, 'package.json');
-  if (existsSync(pkgJson)) rmSync(pkgJson);
+  run('SKIP_BUILD=true npx tsx scripts/copy-habit-viewer-to-docs.ts');
 }
 
 function copyShowcaseFiles(): void {

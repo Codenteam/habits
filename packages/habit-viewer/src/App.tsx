@@ -19,6 +19,7 @@ import {
 interface ViewerState {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+  rawYaml: string | null;
   error: string | null;
   loading: boolean;
 }
@@ -206,6 +207,7 @@ function App() {
   const [state, setState] = useState<ViewerState>({
     nodes: [],
     edges: [],
+    rawYaml: null,
     error: null,
     loading: true,
   });
@@ -278,9 +280,9 @@ function App() {
         return;
       }
 
+      let content = '';
+
       try {
-        let content: string;
-        
         if (params.url) {
           // Fetch content from URL
           const resolvedUrl = resolveUrl(params.url);
@@ -323,15 +325,21 @@ function App() {
         setState({
           nodes,
           edges,
+          rawYaml: content,
           error: null,
           loading: false,
         });
       } catch (err) {
-        setState(s => ({
-          ...s,
+        const message = err instanceof Error ? err.message : String(err);
+        setState({
+          nodes: [],
+          edges: [],
+          rawYaml: content || null,
           loading: false,
-          error: `Failed to parse habit: ${err instanceof Error ? err.message : String(err)}`,
-        }));
+          error: content
+            ? `Failed to parse habit: ${message}`
+            : `Failed to load habit: ${message}`,
+        });
       }
     }
 
@@ -392,14 +400,23 @@ function App() {
     return <InputForm onSubmit={handleFormSubmit} />;
   }
 
-  // Error state
+  // Error state — still show YAML when content was fetched but isn't a workflow graph
   if (state.error) {
     return (
-      <div className="flex items-center justify-center w-full h-full bg-slate-900 p-4">
-        <div className="text-red-400 text-center max-w-md">
-          <div className="text-lg font-semibold mb-2">Error</div>
-          <div className="text-sm">{state.error}</div>
+      <div className="flex flex-col w-full h-full bg-slate-900">
+        <div className="px-4 py-2 bg-amber-900/40 border-b border-amber-700 text-amber-200 text-sm">
+          {state.error}
+          {state.rawYaml ? ' — showing raw YAML below.' : ''}
         </div>
+        {state.rawYaml ? (
+          <pre className="flex-1 overflow-auto p-4 m-0 text-sm text-slate-200 font-mono whitespace-pre-wrap">
+            <code>{state.rawYaml}</code>
+          </pre>
+        ) : (
+          <div className="flex flex-1 items-center justify-center p-4">
+            <div className="text-red-400 text-center max-w-md text-sm">{state.error}</div>
+          </div>
+        )}
       </div>
     );
   }
@@ -429,6 +446,7 @@ function App() {
         ref={canvasRef}
         nodes={state.nodes}
         edges={state.edges}
+        rawYaml={state.rawYaml ?? undefined}
         showControls={!params.hideControls}
         showMinimap={!params.hideControls && !params.hideMinimap}
         fitView={params.fitView}

@@ -23,6 +23,7 @@ import IndustryPage from './components/industries/IndustryPage.vue'
 import ContactForm from './components/ContactForm.vue'
 import RegisterHubForm from './components/RegisterHubForm.vue'
 import UseCasesMegaMenu from './components/UseCasesMegaMenu.vue'
+import EnterprisePricing from './components/EnterprisePricing.vue'
 import './custom.css'
 import './home-tokens.css'
 import './d2-custom.css'
@@ -53,6 +54,7 @@ export default {
     app.component('ContactForm', ContactForm)
     app.component('RegisterHubForm', RegisterHubForm)
     app.component('UseCasesMegaMenu', UseCasesMegaMenu)
+    app.component('EnterprisePricing', EnterprisePricing)
     enhanceAppWithTabs(app)
   }
 }

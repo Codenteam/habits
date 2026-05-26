@@ -91,14 +91,6 @@ Use this as a starting point for building more complex automations that interact
 
 - PARAM1 environment key
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/hello-world/stack.yaml [stack.yaml]
-
-<<< @/../showcase/hello-world/habit.yaml [habit.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="hello-world" />

@@ -133,20 +133,6 @@ Google Sheet for easy bookkeeping.
 - GOOGLE_SHEETS_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
 - GOOGLE_SPREADSHEET_ID (Target Google Spreadsheet ID)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/invoices-processing/stack.yaml [stack.yaml]
-
-<<< @/../showcase/invoices-processing/.env.example [.env.example]
-
-<<< @/../showcase/invoices-processing/habits/extract-invoice-attachment.yaml [extract-invoice-attachment.yaml]
-
-<<< @/../showcase/invoices-processing/habits/extract-invoice.yaml [extract-invoice.yaml]
-
-<<< @/../showcase/invoices-processing/habits/fetch-emails.yaml [fetch-emails.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="invoices-processing" />

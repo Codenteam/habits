@@ -1324,8 +1324,12 @@ export class WorkflowExecutor {
     const hasRequiredDeps = nodeDeps.dependsOn.length > 0;
     const hasOptionalDeps = nodeDeps.optionalDependsOn.length > 0;
     
-    // Helper to check if a node status is "done" (completed or skipped)
-    const isDone = (status: NodeExecutionStatus['status'] | undefined) => 
+    // Required upstream nodes must complete successfully; skipped branches must not unlock downstream work.
+    const isRequiredDependencySatisfied = (status: NodeExecutionStatus['status'] | undefined) =>
+      status === 'completed';
+
+    // Optional / flow-control paths may treat skipped nodes as satisfied.
+    const isDone = (status: NodeExecutionStatus['status'] | undefined) =>
       status === 'completed' || status === 'skipped';
     
     // If no dependencies at all, node can run
@@ -1333,10 +1337,10 @@ export class WorkflowExecutor {
       return true;
     }
 
-    // Check required dependencies - ALL must be completed or skipped
+    // Check required dependencies - ALL must be completed (skipped does not count)
     const allRequiredSatisfied = nodeDeps.dependsOn.every(depNodeId => {
       const depStatus = nodeStatuses.find(s => s.nodeId === depNodeId);
-      return isDone(depStatus?.status);
+      return isRequiredDependencySatisfied(depStatus?.status);
     });
 
     // If has required deps and they're not all satisfied, can't run
@@ -1485,6 +1489,9 @@ export class WorkflowExecutor {
               content: fullParams.script,
             },
           });
+          if (nodeResult?.success === false) {
+            throw new Error(nodeResult.data?.error || nodeResult.data?.message || 'Script execution failed');
+          }
           break;
         case 'bits':
           // Bits framework - native Habits module execution

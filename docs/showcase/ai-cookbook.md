@@ -99,18 +99,6 @@ inspiration when staring at a fridge full of random ingredients.
 - OpenAI API key (for GPT-4o and DALL-E 3)
 - SQLite (auto-configured)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/ai-cookbook/stack.yaml [stack.yaml]
-
-<<< @/../showcase/ai-cookbook/habits/generate-recipe.yaml [generate-recipe.yaml]
-
-<<< @/../showcase/ai-cookbook/habits/get-recipe.yaml [get-recipe.yaml]
-
-<<< @/../showcase/ai-cookbook/habits/list-recipes.yaml [list-recipes.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="ai-cookbook" />

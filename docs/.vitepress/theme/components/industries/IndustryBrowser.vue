@@ -63,6 +63,7 @@
     <ContactForm
       heading="Ready to automate your industry?"
       subtext="Every organization runs differently. Tell us about yours and we'll show you exactly how Habits fits into your environment from day one."
+      form-purpose="docs-industries"
     />
   </div>
 </template>

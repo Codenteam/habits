@@ -126,20 +126,6 @@ with minimal manual input.
 - GOOGLE_DRIVE_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
 - GOOGLE_DRIVE_FOLDER_ID (Target Google Drive folder ID for uploads)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/client-invoice-manager/stack.yaml [stack.yaml]
-
-<<< @/../showcase/client-invoice-manager/.env.example [.env.example]
-
-<<< @/../showcase/client-invoice-manager/habits/generate-invoice.yaml [generate-invoice.yaml]
-
-<<< @/../showcase/client-invoice-manager/habits/list-clients.yaml [list-clients.yaml]
-
-<<< @/../showcase/client-invoice-manager/habits/save-client.yaml [save-client.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="client-invoice-manager" />

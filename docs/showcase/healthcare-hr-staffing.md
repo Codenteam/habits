@@ -100,12 +100,6 @@ A collection of habits that keep clinical staffing running smoothly: from roster
 </div>
 
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/healthcare-hr-staffing/stack.yaml [stack.yaml]
-:::
-
 
 <div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>
 

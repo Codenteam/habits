@@ -1470,13 +1470,14 @@ async function loadFromHabitFile(habitPath: string, externalEnvPath?: string): P
   
   // Find all YAML workflow files (excluding common non-workflow files)
   const workflowFiles: string[] = [];
-  const excludePatterns = ['stack.yaml', 'config.yaml', '.env'];
+  const excludeBasenames = new Set(['stack.yaml', 'stack.yml', 'config.yaml', 'config.yml']);
   
   zip.forEach((relativePath, file) => {
     if (!file.dir && (relativePath.endsWith('.yaml') || relativePath.endsWith('.yml'))) {
       const norm = relativePath.replace(/\\/g, '/');
+      const base = path.basename(norm).toLowerCase();
       // Skip stack/config and declarative UI specs under frontend/
-      if (excludePatterns.some(p => norm.toLowerCase().includes(p.toLowerCase()))) return;
+      if (excludeBasenames.has(base) || base === '.env') return;
       if (/^frontend\//i.test(norm)) return;
       workflowFiles.push(relativePath);
     }

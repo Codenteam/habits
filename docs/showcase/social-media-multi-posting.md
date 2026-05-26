@@ -131,20 +131,6 @@ with a cron-driven scheduler to publish posts to multiple social platforms with 
 - LINKEDIN_CLIENT_SECRET (LinkedIn OAuth 2.0 Client Secret)
 - LINKEDIN_ORGANIZATION_ID (LinkedIn Company Page / Organization ID)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/social-media-multi-posting/stack.yaml [stack.yaml]
-
-<<< @/../showcase/social-media-multi-posting/.env.example [.env.example]
-
-<<< @/../showcase/social-media-multi-posting/habits/check-pending-posts.yaml [check-pending-posts.yaml]
-
-<<< @/../showcase/social-media-multi-posting/habits/delete-post.yaml [delete-post.yaml]
-
-<<< @/../showcase/social-media-multi-posting/habits/generate-social-content.yaml [generate-social-content.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="social-media-multi-posting" />

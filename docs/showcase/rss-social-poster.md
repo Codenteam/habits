@@ -128,20 +128,6 @@ Twitter/X and LinkedIn without any manual intervention.
 - LINKEDIN_ORG_ID (LinkedIn Organization ID for page posts)
 - RSS_FEED_URL (RSS/Atom feed URL to monitor)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/rss-social-poster/stack.yaml [stack.yaml]
-
-<<< @/../showcase/rss-social-poster/.env.example [.env.example]
-
-<<< @/../showcase/rss-social-poster/habits/fetch-rss.yaml [fetch-rss.yaml]
-
-<<< @/../showcase/rss-social-poster/habits/generate-social-posts.yaml [generate-social-posts.yaml]
-
-<<< @/../showcase/rss-social-poster/habits/post-to-social.yaml [post-to-social.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="rss-social-poster" />

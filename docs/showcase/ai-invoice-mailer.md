@@ -125,20 +125,6 @@ email delivery to produce and send professional invoices with minimal effort.
 - SMTP_PASSWORD (SMTP password or app-specific password)
 - EMAIL_FROM (Display name and address used as the sender)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/ai-invoice-mailer/stack.yaml [stack.yaml]
-
-<<< @/../showcase/ai-invoice-mailer/.env.example [.env.example]
-
-<<< @/../showcase/ai-invoice-mailer/habits/generate-invoice.yaml [generate-invoice.yaml]
-
-<<< @/../showcase/ai-invoice-mailer/habits/list-clients.yaml [list-clients.yaml]
-
-<<< @/../showcase/ai-invoice-mailer/habits/save-client.yaml [save-client.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="ai-invoice-mailer" />

@@ -93,20 +93,6 @@ template for your own content management systems.
 
 - Node.js 18+
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/minimal-blog/stack.yaml [stack.yaml]
-
-<<< @/../showcase/minimal-blog/.env.example [.env.example]
-
-<<< @/../showcase/minimal-blog/habits/create-post.yaml [create-post.yaml]
-
-<<< @/../showcase/minimal-blog/habits/delete-post.yaml [delete-post.yaml]
-
-<<< @/../showcase/minimal-blog/habits/get-post.yaml [get-post.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="minimal-blog" />

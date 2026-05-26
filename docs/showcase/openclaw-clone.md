@@ -57,20 +57,6 @@ SaaS applications with Habits.
 - OpenAI API key
 - PostgreSQL database
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/openclaw-clone/stack.yaml [stack.yaml]
-
-<<< @/../showcase/openclaw-clone/.env.example [.env.example]
-
-<<< @/../showcase/openclaw-clone/habits/browse-web.yaml [browse-web.yaml]
-
-<<< @/../showcase/openclaw-clone/habits/chat.yaml [chat.yaml]
-
-<<< @/../showcase/openclaw-clone/habits/complete-task.yaml [complete-task.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="openclaw-clone" />

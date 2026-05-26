@@ -100,16 +100,6 @@ for unified model access across multiple AI providers.
 
 - Intersect API key (for AI gateway access)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/marketing-campaign/stack.yaml [stack.yaml]
-
-<<< @/../showcase/marketing-campaign/habit.yaml [habit.yaml]
-
-<<< @/../showcase/marketing-campaign/.env.example [.env.example]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="marketing-campaign" />

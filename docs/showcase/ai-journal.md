@@ -99,18 +99,6 @@ to build a journaling habit, AI Journal makes the experience more meaningful and
 
 - OpenAI API key (for GPT-4o)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/ai-journal/stack.yaml [stack.yaml]
-
-<<< @/../showcase/ai-journal/habits/get-entries.yaml [get-entries.yaml]
-
-<<< @/../showcase/ai-journal/habits/get-entry.yaml [get-entry.yaml]
-
-<<< @/../showcase/ai-journal/habits/save-entry.yaml [save-entry.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="ai-journal" />

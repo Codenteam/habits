@@ -100,12 +100,6 @@ A collection of habits that keep tenants happy and properties running smoothly: 
 </div>
 
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/real-estate-property-management/stack.yaml [stack.yaml]
-:::
-
 
 <div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>
 

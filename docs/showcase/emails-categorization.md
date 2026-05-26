@@ -126,20 +126,6 @@ classify and summarise every unread email, and delivers a structured report to a
 - TELEGRAM_BOT_TOKEN (Telegram Bot token from BotFather)
 - TELEGRAM_CHAT_ID (Telegram chat ID to send the report to)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/emails-categorization/stack.yaml [stack.yaml]
-
-<<< @/../showcase/emails-categorization/.env.example [.env.example]
-
-<<< @/../showcase/emails-categorization/habits/categorize-emails.yaml [categorize-emails.yaml]
-
-<<< @/../showcase/emails-categorization/habits/categorize-single-email.yaml [categorize-single-email.yaml]
-
-<<< @/../showcase/emails-categorization/habits/fetch-emails.yaml [fetch-emails.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="emails-categorization" />

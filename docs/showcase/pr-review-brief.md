@@ -1,30 +1,33 @@
 ---
-title: "Finance & Banking Compliance & Audit"
-description: "Automate AML screening, SAR filing, audit trail compilation, policy compliance checks, and regulatory report generation."
+title: "PR Review Brief"
+description: "An AI-powered developer tool designed to parse complex Git diff outputs and Pull Request logs, transforming scattered lines of code updates into clean, human-readable change summaries."
 aside: false
 ---
 
 <script setup>
-import { Tag, Brain } from 'lucide-vue-next'
+import { Brain, Layout, Server, Tag } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/finance-banking-compliance-audit/1.webp', caption: 'Finance & Banking Compliance & Audit' }
+    { img: '/showcase/pr-review-brief/pr-review-brief-2.webp', caption: 'PR Review Brief' },
+    { img: '/showcase/pr-review-brief/pr-review-brief.webp', caption: 'PR Review Brief' }
 ]
 </script>
 
-# Finance & Banking Compliance & Audit
+# PR Review Brief
 
 <div class="showcase-header">
   <div class="showcase-meta">
     <div class="meta-left">
-      <span class="difficulty-pill difficulty-intermediate">
+      <span class="difficulty-pill difficulty-beginner">
         <span class="difficulty-dot"></span>
-        Intermediate
+        Beginner
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-finance"><component :is="Tag" :size="12" /> finance</span> <span class="showcase-tag tag-compliance"><component :is="Tag" :size="12" /> compliance</span> <span class="showcase-tag tag-audit"><component :is="Tag" :size="12" /> audit</span> <span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span> <span class="showcase-tag tag-backend"><component :is="Server" :size="12" /> backend</span> <span class="showcase-tag tag-programming"><component :is="Tag" :size="12" /> programming</span></div>
     </div>
-    
+    <div class="meta-right">
+      <DownloadExample examplePath="pr-review-brief" />
+    </div>
   </div>
 </div>
 
@@ -32,76 +35,25 @@ const images = [
   <ShowcaseHero :images="images" />
 </div>
 
-<div class="showcase-taxonomy"><div class="taxonomy-group"><span class="taxonomy-label">Industries</span><span class="taxonomy-values"><a href="../industries/finance-banking" class="taxonomy-pill">finance banking</a></span></div><div class="taxonomy-group"><span class="taxonomy-label">Departments</span><span class="taxonomy-values"><a href="../industries/finance-banking#compliance-audit" class="taxonomy-pill">compliance audit</a></span></div></div>
-
-<p class="showcase-description">Automate AML screening, SAR filing, audit trail compilation, policy compliance checks, and regulatory report generation.</p>
-
-A collection of habits that keep your compliance function ahead of regulators: from AML screening through to periodic reporting. Each habit operates independently and can be deployed individually or as a complete compliance and audit suite.
-
-## What It Does
-
-- **AML Screening**: screen transactions against watchlists and flag matches
-- **SAR Filing**: draft and route Suspicious Activity Reports for sign-off
-- **Audit Trail Compilation**: aggregate audit logs and prepare evidence packs
-- **Policy Compliance Check**: verify internal processes against current regulations
-- **Regulatory Reporting**: generate and submit periodic regulatory reports
-- **Risk Register Update**: update risk register entries based on audit findings
 
 
-<div class="habits-grid">
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">AML Screening</h3>
-      <span class="trigger-badge trigger-scheduler">Scheduled</span>
-    </div>
-    <p class="habit-description">Screen transactions against watchlists and sanction databases and flag any matches.</p>
-    <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">http</span><span class="bit-badge">ai</span></div>
-  </div>
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">SAR Filing</h3>
-      <span class="trigger-badge trigger-webhook">Webhook</span>
-    </div>
-    <p class="habit-description">Draft Suspicious Activity Reports with AI assistance and route for compliance sign-off.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">ai</span><span class="bit-badge">email</span></div>
-  </div>
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">Audit Trail Compilation</h3>
-      <span class="trigger-badge trigger-scheduler">Scheduled</span>
-    </div>
-    <p class="habit-description">Aggregate system audit logs and assemble evidence packs for upcoming audits.</p>
-    <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">ai</span><span class="bit-badge">http</span></div>
-  </div>
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">Policy Compliance Check</h3>
-      <span class="trigger-badge trigger-scheduler">Scheduled</span>
-    </div>
-    <p class="habit-description">Verify that internal processes remain aligned with current regulatory requirements.</p>
-    <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">ai</span><span class="bit-badge">http</span></div>
-  </div>
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">Regulatory Reporting</h3>
-      <span class="trigger-badge trigger-scheduler">Scheduled</span>
-    </div>
-    <p class="habit-description">Generate mandatory periodic reports and submit them to regulatory authorities on schedule.</p>
-    <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">http</span><span class="bit-badge">email</span></div>
-  </div>
-  <div class="habit-card">
-    <div class="habit-header">
-      <h3 class="habit-name">Risk Register Update</h3>
-      <span class="trigger-badge trigger-webhook">Webhook</span>
-    </div>
-    <p class="habit-description">Update the enterprise risk register automatically based on audit findings and alerts.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">http</span><span class="bit-badge">email</span></div>
-  </div>
-</div>
+<p class="showcase-description">An AI-powered developer tool designed to parse complex Git diff outputs and Pull Request logs, transforming scattered lines of code updates into clean, human-readable change summaries.</p>
+
+- Simplify your code review workflow and stay on top of repository changes. 
+ - This application captures raw git diff logs, filters out mechanical or boilerplate lines, and leverages AI to summarize logic changes,architectural refactors, and newly introduced components into an organized, high-level summary brief for the engineering team.
 
 
 
-<div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>
+## Requirements
+
+- OpenAI API key (gpt-5-mini)
+
+## Quick Start
+
+<ExampleRunner examplePath="pr-review-brief" />
+
+<DownloadExample examplePath="pr-review-brief" />
+
 
 <ContactForm
   heading="Want this habit running in your environment?"

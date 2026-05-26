@@ -59,7 +59,6 @@ interface ExampleData extends ShowcaseMetadata {
   slug: string;
   images: string[];
   path: string;
-  keyFiles: string[];
   habitFiles: string[];
   downloads: DownloadFile[];
   useDefaultImage?: boolean;
@@ -125,37 +124,6 @@ function getImageFiles(demoDir: string): string[] {
       if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
       return a.localeCompare(b);
     });
-}
-
-// Key files to look for in each example (in display order)
-const KEY_FILES = [
-  'stack.yaml',
-  'habit.yaml',
-  '.env.example',
-];
-
-function getKeyFiles(examplePath: string): string[] {
-  const found: string[] = [];
-  
-  for (const file of KEY_FILES) {
-    if (existsSync(join(examplePath, file))) {
-      found.push(file);
-    }
-  }
-  
-  // Also check for habit files in habits/ subdirectory
-  const habitsDir = join(examplePath, 'habits');
-  if (existsSync(habitsDir) && statSync(habitsDir).isDirectory()) {
-    const habitFiles = readdirSync(habitsDir)
-      .filter(f => f.endsWith('.yaml') || f.endsWith('.yml'))
-      .slice(0, 3); // Limit to first 3 habit files
-    
-    for (const file of habitFiles) {
-      found.push(`habits/${file}`);
-    }
-  }
-  
-  return found;
 }
 
 // Platform detection from file extensions
@@ -301,7 +269,6 @@ function scanExamples(): ExampleData[] {
         slug: dir,
         images,
         path: examplePath,
-        keyFiles: getKeyFiles(examplePath),
         habitFiles,
         downloads,
         useDefaultImage,
@@ -439,31 +406,22 @@ function generateLandingPage(example: ExampleData): string {
   
   const linksSection = links ? `\n## Links\n\n${links}\n` : '';
 
-  // Generate key files code-group section
-  const keyFilesSection = example.keyFiles.length > 0
-    ? `
-## Key Files
-
-::: code-group
-${example.keyFiles.map(file => {
-  const displayName = basename(file);
-  return `<<< @/../showcase/${example.slug}/${file} [${displayName}]`;
-}).join('\n\n')}
-:::
-`
-    : '';
-
   // Use habit files from ExampleData (either from showcase.yaml or auto-detected)
   const habitFiles = example.habitFiles;
-  
-  // Generate tabs data for habit viewer using URLs (files are copied to public/showcase/{slug}/)
-  const habitTabsArray = habitFiles.map(file => {
+
+  // Workflow viewer tabs — exclude stack/config files (not renderable as graphs)
+  const viewerHabitFiles = habitFiles.filter(file => {
+    const name = basename(file);
+    return name !== 'stack.yaml' && name !== '.env.example';
+  });
+
+  const habitTabsArray = viewerHabitFiles.map(file => {
     const label = basename(file, extname(file));
     const fileName = basename(file);
     return `{ label: '${label}', url: '/showcase/${example.slug}/${fileName}' }`;
   }).join(',\n    ');
-  
-  const habitViewerSection = habitFiles.length > 0
+
+  const habitViewerSection = viewerHabitFiles.length > 0
     ? `
 
 <hr style="clear:both;">
@@ -523,7 +481,7 @@ ${example.keyFiles.map(file => {
   const scriptSetupContent = [
     iconImport,
     `const images = [\n    ${imagesList}\n]`,
-    habitFiles.length > 0 ? `const habitTabs = [\n    ${habitTabsArray}\n]` : '',
+    viewerHabitFiles.length > 0 ? `const habitTabs = [\n    ${habitTabsArray}\n]` : '',
     example.downloads.length > 0 ? `const downloads = [\n    ${downloadsData}\n]` : '',
   ].filter(Boolean).join('\n\n');
 
@@ -565,7 +523,7 @@ ${(example.industries?.length || example.departments?.length) ? `<div class="sho
 
 ${example.longDescription || ''}
 ${buildHabitsGrid(example)}
-${appDownloadsSection}${habitViewerSection}${requirements}${keyFilesSection}
+${appDownloadsSection}${habitViewerSection}${requirements}
 ${example.quickDownload !== false ? `## Quick Start
 
 <ExampleRunner examplePath="${example.slug}" />

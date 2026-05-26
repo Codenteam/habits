@@ -57,16 +57,6 @@ beyond simple chat to actually interact with your tools and data.
 - MCP server running (optional)
 - Google Drive credentials (optional)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/agent-mcp-demo/stack.yaml [stack.yaml]
-
-<<< @/../showcase/agent-mcp-demo/habit.yaml [habit.yaml]
-
-<<< @/../showcase/agent-mcp-demo/.env.example [.env.example]
-:::
-
 
 
 

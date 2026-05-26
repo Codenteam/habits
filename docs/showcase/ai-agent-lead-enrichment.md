@@ -114,16 +114,6 @@ with HubSpot CRM integration to qualify and store leads with minimal effort.
 - OPENAI_API_KEY (OpenAI API key)
 - HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/ai-agent-lead-enrichment/stack.yaml [stack.yaml]
-
-<<< @/../showcase/ai-agent-lead-enrichment/.env.example [.env.example]
-
-<<< @/../showcase/ai-agent-lead-enrichment/habits/enrich-lead.yaml [enrich-lead.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="ai-agent-lead-enrichment" />

@@ -114,14 +114,6 @@ Demonstrates how to build a complete full-stack application with Habits includin
 
 - No external API keys required (uses local SQLite)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/qr-database/stack.yaml [stack.yaml]
-
-<<< @/../showcase/qr-database/.env.example [.env.example]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="qr-database" />

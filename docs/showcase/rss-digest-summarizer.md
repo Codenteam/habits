@@ -122,20 +122,6 @@ a configurable schedule.
 - SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
 - RSS_FEED_URL (RSS/Atom feed URL to monitor for new articles)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/rss-digest-summarizer/stack.yaml [stack.yaml]
-
-<<< @/../showcase/rss-digest-summarizer/.env.example [.env.example]
-
-<<< @/../showcase/rss-digest-summarizer/habits/rss-digest.yaml [rss-digest.yaml]
-
-<<< @/../showcase/rss-digest-summarizer/habits/send-digest.yaml [send-digest.yaml]
-
-<<< @/../showcase/rss-digest-summarizer/habits/summarize-content.yaml [summarize-content.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="rss-digest-summarizer" />

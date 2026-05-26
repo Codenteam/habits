@@ -13,6 +13,10 @@ const isComparison = computed(
   () => frontmatter.value.isComparison || frontmatter.value.layout === 'comparison'
 )
 
+const isPricing = computed(
+  () => frontmatter.value.isPricing === true
+)
+
 // Helper to get icon SVG
 const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 </script>
@@ -22,7 +26,7 @@ const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
     <Content />
   </HomeLayout>
 
-  <Layout v-else :class="{ 'is-comparison-page': isComparison }">
+  <Layout v-else :class="{ 'is-comparison-page': isComparison, 'is-pricing-page': isPricing }">
     <template #doc-before>
       <ComparisonLayout v-if="isComparison" />
     </template>
@@ -46,5 +50,36 @@ const icon = (name) => feather.icons[name].toSvg({ class: 'feather-icon' })
 .is-comparison-page .VPDoc .container .content {
   max-width: 100%;
   padding-right: 0;
+}
+
+/* Full-width pricing page — hide aside & sidebar, widen content */
+.is-pricing-page .VPDoc .container .aside {
+  display: none;
+}
+
+.is-pricing-page .VPDoc.has-sidebar .container {
+  max-width: 100%;
+}
+
+.is-pricing-page .VPDocAside,
+.is-pricing-page .VPSidebar {
+  display: none;
+}
+
+.is-pricing-page .VPContent.has-sidebar {
+  padding-left: 0 !important;
+}
+
+.is-pricing-page .VPDoc .container .content {
+  max-width: 100%;
+  padding-right: 0;
+}
+
+.is-pricing-page .VPDoc .content-container {
+  max-width: 100%;
+}
+
+.is-pricing-page .VPDoc h1 {
+  display: none;
 }
 </style>

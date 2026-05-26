@@ -131,20 +131,6 @@ uses OpenAI to summarise each message, and delivers a clean digest report to a S
 - SLACK_BOT_TOKEN (Slack Bot User OAuth Token)
 - SLACK_DIGEST_CHANNEL (Slack channel ID to post the digest to)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/email-digest-summarizer/stack.yaml [stack.yaml]
-
-<<< @/../showcase/email-digest-summarizer/.env.example [.env.example]
-
-<<< @/../showcase/email-digest-summarizer/habits/content-digest.yaml [content-digest.yaml]
-
-<<< @/../showcase/email-digest-summarizer/habits/fetch-emails.yaml [fetch-emails.yaml]
-
-<<< @/../showcase/email-digest-summarizer/habits/process-content.yaml [process-content.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="email-digest-summarizer" />

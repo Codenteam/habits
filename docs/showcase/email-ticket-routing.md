@@ -154,20 +154,6 @@ spam, or urgent) and forwards it to the correct team inbox via SMTP : no manual 
 - SMTP_URGENT_USER (Gmail address for the urgent/critical inbox)
 - SMTP_URGENT_PASSWORD (Gmail App Password for the urgent inbox)
 
-## Key Files
-
-::: code-group
-<<< @/../showcase/email-ticket-routing/stack.yaml [stack.yaml]
-
-<<< @/../showcase/email-ticket-routing/.env.example [.env.example]
-
-<<< @/../showcase/email-ticket-routing/habits/analyze-ticket.yaml [analyze-ticket.yaml]
-
-<<< @/../showcase/email-ticket-routing/habits/assign-ticket.yaml [assign-ticket.yaml]
-
-<<< @/../showcase/email-ticket-routing/habits/fetch-emails.yaml [fetch-emails.yaml]
-:::
-
 ## Quick Start
 
 <ExampleRunner examplePath="email-ticket-routing" />

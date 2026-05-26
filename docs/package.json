@@ -5,7 +5,9 @@
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
+    "predev": "npx tsx ../scripts/copy-habit-viewer-to-docs.ts",
     "dev": "vitepress dev",
+    "prebuild": "npx tsx ../scripts/copy-habit-viewer-to-docs.ts",
     "build": "npx tsx ../scripts/generate-industry-docs.ts && vitepress build",
     "preview": "vitepress preview",
     "generate": "npx tsx ../scripts/generate-industry-docs.ts"
