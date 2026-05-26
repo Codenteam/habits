@@ -1,0 +1,30 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: PR Review Brief
+description: An AI-powered developer tool designed to parse complex Git diff outputs and Pull Request logs, transforming scattered lines of code updates into clean, human-readable change summaries.
+
+longDescription: |
+ - Simplify your code review workflow and stay on top of repository changes. 
+  - This application captures raw git diff logs, filters out mechanical or boilerplate lines, and leverages AI to summarize logic changes,architectural refactors, and newly introduced components into an organized, high-level summary brief for the engineering team.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - programming
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - pr-review.yaml
+quickDownload: true
+

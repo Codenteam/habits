@@ -1,0 +1,34 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+
+name: Email Drafts
+description: Convert any rough situation or text description into a professional email draft instantly.
+
+longDescription: |
+  - This habit is designed to help you write professional emails on the fly. You just need to describe the situation in plain English (e.g., explaining a server crash or requesting a meeting).
+  - The AI will automatically draft a structured, clean, and professional email. The output is displayed using custom HTML templates that ensure the text is aligned properly from left to right (LTR) for flawless reading.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - emails
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+files:
+  - stack.yaml
+  - email-drafts.yaml
+
+habits:
+  - stack.yaml
+  - email-drafts.yaml
+quickDownload: true

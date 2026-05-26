@@ -1,0 +1,10 @@
+id: contact-config
+name: Contact Form Config
+description: Returns public client config for docs contact forms (reCAPTCHA site key).
+
+nodes: []
+
+edges: []
+
+output:
+  recaptchaSiteKey: "{{habits.env.HABITS_RECAPTCHA_SITE_KEY}}"

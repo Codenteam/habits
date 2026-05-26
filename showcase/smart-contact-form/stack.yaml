@@ -1,0 +1,22 @@
+# API-only habit: validates reCAPTCHA, summarizes with OpenAI, emails notification.
+version: "1.0"
+name: Smart Contact Form
+description: Receives contact form submissions from docs, validates reCAPTCHA, summarizes with OpenAI, and sends email.
+
+workflows:
+  - id: contact-config
+    path: ./habits/contact-settings.yaml
+    enabled: true
+  - id: submit-contact
+    path: ./habits/submit-contact.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

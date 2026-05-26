@@ -1,0 +1,12 @@
+version: '1.0'
+workflows:
+  - id: pr-review-brief
+    path: ./pr-review-brief.yaml
+    enabled: true
+    webhookTimeout: 30000
+server:
+  port: 15000
+  host: 0.0.0.0
+  frontend: ./frontend
+defaults:
+  webhookTimeout: 30000

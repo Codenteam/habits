@@ -1,0 +1,64 @@
+id: daily-standup
+name: Daily-Standup
+nodes:
+  - id: openai
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          Act as a professional Scrum Master and Agile Coach. Clean up and transform the following raw git commits or
+          daily task list into a clear, professional Daily Standup message: {{habits.input.tasks}}.
+
+          Structure the response into three distinct standard sections by (weight-font:bold):
+          1. **Yesterday / What I accomplished**
+          2. **Today / What I am focusing on**
+          3. **Blockers (if any)**
+
+          Keep the tone concise, professional, and optimized for Slack or Email updates.
+
+          Strict Output Formatting Rules:
+          1. DO NOT use any Markdown syntax like asterisks (**) or hashes (#).
+          2. For the main Agile headers, wrap them strictly in HTML bold tags like this:
+             <b>Yesterday / What I accomplished</b><br>
+             <b>Today / What I am focusing on</b><br>
+             <b>Blockers (if any)</b><br>
+          3. Every single bullet point must start on a new line with a dash and end with a line break like this:
+             - Task description here<br>
+          4. Keep the text inside the bullet points completely normal (NO bold words inside the bullet points).
+
+          Example Output Style:
+          <b>Yesterday / What I accomplished</b><br>
+          - Fixed authentication bug on the login screen<br>
+          - Optimized the database query for the user dashboard<br>
+          <br>
+          <b>Today / What I am focusing on</b><br>
+          - Implementing responsive navbar UI<br>
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Daily-Standups
+        value: "{{openai}}"
+        key: Standup_Report
+edges:
+  - id: openai__database
+    source: openai
+    target: database
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai}}"

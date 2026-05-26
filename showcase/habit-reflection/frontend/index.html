@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Reflection | AI Studio</title>
+    <style>
+        :root {
+            --bg-dark: #0b0f17;
+            --card-bg: #131a26;
+            --accent-cyan: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.2);
+            --text-main: #94a3b8;
+            --text-white: #f8fafc;
+            --input-bg: #090d14;
+            --border: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at bottom right, #0c4a6e, var(--bg-dark));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .reflection-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 460px;
+            padding: 40px 30px;
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin: 0;
+            color: var(--text-white);
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, var(--accent-cyan));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--accent-cyan);
+            font-size: 13px;
+            margin: 8px 0 25px 0;
+            font-family: monospace;
+        }
+
+        .badge-bar {
+            background-color: #090d14;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 14px;
+            color: var(--text-white);
+            font-weight: 600;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-box {
+            background: rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(6, 182, 212, 0.15);
+            padding: 15px;
+            border-radius: 14px;
+            font-size: 13px;
+            color: #7dd3fc;
+            margin-bottom: 25px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .field-label {
+            display: block;
+            text-align: left;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            color: var(--text-white);
+            font-size: 14px;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #0e7490, var(--accent-cyan));
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(6, 182, 212, 0.3);
+        }
+
+        #resultArea {
+            margin-top: 30px;
+            background: #090d14;
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent-cyan);
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="reflection-card">
+        <form id="reflectionForm">
+            <div class="header">
+                <h1>Habit Reflection</h1>
+                <p></p>
+            </div>
+
+            <div class="badge-bar">
+                <span>🧘‍♂️</span> Weekly Check-in Analysis
+            </div>
+
+            <div class="info-box">
+                💡 Paste your raw answers to your weekly progress or habit tracking questions below to generate a deep
+                synthesis.
+            </div>
+
+            <label class="field-label">WEEKLY CHECK-IN ANSWERS</label>
+            <textarea id="reflectionInput" rows="7"
+                placeholder="Q1: Did I code every day? Yes, except Wed.&#10;Q2: What broke my focus? Social media scrolling before bed.&#10;Q3: How do I feel? Energized but a bit tired."></textarea>
+
+            <button id="submitBtn" class="submit-btn">
+                <span id="btnText">⚡ Analyze My Week</span>
+            </button>
+
+            <div id="resultArea"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async function () {
+            const rawAnswers = document.getElementById('reflectionInput').value;
+            const result = document.getElementById('resultArea');
+            const btn = document.getElementById('btnText');
+
+            if (!rawAnswers) return alert("Please enter your weekly check-in text first!");
+
+
+            btn.innerText = "Synthesizing Reflection...";
+            result.style.display = "none";
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/api/habit-reflection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "Reflection": rawAnswers })
+                });
+
+                const data = await response.json();
+                const results = data.output?.Results || data.output?.result || "Could not generate reflection summary.";
+
+                result.innerHTML = data.output.Results;
+                result.style.display = "block";
+            } catch (err) {
+                result.innerText = "Error connecting to server. Please ensure the workflow is running.";
+                result.style.display = "block";
+            } finally {
+                btn.innerText = "⚡ Analyze My Week";
+                this.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

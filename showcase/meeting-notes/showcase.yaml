@@ -1,0 +1,34 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+
+name: Meeting Notes 
+description: An AI-powered productivity tool designed to condense lengthy meeting scripts, notes, transcripts into structured, actionable items and summaries.
+
+longDescription: |
+ - Transform your team's discussions into concrete next steps. 
+ - This application captures a raw transcript or meeting script, 
+  filters out casual conversations, and utilizes AI to extract 
+  key decisions, distribute action items, and generate a concise executive brief.
+
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - bussines
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - meeting-notes.yaml
+
+quickDownload: true

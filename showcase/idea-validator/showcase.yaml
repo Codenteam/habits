@@ -1,0 +1,32 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Idea Validator
+description: An AI-powered validation tool that acts as a devil's advocate, rigorously analyzing product ideas to uncover potential flaws, market risks, and hidden reasons for failure.
+
+longDescription: |
+  - Stress-test your business and product concepts before spending time and money. 
+  - This application takes a raw description of a product idea, bypasses surface-level 
+    optimism, and uses AI to perform a critical evaluation of market viability, 
+    operational challenges, and structural risks under a strict critique framework.
+
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - business
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - idea-validator.yaml
+quickDownload: true

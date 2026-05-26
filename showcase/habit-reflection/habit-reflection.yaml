@@ -1,0 +1,57 @@
+id: habit-reflection
+name: Habit Reflection
+nodes:
+  - id: openai
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          Act as a personal development coach and behavioral psychologist. Analyze the following answers to weekly
+          check-in prompts: {{habits.input.Reflection}}.
+
+          Synthesize these responses into a structured, deep weekly reflection summary. Your response must include:
+          1. **Key Insights & Behavioral Patterns** (What do these answers say about the user's current state)
+          2. **Victories & Successes** (What went well)
+          3. **Areas for Improvement & Traps** (What triggered bad habits or lowered productivity)
+          4. **Actionable Roadmap for Next Week** (3 concrete steps to stay on track)
+
+          Keep the tone highly encouraging, insightful, and practical.
+
+          Strict Output Formatting Rules:
+          1. DO NOT use any Markdown syntax like asterisks (**) or hashes (#).
+          2. For main headers, wrap them strictly in HTML tags like this: <b>1. Title Here</b><br>
+          3. For every bullet point, start it on a new line with a dash like this: - Bullet text<br>
+
+          Example Output Style:
+          <b>1. Key Insights & Behavioral Patterns</b><br>
+          - You sustain physical-routine discipline...<br>
+          - Cognitive and emotional energy are limiting factors...<br>
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Weekly Reflections
+        value: "{{openai}}"
+        key: Weekly_Reflections
+edges:
+  - id: openai__database
+    source: openai
+    target: database
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai}}"

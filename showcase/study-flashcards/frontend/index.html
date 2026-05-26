@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Flashcards</title>
+    <style>
+        /* الألوان المستوحاة من صورة AI Cookbook */
+        :root {
+            --bg-dark: #12141d;
+            --card-bg: #1e212e;
+            --accent-orange: #ff6b35;
+            --text-main: #ffffff;
+            --text-dim: #9ca3af;
+            --input-bg: #12141d;
+            --border-color: #2d3343;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: var(--text-dim);
+        }
+
+        /* تنسيق قسم الإدخال ليطابق الصندوق العلوي في الصورة */
+        .input-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            padding: 15px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-generate {
+            background: var(--accent-orange);
+            color: white;
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: opacity 0.2s;
+        }
+
+        /* تنسيق الفلاش كارد */
+        .flashcard {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 40px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+
+        .flashcard.flipped {
+            background: var(--accent-orange);
+            color: white;
+        }
+
+        .card-label {
+            font-size: 0.9em;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .flashcard.flipped .card-label {
+            color: white;
+            opacity: 0.8;
+        }
+
+        .card-content {
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        button:not(.btn-generate) {
+            padding: 12px 25px;
+            background: var(--card-bg);
+            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:not(.btn-generate):hover {
+            border-color: var(--accent-orange);
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            height: 6px;
+            border-radius: 3px;
+            margin: 10px 0 25px;
+        }
+
+        .progress-fill {
+            background: var(--accent-orange);
+            height: 100%;
+            border-radius: 3px;
+            width: 0%;
+        }
+
+        .empty-state {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: var(--text-dim);
+            border: 1px dashed var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <form id="studyForm">
+            <div class="header">
+                <h1>📚 Study Flashcards</h1>
+                <p>Generate and learn with AI-powered flashcards</p>
+            </div>
+
+            <div class="input-section">
+                <h2>Create Questions</h2>
+                <textarea id="inputText" placeholder="Paste your study material here..."></textarea>
+                <button class="btn-primary btn-generate" id="generateBtn">Generate
+                    Questions</button>
+            </div>
+        </form>
+
+        <div id="result"></div>
+    </div>
+    </div>
+
+
+
+
+
+    <script>
+        document.getElementById('studyForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userInput = document.getElementById('inputText').value;
+            const btn = document.getElementById('generateBtn');
+            const resultDiv = document.getElementById('result');
+
+
+            if (!userInput.trim()) {
+                alert("Please type or paste the text first before pressing the button!");
+                return;
+            }
+
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+            resultDiv.style.display = "none";
+
+            try {
+                const response = await fetch('/api/study-flashcards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ script: userInput }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                resultDiv.style.display = "block";
+
+
+                if (result.output && result.output.Results) {
+                    const questions = JSON.parse(result.output.Results);
+                    resultDiv.innerHTML = "";
+                    questions.forEach((item, index) => {
+                        resultDiv.innerHTML += `
+                            <div class="flashcard" id="flashcard-${index}">
+                                <div class="card-label">Question</div>
+                                <div class="card-content">${item.question}</div> 
+                                <div class="card-content" style="color: #27F565; margin-top: 10px;">${item.answer}</div>   
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultDiv.innerText = "Error: AI could not process the text correctly.";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                btn.innerText = "Execution Failed";
+                btn.style.backgroundColor = "#f56565";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Generate Questions";
+            }
+        }
+        );
+
+
+    </script>
+
+
+</body>
+
+</html>

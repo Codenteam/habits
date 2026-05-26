@@ -1,0 +1,47 @@
+id: study-flashcards
+name: Study-Flashcards
+nodes:
+  - id: openai-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          Task: Extract questions from the provided text.
+
+          Instructions:
+          1. Analyze the text and create 10 high-quality Q&A pairs.
+          2. Respond ONLY with a JSON array of objects.
+          3. Each object must have exactly two keys: question and answer.
+          4. Do not include any introductory text, explanations, or markdown formatting (like ```json).
+          5. If the text is insufficient, create general questions based on its topic.
+
+          text: {{habits.input.script}}
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Study-Flashcards
+        value: "{{openai-1}}"
+        key: questions
+edges:
+  - id: openai-1__database-1
+    source: openai-1
+    target: database-1
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai-1}}"

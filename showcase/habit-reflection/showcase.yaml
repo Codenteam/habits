@@ -1,0 +1,33 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Habit Reflection 
+description: AI-powered digital wellness tool that takes raw, weekly habit check-in answers and turns them into a deep synthesis of personal growth and focus areas.
+
+longDescription: |
+  - Reflect on your habits and mental health with ease. 
+  - This application captures a user's rough or unorganized weekly check-in answers, 
+    filters out distractions, and uses AI to generate an organized analysis of 
+    accomplishments, focus blockers (like social media scrolling), and wellness patterns, 
+    concluding with an actionable synthesis summary.
+
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - mental health
+  
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - habit-reflection.yaml
+quickDownload: true
