@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Tailor</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+        h1 { font-size: 2.2rem; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        p.subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 1rem; }
+        .container {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 650px;
+            border: 1px solid #334155;
+        }
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
+        textarea {
+            width: 100%;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            resize: vertical;
+            height: 120px; 
+        }
+        textarea:focus { outline: none; border-color: #f97316; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #f97316;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        button:hover { background-color: #ea580c; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background-color: #64748b; cursor: not-allowed; }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ AI Resume Tailor</h1>
+    <p class="subtitle">Optimize your resume for any job description in seconds</p>
+
+    <div class="container">
+        <form id="tailorForm">
+            <label for="jobDescription">Job Description *</label>
+            <textarea id="jobDescription" placeholder="Paste the job requirements here..." required></textarea>
+            
+            <label for="resume">Current Resume *</label>
+            <textarea id="resume" placeholder="Paste your current resume content here..." required></textarea>
+            
+            <button type="submit" id="submitBtn">Tailor My Resume</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('tailorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const jobDescription = document.getElementById('jobDescription').value;
+            const resume = document.getElementById('resume').value;
+            const resultDiv = document.getElementById('result');
+            
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+            resultDiv.style.display = "none";
+
+            try {
+            
+                const response = await fetch('/api/resume-tailor', {
+                    method: 'POST',
+                    mode: 'cors', 
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "Job description": jobDescription, 
+                        "resume": resume
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                resultDiv.style.display = "block";
+                
+                
+                if (result.output && result.output.result) {
+                    resultDiv.innerText = result.output.result;
+                } else if (result.text) {
+                    resultDiv.innerText = result.text;
+                } else {
+                    resultDiv.innerText = JSON.stringify(result, null, 2);
+                }
+
+            } catch (err) {
+                alert("Connection error: " + err.message);
+                console.error("Detailed Error:", err);
+            } finally {
+                btn.innerHTML = "Tailor My Resume";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

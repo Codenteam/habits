@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Analyst | AI Studio</title>
+    <style>
+        :root {
+            --bg-deep: #0b0e14;
+            --card-bg: #161b22;
+            --accent-blue: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #ffffff;
+            --text-dim: #8b949e;
+            --input-bg: #1c2128;
+            --border-color: #30363d;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a, var(--bg-deep));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6), 0 0 2px var(--accent-blue);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin: 0;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #22d3ee;
+            font-size: 14px;
+            margin: 10px 0 30px 0;
+            font-family: monospace;
+        }
+
+        .tabs-container {
+            display: flex;
+            background: #0d1117;
+            padding: 5px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .hint-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #93c5fd;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            font-size: 14px;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .execute-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .execute-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+
+        #resultArea {
+            margin-top: 25px;
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            border-left: 3px solid var(--accent-blue);
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        .loading-ring {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="main-card">
+        <form id="mainCard">
+            <div class="header">
+                <h1>Budget Analyst</h1>
+                <br>
+            </div>
+
+            <div class="hint-box">
+                💡 Try pasting a monthly summary of your income and expenses.
+            </div>
+
+            <div class="input-group">
+                <label>FINANCIAL DATA</label>
+                <textarea id="budgetInput" rows="5" placeholder="e.g. Income $5000, Rent $1200..."></textarea>
+            </div>
+
+            <button id="executeBtn" class="execute-btn">
+                <span class="loading-ring" id="spinner"></span>
+                <span id="btnText">⚡ Execute</span>
+            </button>
+
+            <div id="resultArea"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('mainCard').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userInput = document.getElementById('budgetInput').value;
+            const btn = document.getElementById('executeBtn');
+            const resultDiv = document.getElementById('resultArea');
+
+            if (!userInput.trim()) {
+                alert("Please enter your financial data first!");
+                return;
+            }
+
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+            resultDiv.style.display = "none";
+            resultDiv.innerHTML = "";
+
+            try {
+                const response = await fetch('/api/budget-analyst', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ budget: userInput }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                resultDiv.style.display = "block";
+
+                if (result.output && result.output.Results) {
+                    resultDiv.innerHTML = result.output.Results;
+                    resultDiv.style.display = "block";
+
+                } else {
+                    resultDiv.innerText = "Error: AI could not process the text correctly.";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultDiv.style.display = "block";
+                resultDiv.style.whiteSpace = "pre-wrap";
+                resultDiv.style.color = "#ef4444";
+                resultDiv.innerText = "Execution Failed. Please check n8n output structure.";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "⚡ Execute";
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Review Brief | AI Studio</title>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --card-bg: #161b22;
+            --accent-blue: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.3);
+            --text-main: #c9d1d9;
+            --text-white: #f0f6fc;
+            --input-bg: #0d1117;
+            --border: #30363d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at bottom left, #1f293d, var(--bg-dark));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .pr-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 460px;
+            padding: 40px 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin: 0;
+            color: var(--text-white);
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #58a6ff;
+            font-size: 13px;
+            margin: 8px 0 25px 0;
+            font-family: monospace;
+        }
+
+        .tab-bar {
+            background-color: #0d1117;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-white);
+            font-weight: 600;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-hint {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #79c0ff;
+            margin-bottom: 25px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .input-label {
+            display: block;
+            text-align: left;
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 15px;
+            color: var(--text-white);
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            resize: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+            margin-bottom: 25px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .action-btn {
+            background-color: #238636;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 160, 67, 0.3);
+        }
+
+        #summaryArea {
+            margin-top: 30px;
+            background: #0d1117;
+            border-radius: 14px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid var(--accent-blue);
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+            color: var(--text-white);
+        }
+
+        .loading-icon {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="pr-card">
+        <form id="codeForm">
+            <div class="header">
+                <h1>PR Review Brief</h1>
+                <p></p>
+            </div>
+
+            <div class="tab-bar">
+                <span>🚀</span> Code Change Summary
+            </div>
+
+            <div class="info-hint">
+                💡 Paste your Git diff output or complex PR logs below to generate a human-readable summary.
+            </div>
+
+            <label class="input-label">GIT DIFF / PR DESCRIPTION</label>
+            <textarea id="diffInput" rows="6"
+                placeholder="Paste git diff here (e.g. + const newUser = true ...)"></textarea>
+
+            <button id="submitBtn" class="action-btn">
+                <div class="loading-icon" id="spinner"></div>
+                <span id="btnText">⚡ Generate Brief</span>
+            </button>
+
+            <div id="summaryArea"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('codeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const diffCode = document.getElementById('diffInput').value;
+            const summaryCode = document.getElementById('summaryArea');
+            const btn = document.getElementById('submitBtn');
+
+            if (!diffCode) return alert("Please enter your git diff or description first!");
+
+            btn.innerText = "Summarizing Code...";
+            summaryCode.style.display = "none";
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/api/pr-review-brief', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "git_diff": diffCode })
+                });
+
+                const data = await response.json();
+                results = data.output?.Results || data.output?.result || "Could not generate brief.";
+
+                summaryCode.innerText = results;
+                summaryCode.style.display = "block";
+            } catch (err) {
+                summaryCode.innerText = "Error connecting to server. Please ensure the workflow running.";
+                summaryCode.style.display = "block";
+            } finally {
+                btn.innerText = "⚡ Generate Brief";
+                this.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

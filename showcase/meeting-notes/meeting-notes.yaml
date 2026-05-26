@@ -1,0 +1,40 @@
+id: meeting-notes
+name: Meeting Notes
+nodes:
+  - id: openai-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          As the project manager, I want you to summarize the general meeting in a simple and organized summary,
+          extracting the main decisions, work items, and those responsible for them, and present it as a list of
+          headings: {{habits.input.script}}
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+  - id: database-1
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Meeting-Notes
+        key: Notes
+        value: "{{openai-1}}"
+edges:
+  - id: openai-1__database-1
+    source: openai-1
+    target: database-1
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai-1}}"

@@ -1,0 +1,40 @@
+id: email-drafts
+name: Email Drafts
+nodes:
+  - id: openai
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      label: OpenAI
+      operation: ask_chatgpt
+      params:
+        model: gpt-5-mini
+        prompt: |
+          I want you to be a professional email writer. I will present you with situations, and you have to write them
+          for me in three email styles: (formal, informal, and assertive), and I will choose one of them.
+          {{habits.input.situation}}
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+  - id: database
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      label: Database
+      operation: store
+      params:
+        collection: Email Drafts
+        value: "{{openai}}"
+        key: Emails
+edges:
+  - id: openai__database
+    source: openai
+    target: database
+    sourceHandle: main
+    targetHandle: main
+output:
+  Results: "{{openai}}"

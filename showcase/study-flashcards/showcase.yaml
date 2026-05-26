@@ -1,0 +1,33 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Study Flashcards 
+description: An AI-powered educational tool that transforms dense study materials, articles, and raw lecture notes into interactive, high-retention flashcards and practice questions.
+
+longDescription: |
+  - Accelerate your learning curve and master complex topics dynamically. 
+  - This application takes raw text or study material inputs, filters out irrelevant details, 
+    and leverages AI to extract core concepts, definitions, and technical insights, 
+    re-formatting them into an optimized question-and-answer flashcard structure.
+
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - education
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+
+habits:
+  - stack.yaml
+  - study-flashcards.yaml
+quickDownload: true

@@ -1,0 +1,30 @@
+# Showcase metadata for Mixed Frameworks example
+# This example demonstrates combining multiple AI frameworks
+
+name: Product Changelog
+description: An AI-powered developer utility that translates raw, technical git log outputs into clean, customer-friendly, and well-structured release notes.
+
+longDescription: |
+  - Bridge the communication gap between your development team and your users. 
+  - This application accepts raw commit histories or technical git logs between tags, strips away internal refactoring noise, and leverages AI to generate an organized breakdown of new features, bug fixes, and performance improvements written in clear, non-technical language.
+
+type: fullstack
+
+tags:
+  - ai
+  - frontend
+  - backend
+  - programming
+
+difficulty: beginner
+
+featured: true
+
+requirements:
+  - OpenAI API key (gpt-5-mini)
+
+habits:
+  - stack.yaml
+  - product-changelog.yaml
+
+quickDownload: true

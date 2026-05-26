@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Notes Automation</title>
+    <style>
+        :root {
+            --bg-color: #1a202c;
+            --card-bg: #2d3748;
+            --text-main: #ffffff;
+            --text-dim: #a0aec0;
+            --accent: #ff7920;
+            --input-bg: #1a202c;
+            --input-border: #4a5568;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            margin-top: 12px;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+
+
+        textarea {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 16px;
+            color: white;
+            box-sizing: border-box;
+            font-size: 1rem;
+            min-height: 120px;
+            transition: border-color 0.2s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+
+        .btn {
+            width: 100%;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .sparkle {
+            color: #f6e05e;
+        }
+
+        #promptOutput {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            display: none;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <form id="meetingNotes">
+            <div class="header">
+                <h1><span class="sparkle">✨</span> Meeting Notes</h1>
+                <p>Summarize meetings into organized action items</p>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>Meeting Script</label>
+                    <textarea id="meetingInput" placeholder="Paste your meeting notes or transcript here..."
+                        style="width: 100%; padding: 16px; background-color: #090d14; color: #fff; border: 1px solid #1e293b; border-radius: 12px; box-sizing: border-box;"></textarea>
+                </div>
+
+                <button class="btn" id="showPromptBtn">Show</button>
+
+                <div id="promptOutput"></div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+
+        document.getElementById('meetingNotes').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userInput = document.getElementById('meetingInput').value;
+            const btn = document.getElementById('showPromptBtn');
+            const resultDiv = document.getElementById('promptOutput');
+
+            if (!userInput.trim()) {
+                alert("Please paste the meeting script first!");
+                return;
+            }
+
+
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+            resultDiv.style.display = "none";
+            resultDiv.innerHTML = "";
+
+            try {
+                const response = await fetch('/api/meeting-notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "script": userInput }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                resultDiv.style.display = "block";
+
+
+                if (result.output && result.output.Results) {
+
+                    resultDiv.style.whiteSpace = "pre-wrap";
+                    resultDiv.innerText = result.output.Results;
+
+                } else {
+                    resultDiv.innerHTML = `<span> Error: AI could not process the text correctly </span>`;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultDiv.style.display = "block";
+                resultDiv.innerHTML = `<span style="color: #f56565;">Execution Failed. Please try again.</span>`;
+            } finally {
+
+                btn.disabled = false;
+                btn.innerText = "Show";
+            }
+        });
+    </script>
+</body>
+
+</html>
