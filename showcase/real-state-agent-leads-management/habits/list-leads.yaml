@@ -1,0 +1,52 @@
+id: list-leads
+name: List Leads
+description: Fetch lead records grouped by processing status.
+version: "1.0"
+
+nodes:
+  - id: get-inprogress
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"status": "inProgress"}'
+        limit: 200
+
+  - id: get-reminder
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"status": "reminder"}'
+        limit: 200
+
+  - id: get-done
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"status": "done"}'
+        limit: 200
+
+edges: []
+
+output:
+  inprogress: "{{get-inprogress.results}}"
+  reminder: "{{get-reminder.results}}"
+  done: "{{get-done.results}}"
+  counts:
+    inprogress: "{{get-inprogress.count}}"
+    reminder: "{{get-reminder.count}}"
+    done: "{{get-done.count}}"

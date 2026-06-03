@@ -1,0 +1,81 @@
+id: update-lead-status
+name: Update Lead Status
+description: Update lead status/reminder in HubSpot and SQL storage.
+version: "1.0"
+
+nodes:
+  - id: load-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"_id": "{{habits.input.leadId}}"}'
+        limit: 1
+
+  - id: sync-hubspot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{load-lead.results[0].email}}"
+        firstName: "{{load-lead.results[0].firstName}}"
+        lastName: "{{load-lead.results[0].lastName}}"
+        company: "{{load-lead.results[0].company}}"
+        phone: "{{load-lead.results[0].phone}}"
+        score: "{{load-lead.results[0].score}}"
+        status: "{{habits.input.status}}"
+        reminder: "{{habits.input.reminder}}"
+
+  - id: update-db
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: real_state_agent_leads_collection
+        filter:
+          _id: "{{habits.input.leadId}}"
+        update:
+          status: "{{habits.input.status}}"
+          reminder: "{{habits.input.reminder}}"
+          doneAt: "{{habits.input.doneAt}}"
+          updatedAt: "{{habits.input.updatedAt}}"
+
+  - id: get-updated
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"_id": "{{habits.input.leadId}}"}'
+        limit: 1
+
+edges:
+  - id: e1
+    source: load-lead
+    target: sync-hubspot
+  - id: e2
+    source: sync-hubspot
+    target: update-db
+  - id: e3
+    source: update-db
+    target: get-updated
+
+output:
+  lead: "{{get-updated.results[0]}}"
+  hubspot: "{{sync-hubspot}}"

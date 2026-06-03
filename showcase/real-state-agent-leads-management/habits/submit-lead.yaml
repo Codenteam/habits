@@ -1,0 +1,113 @@
+id: submit-lead
+name: Submit Lead
+description: Enrich lead form data with OpenAI (no scoring), then save to HubSpot and SQL with initial score from input (default 0).
+version: "1.0"
+
+nodes:
+  - id: ai-enrich
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        cast: 'force'
+        temperature: 0.3
+        maxTokens: 450
+        prompt: |
+          You are a real-estate lead enrichment assistant.
+
+          Lead details:
+          - First Name: {{habits.input.firstName}}
+          - Last Name: {{habits.input.lastName}}
+          - Email: {{habits.input.email}}
+          - Company (optional): {{habits.input.company}}
+          - Phone: {{habits.input.phone}}
+
+          Return ONLY valid JSON with this exact schema:
+          {
+            "email": string,
+            "firstName": string,
+            "lastName": string,
+            "company": string | null,
+            "phone": string,
+            "status": "inProgress" | "reminder" | "done",
+            "reminder": string | null
+          }
+
+          Rules:
+          - Keep the same person fields from the input, only normalize formatting if needed.
+          - company is optional; use null when the input company is empty or missing.
+          - Do not include or compute a lead score.
+          - status should default to "inProgress" for a newly submitted lead unless the input strongly suggests otherwise.
+          - reminder should be null for a new lead.
+
+  - id: hubspot-sync
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{ai-enrich.email}}"
+        firstName: "{{ai-enrich.firstName}}"
+        lastName: "{{ai-enrich.lastName}}"
+        company: "{{ai-enrich.company}}"
+        phone: "{{ai-enrich.phone}}"
+        score: 0
+        status: "{{ai-enrich.status}}"
+        reminder: "{{ai-enrich.reminder}}"
+        submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
+
+  - id: save-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: real_state_agent_leads_collection
+        document:
+          email: "{{ai-enrich.email}}"
+          firstName: "{{ai-enrich.firstName}}"
+          lastName: "{{ai-enrich.lastName}}"
+          company: "{{ai-enrich.company}}"
+          phone: "{{ai-enrich.phone}}"
+          score: 0
+          status: "{{ai-enrich.status}}"
+          reminder: "{{ai-enrich.reminder}}"
+          hubspotContact: "{{hubspot-sync}}"
+          submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
+
+edges:
+  - id: e1
+    source: ai-enrich
+    target: hubspot-sync
+  - id: e2
+    source: hubspot-sync
+    target: save-lead
+
+output:
+  success: true
+  leadId: "{{save-lead.id}}"
+  lead:
+    _id: "{{save-lead.id}}"
+    email: "{{ai-enrich.email}}"
+    firstName: "{{ai-enrich.firstName}}"
+    lastName: "{{ai-enrich.lastName}}"
+    company: "{{ai-enrich.company}}"
+    phone: "{{ai-enrich.phone}}"
+    score: 0
+    status: "{{ai-enrich.status}}"
+    reminder: "{{ai-enrich.reminder}}"
+    submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"

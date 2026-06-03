@@ -1,0 +1,41 @@
+name: Real State Agent Leads Management
+type: fullstack
+description: Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence.
+
+longDescription: |
+  A real-estate lead operations showcase with a frontend and API habits.
+
+  ## Included flows
+
+  - Submit and validate lead form
+  - Enrich lead with OpenAI scoring and summary
+  - Sync/create contact in HubSpot
+  - Save and manage records in SQL collection `real_state_agent_leads_collection`
+  - List leads by status: in progress, reminder, done
+  - Process one lead, analyze call audio, and save follow-up reminder
+  - Mark lead as done and keep HubSpot + SQL in sync
+
+tags:
+  - real-estate
+  - leads
+  - openai
+  - hubspot
+  - sql
+  - frontend
+
+difficulty: intermediate
+featured: false
+version: "1.0"
+
+requirements:
+  - HABITS_OPENAI_API_KEY
+  - HABITS_HUBSPOT_ACCESS_TOKEN
+
+habits:
+  - habits/submit-lead.yaml
+  - habits/list-leads.yaml
+  - habits/get-lead-details.yaml
+  - habits/update-lead-status.yaml
+  - habits/analyze-lead-call.yaml
+
+quickDownload: true

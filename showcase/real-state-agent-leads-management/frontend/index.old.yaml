@@ -1,0 +1,280 @@
+version: 1
+meta:
+  id: real-state-agent-leads-management
+  title: Real State Agent Leads Management
+  subtitle: Submit, process, analyze, and close real-estate leads
+  icon: "lucide:Building2"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: Real State Agent Leads Management
+    subtitle: "Lead form · processing queue · call analysis"
+    icon: "lucide:Building2"
+  nav:
+    - { id: submit, label: Lead Form, icon: "lucide:FilePenLine" }
+    - { id: lists, label: Contacts List, icon: "lucide:ListChecks" }
+    - { id: process, label: Process Lead, icon: "lucide:PhoneCall" }
+
+state:
+  firstName: ""
+  lastName: ""
+  email: ""
+  company: ""
+  phone: ""
+  submitResult: null
+  submitStatus: null
+  inprogressLeads: []
+  reminderLeads: []
+  doneLeads: []
+  allLeads: []
+  selectedLeadId: ""
+  selectedLead: null
+  audioBase64: ""
+  callAnalysis: null
+  reminderDate: ""
+  error: null
+
+actions:
+  submitLead:
+    method: POST
+    endpoint: /api/submit-lead
+    body:
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      company: "{{state.company}}"
+      phone: "{{state.phone}}"
+      submittedAt: "{{new Date().toISOString()}}"
+    responsePath: lead
+    onSuccess:
+      set:
+        submitResult: "$response"
+        submitStatus: "Lead submitted and synced to HubSpot successfully."
+        firstName: ""
+        lastName: ""
+        email: ""
+        company: ""
+        phone: ""
+        error: null
+      dispatch: loadLeads
+      toast: "Lead submitted"
+    onError:
+      set: { error: "$error.message", submitStatus: null }
+
+  loadLeads:
+    method: POST
+    endpoint: /api/list-leads
+    body:
+      limit: 200
+    onSuccess:
+      set:
+        allLeads: "$response.leads"
+        inprogressLeads: "$response.inprogress"
+        reminderLeads: "$response.reminder"
+        doneLeads: "$response.done"
+
+  refreshSelected:
+    method: POST
+    endpoint: /api/get-lead-details
+    body:
+      leadId: "{{state.selectedLeadId}}"
+    responsePath: lead
+    onSuccess:
+      set: { selectedLead: "$response", reminderDate: "$response.reminder" }
+
+  markDone:
+    method: POST
+    endpoint: /api/update-lead-status
+    body:
+      leadId: "{{state.selectedLeadId}}"
+      status: done
+      doneAt: "{{new Date().toISOString()}}"
+      reminder: ""
+    onSuccess:
+      dispatch: loadLeads
+      toast: "Lead marked as done"
+      set: { submitStatus: "Lead status updated to done.", error: null }
+
+  saveReminder:
+    method: POST
+    endpoint: /api/update-lead-status
+    body:
+      leadId: "{{state.selectedLeadId}}"
+      status: reminder
+      reminder: "{{state.reminderDate || state.callAnalysis.reminderDate}}"
+    onSuccess:
+      dispatch: loadLeads
+      toast: "Reminder saved"
+      set: { submitStatus: "Reminder saved to HubSpot and SQL.", error: null }
+
+  analyzeCall:
+    method: POST
+    endpoint: /api/analyze-lead-call
+    body:
+      leadId: "{{state.selectedLeadId}}"
+      audioBase64: "{{state.audioBase64}}"
+    responsePath: analysis
+    onSuccess:
+      set:
+        callAnalysis: "$response"
+        reminderDate: "$response.reminderDate"
+        submitStatus: "Call analyzed successfully."
+        error: null
+      dispatch: refreshSelected
+    onError:
+      set: { error: "$error.message" }
+
+onMount:
+  - loadLeads
+
+defaultView: submit
+
+views:
+  submit:
+    widgets:
+      - kind: card
+        title: New lead details
+        children:
+          - kind: form
+            bindTo: state
+            layout: two-column
+            fields:
+              - { name: firstName, type: text, label: First name, required: true, placeholder: "John" }
+              - { name: lastName, type: text, label: Last name, placeholder: "Doe" }
+              - { name: email, type: email, label: Email, required: true, placeholder: "john@example.com" }
+              - { name: company, type: text, label: Company, required: true, placeholder: "Acme Realty" }
+              - { name: phone, type: text, label: Phone number, required: true, placeholder: "+1 555 010 0000" }
+            submit: { label: Submit lead, action: submitLead, loadingLabel: "Scoring and syncing..." }
+      - kind: result-panel
+        source: state.submitResult
+        title: Submitted lead
+        sections:
+          - { kind: kv-grid, source: state.submitResult }
+      - kind: status-banner
+        showWhen: state.submitStatus
+        source: state.submitStatus
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+
+  lists:
+    widgets:
+      - kind: metric-grid
+        columns: 4
+        metrics:
+          - { value: "{{state.allLeads.length}}", label: All leads }
+          - { value: "{{state.inprogressLeads.length}}", label: In progress }
+          - { value: "{{state.reminderLeads.length}}", label: Reminder leads }
+          - { value: "{{state.doneLeads.length}}", label: Done leads }
+
+      - kind: card
+        title: In progress leads
+        children:
+          - kind: list
+            source: state.inprogressLeads
+            empty: "No in-progress leads."
+            itemKey: _id
+            onItemClick: { set: { selectedLeadId: "$item._id", selectedLead: null, callAnalysis: null, audioBase64: "", reminderDate: "", __view: process }, dispatch: refreshSelected }
+            template:
+              - { kind: text, value: "{{item.firstName}} {{item.lastName}} · {{item.email}}", strong: true }
+
+      - kind: card
+        title: Reminder leads
+        children:
+          - kind: list
+            source: state.reminderLeads
+            empty: "No reminder leads."
+            itemKey: _id
+            onItemClick: { set: { selectedLeadId: "$item._id", selectedLead: null, callAnalysis: null, audioBase64: "", reminderDate: "", __view: process }, dispatch: refreshSelected }
+            template:
+              - { kind: text, value: "{{item.firstName}} {{item.lastName}} · {{item.email}}", strong: true }
+
+      - kind: card
+        title: Done leads
+        children:
+          - kind: list
+            source: state.doneLeads
+            empty: "No done leads yet."
+            itemKey: _id
+            onItemClick: { set: { selectedLeadId: "$item._id", selectedLead: null, callAnalysis: null, audioBase64: "", reminderDate: "", __view: process }, dispatch: refreshSelected }
+            template:
+              - { kind: text, value: "{{item.firstName}} {{item.lastName}} · {{item.email}}", strong: true }
+
+      - kind: button-row
+        buttons:
+          - { label: Refresh lists, action: loadLeads, variant: secondary }
+
+  process:
+    widgets:
+      - kind: card
+        title: Lead details
+        children:
+          - kind: kv-grid
+            source: state.selectedLead
+            fields:
+              - { key: _id, label: Lead ID }
+              - { key: firstName, label: First name }
+              - { key: lastName, label: Last name }
+              - { key: email, label: Email }
+              - { key: company, label: Company }
+              - { key: phone, label: Phone }
+              - { key: status, label: Status }
+              - { key: submittedAt, label: Submitted at }
+              - { key: score, label: AI score }
+          - kind: button-row
+            buttons:
+              - { label: Mark as done, action: markDone, variant: primary, showWhen: "state.selectedLead && state.selectedLead.status !== 'done'" }
+              - { label: Refresh lead, action: refreshSelected, variant: secondary }
+
+      - kind: card
+        title: Analyze call recording
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: audioBase64, type: file-upload, label: Upload MP3/WAV/M4A, accept: ".mp3,.wav,.m4a,.webm", asBase64: true, required: true }
+            submit: { label: Analyze call, action: analyzeCall, loadingLabel: "Analyzing call..." }
+
+      - kind: result-panel
+        source: state.callAnalysis
+        title: Call analysis result
+        sections:
+          - kind: badge-list
+            values: ["{{state.callAnalysis.rating}}", "score {{state.callAnalysis.score}}"]
+          - { kind: markdown, source: state.callAnalysis.summary }
+          - kind: section
+            title: Highlights
+            children:
+              - { kind: bullet-list, source: state.callAnalysis.highlights }
+          - kind: section
+            title: Recommendations
+            children:
+              - { kind: bullet-list, source: state.callAnalysis.recommendations }
+          - kind: section
+            title: Reminder suggestion
+            children:
+              - { kind: text, value: "{{state.callAnalysis.reminderReason || 'No reminder suggestion'}}", muted: true }
+              - { kind: text, value: "{{state.callAnalysis.reminderDate || 'No reminder date'}}", muted: true }
+
+      - kind: card
+        title: Save reminder action
+        showWhen: "state.selectedLead"
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: reminderDate, type: datetime-local, label: Reminder date/time, required: true }
+            submit: { label: Save reminder to HubSpot + SQL, action: saveReminder, loadingLabel: "Saving reminder..." }
+
+      - kind: status-banner
+        showWhen: state.submitStatus
+        source: state.submitStatus
+
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error

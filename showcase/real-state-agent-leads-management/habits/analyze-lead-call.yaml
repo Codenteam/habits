@@ -1,0 +1,89 @@
+id: analyze-lead-call
+name: Analyze Lead Call
+description: Analyze uploaded lead-call audio and store recommendations.
+version: "1.0"
+
+nodes:
+  - id: load-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"_id": "{{habits.input.leadId}}"}'
+        limit: 1
+
+  - id: analyze-audio
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_with_file
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        cast: true
+        fileContent: "{{habits.input.audioBase64}}"
+        filename: "lead-call.mp3"
+        prompt: |
+          You are a sales call quality analyst for real-estate leads.
+
+          Lead context:
+          - Name: {{load-lead.results[0].firstName}} {{load-lead.results[0].lastName}}
+          - Email: {{load-lead.results[0].email}}
+          - Company: {{load-lead.results[0].company}}
+
+          Analyze the uploaded call recording and return ONLY valid JSON with this exact schema:
+          {
+            "summary": string,
+            "rating": "good" | "bad" | "neutral",
+            "score": number,
+            "highlights": string[],
+            "recommendations": string[],
+            "hasReminder": boolean,
+            "reminderDate": string | null,
+            "reminderReason": string | null
+          }
+
+          Rules:
+          - score must be between 0 and 100
+          - summary max 3 sentences
+          - reminderDate must be ISO datetime when hasReminder=true, otherwise null
+
+  - id: save-analysis
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: real_state_agent_leads_collection
+        filter:
+          _id: "{{habits.input.leadId}}"
+        update:
+          callAnalysis: "{{analyze-audio}}"
+          analysisRating: "{{analyze-audio.rating}}"
+          analysisScore: "{{analyze-audio.score}}"
+          reminderSuggestedDate: "{{analyze-audio.reminderDate}}"
+          reminderReason: "{{analyze-audio.reminderReason}}"
+          updatedAt: "{{new Date().toISOString()}}"
+
+edges:
+  - id: e1
+    source: load-lead
+    target: analyze-audio
+  - id: e2
+    source: analyze-audio
+    target: save-analysis
+
+output:
+  leadId: "{{habits.input.leadId}}"
+  analysis: "{{analyze-audio}}"
+  updated: "{{save-analysis.updated}}"

@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real Estate Agent — Leads Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 8s ease-in-out infinite',
+            'scan': 'scan 2.5s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --ha-bg-base: #0f172a;
+      --ha-bg-surface: #1e293b;
+      --ha-bg-elevated: #334155;
+      --ha-bg-hover: #475569;
+      --ha-border: #334155;
+      --ha-border-subtle: #1e293b;
+      --ha-text-primary: #ffffff;
+      --ha-text-body: #cbd5e1;
+      --ha-text-muted: #94a3b8;
+      --ha-text-disabled: #64748b;
+      --ha-accent-blue: #3b82f6;
+      --ha-accent-blue-hover: #2563eb;
+      --ha-accent-sky: #38bdf8;
+      --ha-accent-emerald: #34d399;
+      --ha-accent-emerald-dim: rgba(52, 211, 153, 0.15);
+      --ha-accent-cyan: #22d3ee;
+      --ha-accent-cyan-dim: rgba(34, 211, 238, 0.15);
+      --ha-accent-purple: #c084fc;
+      --ha-accent-purple-dim: rgba(192, 132, 252, 0.15);
+      --ha-status-running: #fbbf24;
+      --ha-status-success: #4ade80;
+      --ha-status-success-dim: rgba(74, 222, 128, 0.15);
+      --ha-status-error: #f87171;
+      --ha-status-error-dim: rgba(248, 113, 113, 0.15);
+      --ha-status-pending: #60a5fa;
+      --ha-status-skipped: #a78bfa;
+      --ha-warn: #f59e0b;
+      --ha-danger: #ef4444;
+      --ha-danger-hover: #dc2626;
+      --ha-danger-surface: #7f1d1d;
+      --ha-radius-sm: 4px;
+      --ha-radius-md: 6px;
+      --ha-radius-lg: 8px;
+      --ha-radius-xl: 12px;
+      --ha-radius-pill: 9999px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes scan {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+    @keyframes gradient-rotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(14px) scale(0.97); filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0) scale(1);   filter: blur(0); }
+    }
+    @keyframes grid-pulse {
+      0%, 100% { opacity: 0.03; }
+      50%       { opacity: 0.07; }
+    }
+    @keyframes particle-float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+      25%       { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+      50%       { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+      75%       { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
+    }
+    @keyframes status-glow {
+      0%, 100% { opacity: 0.7; }
+      50%       { opacity: 1; }
+    }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: grid-pulse 4s ease-in-out infinite;
+    }
+    .glass-card {
+      background: rgba(10, 14, 26, 0.88);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+    }
+    .glass-inner {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.12);
+    }
+    .neon-border {
+      position: relative;
+    }
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 1.25rem;
+      padding: 2px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1, #22d3ee);
+      background-size: 300% 300%;
+      animation: gradient-rotate 6s linear infinite;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.45;
+    }
+    .input-glow:focus {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3), 0 0 18px rgba(56, 189, 248, 0.12);
+    }
+    .input-error {
+      border-color: rgba(248, 113, 113, 0.6) !important;
+      box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15);
+    }
+    .btn-primary {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(14, 165, 233, 0.35); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      transition: all 0.3s ease;
+    }
+    .btn-success:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(16, 185, 129, 0.35); }
+
+    .tab-active {
+      background: linear-gradient(135deg, rgba(14,165,233,0.2), rgba(99,102,241,0.2));
+      border-bottom: 2px solid #38bdf8;
+      color: #e0f2fe;
+    }
+    .tab-inactive {
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-inactive:hover { color: #94a3b8; border-bottom-color: rgba(56,189,248,0.3); }
+
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .result-reveal  { animation: reveal 0.45s ease-out forwards; }
+    .slide-in       { animation: slide-in 0.35s ease-out forwards; }
+    .status-pulse   { animation: status-glow 1.5s ease-in-out infinite; }
+
+    .lead-item {
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .lead-item:hover {
+      background: rgba(56, 189, 248, 0.06);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .score-ring {
+      background: conic-gradient(#38bdf8 0%, #6366f1 var(--score-pct), rgba(30,41,59,0.7) var(--score-pct) 100%);
+    }
+
+    .score-hint-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .score-hint-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: none;
+      cursor: help;
+      line-height: 0;
+    }
+    .score-hint-tooltip {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 10px);
+      width: 17.5rem;
+      max-width: min(17.5rem, calc(100vw - 2rem));
+      padding: 0.65rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.5;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #e2e8f0;
+      text-align: left;
+      white-space: normal;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      z-index: 60;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+    }
+    .score-hint-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0.65rem;
+      border: 6px solid transparent;
+      border-top-color: rgba(56, 189, 248, 0.28);
+    }
+    .score-hint-wrap:hover .score-hint-tooltip,
+    .score-hint-wrap.is-open .score-hint-tooltip,
+    .score-hint-btn:focus-visible .score-hint-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .badge-inprogress { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .badge-reminder   { background: rgba(192,132,252,0.15); color: #c084fc; border: 1px solid rgba(192,132,252,0.3); }
+    .badge-done       { background: rgba(74,222,128,0.15);  color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+
+    .rating-good    { background: rgba(52,211,153,0.15); color: #34d399; border:1px solid rgba(52,211,153,0.3); }
+    .rating-bad     { background: rgba(248,113,113,0.15); color: #f87171; border:1px solid rgba(248,113,113,0.3); }
+    .rating-neutral { background: rgba(148,163,184,0.15); color: #94a3b8; border:1px solid rgba(148,163,184,0.3); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.45); }
+
+    /* page transitions */
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body class="bg-slate-950 min-h-screen font-sans text-slate-200">
+
+  <!-- Background -->
+  <div class="fixed inset-0 bg-grid pointer-events-none"></div>
+  <div class="fixed inset-0 bg-gradient-to-br from-sky-950/30 via-slate-950 to-indigo-950/25 pointer-events-none"></div>
+  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+  <div class="fixed top-0 left-1/4 w-[600px] h-[600px] bg-sky-500/5 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
+  <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/6 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style="animation-delay:2.5s;"></div>
+
+  <!-- ═══════════════════════════════════════════════════
+       PAGE: MAIN (list + submit)
+  ════════════════════════════════════════════════════ -->
+  <div id="page-main" class="page active relative z-10">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+
+      <!-- Header -->
+      <div class="text-center mb-10 neon-border rounded-2xl glass-card p-8 overflow-hidden relative">
+        <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+          <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent animate-scan"></div>
+        </div>
+        <div class="flex items-center justify-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+          </div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
+            Real Estate Agent
+          </h1>
+        </div>
+        <p class="text-slate-400 text-sm tracking-wider uppercase font-medium">Leads Management System</p>
+        <p class="text-slate-500 text-xs mt-1">Powered by Habits · OpenAI · HubSpot · SQL</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="flex border-b border-slate-800/60">
+          <button id="tab-submit-btn" onclick="switchTab('submit')"
+            class="flex-1 py-4 px-6 text-sm font-semibold tab-active flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Submit Lead
+          </button>
+          <button id="tab-leads-btn" onclick="switchTab('leads')"
+            class="flex-1 py-4 px-6 text-sm font-semibold tab-inactive flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Leads Dashboard
+          </button>
+        </div>
+
+        <!-- ── TAB: Submit Lead ── -->
+        <div id="tab-submit" class="p-6 md:p-8">
+          <div class="max-w-lg mx-auto">
+            <h2 class="text-lg font-bold text-white mb-1">New Lead</h2>
+            <p class="text-slate-500 text-sm mb-6">Fill in the form — AI will score and enrich the lead automatically.</p>
+
+            <form id="submitForm" onsubmit="handleSubmitLead(event)" novalidate>
+              <!-- First + Last -->
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+                    First Name <span class="text-sky-400">*</span>
+                  </label>
+                  <input type="text" id="sf-firstName" placeholder="John"
+                    class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+                  <p id="err-firstName" class="hidden mt-1 text-xs text-red-400 flex items-center gap-1">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <span id="err-firstName-text"></span>
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+                    Last Name <span class="text-sky-400">*</span>
+                  </label>
+                  <input type="text" id="sf-lastName" placeholder="Doe"
+                    class="w-full px-3.5 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+                  <p id="err-lastName" class="hidden mt-1 text-xs text-red-400 flex items-center gap-1">
+                    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <span id="err-lastName-text"></span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="mb-4">
+                <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+                  Email <span class="text-sky-400">*</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <input type="email" id="sf-email" placeholder="john@acme.com"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+                </div>
+                <p id="err-email" class="hidden mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  <span id="err-email-text"></span>
+                </p>
+              </div>
+
+              <!-- Company -->
+              <div class="mb-4">
+                <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+                  Company <span class="text-slate-500 font-normal normal-case">(optional)</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                  </div>
+                  <input type="text" id="sf-company" placeholder="Acme Inc"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+                </div>
+                <p id="err-company" class="hidden mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  <span id="err-company-text"></span>
+                </p>
+              </div>
+
+              <!-- Phone -->
+              <div class="mb-6">
+                <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+                  Phone <span class="text-sky-400">*</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                  </div>
+                  <input type="tel" id="sf-phone" placeholder="+1 555 000 0000"
+                    class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+                </div>
+                <p id="err-phone" class="hidden mt-1 text-xs text-red-400 flex items-center gap-1">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  <span id="err-phone-text"></span>
+                </p>
+              </div>
+
+              <button type="submit" id="sf-btn"
+                class="btn-primary w-full text-white font-bold py-3.5 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:ring-offset-2 focus:ring-offset-slate-950 shadow-lg shadow-sky-500/20">
+                <span id="sf-btn-content" class="flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                  Submit Lead
+                </span>
+              </button>
+            </form>
+
+            <div id="sf-status" class="mt-4 hidden"></div>
+          </div>
+        </div>
+
+        <!-- ── TAB: Leads Dashboard ── -->
+        <div id="tab-leads" class="p-6 md:p-8 hidden">
+
+          <!-- Stats grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-sky-400" id="count-all">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">All Leads</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-amber-400" id="count-inprogress">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">In Progress</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-violet-400" id="count-reminder">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Reminder</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-emerald-400" id="count-done">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Done</div>
+            </div>
+          </div>
+
+          <!-- Refresh -->
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-bold text-white">Lead Lists</h2>
+            <button onclick="loadLeads()" id="refresh-btn"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-400 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all">
+              <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          <div id="leads-status" class="mb-4 hidden"></div>
+          <div id="leads-content">
+            <div class="text-center py-12 text-slate-600">
+              <svg class="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <p class="text-sm">Click <strong class="text-slate-500">Refresh</strong> to load leads</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       PAGE: LEAD DETAIL
+  ════════════════════════════════════════════════════ -->
+  <div id="page-detail" class="page relative z-10">
+    <div class="max-w-3xl mx-auto px-4 py-8">
+
+      <!-- Back + title -->
+      <div class="flex items-center gap-3 mb-6">
+        <button onclick="goBack()"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-400 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Back
+        </button>
+        <h1 class="text-xl font-bold text-white">Lead Details</h1>
+      </div>
+
+      <!-- Lead info card -->
+      <div id="detail-card" class="glass-card rounded-2xl p-6 mb-5 result-reveal">
+        <div id="detail-loading" class="text-center py-8 text-slate-500">
+          <svg class="w-6 h-6 animate-spin mx-auto mb-2 text-sky-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Loading lead...
+        </div>
+        <div id="detail-body" class="hidden">
+          <!-- Filled dynamically -->
+        </div>
+        <div id="detail-error" class="hidden text-center py-8 text-red-400 text-sm"></div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex flex-wrap gap-3 mb-4" id="detail-actions" style="display:none!important;">
+        <button onclick="refreshLeadDetail()"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-sky-400 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh Lead
+        </button>
+        <button id="add-reminder-btn" onclick="toggleReminderPanel()"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-violet-300 border border-violet-500/30 rounded-xl hover:bg-violet-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          Add Reminder
+        </button>
+        <button id="remove-reminder-btn" onclick="handleRemoveReminder()" style="display:none"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-rose-300 border border-rose-500/30 rounded-xl hover:bg-rose-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Remove Reminder
+        </button>
+        <button id="mark-done-btn" onclick="handleMarkDone()"
+          class="btn-success flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white rounded-xl focus:outline-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Mark as Done
+        </button>
+        <button id="revert-inprogress-btn" onclick="handleRevertToInProgress()" style="display:none"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-300 border border-amber-500/35 rounded-xl hover:bg-amber-500/10 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+          </svg>
+          Revert to In Progress
+        </button>
+      </div>
+
+      <!-- Manual reminder panel -->
+      <div id="reminder-panel" class="hidden glass-card rounded-2xl p-5 mb-6 slide-in">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Schedule Reminder</h3>
+            <p class="text-xs text-slate-500">Choose when to follow up with this lead.</p>
+          </div>
+        </div>
+        <label for="reminder-datetime" class="block text-xs text-slate-400 uppercase tracking-wider font-medium mb-2">Reminder date &amp; time</label>
+        <input type="datetime-local" id="reminder-datetime"
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-sm text-white input-glow focus:outline-none focus:border-violet-500/50" />
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button id="save-reminder-btn" type="button" onclick="handleSaveManualReminder()"
+            class="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Save Reminder
+          </button>
+          <button type="button" onclick="toggleReminderPanel(false)"
+            class="px-4 py-2.5 text-sm font-medium text-slate-400 border border-slate-600/50 rounded-xl hover:bg-slate-800/50 transition-all">
+            Cancel
+          </button>
+        </div>
+        <div id="manual-reminder-status" class="mt-3 hidden"></div>
+      </div>
+
+      <!-- Call analysis section -->
+      <div id="analyze-section" class="glass-card rounded-2xl p-6 mb-5 hidden">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-bold text-white">Analyze Call Recording</h3>
+        </div>
+
+        <!-- Upload -->
+        <div class="mb-4">
+          <label class="block text-slate-400 text-xs mb-2 font-medium tracking-wide uppercase">Upload MP3 Recording</label>
+          <div id="upload-zone"
+            class="border-2 border-dashed border-slate-600/50 rounded-xl p-6 text-center cursor-pointer hover:border-violet-500/50 hover:bg-violet-500/5 transition-all"
+            onclick="document.getElementById('audio-input').click()"
+            ondragover="handleDragOver(event)"
+            ondrop="handleDrop(event)">
+            <svg class="w-8 h-8 mx-auto mb-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <p class="text-sm text-slate-400" id="upload-label">Drop MP3 here or click to browse</p>
+            <p class="text-xs text-slate-600 mt-1">MP3 files only</p>
+          </div>
+          <input type="file" id="audio-input" accept=".mp3,audio/mpeg" class="hidden" onchange="handleFileSelect(event)" />
+        </div>
+
+        <button id="analyze-btn" onclick="handleAnalyze()" disabled
+          class="w-full py-3 px-6 rounded-xl font-bold text-sm transition-all bg-gradient-to-r from-violet-600 to-purple-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:from-violet-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50">
+          <span id="analyze-btn-content" class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            Analyze Call
+          </span>
+        </button>
+
+        <div id="analyze-status" class="mt-3 hidden"></div>
+
+        <!-- Analysis result -->
+        <div id="analysis-result" class="mt-5 hidden result-reveal">
+          <div class="h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent mb-5"></div>
+          <div id="analysis-body"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────
+    // Particles
+    // ─────────────────────────────────────────────────
+    (function() {
+      const c = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation:particle-float ${3+Math.random()*4}s ease-in-out infinite;animation-delay:${Math.random()*4}s`;
+        c.appendChild(p);
+      }
+    })();
+
+    // ─────────────────────────────────────────────────
+    // State
+    // ─────────────────────────────────────────────────
+    let currentLeadId = null;
+    let currentLead = null;
+    let leadsListCache = null;
+    let selectedAudioFile = null;
+
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const NAME_RE = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s'-]{2,}$/;
+
+    // ─────────────────────────────────────────────────
+    // Page navigation
+    // ─────────────────────────────────────────────────
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goBack() {
+      currentLeadId = null;
+      currentLead = null;
+      selectedAudioFile = null;
+      toggleReminderPanel(false);
+      showPage('main');
+      switchTab('leads');
+    }
+
+    // ─────────────────────────────────────────────────
+    // Tabs
+    // ─────────────────────────────────────────────────
+    function switchTab(tab) {
+      const isSubmit = tab === 'submit';
+      document.getElementById('tab-submit').classList.toggle('hidden', !isSubmit);
+      document.getElementById('tab-leads').classList.toggle('hidden', isSubmit);
+      document.getElementById('tab-submit-btn').className =
+        `flex-1 py-4 px-6 text-sm font-semibold ${isSubmit ? 'tab-active' : 'tab-inactive'} flex items-center justify-center gap-2`;
+      document.getElementById('tab-leads-btn').className =
+        `flex-1 py-4 px-6 text-sm font-semibold ${!isSubmit ? 'tab-active' : 'tab-inactive'} flex items-center justify-center gap-2`;
+      if (!isSubmit) loadLeads();
+    }
+
+    // ─────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function statusHtml(type, msg) {
+      const styles = {
+        loading: 'bg-slate-800/50 border-slate-600/30 text-slate-300 status-pulse',
+        success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+        error:   'bg-red-500/10 border-red-500/30 text-red-300',
+        info:    'bg-sky-500/10 border-sky-500/30 text-sky-300',
+      };
+      const icons = {
+        loading: `<svg class="w-4 h-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`,
+        success: `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
+        error:   `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
+        info:    `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      };
+      return `<div class="p-3 rounded-xl text-sm border flex items-center gap-2 ${styles[type]}">${icons[type]}<span>${msg}</span></div>`;
+    }
+
+    function showStatus(elId, type, msg) {
+      const el = document.getElementById(elId);
+      el.innerHTML = statusHtml(type, msg);
+      el.classList.remove('hidden');
+    }
+
+    function hideStatus(elId) {
+      document.getElementById(elId).classList.add('hidden');
+    }
+
+    function setFieldError(inputId, errId, msg) {
+      document.getElementById(inputId).classList.add('input-error');
+      document.getElementById(errId + '-text').textContent = msg;
+      document.getElementById(errId).classList.remove('hidden');
+    }
+
+    function clearFieldError(inputId, errId) {
+      document.getElementById(inputId).classList.remove('input-error');
+      document.getElementById(errId).classList.add('hidden');
+    }
+
+    function statusBadge(status) {
+      const map = {
+        inProgress: ['badge-inprogress', 'In Progress'],
+        reminder:   ['badge-reminder',   'Reminder'],
+        done:       ['badge-done',        'Done'],
+      };
+      const [cls, label] = map[status] || ['bg-slate-700 text-slate-400 border border-slate-600', status];
+      return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${cls}">${esc(label)}</span>`;
+    }
+
+    function ratingBadge(rating) {
+      const map = {
+        good:    'rating-good',
+        bad:     'rating-bad',
+        neutral: 'rating-neutral',
+      };
+      return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${map[rating] || 'rating-neutral'}">${esc(rating ?? 'neutral')}</span>`;
+    }
+
+    function scoreCircle(score) {
+      const s = Number(score) || 0;
+      const pct = Math.min(100, Math.max(0, s));
+      const color = pct >= 70 ? '#34d399' : pct >= 40 ? '#fbbf24' : '#f87171';
+      return `
+        <div class="relative w-16 h-16 flex-shrink-0">
+          <svg class="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(30,41,59,0.8)" stroke-width="3.5"/>
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="${color}" stroke-width="3.5"
+              stroke-dasharray="${pct} ${100 - pct}" stroke-linecap="round"/>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center text-xs font-bold" style="color:${color}">${s}</div>
+        </div>`;
+    }
+
+    function leadDisplayName(lead) {
+      const name = ((lead.firstName || '') + ' ' + (lead.lastName || '')).trim();
+      return name || lead.email || 'this lead';
+    }
+
+    function scoreTooltipText(leadName) {
+      return `The lead score is calculated from the complete record for ${leadName}, including profile enrichment, call analysis, and follow-up activity. It updates automatically as new information is added to this lead.`;
+    }
+
+    function scoreLabelWithHint(leadName) {
+      const msg = esc(scoreTooltipText(leadName));
+      return `
+        <span class="score-hint-wrap inline-flex items-center gap-1.5 normal-case">
+          <span>Score</span>
+          <button type="button" class="score-hint-btn" aria-label="About lead score" title="">
+            <svg class="w-3.5 h-3.5 text-slate-500 hover:text-sky-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span role="tooltip" class="score-hint-tooltip">${msg}</span>
+          </button>
+        </span>`;
+    }
+
+    let scoreHintDocListenerBound = false;
+    function initScoreHintTooltips(root) {
+      root.querySelectorAll('.score-hint-btn').forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+      });
+      root.querySelectorAll('.score-hint-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const wrap = btn.closest('.score-hint-wrap');
+          const wasOpen = wrap.classList.contains('is-open');
+          root.querySelectorAll('.score-hint-wrap.is-open').forEach(w => w.classList.remove('is-open'));
+          if (!wasOpen) wrap.classList.add('is-open');
+        });
+      });
+      if (!scoreHintDocListenerBound) {
+        scoreHintDocListenerBound = true;
+        document.addEventListener('click', () => {
+          document.querySelectorAll('.score-hint-wrap.is-open').forEach(w => w.classList.remove('is-open'));
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────────
+    // Form validation
+    // ─────────────────────────────────────────────────
+    ['sf-firstName','sf-lastName','sf-email','sf-company','sf-phone'].forEach(id => {
+      const errMap = { 'sf-firstName':'err-firstName','sf-lastName':'err-lastName','sf-email':'err-email','sf-company':'err-company','sf-phone':'err-phone' };
+      document.getElementById(id).addEventListener('input', () => clearFieldError(id, errMap[id]));
+    });
+
+    const PHONE_RE = /^\+?[0-9]{4,}$/;
+
+    function validateSubmitForm() {
+      const firstName = document.getElementById('sf-firstName').value.trim();
+      const lastName  = document.getElementById('sf-lastName').value.trim();
+      const email     = document.getElementById('sf-email').value.trim();
+      const company   = document.getElementById('sf-company').value.trim();
+      const phone     = document.getElementById('sf-phone').value.trim();
+      let valid = true;
+
+      clearFieldError('sf-firstName','err-firstName');
+      clearFieldError('sf-lastName','err-lastName');
+      clearFieldError('sf-email','err-email');
+      clearFieldError('sf-company','err-company');
+      clearFieldError('sf-phone','err-phone');
+
+      if (!firstName) {
+        setFieldError('sf-firstName','err-firstName','First name is required.'); valid = false;
+      } else if (!NAME_RE.test(firstName)) {
+        setFieldError('sf-firstName','err-firstName','Enter a valid first name (letters only, min 2 chars).'); valid = false;
+      }
+
+      if (!lastName) {
+        setFieldError('sf-lastName','err-lastName','Last name is required.'); valid = false;
+      } else if (!NAME_RE.test(lastName)) {
+        setFieldError('sf-lastName','err-lastName','Enter a valid last name (letters only, min 2 chars).'); valid = false;
+      }
+
+      if (!email) {
+        setFieldError('sf-email','err-email','Email is required.'); valid = false;
+      } else if (!EMAIL_RE.test(email)) {
+        setFieldError('sf-email','err-email','Please enter a valid email address.'); valid = false;
+      }
+
+      if (company && company.length < 2) {
+        setFieldError('sf-company','err-company','Company name must be at least 2 characters when provided.'); valid = false;
+      }
+
+      if (!phone) {
+        setFieldError('sf-phone','err-phone','Phone number is required.'); valid = false;
+      } else if (!PHONE_RE.test(phone)) {
+        setFieldError('sf-phone','err-phone','Enter a valid phone number.'); valid = false;
+      }
+
+      return valid;
+    }
+
+    // ─────────────────────────────────────────────────
+    // Submit Lead
+    // ─────────────────────────────────────────────────
+    async function handleSubmitLead(e) {
+      e.preventDefault();
+      if (!validateSubmitForm()) return;
+
+      const payload = {
+        firstName: document.getElementById('sf-firstName').value.trim(),
+        lastName:  document.getElementById('sf-lastName').value.trim(),
+        email:     document.getElementById('sf-email').value.trim(),
+        company:   document.getElementById('sf-company').value.trim() || null,
+        phone:     document.getElementById('sf-phone').value.trim(),
+        submittedAt: new Date().toISOString(),
+      };
+
+      const btn = document.getElementById('sf-btn');
+      const btnContent = document.getElementById('sf-btn-content');
+      btn.disabled = true;
+      btn.classList.add('opacity-70','cursor-not-allowed');
+      btnContent.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Submitting...`;
+      showStatus('sf-status','loading','Processing lead — AI enrichment in progress…');
+
+      try {
+        const res = await fetch('/api/submit-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Submission failed.');
+        showStatus('sf-status','success','Lead submitted and enriched successfully!');
+        document.getElementById('submitForm').reset();
+        clearFieldError('sf-firstName','err-firstName');
+        clearFieldError('sf-lastName','err-lastName');
+        clearFieldError('sf-email','err-email');
+        clearFieldError('sf-company','err-company');
+      } catch (err) {
+        showStatus('sf-status','error', esc(err.message) || 'Failed to submit. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70','cursor-not-allowed');
+        btnContent.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Submit Lead`;
+      }
+    }
+
+    // ─────────────────────────────────────────────────
+    // Load Leads
+    // ─────────────────────────────────────────────────
+    async function loadLeads() {
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.add('animate-spin');
+      showStatus('leads-status','loading','Fetching leads…');
+
+      try {
+        const res = await fetch('/api/list-leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Failed to fetch leads.');
+
+        const counts = data.output.counts || {};
+        const inprogressCount = counts.inprogress ?? (data.output.inprogress || []).length;
+        const reminderCount   = counts.reminder   ?? (data.output.reminder  || []).length;
+        const doneCount       = counts.done       ?? (data.output.done      || []).length;
+        document.getElementById('count-all').textContent        = inprogressCount + reminderCount + doneCount;
+        document.getElementById('count-inprogress').textContent = inprogressCount;
+        document.getElementById('count-reminder').textContent   = reminderCount;
+        document.getElementById('count-done').textContent       = doneCount;
+
+        hideStatus('leads-status');
+        leadsListCache = {
+          inprogress: data.output.inprogress || [],
+          reminder: data.output.reminder || [],
+          done: data.output.done || [],
+          counts: data.output.counts || {},
+        };
+        renderLeadLists({ output: leadsListCache });
+      } catch (err) {
+        showStatus('leads-status','error', esc(err.message));
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    function renderLeadLists(data) {
+      const inprogress = data.output.inprogress || [];
+      const reminder   = data.output.reminder   || [];
+      const done       = data.output.done       || [];
+
+      document.getElementById('leads-content').innerHTML = `
+        ${renderLeadSection('In Progress', 'inprogress', inprogress, 'amber')}
+        ${renderLeadSection('Reminder', 'reminder', reminder, 'violet')}
+        ${renderLeadSection('Done', 'done', done, 'emerald')}
+      `;
+    }
+
+    function renderLeadSection(title, key, leads, color) {
+      const colorMap = {
+        amber:   { text: 'text-amber-400',   dot: 'bg-amber-400',   border: 'border-amber-500/20' },
+        violet:  { text: 'text-violet-400',  dot: 'bg-violet-400',  border: 'border-violet-500/20' },
+        emerald: { text: 'text-emerald-400', dot: 'bg-emerald-400', border: 'border-emerald-500/20' },
+      };
+      const c = colorMap[color];
+      const empty = leads.length === 0
+        ? `<div class="text-center py-6 text-slate-600 text-sm">No ${title.toLowerCase()} leads</div>`
+        : '';
+      const items = leads.map(lead => renderLeadItem(lead, key)).join('');
+
+      return `
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-2 h-2 rounded-full ${c.dot}"></div>
+            <h3 class="text-sm font-bold ${c.text} uppercase tracking-wider">${esc(title)}</h3>
+            <span class="ml-auto text-xs text-slate-600">${leads.length} lead${leads.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="space-y-2">
+            ${empty}
+            ${items}
+          </div>
+        </div>`;
+    }
+
+    function formatReminderListLabel(reminder) {
+      if (!reminder) return '';
+      const d = new Date(reminder);
+      if (isNaN(d.getTime())) return esc(String(reminder));
+      return esc(d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }));
+    }
+
+    function renderLeadItem(lead, sectionKey) {
+      const id    = lead._id || lead.id || '';
+      const first = esc(lead.firstName || '');
+      const last  = esc(lead.lastName  || '');
+      const name  = (first || last) ? `${first} ${last}`.trim() : '<span class="text-slate-500 italic">No name</span>';
+      const email = esc(lead.email || '—');
+      const score = lead.score != null ? `<span class="text-xs text-slate-500 ml-1">&nbsp;· Score: <span class="text-sky-400 font-semibold">${esc(String(lead.score))}</span></span>` : '';
+      const reminderRow = sectionKey === 'reminder' && lead.reminder
+        ? `<div class="text-xs text-slate-500 mt-0.5 truncate">Reminder: <span class="text-violet-400 font-medium">${formatReminderListLabel(lead.reminder)}</span></div>`
+        : '';
+
+      return `
+        <div class="lead-item glass-inner rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent slide-in">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase">
+            ${(lead.firstName || lead.email || '?')[0]}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-white truncate">${name}${score}</div>
+            <div class="text-xs text-slate-500 truncate">${email}</div>
+            ${reminderRow}
+          </div>
+          <button onclick="openLeadDetail('${esc(id)}')"
+            class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-300 border border-sky-500/30 rounded-lg hover:bg-sky-500/15 hover:border-sky-500/60 transition-all">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            Process
+          </button>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────────
+    // Lead Detail
+    // ─────────────────────────────────────────────────
+    async function openLeadDetail(id) {
+      currentLeadId = id;
+      currentLead = null;
+      selectedAudioFile = null;
+      toggleReminderPanel(false);
+      document.getElementById('analysis-result').classList.add('hidden');
+      document.getElementById('analyze-status').classList.add('hidden');
+      document.getElementById('audio-input').value = '';
+      document.getElementById('upload-label').textContent = 'Drop MP3 here or click to browse';
+      document.getElementById('analyze-btn').disabled = true;
+
+      // reset detail
+      document.getElementById('detail-loading').classList.remove('hidden');
+      document.getElementById('detail-body').classList.add('hidden');
+      document.getElementById('detail-error').classList.add('hidden');
+      document.getElementById('detail-actions').style.removeProperty('display');
+      document.getElementById('analyze-section').classList.add('hidden');
+
+      showPage('detail');
+      await fetchLeadDetail(id);
+    }
+
+    async function fetchLeadDetail(id) {
+      document.getElementById('detail-loading').classList.remove('hidden');
+      document.getElementById('detail-body').classList.add('hidden');
+      document.getElementById('detail-error').classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/get-lead-details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leadId: id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Failed to fetch lead.');
+        const lead = data.output.lead || {};
+        applyLeadUpdate(lead, { skipListPatch: true });
+        document.getElementById('detail-loading').classList.add('hidden');
+        document.getElementById('detail-body').classList.remove('hidden');
+        document.getElementById('detail-actions').style.display = 'flex';
+        document.getElementById('analyze-section').classList.remove('hidden');
+      } catch (err) {
+        document.getElementById('detail-loading').classList.add('hidden');
+        document.getElementById('detail-error').classList.remove('hidden');
+        document.getElementById('detail-error').textContent = err.message;
+      }
+    }
+
+    function renderLeadDetail(lead) {
+      const fields = [
+        { label: 'First Name',   value: lead.firstName },
+        { label: 'Last Name',    value: lead.lastName },
+        { label: 'Email',        value: lead.email },
+        { label: 'Company',      value: lead.company },
+        { label: 'Phone',        value: lead.phone || '—' },
+        { label: 'Status',       value: statusBadge(lead.status), raw: true },
+        { labelHtml: scoreLabelWithHint(leadDisplayName(lead)), value: lead.score != null ? scoreCircle(lead.score) : '—', raw: true },
+        { label: 'Reminder',     value: formatReminderDisplay(lead.reminder), raw: true },
+        { label: 'Submitted At', value: lead.submittedAt ? new Date(lead.submittedAt).toLocaleString() : '—' },
+      ];
+
+      const fieldRows = fields.map(f => `
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 py-2.5 border-b border-slate-800/50 last:border-0">
+          <span class="text-xs text-slate-500 uppercase tracking-wider font-medium w-28 flex-shrink-0">${f.labelHtml ?? esc(f.label)}</span>
+          <span class="text-sm text-white">${f.raw ? f.value : esc(String(f.value ?? '—'))}</span>
+        </div>`).join('');
+
+      // Call analysis history
+      let analysisSection = '';
+      if (lead.callAnalysis) {
+        const a = lead.callAnalysis;
+        analysisSection = `
+          <div class="mt-4 pt-4 border-t border-slate-800/50">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Previous Analysis</span>
+              ${ratingBadge(a.rating)}
+            </div>
+            ${a.summary ? `<p class="text-sm text-slate-300 mb-3">${esc(a.summary)}</p>` : ''}
+            ${(a.recommendations || []).length > 0 ? `
+              <div class="mb-2">
+                <div class="text-xs text-slate-500 mb-1">Recommendations</div>
+                <ul class="space-y-1">${(a.recommendations||[]).map(r => `<li class="text-xs text-slate-300 flex gap-2"><span class="text-sky-400 mt-0.5">›</span>${esc(r)}</li>`).join('')}</ul>
+              </div>` : ''}
+          </div>`;
+      }
+
+      document.getElementById('detail-body').innerHTML = `
+        <div class="flex items-start gap-4 mb-5">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-lg font-bold text-white flex-shrink-0 uppercase shadow-lg shadow-sky-500/20">
+            ${esc((lead.firstName || lead.email || '?')[0])}
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">${esc(leadDisplayName(lead))}</h2>
+            <p class="text-sm text-slate-500">${esc(lead.email || '')}</p>
+          </div>
+        </div>
+        <div class="space-y-0">${fieldRows}</div>
+        ${analysisSection}
+      `;
+      initScoreHintTooltips(document.getElementById('detail-body'));
+    }
+
+    async function refreshLeadDetail() {
+      if (!currentLeadId) return;
+      await fetchLeadDetail(currentLeadId);
+    }
+
+    function leadIdOf(lead) {
+      return String(lead._id || lead.id || '');
+    }
+
+    function statusToListKey(status) {
+      if (status === 'inProgress') return 'inprogress';
+      if (status === 'reminder' || status === 'done') return status;
+      return 'inprogress';
+    }
+
+    function formatReminderDisplay(reminder) {
+      if (!reminder) return '—';
+      const d = new Date(reminder);
+      if (isNaN(d.getTime())) return esc(String(reminder));
+      return `<span class="text-violet-300">${esc(d.toLocaleString())}</span>`;
+    }
+
+    function toDatetimeLocalValue(isoOrDate) {
+      if (!isoOrDate) return '';
+      const d = new Date(isoOrDate);
+      if (isNaN(d.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function updateDetailActionButtons(lead) {
+      const isDone = lead.status === 'done';
+      const hasReminder = Boolean(lead.reminder);
+      const markBtn = document.getElementById('mark-done-btn');
+      const revertBtn = document.getElementById('revert-inprogress-btn');
+      const reminderBtn = document.getElementById('add-reminder-btn');
+      const removeReminderBtn = document.getElementById('remove-reminder-btn');
+
+      markBtn.style.display = isDone ? 'none' : '';
+      markBtn.disabled = false;
+      markBtn.classList.remove('opacity-40', 'opacity-60', 'cursor-not-allowed');
+      markBtn.title = '';
+      markBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Mark as Done`;
+
+      revertBtn.style.display = isDone ? '' : 'none';
+      revertBtn.disabled = false;
+      revertBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      revertBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg> Revert to In Progress`;
+
+      reminderBtn.style.display = isDone ? 'none' : '';
+
+      removeReminderBtn.style.display = !isDone && hasReminder ? '' : 'none';
+      removeReminderBtn.disabled = false;
+      removeReminderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      removeReminderBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Remove Reminder`;
+
+      if (isDone) toggleReminderPanel(false);
+    }
+
+    function patchLeadInLists(lead) {
+      if (!leadsListCache) return;
+      const id = leadIdOf(lead);
+      ['inprogress', 'reminder', 'done'].forEach(key => {
+        leadsListCache[key] = (leadsListCache[key] || []).filter(l => leadIdOf(l) !== id);
+      });
+      const key = statusToListKey(lead.status);
+      leadsListCache[key] = [...(leadsListCache[key] || []), lead];
+      leadsListCache.counts = {
+        inprogress: leadsListCache.inprogress.length,
+        reminder: leadsListCache.reminder.length,
+        done: leadsListCache.done.length,
+      };
+      document.getElementById('count-all').textContent =
+        leadsListCache.counts.inprogress + leadsListCache.counts.reminder + leadsListCache.counts.done;
+      document.getElementById('count-inprogress').textContent = leadsListCache.counts.inprogress;
+      document.getElementById('count-reminder').textContent = leadsListCache.counts.reminder;
+      document.getElementById('count-done').textContent = leadsListCache.counts.done;
+      if (!document.getElementById('tab-leads').classList.contains('hidden')) {
+        renderLeadLists({ output: leadsListCache });
+      }
+    }
+
+    function applyLeadUpdate(lead, opts = {}) {
+      currentLead = lead;
+      renderLeadDetail(lead);
+      updateDetailActionButtons(lead);
+      if (!opts.skipListPatch) patchLeadInLists(lead);
+    }
+
+    async function updateLeadOnServer(payload) {
+      const res = await fetch('/api/update-lead-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: currentLeadId,
+          updatedAt: new Date().toISOString(),
+          ...payload,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Update failed.');
+      const lead = data.output?.lead;
+      if (!lead) throw new Error('Lead was not returned after update.');
+      applyLeadUpdate(lead);
+      return lead;
+    }
+
+    function toggleReminderPanel(forceOpen) {
+      const panel = document.getElementById('reminder-panel');
+      const shouldShow = forceOpen === true
+        ? true
+        : forceOpen === false
+          ? false
+          : panel.classList.contains('hidden');
+      if (shouldShow) {
+        panel.classList.remove('hidden');
+        const input = document.getElementById('reminder-datetime');
+        const min = new Date();
+        min.setMinutes(min.getMinutes() - min.getTimezoneOffset());
+        input.min = min.toISOString().slice(0, 16);
+        input.value = toDatetimeLocalValue(currentLead?.reminder) || '';
+        hideStatus('manual-reminder-status');
+      } else {
+        panel.classList.add('hidden');
+        hideStatus('manual-reminder-status');
+      }
+    }
+
+    // ─────────────────────────────────────────────────
+    // Mark as Done / Reminder / Revert
+    // ─────────────────────────────────────────────────
+    async function handleMarkDone() {
+      if (!currentLeadId) return;
+      const btn = document.getElementById('mark-done-btn');
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Updating…`;
+
+      try {
+        await updateLeadOnServer({ status: 'done', reminder: null, doneAt: new Date().toISOString() });
+        toggleReminderPanel(false);
+      } catch (err) {
+        alert('Error: ' + err.message);
+        if (currentLead) updateDetailActionButtons(currentLead);
+      }
+    }
+
+    async function handleRevertToInProgress() {
+      if (!currentLeadId) return;
+      const btn = document.getElementById('revert-inprogress-btn');
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Reverting…`;
+
+      try {
+        await updateLeadOnServer({ status: 'inProgress', reminder: null, doneAt: null });
+        toggleReminderPanel(false);
+      } catch (err) {
+        alert('Error: ' + err.message);
+        updateDetailActionButtons(currentLead || { status: 'done' });
+      }
+    }
+
+    async function handleRemoveReminder() {
+      if (!currentLeadId || !currentLead?.reminder) return;
+      const btn = document.getElementById('remove-reminder-btn');
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Removing…`;
+
+      try {
+        await updateLeadOnServer({
+          status: currentLead.status === 'reminder' ? 'inProgress' : currentLead.status,
+          reminder: null,
+          doneAt: currentLead.status === 'reminder' ? null : (currentLead.doneAt ?? null),
+        });
+        toggleReminderPanel(false);
+      } catch (err) {
+        alert('Error: ' + err.message);
+        if (currentLead) updateDetailActionButtons(currentLead);
+      }
+    }
+
+    async function handleSaveManualReminder() {
+      if (!currentLeadId) return;
+      const input = document.getElementById('reminder-datetime');
+      if (!input.value) {
+        showStatus('manual-reminder-status', 'error', 'Please select a reminder date and time.');
+        return;
+      }
+      const reminderIso = new Date(input.value).toISOString();
+      const btn = document.getElementById('save-reminder-btn');
+      btn.disabled = true;
+      btn.classList.add('opacity-60', 'cursor-not-allowed');
+      showStatus('manual-reminder-status', 'loading', 'Saving reminder…');
+
+      try {
+        await updateLeadOnServer({ status: 'reminder', reminder: reminderIso, doneAt: null });
+        showStatus('manual-reminder-status', 'success', 'Reminder saved. Lead moved to Reminder.');
+        toggleReminderPanel(false);
+      } catch (err) {
+        showStatus('manual-reminder-status', 'error', esc(err.message));
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+    }
+
+    // ─────────────────────────────────────────────────
+    // Audio upload / drag-drop
+    // ─────────────────────────────────────────────────
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.add('border-violet-500/60','bg-violet-500/8');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-zone').classList.remove('border-violet-500/60','bg-violet-500/8');
+      const file = e.dataTransfer.files[0];
+      if (file) setAudioFile(file);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) setAudioFile(file);
+    }
+
+    function setAudioFile(file) {
+      if (!file.type.includes('mpeg') && !file.name.endsWith('.mp3')) {
+        alert('Please select an MP3 file.');
+        return;
+      }
+      selectedAudioFile = file;
+      document.getElementById('upload-label').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      document.getElementById('analyze-btn').disabled = false;
+    }
+
+    // ─────────────────────────────────────────────────
+    // Analyze Lead Call
+    // ─────────────────────────────────────────────────
+    async function handleAnalyze() {
+      if (!selectedAudioFile || !currentLeadId) return;
+
+      const btn = document.getElementById('analyze-btn');
+      const btnContent = document.getElementById('analyze-btn-content');
+      btn.disabled = true;
+      btnContent.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Analyzing call…`;
+      showStatus('analyze-status','loading','Uploading and analyzing audio with AI…');
+      document.getElementById('analysis-result').classList.add('hidden');
+
+      try {
+        const audioBase64 = await fileToBase64(selectedAudioFile);
+        const res = await fetch('/api/analyze-lead-call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ leadId: currentLeadId, audioBase64 }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || data.error || 'Analysis failed.');
+        hideStatus('analyze-status');
+        renderAnalysisResult(data.analysis || data);
+      } catch (err) {
+        showStatus('analyze-status','error', esc(err.message));
+        btn.disabled = false;
+      } finally {
+        btnContent.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Analyze Call`;
+        btn.disabled = !selectedAudioFile;
+      }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderAnalysisResult(a) {
+      const hasReminder = a.hasReminder && a.reminderDate;
+
+      const highlightsList = (a.highlights || []).map(h =>
+        `<li class="flex gap-2 text-sm text-slate-300"><span class="text-cyan-400 mt-0.5 flex-shrink-0">›</span>${esc(h)}</li>`
+      ).join('');
+
+      const recsList = (a.recommendations || []).map(r =>
+        `<li class="flex gap-2 text-sm text-slate-300"><span class="text-violet-400 mt-0.5 flex-shrink-0">›</span>${esc(r)}</li>`
+      ).join('');
+
+      const reminderBlock = hasReminder ? `
+        <div class="mt-4 p-4 rounded-xl bg-violet-500/10 border border-violet-500/25">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-violet-300 mb-1">Reminder Recommended</p>
+              <p class="text-xs text-slate-400 mb-1">${esc(a.reminderReason || '')}</p>
+              <p class="text-xs text-slate-500">Suggested date: <span class="text-violet-300 font-medium">${esc(a.reminderDate ? new Date(a.reminderDate).toLocaleString() : '')}</span></p>
+            </div>
+          </div>
+          <button onclick="saveReminder('${esc(a.reminderDate || '')}', '${esc(a.reminderReason || '')}')"
+            class="mt-3 w-full py-2 px-4 text-xs font-bold text-violet-200 border border-violet-500/40 rounded-lg hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+            </svg>
+            Save Reminder to Lead
+          </button>
+        </div>` : '';
+
+      document.getElementById('analysis-body').innerHTML = `
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            ${scoreCircle(a.score)}
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">Call Analysis</span>
+                ${ratingBadge(a.rating)}
+              </div>
+              ${a.summary ? `<p class="text-xs text-slate-400 mt-1 max-w-sm">${esc(a.summary)}</p>` : ''}
+            </div>
+          </div>
+        </div>
+        ${highlightsList ? `<div class="mb-3"><div class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1.5">Highlights</div><ul class="space-y-1">${highlightsList}</ul></div>` : ''}
+        ${recsList ? `<div class="mb-3"><div class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1.5">Recommendations</div><ul class="space-y-1">${recsList}</ul></div>` : ''}
+        ${reminderBlock}
+        <div id="reminder-save-status" class="mt-2 hidden"></div>
+      `;
+
+      document.getElementById('analysis-result').classList.remove('hidden');
+      // refresh detail to show updated analysis
+      refreshLeadDetail();
+    }
+
+    // ─────────────────────────────────────────────────
+    // Save Reminder
+    // ─────────────────────────────────────────────────
+    async function saveReminder(reminderDate, reminderReason) {
+      if (!currentLeadId) return;
+      showStatus('reminder-save-status','loading','Saving reminder…');
+      try {
+        await updateLeadOnServer({ status: 'reminder', reminder: reminderDate || null, doneAt: null });
+        showStatus('reminder-save-status','success','Reminder saved successfully!');
+      } catch (err) {
+        showStatus('reminder-save-status','error', esc(err.message));
+      }
+    }
+  </script>
+</body>
+</html>
