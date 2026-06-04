@@ -1,0 +1,88 @@
+id: list-today-analyses
+name: List Today's Analyses
+description: >
+  Returns leads that received a saved call analysis today (lastRecord within the
+  reporting day and callAnalysis present), newest first.
+version: "1.0"
+
+nodes:
+  - id: get-today-activity
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"lastRecord": {"$ne": null, "$gte": "{{habits.input.dayStart}}", "$lte": "{{habits.input.dayEnd}}"}}'
+        limit: 200
+
+  - id: prepare-list
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Filter saved analyses and sort by last record
+      params:
+        leads: "{{get-today-activity.results}}"
+        dayStart: "{{habits.input.dayStart}}"
+        dayEnd: "{{habits.input.dayEnd}}"
+        currentDay: "{{habits.input.currentDay}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(leads, dayStart, dayEnd, currentDay) {
+            const rows = Array.isArray(leads) ? leads : [];
+
+            function parseAnalysis(raw) {
+              if (!raw) return null;
+              if (typeof raw === 'string') {
+                try { return JSON.parse(raw); } catch { return null; }
+              }
+              return typeof raw === 'object' ? raw : null;
+            }
+
+            const analyses = rows
+              .map((lead) => {
+                const callAnalysis = parseAnalysis(lead.callAnalysis);
+                if (!callAnalysis) return null;
+                const lastRecord = lead.lastRecord ? new Date(lead.lastRecord).getTime() : 0;
+                const firstName = lead.firstName || '';
+                const lastName = lead.lastName || '';
+                const leadName = `${firstName} ${lastName}`.trim() || lead.email || 'Unknown lead';
+                return {
+                  leadId: lead._id,
+                  leadName,
+                  email: lead.email || '',
+                  status: lead.status || '',
+                  score: lead.score != null ? lead.score : callAnalysis.score,
+                  lastRecord: lead.lastRecord,
+                  analysis: callAnalysis,
+                  analysisRating: lead.analysisRating || callAnalysis.rating,
+                  analysisScore: lead.analysisScore != null ? lead.analysisScore : callAnalysis.score,
+                };
+              })
+              .filter(Boolean)
+              .sort((a, b) => new Date(b.lastRecord).getTime() - new Date(a.lastRecord).getTime());
+
+            return {
+              currentDay: currentDay || '',
+              dayStart,
+              dayEnd,
+              analyses,
+              count: analyses.length,
+            };
+          }
+
+edges:
+  - id: e1
+    source: get-today-activity
+    target: prepare-list
+
+output:
+  currentDay: "{{prepare-list.result.currentDay}}"
+  dayStart: "{{prepare-list.result.dayStart}}"
+  dayEnd: "{{prepare-list.result.dayEnd}}"
+  analyses: "{{prepare-list.result.analyses}}"
+  count: "{{prepare-list.result.count}}"

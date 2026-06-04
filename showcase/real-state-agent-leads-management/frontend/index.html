@@ -285,10 +285,18 @@
       transform: translateY(-1px);
       box-shadow: 0 8px 28px rgba(245, 158, 11, 0.35);
     }
-    .eod-scroll {
+    .eod-scroll,
+    .analysis-scroll {
       max-height: min(70vh, 720px);
       overflow-y: auto;
       padding-right: 4px;
+    }
+    .analysis-card {
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .analysis-card:hover {
+      border-color: rgba(56, 189, 248, 0.35);
+      transform: translateY(-1px);
     }
     .priority-high   { border-left: 3px solid #f87171; }
     .priority-medium { border-left: 3px solid #fbbf24; }
@@ -344,18 +352,27 @@
       <div class="glass-card rounded-2xl overflow-hidden">
         <div class="flex border-b border-slate-800/60">
           <button id="tab-submit-btn" onclick="switchTab('submit')"
-            class="flex-1 py-4 px-6 text-sm font-semibold tab-active flex items-center justify-center gap-2">
+            class="flex-1 py-3 px-3 sm:px-5 text-sm font-semibold tab-active flex items-center justify-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             Submit Lead
           </button>
           <button id="tab-leads-btn" onclick="switchTab('leads')"
-            class="flex-1 py-4 px-6 text-sm font-semibold tab-inactive flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="flex-1 py-3 px-3 sm:px-5 text-sm font-semibold tab-inactive flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
-            Leads Dashboard
+            <span class="hidden sm:inline">Leads Dashboard</span>
+            <span class="sm:hidden">Leads</span>
+          </button>
+          <button id="tab-analyses-btn" onclick="switchTab('analyses')"
+            class="flex-1 py-3 px-3 sm:px-5 text-sm font-semibold tab-inactive flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <span class="hidden sm:inline">Today's Analyses</span>
+            <span class="sm:hidden">Today</span>
           </button>
         </div>
 
@@ -510,6 +527,56 @@
               </svg>
               <p class="text-sm">Click <strong class="text-slate-500">Refresh</strong> to load leads</p>
             </div>
+          </div>
+        </div>
+
+        <!-- ── TAB: Today's Analyses ── -->
+        <div id="tab-analyses" class="hidden p-6 md:p-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-white">Today's Saved Analyses</h2>
+              <p class="text-slate-500 text-sm mt-0.5">Call analyses recorded today, newest first.</p>
+              <p id="analyses-date-label" class="text-xs text-cyan-500/80 mt-2 uppercase tracking-wider font-medium"></p>
+            </div>
+            <button type="button" onclick="loadTodayAnalyses()" id="analyses-refresh-btn"
+              class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-cyan-300 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/10 transition-all self-start sm:self-auto">
+              <svg id="analyses-refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          <div id="analyses-summary" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5 hidden">
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-cyan-400" id="analyses-count-total">0</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Analyses today</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-emerald-400" id="analyses-count-good">0</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Good calls</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center col-span-2 sm:col-span-1">
+              <div class="text-2xl font-bold text-sky-400" id="analyses-avg-score">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Avg. call score</div>
+            </div>
+          </div>
+
+          <div id="analyses-status" class="mb-4 hidden"></div>
+
+          <div id="analyses-empty" class="hidden glass-inner rounded-2xl p-10 text-center">
+            <svg class="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <p class="text-slate-400 text-sm font-medium">No call analyses saved today yet</p>
+            <p class="text-slate-600 text-xs mt-2 max-w-sm mx-auto">Process a lead and run <span class="text-slate-500">Analyze Call</span> — results appear here when saved.</p>
+          </div>
+
+          <div id="analyses-list-wrap" class="hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span id="analyses-list-meta" class="text-xs text-slate-500"></span>
+            </div>
+            <div id="analyses-list" class="analysis-scroll space-y-4 pr-1"></div>
           </div>
         </div>
       </div>
@@ -961,15 +1028,163 @@
     // ─────────────────────────────────────────────────
     // Tabs
     // ─────────────────────────────────────────────────
+    const TAB_BTN_CLASS = 'flex-1 py-3 px-3 sm:px-5 text-sm font-semibold flex items-center justify-center gap-1.5';
+
     function switchTab(tab) {
       const isSubmit = tab === 'submit';
+      const isLeads = tab === 'leads';
+      const isAnalyses = tab === 'analyses';
       document.getElementById('tab-submit').classList.toggle('hidden', !isSubmit);
-      document.getElementById('tab-leads').classList.toggle('hidden', isSubmit);
+      document.getElementById('tab-leads').classList.toggle('hidden', !isLeads);
+      document.getElementById('tab-analyses').classList.toggle('hidden', !isAnalyses);
       document.getElementById('tab-submit-btn').className =
-        `flex-1 py-4 px-6 text-sm font-semibold ${isSubmit ? 'tab-active' : 'tab-inactive'} flex items-center justify-center gap-2`;
+        `${TAB_BTN_CLASS} ${isSubmit ? 'tab-active' : 'tab-inactive'}`;
       document.getElementById('tab-leads-btn').className =
-        `flex-1 py-4 px-6 text-sm font-semibold ${!isSubmit ? 'tab-active' : 'tab-inactive'} flex items-center justify-center gap-2`;
-      if (!isSubmit) loadLeads();
+        `${TAB_BTN_CLASS} ${isLeads ? 'tab-active' : 'tab-inactive'}`;
+      document.getElementById('tab-analyses-btn').className =
+        `${TAB_BTN_CLASS} ${isAnalyses ? 'tab-active' : 'tab-inactive'}`;
+      if (isLeads) loadLeads();
+      if (isAnalyses) loadTodayAnalyses();
+    }
+
+    // ─────────────────────────────────────────────────
+    // Today's analyses
+    // ─────────────────────────────────────────────────
+    function formatAnalysisTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return esc(String(iso));
+      return d.toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      });
+    }
+
+    function renderTodayAnalysisCard(item) {
+      const a = item.analysis || {};
+      const rating = item.analysisRating || a.rating || 'neutral';
+      const callScore = item.analysisScore != null ? item.analysisScore : a.score;
+      const highlights = Array.isArray(a.highlights) ? a.highlights : [];
+      const recs = Array.isArray(a.recommendations) ? a.recommendations : [];
+      const leadId = esc(item.leadId || '');
+
+      const highlightsHtml = highlights.length
+        ? `<ul class="mt-3 space-y-1">${highlights.slice(0, 4).map(h =>
+            `<li class="text-xs text-slate-400 flex gap-2"><span class="text-cyan-400 flex-shrink-0">•</span><span>${esc(h)}</span></li>`
+          ).join('')}</ul>`
+        : '';
+
+      const recsHtml = recs.length
+        ? `<div class="mt-3 pt-3 border-t border-slate-700/40">
+            <p class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1.5">Recommendations</p>
+            <ul class="space-y-1">${recs.slice(0, 3).map(r =>
+              `<li class="text-xs text-slate-300 flex gap-2"><span class="text-violet-400 flex-shrink-0">›</span><span>${esc(r)}</span></li>`
+            ).join('')}</ul>
+          </div>`
+        : '';
+
+      const reminderHtml = a.hasReminder && (a.reminderDate || a.reminderReason)
+        ? `<p class="text-xs text-violet-400 mt-3"><span class="text-slate-500">Follow-up:</span> ${esc(a.reminderDate || a.reminderReason)}</p>`
+        : '';
+
+      return `
+        <article class="analysis-card glass-card rounded-2xl p-5 border border-slate-700/40 result-reveal">
+          <div class="flex flex-wrap items-start gap-4">
+            <div class="flex-shrink-0">${callScore != null ? scoreCircle(callScore) : ''}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+                <div class="min-w-0">
+                  <h4 class="text-base font-bold text-white truncate">${esc(item.leadName)}</h4>
+                  <p class="text-xs text-slate-500 truncate">${esc(item.email || '')}</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+                  ${ratingBadge(rating)}
+                  ${statusBadge(item.status || '')}
+                </div>
+              </div>
+              <p class="text-xs text-cyan-500/90 font-medium">${formatAnalysisTime(item.lastRecord)}</p>
+              ${a.summary ? `<p class="text-sm text-slate-300 leading-relaxed mt-2">${esc(a.summary)}</p>` : ''}
+              ${highlightsHtml}
+              ${recsHtml}
+              ${reminderHtml}
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button type="button" onclick="openLeadDetail('${leadId}')"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-300 border border-sky-500/30 rounded-lg hover:bg-sky-500/15 transition-all">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  View lead
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    function renderTodayAnalyses(output) {
+      const list = output.analyses || [];
+      const count = output.count ?? list.length;
+
+      const today = new Date();
+      document.getElementById('analyses-date-label').textContent =
+        'Reporting date: ' + today.toLocaleDateString(undefined, {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        });
+
+      document.getElementById('analyses-summary').classList.toggle('hidden', count === 0);
+      document.getElementById('analyses-count-total').textContent = String(count);
+
+      const goodCount = list.filter(item => {
+        const r = (item.analysisRating || item.analysis?.rating || '').toLowerCase();
+        return r === 'good';
+      }).length;
+      document.getElementById('analyses-count-good').textContent = String(goodCount);
+
+      const scores = list
+        .map(item => item.analysisScore != null ? Number(item.analysisScore) : Number(item.analysis?.score))
+        .filter(n => !isNaN(n));
+      document.getElementById('analyses-avg-score').textContent =
+        scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : '—';
+
+      if (!list.length) {
+        document.getElementById('analyses-empty').classList.remove('hidden');
+        document.getElementById('analyses-list-wrap').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('analyses-list-meta').textContent =
+        `${count} ${count === 1 ? 'analysis' : 'analyses'} saved today`;
+      document.getElementById('analyses-list').innerHTML = list.map(renderTodayAnalysisCard).join('');
+      document.getElementById('analyses-empty').classList.add('hidden');
+      document.getElementById('analyses-list-wrap').classList.remove('hidden');
+    }
+
+    async function loadTodayAnalyses() {
+      const icon = document.getElementById('analyses-refresh-icon');
+      icon.classList.add('animate-spin');
+      showStatus('analyses-status', 'loading', 'Loading today’s saved analyses…');
+      document.getElementById('analyses-empty').classList.add('hidden');
+      document.getElementById('analyses-list-wrap').classList.add('hidden');
+
+      try {
+        const bounds = getReportingDayBounds();
+        const res = await fetch('/api/list-today-analyses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bounds),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || data?.message || `Request failed (${res.status})`);
+
+        const output = data?.output || data || {};
+        hideStatus('analyses-status');
+        renderTodayAnalyses(output);
+      } catch (err) {
+        showStatus('analyses-status', 'error', esc(err.message));
+        document.getElementById('analyses-summary').classList.add('hidden');
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
     }
 
     // ─────────────────────────────────────────────────

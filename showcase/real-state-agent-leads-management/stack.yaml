@@ -26,6 +26,9 @@ workflows:
   - id: summarize-lead-eod
     path: ./habits/summarize-lead-eod.yaml
     enabled: true
+  - id: list-today-analyses
+    path: ./habits/list-today-analyses.yaml
+    enabled: true
 
 server:
   port: 13000
