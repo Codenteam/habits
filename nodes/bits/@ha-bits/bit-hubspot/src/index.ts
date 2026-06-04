@@ -949,6 +949,12 @@ const hubspotBit = {
           description: 'Lead reminder',
           required: false,
         },
+        lastRecord: {
+          type: 'SHORT_TEXT',
+          displayName: 'Last Record',
+          description: 'Date/time of the most recent call recording or analysis',
+          required: false,
+        },
         submittedAt: {
           type: 'SHORT_TEXT',
           displayName: 'Submitted At',
@@ -966,6 +972,7 @@ const hubspotBit = {
           score,
           status,
           reminder,
+          lastRecord,
           submittedAt
         } = context.propsValue;
 
@@ -983,6 +990,12 @@ const hubspotBit = {
         } else if (reminder === null || reminder === '' || String(reminder) === 'null') {
           // HubSpot keeps the previous value unless we send an empty string
           properties.reminder = '';
+        }
+        if (lastRecord != null && lastRecord !== '' && String(lastRecord) !== 'null') {
+          properties.lastrecord = String(lastRecord);
+        } else if (lastRecord === null || lastRecord === '' || String(lastRecord) === 'null') {
+          // HubSpot keeps the previous value unless we send an empty string
+          properties.lastrecord = '';
         }
         if (submittedAt) properties.submittedat = submittedAt;
         if (score != null && score !== '') {
@@ -1051,8 +1064,6 @@ const hubspotBit = {
           status: 'lead',
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
-          reminder: data.properties.reminder,
-          submittedAt: data.properties.submittedAt,
         };
         
         return { success: true, lead };

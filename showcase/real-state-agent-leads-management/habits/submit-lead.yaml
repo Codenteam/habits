@@ -66,6 +66,7 @@ nodes:
         score: 0
         status: "{{ai-enrich.status}}"
         reminder: "{{ai-enrich.reminder}}"
+        lastRecord: null
         submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
 
   - id: save-lead
@@ -86,6 +87,7 @@ nodes:
           score: 0
           status: "{{ai-enrich.status}}"
           reminder: "{{ai-enrich.reminder}}"
+          lastRecord: null
           hubspotContact: "{{hubspot-sync}}"
           submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
 
@@ -110,4 +112,5 @@ output:
     score: 0
     status: "{{ai-enrich.status}}"
     reminder: "{{ai-enrich.reminder}}"
+    lastRecord: null
     submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"

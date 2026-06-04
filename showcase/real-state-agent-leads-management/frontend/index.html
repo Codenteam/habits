@@ -1011,19 +1011,23 @@
       const reminderRow = sectionKey === 'reminder' && lead.reminder
         ? `<div class="text-xs text-slate-500 mt-0.5 truncate">Reminder: <span class="text-violet-400 font-medium">${formatReminderListLabel(lead.reminder)}</span></div>`
         : '';
+      const lastRecordRow = lead.lastRecord
+        ? `<div class="text-xs text-slate-500 mt-0.5 truncate">Last Record: <span class="text-cyan-400 font-medium">${formatReminderListLabel(lead.lastRecord)}</span></div>`
+        : '';
 
       return `
-        <div class="lead-item glass-inner rounded-xl px-4 py-3 flex items-center gap-3 border border-transparent slide-in">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase">
+        <div class="lead-item glass-inner rounded-xl px-4 py-3 flex items-start gap-3 border border-transparent slide-in">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-600 to-indigo-600 flex items-center justify-center flex-shrink-0 self-start text-xs font-bold text-white uppercase">
             ${(lead.firstName || lead.email || '?')[0]}
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-semibold text-white truncate">${name}${score}</div>
             <div class="text-xs text-slate-500 truncate">${email}</div>
             ${reminderRow}
+            ${lastRecordRow}
           </div>
           <button onclick="openLeadDetail('${esc(id)}')"
-            class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-300 border border-sky-500/30 rounded-lg hover:bg-sky-500/15 hover:border-sky-500/60 transition-all">
+            class="flex-shrink-0 self-start flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-sky-300 border border-sky-500/30 rounded-lg hover:bg-sky-500/15 hover:border-sky-500/60 transition-all">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -1093,6 +1097,7 @@
         { label: 'Status',       value: statusBadge(lead.status), raw: true },
         { labelHtml: scoreLabelWithHint(leadDisplayName(lead)), value: lead.score != null ? scoreCircle(lead.score) : '—', raw: true },
         { label: 'Reminder',     value: formatReminderDisplay(lead.reminder), raw: true },
+        { label: 'Last Record',  value: lead.lastRecord ? new Date(lead.lastRecord).toLocaleString() : '—' },
         { label: 'Submitted At', value: lead.submittedAt ? new Date(lead.submittedAt).toLocaleString() : '—' },
       ];
 
@@ -1413,6 +1418,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             leadId: currentLeadId,
+            lastRecord: new Date().toISOString(),
             audio: {
               filename: selectedAudioFile.name,
               data: audioBase64,

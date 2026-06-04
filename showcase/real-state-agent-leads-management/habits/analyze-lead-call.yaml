@@ -94,7 +94,29 @@ nodes:
           analysisScore: "{{analyze-call.score}}"
           reminderSuggestedDate: "{{analyze-call.reminderDate}}"
           reminderReason: "{{analyze-call.reminderReason}}"
+          lastRecord: "{{habits.input.lastRecord}}"
           updatedAt: "{{habits.function.now()}}"
+
+  - id: sync-hubspot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{load-lead.results[0].email}}"
+        firstName: "{{load-lead.results[0].firstName}}"
+        lastName: "{{load-lead.results[0].lastName}}"
+        company: "{{load-lead.results[0].company}}"
+        phone: "{{load-lead.results[0].phone}}"
+        score: "{{load-lead.results[0].score}}"
+        status: "{{load-lead.results[0].status}}"
+        reminder: "{{load-lead.results[0].reminder}}"
+        lastRecord: "{{habits.input.lastRecord}}"
 
 edges:
   - id: e1
@@ -106,8 +128,13 @@ edges:
   - id: e3
     source: analyze-call
     target: save-analysis
+  - id: e4
+    source: save-analysis
+    target: sync-hubspot
 
 output:
   leadId: "{{habits.input.leadId}}"
   transcript: "{{transcribe-audio.text}}"
   analysis: "{{analyze-call}}"
+  lastRecord: "{{habits.input.lastRecord}}"
+  hubspot: "{{sync-hubspot}}"
