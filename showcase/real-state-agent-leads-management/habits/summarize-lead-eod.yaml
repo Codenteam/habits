@@ -1,0 +1,70 @@
+id: summarize-lead-eod
+name: Summarize Lead (End of Day)
+description: Produce an end-of-day summary and recommended actions for a single lead (invoked by bit-loop).
+version: "1.0"
+
+nodes:
+  - id: summarize
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        cast: 'force'
+        temperature: 0.35
+        maxTokens: 1200
+        prompt: |
+          You are a real-estate sales coach preparing an end-of-day briefing for an agent.
+
+          Lead record (JSON):
+          {{lead}}
+
+          Analyze this lead's status, score, reminders, call analysis (if any), and activity for the reporting day.
+          Return ONLY valid JSON wrapped in ```json``` code fences with this exact schema:
+          ```json
+          {
+            "leadId": string,
+            "leadName": string,
+            "status": string,
+            "category": "activity_today" | "due_reminder" | "both",
+            "headline": string,
+            "summary": string,
+            "highlights": string[],
+            "recommendedActions": string[],
+            "priority": "high" | "medium" | "low",
+            "followUpBy": string | null
+          }
+          ```
+
+          Rules:
+          - headline: one short line for a dashboard card title
+          - summary: 2–4 sentences for the agent
+          - recommendedActions: 2–5 concrete next steps (strings)
+          - category: "activity_today" if lastRecord falls on the reporting day; "due_reminder" if reminder is due on or before that day; "both" when both apply
+          - priority: high for overdue reminders or hot leads (score ≥ 70); medium by default; low for done or cold leads
+          - followUpBy:
+            - If lead.reminder is set (not null/empty), followUpBy MUST be that reminder value (use it as-is if already plain text; format ISO dates in a readable way).
+            - Else if callAnalysis.hasReminder is true, use callAnalysis.reminderDate if present, otherwise callAnalysis.reminderReason.
+            - Else if reminderSuggestedDate or reminderReason is set on the lead, use that text.
+            - Else if nothing in the record indicates a follow-up, followUpBy MUST be null (do not invent or guess follow-up timing).
+
+edges: []
+
+output:
+  leadId: "{{summarize.leadId}}"
+  leadName: "{{summarize.leadName}}"
+  status: "{{summarize.status}}"
+  category: "{{summarize.category}}"
+  headline: "{{summarize.headline}}"
+  summary: "{{summarize.summary}}"
+  highlights: "{{summarize.highlights}}"
+  recommendedActions: "{{summarize.recommendedActions}}"
+  priority: "{{summarize.priority}}"
+  followUpBy: "{{summarize.followUpBy}}"
+  lead: "{{lead}}"

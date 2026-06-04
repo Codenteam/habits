@@ -20,6 +20,12 @@ workflows:
   - id: save-lead-score
     path: ./habits/save-lead-score.yaml
     enabled: true
+  - id: end-of-day-analysis
+    path: ./habits/end-of-day-analysis.yaml
+    enabled: true
+  - id: summarize-lead-eod
+    path: ./habits/summarize-lead-eod.yaml
+    enabled: true
 
 server:
   port: 13000

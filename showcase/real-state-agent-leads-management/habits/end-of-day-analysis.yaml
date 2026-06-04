@@ -1,0 +1,91 @@
+id: end-of-day-analysis
+name: End of Day Analysis
+description: >
+  Loads leads with lastRecord on the reporting day and leads with reminders due
+  on or before that day, merges without duplicates, then summarizes each with OpenAI.
+version: "1.0"
+
+nodes:
+  - id: get-activity-today
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"lastRecord": {"$ne": null, "$gte": "{{habits.input.dayStart}}", "$lte": "{{habits.input.dayEnd}}"}}'
+        limit: 200
+
+  - id: get-due-reminders
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"reminder": {"$ne": null, "$lte": "{{habits.input.dayEnd}}"}}'
+        limit: 200
+
+  - id: merge-leads
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Merge and dedupe lead lists
+      params:
+        activityToday: "{{get-activity-today.results}}"
+        dueReminders: "{{get-due-reminders.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(activityToday, dueReminders) {
+            const a = Array.isArray(activityToday) ? activityToday : [];
+            const b = Array.isArray(dueReminders) ? dueReminders : [];
+            const byId = new Map();
+            for (const lead of [...a, ...b]) {
+              if (lead && lead._id) byId.set(lead._id, lead);
+            }
+            const leads = Array.from(byId.values());
+            return { leads, count: leads.length };
+          }
+
+  - id: summarize-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{merge-leads.result.leads}}"
+        habitId: summarize-lead-eod
+        inputKey: lead
+        delayMs: 350
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - id: e1
+    source: get-activity-today
+    target: merge-leads
+  - id: e2
+    source: get-due-reminders
+    target: merge-leads
+  - id: e3
+    source: merge-leads
+    target: summarize-all
+
+output:
+  currentDay: "{{habits.input.currentDay}}"
+  dayStart: "{{habits.input.dayStart}}"
+  dayEnd: "{{habits.input.dayEnd}}"
+  activityCount: "{{get-activity-today.count}}"
+  reminderCount: "{{get-due-reminders.count}}"
+  leadCount: "{{merge-leads.result.count}}"
+  summaries: "{{summarize-all.results}}"
+  successCount: "{{summarize-all.successCount}}"
+  errorCount: "{{summarize-all.errorCount}}"

@@ -14,6 +14,7 @@ longDescription: |
   - List leads by status: in progress, reminder, done
   - Process one lead, analyze call audio, and save follow-up reminder
   - Mark lead as done and keep HubSpot + SQL in sync
+  - End-of-day analysis for today's activity and due reminders
 
 tags:
   - real-estate
@@ -38,5 +39,7 @@ habits:
   - habits/update-lead-status.yaml
   - habits/analyze-lead-call.yaml
   - habits/save-lead-score.yaml
+  - habits/end-of-day-analysis.yaml
+  - habits/summarize-lead-eod.yaml
 
 quickDownload: true
