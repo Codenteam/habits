@@ -64,7 +64,7 @@ A real-estate lead operations showcase with a frontend and API habits.
 ## Included flows
 
 - Submit and validate lead form
-- Enrich lead with OpenAI scoring and summary
+- Enrich lead with OpenAI
 - Sync/create contact in HubSpot
 - Save and manage records in SQL collection `real_state_agent_leads_collection`
 - List leads by status: in progress, reminder, done
