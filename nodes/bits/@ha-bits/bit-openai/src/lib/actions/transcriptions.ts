@@ -4,15 +4,63 @@
  */
 
 import {
-  HttpMethod,
-  httpClient,
   Property,
   createAction,
 } from '@ha-bits/cortex-core';
-import { baseUrl as openAiBaseUrl, openaiAuth } from '../common/common';
-import FormData from 'form-data';
+import OpenAI, { toFile } from 'openai';
 import mime from 'mime-types';
-import { Languages, openaiAuthValue } from '../common/common';
+import { Languages, openaiAuth, openaiAuthValue } from '../common/common';
+
+type AudioFileInput = {
+  filename?: string;
+  data?: Buffer | Uint8Array | string | { type: 'Buffer'; data: number[] };
+  extension?: string;
+};
+
+function normalizeAudioBuffer(audio: AudioFileInput | string): {
+  filename: string;
+  buffer: Buffer;
+  mimeType: string;
+} {
+  if (typeof audio === 'string') {
+    return {
+      filename: 'audio.mp3',
+      buffer: Buffer.from(audio, 'base64'),
+      mimeType: 'audio/mpeg',
+    };
+  }
+
+  if (!audio?.data) {
+    throw new Error('Audio file is required');
+  }
+
+  const filename = audio.filename || 'audio.mp3';
+  const extension = audio.extension || `.${filename.split('.').pop() || 'mp3'}`;
+  const mimeType = (mime.lookup(extension.replace(/^\./, '')) || 'application/octet-stream') as string;
+
+  let buffer: Buffer;
+  const { data } = audio;
+
+  if (typeof data === 'string') {
+    buffer = Buffer.from(data, 'base64');
+  } else if (Buffer.isBuffer(data)) {
+    buffer = data;
+  } else if (data instanceof Uint8Array) {
+    buffer = Buffer.from(data);
+  } else if (
+    data &&
+    typeof data === 'object' &&
+    'type' in data &&
+    data.type === 'Buffer' &&
+    Array.isArray(data.data)
+  ) {
+    buffer = Buffer.from(data.data);
+  } else {
+    throw new Error('Invalid audio file data');
+  }
+
+  return { filename, buffer, mimeType };
+}
 
 export const transcribeAction = createAction({
   name: 'transcribe',
@@ -36,41 +84,24 @@ export const transcribeAction = createAction({
     }),
   },
   run: async (context) => {
-    const fileData = context.propsValue.audio as { filename: string; data: Buffer; extension?: string };
-    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
+    const authValue = context.auth as unknown as openaiAuthValue;
+    const openai = new OpenAI({
+      apiKey: authValue.apiKey,
+    } as any);
+
     let language = context.propsValue.language;
-    // if language is not in languages list, default to english
     if (!Languages.some((l) => l.value === language)) {
       language = 'en';
     }
 
-    const form = new FormData();
-    form.append('file', fileData.data, {
-      filename: fileData.filename,
-      contentType: mimeType as string,
+    const { filename, buffer, mimeType } = normalizeAudioBuffer(context.propsValue.audio);
+
+    const transcription = await openai.audio.transcriptions.create({
+      file: await toFile(buffer, filename, { type: mimeType }),
+      model: 'whisper-1',
+      language,
     });
-    form.append('model', 'whisper-1');
-    form.append('language', language);
 
-    const authValue = context.auth as unknown as openaiAuthValue;
-    const baseUrl = openAiBaseUrl;
-    const headers = {
-      Authorization: `Bearer ${authValue.apiKey}`,
-    };
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${baseUrl}/audio/transcriptions`,
-        body: form,
-        headers: {
-          ...form.getHeaders(),
-          ...headers,
-        },
-      });
-      return response.body;
-    } catch (e) {
-      throw new Error(`Error while execution:\n${e}`);
-    }
+    return { text: transcription.text };
   },
 });

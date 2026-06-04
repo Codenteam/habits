@@ -1244,6 +1244,24 @@
       return lead;
     }
 
+    async function saveLeadScoreOnServer(score) {
+      const res = await fetch('/api/save-lead-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: currentLeadId,
+          score: Number(score),
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Failed to save score.');
+      const lead = data.output?.lead;
+      if (!lead) throw new Error('Lead was not returned after score update.');
+      applyLeadUpdate(lead);
+      return lead;
+    }
+
     function toggleReminderPanel(forceOpen) {
       const panel = document.getElementById('reminder-panel');
       const shouldShow = forceOpen === true
@@ -1393,12 +1411,19 @@
         const res = await fetch('/api/analyze-lead-call', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ leadId: currentLeadId, audioBase64 }),
+          body: JSON.stringify({
+            leadId: currentLeadId,
+            audio: {
+              filename: selectedAudioFile.name,
+              data: audioBase64,
+              extension: '.' + (selectedAudioFile.name.split('.').pop() || 'mp3').toLowerCase(),
+            },
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || data.error || 'Analysis failed.');
         hideStatus('analyze-status');
-        renderAnalysisResult(data.analysis || data);
+        await renderAnalysisResult(data.output?.analysis ?? data.analysis);
       } catch (err) {
         showStatus('analyze-status','error', esc(err.message));
         btn.disabled = false;
@@ -1417,7 +1442,7 @@
       });
     }
 
-    function renderAnalysisResult(a) {
+    async function renderAnalysisResult(a) {
       const hasReminder = a.hasReminder && a.reminderDate;
 
       const highlightsList = (a.highlights || []).map(h =>
@@ -1435,18 +1460,12 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
             </svg>
             <div class="flex-1">
-              <p class="text-sm font-semibold text-violet-300 mb-1">Reminder Recommended</p>
-              <p class="text-xs text-slate-400 mb-1">${esc(a.reminderReason || '')}</p>
-              <p class="text-xs text-slate-500">Suggested date: <span class="text-violet-300 font-medium">${esc(a.reminderDate ? new Date(a.reminderDate).toLocaleString() : '')}</span></p>
+              <p class="text-sm font-semibold text-violet-300 mb-1">Suggested Follow-up</p>
+              <p class="text-sm text-white font-medium mb-1">${esc(a.reminderDate || '')}</p>
+              ${a.reminderReason ? `<p class="text-xs text-slate-400 mb-2">${esc(a.reminderReason)}</p>` : ''}
+              <p class="text-xs text-slate-500 leading-relaxed">To schedule this follow-up on the lead record, use <span class="text-violet-300 font-medium">Add Reminder to this Lead</span> above and choose the date and time that best matches what was discussed.</p>
             </div>
           </div>
-          <button onclick="saveReminder('${esc(a.reminderDate || '')}', '${esc(a.reminderReason || '')}')"
-            class="mt-3 w-full py-2 px-4 text-xs font-bold text-violet-200 border border-violet-500/40 rounded-lg hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-            </svg>
-            Save Reminder to Lead
-          </button>
         </div>` : '';
 
       document.getElementById('analysis-body').innerHTML = `
@@ -1465,25 +1484,22 @@
         ${highlightsList ? `<div class="mb-3"><div class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1.5">Highlights</div><ul class="space-y-1">${highlightsList}</ul></div>` : ''}
         ${recsList ? `<div class="mb-3"><div class="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1.5">Recommendations</div><ul class="space-y-1">${recsList}</ul></div>` : ''}
         ${reminderBlock}
-        <div id="reminder-save-status" class="mt-2 hidden"></div>
+        <div id="score-save-status" class="mt-2 hidden"></div>
       `;
 
       document.getElementById('analysis-result').classList.remove('hidden');
-      // refresh detail to show updated analysis
-      refreshLeadDetail();
-    }
 
-    // ─────────────────────────────────────────────────
-    // Save Reminder
-    // ─────────────────────────────────────────────────
-    async function saveReminder(reminderDate, reminderReason) {
-      if (!currentLeadId) return;
-      showStatus('reminder-save-status','loading','Saving reminder…');
-      try {
-        await updateLeadOnServer({ status: 'reminder', reminder: reminderDate || null, doneAt: null });
-        showStatus('reminder-save-status','success','Reminder saved successfully!');
-      } catch (err) {
-        showStatus('reminder-save-status','error', esc(err.message));
+      if (a?.score != null && currentLeadId) {
+        showStatus('score-save-status', 'loading', 'Saving score to HubSpot and database…');
+        try {
+          await saveLeadScoreOnServer(a.score);
+          showStatus('score-save-status', 'success', `Lead score updated to ${Number(a.score)}.`);
+        } catch (err) {
+          showStatus('score-save-status', 'error', esc(err.message));
+          await refreshLeadDetail();
+        }
+      } else {
+        await refreshLeadDetail();
       }
     }
   </script>

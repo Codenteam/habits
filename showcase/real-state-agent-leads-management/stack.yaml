@@ -17,6 +17,9 @@ workflows:
   - id: analyze-lead-call
     path: ./habits/analyze-lead-call.yaml
     enabled: true
+  - id: save-lead-score
+    path: ./habits/save-lead-score.yaml
+    enabled: true
 
 server:
   port: 13000

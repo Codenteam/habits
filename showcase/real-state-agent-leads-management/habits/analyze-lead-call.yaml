@@ -1,6 +1,6 @@
 id: analyze-lead-call
 name: Analyze Lead Call
-description: Analyze uploaded lead-call audio and store recommendations.
+description: Transcribe uploaded lead-call audio with Whisper, analyze the transcript, and store recommendations.
 version: "1.0"
 
 nodes:
@@ -16,30 +16,48 @@ nodes:
         filter: '{"_id": "{{habits.input.leadId}}"}'
         limit: 1
 
-  - id: analyze-audio
+  - id: transcribe-audio
     type: action
     data:
       framework: bits
       source: npm
       module: "@ha-bits/bit-openai"
-      operation: ask_with_file
+      operation: transcribe
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        audio: "{{habits.input.audio}}"
+        language: en
+
+  - id: analyze-call
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
       credentials:
         openai:
           apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
       params:
         model: gpt-4o-mini
-        cast: true
-        fileContent: "{{habits.input.audioBase64}}"
-        filename: "lead-call.mp3"
+        cast: 'force'
+        temperature: 0.3
+        maxTokens: 1500
         prompt: |
           You are a sales call quality analyst for real-estate leads.
 
           Lead context:
           - Name: {{load-lead.results[0].firstName}} {{load-lead.results[0].lastName}}
           - Email: {{load-lead.results[0].email}}
-          - Company: {{load-lead.results[0].company}}
+          - Company: {{load-lead.results[0].company || 'Not provided'}}
 
-          Analyze the uploaded call recording and return ONLY valid JSON with this exact schema:
+          Call transcript:
+          {{transcribe-audio.text}}
+
+          Analyze the call transcript and return ONLY valid JSON wrapped in ```json``` code fences with this exact schema:
+          ```json
           {
             "summary": string,
             "rating": "good" | "bad" | "neutral",
@@ -50,11 +68,14 @@ nodes:
             "reminderDate": string | null,
             "reminderReason": string | null
           }
+          ```
 
           Rules:
           - score must be between 0 and 100
           - summary max 3 sentences
-          - reminderDate must be ISO datetime when hasReminder=true, otherwise null
+          - Set hasReminder=true when the call mentions a follow-up, callback, or scheduled check-in; otherwise false
+          - reminderDate: when hasReminder=true, copy the follow-up timing exactly as stated in the call — keep the original wording whether specific ("March 15 at 2pm") or vague ("next week", "next Tuesday", "in a few days"); do not convert to ISO dates or normalize the phrasing; null when hasReminder=false
+          - reminderReason: short explanation of why to follow up; null when hasReminder=false
 
   - id: save-analysis
     type: action
@@ -68,22 +89,25 @@ nodes:
         filter:
           _id: "{{habits.input.leadId}}"
         update:
-          callAnalysis: "{{analyze-audio}}"
-          analysisRating: "{{analyze-audio.rating}}"
-          analysisScore: "{{analyze-audio.score}}"
-          reminderSuggestedDate: "{{analyze-audio.reminderDate}}"
-          reminderReason: "{{analyze-audio.reminderReason}}"
-          updatedAt: "{{new Date().toISOString()}}"
+          callAnalysis: "{{analyze-call}}"
+          analysisRating: "{{analyze-call.rating}}"
+          analysisScore: "{{analyze-call.score}}"
+          reminderSuggestedDate: "{{analyze-call.reminderDate}}"
+          reminderReason: "{{analyze-call.reminderReason}}"
+          updatedAt: "{{habits.function.now()}}"
 
 edges:
   - id: e1
     source: load-lead
-    target: analyze-audio
+    target: transcribe-audio
   - id: e2
-    source: analyze-audio
+    source: transcribe-audio
+    target: analyze-call
+  - id: e3
+    source: analyze-call
     target: save-analysis
 
 output:
   leadId: "{{habits.input.leadId}}"
-  analysis: "{{analyze-audio}}"
-  updated: "{{save-analysis.updated}}"
+  transcript: "{{transcribe-audio.text}}"
+  analysis: "{{analyze-call}}"

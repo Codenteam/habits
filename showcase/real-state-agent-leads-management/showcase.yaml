@@ -37,5 +37,6 @@ habits:
   - habits/get-lead-details.yaml
   - habits/update-lead-status.yaml
   - habits/analyze-lead-call.yaml
+  - habits/save-lead-score.yaml
 
 quickDownload: true
