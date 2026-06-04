@@ -338,6 +338,23 @@
     "imageCount": 2
   },
   {
+    "slug": "real-state-agent-leads-management",
+    "name": "Real State Agent Leads Management",
+    "description": "Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence.",
+    "tags": [
+      "real-estate",
+      "leads",
+      "openai",
+      "hubspot",
+      "sql",
+      "frontend"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/real-state-agent-leads-management/real-state-agent-leads-management-1.webp",
+    "imageCount": 10
+  },
+  {
     "slug": "resume-analyzer",
     "name": "Resume Analyzer",
     "description": "AI-powered resume analysis tool that evaluates ATS compatibility, provides job match scores, generates improved summaries, and prepares interview questions.",
