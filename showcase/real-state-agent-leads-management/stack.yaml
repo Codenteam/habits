@@ -1,0 +1,43 @@
+version: "1.0"
+name: "Real State Agent Leads Management"
+
+workflows:
+  - id: submit-lead
+    path: ./habits/submit-lead.yaml
+    enabled: true
+  - id: list-leads
+    path: ./habits/list-leads.yaml
+    enabled: true
+  - id: get-lead-details
+    path: ./habits/get-lead-details.yaml
+    enabled: true
+  - id: update-lead-status
+    path: ./habits/update-lead-status.yaml
+    enabled: true
+  - id: analyze-lead-call
+    path: ./habits/analyze-lead-call.yaml
+    enabled: true
+  - id: save-lead-score
+    path: ./habits/save-lead-score.yaml
+    enabled: true
+  - id: end-of-day-analysis
+    path: ./habits/end-of-day-analysis.yaml
+    enabled: true
+  - id: summarize-lead-eod
+    path: ./habits/summarize-lead-eod.yaml
+    enabled: true
+  - id: list-today-analyses
+    path: ./habits/list-today-analyses.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

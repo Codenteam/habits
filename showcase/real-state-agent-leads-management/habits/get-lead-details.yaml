@@ -1,0 +1,22 @@
+id: get-lead-details
+name: Get Lead Details
+description: Fetch a single lead record by unique ID for processing view.
+version: "1.0"
+
+nodes:
+  - id: get-lead
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"_id": "{{habits.input.leadId}}"}'
+        limit: 1
+
+edges: []
+
+output:
+  lead: "{{get-lead.results[0]}}"

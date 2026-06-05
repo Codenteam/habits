@@ -937,6 +937,30 @@ const hubspotBit = {
           description: 'Numeric score 0-100 from AI enrichment',
           required: false,
         },
+        status: {
+          type: 'SHORT_TEXT',
+          displayName: 'Status',
+          description: 'Lead status',
+          required: false,
+        },
+        reminder: {
+          type: 'SHORT_TEXT',
+          displayName: 'Reminder',
+          description: 'Lead reminder',
+          required: false,
+        },
+        lastRecord: {
+          type: 'SHORT_TEXT',
+          displayName: 'Last Record',
+          description: 'Date/time of the most recent call recording or analysis',
+          required: false,
+        },
+        submittedAt: {
+          type: 'SHORT_TEXT',
+          displayName: 'Submitted At',
+          description: 'Lead submission timestamp',
+          required: false,
+        },
       },
       async run(context: HubSpotContext) {
         const {
@@ -945,7 +969,11 @@ const hubspotBit = {
           lastName,
           company,
           phone,
-          score
+          score,
+          status,
+          reminder,
+          lastRecord,
+          submittedAt
         } = context.propsValue;
 
         const properties: Record<string, string | number> = {
@@ -956,6 +984,20 @@ const hubspotBit = {
         if (lastName) properties.lastname = lastName;
         if (company) properties.company = company;
         if (phone) properties.phone = phone;
+        if (status) properties.status = status;
+        if (reminder != null && reminder !== '' && String(reminder) !== 'null') {
+          properties.reminder = String(reminder);
+        } else if (reminder === null || reminder === '' || String(reminder) === 'null') {
+          // HubSpot keeps the previous value unless we send an empty string
+          properties.reminder = '';
+        }
+        if (lastRecord != null && lastRecord !== '' && String(lastRecord) !== 'null') {
+          properties.lastrecord = String(lastRecord);
+        } else if (lastRecord === null || lastRecord === '' || String(lastRecord) === 'null') {
+          // HubSpot keeps the previous value unless we send an empty string
+          properties.lastrecord = '';
+        }
+        if (submittedAt) properties.submittedat = submittedAt;
         if (score != null && score !== '') {
           properties.score = Number(score);
         }
