@@ -28,7 +28,7 @@ nodes:
           apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
       params:
         audio: "{{habits.input.audio}}"
-        language: en
+        language: "{{habits.input.language}}"
 
   - id: analyze-call
     type: action
