@@ -29,7 +29,8 @@ nodes:
           - Company (optional): {{habits.input.company}}
           - Phone: {{habits.input.phone}}
 
-          Return ONLY valid JSON with this exact schema:
+          Return ONLY valid JSON wrapped in ```json``` code fences with this exact schema:
+          ```json
           {
             "email": string,
             "firstName": string,
@@ -39,6 +40,7 @@ nodes:
             "status": "inProgress" | "reminder" | "done",
             "reminder": string | null
           }
+          ```
 
           Rules:
           - Keep the same person fields from the input, only normalize formatting if needed.
