@@ -1,4 +1,4 @@
-name: Real State Agent Leads Management
+name: Real Estate Agent Leads Management
 type: fullstack
 description: Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence.
 

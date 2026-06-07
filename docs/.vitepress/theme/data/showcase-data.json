@@ -338,8 +338,8 @@
     "imageCount": 2
   },
   {
-    "slug": "real-state-agent-leads-management",
-    "name": "Real State Agent Leads Management",
+    "slug": "real-estate-agent-leads-management",
+    "name": "Real Estate Agent Leads Management",
     "description": "Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence.",
     "tags": [
       "real-estate",
@@ -351,7 +351,7 @@
     ],
     "difficulty": "intermediate",
     "featured": true,
-    "thumbnail": "/showcase/real-state-agent-leads-management/real-state-agent-leads-management-1.webp",
+    "thumbnail": "/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-1.webp",
     "imageCount": 10
   },
   {

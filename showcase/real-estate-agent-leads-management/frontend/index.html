@@ -202,6 +202,22 @@
       background: conic-gradient(#38bdf8 0%, #6366f1 var(--score-pct), rgba(30,41,59,0.7) var(--score-pct) 100%);
     }
 
+    .lang-select-wrap {
+      position: relative;
+    }
+    .lang-select-wrap select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .lang-select-wrap select option {
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    .lang-select-wrap:focus-within .lang-select-icon {
+      color: #a78bfa;
+    }
+
     .score-hint-wrap {
       position: relative;
       display: inline-flex;
@@ -710,9 +726,32 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
             </svg>
             <p class="text-sm text-slate-400" id="upload-label">Drop MP3 here or click to browse</p>
-            <p class="text-xs text-slate-600 mt-1">MP3 files only</p>
+            
           </div>
           <input type="file" id="audio-input" accept=".mp3,audio/mpeg" class="hidden" onchange="handleFileSelect(event)" />
+        </div>
+
+        <!-- Transcription language -->
+        <div class="mb-4">
+          <label for="analyze-language" class="block text-slate-400 text-xs mb-2 font-medium tracking-wide uppercase">Spoken Language in Record</label>
+          <div class="lang-select-wrap relative group">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+              <svg class="w-4 h-4 text-violet-400/80 group-focus-within:text-violet-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+              </svg>
+            </div>
+            <select id="analyze-language"
+              class="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm font-medium text-white bg-slate-900/60 border border-slate-600/50 hover:border-violet-500/40 focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/25 transition-all">
+              <option value="en" selected>English</option>
+              <option value="ar">Arabic (العربية)</option>
+            </select>
+            <div class="lang-select-icon pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 mt-1.5">Select the language spoken in the uploaded audio</p>
         </div>
 
         <button id="analyze-btn" onclick="handleAnalyze()" disabled
@@ -1541,6 +1580,7 @@
       document.getElementById('analyze-status').classList.add('hidden');
       document.getElementById('audio-input').value = '';
       document.getElementById('upload-label').textContent = 'Drop MP3 here or click to browse';
+      document.getElementById('analyze-language').value = 'en';
       document.getElementById('analyze-btn').disabled = true;
 
       // reset detail
@@ -1906,12 +1946,14 @@
 
       try {
         const audioBase64 = await fileToBase64(selectedAudioFile);
+        const language = document.getElementById('analyze-language').value || 'en';
         const res = await fetch('/api/analyze-lead-call', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             leadId: currentLeadId,
             lastRecord: new Date().toISOString(),
+            language,
             audio: {
               filename: selectedAudioFile.name,
               data: audioBase64,
