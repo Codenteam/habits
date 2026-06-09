@@ -1,0 +1,63 @@
+version: "1.0"
+name: "Real Estate Social Marketing"
+
+workflows:
+  - id: add-property
+    path: ./habits/add-property.yaml
+    enabled: true
+
+  - id: extract-property-details
+    path: ./habits/extract-property-details.yaml
+    enabled: true
+
+  - id: generate-property-posts
+    path: ./habits/generate-property-posts.yaml
+    enabled: true
+
+  - id: list-properties
+    path: ./habits/list-properties.yaml
+    enabled: true
+
+  - id: get-property
+    path: ./habits/get-property.yaml
+    enabled: true
+
+  - id: delete-property
+    path: ./habits/delete-property.yaml
+    enabled: true
+
+  - id: set-property-schedule
+    path: ./habits/set-property-schedule.yaml
+    enabled: true
+
+  - id: return-property-to-draft
+    path: ./habits/return-property-to-draft.yaml
+    enabled: true
+
+  - id: publish-social-post
+    path: ./habits/publish-social-post.yaml
+    enabled: true
+
+  - id: publish-property-now
+    path: ./habits/publish-property-now.yaml
+    enabled: true
+
+  - id: get-scheduled-properties
+    path: ./habits/get-scheduled-properties.yaml
+    enabled: true
+
+  - id: check-pending-posts
+    path: ./habits/check-pending-posts.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

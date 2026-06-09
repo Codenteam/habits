@@ -1,0 +1,25 @@
+id: list-properties
+name: List Properties
+description: >-
+  Returns draft properties ready for review and scheduling.
+  Excludes published items and already-scheduled pending items.
+
+nodes:
+  - id: get-drafts
+    type: bits
+    data:
+      label: Get Draft Properties
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: rem_marketing_properties
+        filter: '{"status": "draft"}'
+        limit: 50
+
+edges: []
+
+output:
+  properties: "{{get-drafts.results}}"
+  total: "{{get-drafts.count}}"

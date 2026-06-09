@@ -1,0 +1,28 @@
+id: get-property
+name: Get Property
+description: Fetch a single property record by ID for the processing view.
+
+input:
+  - id: propertyId
+    type: string
+    required: true
+    label: Property ID
+
+nodes:
+  - id: get-record
+    type: bits
+    data:
+      label: Get Property by ID
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: rem_marketing_properties
+        filter: '{"_id": "{{habits.input.propertyId}}"}'
+        limit: 1
+
+edges: []
+
+output:
+  property: "{{get-record.results[0]}}"

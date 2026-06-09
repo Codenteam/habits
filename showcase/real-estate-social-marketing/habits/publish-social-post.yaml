@@ -1,0 +1,60 @@
+id: publish-social-post
+name: Publish Social Post
+description: >-
+  Called per-item by bit-loop in check-pending-posts.
+  Posts Twitter and LinkedIn content for a property, then marks it published.
+
+nodes:
+  - id: post-to-twitter
+    type: bits
+    data:
+      label: Post to Twitter/X
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-twitter"
+      operation: tweet
+      auth:
+        clientId: "{{habits.env.HABITS_TWITTER_CLIENT_ID}}"
+      params:
+        text: "{{property.twitter}}"
+
+  - id: post-to-linkedin
+    type: bits
+    data:
+      label: Post to LinkedIn
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-linkedin"
+      operation: createPost
+      auth:
+        clientId: "{{habits.env.HABITS_LINKEDIN_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_LINKEDIN_CLIENT_SECRET}}"
+      params:
+        text: "{{property.linkedin}}"
+        visibility: "PUBLIC"
+        organizationId: "{{habits.env.HABITS_LINKEDIN_ORGANIZATION_ID}}"
+
+  - id: mark-published
+    type: bits
+    data:
+      label: Mark Property as Published
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: rem_marketing_properties
+        filter:
+          _id: "{{property._id}}"
+        update:
+          status: "published"
+
+edges:
+  - source: post-to-twitter
+    target: mark-published
+  - source: post-to-linkedin
+    target: mark-published
+
+output:
+  status: "published"
+  propertyId: "{{property._id}}"

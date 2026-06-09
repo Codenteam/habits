@@ -1,0 +1,154 @@
+id: generate-property-posts
+name: Generate Property Social Posts
+description: >-
+  Generates platform-specific Twitter/X and LinkedIn posts for a real-estate
+  property using OpenAI from structured property details.
+
+input:
+  - id: propertyUrl
+    type: string
+    required: false
+    label: Property URL
+  - id: title
+    type: string
+    required: false
+    label: Title
+  - id: address
+    type: string
+    required: false
+    label: Address
+  - id: price
+    type: string
+    required: false
+    label: Price
+  - id: bedrooms
+    type: string
+    required: false
+    label: Bedrooms
+  - id: bathrooms
+    type: string
+    required: false
+    label: Bathrooms
+  - id: sqft
+    type: string
+    required: false
+    label: Square Feet
+  - id: propertyType
+    type: string
+    required: false
+    label: Property Type
+  - id: listingType
+    type: string
+    required: false
+    label: Listing Type
+    description: Rent or Buy
+  - id: description
+    type: string
+    required: false
+    label: Description
+  - id: highlights
+    type: string
+    required: false
+    label: Highlights
+
+nodes:
+  - id: generate-twitter
+    type: bits
+    data:
+      label: Generate Twitter Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.75
+        maxTokens: 120
+        prompt: |
+          Write a very short Twitter/X post to market this real-estate listing.
+
+          Title: {{title}}
+          Address: {{address}}
+          Price: {{price}}
+          Type: {{propertyType}}
+          Listing: {{listingType}}
+          Beds: {{bedrooms}} | Baths: {{bathrooms}} | Size: {{sqft}}
+          Summary: {{description}}
+          Highlights: {{highlights}}
+          Listing URL: {{propertyUrl}}
+
+          HARD LIMIT: the entire post MUST be 250 characters or fewer (Twitter max is 280; leave headroom).
+
+          Format — each item on its own line (use real line breaks, preserve this layout):
+          Line 1: One hook sentence only (max 10 words). Lifestyle appeal; no stats, address, or link.
+          Line 2: 💰 {{price}} · 🛏{{bedrooms}}bd · 🛁{{bathrooms}}ba · 🔖{{listingType}} — omit any empty field.
+          Line 3: (blank line)
+          Line 4: {{propertyUrl}} — link alone on this line, nothing else
+          Line 5: (blank line)
+          Line 6: Exactly 2 short hashtags on one line (e.g. #RealEstate #Austin)
+
+          Rules:
+          - Do NOT repeat title, full address, sqft, or property type — stats line is enough
+          - listingType must be "Rent" or "Buy"; infer from context if missing
+          - Link and hashtags must each be on separate lines with a blank line before them
+          - Count characters before responding; if over 250, shorten the hook first, then drop a hashtag
+          - Return ONLY the final post text, nothing else
+
+  - id: generate-linkedin
+    type: bits
+    data:
+      label: Generate LinkedIn Post
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.7
+        maxTokens: 800
+        prompt: |
+          Write a short LinkedIn post to market this real-estate listing.
+
+          Title: {{title}}
+          Address: {{address}}
+          Price: {{price}}
+          Type: {{propertyType}}
+          Listing: {{listingType}}
+          Beds: {{bedrooms}} | Baths: {{bathrooms}} | Size: {{sqft}}
+          Summary: {{description}}
+          Highlights: {{highlights}}
+          Listing URL: {{propertyUrl}}
+
+          Format (use exactly this structure, preserve blank lines):
+          1) Body: 2 sentences of professional, compelling marketing copy — focus on value, lifestyle, and highlights. Do NOT repeat price, bed/bath counts, size, address, or listing type in the body.
+          2) Blank line
+          3) Details block — one item per line, skip any empty field:
+             {{title}}
+             🔖 Listing: {{listingType}}
+             📍 {{address}}
+             💰 Price: {{price}}  |  🛏 {{bedrooms}} Bedrooms  |  🛁 {{bathrooms}} Bathrooms  |  📐 {{sqft}}
+             🏷 Type: {{propertyType}}
+          4) Blank line
+          5) Listing link on its own line: {{propertyUrl}}
+          6) Blank line
+          7) Hashtags: 4-6 relevant professional hashtags (location, property type, real estate) on one line
+
+          Rules:
+          - Body is description only — no stats, no link, no hashtags in the body
+          - Details block uses the exact labels/emojis above; omit a line only if that value is truly empty
+          - listingType line must show "Rent" or "Buy" (prefix with 🔖 Listing:); infer from context if missing
+          - Always include the exact listing URL on its own line after the details block
+          - End with hashtags after the link
+          - Return ONLY the final post text, nothing else
+
+edges: []
+
+output:
+  twitter: "{{generate-twitter}}"
+  linkedin: "{{generate-linkedin}}"

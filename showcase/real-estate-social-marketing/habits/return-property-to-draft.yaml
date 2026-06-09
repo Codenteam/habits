@@ -1,0 +1,34 @@
+id: return-property-to-draft
+name: Return Property to Draft
+description: >-
+  Removes the scheduled publish time and moves a pending property back to draft status.
+
+input:
+  - id: propertyId
+    type: string
+    required: true
+    label: Property ID
+
+nodes:
+  - id: update-draft
+    type: bits
+    data:
+      label: Return to Draft
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: rem_marketing_properties
+        filter:
+          _id: "{{habits.input.propertyId}}"
+        update:
+          scheduledAt: ""
+          scheduleTimezone: "UTC"
+          status: "draft"
+
+edges: []
+
+output:
+  propertyId: "{{habits.input.propertyId}}"
+  status: "draft"
