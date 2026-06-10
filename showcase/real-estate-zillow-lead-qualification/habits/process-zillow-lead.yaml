@@ -1,0 +1,138 @@
+id: process-zillow-lead
+name: Process Zillow Lead
+description: >-
+  Stage 1 of the Zillow lead qualification flow.
+  Receives lead details via habits.input, upserts the contact in HubSpot,
+  fetches property details from Bridge Web API, generates a personalised
+  welcome message with OpenAI, and sends it via WhatsApp.
+version: "1.0"
+
+# Expected habits.input payload (e.g. from Zillow webhook handler or API caller):
+#   propertyId, firstName, lastName, email, phone, message, source
+
+nodes:
+  # ── 1. Create or update contact in HubSpot ──
+  - id: hubspot-upsert
+    type: action
+    position: { x: 0, y: 0 }
+    data:
+      label: HubSpot Create or Update
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName || ''}}"
+        lastName: "{{habits.input.lastName || ''}}"
+        phone: "{{habits.input.phone}}"
+        source: "{{habits.input.source || 'zillow'}}"
+        status: "welcome-sent"
+        propertyId: "{{habits.input.propertyId || habits.input.listingId || habits.input.zpid}}"
+
+  # ── 2. Fetch property details via Bridge Web API ──
+  - id: bridge-property
+    type: action
+    position: { x: 220, y: 0 }
+    data:
+      label: Get Property Details (Bridge Web API)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-bridge"
+      operation: getPropertyDetails
+      credentials:
+        bridge:
+          accessToken: "{{habits.env.HABITS_BRIDGE_ACCESS_TOKEN}}"
+      params:
+        datasetId: "{{habits.env.HABITS_BRIDGE_DATASET_ID}}"
+        listingId: "{{habits.input.propertyId || habits.input.listingId || habits.input.zpid}}"
+      # SKELETON: Bridge Web API (api.bridgedataoutput.com) — @ha-bits/bit-bridge
+      # getPropertyDetails not implemented yet.
+      #
+      # accessToken (HABITS_BRIDGE_ACCESS_TOKEN):
+      #   Register at https://bridgedataoutput.com → log in → dashboard.
+      #   Copy the Server Token (use as access_token; Bearer header or query param).
+      #   MLS/data-feed access must be approved for your account first.
+      #
+      # datasetId (HABITS_BRIDGE_DATASET_ID):
+      #   Bridge dashboard → Data / Feeds — MLS dataset code for your market (e.g. "itso").
+      #   Or list approved datasets: GET /api/v2/datasets?access_token={server_token}
+      #
+      # listingId: MLS listing key from habits.input (propertyId / listingId / zpid).
+
+  # ── 3. Generate personalised welcome message with OpenAI ──
+  - id: openai-welcome
+    type: action
+    position: { x: 440, y: 0 }
+    data:
+      label: Generate Welcome Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.7
+        maxTokens: 300
+        prompt: |
+          You are a friendly real-estate agent assistant.
+
+          Write a short welcome WhatsApp message (max 3 sentences) for a lead
+          who requested info about a property on Zillow.
+
+          Lead:
+          - Name: {{habits.input.firstName}} {{habits.input.lastName}}
+          - Phone: {{habits.input.phone}}
+
+          Property:
+          - ID: {{habits.input.propertyId || habits.input.listingId || habits.input.zpid}}
+          - Address: {{bridge-property.address || bridge-property.streetAddress}}
+          - City: {{bridge-property.city}}
+          - Price: {{bridge-property.price}}
+          - Bedrooms: {{bridge-property.bedrooms}}
+          - Bathrooms: {{bridge-property.bathrooms}}
+          - Description: {{bridge-property.description || ''}}
+
+          Mention the lead's first name, the property location, and one standout
+          detail. End by asking if they would like to schedule a viewing.
+          Return ONLY the message text, no quotes or JSON.
+
+  # ── 4. Send welcome via WhatsApp ──
+  - id: send-whatsapp
+    type: action
+    position: { x: 660, y: 0 }
+    data:
+      label: Send Welcome via WhatsApp
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{habits.input.phone}}"
+        message: "{{openai-welcome}}"
+
+edges:
+  - id: e1
+    source: hubspot-upsert
+    target: bridge-property
+  - id: e2
+    source: bridge-property
+    target: openai-welcome
+  - id: e3
+    source: openai-welcome
+    target: send-whatsapp
+
+output:
+  success: true
+  hubspotContactId: "{{hubspot-upsert.contactId || hubspot-upsert.id}}"
+  propertyId: "{{habits.input.propertyId || habits.input.listingId || habits.input.zpid}}"
+  welcomeMessage: "{{openai-welcome}}"
+  whatsapp: "{{send-whatsapp}}"
