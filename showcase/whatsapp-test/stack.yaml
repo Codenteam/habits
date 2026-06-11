@@ -1,0 +1,24 @@
+version: "1.0"
+name: WhatsApp Test
+
+description: Minimal showcase to verify WhatsApp Business API messaging.
+
+workflows:
+  - id: send-hello
+    path: ./habits/send-hello.yaml
+    enabled: true
+
+  - id: receive-message
+    path: ./habits/receive-message.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

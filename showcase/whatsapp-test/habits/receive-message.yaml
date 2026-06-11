@@ -1,0 +1,84 @@
+id: receive-message
+name: Receive WhatsApp Message
+description: >-
+  Webhook listener for inbound WhatsApp messages via Meta Cloud API.
+  Register callback URL in Meta App Dashboard: http://<host>:13000/webhook/v/whatsapp
+version: "1.0"
+
+# Required env vars:
+#   HABITS_WHATSAPP_VERIFY_TOKEN  — same string as Meta App Dashboard "Verify token"
+
+nodes:
+  - id: whatsapp-inbound
+    type: trigger
+    data:
+      label: WhatsApp Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params:
+        # Any string works; must be the same in .env (HABITS_WHATSAPP_VERIFY_TOKEN) and Meta App webhook "Verify token"
+        verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{whatsapp-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const entry = payload?.entry?.[0];
+            const change = entry?.changes?.[0]?.value;
+            const msg = change?.messages?.[0];
+            const contact = change?.contacts?.[0];
+
+            return {
+              from: String(msg?.from || ''),
+              text: String(
+                msg?.text?.body
+                || msg?.button?.text
+                || msg?.interactive?.button_reply?.title
+                || ''
+              ),
+              messageId: String(msg?.id || ''),
+              messageType: String(msg?.type || ''),
+              contactName: String(contact?.profile?.name || ''),
+              waId: String(contact?.wa_id || msg?.from || ''),
+              phoneNumberId: String(change?.metadata?.phone_number_id || ''),
+              timestamp: String(msg?.timestamp || ''),
+            };
+          }
+
+  - id: log-inbound
+    type: action
+    data:
+      label: Log Parsed Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WhatsApp Inbound
+        message: "{{parse-inbound}}"
+
+edges:
+  - source: whatsapp-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: log-inbound
+
+output:
+  from: "{{parse-inbound.result.from}}"
+  text: "{{parse-inbound.result.text}}"
+  messageId: "{{parse-inbound.result.messageId}}"
+  contactName: "{{parse-inbound.result.contactName}}"
+  waId: "{{parse-inbound.result.waId}}"
+  timestamp: "{{parse-inbound.result.timestamp}}"

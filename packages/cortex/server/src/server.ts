@@ -302,7 +302,10 @@ class WorkflowExecutorServer {
     const webhookPath = webhookName ? `/webhook/v/${moduleId}/${webhookName}` : `/webhook/v/${moduleId}`;
     console.log(`📥 Vendor webhook received: ${webhookPath}`);
     console.log(`   Method: ${req.method}`);
-    console.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}...`);
+    const bodyPreview = req.body != null && Object.keys(req.body).length > 0
+      ? JSON.stringify(req.body).substring(0, 200)
+      : '(empty)';
+    console.log(`   Body: ${bodyPreview}...`);
 
     // Build filter payload
     const filterPayload = {
@@ -311,6 +314,54 @@ class WorkflowExecutorServer {
       query: req.query as Record<string, string>,
       method: req.method,
     };
+
+    // Meta/WhatsApp webhook verification: GET ?hub.mode=subscribe&hub.challenge=...&hub.verify_token=...
+    const hubMode = req.query['hub.mode'];
+    if (req.method === 'GET' && hubMode === 'subscribe') {
+      const listeners = this.webhookRegistry.getListeners(moduleId, webhookName);
+      if (listeners.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: `No listeners registered for module: ${moduleId}${webhookName ? ' / ' + webhookName : ''}`,
+        });
+        return;
+      }
+
+      const env = this.executor.getEnvVars();
+      const resolveContext = { habits: { env } };
+
+      for (const listener of listeners) {
+        if (!listener.onHandshake) continue;
+
+        try {
+          const triggerProps = listener.triggerProps
+            ? this.executor.resolveNodeParams(listener.triggerProps, resolveContext)
+            : {};
+
+          const handshakeContext = {
+            propsValue: triggerProps,
+            payload: filterPayload,
+            webhookPayload: filterPayload,
+          };
+
+          const response = await listener.onHandshake(handshakeContext);
+          if (response != null && response !== false) {
+            const challenge = typeof response === 'string'
+              ? response
+              : String(req.query['hub.challenge'] ?? response);
+            console.log(`✅ Webhook verification succeeded for ${moduleId} (${listener.workflowId}/${listener.nodeId})`);
+            res.status(200).send(challenge);
+            return;
+          }
+        } catch (error) {
+          console.error(`❌ Handshake error for ${listener.workflowId}/${listener.nodeId}:`, error);
+        }
+      }
+
+      console.warn(`⚠️ Webhook verification failed for ${webhookPath}`);
+      res.status(403).send('Forbidden');
+      return;
+    }
 
     // Dispatch to all matching listeners
     const results = await this.webhookRegistry.dispatch(moduleId, webhookName, filterPayload);
@@ -330,7 +381,7 @@ class WorkflowExecutorServer {
     console.log(`🔌 ${matchedResults.length}/${results.length} listener(s) matched for ${webhookPath}`);
 
     // Start workflow executions for matched listeners
-    const executions: { workflowId: string; nodeId: string; status: string; error?: string }[] = [];
+    const executions: { workflowId: string; nodeId: string; status: string; error?: string; executionId?: string; output?: unknown }[] = [];
     
     for (const result of matchedResults) {
       const { listener } = result;
@@ -370,6 +421,8 @@ class WorkflowExecutorServer {
           workflowId: listener.workflowId,
           nodeId: listener.nodeId,
           status: execution.status,
+          executionId: execution.id,
+          output: execution.output,
         });
       } catch (error) {
         console.error(`   ❌ Error starting workflow ${listener.workflowId}:`, error);
@@ -423,6 +476,10 @@ class WorkflowExecutorServer {
         const moduleName = nodeData.module;
         const triggerName = nodeData.operation || 'default';
         const webhookName = nodeData?.params?.webhookName;
+        const rawTriggerProps = nodeData.params || {};
+        const triggerProps = this.executor.resolveNodeParams(rawTriggerProps, {
+          habits: { env: this.executor.getEnvVars() },
+        });
         
         try {
           // Load the bit module to get the id and filter function
@@ -478,6 +535,8 @@ class WorkflowExecutorServer {
             webhookName,
             filter: trigger.filter,
             run: trigger.run,
+            onHandshake: trigger.onHandshake,
+            triggerProps,
             npmModule: moduleName,
           });
           

@@ -23,13 +23,12 @@ nodes:
       framework: bits
       source: npm
       module: "@ha-bits/bit-whatsapp"
-      operation: inboundMessageTrigger
+      operation: inboundMessage
+      triggerType: webhook
       isTrigger: true
       params:
-        path: /whatsapp-inbound
+        # Any string works; must be the same in .env (HABITS_WHATSAPP_VERIFY_TOKEN) and Meta App webhook "Verify token"
         verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
-      # SKELETON: inboundMessageTrigger not implemented in @ha-bits/bit-whatsapp yet.
-      # Until the bit exists, wire Meta webhook to bit-http webhookTrigger on this path.
 
   # ── 2. Parse Meta webhook payload into flat lead fields ──
   - id: parse-whatsapp
@@ -40,11 +39,11 @@ nodes:
       source: inline
       label: Parse WhatsApp Inbound
       params:
-        input: "{{habits.input}}"
+        input: "{{whatsapp-inbound.body}}"
         type: script
         language: javascript
         script: |
-          export async function main(input: Record<string, unknown>) {
+          async function main(input: Record<string, unknown>) {
             const entry = (input as any)?.entry?.[0];
             const change = entry?.changes?.[0]?.value;
             const msg = change?.messages?.[0];
