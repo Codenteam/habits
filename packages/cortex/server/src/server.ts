@@ -315,7 +315,12 @@ class WorkflowExecutorServer {
       method: req.method,
     };
 
-    // Meta/WhatsApp webhook verification: GET ?hub.mode=subscribe&hub.challenge=...&hub.verify_token=...
+    // Meta webhook verification handshake (WhatsApp, etc.):
+    // When you register a callback URL in the Meta App Dashboard, Meta sends a GET with
+    // ?hub.mode=subscribe&hub.verify_token=<token>&hub.challenge=<random>.
+    // Each registered trigger's onHandshake compares hub.verify_token to its verifyToken param
+    // (same value as in .env / Meta webhook config). On match, we respond 200 with hub.challenge
+    // as plain text so Meta confirms that this endpoint is an active and then send any msg direct if triggered
     const hubMode = req.query['hub.mode'];
     if (req.method === 'GET' && hubMode === 'subscribe') {
       const listeners = this.webhookRegistry.getListeners(moduleId, webhookName);
