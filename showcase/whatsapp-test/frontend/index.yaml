@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: whatsapp-test
+  title: WhatsApp Test
+  subtitle: Send the hello_world template via WhatsApp Business API
+  icon: "lucide:MessageCircle"
+
+theme:
+  preset: neural
+  mode: dark
+
+state:
+  to: ""
+  templateName: hello_world
+  languageCode: en_US
+  result: null
+
+actions:
+  send:
+    method: POST
+    endpoint: /api/send-hello
+    body:
+      to: "{{state.to}}"
+      templateName: "{{state.templateName}}"
+      languageCode: "{{state.languageCode}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Message sent!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+
+widgets:
+  - kind: card
+    title: Send Hello
+    subtitle: Leave phone blank to use HABITS_WHATSAPP_PHONE from env
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: to
+            type: text
+            label: Recipient phone
+            placeholder: "+14155238886"
+        submit: { label: Send hello, action: send, loadingLabel: "Sending..." }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

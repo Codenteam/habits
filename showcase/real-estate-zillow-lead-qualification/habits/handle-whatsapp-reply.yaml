@@ -1,0 +1,542 @@
+id: handle-whatsapp-reply
+name: Handle WhatsApp Reply
+description: >-
+  Stage 2 of the Zillow lead qualification flow.
+  Single inbound WhatsApp trigger. OpenAI detects conversation step and bit-if
+  branches: send questions, clarify missing appointment, confirm appointment
+  (+ Slack), or already booked thank-you.
+version: "1.0"
+
+# Conversation steps (openai-route.step):
+#   send_questions         — first reply → property line + 2 questions (qual + call time)
+#   clarify_qualification  — qual answered, no call time → re-ask communication call only
+#   confirm_appointment    — call time provided → thank-you WhatsApp + Slack
+#   already_booked         — post-booking message → final thank-you only
+
+nodes:
+  # ── 1. Trigger: every inbound WhatsApp message from a lead ──
+  - id: whatsapp-inbound
+    type: trigger
+    position: { x: 0, y: 0 }
+    data:
+      label: WhatsApp Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params:
+        # Any string works; must be the same in .env (HABITS_WHATSAPP_VERIFY_TOKEN) and Meta App webhook "Verify token"
+        verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
+
+  # ── 2. Parse Meta webhook payload into flat lead fields ──
+  - id: parse-whatsapp
+    type: script
+    position: { x: 220, y: 0 }
+    data:
+      framework: script
+      source: inline
+      label: Parse WhatsApp Inbound
+      params:
+        input: "{{whatsapp-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(input: Record<string, unknown>) {
+            const entry = (input as any)?.entry?.[0];
+            const change = entry?.changes?.[0]?.value;
+            const msg = change?.messages?.[0];
+            const contact = change?.contacts?.[0];
+
+            if (msg) {
+              return {
+                phone: String(msg.from || ''),
+                replyText: String(msg.text?.body || msg.button?.text || msg.interactive?.button_reply?.title || ''),
+                messageId: String(msg.id || ''),
+                leadName: String(contact?.profile?.name || ''),
+                waId: String(contact?.wa_id || msg.from || ''),
+                email: '',
+                propertyId: '',
+                contactId: '',
+              };
+            }
+
+            return {
+              phone: String(input.from || input.phone || ''),
+              replyText: String(input.body || input.text || input.message || ''),
+              messageId: String(input.messageId || ''),
+              leadName: String(input.leadName || input.firstName || ''),
+              waId: String(input.waId || input.from || input.phone || ''),
+              email: String(input.email || ''),
+              propertyId: String(input.propertyId || ''),
+              contactId: String(input.contactId || ''),
+            };
+          }
+
+  # ── 3. Load HubSpot contact stage ──
+  - id: hubspot-lookup
+    type: action
+    position: { x: 440, y: 0 }
+    data:
+      label: Lookup HubSpot Lead Stage
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: getContact
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{parse-whatsapp.result.email || habits.input.email || ''}}"
+
+  # ── 4. Fetch property details via Bridge Web API ──
+  - id: bridge-property
+    type: action
+    position: { x: 550, y: 0 }
+    data:
+      label: Get Property Details (Bridge Web API)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-bridge"
+      operation: getPropertyDetails
+      credentials:
+        bridge:
+          accessToken: "{{habits.env.HABITS_BRIDGE_ACCESS_TOKEN}}"
+      params:
+        datasetId: "{{habits.env.HABITS_BRIDGE_DATASET_ID}}"
+        listingId: "{{parse-whatsapp.result.propertyId || habits.input.propertyId || habits.input.listingId || habits.input.zpid || hubspot-lookup.contact.properties.propertyid || ''}}"
+      # SKELETON: Bridge Web API (api.bridgedataoutput.com) — @ha-bits/bit-bridge
+      # getPropertyDetails not implemented yet.
+      #
+      # accessToken (HABITS_BRIDGE_ACCESS_TOKEN):
+      #   Register at https://bridgedataoutput.com → log in → dashboard.
+      #   Copy the Server Token (use as access_token; Bearer header or query param).
+      #   MLS/data-feed access must be approved for your account first.
+      #
+      # datasetId (HABITS_BRIDGE_DATASET_ID):
+      #   Bridge dashboard → Data / Feeds — MLS dataset code for your market (e.g. "itso").
+      #   Or list approved datasets: GET /api/v2/datasets?access_token={server_token}
+      #
+      # listingId: MLS listing key from parse-whatsapp / habits.input / HubSpot contact.
+
+  # ── 5. OpenAI detects step and prepares the WhatsApp reply ──
+  - id: openai-route
+    type: action
+    position: { x: 660, y: 0 }
+    data:
+      label: Detect Step and Prepare Reply
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        cast: true
+        temperature: 0.3
+        maxTokens: 550
+        prompt: |
+          You are a real-estate WhatsApp assistant managing a lead conversation.
+
+          HubSpot stage: {{hubspot-lookup.contact.status || hubspot-lookup.contact.properties.status || 'welcome-sent'}}
+          Lead name: {{parse-whatsapp.result.leadName}}
+          Lead message: "{{parse-whatsapp.result.replyText}}"
+
+          Property they inquired about:
+          - ID: {{parse-whatsapp.result.propertyId || habits.input.propertyId || hubspot-lookup.contact.properties.propertyid || ''}}
+          - Address: {{bridge-property.address || bridge-property.streetAddress || ''}}
+          - City: {{bridge-property.city || ''}}
+          - Price: {{bridge-property.price || ''}}
+          - Bedrooms: {{bridge-property.bedrooms || ''}}
+          - Bathrooms: {{bridge-property.bathrooms || ''}}
+
+          A "communication call appointment" means a phone or video call with the agent —
+          NOT an in-person property viewing. Detect viewing/call times in the lead message.
+
+          Detect which step we are in and return the matching step value:
+
+          1. step "send_questions" — FIRST reply after the welcome message ONLY.
+             HubSpot stage is welcome-sent or new-zillow-lead.
+             Lead has NOT yet received the qualification questions.
+             replyMessage structure:
+             - One short opening line mentioning the property (address, city, or price if known).
+             - Exactly TWO numbered questions:
+               (1) ONE qualification question — their timeline to buy/rent OR budget/financing
+                   (pick the most relevant based on their first reply).
+               (2) When would they like a communication call with our agent? (phone/video —
+                   ask for preferred day and time).
+             Keep under 320 characters if possible. Friendly and concise.
+
+          2. step "clarify_qualification" — HubSpot stage is qualification-sent AND the lead
+             replied but did NOT include a communication call appointment time.
+             They may have answered the qualification part (timeline, budget, interest) but
+             skipped or ignored question (2) — no call time such as "tomorrow 2pm", "tonight",
+             "next week", "Saturday morning", "call me at 5", etc.
+             replyMessage: briefly acknowledge what they already shared, then re-ask ONLY for
+             the communication call appointment — when works for a phone/video call with our
+             agent. Do NOT repeat question (1) if they already answered it. Do NOT repeat the
+             full property intro. Do NOT confirm a booking yet.
+
+          3. step "confirm_appointment" — lead provided a communication call appointment time.
+             HubSpot stage is qualification-sent (or welcome-sent if they gave call time upfront).
+             Lead message MUST include when they want the communication call — specific
+             (e.g. "Tuesday 3pm") OR vague (e.g. "tonight", "next week", "tomorrow morning").
+             replyMessage: warm thank-you confirming the communication call in the lead's own
+             words (mention the property briefly). Do NOT invent a time — repeat what they said.
+             appointmentLabel: human-readable call time as the lead stated it.
+             appointmentDateTime: best-effort ISO 8601 if parseable, otherwise empty string.
+             timeline and budget: extract from message if present.
+
+          4. step "already_booked" — HubSpot stage is appointment-booked and lead sends
+             another message (thanks, question, reschedule request, etc.).
+             replyMessage: brief polite final thank-you acknowledging their communication call
+             is confirmed. Do NOT send qualification questions again. Do NOT re-book.
+
+          Return ONLY valid JSON:
+          ```json
+          {
+            "step": "send_questions" | "clarify_qualification" | "confirm_appointment" | "already_booked",
+            "replyMessage": "WhatsApp message to send to the lead",
+            "appointmentLabel": "human-readable appointment time from lead words",
+            "appointmentDateTime": "ISO 8601 or empty string",
+            "timeline": "extracted timeline or empty string",
+            "budget": "extracted budget/financing or empty string",
+            "notes": "brief agent notes"
+          }
+          ```
+
+  # ── 6. Branch on conversation step ──
+  - id: route-step
+    type: action
+    position: { x: 880, y: 0 }
+    data:
+      label: Route by Conversation Step
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Send Questions
+            value1: "{{openai-route.step}}"
+            operator: equals
+            value2: send_questions
+            output: send_questions
+          - label: Clarify Qualification
+            value1: "{{openai-route.step}}"
+            operator: equals
+            value2: clarify_qualification
+            output: clarify_qualification
+          - label: Confirm Appointment
+            value1: "{{openai-route.step}}"
+            operator: equals
+            value2: confirm_appointment
+            output: confirm_appointment
+          - label: Already Booked
+            value1: "{{openai-route.step}}"
+            operator: equals
+            value2: already_booked
+            output: already_booked
+        includeElse: true
+        defaultOutput: clarify_qualification
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Branch A — send_questions: WhatsApp questions + HubSpot (no Slack)
+  # ══════════════════════════════════════════════════════════════════════════
+
+  - id: send-whatsapp-questions
+    type: action
+    position: { x: 1100, y: -300 }
+    data:
+      label: Send Qualification Questions
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{parse-whatsapp.result.phone}}"
+        message: "{{openai-route.replyMessage}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'send_questions'"
+        skipIfStopped: true
+
+  - id: hubspot-questions
+    type: action
+    position: { x: 1320, y: -300 }
+    data:
+      label: HubSpot — Qualification Sent
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{parse-whatsapp.result.email || habits.input.email || ''}}"
+        phone: "{{parse-whatsapp.result.phone}}"
+        status: qualification-sent
+        propertyId: "{{parse-whatsapp.result.propertyId || habits.input.propertyId || ''}}"
+        lastRecord: "{{parse-whatsapp.result.replyText}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'send_questions'"
+        skipIfStopped: true
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Branch B — clarify_qualification: partial answer, ask for appointment (no Slack)
+  # ══════════════════════════════════════════════════════════════════════════
+
+  - id: send-whatsapp-clarify
+    type: action
+    position: { x: 1100, y: -100 }
+    data:
+      label: Send Clarification Request
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{parse-whatsapp.result.phone}}"
+        message: "{{openai-route.replyMessage}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'clarify_qualification'"
+        skipIfStopped: true
+
+  - id: hubspot-clarify
+    type: action
+    position: { x: 1320, y: -100 }
+    data:
+      label: HubSpot — Still Qualifying
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{parse-whatsapp.result.email || habits.input.email || ''}}"
+        phone: "{{parse-whatsapp.result.phone}}"
+        status: qualification-sent
+        propertyId: "{{parse-whatsapp.result.propertyId || habits.input.propertyId || ''}}"
+        lastRecord: "{{parse-whatsapp.result.replyText}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'clarify_qualification'"
+        skipIfStopped: true
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Branch C — confirm_appointment: WhatsApp thank-you → HubSpot → Slack notify
+  # ══════════════════════════════════════════════════════════════════════════
+
+  - id: send-whatsapp-confirm
+    type: action
+    position: { x: 1100, y: 100 }
+    data:
+      label: Send Appointment Confirmation
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{parse-whatsapp.result.phone}}"
+        message: "{{openai-route.replyMessage}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'confirm_appointment'"
+        skipIfStopped: true
+
+  - id: hubspot-booked
+    type: action
+    position: { x: 1320, y: 100 }
+    data:
+      label: HubSpot — Appointment Booked
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createOrUpdate
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{parse-whatsapp.result.email || habits.input.email || ''}}"
+        phone: "{{parse-whatsapp.result.phone}}"
+        status: appointment-booked
+        propertyId: "{{parse-whatsapp.result.propertyId || habits.input.propertyId || ''}}"
+        lastRecord: "{{parse-whatsapp.result.replyText}}"
+        reminder: "{{openai-route.appointmentLabel || openai-route.appointmentDateTime}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'confirm_appointment'"
+        skipIfStopped: true
+
+  - id: prepare-slack-notify
+    type: script
+    position: { x: 1540, y: 100 }
+    data:
+      framework: script
+      source: inline
+      label: Prepare Slack Notify Payload
+      params:
+        leadName: "{{parse-whatsapp.result.leadName}}"
+        phone: "{{parse-whatsapp.result.phone}}"
+        email: "{{parse-whatsapp.result.email || habits.input.email || ''}}"
+        propertyId: "{{parse-whatsapp.result.propertyId || habits.input.propertyId || ''}}"
+        appointmentDateTime: "{{openai-route.appointmentDateTime}}"
+        appointmentLabel: "{{openai-route.appointmentLabel}}"
+        timeline: "{{openai-route.timeline}}"
+        budget: "{{openai-route.budget}}"
+        notes: "{{openai-route.notes}}"
+        hubspotContactId: "{{hubspot-booked.contactId || hubspot-booked.id || ''}}"
+        routeOutput: "{{route-step.output}}"
+        type: script
+        language: javascript
+        script: |
+          export async function main(
+            leadName: string,
+            phone: string,
+            email: string,
+            propertyId: string,
+            appointmentDateTime: string,
+            appointmentLabel: string,
+            timeline: string,
+            budget: string,
+            notes: string,
+            hubspotContactId: string,
+            routeOutput: string
+          ) {
+            if (routeOutput !== 'confirm_appointment') {
+              return { items: [] };
+            }
+            return {
+              items: [{
+                leadName,
+                phone,
+                email,
+                propertyId,
+                appointmentDateTime: appointmentDateTime || appointmentLabel,
+                timeline,
+                budget,
+                notes,
+                hubspotContactId,
+              }],
+            };
+          }
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'confirm_appointment'"
+        skipIfStopped: true
+
+  - id: notify-slack-loop
+    type: action
+    position: { x: 1760, y: 100 }
+    data:
+      label: Notify Slack (forEach)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{prepare-slack-notify.result.items}}"
+        habitId: notify-slack
+        inputKey: spread
+        collectResults: true
+        continueOnError: true
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'confirm_appointment'"
+        skipIfStopped: true
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # Branch D — already_booked: final thank-you WhatsApp only (no Slack)
+  # ══════════════════════════════════════════════════════════════════════════
+
+  - id: send-whatsapp-thanks
+    type: action
+    position: { x: 1100, y: 300 }
+    data:
+      label: Send Final Thank You
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{parse-whatsapp.result.phone}}"
+        message: "{{openai-route.replyMessage}}"
+      stopAfterIf:
+        expr: "{{route-step.output}} !== 'already_booked'"
+        skipIfStopped: true
+
+edges:
+  - id: e1
+    source: whatsapp-inbound
+    target: parse-whatsapp
+  - id: e2
+    source: parse-whatsapp
+    target: hubspot-lookup
+  - id: e3
+    source: hubspot-lookup
+    target: bridge-property
+  - id: e3b
+    source: bridge-property
+    target: openai-route
+  - id: e4
+    source: openai-route
+    target: route-step
+
+  # Branch A — send_questions
+  - id: e5a
+    source: route-step
+    target: send-whatsapp-questions
+    sourceHandle: branch-0
+  - id: e6a
+    source: send-whatsapp-questions
+    target: hubspot-questions
+
+  # Branch B — clarify_qualification
+  - id: e5b
+    source: route-step
+    target: send-whatsapp-clarify
+    sourceHandle: branch-1
+  - id: e6b
+    source: send-whatsapp-clarify
+    target: hubspot-clarify
+
+  # Branch C — confirm_appointment
+  - id: e5c
+    source: route-step
+    target: send-whatsapp-confirm
+    sourceHandle: branch-2
+  - id: e6c
+    source: send-whatsapp-confirm
+    target: hubspot-booked
+  - id: e7c
+    source: hubspot-booked
+    target: prepare-slack-notify
+  - id: e8c
+    source: prepare-slack-notify
+    target: notify-slack-loop
+
+  # Branch D — already_booked
+  - id: e5d
+    source: route-step
+    target: send-whatsapp-thanks
+    sourceHandle: branch-3
+
+output:
+  step: "{{openai-route.step}}"
+  routedTo: "{{route-step.output}}"
+  reply: "{{parse-whatsapp.result}}"
+  whatsappQuestions: "{{send-whatsapp-questions}}"
+  whatsappClarify: "{{send-whatsapp-clarify}}"
+  whatsappConfirm: "{{send-whatsapp-confirm}}"
+  whatsappThanks: "{{send-whatsapp-thanks}}"
+  hubspot: "{{hubspot-questions || hubspot-clarify || hubspot-booked}}"
+  slack: "{{notify-slack-loop}}"

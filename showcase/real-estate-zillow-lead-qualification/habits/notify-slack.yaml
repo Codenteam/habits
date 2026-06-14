@@ -1,0 +1,66 @@
+id: notify-slack
+name: Notify Slack
+description: >-
+  Generate an AI Slack summary for a confirmed property viewing and post it to
+  the team channel. Invoked per-item by bit-loop from handle-whatsapp-reply.
+version: "1.0"
+
+# Input (spread by bit-loop inputKey: spread):
+#   leadName, phone, email, propertyId, appointmentDateTime,
+#   timeline, budget, notes, hubspotContactId
+
+nodes:
+  - id: openai-slack
+    type: action
+    data:
+      label: Generate Slack Notification
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.4
+        maxTokens: 350
+        prompt: |
+          Write a Slack message for a real-estate sales team about a newly
+          confirmed property viewing (time taken directly from the lead's WhatsApp reply).
+
+          Lead: {{habits.input.leadName}}
+          Phone: {{habits.input.phone}}
+          Email: {{habits.input.email || ''}}
+          Property ID: {{habits.input.propertyId}}
+          Appointment: {{habits.input.appointmentDateTime}}
+          Timeline: {{habits.input.timeline}}
+          Budget: {{habits.input.budget}}
+          Notes: {{habits.input.notes}}
+          HubSpot Contact: {{habits.input.hubspotContactId}}
+
+          Use Slack mrkdwn (*bold*, bullet lists).
+          Return ONLY the message text.
+
+  - id: send-slack
+    type: action
+    data:
+      label: Send Slack Notification
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_CHANNEL_ID}}"
+        text: "{{openai-slack}}"
+        iconEmoji: ":house:"
+
+edges:
+  - id: e1
+    source: openai-slack
+    target: send-slack
+
+output:
+  slackMessage: "{{openai-slack}}"
+  slack: "{{send-slack}}"

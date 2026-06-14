@@ -1,0 +1,32 @@
+id: send-hello
+name: Send Hello via WhatsApp
+description: Sends a fixed "hello" text message via WhatsApp Business Cloud API.
+version: "1.0"
+
+# Required env vars:
+#   HABITS_WHATSAPP_ACCESS_TOKEN
+#   HABITS_WHATSAPP_PHONE_NUMBER_ID
+#   HABITS_WHATSAPP_PHONE  (default recipient, e.g. +14155238886)
+
+nodes:
+  - id: send-hello
+    type: action
+    data:
+      label: Send Hello
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{habits.input.to || habits.env.HABITS_WHATSAPP_PHONE}}"
+        message: hello
+
+edges: []
+
+output:
+  success: "{{send-hello.success}}"
+  messageId: "{{send-hello.messageId}}"
+  to: "{{send-hello.to}}"
+  timestamp: "{{send-hello.timestamp}}"

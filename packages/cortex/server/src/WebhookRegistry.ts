@@ -33,6 +33,10 @@ export interface WebhookListener {
   filter?: (payload: WebhookFilterPayload) => boolean | Promise<boolean>;
   /** The run function from the trigger definition */
   run?: (context: any) => Promise<any[]>;
+  /** Optional handshake handler (e.g. Meta webhook verification GET) */
+  onHandshake?: (context: any) => Promise<any>;
+  /** Resolved trigger params from the workflow node (verify tokens, etc.) */
+  triggerProps?: Record<string, any>;
   /** The npm module name (e.g., '@ha-bits/bit-gohighlevel') */
   npmModule?: string;
 }

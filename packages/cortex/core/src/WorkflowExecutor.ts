@@ -702,6 +702,16 @@ export class WorkflowExecutor {
     return this.env;
   }
 
+  /** Public accessor for env vars (e.g. webhook handshake param resolution at server startup). */
+  getEnvVars(): Record<string, string | undefined> {
+    return this.getEnv();
+  }
+
+  /** Resolve workflow node params outside of an execution context. */
+  resolveNodeParams(params: Record<string, any>, context: Record<string, any> = {}): Record<string, any> {
+    return this.resolveParameters(params, context);
+  }
+
   /**
    * Execute a complete workflow using dependency-based execution
    */

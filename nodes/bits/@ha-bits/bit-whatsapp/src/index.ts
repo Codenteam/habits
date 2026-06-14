@@ -17,6 +17,28 @@ interface WhatsAppContext {
     phoneNumberId: string;
   };
   propsValue: Record<string, any>;
+  payload?: unknown;
+  webhookPayload?: WebhookFilterPayload;
+}
+
+interface WebhookFilterPayload {
+  body: any;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+  method: string;
+}
+
+interface WhatsAppInboundMessage {
+  messageId: string;
+  from: string;
+  timestamp: string;
+  type: string;
+  text: string;
+  phoneNumberId: string;
+  displayPhoneNumber: string;
+  contactName: string;
+  waId: string;
+  raw: any;
 }
 
 interface WhatsAppResponse {
@@ -71,7 +93,122 @@ function formatPhoneNumber(phone: string): string {
   return phone.replace(/[\s\-\+\(\)]/g, '');
 }
 
+/**
+ * Extract inbound user messages from a Meta WhatsApp webhook POST body.
+ * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/overview
+ */
+function extractInboundMessages(body: any): WhatsAppInboundMessage[] {
+  if (!body || body.object !== 'whatsapp_business_account' || !Array.isArray(body.entry)) {
+    return [];
+  }
+
+  const messages: WhatsAppInboundMessage[] = [];
+
+  for (const entry of body.entry) {
+    const changes = Array.isArray(entry?.changes) ? entry.changes : [];
+    for (const change of changes) {
+      if (change?.field !== 'messages') continue;
+
+      const value = change?.value;
+      const inbound = Array.isArray(value?.messages) ? value.messages : [];
+      if (inbound.length === 0) continue;
+
+      const contacts: any[] = Array.isArray(value?.contacts) ? value.contacts : [];
+      const contactByWaId = new Map<string, any>(
+        contacts.map((c) => [String(c?.wa_id ?? ''), c])
+      );
+      const phoneNumberId = String(value?.metadata?.phone_number_id ?? '');
+      const displayPhoneNumber = String(value?.metadata?.display_phone_number ?? '');
+
+      for (const msg of inbound) {
+        const from = String(msg?.from ?? '');
+        const contact = contactByWaId.get(from);
+        messages.push({
+          messageId: String(msg?.id ?? ''),
+          from,
+          timestamp: String(msg?.timestamp ?? ''),
+          type: String(msg?.type ?? 'unknown'),
+          text: String(
+            msg?.text?.body
+            ?? msg?.button?.text
+            ?? msg?.interactive?.button_reply?.title
+            ?? msg?.interactive?.list_reply?.title
+            ?? ''
+          ),
+          phoneNumberId,
+          displayPhoneNumber,
+          contactName: String(contact?.profile?.name ?? ''),
+          waId: String(contact?.wa_id ?? from),
+          raw: msg,
+        });
+      }
+    }
+  }
+
+  return messages;
+}
+
+function hasInboundMessages(body: any): boolean {
+  return extractInboundMessages(body).length > 0;
+}
+
+function inboundMessageFilter(payload: WebhookFilterPayload): boolean {
+  const mode = payload.query?.['hub.mode'];
+  if (payload.method === 'GET' && mode === 'subscribe') {
+    return true;
+  }
+
+  if (payload.method !== 'POST') {
+    return false;
+  }
+
+  return payload.body?.object === 'whatsapp_business_account' && hasInboundMessages(payload.body);
+}
+
+async function inboundMessageHandshake(context: WhatsAppContext): Promise<string | false> {
+  const verifyToken = String(context.propsValue?.verifyToken ?? '');
+  const query = context.webhookPayload?.query ?? {};
+  const mode = String(query['hub.mode'] ?? '');
+  const token = String(query['hub.verify_token'] ?? '');
+  const challenge = String(query['hub.challenge'] ?? '');
+
+  if (mode !== 'subscribe' || !verifyToken || !challenge) {
+    return false;
+  }
+
+  if (token !== verifyToken) {
+    console.warn('[bit-whatsapp] Webhook verify token mismatch');
+    return false;
+  }
+
+  console.log('[bit-whatsapp] Webhook verification succeeded');
+  return challenge;
+}
+
+async function inboundMessageRun(context: WhatsAppContext) {
+  const body = context.webhookPayload?.body ?? context.payload;
+  const messages = extractInboundMessages(body);
+
+  return messages.map((msg) => ({
+    event: 'inboundMessage',
+    ...msg,
+    entry: body?.entry,
+    raw: body,
+  }));
+}
+
+const inboundMessageProps = {
+  verifyToken: {
+    type: 'SECRET_TEXT' as const,
+    displayName: 'Verify Token',
+    description: 'Verification string for Meta webhook setup (hub.verify_token). Store the same value in Meta App Dashboard.',
+    required: true,
+  },
+};
+
 const whatsappBit = {
+  // Vendor webhook routing: POST/GET /webhook/v/whatsapp
+  id: 'whatsapp',
   displayName: 'WhatsApp',
   description: 'Send messages via WhatsApp Business Cloud API (Meta)',
   logoUrl: 'lucide:MessageCircle',
@@ -499,7 +636,23 @@ const whatsappBit = {
     },
   },
   
-  triggers: {},
+  triggers: {
+    /**
+     * Inbound message trigger (Meta WhatsApp Cloud API webhook).
+     * Configure Meta App Dashboard callback URL: https://<host>/webhook/v/whatsapp
+     * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint
+     */
+    inboundMessage: {
+      name: 'inboundMessage',
+      displayName: 'Inbound Message',
+      description: 'Triggers when a user sends a WhatsApp message to your business number',
+      type: 'WEBHOOK',
+      props: inboundMessageProps,
+      filter: inboundMessageFilter,
+      onHandshake: inboundMessageHandshake,
+      run: inboundMessageRun,
+    },
+  },
 };
 
 export const whatsapp = whatsappBit;
