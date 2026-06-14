@@ -43,5 +43,7 @@ habits:
   - habits/end-of-day-analysis.yaml
   - habits/summarize-lead-eod.yaml
   - habits/list-today-analyses.yaml
+  - habits/get-sync-preference.yaml
+  - habits/save-sync-preference.yaml
 
 quickDownload: true

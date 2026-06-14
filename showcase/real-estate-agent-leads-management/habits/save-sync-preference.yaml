@@ -1,0 +1,26 @@
+id: save-sync-preference
+name: Save Sync Preference
+description: Persist HubSpot vs database-only sync preference to settings storage.
+version: "1.0"
+
+nodes:
+  - id: save-preference
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: real_estate_agent_settings
+        key: sync-preference
+        value:
+          syncHubspot: "{{habits.input.syncHubspot}}"
+          updatedAt: "{{habits.input.updatedAt || new Date().toISOString()}}"
+
+edges: []
+
+output:
+  success: true
+  syncHubspot: "{{habits.input.syncHubspot}}"
+  preference: "{{save-preference}}"

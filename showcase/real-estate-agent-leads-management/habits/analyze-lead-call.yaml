@@ -97,6 +97,23 @@ nodes:
           lastRecord: "{{habits.input.lastRecord}}"
           updatedAt: "{{habits.function.now()}}"
 
+  - id: check-hubspot-sync
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: if
+        branches:
+          - value1: "{{habits.input.syncHubspot}}"
+            operator: equals
+            value2: true
+            output: hubspot
+        includeElse: true
+        defaultOutput: database
+
   - id: sync-hubspot
     type: action
     data:
@@ -119,22 +136,23 @@ nodes:
         lastRecord: "{{habits.input.lastRecord}}"
 
 edges:
-  - id: e1
-    source: load-lead
+  - source: load-lead
     target: transcribe-audio
-  - id: e2
-    source: transcribe-audio
+  - source: transcribe-audio
     target: analyze-call
-  - id: e3
-    source: analyze-call
+  - source: analyze-call
     target: save-analysis
-  - id: e4
-    source: save-analysis
+  - source: save-analysis
+    target: check-hubspot-sync
+  - source: check-hubspot-sync
     target: sync-hubspot
+    sourceHandle: branch-0
 
 output:
+  success: true
   leadId: "{{habits.input.leadId}}"
+  routedTo: "{{check-hubspot-sync.output}}"
+  branchExecuted: "{{check-hubspot-sync.executedConditionLabel}}"
   transcript: "{{transcribe-audio.text}}"
   analysis: "{{analyze-call}}"
   lastRecord: "{{habits.input.lastRecord}}"
-  hubspot: "{{sync-hubspot}}"
