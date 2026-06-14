@@ -652,18 +652,6 @@ const whatsappBit = {
       onHandshake: inboundMessageHandshake,
       run: inboundMessageRun,
     },
-
-    /** @deprecated Use inboundMessage */
-    inboundMessageTrigger: {
-      name: 'inboundMessageTrigger',
-      displayName: 'Inbound Message (legacy alias)',
-      description: 'Alias for inboundMessage',
-      type: 'WEBHOOK',
-      props: inboundMessageProps,
-      filter: inboundMessageFilter,
-      onHandshake: inboundMessageHandshake,
-      run: inboundMessageRun,
-    },
   },
 };
 
