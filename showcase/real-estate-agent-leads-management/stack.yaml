@@ -29,6 +29,12 @@ workflows:
   - id: list-today-analyses
     path: ./habits/list-today-analyses.yaml
     enabled: true
+  - id: get-sync-preference
+    path: ./habits/get-sync-preference.yaml
+    enabled: true
+  - id: save-sync-preference
+    path: ./habits/save-sync-preference.yaml
+    enabled: true
 
 server:
   port: 13000

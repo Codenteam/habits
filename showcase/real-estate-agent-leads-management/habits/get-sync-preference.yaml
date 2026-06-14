@@ -1,0 +1,25 @@
+id: get-sync-preference
+name: Get Sync Preference
+description: Load HubSpot vs database-only sync preference from settings storage.
+version: "1.0"
+
+nodes:
+  - id: load-preference
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: real_estate_agent_settings
+        key: sync-preference
+        defaultValue:
+          syncHubspot: null
+
+edges: []
+
+output:
+  success: true
+  found: "{{load-preference.found}}"
+  preference: "{{load-preference.value}}"

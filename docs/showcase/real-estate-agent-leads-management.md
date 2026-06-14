@@ -8,6 +8,7 @@ aside: false
 import { Tag, Sparkles, Layout } from 'lucide-vue-next'
 
 const images = [
+    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-0 (1).webp', caption: 'Real Estate Agent Leads Management' },
     { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-1.webp', caption: 'Real Estate Agent Leads Management' },
     { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-10.webp', caption: 'Real Estate Agent Leads Management' },
     { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-2.webp', caption: 'Real Estate Agent Leads Management' },
@@ -29,7 +30,9 @@ const habitTabs = [
     { label: 'save-lead-score', url: '/showcase/real-estate-agent-leads-management/save-lead-score.yaml' },
     { label: 'end-of-day-analysis', url: '/showcase/real-estate-agent-leads-management/end-of-day-analysis.yaml' },
     { label: 'summarize-lead-eod', url: '/showcase/real-estate-agent-leads-management/summarize-lead-eod.yaml' },
-    { label: 'list-today-analyses', url: '/showcase/real-estate-agent-leads-management/list-today-analyses.yaml' }
+    { label: 'list-today-analyses', url: '/showcase/real-estate-agent-leads-management/list-today-analyses.yaml' },
+    { label: 'get-sync-preference', url: '/showcase/real-estate-agent-leads-management/get-sync-preference.yaml' },
+    { label: 'save-sync-preference', url: '/showcase/real-estate-agent-leads-management/save-sync-preference.yaml' }
 ]
 </script>
 
