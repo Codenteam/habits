@@ -1,42 +1,39 @@
 ---
-title: "Real Estate Agent Leads Management"
-description: "Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence."
+title: "Real Estate Social Marketing"
+description: "Turn property listing URLs into AI-generated LinkedIn and Twitter posts, schedule publishing, and automate multi-platform social marketing."
 aside: false
 ---
 
 <script setup>
-import { Tag, Sparkles, Layout } from 'lucide-vue-next'
+import { Brain, Tag, Zap, Layout } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-0 (1).webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-1.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-10.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-2.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-3.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-4.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-5.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-6.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-7.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-8.webp', caption: 'Real Estate Agent Leads Management' },
-    { img: '/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-9.webp', caption: 'Real Estate Agent Leads Management' }
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-1.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-2.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-3.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-4.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-5.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-marketing-7.webp', caption: 'Real Estate Social Marketing' },
+    { img: '/showcase/real-estate-social-marketing/real-estate-social-merketing-6.webp', caption: 'Real Estate Social Marketing' }
 ]
 
 const habitTabs = [
-    { label: 'submit-lead', url: '/showcase/real-estate-agent-leads-management/submit-lead.yaml' },
-    { label: 'list-leads', url: '/showcase/real-estate-agent-leads-management/list-leads.yaml' },
-    { label: 'get-lead-details', url: '/showcase/real-estate-agent-leads-management/get-lead-details.yaml' },
-    { label: 'update-lead-status', url: '/showcase/real-estate-agent-leads-management/update-lead-status.yaml' },
-    { label: 'analyze-lead-call', url: '/showcase/real-estate-agent-leads-management/analyze-lead-call.yaml' },
-    { label: 'save-lead-score', url: '/showcase/real-estate-agent-leads-management/save-lead-score.yaml' },
-    { label: 'end-of-day-analysis', url: '/showcase/real-estate-agent-leads-management/end-of-day-analysis.yaml' },
-    { label: 'summarize-lead-eod', url: '/showcase/real-estate-agent-leads-management/summarize-lead-eod.yaml' },
-    { label: 'list-today-analyses', url: '/showcase/real-estate-agent-leads-management/list-today-analyses.yaml' },
-    { label: 'get-sync-preference', url: '/showcase/real-estate-agent-leads-management/get-sync-preference.yaml' },
-    { label: 'save-sync-preference', url: '/showcase/real-estate-agent-leads-management/save-sync-preference.yaml' }
+    { label: 'add-property', url: '/showcase/real-estate-social-marketing/add-property.yaml' },
+    { label: 'extract-property-details', url: '/showcase/real-estate-social-marketing/extract-property-details.yaml' },
+    { label: 'generate-property-posts', url: '/showcase/real-estate-social-marketing/generate-property-posts.yaml' },
+    { label: 'list-properties', url: '/showcase/real-estate-social-marketing/list-properties.yaml' },
+    { label: 'get-property', url: '/showcase/real-estate-social-marketing/get-property.yaml' },
+    { label: 'delete-property', url: '/showcase/real-estate-social-marketing/delete-property.yaml' },
+    { label: 'set-property-schedule', url: '/showcase/real-estate-social-marketing/set-property-schedule.yaml' },
+    { label: 'return-property-to-draft', url: '/showcase/real-estate-social-marketing/return-property-to-draft.yaml' },
+    { label: 'publish-social-post', url: '/showcase/real-estate-social-marketing/publish-social-post.yaml' },
+    { label: 'publish-property-now', url: '/showcase/real-estate-social-marketing/publish-property-now.yaml' },
+    { label: 'get-scheduled-properties', url: '/showcase/real-estate-social-marketing/get-scheduled-properties.yaml' },
+    { label: 'check-pending-posts', url: '/showcase/real-estate-social-marketing/check-pending-posts.yaml' }
 ]
 </script>
 
-# Real Estate Agent Leads Management
+# Real Estate Social Marketing
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -46,10 +43,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-real-estate"><component :is="Tag" :size="12" /> real-estate</span> <span class="showcase-tag tag-leads"><component :is="Tag" :size="12" /> leads</span> <span class="showcase-tag tag-openai"><component :is="Sparkles" :size="12" /> openai</span> <span class="showcase-tag tag-hubspot"><component :is="Tag" :size="12" /> hubspot</span> <span class="showcase-tag tag-sql"><component :is="Tag" :size="12" /> sql</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
+      <div class="tags"><span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span> <span class="showcase-tag tag-real-estate"><component :is="Tag" :size="12" /> real-estate</span> <span class="showcase-tag tag-social-media"><component :is="Tag" :size="12" /> social-media</span> <span class="showcase-tag tag-twitter"><component :is="Tag" :size="12" /> twitter</span> <span class="showcase-tag tag-linkedin"><component :is="Tag" :size="12" /> linkedin</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-scheduling"><component :is="Tag" :size="12" /> scheduling</span> <span class="showcase-tag tag-frontend"><component :is="Layout" :size="12" /> frontend</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="real-estate-agent-leads-management" />
+      <DownloadExample examplePath="real-estate-social-marketing" />
     </div>
   </div>
 </div>
@@ -60,21 +57,35 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Lead intake and processing workflow with OpenAI scoring, HubSpot sync, and SQL persistence.</p>
+<p class="showcase-description">Turn property listing URLs into AI-generated LinkedIn and Twitter posts, schedule publishing, and automate multi-platform social marketing.</p>
 
-A real-estate lead operations showcase with a frontend and API habits.
+**Real Estate Social Marketing** is a full-stack showcase that extracts listing details from
+a property URL, generates platform-specific social posts with OpenAI, and publishes
+to Twitter/X and LinkedIn on demand or on a schedule.
 
-## Included flows
+## What it does
 
-- Submit and validate lead form
-- Enrich lead with OpenAI
-- Sync/create contact in HubSpot
-- Save and manage records in SQL collection `real_state_agent_leads_collection`
-- List leads by status: in progress, reminder, done
-- Process one lead, analyze call audio, and save follow-up reminder
-- Mark lead as done and keep HubSpot + SQL in sync
-- End-of-day analysis for today's activity and due reminders
-- Browse today's saved call analyses in the dashboard
+- **Property extraction** : `add-property` fetches the listing page and uses OpenAI to extract structured property details via `extract-property-details`
+- **Social content generation** : `generate-property-posts` crafts tailored Twitter/X and LinkedIn posts for each property
+- **Queue management** : Browse draft properties, review generated posts, publish immediately, or schedule for later
+- **Automated publishing** : `check-pending-posts` runs every 3 minutes and publishes due items via `publish-social-post`
+
+## Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for extraction and post generation |
+| `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
+| `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
+| `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
+| `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+
+## How to run
+
+1. Copy `.env.example` to `.env` and fill in credentials.
+2. Run `pnpm habits dev showcase/real-estate-social-marketing/stack.yaml`
+3. Open http://localhost:13000 and paste a property listing URL.
+4. Review generated posts on the Process page and publish or schedule.
 
 
 
@@ -113,14 +124,17 @@ A real-estate lead operations showcase with a frontend and API habits.
 
 ## Requirements
 
-- HABITS_OPENAI_API_KEY
-- HABITS_HUBSPOT_ACCESS_TOKEN
+- OPENAI_API_KEY
+- TWITTER_CLIENT_ID
+- LINKEDIN_CLIENT_ID
+- LINKEDIN_CLIENT_SECRET
+- LINKEDIN_ORGANIZATION_ID
 
 ## Quick Start
 
-<ExampleRunner examplePath="real-estate-agent-leads-management" />
+<ExampleRunner examplePath="real-estate-social-marketing" />
 
-<DownloadExample examplePath="real-estate-agent-leads-management" />
+<DownloadExample examplePath="real-estate-social-marketing" />
 
 
 <ContactForm

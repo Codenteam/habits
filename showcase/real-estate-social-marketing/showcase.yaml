@@ -1,0 +1,71 @@
+name: Real Estate Social Marketing
+type: fullstack
+description: >-
+  Turn property listing URLs into AI-generated LinkedIn and Twitter posts,
+  schedule publishing, and automate multi-platform social marketing.
+
+longDescription: |
+  **Real Estate Social Marketing** is a full-stack showcase that extracts listing details from
+  a property URL, generates platform-specific social posts with OpenAI, and publishes
+  to Twitter/X and LinkedIn on demand or on a schedule.
+
+  ## What it does
+
+  - **Property extraction** : `add-property` fetches the listing page and uses OpenAI to extract structured property details via `extract-property-details`
+  - **Social content generation** : `generate-property-posts` crafts tailored Twitter/X and LinkedIn posts for each property
+  - **Queue management** : Browse draft properties, review generated posts, publish immediately, or schedule for later
+  - **Automated publishing** : `check-pending-posts` runs every 3 minutes and publishes due items via `publish-social-post`
+
+  ## Environment variables
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for extraction and post generation |
+  | `HABITS_TWITTER_CLIENT_ID` | Twitter/X OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_ID` | LinkedIn OAuth 2.0 Client ID |
+  | `HABITS_LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth 2.0 Client Secret |
+  | `HABITS_LINKEDIN_ORGANIZATION_ID` | LinkedIn Company Page / Organization ID |
+
+  ## How to run
+
+  1. Copy `.env.example` to `.env` and fill in credentials.
+  2. Run `pnpm habits dev showcase/real-estate-social-marketing/stack.yaml`
+  3. Open http://localhost:13000 and paste a property listing URL.
+  4. Review generated posts on the Process page and publish or schedule.
+
+tags:
+  - ai
+  - real-estate
+  - social-media
+  - twitter
+  - linkedin
+  - automation
+  - scheduling
+  - frontend
+
+difficulty: intermediate
+featured: true
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY
+  - TWITTER_CLIENT_ID
+  - LINKEDIN_CLIENT_ID
+  - LINKEDIN_CLIENT_SECRET
+  - LINKEDIN_ORGANIZATION_ID
+
+habits:
+  - habits/add-property.yaml
+  - habits/extract-property-details.yaml
+  - habits/generate-property-posts.yaml
+  - habits/list-properties.yaml
+  - habits/get-property.yaml
+  - habits/delete-property.yaml
+  - habits/set-property-schedule.yaml
+  - habits/return-property-to-draft.yaml
+  - habits/publish-social-post.yaml
+  - habits/publish-property-now.yaml
+  - habits/get-scheduled-properties.yaml
+  - habits/check-pending-posts.yaml
+
+quickDownload: true

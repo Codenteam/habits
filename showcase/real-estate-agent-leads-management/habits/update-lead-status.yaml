@@ -16,6 +16,23 @@ nodes:
         filter: '{"_id": "{{habits.input.leadId}}"}'
         limit: 1
 
+  - id: check-hubspot-sync
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: if
+        branches:
+          - value1: "{{habits.input.syncHubspot}}"
+            operator: equals
+            value2: true
+            output: hubspot
+        includeElse: true
+        defaultOutput: database
+
   - id: sync-hubspot
     type: action
     data:
@@ -54,6 +71,23 @@ nodes:
           doneAt: "{{habits.input.doneAt}}"
           updatedAt: "{{habits.input.updatedAt}}"
 
+  - id: update-db-after-hubspot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: real_state_agent_leads_collection
+        filter:
+          _id: "{{habits.input.leadId}}"
+        update:
+          status: "{{habits.input.status}}"
+          reminder: "{{habits.input.reminder}}"
+          doneAt: "{{habits.input.doneAt}}"
+          updatedAt: "{{habits.input.updatedAt}}"
+
   - id: get-updated
     type: action
     data:
@@ -66,17 +100,106 @@ nodes:
         filter: '{"_id": "{{habits.input.leadId}}"}'
         limit: 1
 
+  - id: get-updated-after-hubspot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: real_state_agent_leads_collection
+        filter: '{"_id": "{{habits.input.leadId}}"}'
+        limit: 1
+
+  - id: finalize-db
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Build database-only response
+      params:
+        fetched: "{{get-updated}}"
+        check: "{{check-hubspot-sync}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(fetched, check) {
+            const lead = fetched.results?.[0] ?? null;
+            return {
+              success: true,
+              routedTo: check.output,
+              branchExecuted: check.executedConditionLabel,
+              databaseLead: lead,
+              lead,
+            };
+          }
+
+  - id: finalize-hubspot
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Build HubSpot response
+      params:
+        fetched: "{{get-updated-after-hubspot}}"
+        check: "{{check-hubspot-sync}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(fetched, check) {
+            const lead = fetched.results?.[0] ?? null;
+            return {
+              success: true,
+              routedTo: check.output,
+              branchExecuted: check.executedConditionLabel,
+              hubspotLead: lead,
+              lead,
+            };
+          }
+
 edges:
-  - id: e1
-    source: load-lead
+  - source: load-lead
+    target: check-hubspot-sync
+  - source: check-hubspot-sync
     target: sync-hubspot
-  - id: e2
-    source: sync-hubspot
+    sourceHandle: branch-0
+  - source: check-hubspot-sync
+    target: update-db-after-hubspot
+    sourceHandle: branch-0
+  - source: check-hubspot-sync
+    target: get-updated-after-hubspot
+    sourceHandle: branch-0
+  - source: sync-hubspot
+    target: update-db-after-hubspot
+    optional: true
+  - source: update-db-after-hubspot
+    target: get-updated-after-hubspot
+    optional: true
+  - source: check-hubspot-sync
     target: update-db
-  - id: e3
-    source: update-db
+    sourceHandle: branch-1
+  - source: check-hubspot-sync
     target: get-updated
+    sourceHandle: branch-1
+  - source: update-db
+    target: get-updated
+    optional: true
+  - source: get-updated
+    target: finalize-db
+    optional: true
+  - source: check-hubspot-sync
+    target: finalize-db
+    sourceHandle: branch-1
+    optional: true
+  - source: get-updated-after-hubspot
+    target: finalize-hubspot
+    optional: true
+  - source: check-hubspot-sync
+    target: finalize-hubspot
+    sourceHandle: branch-0
+    optional: true
 
 output:
-  lead: "{{get-updated.results[0]}}"
-  hubspot: "{{sync-hubspot}}"
+  databaseBranch: "{{finalize-db}}"
+  hubspotBranch: "{{finalize-hubspot}}"

@@ -49,6 +49,23 @@ nodes:
           - status should default to "inProgress" for a newly submitted lead unless the input strongly suggests otherwise.
           - reminder should be null for a new lead.
 
+  - id: check-hubspot-sync
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: if
+        branches:
+          - value1: "{{habits.input.syncHubspot}}"
+            operator: equals
+            value2: true
+            output: hubspot
+        includeElse: true
+        defaultOutput: database
+
   - id: hubspot-sync
     type: action
     data:
@@ -90,29 +107,133 @@ nodes:
           status: "{{ai-enrich.status}}"
           reminder: "{{ai-enrich.reminder}}"
           lastRecord: null
-          hubspotContact: "{{hubspot-sync}}"
           submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
 
+  - id: save-lead-after-hubspot
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: real_state_agent_leads_collection
+        document:
+          email: "{{ai-enrich.email}}"
+          firstName: "{{ai-enrich.firstName}}"
+          lastName: "{{ai-enrich.lastName}}"
+          company: "{{ai-enrich.company}}"
+          phone: "{{ai-enrich.phone}}"
+          score: 0
+          status: "{{ai-enrich.status}}"
+          reminder: "{{ai-enrich.reminder}}"
+          lastRecord: null
+          submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
+
+  - id: finalize-db
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Build database-only response
+      params:
+        saveResult: "{{save-lead}}"
+        enrich: "{{ai-enrich}}"
+        check: "{{check-hubspot-sync}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(saveResult, enrich, check) {
+            const submittedAt = saveResult.submittedAt || new Date().toISOString();
+            return {
+              success: true,
+              routedTo: check.output,
+              branchExecuted: check.executedConditionLabel,
+              databaseSave: saveResult,
+              leadId: saveResult.id,
+              lead: {
+                _id: saveResult.id,
+                email: enrich.email,
+                firstName: enrich.firstName,
+                lastName: enrich.lastName,
+                company: enrich.company,
+                phone: enrich.phone,
+                score: 0,
+                status: enrich.status,
+                reminder: enrich.reminder,
+                lastRecord: null,
+                submittedAt,
+              },
+            };
+          }
+
+  - id: finalize-hubspot
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: Build HubSpot response
+      params:
+        saveResult: "{{save-lead-after-hubspot}}"
+        enrich: "{{ai-enrich}}"
+        check: "{{check-hubspot-sync}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(saveResult, enrich, check) {
+            const submittedAt = saveResult.submittedAt || new Date().toISOString();
+            return {
+              success: true,
+              routedTo: check.output,
+              branchExecuted: check.executedConditionLabel,
+              hubspotSave: saveResult,
+              leadId: saveResult.id,
+              lead: {
+                _id: saveResult.id,
+                email: enrich.email,
+                firstName: enrich.firstName,
+                lastName: enrich.lastName,
+                company: enrich.company,
+                phone: enrich.phone,
+                score: 0,
+                status: enrich.status,
+                reminder: enrich.reminder,
+                lastRecord: null,
+                submittedAt,
+              },
+            };
+          }
+
 edges:
-  - id: e1
-    source: ai-enrich
+  - source: ai-enrich
+    target: check-hubspot-sync
+  - source: check-hubspot-sync
     target: hubspot-sync
-  - id: e2
-    source: hubspot-sync
+    sourceHandle: branch-0
+  - source: check-hubspot-sync
+    target: save-lead-after-hubspot
+    sourceHandle: branch-0
+  - source: hubspot-sync
+    target: save-lead-after-hubspot
+    optional: true
+  - source: check-hubspot-sync
     target: save-lead
+    sourceHandle: branch-1
+  - source: save-lead
+    target: finalize-db
+    optional: true
+  - source: check-hubspot-sync
+    target: finalize-db
+    sourceHandle: branch-1
+    optional: true
+  - source: save-lead-after-hubspot
+    target: finalize-hubspot
+    optional: true
+  - source: check-hubspot-sync
+    target: finalize-hubspot
+    sourceHandle: branch-0
+    optional: true
 
 output:
-  success: true
-  leadId: "{{save-lead.id}}"
-  lead:
-    _id: "{{save-lead.id}}"
-    email: "{{ai-enrich.email}}"
-    firstName: "{{ai-enrich.firstName}}"
-    lastName: "{{ai-enrich.lastName}}"
-    company: "{{ai-enrich.company}}"
-    phone: "{{ai-enrich.phone}}"
-    score: 0
-    status: "{{ai-enrich.status}}"
-    reminder: "{{ai-enrich.reminder}}"
-    lastRecord: null
-    submittedAt: "{{habits.input.submittedAt || new Date().toISOString()}}"
+  databaseBranch: "{{finalize-db}}"
+  hubspotBranch: "{{finalize-hubspot}}"

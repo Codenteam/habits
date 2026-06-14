@@ -351,8 +351,27 @@
     ],
     "difficulty": "intermediate",
     "featured": true,
-    "thumbnail": "/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-1.webp",
-    "imageCount": 10
+    "thumbnail": "/showcase/real-estate-agent-leads-management/real-estate-agent-leads-management-0 (1).webp",
+    "imageCount": 11
+  },
+  {
+    "slug": "real-estate-social-marketing",
+    "name": "Real Estate Social Marketing",
+    "description": "Turn property listing URLs into AI-generated LinkedIn and Twitter posts, schedule publishing, and automate multi-platform social marketing.",
+    "tags": [
+      "ai",
+      "real-estate",
+      "social-media",
+      "twitter",
+      "linkedin",
+      "automation",
+      "scheduling",
+      "frontend"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/real-estate-social-marketing/real-estate-social-marketing-1.webp",
+    "imageCount": 7
   },
   {
     "slug": "resume-analyzer",

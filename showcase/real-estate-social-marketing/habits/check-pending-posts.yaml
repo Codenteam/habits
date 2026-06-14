@@ -1,0 +1,61 @@
+id: check-pending-posts
+name: Check Pending Posts
+description: >-
+  Cron habit that runs every 3 minutes. Fetches pending properties whose
+  scheduledAt time has passed, then invokes publish-social-post for each.
+
+nodes:
+  - id: cron-trigger
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      params:
+        cronExpression: "*/3 * * * *"
+        timezone: "UTC"
+
+  - id: get-pending
+    type: bits
+    data:
+      label: Get Due Scheduled Properties
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: rem_marketing_properties
+        filter: '{"status": "pending", "scheduledAt": {"$lte": "{{cron-trigger[0].executedAt}}"}}'
+        limit: 20
+
+  - id: publish-posts
+    type: action
+    data:
+      label: Publish Each Property
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-pending.results}}"
+        habitId: publish-social-post
+        inputKey: property
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: cron-trigger
+    target: get-pending
+  - source: get-pending
+    target: publish-posts
+
+output:
+  properties: "{{get-pending.results}}"
+  totalPending: "{{get-pending.count}}"
+  published: "{{publish-posts.successCount}}"
+  publishResults: "{{publish-posts.results}}"
+  checkedAt: "{{cron-trigger[0].executedAt}}"
+  cronExpression: "{{cron-trigger[0].cronExpression}}"
+  nextExecution: "{{cron-trigger[0].nextExecution}}"

@@ -1,0 +1,92 @@
+id: extract-property-details
+name: Extract Property Details
+description: >-
+  Fetches a real-estate listing page and uses OpenAI to extract structured
+  property details from the page content and URL.
+
+input:
+  - id: propertyUrl
+    type: string
+    required: true
+    label: Property URL
+    description: Public URL of the real-estate listing
+
+nodes:
+  - id: fetch-page
+    type: bits
+    data:
+      label: Fetch Listing Page
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-http"
+      operation: fetchPage
+      params:
+        url: "{{propertyUrl}}"
+        extractText: true
+        userAgent: "Mozilla/5.0 (compatible; HabitsMonitor/1.0)"
+
+  - id: extract-details
+    type: bits
+    data:
+      label: Extract Property Details with AI
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o
+        temperature: 0.2
+        maxTokens: 1200
+        cast: 'force'
+        prompt: |
+          You are a professional real-estate data analyst. Extract structured listing details from the property URL and page text below.
+
+          PROPERTY URL: {{propertyUrl}}
+
+          PAGE TEXT (may be truncated):
+          {{fetch-page.text}}
+
+          Return ONLY valid JSON wrapped in ```json``` fences with these fields:
+          {
+            "propertyUrl": "{{propertyUrl}}",
+            "title": "Listing headline",
+            "address": "Full street address or area",
+            "price": "Formatted price with currency",
+            "bedrooms": "Number or range, e.g. 3 or 3 + Maid",
+            "bathrooms": "Number or range",
+            "sqft": "Living area with unit (prefer sqm/sqft shown on page)",
+            "propertyType": "house, villa, condo, apartment, townhouse, land, etc.",
+            "listingType": "Rent or Buy — whether the listing is for rent or for purchase",
+            "description": "2-3 sentence professional summary",
+            "highlights": ["feature 1", "feature 2", "feature 3"]
+          }
+
+          Rules:
+          - Read the PAGE TEXT first — price, bedrooms, bathrooms, and size are almost always there, not in the URL
+          - Look for explicit labels: Price, EGP, USD, Bedrooms, Bathrooms, sqm, sqft, BUA, Property Size, Sale price, Down Payment, For Rent, For Sale, Rent, Buy
+          - listingType must be exactly "Rent" or "Buy" — infer from URL path (/rent/, /buy/, /sale/), page headings, price labels (monthly rent vs sale price), or listing badges
+          - On Property Finder and similar portals, use the main listing price and room counts from the page body
+          - Use the URL only to supplement location, property type, or when page text is missing
+          - Never leave price, bedrooms, or bathrooms empty if they appear anywhere in the page text
+          - Keep highlights to 3-5 short bullet phrases from real listing features
+          - Return JSON only, no commentary
+
+edges:
+  - source: fetch-page
+    target: extract-details
+
+output:
+  propertyUrl: "{{extract-details.propertyUrl}}"
+  title: "{{extract-details.title}}"
+  address: "{{extract-details.address}}"
+  price: "{{extract-details.price}}"
+  bedrooms: "{{extract-details.bedrooms}}"
+  bathrooms: "{{extract-details.bathrooms}}"
+  sqft: "{{extract-details.sqft}}"
+  propertyType: "{{extract-details.propertyType}}"
+  listingType: "{{extract-details.listingType}}"
+  description: "{{extract-details.description}}"
+  highlights: "{{extract-details.highlights}}"

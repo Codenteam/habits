@@ -329,9 +329,48 @@
   <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/6 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style="animation-delay:2.5s;"></div>
 
   <!-- ═══════════════════════════════════════════════════
+       PAGE: SETUP (HubSpot sync choice)
+  ════════════════════════════════════════════════════ -->
+  <div id="page-setup" class="page relative z-10">
+    <div class="max-w-lg mx-auto px-4 py-16 min-h-screen flex flex-col justify-center">
+      <div class="neon-border rounded-2xl glass-card p-8 md:p-10 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-sky-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent mb-2">
+          Connect your CRM?
+        </h1>
+        <p class="text-slate-400 text-sm mb-8 leading-relaxed">
+          Choose whether to sync leads with HubSpot or keep everything in the local SQL database only.
+          You can change this later from the dashboard header.
+        </p>
+        <div class="space-y-3">
+          <button type="button" onclick="chooseHubspotSync(true)"
+            class="w-full btn-primary flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-bold text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Sync with HubSpot + Database
+          </button>
+          <button type="button" onclick="chooseHubspotSync(false)"
+            class="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-bold text-sky-300 border border-sky-500/30 hover:bg-sky-500/10 hover:border-sky-500/50 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+            Database Only (no HubSpot)
+          </button>
+        </div>
+        <p class="text-slate-600 text-xs mt-6">HubSpot sync requires <code class="text-slate-500">HABITS_HUBSPOT_ACCESS_TOKEN</code> in your environment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
        PAGE: MAIN (list + submit)
   ════════════════════════════════════════════════════ -->
-  <div id="page-main" class="page active relative z-10">
+  <div id="page-main" class="page relative z-10">
     <div class="max-w-5xl mx-auto px-4 py-8">
 
       <!-- Header -->
@@ -352,7 +391,10 @@
               </h1>
             </div>
             <p class="text-slate-400 text-sm tracking-wider uppercase font-medium">Leads Management System</p>
-            <p class="text-slate-500 text-xs mt-1">Powered by Habits · OpenAI · HubSpot · SQL</p>
+            <p id="header-powered-by" class="text-slate-500 text-xs mt-1">Powered by Habits · OpenAI · SQL</p>
+            <button type="button" id="hubspot-mode-badge" onclick="openSetupPage()"
+              class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors hover:opacity-90">
+            </button>
           </div>
           <button type="button" onclick="openEndOfDay()"
             class="btn-eod flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-amber-500/20 whitespace-nowrap self-center sm:self-auto">
@@ -861,6 +903,150 @@
     let currentLead = null;
     let leadsListCache = null;
     let selectedAudioFile = null;
+    let syncHubspotEnabled = null;
+
+    function applyHubspotSyncPreference(enabled) {
+      syncHubspotEnabled = enabled;
+      updateHubspotModeBadge();
+    }
+
+    async function fetchHubspotSyncPreference() {
+      const res = await fetch('/api/get-sync-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || data?.error || 'Failed to load sync preference.');
+      const output = data?.output ?? data ?? {};
+      const pref = output.preference;
+      if (pref && typeof pref === 'object' && pref.syncHubspot === true) return true;
+      if (pref && typeof pref === 'object' && pref.syncHubspot === false) return false;
+      if (output.found === false) return null;
+      return null;
+    }
+
+    async function persistHubspotSyncPreference(enabled) {
+      const res = await fetch('/api/save-sync-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          syncHubspot: enabled === true,
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+      const data = await res.json();
+      assertWorkflowOk(res, data, 'Failed to save sync preference.');
+    }
+
+    function withSyncHubspot(payload = {}) {
+      return { syncHubspot: syncHubspotEnabled === true, ...payload };
+    }
+
+    function isSkippedWorkflowValue(value) {
+      return value != null && typeof value === 'object' && value._skipped === true;
+    }
+
+    /** Parse Cortex workflow API responses (handles branch-skipped output fields). */
+    function parseWorkflowResponse(data) {
+      const rawOutput = data?.output ?? data ?? {};
+      const status = data?.status;
+
+      function activeBranchPayload(output) {
+        const db = output.databaseBranch;
+        const hs = output.hubspotBranch;
+        if (db && !isSkippedWorkflowValue(db) && db.success !== false) return db;
+        if (hs && !isSkippedWorkflowValue(hs) && hs.success !== false) return hs;
+        return output;
+      }
+
+      const output = activeBranchPayload(rawOutput);
+      const succeeded = status === 'completed' || output.success === true || rawOutput.success === true;
+
+      const pickLead = () => {
+        const candidates = [
+          output.lead,
+          output.databaseLead,
+          output.hubspotLead,
+          output.databaseSave,
+          output.hubspotSave,
+        ];
+        for (const candidate of candidates) {
+          if (!candidate || typeof candidate === 'string' || isSkippedWorkflowValue(candidate)) continue;
+          if (Array.isArray(candidate.results) && candidate.results[0]) return candidate.results[0];
+          if (candidate._id || candidate.id) return candidate;
+        }
+        if (output.leadId) {
+          return { _id: output.leadId, id: output.leadId, ...(typeof output.lead === 'object' ? output.lead : {}) };
+        }
+        return null;
+      };
+
+      return { output, status, succeeded, lead: pickLead() };
+    }
+
+    function assertWorkflowOk(res, data, fallbackMessage) {
+      const parsed = parseWorkflowResponse(data);
+      const rawOutput = data?.output ?? data ?? {};
+      const ok = parsed.succeeded
+        || parsed.output?.success === true
+        || rawOutput.databaseBranch?.success === true
+        || rawOutput.hubspotBranch?.success === true;
+      if (!ok) {
+        throw new Error(data?.message || data?.error || parsed.output?.error || fallbackMessage);
+      }
+      return parsed;
+    }
+
+    function hubspotSyncLabel() {
+      return syncHubspotEnabled ? 'HubSpot + Database' : 'Database only';
+    }
+
+    function updateHubspotModeBadge() {
+      const badge = document.getElementById('hubspot-mode-badge');
+      const header = document.getElementById('header-powered-by');
+      if (!badge || syncHubspotEnabled === null) return;
+      const enabled = syncHubspotEnabled === true;
+      badge.className = enabled
+        ? 'mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-orange-500/30 bg-orange-500/10 text-orange-300 transition-colors hover:opacity-90'
+        : 'mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-sky-500/30 bg-sky-500/10 text-sky-300 transition-colors hover:opacity-90';
+      badge.innerHTML = enabled
+        ? `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> ${hubspotSyncLabel()} · Change`
+        : `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg> ${hubspotSyncLabel()} · Change`;
+      if (header) {
+        header.textContent = enabled
+          ? 'Powered by Habits · OpenAI · HubSpot · SQL'
+          : 'Powered by Habits · OpenAI · SQL';
+      }
+    }
+
+    async function chooseHubspotSync(enabled) {
+      try {
+        await persistHubspotSyncPreference(enabled);
+        applyHubspotSyncPreference(enabled);
+        showPage('main');
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function openSetupPage() {
+      showPage('setup');
+    }
+
+    async function initApp() {
+      try {
+        applyHubspotSyncPreference(await fetchHubspotSyncPreference());
+      } catch (err) {
+        console.warn('Could not load sync preference:', err.message);
+        applyHubspotSyncPreference(null);
+      }
+      if (syncHubspotEnabled === null) {
+        showPage('setup');
+      } else {
+        showPage('main');
+      }
+    }
 
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const NAME_RE = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s'-]{2,}$/;
@@ -1412,14 +1598,14 @@
       e.preventDefault();
       if (!validateSubmitForm()) return;
 
-      const payload = {
+      const payload = withSyncHubspot({
         firstName: document.getElementById('sf-firstName').value.trim(),
         lastName:  document.getElementById('sf-lastName').value.trim(),
         email:     document.getElementById('sf-email').value.trim(),
         company:   document.getElementById('sf-company').value.trim() || null,
         phone:     document.getElementById('sf-phone').value.trim(),
         submittedAt: new Date().toISOString(),
-      };
+      });
 
       const btn = document.getElementById('sf-btn');
       const btnContent = document.getElementById('sf-btn-content');
@@ -1435,8 +1621,9 @@
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || data.error || 'Submission failed.');
-        showStatus('sf-status','success','Lead submitted and enriched successfully!');
+        assertWorkflowOk(res, data, 'Submission failed.');
+        const syncNote = syncHubspotEnabled ? ' and synced to HubSpot' : '';
+        showStatus('sf-status','success',`Lead submitted and enriched successfully${syncNote}!`);
         document.getElementById('submitForm').reset();
         clearFieldError('sf-firstName','err-firstName');
         clearFieldError('sf-lastName','err-lastName');
@@ -1768,15 +1955,19 @@
       const res = await fetch('/api/update-lead-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(withSyncHubspot({
           leadId: currentLeadId,
           updatedAt: new Date().toISOString(),
           ...payload,
-        }),
+        })),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.error || 'Update failed.');
-      const lead = data.output?.lead;
+      const parsed = assertWorkflowOk(res, data, 'Update failed.');
+      let lead = parsed.lead;
+      if (!lead && currentLeadId) {
+        await fetchLeadDetail(currentLeadId);
+        lead = currentLead;
+      }
       if (!lead) throw new Error('Lead was not returned after update.');
       applyLeadUpdate(lead);
       return lead;
@@ -1786,15 +1977,19 @@
       const res = await fetch('/api/save-lead-score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(withSyncHubspot({
           leadId: currentLeadId,
           score: Number(score),
           updatedAt: new Date().toISOString(),
-        }),
+        })),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.error || 'Failed to save score.');
-      const lead = data.output?.lead;
+      const parsed = assertWorkflowOk(res, data, 'Failed to save score.');
+      let lead = parsed.lead;
+      if (!lead && currentLeadId) {
+        await fetchLeadDetail(currentLeadId);
+        lead = currentLead;
+      }
       if (!lead) throw new Error('Lead was not returned after score update.');
       applyLeadUpdate(lead);
       return lead;
@@ -1950,7 +2145,7 @@
         const res = await fetch('/api/analyze-lead-call', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: JSON.stringify(withSyncHubspot({
             leadId: currentLeadId,
             lastRecord: new Date().toISOString(),
             language,
@@ -1959,10 +2154,10 @@
               data: audioBase64,
               extension: '.' + (selectedAudioFile.name.split('.').pop() || 'mp3').toLowerCase(),
             },
-          }),
+          })),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || data.error || 'Analysis failed.');
+        assertWorkflowOk(res, data, 'Analysis failed.');
         hideStatus('analyze-status');
         await renderAnalysisResult(data.output?.analysis ?? data.analysis);
       } catch (err) {
@@ -2031,7 +2226,10 @@
       document.getElementById('analysis-result').classList.remove('hidden');
 
       if (a?.score != null && currentLeadId) {
-        showStatus('score-save-status', 'loading', 'Saving score to HubSpot and database…');
+        const saveMsg = syncHubspotEnabled
+          ? 'Saving score to HubSpot and database…'
+          : 'Saving score to database…';
+        showStatus('score-save-status', 'loading', saveMsg);
         try {
           await saveLeadScoreOnServer(a.score);
           showStatus('score-save-status', 'success', `Lead score updated to ${Number(a.score)}.`);
@@ -2043,6 +2241,11 @@
         await refreshLeadDetail();
       }
     }
+
+    initApp().catch(err => {
+      console.error('App init failed:', err);
+      showPage('setup');
+    });
   </script>
 </body>
 </html>

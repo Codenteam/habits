@@ -6,6 +6,8 @@ Lead intake and processing for real-estate agents: OpenAI enrichment, call analy
 
 Create a `.env` file in this folder (see `showcase.yaml` requirements):
 
+> **Note:** On first launch you choose **HubSpot + Database** or **Database only**. Set `HABITS_HUBSPOT_ACCESS_TOKEN` if you use HubSpot sync; database-only mode does not require it.
+
 ```env
 HABITS_OPENAI_API_KEY=your_openai_api_key
 HABITS_HUBSPOT_ACCESS_TOKEN=your_hubspot_private_app_token
