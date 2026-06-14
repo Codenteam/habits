@@ -1,0 +1,25 @@
+id: get-scheduled-properties
+name: Get Scheduled Properties
+description: >-
+  Returns all pending properties that have a scheduled publish time,
+  ordered for the scheduled queue UI.
+
+nodes:
+  - id: get-scheduled
+    type: bits
+    data:
+      label: Get Scheduled Properties
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: rem_marketing_properties
+        filter: '{"status": "pending"}'
+        limit: 50
+
+edges: []
+
+output:
+  properties: "{{get-scheduled.results}}"
+  total: "{{get-scheduled.count}}"

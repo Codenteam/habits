@@ -1,0 +1,100 @@
+id: add-property
+name: Add Property
+description: >-
+  Takes a property listing URL, extracts details with AI, generates Twitter
+  and LinkedIn posts via sub-habits, then saves the full record to the database.
+
+input:
+  - id: propertyUrl
+    type: string
+    required: true
+    label: Property URL
+    description: Public URL of the real-estate listing
+
+  - id: createdAt
+    type: string
+    required: false
+    label: Created At
+    description: ISO datetime when the property was submitted
+
+nodes:
+  - id: extract-step
+    type: action
+    data:
+      label: Extract Property Details
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items:
+          - propertyUrl: "{{habits.input.propertyUrl}}"
+        habitId: extract-property-details
+        inputKey: spread
+        collectResults: true
+
+  - id: generate-step
+    type: action
+    data:
+      label: Generate Social Posts
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{extract-step.results[0].output}}"
+        habitId: generate-property-posts
+        inputKey: spread
+        collectResults: true
+
+  - id: save-property
+    type: bits
+    data:
+      label: Save Property to Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: rem_marketing_properties
+        document:
+          propertyUrl: "{{extract-step.results[0].output.propertyUrl}}"
+          title: "{{extract-step.results[0].output.title}}"
+          address: "{{extract-step.results[0].output.address}}"
+          price: "{{extract-step.results[0].output.price}}"
+          bedrooms: "{{extract-step.results[0].output.bedrooms}}"
+          bathrooms: "{{extract-step.results[0].output.bathrooms}}"
+          sqft: "{{extract-step.results[0].output.sqft}}"
+          propertyType: "{{extract-step.results[0].output.propertyType}}"
+          listingType: "{{extract-step.results[0].output.listingType}}"
+          description: "{{extract-step.results[0].output.description}}"
+          highlights: "{{extract-step.results[0].output.highlights}}"
+          twitter: "{{generate-step.results[0].output.twitter}}"
+          linkedin: "{{generate-step.results[0].output.linkedin}}"
+          status: "draft"
+          scheduledAt: ""
+          scheduleTimezone: "UTC"
+          createdAt: "{{habits.input.createdAt}}"
+
+edges:
+  - source: extract-step
+    target: generate-step
+  - source: generate-step
+    target: save-property
+
+output:
+  propertyId: "{{save-property.id}}"
+  status: "draft"
+  propertyUrl: "{{extract-step.results[0].output.propertyUrl}}"
+  title: "{{extract-step.results[0].output.title}}"
+  address: "{{extract-step.results[0].output.address}}"
+  price: "{{extract-step.results[0].output.price}}"
+  bedrooms: "{{extract-step.results[0].output.bedrooms}}"
+  bathrooms: "{{extract-step.results[0].output.bathrooms}}"
+  sqft: "{{extract-step.results[0].output.sqft}}"
+  propertyType: "{{extract-step.results[0].output.propertyType}}"
+  listingType: "{{extract-step.results[0].output.listingType}}"
+  description: "{{extract-step.results[0].output.description}}"
+  highlights: "{{extract-step.results[0].output.highlights}}"
+  twitter: "{{generate-step.results[0].output.twitter}}"
+  linkedin: "{{generate-step.results[0].output.linkedin}}"

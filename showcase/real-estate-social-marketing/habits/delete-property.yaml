@@ -1,0 +1,28 @@
+id: delete-property
+name: Delete Property
+description: Deletes a property record from the database by ID.
+
+input:
+  - id: propertyId
+    type: string
+    required: true
+    label: Property ID
+
+nodes:
+  - id: delete-record
+    type: bits
+    data:
+      label: Delete Property
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: deleteDoc
+      params:
+        collection: rem_marketing_properties
+        id: "{{habits.input.propertyId}}"
+
+edges: []
+
+output:
+  deleted: "{{delete-record.deleted}}"
+  propertyId: "{{habits.input.propertyId}}"

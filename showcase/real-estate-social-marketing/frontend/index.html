@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real Estate Social Marketing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 8s ease-in-out infinite',
+            'scan': 'scan 2.5s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --ha-bg-base: #0f172a;
+      --ha-bg-surface: #1e293b;
+      --ha-accent-sky: #38bdf8;
+      --ha-accent-emerald: #34d399;
+      --ha-danger: #ef4444;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes scan {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+    @keyframes gradient-rotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(14px) scale(0.97); filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0) scale(1);   filter: blur(0); }
+    }
+    @keyframes grid-pulse {
+      0%, 100% { opacity: 0.03; }
+      50%       { opacity: 0.07; }
+    }
+    @keyframes particle-float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+      25%       { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+      50%       { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+      75%       { transform: translateY(-30px) translateX(15px); opacity: 0.5; }
+    }
+    @keyframes status-glow {
+      0%, 100% { opacity: 0.7; }
+      50%       { opacity: 1; }
+    }
+
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: grid-pulse 4s ease-in-out infinite;
+    }
+    .glass-card {
+      background: rgba(10, 14, 26, 0.88);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+    }
+    .glass-inner {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.12);
+    }
+    .neon-border { position: relative; }
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 1.25rem;
+      padding: 2px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1, #22d3ee);
+      background-size: 300% 300%;
+      animation: gradient-rotate 6s linear infinite;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .neon-border > * { position: relative; z-index: 1; }
+
+    .input-glow:focus {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3), 0 0 18px rgba(56, 189, 248, 0.12);
+    }
+    .input-error {
+      border-color: rgba(248, 113, 113, 0.6) !important;
+      box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15);
+    }
+
+    .btn-primary {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(14, 165, 233, 0.35); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.55; transform: none; cursor: not-allowed; }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669, #10b981);
+      transition: all 0.3s ease;
+    }
+    .btn-success:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(16, 185, 129, 0.35); }
+    .btn-success:disabled { opacity: 0.55; transform: none; cursor: not-allowed; }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      transition: all 0.3s ease;
+    }
+    .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(239, 68, 68, 0.35); }
+
+    .btn-secondary {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      transition: all 0.3s ease;
+    }
+    .btn-secondary:hover { transform: translateY(-1px); background: rgba(56, 189, 248, 0.14); box-shadow: 0 6px 20px rgba(56, 189, 248, 0.15); }
+    .btn-secondary:disabled { opacity: 0.55; transform: none; cursor: not-allowed; }
+
+    .tab-active {
+      background: linear-gradient(135deg, rgba(14,165,233,0.2), rgba(99,102,241,0.2));
+      border-bottom: 2px solid #38bdf8;
+      color: #e0f2fe;
+    }
+    .tab-inactive {
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-inactive:hover { color: #94a3b8; border-bottom-color: rgba(56,189,248,0.3); }
+
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .result-reveal { animation: reveal 0.45s ease-out forwards; }
+    .status-pulse { animation: status-glow 1.5s ease-in-out infinite; }
+
+    .property-item {
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .property-item:hover {
+      background: rgba(56, 189, 248, 0.06);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .badge-draft    { background: rgba(96,165,250,0.15); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+    .badge-pending  { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .badge-published{ background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+
+    .platform-tab-active {
+      background: rgba(14,165,233,0.2);
+      border-color: rgba(56,189,248,0.5);
+      color: #e0f2fe;
+    }
+
+    .post-scroll {
+      max-height: min(50vh, 420px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .add-post-preview {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .add-post-preview-text {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.45); }
+
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .confirm-overlay.hidden { display: none; }
+    .confirm-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(8px);
+    }
+    .confirm-dialog {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 26rem;
+      padding: 1.5rem;
+      border-radius: 1.25rem;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.12);
+    }
+    .confirm-actions {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 0.625rem;
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 480px) {
+      .confirm-dialog { padding: 1.75rem; }
+      .confirm-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+      }
+      .confirm-actions button { width: auto; min-width: 6.5rem; }
+    }
+    body.confirm-open { overflow: hidden; }
+  </style>
+</head>
+<body class="bg-slate-950 min-h-screen font-sans text-slate-200">
+
+  <div class="fixed inset-0 bg-grid pointer-events-none"></div>
+  <div class="fixed inset-0 bg-gradient-to-br from-sky-950/30 via-slate-950 to-indigo-950/25 pointer-events-none"></div>
+  <div id="particles" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+  <div class="fixed top-0 left-1/4 w-[600px] h-[600px] bg-sky-500/5 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
+  <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/6 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style="animation-delay:2.5s;"></div>
+
+  <div class="relative z-10 max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="mb-10 neon-border rounded-2xl glass-card p-6 md:p-8 overflow-hidden relative">
+      <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div class="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent animate-scan"></div>
+      </div>
+      <div class="flex flex-col gap-4 relative">
+        <div class="flex justify-center sm:hidden">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/30">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="text-center sm:text-left flex-1 min-w-0">
+            <div class="flex items-center justify-center sm:justify-start gap-3 mb-3">
+              <div class="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 items-center justify-center shadow-lg shadow-sky-500/30 flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent leading-tight">
+                Real Estate Social Marketing
+              </h1>
+            </div>
+            <p class="text-slate-400 text-xs sm:text-sm tracking-wider uppercase font-medium">Property Listings → AI Posts → Multi-Platform Publishing</p>
+            <p class="text-slate-500 text-xs mt-1">Powered by Habits · OpenAI · Twitter/X · LinkedIn</p>
+          </div>
+          <div class="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right flex-shrink-0">
+            <div id="cron-status" class="text-xs text-slate-500">Scheduler idle</div>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-xs text-emerald-400/80 font-medium">Showcase active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="glass-card rounded-2xl overflow-hidden">
+      <div class="flex border-b border-slate-800/60">
+        <button id="tab-add-btn" onclick="switchTab('add')"
+          class="flex-1 py-3 px-2 sm:px-5 text-sm font-semibold tab-active flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+          </svg>
+          <span class="hidden sm:inline">Add Property</span>
+          <span class="sm:hidden">Add</span>
+        </button>
+        <button id="tab-properties-btn" onclick="switchTab('properties')"
+          class="flex-1 py-3 px-2 sm:px-5 text-sm font-semibold tab-inactive flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+          </svg>
+          <span class="hidden sm:inline">Properties</span>
+          <span class="sm:hidden">List</span>
+        </button>
+        <button id="tab-scheduled-btn" onclick="switchTab('scheduled')"
+          class="flex-1 py-3 px-2 sm:px-5 text-sm font-semibold tab-inactive flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="hidden sm:inline">Scheduled Queue</span>
+          <span class="sm:hidden">Queue</span>
+        </button>
+      </div>
+
+      <!-- TAB: Add Property -->
+      <div id="tab-add" class="p-6 md:p-8">
+        <div class="max-w-2xl mx-auto">
+          <h2 class="text-lg font-bold text-white mb-1">Add Listing URL</h2>
+          <p class="text-slate-500 text-sm mb-6">
+            Paste a property listing link — AI extracts details, generates Twitter/X and LinkedIn posts, and saves a draft.
+          </p>
+
+          <form id="addForm" onsubmit="handleAddProperty(event)" novalidate>
+            <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">
+              Property URL <span class="text-sky-400">*</span>
+            </label>
+            <div class="relative mb-2">
+              <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+              </div>
+              <input type="url" id="propertyUrl" placeholder="https://example.com/listing/123"
+                class="w-full pl-10 pr-4 py-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 transition-all input-glow text-sm" />
+            </div>
+            <p id="err-url" class="hidden mb-4 text-xs text-red-400 flex items-center gap-1">
+              <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <span id="err-url-text"></span>
+            </p>
+
+            <button type="submit" id="add-btn"
+              class="btn-primary w-full text-white font-bold py-3.5 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/50 shadow-lg shadow-sky-500/20">
+              <span id="add-btn-content" class="flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Extract Details &amp; Generate Posts
+              </span>
+            </button>
+          </form>
+
+          <div id="add-status" class="mt-4 hidden"></div>
+
+          <div id="add-result" class="hidden mt-6 result-reveal">
+            <div class="glass-inner rounded-2xl p-5 border border-emerald-500/20">
+              <div class="flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <h3 class="text-base font-bold text-white">Property added successfully</h3>
+              </div>
+              <div id="add-result-body" class="min-w-0 overflow-hidden"></div>
+              <button type="button" onclick="switchTab('properties')"
+                class="mt-4 w-full py-2.5 text-sm font-semibold text-sky-300 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all">
+                View in Properties →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Properties -->
+      <div id="tab-properties" class="p-6 md:p-8 hidden">
+        <!-- List view -->
+        <div id="properties-list-view" class="view-panel active">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-white">Draft Properties</h2>
+              <p class="text-slate-500 text-sm mt-0.5">Review AI-generated posts before publishing or scheduling.</p>
+            </div>
+            <button type="button" onclick="loadProperties()" id="properties-refresh-btn"
+              class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-sky-400 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all self-start">
+              <svg id="properties-refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-sky-400" id="count-drafts">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Drafts</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center">
+              <div class="text-2xl font-bold text-amber-400" id="count-scheduled">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Scheduled</div>
+            </div>
+            <div class="glass-inner rounded-xl p-4 text-center col-span-2 sm:col-span-1">
+              <div class="text-2xl font-bold text-emerald-400" id="count-ready">—</div>
+              <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide">Ready to process</div>
+            </div>
+          </div>
+
+          <div id="properties-status" class="mb-4 hidden"></div>
+          <div id="properties-empty" class="hidden glass-inner rounded-2xl p-10 text-center">
+            <svg class="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+            </svg>
+            <p class="text-slate-400 text-sm font-medium">No draft properties yet</p>
+            <p class="text-slate-600 text-xs mt-2">Add a listing URL in the <button type="button" onclick="switchTab('add')" class="text-sky-400 hover:underline">Add Property</button> tab.</p>
+          </div>
+          <div id="properties-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Process view -->
+        <div id="properties-process-view" class="view-panel">
+          <div class="flex items-center gap-3 mb-6">
+            <button type="button" onclick="closeProcessView()"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-400 border border-sky-500/30 rounded-xl hover:bg-sky-500/10 transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Back
+            </button>
+            <h2 class="text-xl font-bold text-white">Process Property</h2>
+          </div>
+
+          <div id="process-loading" class="text-center py-12 text-slate-500">
+            <svg class="w-8 h-8 animate-spin mx-auto mb-3 text-sky-400" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Loading property details…
+          </div>
+
+          <div id="process-error" class="hidden text-center py-8 text-red-400 text-sm"></div>
+
+          <div id="process-content" class="hidden space-y-5 result-reveal">
+            <div id="process-details" class="glass-inner rounded-2xl p-5 md:p-6"></div>
+
+            <div class="glass-inner rounded-2xl p-5 md:p-6">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 class="text-base font-bold text-white">Generated Social Posts</h3>
+                <div class="flex rounded-xl overflow-hidden border border-slate-700/50">
+                  <button type="button" id="platform-twitter" onclick="setPlatform('twitter')"
+                    class="platform-tab-active px-4 py-2 text-xs font-semibold border-r border-slate-700/50 transition-all">
+                    Twitter / X
+                  </button>
+                  <button type="button" id="platform-linkedin" onclick="setPlatform('linkedin')"
+                    class="px-4 py-2 text-xs font-semibold text-slate-400 border-slate-700/50 transition-all hover:text-slate-200">
+                    LinkedIn
+                  </button>
+                </div>
+              </div>
+              <div id="post-twitter" class="post-scroll">
+                <pre id="post-twitter-text" class="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed"></pre>
+              </div>
+              <div id="post-linkedin" class="post-scroll hidden">
+                <pre id="post-linkedin-text" class="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed"></pre>
+              </div>
+            </div>
+
+            <div class="glass-inner rounded-2xl p-5 md:p-6">
+              <h3 class="text-base font-bold text-white mb-4">Publish Options</h3>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <button type="button" id="publish-now-btn" onclick="publishSelected()"
+                    class="btn-success w-full text-white font-bold py-3 px-5 rounded-xl shadow-lg shadow-emerald-500/20">
+                    <span id="publish-now-content" class="flex items-center justify-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                      </svg>
+                      Publish Now
+                    </span>
+                  </button>
+                  <p class="text-xs text-slate-500 mt-2 text-center">Posts immediately to Twitter/X and LinkedIn</p>
+                </div>
+                <div>
+                  <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Schedule Date &amp; Time</label>
+                  <input type="datetime-local" id="scheduleAt"
+                    class="w-full px-3.5 py-3 mb-2 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white focus:outline-none focus:border-sky-500/60 input-glow text-sm" />
+                  <label class="block text-slate-400 text-xs mb-1.5 font-medium tracking-wide uppercase">Timezone</label>
+                  <select id="scheduleTimezone"
+                    class="w-full px-3.5 py-3 mb-3 bg-slate-800/60 border border-slate-600/40 rounded-xl text-white focus:outline-none focus:border-sky-500/60 input-glow text-sm">
+                    <option value="UTC">UTC</option>
+                  </select>
+                  <button type="button" id="schedule-btn" onclick="setSchedule()"
+                    class="w-full py-3 px-5 text-sm font-bold text-amber-200 border border-amber-500/40 rounded-xl hover:bg-amber-500/10 transition-all">
+                    <span id="schedule-btn-content">Set Schedule</span>
+                  </button>
+                </div>
+              </div>
+              <div id="process-action-status" class="mt-4 hidden"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Scheduled -->
+      <div id="tab-scheduled" class="p-6 md:p-8 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-white">Scheduled Queue</h2>
+            <p class="text-slate-500 text-sm mt-0.5">Pending posts — auto-checked every 3 minutes.</p>
+          </div>
+          <button type="button" onclick="refreshScheduled()" id="scheduled-refresh-btn"
+            class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-cyan-300 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/10 transition-all self-start">
+            <svg id="scheduled-refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div class="glass-inner rounded-xl p-4 mb-5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="flex items-center gap-3 flex-1">
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">Cron monitor</p>
+              <p id="cron-detail" class="text-xs text-slate-500 mt-0.5">Checking every 3 minutes…</p>
+            </div>
+          </div>
+          <div class="text-xs text-slate-500 sm:text-right">
+            <div>Last check: <span id="cron-last-check" class="text-slate-400">—</span></div>
+            <div>Next run: <span id="cron-next-run" class="text-cyan-400/80">—</span></div>
+          </div>
+        </div>
+
+        <div id="scheduled-status" class="mb-4 hidden"></div>
+        <div id="scheduled-empty" class="hidden glass-inner rounded-2xl p-10 text-center">
+          <svg class="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-slate-400 text-sm font-medium">No scheduled posts</p>
+          <p class="text-slate-600 text-xs mt-2">Schedule a property from the Properties tab to see it here.</p>
+        </div>
+        <div id="scheduled-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div id="confirm-overlay" class="confirm-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <div class="confirm-backdrop" data-confirm-backdrop aria-hidden="true"></div>
+    <div id="confirm-dialog" class="confirm-dialog glass-card result-reveal">
+      <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+        <div id="confirm-icon-wrap" class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center mx-auto sm:mx-0">
+          <svg id="confirm-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0 text-center sm:text-left">
+          <h3 id="confirm-title" class="text-lg font-bold text-white leading-snug">Are you sure?</h3>
+          <p id="confirm-message" class="mt-2 text-sm text-slate-400 leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" id="confirm-cancel-btn"
+          class="btn-secondary w-full sm:w-auto text-sky-300 font-semibold py-2.5 px-5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+          Cancel
+        </button>
+        <button type="button" id="confirm-ok-btn"
+          class="btn-primary w-full sm:w-auto text-white font-semibold py-2.5 px-5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Particles ──
+    (function initParticles() {
+      const c = document.getElementById('particles');
+      for (let i = 0; i < 18; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation:particle-float ${3+Math.random()*4}s ease-in-out infinite;animation-delay:${Math.random()*4}s`;
+        c.appendChild(p);
+      }
+    })();
+
+    // ── State ──
+    let currentTab = 'add';
+    let addFormSession = 0;
+    let selectedPropertyId = null;
+    let selectedProperty = null;
+    let activePlatform = 'twitter';
+    let propertiesCache = [];
+    let scheduledCache = [];
+    let cronTimeout = null;
+    let lastCronCheckAt = null;
+    const CRON_MS = 3 * 60 * 1000;
+
+    const TAB_BTN = 'flex-1 py-3 px-2 sm:px-5 text-sm font-semibold flex items-center justify-center gap-1.5';
+    const URL_RE = /^https?:\/\/.+/i;
+
+    // ── Helpers ──
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function statusHtml(type, msg) {
+      const styles = {
+        loading: 'bg-slate-800/50 border-slate-600/30 text-slate-300 status-pulse',
+        success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+        error:   'bg-red-500/10 border-red-500/30 text-red-300',
+        info:    'bg-sky-500/10 border-sky-500/30 text-sky-300',
+      };
+      const icons = {
+        loading: `<svg class="w-4 h-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`,
+        success: `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`,
+        error:   `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`,
+        info:    `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+      };
+      return `<div class="p-3 rounded-xl text-sm border flex items-center gap-2 ${styles[type]}">${icons[type]}<span>${msg}</span></div>`;
+    }
+
+    function showStatus(elId, type, msg) {
+      const el = document.getElementById(elId);
+      el.innerHTML = statusHtml(type, msg);
+      el.classList.remove('hidden');
+    }
+
+    function hideStatus(elId) {
+      document.getElementById(elId).classList.add('hidden');
+    }
+
+    const CONFIRM_VARIANTS = {
+      default: {
+        iconWrap: 'bg-sky-500/15',
+        iconColor: 'text-sky-400',
+        dialogBorder: 'border-sky-500/20',
+        confirmBtn: 'btn-primary',
+        iconPath: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+      },
+      danger: {
+        iconWrap: 'bg-red-500/15',
+        iconColor: 'text-red-400',
+        dialogBorder: 'border-red-500/25',
+        confirmBtn: 'btn-danger',
+        iconPath: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+      },
+      publish: {
+        iconWrap: 'bg-emerald-500/15',
+        iconColor: 'text-emerald-400',
+        dialogBorder: 'border-emerald-500/25',
+        confirmBtn: 'btn-success',
+        iconPath: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12',
+      },
+      warning: {
+        iconWrap: 'bg-amber-500/15',
+        iconColor: 'text-amber-400',
+        dialogBorder: 'border-amber-500/25',
+        confirmBtn: 'btn-primary',
+        iconPath: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+      },
+    };
+
+    function showConfirm({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', variant = 'default' }) {
+      const v = CONFIRM_VARIANTS[variant] || CONFIRM_VARIANTS.default;
+      const overlay = document.getElementById('confirm-overlay');
+      const dialog = document.getElementById('confirm-dialog');
+      const titleEl = document.getElementById('confirm-title');
+      const messageEl = document.getElementById('confirm-message');
+      const confirmBtn = document.getElementById('confirm-ok-btn');
+      const cancelBtn = document.getElementById('confirm-cancel-btn');
+      const iconWrap = document.getElementById('confirm-icon-wrap');
+      const icon = document.getElementById('confirm-icon');
+
+      titleEl.textContent = title || 'Are you sure?';
+      messageEl.textContent = message || '';
+      confirmBtn.textContent = confirmLabel;
+      cancelBtn.textContent = cancelLabel;
+
+      iconWrap.className = `flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center mx-auto sm:mx-0 ${v.iconWrap}`;
+      icon.className = `w-6 h-6 ${v.iconColor}`;
+      icon.querySelector('path').setAttribute('d', v.iconPath);
+      dialog.className = `confirm-dialog glass-card result-reveal border ${v.dialogBorder}`;
+      confirmBtn.className = `${v.confirmBtn} w-full sm:w-auto text-white font-semibold py-2.5 px-5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50`;
+
+      return new Promise((resolve) => {
+        const close = (result) => {
+          overlay.classList.add('hidden');
+          overlay.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('confirm-open');
+          document.removeEventListener('keydown', onKeydown);
+          confirmBtn.onclick = null;
+          cancelBtn.onclick = null;
+          backdrop.onclick = null;
+          resolve(result);
+        };
+
+        const onKeydown = (e) => {
+          if (e.key === 'Escape') close(false);
+        };
+
+        const backdrop = overlay.querySelector('[data-confirm-backdrop]');
+        confirmBtn.onclick = () => close(true);
+        cancelBtn.onclick = () => close(false);
+        backdrop.onclick = () => close(false);
+
+        document.body.classList.add('confirm-open');
+        overlay.classList.remove('hidden');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.addEventListener('keydown', onKeydown);
+        (variant === 'danger' ? cancelBtn : confirmBtn).focus();
+      });
+    }
+
+    async function apiCall(endpoint, body = {}) {
+      const res = await fetch('/api/' + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data?.error || data?.message || (typeof data === 'string' ? data : `Request failed (${res.status})`);
+        throw new Error(msg);
+      }
+      return data?.output !== undefined ? data.output : data;
+    }
+
+    function propertyId(p) {
+      return p?._id || p?.id || p?.propertyId || '';
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return esc(String(iso));
+      return d.toLocaleString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit',
+      });
+    }
+
+    function parseHighlights(val) {
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (_) { /* ignore */ }
+        return val.split(/[,;•\n]/).map(s => s.trim()).filter(Boolean);
+      }
+      return [];
+    }
+
+    function statusBadge(status) {
+      const s = (status || 'draft').toLowerCase();
+      const map = { draft: 'badge-draft', pending: 'badge-pending', published: 'badge-published' };
+      return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${map[s] || 'badge-draft'}">${esc(s)}</span>`;
+    }
+
+    function listingTypeBadge(listingType) {
+      const t = (listingType || '').trim();
+      if (!t) return '';
+      const lower = t.toLowerCase();
+      const isRent = lower === 'rent';
+      const cls = isRent ? 'bg-violet-500/15 text-violet-300 border-violet-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+      return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold border ${cls}">${esc(t)}</span>`;
+    }
+
+    function renderPropertyDetails(p, compact) {
+      const highlights = parseHighlights(p.highlights);
+      const highlightsHtml = highlights.length
+        ? `<ul class="mt-3 space-y-1">${highlights.map(h =>
+            `<li class="text-xs text-slate-400 flex gap-2"><span class="text-cyan-400 flex-shrink-0">•</span><span>${esc(h)}</span></li>`
+          ).join('')}</ul>`
+        : '';
+
+      const grid = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+          ${p.price ? `<div class="glass-inner rounded-lg p-3 text-center"><div class="text-xs text-slate-500 uppercase">Price</div><div class="text-sm font-bold text-sky-300 mt-1">${esc(p.price)}</div></div>` : ''}
+          ${p.bedrooms ? `<div class="glass-inner rounded-lg p-3 text-center"><div class="text-xs text-slate-500 uppercase">Beds</div><div class="text-sm font-bold text-white mt-1">${esc(p.bedrooms)}</div></div>` : ''}
+          ${p.bathrooms ? `<div class="glass-inner rounded-lg p-3 text-center"><div class="text-xs text-slate-500 uppercase">Baths</div><div class="text-sm font-bold text-white mt-1">${esc(p.bathrooms)}</div></div>` : ''}
+          ${p.sqft ? `<div class="glass-inner rounded-lg p-3 text-center"><div class="text-xs text-slate-500 uppercase">Size</div><div class="text-sm font-bold text-white mt-1">${esc(p.sqft)}</div></div>` : ''}
+        </div>`;
+
+      if (compact) {
+        return `
+          <p class="text-sm text-slate-400 line-clamp-2">${esc(p.description || '')}</p>
+          <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-500">
+            ${listingTypeBadge(p.listingType)}
+            ${p.address ? `<span>${esc(p.address)}</span>` : ''}
+            ${p.price ? `<span class="text-sky-400 font-semibold">${esc(p.price)}</span>` : ''}
+          </div>`;
+      }
+
+      return `
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-lg font-bold text-white">${esc(p.title || 'Untitled property')}</h3>
+              ${listingTypeBadge(p.listingType)}
+            </div>
+            ${p.address ? `<p class="text-sm text-slate-400 mt-1">${esc(p.address)}</p>` : ''}
+            ${p.propertyType ? `<p class="text-xs text-cyan-500/80 mt-1 uppercase tracking-wider">${esc(p.propertyType)}</p>` : ''}
+          </div>
+          ${statusBadge(p.status)}
+        </div>
+        ${p.propertyUrl ? `<a href="${esc(p.propertyUrl)}" target="_blank" rel="noopener" class="text-xs text-sky-400 hover:underline break-all">${esc(p.propertyUrl)}</a>` : ''}
+        ${p.description ? `<p class="text-sm text-slate-300 leading-relaxed mt-4">${esc(p.description)}</p>` : ''}
+        ${highlightsHtml}
+        ${grid}`;
+    }
+
+    // ── Tabs ──
+    function switchTab(tab) {
+      const prevTab = currentTab;
+      currentTab = tab;
+      const isAdd = tab === 'add';
+      const isProps = tab === 'properties';
+      const isSched = tab === 'scheduled';
+
+      document.getElementById('tab-add').classList.toggle('hidden', !isAdd);
+      document.getElementById('tab-properties').classList.toggle('hidden', !isProps);
+      document.getElementById('tab-scheduled').classList.toggle('hidden', !isSched);
+
+      document.getElementById('tab-add-btn').className = `${TAB_BTN} ${isAdd ? 'tab-active' : 'tab-inactive'}`;
+      document.getElementById('tab-properties-btn').className = `${TAB_BTN} ${isProps ? 'tab-active' : 'tab-inactive'}`;
+      document.getElementById('tab-scheduled-btn').className = `${TAB_BTN} ${isSched ? 'tab-active' : 'tab-inactive'}`;
+
+      if (isProps) {
+        closeProcessView(false);
+        loadProperties();
+      }
+      if (isSched) {
+        startCronPolling();
+      } else {
+        stopCronPolling();
+      }
+
+      if (isAdd && prevTab !== 'add') {
+        resetAddTab();
+      }
+    }
+
+    function resetAddTab() {
+      addFormSession++;
+      const input = document.getElementById('propertyUrl');
+      input.value = '';
+      input.classList.remove('input-error');
+      document.getElementById('err-url').classList.add('hidden');
+      document.getElementById('add-result').classList.add('hidden');
+      document.getElementById('add-result-body').innerHTML = '';
+      hideStatus('add-status');
+      const btn = document.getElementById('add-btn');
+      btn.disabled = false;
+      document.getElementById('add-btn-content').innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        Extract Details &amp; Generate Posts`;
+    }
+
+    // ── Add Property ──
+    async function handleAddProperty(e) {
+      e.preventDefault();
+      const input = document.getElementById('propertyUrl');
+      const url = input.value.trim();
+      const errEl = document.getElementById('err-url');
+      const errText = document.getElementById('err-url-text');
+
+      errEl.classList.add('hidden');
+      input.classList.remove('input-error');
+
+      if (!url) {
+        input.classList.add('input-error');
+        errText.textContent = 'Property URL is required.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (!URL_RE.test(url)) {
+        input.classList.add('input-error');
+        errText.textContent = 'Enter a valid http(s) URL.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('add-btn');
+      btn.disabled = true;
+      document.getElementById('add-result').classList.add('hidden');
+      document.getElementById('add-btn-content').innerHTML = `
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        Extracting &amp; generating…`;
+      showStatus('add-status', 'loading', 'Fetching listing page, extracting details with AI, and generating social posts. This may take a minute.');
+
+      const session = addFormSession;
+      try {
+        const output = await apiCall('add-property', {
+          propertyUrl: url,
+          createdAt: new Date().toISOString(),
+        });
+
+        if (session !== addFormSession) return;
+
+        hideStatus('add-status');
+        input.value = '';
+        document.getElementById('add-result-body').innerHTML = renderPropertyDetails(output, false) + `
+          <div class="mt-4 pt-4 border-t border-slate-700/40 grid sm:grid-cols-2 gap-3 min-w-0">
+            <div class="add-post-preview">
+              <p class="text-xs text-slate-500 uppercase mb-1">Twitter / X preview</p>
+              <div class="glass-inner rounded-lg p-3 add-post-preview">
+                <p class="text-xs text-slate-400 whitespace-pre-wrap break-words line-clamp-4 add-post-preview-text">${esc(output.twitter || '')}</p>
+              </div>
+            </div>
+            <div class="add-post-preview">
+              <p class="text-xs text-slate-500 uppercase mb-1">LinkedIn preview</p>
+              <div class="glass-inner rounded-lg p-3 add-post-preview">
+                <p class="text-xs text-slate-400 whitespace-pre-wrap break-words line-clamp-4 add-post-preview-text">${esc(output.linkedin || '')}</p>
+              </div>
+            </div>
+          </div>`;
+        document.getElementById('add-result').classList.remove('hidden');
+        loadProperties(true);
+        loadScheduledCount();
+      } catch (err) {
+        if (session !== addFormSession) return;
+        showStatus('add-status', 'error', esc(err.message));
+      } finally {
+        if (session !== addFormSession) return;
+        btn.disabled = false;
+        document.getElementById('add-btn-content').innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Extract Details &amp; Generate Posts`;
+      }
+    }
+
+    // ── Properties list ──
+    function renderPropertyCard(p) {
+      const id = propertyId(p);
+      return `
+        <article class="property-item glass-inner rounded-xl p-4 md:p-5 border border-slate-700/40 result-reveal">
+          <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <h4 class="text-base font-bold text-white truncate">${esc(p.title || 'Untitled')}</h4>
+                ${listingTypeBadge(p.listingType)}
+                ${statusBadge(p.status)}
+              </div>
+              ${renderPropertyDetails(p, true)}
+            </div>
+            <div class="flex sm:flex-col gap-2 flex-shrink-0">
+              <button type="button" onclick="openProcessView('${esc(id)}')"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-sky-300 border border-sky-500/30 rounded-lg hover:bg-sky-500/15 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                Process
+              </button>
+              <button type="button" onclick="deleteProperty('${esc(id)}')"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    async function loadProperties(silent) {
+      const icon = document.getElementById('properties-refresh-icon');
+      if (!silent) {
+        icon.classList.add('animate-spin');
+        showStatus('properties-status', 'loading', 'Loading draft properties…');
+      }
+
+      try {
+        const output = await apiCall('list-properties', {});
+        propertiesCache = output.properties || output || [];
+        if (!Array.isArray(propertiesCache)) propertiesCache = [];
+
+        document.getElementById('count-drafts').textContent = String(propertiesCache.length);
+        document.getElementById('count-ready').textContent = String(propertiesCache.length);
+
+        if (!propertiesCache.length) {
+          document.getElementById('properties-empty').classList.remove('hidden');
+          document.getElementById('properties-list').innerHTML = '';
+        } else {
+          document.getElementById('properties-empty').classList.add('hidden');
+          document.getElementById('properties-list').innerHTML = propertiesCache.map(renderPropertyCard).join('');
+        }
+
+        if (!silent) hideStatus('properties-status');
+        loadScheduledCount();
+      } catch (err) {
+        if (!silent) showStatus('properties-status', 'error', esc(err.message));
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    async function loadScheduledCount() {
+      try {
+        const output = await apiCall('get-scheduled-properties', {});
+        const list = output.properties || output || [];
+        document.getElementById('count-scheduled').textContent = String(Array.isArray(list) ? list.length : 0);
+      } catch (_) {
+        document.getElementById('count-scheduled').textContent = '—';
+      }
+    }
+
+    async function deleteProperty(id) {
+      if (!await showConfirm({
+        title: 'Remove property?',
+        message: 'Remove this property?',
+        confirmLabel: 'Remove',
+        cancelLabel: 'Keep',
+        variant: 'danger',
+      })) return;
+      try {
+        await apiCall('delete-property', { propertyId: id });
+        if (selectedPropertyId === id) closeProcessView();
+        await loadProperties(true);
+        await loadScheduledCount();
+        if (currentTab === 'scheduled') await loadScheduled(true);
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    }
+
+    // ── Process view ──
+    function closeProcessView(resetTab) {
+      selectedPropertyId = null;
+      selectedProperty = null;
+      document.getElementById('properties-list-view').classList.add('active');
+      document.getElementById('properties-process-view').classList.remove('active');
+      document.getElementById('process-content').classList.add('hidden');
+      document.getElementById('process-loading').classList.remove('hidden');
+      document.getElementById('process-error').classList.add('hidden');
+      hideStatus('process-action-status');
+      if (resetTab !== false) { /* keep tab */ }
+    }
+
+    async function openProcessView(id) {
+      selectedPropertyId = id;
+      selectedProperty = null;
+      document.getElementById('properties-list-view').classList.remove('active');
+      document.getElementById('properties-process-view').classList.add('active');
+      document.getElementById('process-loading').classList.remove('hidden');
+      document.getElementById('process-content').classList.add('hidden');
+      document.getElementById('process-error').classList.add('hidden');
+      hideStatus('process-action-status');
+
+      try {
+        const output = await apiCall('get-property', { propertyId: id });
+        selectedProperty = output.property || output;
+        if (!selectedProperty) throw new Error('Property not found.');
+
+        document.getElementById('process-details').innerHTML = renderPropertyDetails(selectedProperty, false);
+        document.getElementById('post-twitter-text').textContent = selectedProperty.twitter || '(No Twitter post generated)';
+        document.getElementById('post-linkedin-text').textContent = selectedProperty.linkedin || '(No LinkedIn post generated)';
+
+        if (selectedProperty.scheduledAt) {
+          const d = new Date(selectedProperty.scheduledAt);
+          if (!isNaN(d.getTime())) {
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('scheduleAt').value =
+              `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          }
+        } else {
+          document.getElementById('scheduleAt').value = '';
+        }
+        document.getElementById('scheduleTimezone').value = 'UTC';
+
+        setPlatform('twitter');
+        document.getElementById('process-loading').classList.add('hidden');
+        document.getElementById('process-content').classList.remove('hidden');
+      } catch (err) {
+        document.getElementById('process-loading').classList.add('hidden');
+        document.getElementById('process-error').classList.remove('hidden');
+        document.getElementById('process-error').textContent = err.message;
+      }
+    }
+
+    function setPlatform(platform) {
+      activePlatform = platform;
+      const tw = document.getElementById('platform-twitter');
+      const li = document.getElementById('platform-linkedin');
+      const twPost = document.getElementById('post-twitter');
+      const liPost = document.getElementById('post-linkedin');
+
+      if (platform === 'twitter') {
+        tw.className = 'platform-tab-active px-4 py-2 text-xs font-semibold border-r border-slate-700/50 transition-all';
+        li.className = 'px-4 py-2 text-xs font-semibold text-slate-400 transition-all hover:text-slate-200';
+        twPost.classList.remove('hidden');
+        liPost.classList.add('hidden');
+      } else {
+        li.className = 'platform-tab-active px-4 py-2 text-xs font-semibold transition-all';
+        tw.className = 'px-4 py-2 text-xs font-semibold text-slate-400 border-r border-slate-700/50 transition-all hover:text-slate-200';
+        liPost.classList.remove('hidden');
+        twPost.classList.add('hidden');
+      }
+    }
+
+    async function publishSelected() {
+      if (!selectedPropertyId) return;
+      if (!await showConfirm({
+        title: 'Publish now?',
+        message: 'Publish to Twitter/X and LinkedIn now?',
+        confirmLabel: 'Publish',
+        variant: 'publish',
+      })) return;
+
+      const btn = document.getElementById('publish-now-btn');
+      btn.disabled = true;
+      document.getElementById('publish-now-content').innerHTML = `
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        Publishing…`;
+      showStatus('process-action-status', 'loading', 'Posting to Twitter/X and LinkedIn…');
+
+      try {
+        await apiCall('publish-property-now', { propertyId: selectedPropertyId });
+        showStatus('process-action-status', 'success', 'Published successfully!');
+        closeProcessView();
+        await loadProperties(true);
+        await loadScheduledCount();
+      } catch (err) {
+        showStatus('process-action-status', 'error', esc(err.message));
+      } finally {
+        btn.disabled = false;
+        document.getElementById('publish-now-content').innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          Publish Now`;
+      }
+    }
+
+    async function setSchedule() {
+      if (!selectedPropertyId) return;
+      const raw = document.getElementById('scheduleAt').value;
+      if (!raw) {
+        showStatus('process-action-status', 'error', 'Pick a date and time for scheduling.');
+        return;
+      }
+      const scheduledAt = new Date(raw).toISOString();
+      const scheduleTimezone = document.getElementById('scheduleTimezone').value || 'UTC';
+
+      const btn = document.getElementById('schedule-btn');
+      btn.disabled = true;
+      document.getElementById('schedule-btn-content').textContent = 'Saving…';
+      showStatus('process-action-status', 'loading', 'Saving schedule…');
+
+      try {
+        await apiCall('set-property-schedule', {
+          propertyId: selectedPropertyId,
+          scheduledAt,
+          scheduleTimezone,
+        });
+        showStatus('process-action-status', 'success', 'Schedule saved — property moved to pending queue.');
+        closeProcessView();
+        switchTab('scheduled');
+      } catch (err) {
+        showStatus('process-action-status', 'error', esc(err.message));
+      } finally {
+        btn.disabled = false;
+        document.getElementById('schedule-btn-content').textContent = 'Set Schedule';
+      }
+    }
+
+    // ── Scheduled queue ──
+    function renderScheduledCard(p) {
+      const id = propertyId(p);
+      return `
+        <article class="property-item glass-inner rounded-xl p-4 md:p-5 border border-amber-500/20 result-reveal">
+          <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <h4 class="text-base font-bold text-white">${esc(p.title || 'Untitled')}</h4>
+                ${listingTypeBadge(p.listingType)}
+                ${statusBadge('pending')}
+              </div>
+              <p class="text-sm text-slate-300 leading-relaxed">${esc(p.description || 'No description')}</p>
+              <div class="flex flex-wrap gap-3 mt-3 text-xs">
+                ${p.address ? `<span class="text-slate-500">${esc(p.address)}</span>` : ''}
+                ${p.price ? `<span class="text-sky-400 font-semibold">${esc(p.price)}</span>` : ''}
+                <span class="text-amber-400/90 font-medium flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  ${formatDate(p.scheduledAt)}
+                  ${p.scheduleTimezone ? ` (${esc(p.scheduleTimezone)})` : ''}
+                </span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-1 gap-2 w-full sm:w-auto flex-shrink-0">
+              <button type="button" onclick="publishScheduled('${esc(id)}')"
+                class="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold text-emerald-300 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/10 transition-all whitespace-nowrap">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <span class="hidden min-[400px]:inline">Publish Now</span>
+                <span class="min-[400px]:hidden">Publish</span>
+              </button>
+              <button type="button" onclick="returnScheduledToDraft('${esc(id)}')"
+                class="btn-secondary flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold text-sky-300 rounded-lg whitespace-nowrap">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/>
+                </svg>
+                <span class="hidden min-[400px]:inline">Return to Drafts</span>
+                <span class="min-[400px]:hidden">To Drafts</span>
+              </button>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    function updateCronDisplay(output = {}) {
+      const published = output.published;
+      const totalPending = output.totalPending;
+
+      if (lastCronCheckAt) {
+        const checkedAt = new Date(lastCronCheckAt).toISOString();
+        const nextExec = new Date(lastCronCheckAt + CRON_MS).toISOString();
+        document.getElementById('cron-last-check').textContent = formatDate(checkedAt);
+        document.getElementById('cron-next-run').textContent = formatDate(nextExec);
+        document.getElementById('cron-status').textContent = 'Scheduler active';
+      }
+
+      let detail = 'Checking every 3 minutes for due posts';
+      if (totalPending != null) detail += ` · ${totalPending} due`;
+      if (published != null && published > 0) detail += ` · ${published} published this run`;
+      document.getElementById('cron-detail').textContent = detail;
+    }
+
+    async function checkPendingPosts(silent) {
+      try {
+        const output = await apiCall('check-pending-posts', {});
+        lastCronCheckAt = Date.now();
+        updateCronDisplay(output);
+        return output;
+      } catch (err) {
+        if (!silent) {
+          document.getElementById('cron-detail').textContent = 'Check failed: ' + err.message;
+        }
+        return null;
+      }
+    }
+
+    async function loadScheduled(silent) {
+      try {
+        const output = await apiCall('get-scheduled-properties', {});
+        scheduledCache = output.properties || output || [];
+        if (!Array.isArray(scheduledCache)) scheduledCache = [];
+
+        document.getElementById('count-scheduled').textContent = String(scheduledCache.length);
+
+        if (!scheduledCache.length) {
+          document.getElementById('scheduled-empty').classList.remove('hidden');
+          document.getElementById('scheduled-list').innerHTML = '';
+        } else {
+          document.getElementById('scheduled-empty').classList.add('hidden');
+          document.getElementById('scheduled-list').innerHTML = scheduledCache.map(renderScheduledCard).join('');
+        }
+        return scheduledCache;
+      } catch (err) {
+        if (!silent) showStatus('scheduled-status', 'error', esc(err.message));
+        return [];
+      }
+    }
+
+    async function refreshScheduled(silent, { skipCheck = false } = {}) {
+      const icon = document.getElementById('scheduled-refresh-icon');
+      if (!silent) {
+        icon.classList.add('animate-spin');
+        showStatus('scheduled-status', 'loading', skipCheck
+          ? 'Refreshing queue…'
+          : 'Checking pending posts and refreshing queue…');
+      }
+
+      try {
+        if (!skipCheck) {
+          stopCronPolling();
+          await checkPendingPosts(true);
+          if (currentTab === 'scheduled') scheduleNextCronCheck();
+        }
+        await loadScheduled(true);
+        if (!silent) hideStatus('scheduled-status');
+      } catch (err) {
+        if (!silent) showStatus('scheduled-status', 'error', esc(err.message));
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    async function publishScheduled(id) {
+      if (!await showConfirm({
+        title: 'Publish now?',
+        message: 'Publish to Twitter/X and LinkedIn now?',
+        confirmLabel: 'Publish',
+        variant: 'publish',
+      })) return;
+      try {
+        showStatus('scheduled-status', 'loading', 'Publishing…');
+        await apiCall('publish-property-now', { propertyId: id });
+        hideStatus('scheduled-status');
+        await refreshScheduled(true, { skipCheck: true });
+        await loadProperties(true);
+      } catch (err) {
+        showStatus('scheduled-status', 'error', esc(err.message));
+      }
+    }
+
+    async function returnScheduledToDraft(id) {
+      if (!await showConfirm({
+        title: 'Return to drafts?',
+        message: 'Remove this item from the schedule and return it to drafts?',
+        confirmLabel: 'Return to Drafts',
+        variant: 'warning',
+      })) return;
+      try {
+        showStatus('scheduled-status', 'loading', 'Returning to drafts…');
+        await apiCall('return-property-to-draft', { propertyId: id });
+        hideStatus('scheduled-status');
+        await refreshScheduled(true, { skipCheck: true });
+        await loadProperties(true);
+        await loadScheduledCount();
+      } catch (err) {
+        showStatus('scheduled-status', 'error', esc(err.message));
+      }
+    }
+
+    function scheduleNextCronCheck() {
+      stopCronPolling();
+      if (currentTab !== 'scheduled') return;
+      cronTimeout = setTimeout(() => runCronCheck(), CRON_MS);
+    }
+
+    async function runCronCheck() {
+      cronTimeout = null;
+      if (currentTab !== 'scheduled') return;
+      try {
+        await checkPendingPosts(true);
+        await loadScheduled(true);
+      } catch (_) { /* keep polling on failure */ }
+      scheduleNextCronCheck();
+    }
+
+    function startCronPolling() {
+      if (cronTimeout != null) return;
+      runCronCheck();
+    }
+
+    function stopCronPolling() {
+      if (cronTimeout) {
+        clearTimeout(cronTimeout);
+        cronTimeout = null;
+      }
+    }
+
+    // ── Boot ──
+    loadScheduledCount();
+  </script>
+</body>
+</html>

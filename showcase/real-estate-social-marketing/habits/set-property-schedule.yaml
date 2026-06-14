@@ -1,0 +1,48 @@
+id: set-property-schedule
+name: Set Property Schedule
+description: >-
+  Sets a scheduled publish time for a property and moves it to pending status.
+
+input:
+  - id: propertyId
+    type: string
+    required: true
+    label: Property ID
+
+  - id: scheduledAt
+    type: string
+    required: true
+    label: Schedule Date & Time
+    description: ISO datetime when posts should be published
+
+  - id: scheduleTimezone
+    type: string
+    required: false
+    label: Timezone
+    defaultValue: UTC
+
+nodes:
+  - id: update-schedule
+    type: bits
+    data:
+      label: Update Schedule
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: rem_marketing_properties
+        filter:
+          _id: "{{habits.input.propertyId}}"
+        update:
+          scheduledAt: "{{habits.input.scheduledAt}}"
+          scheduleTimezone: "{{habits.input.scheduleTimezone || 'UTC'}}"
+          status: "pending"
+
+edges: []
+
+output:
+  propertyId: "{{habits.input.propertyId}}"
+  scheduledAt: "{{habits.input.scheduledAt}}"
+  scheduleTimezone: "{{habits.input.scheduleTimezone || 'UTC'}}"
+  status: "pending"
