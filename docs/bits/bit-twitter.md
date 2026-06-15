@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-twitter`</span>
   <span class="bit-version">v1.0.0</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-twitter">📥 <span class="download-count">78</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-twitter">📥 <span class="download-count">85</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">twitter</span> <span class="bit-category">x</span> <span class="bit-category">social-media</span> <span class="bit-category">tweets</span></span>
 </div>
 
@@ -54,6 +54,7 @@ nodes:
 ## Used In Showcases
 
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
+- [rss-social-poster](/showcase/rss-social-poster)
 
 <style>
 .bit-meta {

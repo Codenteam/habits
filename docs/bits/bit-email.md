@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-email`</span>
   <span class="bit-version">v1.0.8</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-email">📥 <span class="download-count">902</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-email">📥 <span class="download-count">941</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">email</span> <span class="bit-category">imap</span> <span class="bit-category">smtp</span> <span class="bit-category">mail</span> <span class="bit-category">nodemailer</span></span>
 </div>
 
@@ -53,7 +53,12 @@ nodes:
 
 ## Used In Showcases
 
+- [invoices-processing](/showcase/invoices-processing)
+- [emails-categorization](/showcase/emails-categorization)
+- [email-ticket-routing](/showcase/email-ticket-routing)
+- [email-digest-summarizer](/showcase/email-digest-summarizer)
 - [email-demo](/showcase/email-demo)
+- [ai-invoice-mailer](/showcase/ai-invoice-mailer)
 
 <style>
 .bit-meta {

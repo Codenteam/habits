@@ -1,0 +1,109 @@
+id: kyc-status-summary
+name: KYC Status Summary
+description: Create a Sumsub applicant, check status, and summarize with OpenAI.
+
+input:
+  - id: email
+    type: string
+    required: true
+    description: Applicant email (also used as external user ID)
+  - id: firstName
+    type: string
+    required: true
+  - id: lastName
+    type: string
+    required: true
+  - id: country
+    type: string
+    required: false
+    description: ISO 3166-1 alpha-3 country code (e.g. GBR, USA, DEU)
+    default: GBR
+  - id: levelName
+    type: string
+    required: false
+    description: Sumsub verification level name from your Dashboard
+    default: id-and-liveness
+
+nodes:
+  - id: create-sumsub-applicant
+    type: action
+    data:
+      label: Create Sumsub Applicant
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createApplicant
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        externalUserId: "{{habits.input.email}}"
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        country: "{{habits.input.country || 'GBR'}}"
+        levelName: "{{habits.input.levelName || 'id-and-liveness'}}"
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+
+  - id: summarize-status
+    type: action
+    data:
+      label: Summarize with OpenAI
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.3
+        maxTokens: 600
+        prompt: |
+          You are a compliance assistant helping a bank onboarding team.
+
+          A new customer started KYC verification via Sumsub. Summarize the status in plain language (3-5 short paragraphs max) and list clear next steps for the applicant and for the operations team.
+
+          Applicant:
+          - Name: {{habits.input.firstName}} {{habits.input.lastName}}
+          - Email: {{habits.input.email}}
+          - Country: {{habits.input.country || 'GBR'}}
+          - Sumsub applicant ID: {{create-sumsub-applicant.applicantId}}
+          - Verification level: {{habits.input.levelName || 'id-and-liveness'}}
+
+          Sumsub review status (JSON):
+          {{get-sumsub-status}}
+
+          If status is init or pending, explain that the applicant still needs to complete the ID check and how the ops team should monitor it.
+
+edges:
+  - source: create-sumsub-applicant
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: summarize-status
+
+output:
+  applicantId: "{{create-sumsub-applicant.applicantId}}"
+  externalUserId: "{{create-sumsub-applicant.externalUserId}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+  approved: "{{get-sumsub-status.approved}}"
+  summary: "{{summarize-status}}"

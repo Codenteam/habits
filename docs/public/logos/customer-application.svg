@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Customer Application">
+  <rect width="80" height="80" rx="14" fill="#2563EB"/>
+  <rect x="22" y="18" width="36" height="44" rx="6" fill="#ffffff"/>
+  <rect x="28" y="28" width="24" height="4" rx="2" fill="#93C5FD"/>
+  <rect x="28" y="36" width="18" height="4" rx="2" fill="#BFDBFE"/>
+  <rect x="28" y="44" width="20" height="4" rx="2" fill="#BFDBFE"/>
+  <circle cx="40" cy="54" r="4" fill="#2563EB"/>
+</svg>

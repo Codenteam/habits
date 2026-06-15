@@ -50,7 +50,7 @@ const industries = [
     "name": "Finance & Banking",
     "icon": "shield",
     "tagline": "Onboard customers, detect fraud, and pass audits, without the manual grind.",
-    "totalHabits": 30,
+    "totalHabits": 31,
     "departmentList": [
       {
         "id": "compliance-audit",

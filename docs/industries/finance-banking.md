@@ -102,17 +102,52 @@ const industry = {
       "id": "customer-onboarding",
       "name": "Finance & Banking Customer Onboarding",
       "icon": "zap",
-      "description": "Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.",
+      "description": "Automate a full customer application path from intake through ID verification, sanctions screening, and core banking account creation.",
       "habits": [
+        {
+          "id": "customer-application-onboarding",
+          "name": "Customer Application Onboarding",
+          "description": "Accept a customer application, create a Sumsub applicant, run ComplyAdvantage sanctions screening, and create the approved client/account in Mambu.",
+          "trigger": "manual",
+          "bits": [
+            "bit-sumsub",
+            "bit-complyadvantage",
+            "bit-mambu"
+          ],
+          "featured": true,
+          "overview": "A single orchestration habit that turns a submitted banking application into an auditable provider flow. It creates the Sumsub verification session, screens the applicant through ComplyAdvantage, and provisions the approved customer/account in Mambu.\n",
+          "flow": [
+            "Customer application is submitted from the web or mobile app.",
+            "Sumsub creates the applicant and verification access token.",
+            "Sumsub verification status is read back into the workflow.",
+            "ComplyAdvantage screens the applicant against sanctions, PEP, and warning lists.",
+            "Mambu creates the client and deposit account for approved applications."
+          ],
+          "components": [
+            "Customer application intake",
+            "Sumsub applicant and access token creation",
+            "Sumsub verification status lookup",
+            "ComplyAdvantage sanctions screening",
+            "ComplyAdvantage normalized decision result",
+            "Mambu client creation",
+            "Mambu deposit account creation"
+          ],
+          "integrations": [
+            "Customer Application",
+            "Habits Workflow",
+            "Sumsub ID Verification",
+            "ComplyAdvantage Sanctions Screening",
+            "Mambu Core Banking"
+          ],
+          "stackFolder": "showcase/finance-banking-customer-onboarding"
+        },
         {
           "id": "kyc-document-collection",
           "name": "KYC Document Collection",
           "description": "Request and validate identity documents from new customers upon application submission.",
           "trigger": "webhook",
           "bits": [
-            "webhook",
-            "email",
-            "http"
+            "bit-sumsub"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         },
@@ -122,9 +157,7 @@ const industry = {
           "description": "Run automated risk scoring on new applications and flag high-risk cases for review.",
           "trigger": "webhook",
           "bits": [
-            "webhook",
-            "ai",
-            "http"
+            "bit-complyadvantage"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         },
@@ -134,9 +167,7 @@ const industry = {
           "description": "Provision customer accounts after approval and trigger the welcome email sequence.",
           "trigger": "webhook",
           "bits": [
-            "webhook",
-            "email",
-            "http"
+            "bit-mambu"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         },
@@ -146,9 +177,8 @@ const industry = {
           "description": "Initiate credit bureau enquiries automatically and parse results into the application record.",
           "trigger": "webhook",
           "bits": [
-            "webhook",
-            "http",
-            "ai"
+            "bit-complyadvantage",
+            "bit-mambu"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         },
@@ -158,9 +188,7 @@ const industry = {
           "description": "Send personalised onboarding emails to new customers over the first 30 days.",
           "trigger": "scheduler",
           "bits": [
-            "scheduler",
-            "email",
-            "ai"
+            "bit-mambu"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         },
@@ -170,9 +198,9 @@ const industry = {
           "description": "Update the CRM automatically at each milestone of the onboarding journey.",
           "trigger": "webhook",
           "bits": [
-            "webhook",
-            "http",
-            "slack"
+            "bit-sumsub",
+            "bit-complyadvantage",
+            "bit-mambu"
           ],
           "stackFolder": "showcase/finance-banking-customer-onboarding"
         }

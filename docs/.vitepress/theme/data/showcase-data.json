@@ -203,6 +203,21 @@
     "imageCount": 3
   },
   {
+    "slug": "finance-banking-customer-onboarding",
+    "name": "Finance & Banking Customer Onboarding",
+    "description": "Automate a full customer application path from intake through ID verification, sanctions screening, and core banking account creation.",
+    "tags": [
+      "finance",
+      "onboarding",
+      "automation",
+      "ai"
+    ],
+    "difficulty": "intermediate",
+    "featured": true,
+    "thumbnail": "/showcase/finance-banking-customer-onboarding/1.webp",
+    "imageCount": 1
+  },
+  {
     "slug": "habit-reflection",
     "name": "Habit Reflection",
     "description": "AI-powered digital wellness tool that takes raw, weekly habit check-in answers and turns them into a deep synthesis of personal growth and focus areas.",

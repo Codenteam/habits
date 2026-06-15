@@ -1,0 +1,36 @@
+id: get-kyc-customer
+name: Get KYC Customer
+description: Load persisted KYC customer record from the database by applicant ID.
+
+input:
+  - id: applicantId
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: false
+
+nodes:
+  - id: query-customer
+    type: action
+    data:
+      label: Query KYC Customer
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          applicantId: "{{habits.input.applicantId}}"
+
+edges: []
+
+output:
+  found: "{{query-customer.count > 0}}"
+  customer: "{{query-customer.results[0]}}"
+  allowNextSteps: "{{query-customer.results[0].allowNextSteps}}"
+  reviewStatus: "{{query-customer.results[0].reviewStatus}}"
+  reviewAnswer: "{{query-customer.results[0].reviewAnswer}}"

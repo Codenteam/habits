@@ -535,7 +535,9 @@ function findShowcasesUsingBit(packageName: string): string[] {
         // Check if this example has showcase.yaml (is a showcase) and isn't disabled
         const showcaseYaml = join(examplesDir, slug, 'showcase.yaml');
 
-        if (existsSync(showcaseYaml) && !showcases.includes(slug)) {
+        // Only include if the docs page was actually generated for this showcase
+        const docsShowcasePage = join(docsDir, 'showcase', `${slug}.md`);
+        if (existsSync(showcaseYaml) && existsSync(docsShowcasePage) && !showcases.includes(slug)) {
           try {
             const showcaseContent = readFileSync(showcaseYaml, 'utf-8');
             const showcaseData = parseYaml(showcaseContent);

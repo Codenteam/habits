@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-markdown-to-html`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-markdown-to-html">📥 <span class="download-count">233</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-markdown-to-html">📥 <span class="download-count">240</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">markdown</span> <span class="bit-category">html</span> <span class="bit-category">convert</span></span>
 </div>
 

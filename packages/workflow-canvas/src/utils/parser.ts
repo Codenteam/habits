@@ -106,18 +106,35 @@ function estimateNodeDimensions(node: WorkflowNode): { width: number; height: nu
   return { width, height };
 }
 
+export type DagreLayoutOptions = {
+  /** Viewport size used to pick TB (portrait) vs LR (landscape) layout */
+  viewport?: { width: number; height: number };
+};
+
+function resolveRankDirection(viewport?: { width: number; height: number }): 'TB' | 'LR' {
+  const width = viewport?.width ?? (typeof window !== 'undefined' ? window.innerWidth : 0);
+  const height = viewport?.height ?? (typeof window !== 'undefined' ? window.innerHeight : 0);
+  return width > height ? 'LR' : 'TB';
+}
+
 /**
  * Apply dagre layout algorithm to nodes (always applies, ignores existing positions)
  * This is the public API for re-arranging nodes on demand
  */
-export function applyDagreLayout(nodes: WorkflowNode[], edges: WorkflowEdge[] = []): WorkflowNode[] {
+export function applyDagreLayout(
+  nodes: WorkflowNode[],
+  edges: WorkflowEdge[] = [],
+  options?: DagreLayoutOptions
+): WorkflowNode[] {
+  const rankdir = resolveRankDirection(options?.viewport);
+
   // Create a new dagre graph
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   
   // Configure the graph layout
   dagreGraph.setGraph({
-    rankdir: 'TB', // Top to bottom layout
+    rankdir,
     nodesep: 100,  // Horizontal spacing between nodes at same rank
     ranksep: 100,  // Spacing between ranks (rows)
     marginx: 0,    // Remove horizontal margin to center nodes

@@ -1,0 +1,315 @@
+version: 1
+meta:
+  id: sumsub-openai-demo
+  title: Sumsub KYC Demo
+  subtitle: Start verification · upload ID & selfie · AI status summary
+  icon: "lucide:ShieldCheck"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+  customCss: |
+    .step-hint {
+      font-size: 13px;
+      color: var(--ha-text-muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .applicant-pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--ha-primary) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--ha-primary) 28%, transparent);
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+layout:
+  type: tabs
+  header:
+    title: Sumsub + OpenAI KYC
+    subtitle: "Step 1: start · Step 2: ID card & selfie · Step 3: status & AI summary"
+    icon: "lucide:ShieldCheck"
+  nav:
+    - { id: start, label: "1 · Start", icon: "lucide:UserPlus" }
+    - { id: documents, label: "2 · Documents", icon: "lucide:IdCard" }
+    - { id: results, label: "3 · Results", icon: "lucide:Sparkles" }
+
+state:
+  firstName: Jane
+  lastName: Doe
+  email: jane.doe@example.com
+  country: GBR
+  levelName: id-and-liveness
+  applicantId: ""
+  idDocType: ID_CARD
+  idCardImage: ""
+  selfieImage: ""
+  startResult: null
+  documentResult: null
+  statusResult: null
+  customerResult: null
+  error: null
+
+actions:
+  startKyc:
+    method: POST
+    endpoint: /api/start-kyc
+    body:
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      country: "{{state.country}}"
+      levelName: "{{state.levelName}}"
+    responsePath: output
+    onSuccess:
+      set:
+        startResult: "$response"
+        applicantId: "$response.applicantId"
+        error: null
+      toast: "Applicant created — upload documents next"
+    onError:
+      set: { error: "$error.message" }
+
+  submitDocuments:
+    method: POST
+    endpoint: /api/submit-kyc-documents
+    body:
+      applicantId: "{{state.applicantId}}"
+      country: "{{state.country}}"
+      idDocType: "{{state.idDocType}}"
+      idCardImage: "{{state.idCardImage}}"
+      idCardMimeType: "{{state.idCardImage__type}}"
+      idCardFileName: "{{state.idCardImage__name}}"
+      selfieImage: "{{state.selfieImage}}"
+      selfieMimeType: "{{state.selfieImage__type}}"
+      selfieFileName: "{{state.selfieImage__name}}"
+    responsePath: output
+    onSuccess:
+      set:
+        documentResult: "$response"
+        error: null
+      toast: "Documents submitted to Sumsub"
+    onError:
+      set: { error: "$error.message" }
+
+  refreshStatus:
+    method: POST
+    endpoint: /api/refresh-kyc-status
+    body:
+      applicantId: "{{state.applicantId}}"
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      country: "{{state.country}}"
+      levelName: "{{state.levelName}}"
+    responsePath: output
+    onSuccess:
+      set:
+        statusResult: "$response"
+        customerResult: "$response.customer"
+        error: null
+      toast: "Status refreshed"
+    onError:
+      set: { error: "$error.message" }
+
+  loadCustomer:
+    method: POST
+    endpoint: /api/get-kyc-customer
+    body:
+      applicantId: "{{state.applicantId}}"
+      email: "{{state.email}}"
+    responsePath: output
+    onSuccess:
+      set:
+        customerResult: "$response.customer"
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+defaultView: start
+
+views:
+  start:
+    widgets:
+      - kind: card
+        title: Start identity verification
+        subtitle: Creates a Sumsub applicant for the id-and-liveness level
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: firstName, type: text, label: First name, required: true }
+              - { name: lastName, type: text, label: Last name, required: true }
+              - { name: email, type: email, label: Email, required: true }
+              - { name: country, type: text, label: Country (ISO alpha-3), placeholder: GBR, required: true }
+              - { name: levelName, type: text, label: Sumsub level name, required: true }
+            submit:
+              label: Create Sumsub applicant
+              action: startKyc
+              loadingLabel: Creating applicant...
+          - kind: alert
+            level: info
+            text: "Step 1 uses bit-sumsub → createApplicant and saves the customer to SQLite (kyc_customers)."
+      - kind: result-panel
+        source: state.startResult
+        title: Applicant created
+        showWhen: state.startResult
+        sections:
+          - kind: kv-grid
+            source: state.startResult
+            fields:
+              - { key: applicantId, label: Applicant ID }
+              - { key: externalUserId, label: External user ID }
+              - { key: levelName, label: Level }
+              - { key: message, label: Next step }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger
+
+  documents:
+    widgets:
+      - kind: card
+        title: Upload ID card & selfie
+        subtitle: Sends images to Sumsub and requests a review
+        children:
+          - kind: alert
+            level: info
+            showWhen: state.applicantId
+            text: "Applicant ID: {{state.applicantId}}"
+          - kind: alert
+            level: warning
+            showWhen: "!state.applicantId"
+            text: "Complete 1 · Start first to get an applicant ID."
+          - kind: form
+            bindTo: state
+            fields:
+              - name: idDocType
+                type: select
+                label: ID document type
+                options:
+                  - { label: ID card, value: ID_CARD }
+                  - { label: Passport, value: PASSPORT }
+                  - { label: Residence permit, value: RESIDENCE_PERMIT }
+                  - { label: Driving licence, value: DRIVERS }
+              - name: idCardImage
+                type: file-upload
+                label: ID card (front)
+                accept: "image/*"
+                asBase64: true
+                required: true
+              - name: selfieImage
+                type: file-upload
+                label: Selfie
+                accept: "image/*"
+                asBase64: true
+                required: true
+            submit:
+              label: Upload documents & request review
+              action: submitDocuments
+              loadingLabel: Uploading to Sumsub...
+              disabledWhen: "!state.applicantId || !state.idCardImage || !state.selfieImage"
+          - kind: alert
+            level: info
+            text: "Step 2 uses bit-sumsub uploads + review request, then persists submission status to the database."
+      - kind: result-panel
+        source: state.documentResult
+        title: Upload result
+        showWhen: state.documentResult
+        sections:
+          - kind: kv-grid
+            source: state.documentResult
+            fields:
+              - { key: kycStatus, label: Status }
+              - { key: reviewAnswer, label: Review answer }
+              - { key: reviewRequest.message, label: Review request }
+              - { key: idUpload.imageId, label: ID image ID }
+              - { key: selfieUpload.imageId, label: Selfie image ID }
+          - kind: json-dump
+            source: state.documentResult
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger
+
+  results:
+    widgets:
+      - kind: card
+        title: Banking decision (from database)
+        subtitle: Updated when Sumsub review completes via webhook or manual refresh
+        children:
+          - kind: alert
+            level: success
+            showWhen: state.customerResult && state.customerResult.allowNextSteps
+            text: "Allow next steps — KYC approved (GREEN). This customer can proceed with account onboarding."
+          - kind: alert
+            level: danger
+            showWhen: state.customerResult && state.customerResult.blockNextSteps
+            text: "Block next steps — KYC declined (RED). Do not proceed with banking onboarding for this customer."
+          - kind: alert
+            level: warning
+            showWhen: state.customerResult && !state.customerResult.allowNextSteps && !state.customerResult.blockNextSteps
+            text: "Review pending — wait for Sumsub webhook or refresh status after review completes."
+          - kind: button
+            label: Load customer record from database
+            action: loadCustomer
+            tone: secondary
+            disabledWhen: "!state.applicantId"
+          - kind: result-panel
+            source: state.customerResult
+            title: Persisted customer record
+            showWhen: state.customerResult
+            sections:
+              - kind: kv-grid
+                source: state.customerResult
+                fields:
+                  - { key: applicantId, label: Applicant ID }
+                  - { key: reviewStatus, label: Review status }
+                  - { key: reviewAnswer, label: Review answer }
+                  - { key: allowNextSteps, label: Allow next steps }
+                  - { key: blockNextSteps, label: Block next steps }
+                  - { key: lastWebhookType, label: Last webhook event }
+          - kind: alert
+            level: info
+            text: "Register Sumsub webhook URL: https://<your-public-host>/webhook/v/sumsub (types: applicantReviewed, applicantPending). Set HABITS_SUMSUB_WEBHOOK_SECRET in .env to match Dashboard → Webhook manager."
+      - kind: card
+        title: Status & AI summary
+        subtitle: Poll Sumsub and explain the case with OpenAI
+        children:
+          - kind: alert
+            level: info
+            showWhen: state.applicantId
+            text: "Applicant ID: {{state.applicantId}}"
+          - kind: button
+            label: Refresh status & generate summary
+            action: refreshStatus
+            tone: primary
+            disabledWhen: "!state.applicantId"
+          - kind: alert
+            level: info
+            text: "Step 3 uses bit-sumsub → getApplicantStatus, then bit-openai → ask_chatgpt."
+      - kind: result-panel
+        source: state.statusResult
+        title: KYC summary
+        showWhen: state.statusResult
+        sections:
+          - kind: kv-grid
+            source: state.statusResult
+            fields:
+              - { key: kycStatus, label: Status }
+              - { key: reviewAnswer, label: Review answer }
+              - { key: approved, label: Approved }
+              - { key: allowNextSteps, label: Allow next steps (DB) }
+              - { key: blockNextSteps, label: Block next steps (DB) }
+          - kind: section
+            title: AI summary
+            children:
+              - kind: markdown
+                source: state.statusResult.summary
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger

@@ -204,11 +204,14 @@ export function getLocalModulePath(framework: string, moduleName: string): strin
     if (fs.existsSync(localPath)) {
       return localPath;
     }
-    // Also check @ha-bits subdirectory for bits framework
+    // Also check @ha-bits and enterprise ee/@ha-bits paths for bits framework
     if (framework === 'bits') {
-      const haBitsPath = path.join(process.env[LOCAL_NODES_PATH_ENV], framework, '@ha-bits', strippedModuleName);
-      if (fs.existsSync(haBitsPath)) {
-        return haBitsPath;
+      const bitsRoots = ['@ha-bits', path.join('ee', '@ha-bits')];
+      for (const bitsRoot of bitsRoots) {
+        const bitsPath = path.join(process.env[LOCAL_NODES_PATH_ENV], framework, bitsRoot, strippedModuleName);
+        if (fs.existsSync(bitsPath)) {
+          return bitsPath;
+        }
       }
     }
   }
@@ -219,19 +222,25 @@ export function getLocalModulePath(framework: string, moduleName: string): strin
     return cwdNodesPath;
   }
   
-  // For bits framework, also check nodes/bits/@ha-bits/ path
-  if (framework === 'bits') {    // Try relative to cwd()
-    const bitsCreatorPath = path.join(process.cwd(), 'nodes', 'bits', '@ha-bits', strippedModuleName);
-    
-    if (fs.existsSync(bitsCreatorPath)) {
-      return bitsCreatorPath;
+  // For bits framework, also check nodes/bits/@ha-bits/ and enterprise ee/ paths
+  if (framework === 'bits') {
+    const bitsSearchRoots = ['@ha-bits', path.join('ee', '@ha-bits')];
+
+    for (const bitsRoot of bitsSearchRoots) {
+      const bitsCreatorPath = path.join(process.cwd(), 'nodes', 'bits', bitsRoot, strippedModuleName);
+      if (fs.existsSync(bitsCreatorPath)) {
+        return bitsCreatorPath;
+      }
     }
+
     // Search up from __dirname path
     let currentDir = __dirname;
-    for (let i = 0; i < 10; i++) {   
-      const bitsPath = path.join(currentDir, 'nodes', 'bits', '@ha-bits', strippedModuleName);
-      if (fs.existsSync(bitsPath)) {
-        return bitsPath;
+    for (let i = 0; i < 10; i++) {
+      for (const bitsRoot of bitsSearchRoots) {
+        const bitsPath = path.join(currentDir, 'nodes', 'bits', bitsRoot, strippedModuleName);
+        if (fs.existsSync(bitsPath)) {
+          return bitsPath;
+        }
       }
       const parent = path.dirname(currentDir);
       if (parent === currentDir) break;

@@ -19,8 +19,8 @@
     "actionCount": 1,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 223,
-    "downloadsFormatted": "223"
+    "downloads": 237,
+    "downloadsFormatted": "237"
   },
   {
     "slug": "bit-database",
@@ -39,9 +39,9 @@
     "icon": "Database",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 5,
-    "downloads": 404,
-    "downloadsFormatted": "404"
+    "showcaseCount": 17,
+    "downloads": 421,
+    "downloadsFormatted": "421"
   },
   {
     "slug": "bit-database-sql",
@@ -62,9 +62,9 @@
     "icon": "Database",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 3,
-    "downloads": 92,
-    "downloadsFormatted": "92"
+    "showcaseCount": 5,
+    "downloads": 96,
+    "downloadsFormatted": "96"
   },
   {
     "slug": "bit-email",
@@ -85,9 +85,9 @@
     "icon": "Mail",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
-    "downloads": 902,
-    "downloadsFormatted": "902"
+    "showcaseCount": 6,
+    "downloads": 941,
+    "downloadsFormatted": "941"
   },
   {
     "slug": "bit-wifi",
@@ -175,7 +175,7 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
+    "showcaseCount": 1,
     "downloads": 0,
     "downloadsFormatted": "-"
   },
@@ -198,9 +198,9 @@
     "icon": "GitBranch",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 355,
-    "downloadsFormatted": "355"
+    "showcaseCount": 1,
+    "downloads": 372,
+    "downloadsFormatted": "372"
   },
   {
     "slug": "bit-intersect",
@@ -220,8 +220,8 @@
     "actionCount": 11,
     "triggerCount": 0,
     "showcaseCount": 3,
-    "downloads": 1625,
-    "downloadsFormatted": "1.6K"
+    "downloads": 1671,
+    "downloadsFormatted": "1.7K"
   },
   {
     "slug": "bit-openai",
@@ -240,9 +240,9 @@
     "icon": "Sparkles",
     "actionCount": 10,
     "triggerCount": 0,
-    "showcaseCount": 2,
-    "downloads": 877,
-    "downloadsFormatted": "877"
+    "showcaseCount": 21,
+    "downloads": 914,
+    "downloadsFormatted": "914"
   },
   {
     "slug": "bit-sms",
@@ -287,8 +287,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 358,
-    "downloadsFormatted": "358"
+    "downloads": 372,
+    "downloadsFormatted": "372"
   },
   {
     "slug": "bit-ai",
@@ -330,8 +330,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 356,
-    "downloadsFormatted": "356"
+    "downloads": 379,
+    "downloadsFormatted": "379"
   },
   {
     "slug": "bit-cookie",
@@ -351,8 +351,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 363,
-    "downloadsFormatted": "363"
+    "downloads": 377,
+    "downloadsFormatted": "377"
   },
   {
     "slug": "bit-crm",
@@ -373,8 +373,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 367,
-    "downloadsFormatted": "367"
+    "downloads": 382,
+    "downloadsFormatted": "382"
   },
   {
     "slug": "bit-database-mongodb",
@@ -416,8 +416,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 223,
-    "downloadsFormatted": "223"
+    "downloads": 230,
+    "downloadsFormatted": "230"
   },
   {
     "slug": "bit-discord",
@@ -438,8 +438,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 178,
-    "downloadsFormatted": "178"
+    "downloads": 184,
+    "downloadsFormatted": "184"
   },
   {
     "slug": "bit-smart-home",
@@ -504,8 +504,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 76,
-    "downloadsFormatted": "76"
+    "downloads": 83,
+    "downloadsFormatted": "83"
   },
   {
     "slug": "bit-filesystem",
@@ -526,8 +526,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 372,
-    "downloadsFormatted": "372"
+    "downloads": 387,
+    "downloadsFormatted": "387"
   },
   {
     "slug": "bit-loop",
@@ -547,9 +547,9 @@
     "icon": "Repeat",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
-    "downloads": 501,
-    "downloadsFormatted": "501"
+    "showcaseCount": 7,
+    "downloads": 520,
+    "downloadsFormatted": "520"
   },
   {
     "slug": "bit-github",
@@ -570,8 +570,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 366,
-    "downloadsFormatted": "366"
+    "downloads": 380,
+    "downloadsFormatted": "380"
   },
   {
     "slug": "bit-gohighlevel",
@@ -634,9 +634,9 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 248,
-    "downloadsFormatted": "248"
+    "showcaseCount": 1,
+    "downloads": 255,
+    "downloadsFormatted": "255"
   },
   {
     "slug": "bit-hello-world",
@@ -655,8 +655,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 390,
-    "downloadsFormatted": "390"
+    "downloads": 414,
+    "downloadsFormatted": "414"
   },
   {
     "slug": "bit-http",
@@ -677,8 +677,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 474,
-    "downloadsFormatted": "474"
+    "downloads": 498,
+    "downloadsFormatted": "498"
   },
   {
     "slug": "bit-httpbin",
@@ -698,8 +698,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 200,
-    "downloadsFormatted": "200"
+    "downloads": 211,
+    "downloadsFormatted": "211"
   },
   {
     "slug": "bit-hubspot",
@@ -720,9 +720,9 @@
     "icon": "Users",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 75,
-    "downloadsFormatted": "75"
+    "showcaseCount": 1,
+    "downloads": 78,
+    "downloadsFormatted": "78"
   },
   {
     "slug": "bit-instagram",
@@ -743,8 +743,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 73,
-    "downloadsFormatted": "73"
+    "downloads": 80,
+    "downloadsFormatted": "80"
   },
   {
     "slug": "bit-invoice",
@@ -764,9 +764,9 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 79,
-    "downloadsFormatted": "79"
+    "showcaseCount": 2,
+    "downloads": 83,
+    "downloadsFormatted": "83"
   },
   {
     "slug": "bit-jsonplaceholder",
@@ -782,8 +782,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 203,
-    "downloadsFormatted": "203"
+    "downloads": 214,
+    "downloadsFormatted": "214"
   },
   {
     "slug": "bit-linkedin",
@@ -803,9 +803,9 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
-    "downloads": 74,
-    "downloadsFormatted": "74"
+    "showcaseCount": 2,
+    "downloads": 79,
+    "downloadsFormatted": "79"
   },
   {
     "slug": "bit-local-ai",
@@ -821,8 +821,8 @@
     "actionCount": 3,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 99,
-    "downloadsFormatted": "99"
+    "downloads": 103,
+    "downloadsFormatted": "103"
   },
   {
     "slug": "bit-logger",
@@ -841,8 +841,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 51,
-    "downloadsFormatted": "51"
+    "downloads": 76,
+    "downloadsFormatted": "76"
   },
   {
     "slug": "bit-markdown-to-html",
@@ -862,8 +862,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 1,
-    "downloads": 233,
-    "downloadsFormatted": "233"
+    "downloads": 240,
+    "downloadsFormatted": "240"
   },
   {
     "slug": "bit-onedrive",
@@ -908,8 +908,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 72,
-    "downloadsFormatted": "72"
+    "downloads": 76,
+    "downloadsFormatted": "76"
   },
   {
     "slug": "bit-ocr",
@@ -999,7 +999,7 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
+    "showcaseCount": 2,
     "downloads": 0,
     "downloadsFormatted": "-"
   },
@@ -1087,7 +1087,7 @@
     "icon": "MessageSquare",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
+    "showcaseCount": 2,
     "downloads": 0,
     "downloadsFormatted": "-"
   },
@@ -1192,9 +1192,9 @@
     "icon": "Send",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 479,
-    "downloadsFormatted": "479"
+    "showcaseCount": 1,
+    "downloads": 497,
+    "downloadsFormatted": "497"
   },
   {
     "slug": "bit-text",
@@ -1215,8 +1215,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 359,
-    "downloadsFormatted": "359"
+    "downloads": 372,
+    "downloadsFormatted": "372"
   },
   {
     "slug": "bit-twitter",
@@ -1236,9 +1236,9 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
-    "downloads": 78,
-    "downloadsFormatted": "78"
+    "showcaseCount": 2,
+    "downloads": 85,
+    "downloadsFormatted": "85"
   },
   {
     "slug": "bit-voice",
@@ -1282,8 +1282,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 86,
-    "downloadsFormatted": "86"
+    "downloads": 90,
+    "downloadsFormatted": "90"
   },
   {
     "slug": "bit-whatsapp",
@@ -1303,8 +1303,8 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 401,
-    "downloadsFormatted": "401"
+    "downloads": 415,
+    "downloadsFormatted": "415"
   },
   {
     "slug": "bit-wise",
@@ -1326,7 +1326,7 @@
     "actionCount": 0,
     "triggerCount": 0,
     "showcaseCount": 0,
-    "downloads": 80,
-    "downloadsFormatted": "80"
+    "downloads": 91,
+    "downloadsFormatted": "91"
   }
 ]

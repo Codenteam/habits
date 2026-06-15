@@ -1,0 +1,61 @@
+id: kyc-document-collection
+name: KYC Document Collection
+description: Request identity documents by creating a Sumsub applicant and access token.
+
+input:
+  - id: applicationId
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: true
+  - id: requiredDocuments
+    type: string
+    required: false
+
+nodes:
+  - id: create-sumsub-applicant
+    type: action
+    data:
+      label: Create Sumsub Applicant
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createApplicant
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        externalUserId: "{{habits.input.applicationId}}"
+        email: "{{habits.input.email}}"
+        requiredDocuments: "{{habits.input.requiredDocuments || 'passport_or_national_id, proof_of_address'}}"
+        levelName: banking-kyc
+
+  - id: create-access-token
+    type: action
+    data:
+      label: Create Sumsub Access Token
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createAccessToken
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+        levelName: banking-kyc
+
+edges:
+  - source: create-sumsub-applicant
+    target: create-access-token
+
+output:
+  provider: sumsub
+  applicantId: "{{create-sumsub-applicant.applicantId}}"
+  accessToken: "{{create-access-token.token}}"
+  verificationUrl: "{{create-access-token.verificationUrl}}"

@@ -3,19 +3,21 @@ import { configureDiagramsPlugin } from 'vitepress-plugin-diagrams'
 import d2 from 'vitepress-plugin-d2'
 import { Layout, Theme } from 'vitepress-plugin-d2/dist/config'
 import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs';
+import { SLOGAN } from './constants'
 
 export default defineConfig({
   title: 'Habits',
-  description: 'Create Agents, Automations, Full-Stacks, SaaS and Micro-Apps (AGPL-3.0).',
+  description: SLOGAN,
   base: '/intersect/habits/',
   cleanUrls: true,
 
   // Serve static assets from .vitepress/public
   vite: {
     publicDir: 'public',
-    // Ignore build output so `vitepress build` + `vitepress dev` together
-    // don't trigger hundreds of broken HMR reloads (invalidateTypeCache).
     server: {
+      hmr: {
+        overlay: false,
+      },
       watch: {
         ignored: [
           '**/.vitepress/dist/**',
@@ -94,6 +96,13 @@ export default defineConfig({
       { text: 'Showcase', link: '/showcase/' },
       { text: 'Pricing', link: '/pricing' },
       { text: 'Downloads', link: '/downloads' },
+      {
+        text: 'Create Now',
+        items: [
+          { text: 'Use Online', link: 'https://base.public.hub.codenteam.com/habits/base/' },
+          { text: 'Register', link: 'https://codenteam.com/intersect/habits/register' },
+        ]
+      },
     ],
     
     sidebar: [
@@ -123,6 +132,7 @@ export default defineConfig({
         items: [
           { text: 'Overview', link: '/tools/' },
           { text: 'Base (Visual Builder)', link: '/tools/base' },
+          { text: 'Create Now', link: 'https://base.public.hub.codenteam.com/habits/base/' },
           { text: 'Cortex Server', link: '/tools/cortex-server' },
           { text: 'Desktop App', link: '/tools/desktop-app' },
           { text: 'Mobile App', link: '/tools/mobile-app' },

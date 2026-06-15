@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-pouch`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-pouch">📥 <span class="download-count">223</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-pouch">📥 <span class="download-count">230</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">pouchdb</span> <span class="bit-category">local</span></span>
 </div>
 

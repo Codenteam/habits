@@ -1,0 +1,79 @@
+id: start-kyc
+name: Start KYC
+description: Create a Sumsub applicant profile to begin identity verification.
+
+input:
+  - id: email
+    type: string
+    required: true
+  - id: firstName
+    type: string
+    required: true
+  - id: lastName
+    type: string
+    required: true
+  - id: country
+    type: string
+    required: false
+    default: GBR
+  - id: levelName
+    type: string
+    required: false
+    default: id-and-liveness
+
+nodes:
+  - id: create-sumsub-applicant
+    type: action
+    data:
+      label: Create Sumsub Applicant
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createApplicant
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        externalUserId: "{{habits.input.email}}"
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        country: "{{habits.input.country || 'GBR'}}"
+        levelName: "{{habits.input.levelName || 'id-and-liveness'}}"
+
+  - id: save-customer-to-db
+    type: action
+    data:
+      label: Save Customer To Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        document:
+          applicantId: "{{create-sumsub-applicant.applicantId}}"
+          externalUserId: "{{create-sumsub-applicant.externalUserId}}"
+          email: "{{habits.input.email}}"
+          firstName: "{{habits.input.firstName}}"
+          lastName: "{{habits.input.lastName}}"
+          country: "{{habits.input.country || 'GBR'}}"
+          levelName: "{{habits.input.levelName || 'id-and-liveness'}}"
+          reviewStatus: init
+          allowNextSteps: false
+          blockNextSteps: false
+
+edges:
+  - source: create-sumsub-applicant
+    target: save-customer-to-db
+
+output:
+  applicantId: "{{create-sumsub-applicant.applicantId}}"
+  externalUserId: "{{create-sumsub-applicant.externalUserId}}"
+  email: "{{create-sumsub-applicant.email}}"
+  levelName: "{{create-sumsub-applicant.levelName}}"
+  dbRecordId: "{{save-customer-to-db.id}}"
+  message: "Applicant created. Upload ID card and selfie on the next step."
