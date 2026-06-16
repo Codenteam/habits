@@ -305,11 +305,13 @@ class WorkflowExecutorServer {
     console.log(`   Body: ${JSON.stringify(req.body).substring(0, 200)}...`);
 
     // Build filter payload
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
     const filterPayload = {
       body: req.body,
       headers: req.headers as Record<string, string>,
       query: req.query as Record<string, string>,
       method: req.method,
+      rawBody,
     };
 
     // Dispatch to all matching listeners
@@ -328,6 +330,12 @@ class WorkflowExecutorServer {
     // Count matches
     const matchedResults = results.filter(r => r.matched);
     console.log(`🔌 ${matchedResults.length}/${results.length} listener(s) matched for ${webhookPath}`);
+    if (matchedResults.length === 0 && results.length > 0) {
+      const webhookType = (req.body as { type?: string })?.type ?? '(missing type)';
+      console.warn(
+        `⚠️ Webhook filter rejected event type=${webhookType} module=${moduleId} — check secret, x-payload-digest headers, and handled webhook types`,
+      );
+    }
 
     // Start workflow executions for matched listeners
     const executions: { workflowId: string; nodeId: string; status: string; error?: string }[] = [];
@@ -575,7 +583,17 @@ class WorkflowExecutorServer {
   }
 
   private setupMiddleware() {
-    this.app.use(express.json({ limit: '1000mb' }));
+    this.app.use(
+      express.json({
+        limit: '1000mb',
+        verify: (req, _res, buf) => {
+          const path = req.url?.split('?')[0] ?? '';
+          if (path.startsWith('/webhook/v/')) {
+            (req as Request & { rawBody?: Buffer }).rawBody = buf;
+          }
+        },
+      }),
+    );
     this.app.use(express.urlencoded({ extended: true, limit: '1000mb' }));
     
     // Add CORS headers

@@ -29,6 +29,7 @@ export interface WebhookFilterPayload {
   headers: Record<string, string>;
   query: Record<string, string>;
   method: string;
+  rawBody?: Buffer | string;
 }
 
 const HANDLED_WEBHOOK_TYPES = new Set([
@@ -71,8 +72,14 @@ export function verifySumsubWebhookDigest(
     return false;
   }
 
-  const bodyString = JSON.stringify(payload.body ?? {});
-  const calculated = createHmac(nodeAlgo, secret).update(bodyString).digest('hex');
+  const bodyMaterial =
+    payload.rawBody !== undefined
+      ? typeof payload.rawBody === 'string'
+        ? payload.rawBody
+        : payload.rawBody
+      : JSON.stringify(payload.body ?? {});
+
+  const calculated = createHmac(nodeAlgo, secret).update(bodyMaterial).digest('hex');
   return calculated.toLowerCase() === digest.toLowerCase();
 }
 

@@ -87,7 +87,7 @@ export type BitsActionContext = BitsRoutineContext;
  * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
  */
 export interface WebhookFilterPayload {
-  /** Raw request body */
+  /** Parsed request body */
   body: any;
   /** HTTP headers */
   headers: Record<string, string>;
@@ -95,6 +95,8 @@ export interface WebhookFilterPayload {
   query: Record<string, string>;
   /** HTTP method */
   method: string;
+  /** Original request body bytes (required for HMAC webhook verification) */
+  rawBody?: Buffer | string;
 }
 
 /**
