@@ -12,16 +12,17 @@ nodes:
   - id: send-hello
     type: action
     data:
-      label: Send Hello
+      label: Send Template Message
       framework: bits
       source: npm
       module: "@ha-bits/bit-whatsapp"
-      operation: sendTextMessage
+      operation: sendTemplateMessage
       params:
         accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
         phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
-        to: "{{habits.input.to || habits.env.HABITS_WHATSAPP_PHONE}}"
-        message: hello
+        to: "{{habits.env.HABITS_WHATSAPP_PHONE}}"
+        templateName: "hello_world"
+        languageCode: "en_US"
 
 edges: []
 
