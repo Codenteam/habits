@@ -170,14 +170,15 @@ function isTruthy(v) {
   return true;
 }
 
-function normalizeImageSrc(src) {
+function normalizeImageSrc(src, mime) {
   if (src == null || src === '') return '';
   var s = String(src);
   if (/^data:/i.test(s) || /^https?:\/\//i.test(s)) return s;
+  var mt = mime ? String(mime).split(';')[0] : 'image/jpeg';
   if (s.indexOf('base64,') >= 0) {
-    return s.indexOf('data:') === 0 ? s : 'data:image/png;base64,' + s.split('base64,').pop();
+    return s.indexOf('data:') === 0 ? s : 'data:' + mt + ';base64,' + s.split('base64,').pop();
   }
-  return 'data:image/png;base64,' + s;
+  return 'data:' + mt + ';base64,' + s;
 }
 
 function syncModals() {
@@ -759,13 +760,25 @@ function render() {
   });
   qa('*').forEach(function (el) {
     // attribute templating: data-tmpl-attr-<name>
+    var tmplSrc = null;
+    var tmplMime = null;
     for (var i = 0; i < el.attributes.length; i++) {
       var a = el.attributes[i];
       if (a.name.indexOf('data-tmpl-attr-') === 0) {
         var attrName = a.name.slice('data-tmpl-attr-'.length);
         var v = evalAny(a.value);
-        if (v == null || v === '') { el.removeAttribute(attrName); }
-        else { el.setAttribute(attrName, attrName === 'src' ? normalizeImageSrc(v) : String(v)); }
+        if (attrName === 'src') tmplSrc = v;
+        else if (attrName === 'data-image-mime') tmplMime = v;
+        else if (v == null || v === '') { el.removeAttribute(attrName); }
+        else { el.setAttribute(attrName, String(v)); }
+      }
+    }
+    if (tmplSrc != null) {
+      if (tmplSrc === '') el.removeAttribute('src');
+      else {
+        if (tmplMime) el.setAttribute('data-image-mime', String(tmplMime));
+        else el.removeAttribute('data-image-mime');
+        el.setAttribute('src', normalizeImageSrc(tmplSrc, tmplMime));
       }
     }
   });
@@ -871,17 +884,31 @@ function render() {
     var arr = getPath({ state: state }, el.getAttribute('data-table-from')) || [];
     if (!Array.isArray(arr)) arr = [];
     var cols = safeParseJson(el.getAttribute('data-table-cols')) || [];
+    var rowActions = safeParseJson(el.getAttribute('data-table-actions')) || [];
+    var colSpan = cols.length + (rowActions.length ? 1 : 0);
     var tbody = el.querySelector('tbody');
     if (!tbody) return;
     if (arr.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="' + cols.length + '" class="ha-help" style="text-align:center;padding:20px">' + escapeHtml(el.getAttribute('data-table-empty') || '') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="ha-help" style="text-align:center;padding:20px">' + escapeHtml(el.getAttribute('data-table-empty') || '') + '</td></tr>';
       return;
     }
     tbody.innerHTML = arr.map(function (row) {
-      return '<tr>' + cols.map(function (c) {
+      var cells = cols.map(function (c) {
         var v = getPath(row, c.key);
         return '<td' + (c.align ? ' style="text-align:' + c.align + '"' : '') + '>' + escapeHtml(v == null ? '' : String(v)) + '</td>';
-      }).join('') + '</tr>';
+      }).join('');
+      if (rowActions.length) {
+        var btns = rowActions.map(function (a) {
+          var params = {};
+          if (a.params) {
+            for (var pk in a.params) params[pk] = renderTemplate(String(a.params[pk]), { item: row });
+          }
+          var tone = a.tone || a.variant || 'secondary';
+          return '<button type="button" class="ha-btn ha-btn--sm ha-btn--' + tone + '" data-action-click="' + escapeHtml(a.action) + '" data-action-params=\'' + escapeHtml(JSON.stringify(params)) + '\'>' + escapeHtml(a.label) + '</button>';
+        }).join(' ');
+        cells += '<td class="ha-table__actions" style="white-space:nowrap">' + btns + '</td>';
+      }
+      return '<tr>' + cells + '</tr>';
     }).join('');
   });
 

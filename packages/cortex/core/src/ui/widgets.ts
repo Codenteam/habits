@@ -663,7 +663,13 @@ function renderImage(w: ImageWidget): string {
     w.height != null ? `max-height:${typeof w.height === 'number' ? w.height + 'px' : w.height}` : '',
     w.rounded ? 'border-radius:var(--ha-radius)' : '',
   ].filter(Boolean).join(';');
-  return `<img${attrs({ class: w.className, alt: w.alt ?? '', 'data-tmpl-attr-src': w.source, style: style || undefined })} />`;
+  return `<img${attrs({
+    class: w.className,
+    alt: w.alt ?? '',
+    'data-tmpl-attr-src': w.source,
+    'data-tmpl-attr-data-image-mime': w.mimeSource,
+    style: style || undefined,
+  })} />`;
 }
 
 function renderScoreRing(w: ScoreRingWidget): string {
@@ -750,14 +756,16 @@ function renderQuizQuestions(w: QuizQuestionsWidget): string {
 }
 
 function renderDataTable(w: DataTableWidget): string {
-  const head = w.columns.map((c) => `<th${attrs({ style: c.align ? `text-align:${c.align}` : undefined })}>${escapeHtml(c.label)}</th>`).join('');
+  const headCols = w.columns.map((c) => `<th${attrs({ style: c.align ? `text-align:${c.align}` : undefined })}>${escapeHtml(c.label)}</th>`).join('');
+  const actionsHead = w.rowActions?.length ? '<th>Actions</th>' : '';
   return `<table${attrs({
     class: cls('ha-table', w.className),
     'data-table-from': w.source,
     'data-table-cols': safeJson(w.columns),
     'data-table-empty': w.empty ?? 'No items',
+    'data-table-actions': w.rowActions?.length ? safeJson(w.rowActions) : undefined,
   })}>
-<thead><tr>${head}</tr></thead>
+<thead><tr>${headCols}${actionsHead}</tr></thead>
 <tbody></tbody>
 </table>`;
 }

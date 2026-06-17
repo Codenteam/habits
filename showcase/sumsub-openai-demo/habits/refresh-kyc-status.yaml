@@ -1,6 +1,6 @@
 id: refresh-kyc-status
 name: Refresh KYC Status
-description: Fetch latest Sumsub status and summarize with OpenAI.
+description: Fetch latest Sumsub status and summarize with local AI (Qwen3.5).
 
 input:
   - id: applicantId
@@ -44,34 +44,32 @@ nodes:
   - id: summarize-status
     type: action
     data:
-      label: Summarize with OpenAI
+      label: Summarize with Local AI
       framework: bits
       source: npm
-      module: "@ha-bits/bit-openai"
-      operation: ask_chatgpt
-      credentials:
-        openai:
-          apiKey: "{{habits.env.OPENAI_API_KEY}}"
+      module: "@ha-bits/bit-local-ai"
+      operation: generate-text
       params:
-        model: gpt-4o-mini
-        temperature: 0.3
+        modelId: "{{habits.env.HABITS_LOCAL_AI_MODEL || 'qwen3.5-0.8b'}}"
         maxTokens: 700
-        prompt: |
-          You are a compliance assistant. Summarize this Sumsub KYC case for an operations analyst.
+        prompts:
+          - role: system
+            content: You are a compliance assistant. Summarize Sumsub KYC cases clearly for operations analysts.
+          - role: user
+            content: |
+              Applicant: {{habits.input.firstName}} {{habits.input.lastName}} ({{habits.input.email}})
+              Country: {{habits.input.country || 'GBR'}}
+              Applicant ID: {{habits.input.applicantId}}
+              Level: {{habits.input.levelName || 'id-and-liveness'}}
 
-          Applicant: {{habits.input.firstName}} {{habits.input.lastName}} ({{habits.input.email}})
-          Country: {{habits.input.country || 'GBR'}}
-          Applicant ID: {{habits.input.applicantId}}
-          Level: {{habits.input.levelName || 'id-and-liveness'}}
+              Latest Sumsub status JSON:
+              {{get-sumsub-status}}
 
-          Latest Sumsub status JSON:
-          {{get-sumsub-status}}
-
-          Explain:
-          1. Current verification state in plain language
-          2. Whether ID document and selfie steps appear complete
-          3. Next actions for the applicant and for ops
-          Keep it concise (4-6 short paragraphs max).
+              Explain:
+              1. Current verification state in plain language
+              2. Whether ID document and selfie steps appear complete
+              3. Next actions for the applicant and for ops
+              Keep it concise (4-6 short paragraphs max).
 
   - id: save-status-to-db
     type: action
@@ -123,7 +121,7 @@ output:
   reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
   approved: "{{get-sumsub-status.approved}}"
   moderationComment: "{{get-sumsub-status.moderationComment}}"
-  summary: "{{summarize-status}}"
+  summary: "{{summarize-status.text}}"
   allowNextSteps: "{{load-customer-from-db.results[0].allowNextSteps}}"
   blockNextSteps: "{{load-customer-from-db.results[0].blockNextSteps}}"
   customer: "{{load-customer-from-db.results[0]}}"

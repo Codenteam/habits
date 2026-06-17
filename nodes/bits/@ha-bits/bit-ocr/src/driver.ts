@@ -73,16 +73,30 @@ export async function processImage(params: ProcessImageParams): Promise<ProcessI
     psm = 3,  // Fully automatic page segmentation
   } = params;
 
-  if (!source) {
-    throw new Error('Source is required for OCR processing');
+  const startTime = Date.now();
+
+  if (!source || !String(source).trim()) {
+    return {
+      success: false,
+      text: '',
+      confidence: 0,
+      blocks: [],
+      language,
+      wordCount: 0,
+      charCount: 0,
+      processingTime: Date.now() - startTime,
+    };
   }
 
-  const startTime = Date.now();
   let imageInput: string | Buffer;
 
   if (sourceType === 'base64') {
-    // Convert base64 to data URL for Tesseract
-    imageInput = `data:image/png;base64,${source}`;
+    const raw = String(source).trim();
+    if (raw.startsWith('data:')) {
+      imageInput = raw;
+    } else {
+      imageInput = `data:image/jpeg;base64,${raw}`;
+    }
   } else if (sourceType === 'dataUrl') {
     imageInput = source;
   } else if (sourceType === 'path') {

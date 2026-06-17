@@ -1,8 +1,12 @@
 id: start-kyc
 name: Start KYC
-description: Create a Sumsub applicant profile to begin identity verification.
+description: Create a Sumsub applicant, upload ID and selfie, request review, and persist to the database.
 
 input:
+  - id: personId
+    type: string
+    required: true
+    description: Your unique identifier for this person (employee ID, customer ref, etc.)
   - id: email
     type: string
     required: true
@@ -20,6 +24,29 @@ input:
     type: string
     required: false
     default: id-and-liveness
+  - id: idCardImage
+    type: string
+    required: true
+    description: Base64 or data-URL from file upload
+  - id: idCardMimeType
+    type: string
+    required: false
+  - id: idCardFileName
+    type: string
+    required: false
+  - id: selfieImage
+    type: string
+    required: true
+  - id: selfieMimeType
+    type: string
+    required: false
+  - id: selfieFileName
+    type: string
+    required: false
+  - id: idDocType
+    type: string
+    required: false
+    default: ID_CARD
 
 nodes:
   - id: create-sumsub-applicant
@@ -36,7 +63,7 @@ nodes:
           secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
           baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
       params:
-        externalUserId: "{{habits.input.email}}"
+        externalUserId: "{{habits.input.personId}}"
         email: "{{habits.input.email}}"
         firstName: "{{habits.input.firstName}}"
         lastName: "{{habits.input.lastName}}"
@@ -55,6 +82,7 @@ nodes:
         collection: kyc_customers
         database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
         document:
+          personId: "{{habits.input.personId}}"
           applicantId: "{{create-sumsub-applicant.applicantId}}"
           externalUserId: "{{create-sumsub-applicant.externalUserId}}"
           email: "{{habits.input.email}}"
@@ -66,14 +94,140 @@ nodes:
           allowNextSteps: false
           blockNextSteps: false
 
+  - id: upload-id-card
+    type: action
+    data:
+      label: Upload ID Card
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: uploadIdDocument
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+        country: "{{habits.input.country || 'GBR'}}"
+        contentBase64: "{{habits.input.idCardImage}}"
+        mimeType: "{{habits.input.idCardMimeType}}"
+        fileName: "{{habits.input.idCardFileName}}"
+        idDocType: "{{habits.input.idDocType || 'ID_CARD'}}"
+        idDocSubType: FRONT_SIDE
+
+  - id: upload-selfie
+    type: action
+    data:
+      label: Upload Selfie
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: uploadSelfie
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+        country: "{{habits.input.country || 'GBR'}}"
+        contentBase64: "{{habits.input.selfieImage}}"
+        mimeType: "{{habits.input.selfieMimeType}}"
+        fileName: "{{habits.input.selfieFileName}}"
+
+  - id: request-check
+    type: action
+    data:
+      label: Request Sumsub Review
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: requestApplicantCheck
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+        reason: Documents uploaded via Habits demo UI
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+
+  - id: save-submission-to-db
+    type: action
+    data:
+      label: Save Submission Status To Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        filter:
+          applicantId: "{{create-sumsub-applicant.applicantId}}"
+        update:
+          reviewStatus: "{{get-sumsub-status.status}}"
+          reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+          approved: "{{get-sumsub-status.approved}}"
+          allowNextSteps: false
+          blockNextSteps: false
+          documentsSubmitted: true
+          idImageId: "{{upload-id-card.imageId}}"
+          selfieImageId: "{{upload-selfie.imageId}}"
+          idCardImageBase64: "{{habits.input.idCardImage}}"
+          idCardMimeType: "{{habits.input.idCardMimeType || 'image/jpeg'}}"
+          selfieImageBase64: "{{habits.input.selfieImage}}"
+          lastWebhookType: documents_submitted
+
 edges:
   - source: create-sumsub-applicant
     target: save-customer-to-db
+  - source: save-customer-to-db
+    target: upload-id-card
+  - source: upload-id-card
+    target: upload-selfie
+  - source: upload-selfie
+    target: request-check
+  - source: request-check
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: save-submission-to-db
 
 output:
+  personId: "{{habits.input.personId}}"
   applicantId: "{{create-sumsub-applicant.applicantId}}"
   externalUserId: "{{create-sumsub-applicant.externalUserId}}"
   email: "{{create-sumsub-applicant.email}}"
   levelName: "{{create-sumsub-applicant.levelName}}"
   dbRecordId: "{{save-customer-to-db.id}}"
-  message: "Applicant created. Upload ID card and selfie on the next step."
+  idUpload:
+    success: "{{upload-id-card.success}}"
+    imageId: "{{upload-id-card.imageId}}"
+  selfieUpload:
+    success: "{{upload-selfie.success}}"
+    imageId: "{{upload-selfie.imageId}}"
+  reviewRequest:
+    ok: "{{request-check.ok}}"
+    message: "{{request-check.message}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+  approved: "{{get-sumsub-status.approved}}"
+  savedToDb: "{{save-submission-to-db.success}}"
+  message: "Applicant created and documents submitted for review."

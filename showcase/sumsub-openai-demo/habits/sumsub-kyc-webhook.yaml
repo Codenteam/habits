@@ -42,6 +42,7 @@ nodes:
         filter:
           applicantId: "{{parse-webhook.applicantId}}"
         update:
+          personId: "{{parse-webhook.externalUserId}}"
           applicantId: "{{parse-webhook.applicantId}}"
           externalUserId: "{{parse-webhook.externalUserId}}"
           reviewStatus: "{{parse-webhook.reviewStatus}}"
@@ -86,6 +87,7 @@ nodes:
         collection: kyc_customers
         database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
         document:
+          personId: "{{parse-webhook.externalUserId}}"
           applicantId: "{{parse-webhook.applicantId}}"
           externalUserId: "{{parse-webhook.externalUserId}}"
           email: "{{parse-webhook.externalUserId}}"

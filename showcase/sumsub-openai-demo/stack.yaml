@@ -1,19 +1,15 @@
 version: "1.0"
-name: Sumsub + OpenAI Demo
+name: Sumsub + Local AI Demo
 
 description: >
   End-to-end KYC demo: create a Sumsub applicant, upload ID card and selfie from
-  the UI, then refresh status with an OpenAI summary.
+  the UI, manage people in a table, fetch Sumsub results, and email departments
+  using local AI (Qwen3.5).
 
 workflows:
   - id: start-kyc
     name: Start KYC
     path: ./habits/start-kyc.yaml
-    enabled: true
-
-  - id: submit-kyc-documents
-    name: Submit KYC Documents
-    path: ./habits/submit-kyc-documents.yaml
     enabled: true
 
   - id: refresh-kyc-status
@@ -34,6 +30,26 @@ workflows:
   - id: get-kyc-customer
     name: Get KYC Customer
     path: ./habits/get-kyc-customer.yaml
+    enabled: true
+
+  - id: list-people
+    name: List People
+    path: ./habits/list-people.yaml
+    enabled: true
+
+  - id: fetch-sumsub-results
+    name: Fetch Sumsub Results
+    path: ./habits/fetch-sumsub-results.yaml
+    enabled: true
+
+  - id: send-results-to-department
+    name: Send Results To Department
+    path: ./habits/send-results-to-department.yaml
+    enabled: true
+
+  - id: chat-case
+    name: Chat About KYC Case
+    path: ./habits/chat-case.yaml
     enabled: true
 
 server:

@@ -1,0 +1,25 @@
+id: list-people
+name: List People
+description: List all KYC people persisted in SQLite.
+
+nodes:
+  - id: query-people
+    type: action
+    data:
+      label: Query All People
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 200
+        sort:
+          _createdAt: -1
+
+edges: []
+
+output:
+  people: "{{query-people.results}}"
+  total: "{{query-people.count}}"

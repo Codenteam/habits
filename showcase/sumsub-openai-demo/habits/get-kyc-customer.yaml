@@ -5,7 +5,10 @@ description: Load persisted KYC customer record from the database by applicant I
 input:
   - id: applicantId
     type: string
-    required: true
+    required: false
+  - id: personId
+    type: string
+    required: false
   - id: email
     type: string
     required: false
@@ -24,13 +27,15 @@ nodes:
         database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
         limit: 1
         filter:
-          applicantId: "{{habits.input.applicantId}}"
+          applicantId: "{{habits.input.applicantId || ''}}"
+          personId: "{{habits.input.personId || ''}}"
+          email: "{{habits.input.email || ''}}"
 
 edges: []
 
 output:
   found: "{{query-customer.count > 0}}"
-  customer: "{{query-customer.results[0]}}"
-  allowNextSteps: "{{query-customer.results[0].allowNextSteps}}"
-  reviewStatus: "{{query-customer.results[0].reviewStatus}}"
-  reviewAnswer: "{{query-customer.results[0].reviewAnswer}}"
+  customer: "{{query-customer.results.0}}"
+  allowNextSteps: "{{query-customer.results.0.allowNextSteps}}"
+  reviewStatus: "{{query-customer.results.0.reviewStatus}}"
+  reviewAnswer: "{{query-customer.results.0.reviewAnswer}}"

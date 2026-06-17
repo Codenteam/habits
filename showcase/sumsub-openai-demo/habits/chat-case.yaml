@@ -1,0 +1,211 @@
+id: chat-case
+name: Chat About KYC Case
+description: Multi-turn chat with local AI about a specific KYC case, always scoped to Person ID, Sumsub applicant ID, and uploaded ID image.
+
+input:
+  - id: personId
+    type: string
+    required: true
+  - id: applicantId
+    type: string
+    required: false
+  - id: message
+    type: string
+    required: false
+    description: Latest user message (optional if included in history)
+  - id: history
+    type: array
+    required: false
+    description: Prior chat turns from the UI ({ role, content }[])
+  - id: idCardImage
+    type: string
+    required: false
+    description: Base64 or data-URL of the ID document image (UI or database)
+  - id: idCardMimeType
+    type: string
+    required: false
+    description: MIME type when idCardImage is raw base64
+
+nodes:
+  - id: load-person
+    type: action
+    data:
+      label: Load Person From Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          personId: "{{habits.input.personId}}"
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Latest Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{habits.input.applicantId || load-person.results.0.applicantId}}"
+
+  - id: ocr-id-document
+    type: action
+    data:
+      label: OCR ID Document
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-ocr"
+      operation: processImage
+      params:
+        source: "{{habits.input.idCardImage || load-person.results.0.idCardImageBase64}}"
+        sourceType: base64
+        language: eng
+
+  - id: extract-id-name
+    type: action
+    data:
+      label: Extract Name From ID OCR
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: extract
+      params:
+        text: "{{ocr-id-document.text}}"
+        pattern: "[A-Z][A-Z ]+(?=\\nDOB)"
+        matchAll: false
+
+  - id: extract-id-dob
+    type: action
+    data:
+      label: Extract DOB From ID OCR
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: extract
+      params:
+        text: "{{ocr-id-document.text}}"
+        pattern: "DOB:\\s*([^\\n]+)"
+        matchAll: false
+
+  - id: extract-id-number
+    type: action
+    data:
+      label: Extract ID Number From OCR
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: extract
+      params:
+        text: "{{ocr-id-document.text}}"
+        pattern: "ID:\\s*([^\\n]+)"
+        matchAll: false
+
+  - id: extract-id-nationality
+    type: action
+    data:
+      label: Extract Nationality From OCR
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: extract
+      params:
+        text: "{{ocr-id-document.text}}"
+        pattern: "NATIONALITY:\\s*([^\\n]+)"
+        matchAll: false
+
+  - id: extract-id-expiry
+    type: action
+    data:
+      label: Extract Expiry From OCR
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-text"
+      operation: extract
+      params:
+        text: "{{ocr-id-document.text}}"
+        pattern: "VALID UNTIL:\\s*([^\\n]+)"
+        matchAll: false
+
+  - id: reply-with-ai
+    type: action
+    data:
+      label: Reply With Local AI
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: generate-text
+      params:
+        modelId: "{{habits.env.HABITS_LOCAL_AI_MODEL || 'qwen3.5-0.8b'}}"
+        maxTokens: 256
+        prompts:
+          - role: system
+            content: |
+              You are a KYC case assistant helping bank staff review identity verification cases.
+          - role: user
+            content: |
+              Case record:
+              - Person ID: {{habits.input.personId}}
+              - Sumsub applicant ID: {{habits.input.applicantId || load-person.results.0.applicantId}}
+              - Name on file: {{load-person.results.0.firstName}} {{load-person.results.0.lastName}}
+              - Email on file: {{load-person.results.0.email}}
+              - Country on file: {{load-person.results.0.country}}
+              - Review status: {{load-person.results.0.reviewStatus}}
+              - Review answer: {{load-person.results.0.reviewAnswer}}
+
+              ID document (from uploaded image OCR):
+              - Name on ID: {{extract-id-name.first}}
+              - Date of birth on ID: {{extract-id-dob.first}}
+              - ID number on ID: {{extract-id-number.first}}
+              - Nationality on ID: {{extract-id-nationality.first}}
+              - Valid until on ID: {{extract-id-expiry.first}}
+
+              Full OCR text:
+              {{ocr-id-document.text}}
+
+              Prior chat: {{habits.input.history}}
+
+              Question: {{habits.input.message}}
+
+              Answer the Question directly. For ID document fields (name, DOB, ID number, nationality, expiry), use the ID document section above.
+
+edges:
+  - source: load-person
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: ocr-id-document
+  - source: ocr-id-document
+    target: extract-id-name
+  - source: extract-id-name
+    target: extract-id-dob
+  - source: extract-id-dob
+    target: extract-id-number
+  - source: extract-id-number
+    target: extract-id-nationality
+  - source: extract-id-nationality
+    target: extract-id-expiry
+  - source: extract-id-expiry
+    target: reply-with-ai
+
+output:
+  personId: "{{habits.input.personId}}"
+  applicantId: "{{habits.input.applicantId || load-person.results.0.applicantId}}"
+  reply: "{{reply-with-ai.text}}"
+  model: "{{reply-with-ai.model}}"
+  hasIdImage: "{{habits.input.idCardImage || load-person.results.0.idCardImageBase64}}"
+  ocrText: "{{ocr-id-document.text}}"
+  idName: "{{extract-id-name.first}}"
+  idDob: "{{extract-id-dob.first}}"
+  idNumber: "{{extract-id-number.first}}"
+  ocrConfidence: "{{ocr-id-document.confidence}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"

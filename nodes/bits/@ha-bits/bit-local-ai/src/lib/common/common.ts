@@ -80,6 +80,15 @@ export const ModelRegistry: Record<string, ModelRegistryEntry> = {
       'tokenizer.json': 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/resolve/main/tokenizer.json',
     },
   },
+  'qwen3.5-0.8b': {
+    label: 'Qwen3.5 0.8B',
+    type: 'text-gen',
+    size: '~530MB',
+    files: {
+      'model.gguf': 'https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q4_K_M.gguf',
+      'tokenizer.json': 'https://huggingface.co/Qwen/Qwen3.5-0.8B/resolve/main/tokenizer.json',
+    },
+  },
   'llama-3.2-1b': {
     label: 'Llama 3.2 1B',
     type: 'text-gen',
