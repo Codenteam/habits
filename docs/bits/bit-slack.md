@@ -51,6 +51,11 @@ nodes:
       # action properties...
 ```
 
+## Used In Showcases
+
+- [rss-digest-summarizer](/showcase/rss-digest-summarizer)
+- [email-digest-summarizer](/showcase/email-digest-summarizer)
+
 <style>
 .bit-meta {
   display: flex;

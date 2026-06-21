@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: daily-standup
+  title: Daily Standup
+  subtitle: Turn git commits or task bullets into a standup update
+  icon: "lucide:CalendarCheck"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Daily Standup, subtitle: "Yesterday · Today · Blockers", icon: "lucide:CalendarCheck" }
+
+state:
+  tasks: ""
+  result: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/daily-standup
+    body:
+      tasks: "{{state.tasks}}"
+    responsePath: output.Results
+    onSuccess: { set: { result: "$response", error: null }, toast: "Standup ready" }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Tasks & commits
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: tasks, type: textarea, label: Paste git log or bullet tasks, rows: 10, required: true, placeholder: "git log --oneline or bullet list of what you did..." }
+        submit: { label: Generate standup, action: generate, loadingLabel: "Generating..." }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Standup
+    sections:
+      - kind: html-preview
+        source: state.result
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

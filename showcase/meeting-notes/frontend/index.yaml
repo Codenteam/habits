@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: meeting-notes
+  title: Meeting Notes
+  subtitle: Turn raw notes or transcripts into structured meeting summaries
+  icon: "lucide:NotebookPen"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Meeting Notes, subtitle: "Decisions · action items · owners", icon: "lucide:NotebookPen" }
+  split: { left: left, right: right, ratio: "400px 1fr" }
+
+state:
+  script: ""
+  result: null
+  error: null
+
+actions:
+  summarize:
+    method: POST
+    endpoint: /api/meeting-notes
+    body:
+      script: "{{state.script}}"
+    responsePath: output.Results
+    onSuccess: { set: { result: "$response", error: null }, toast: "Summary ready" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Meeting transcript
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: script, type: textarea, label: Paste notes or transcript, rows: 12, required: true, placeholder: "Raw meeting notes, transcript, or bullet points..." }
+            submit: { label: Summarize, action: summarize, loadingLabel: "Summarizing..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.result
+        showWhen: state.result
+        title: Summary
+        sections:
+          - { kind: markdown, source: state.result, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

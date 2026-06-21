@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: resume-tailor
+  title: Resume Tailor
+  subtitle: Tailor your resume to a specific job description
+  icon: "lucide:FileUser"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Resume Tailor, subtitle: "Match your resume to the role", icon: "lucide:FileUser" }
+  split: { left: left, right: right, ratio: "420px 1fr" }
+
+state:
+  jobDescription: ""
+  resume: ""
+  result: null
+  error: null
+
+actions:
+  tailor:
+    method: POST
+    endpoint: /api/resume-tailor
+    body:
+      "Job description": "{{state.jobDescription}}"
+      resume: "{{state.resume}}"
+    responsePath: output.result
+    onSuccess: { set: { result: "$response", error: null }, toast: "Resume tailored" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Inputs
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: jobDescription, type: textarea, label: Job description, rows: 8, required: true, placeholder: "Paste the job posting..." }
+              - { name: resume, type: textarea, label: Your resume, rows: 12, required: true, placeholder: "Paste your current resume..." }
+            submit: { label: Tailor my resume, action: tailor, loadingLabel: "Tailoring..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.result
+        showWhen: state.result
+        title: Tailored resume
+        sections:
+          - { kind: markdown, source: state.result, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

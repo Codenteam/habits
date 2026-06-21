@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: email-digest-summarizer
+  title: Email Digest Summarizer
+  subtitle: Fetch Gmail, summarize each message, and post a digest to Slack
+  icon: "lucide:Mail"
+
+theme:
+  preset: aurora
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Email Digest, subtitle: "Gmail → AI → Slack", icon: "lucide:Mail" }
+
+state:
+  fetched: 0
+  summarized: 0
+  slackPosted: ""
+  allSummaries: []
+  error: null
+
+actions:
+  runEmailDigest:
+    method: POST
+    endpoint: /api/content-digest
+    body:
+      digestDate: "{{new Date().toISOString()}}"
+    responsePath: output
+    onSuccess:
+      set:
+        fetched: "$response.contentsFetched"
+        summarized: "$response.contentsSummarized"
+        slackPosted: "$response.slackPosted"
+        allSummaries: "$response.summaries"
+        error: null
+      toast: "Digest complete"
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: status-banner
+    source: "Pipeline: fetch Gmail → AI summarize each → post digest to Slack"
+  - kind: card
+    title: Email digest
+    children:
+      - kind: button
+        label: Run email digest
+        action: runEmailDigest
+        loadingLabel: "Running..."
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.allSummaries.length
+    source: state.allSummaries
+    title: Last run
+    sections:
+      - kind: metric-grid
+        columns: 3
+        metrics:
+          - { value: "{{state.fetched}}", label: Fetched }
+          - { value: "{{state.summarized}}", label: Summarized }
+          - { value: "{{state.slackPosted}}", label: Slack posted }
+      - kind: data-table
+        source: state.allSummaries
+        empty: "No summaries yet. Run the digest to fetch emails."
+        columns:
+          - { key: title, label: Title }
+          - { key: importance, label: Importance }
+          - { key: category, label: Category }
+          - { key: sentiment, label: Sentiment }
+          - { key: actionItem, label: Action }

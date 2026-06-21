@@ -1,0 +1,77 @@
+version: 1
+meta:
+  id: google-drive-test
+  title: Google Drive Test
+  subtitle: Upload a file, then verify it exists on Drive
+  icon: "lucide:HardDrive"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Google Drive Test, subtitle: "Upload → verify (2 bits)", icon: "lucide:HardDrive" }
+
+state:
+  fileBase64: ""
+  folderId: ""
+  result: null
+  error: null
+
+actions:
+  run:
+    method: POST
+    endpoint: /api/google-drive-test
+    body:
+      fileName: "{{state.fileBase64__name}}"
+      content: "{{state.fileBase64}}"
+      mimeType: "{{state.fileBase64__type}}"
+      folderId: "{{state.folderId}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: null
+      toast: "{{$response.exists ? 'File verified on Drive' : 'Uploaded but not found'}}"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+widgets:
+  - kind: status-banner
+    source: "Uses @ha-bits/bit-google-drive uploadFile + listFiles only. Connect Google Drive in app Secrets first."
+  - kind: card
+    title: Upload file
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: fileBase64, type: file-upload, label: "Choose file", asBase64: true, required: true }
+          - { name: folderId, type: text, label: "Folder ID (optional)", placeholder: "Leave empty for Drive root" }
+        submit:
+          label: Upload and verify
+          action: run
+          disabledWhen: "!state.fileBase64"
+          loadingLabel: "Uploading..."
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Result
+    sections:
+      - kind: metric-grid
+        columns: 3
+        metrics:
+          - { value: "{{state.result.uploadSuccess}}", label: Uploaded }
+          - { value: "{{state.result.exists}}", label: "Exists on Drive" }
+          - { value: "{{state.result.verifiedCount}}", label: "Matches found" }
+      - kind: kv-grid
+        source: state.result.file
+        fields:
+          - { key: name, label: File name }
+          - { key: id, label: File ID }
+          - { key: webViewLink, label: Drive link }

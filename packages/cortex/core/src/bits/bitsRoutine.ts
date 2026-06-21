@@ -87,7 +87,7 @@ export type BitsActionContext = BitsRoutineContext;
  * Webhook filter payload - passed to trigger.filter() to determine if trigger should handle the event
  */
 export interface WebhookFilterPayload {
-  /** Raw request body */
+  /** Parsed request body */
   body: any;
   /** HTTP headers */
   headers: Record<string, string>;
@@ -95,6 +95,8 @@ export interface WebhookFilterPayload {
   query: Record<string, string>;
   /** HTTP method */
   method: string;
+  /** Original request body bytes (required for HMAC webhook verification) */
+  rawBody?: Buffer | string;
 }
 
 /**
@@ -701,7 +703,31 @@ async function executeGenericBitsPiece(
           }
         }
       } else {
-        // Priority 3: Try to get OAuth token from global store (single-user mode or Tauri)
+        // Priority 3: Hydrate from Tauri keyring (secrets popup), then in-memory store
+        const isTauri =
+          typeof window !== 'undefined' &&
+          ((window as any).__TAURI__ ||
+            (window as any).parent?.__TAURI__ ||
+            (window as any).parent?.parent?.__TAURI__);
+        if (isTauri) {
+          const parentHabits =
+            (typeof window !== 'undefined' && (window as any).parent?.__habits__) ||
+            (typeof window !== 'undefined' && (window as any).parent?.parent?.__habits__);
+          if (parentHabits?.getOAuthTokenEntry) {
+            try {
+              const entry = await parentHabits.getOAuthTokenEntry(bitId);
+              if (entry?.tokens && entry?.config) {
+                oauthTokenStore.setToken(bitId, entry.tokens, entry.config);
+                logger.log(`🔐 Hydrated OAuth token from keyring for: ${bitId}`);
+              }
+            } catch (hydrateErr) {
+              logger.warn(`Failed to hydrate OAuth token from keyring for ${bitId}`, {
+                error: String(hydrateErr),
+              });
+            }
+          }
+        }
+
         const oauthToken = oauthTokenStore.getToken(bitId);
         if (oauthToken) {
           auth = {
@@ -768,8 +794,7 @@ async function executeGenericBitsPiece(
             auth = oauthResult.tokens;
             logger.log(`✅ OAuth flow completed for ${bitId}, access token received`);
 
-            // Persist tokens so subsequent actions in the same session skip the browser flow.
-            oauthTokenStore.setToken(bitId, auth, {
+            const oauthConfig = {
               displayName: pieceAuth.displayName || bitId,
               required: pieceAuth.required || false,
               authorizationUrl: pieceAuth.authorizationUrl || '',
@@ -777,7 +802,25 @@ async function executeGenericBitsPiece(
               clientId,
               clientSecret,
               scopes: pieceAuth.scopes || [],
-            });
+            };
+            // Persist tokens so subsequent actions in the same session skip the browser flow.
+            oauthTokenStore.setToken(bitId, auth, oauthConfig);
+
+            const parentHabitsForSave =
+              (typeof window !== 'undefined' && (window as any).parent?.__habits__) ||
+              (typeof window !== 'undefined' && (window as any).parent?.parent?.__habits__);
+            if (parentHabitsForSave?.setOAuthTokenEntry) {
+              try {
+                await parentHabitsForSave.setOAuthTokenEntry(bitId, {
+                  tokens: auth,
+                  config: oauthConfig,
+                });
+              } catch (persistErr) {
+                logger.warn(`Failed to persist OAuth token to keyring for ${bitId}`, {
+                  error: String(persistErr),
+                });
+              }
+            }
           } else {
             logger.warn(`⚠️ No OAuth token found for ${bitId}. Provide tokens via credentials or complete the OAuth flow.`);
           }

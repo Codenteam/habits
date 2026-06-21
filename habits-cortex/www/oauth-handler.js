@@ -25,7 +25,8 @@
   // Must be a valid HTTPS URL (custom schemes are rejected by Google, LinkedIn, etc.).
   var OAUTH_REDIRECT_URI = 'https://habits.codenteam.com/oauth.html';
 
-  // Custom URL scheme used for the desktop fallback (oauth.html -> habits-cortex://).
+  // Custom URL scheme for desktop OAuth callbacks (oauth.html -> {scheme}://oauth).
+  // Production: habits-cortex. Dev app (com.codenteam-oss.habits.dev): habits-cortex-dev.
   var URL_SCHEME = 'habits-cortex';
 
   // Timeout for the entire OAuth flow (5 minutes).
@@ -51,6 +52,15 @@
         console.warn('[OAuth] Tauri not available, deep link handler not initialized');
         return;
       }
+      try {
+        var appConfig = await tauri.core.invoke('get_app_config');
+        if (appConfig && appConfig.urlScheme) {
+          URL_SCHEME = appConfig.urlScheme;
+          console.log('[OAuth] URL scheme:', URL_SCHEME);
+        }
+      } catch (configErr) {
+        console.warn('[OAuth] Could not read app config, using default scheme:', configErr);
+      }
       // Subscribe to the deep-link plugin's "new-url" event via Tauri event system.
       // The deep-link plugin emits "deep-link://new-url" events on incoming links.
       if (tauri.event && tauri.event.listen) {
@@ -74,7 +84,8 @@
   /**
    * Handle an incoming deep link URL.
    * Works for both:
-   *   - habits-cortex://oauth?code=...&state=...   (desktop, from oauth.html redirect)
+   *   - habits-cortex://oauth?code=...&state=...        (production desktop)
+   *   - habits-cortex-dev://oauth?code=...&state=...    (dev desktop, via oauth.html shortcut)
    *   - https://habits.codenteam.com/oauth.html?code=...&state=...  (mobile App Links)
    */
   function handleDeepLink(url) {

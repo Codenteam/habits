@@ -7,21 +7,13 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import grapesjs, { type Editor as GrapesEditor, type EditorConfig } from 'grapesjs';
-import grapesjsPresetWebpage from 'grapesjs-preset-webpage';
-import grapesjsBlocksBasic from 'grapesjs-blocks-basic';
-import grapesjsPluginForms from 'grapesjs-plugin-forms';
-import grapesjsTailwind from 'grapesjs-tailwind';
-import parserPostCSS from 'grapesjs-parser-postcss';
-import customCodePlugin from 'grapesjs-custom-code';
-import * as monaco from 'monaco-editor';
+import type { Editor as GrapesEditor, EditorConfig } from 'grapesjs';
 import type { editor as MonacoEditorType } from 'monaco-editor';
 import { Save, Plug, Loader2, Settings, Bot, Zap, X, AlignLeft } from 'lucide-react';
 import type { FrontendBuilderProps, WebCanvasConfig, HostingDetectionResult } from './types';
 import { detectHostingEnvironment, validateTenantUrl, generateWithAI } from './webcanvas-client';
+import { defineMonacoTheme, loadGrapesJsStack, loadMonacoEditor } from './legacy-deps';
 
-// Import CSS
-import 'grapesjs/dist/css/grapes.min.css';
 import './FrontendBuilder.css';
 
 // ==========================================
@@ -70,37 +62,6 @@ let formatterRegistered = false;
 function registerHtmlFormatter() {
   if (formatterRegistered) return;
   formatterRegistered = true;
-
-}
-
-// Define Monaco theme
-function defineMonacoTheme() {
-  monaco.editor.defineTheme('cyber-dark', {
-    base: 'vs-dark',
-    inherit: true,
-    rules: [
-      { token: 'tag', foreground: '22d3ee' },
-      { token: 'attribute.name', foreground: 'a78bfa' },
-      { token: 'attribute.value', foreground: '4ade80' },
-      { token: 'comment', foreground: '3f3f46', fontStyle: 'italic' },
-    ],
-    colors: {
-      'editor.background': '#13141c',
-      'editor.foreground': '#ffffff',
-      'editor.lineHighlightBackground': '#1f202a',
-      'editor.lineHighlightBorder': '#00000000',
-      'editorLineNumber.foreground': '#ffffff50',
-      'editorLineNumber.activeForeground': '#ffffff',
-      'editor.selectionBackground': '#ffffff25',
-      'editor.inactiveSelectionBackground': '#ffffff15',
-      'editorCursor.foreground': '#ffffff',
-      'editorWidget.background': '#1a1b26',
-      'editorWidget.border': '#ffffff20',
-      'scrollbarSlider.background': '#ffffff15',
-      'scrollbarSlider.hoverBackground': '#ffffff25',
-      'scrollbarSlider.activeBackground': '#ffffff35',
-    }
-  });
 }
 
 // ==========================================
@@ -459,10 +420,14 @@ export function FrontendBuilderVanilla({
     if (!monacoContainerRef.current || monacoInitializedRef.current) return;
     monacoInitializedRef.current = true;
 
-    defineMonacoTheme();
-    registerHtmlFormatter();
+    let cancelled = false;
+    void loadMonacoEditor().then((monaco) => {
+      if (cancelled || !monacoContainerRef.current) return;
 
-    const monacoEditor = monaco.editor.create(monacoContainerRef.current, {
+      defineMonacoTheme(monaco);
+      registerHtmlFormatter();
+
+      const monacoEditor = monaco.editor.create(monacoContainerRef.current, {
       value: currentHtml,
       language: 'html',
       theme: 'cyber-dark',
@@ -495,6 +460,11 @@ export function FrontendBuilderVanilla({
     }, 100);
 
     // No cleanup - editors persist to avoid React Strict Mode double-mount issues
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ==========================================
@@ -503,6 +473,20 @@ export function FrontendBuilderVanilla({
   useEffect(() => {
     if (!editorContainerRef.current || initializedRef.current) return;
     initializedRef.current = true;
+
+    let cancelled = false;
+    void loadGrapesJsStack().then((stack) => {
+      if (cancelled || !editorContainerRef.current) return;
+
+      const {
+        grapesjs,
+        grapesjsBlocksBasic,
+        grapesjsPresetWebpage,
+        grapesjsPluginForms,
+        grapesjsTailwind,
+        parserPostCSS,
+        customCodePlugin,
+      } = stack;
 
     const gjsOptions: EditorConfig = {
       container: editorContainerRef.current,
@@ -582,6 +566,11 @@ export function FrontendBuilderVanilla({
       codeToGrapes(initialHtml);
     }
     // No cleanup - editors persist to avoid React Strict Mode double-mount issues
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ==========================================

@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: budget-analyst
+  title: Budget Analyst
+  subtitle: Paste financial data and get an AI-powered budget breakdown
+  icon: "lucide:PieChart"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Budget Analyst, subtitle: "Financial data analysis", icon: "lucide:PieChart" }
+
+state:
+  budget: ""
+  result: null
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/budget-analyst
+    body:
+      budget: "{{state.budget}}"
+    responsePath: output.Results
+    onSuccess: { set: { result: "$response", error: null }, toast: "Analysis complete" }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Financial data
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: budget, type: textarea, label: Paste your financial data, rows: 10, required: true, placeholder: "Income, expenses, debts, goals..." }
+        submit: { label: Analyze budget, action: analyze, loadingLabel: "Analyzing..." }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Analysis
+    sections:
+      - kind: html-preview
+        source: state.result
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

@@ -50,7 +50,7 @@ const industries = [
     "name": "Finance & Banking",
     "icon": "shield",
     "tagline": "Onboard customers, detect fraud, and pass audits, without the manual grind.",
-    "totalHabits": 30,
+    "totalHabits": 31,
     "departmentList": [
       {
         "id": "compliance-audit",
@@ -61,7 +61,7 @@ const industries = [
       {
         "id": "customer-onboarding",
         "name": "Finance & Banking Customer Onboarding",
-        "description": "Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.",
+        "description": "Automate a full customer application path from intake through ID verification, sanctions screening, and core banking account creation.",
         "showcaseSlug": "finance-banking-customer-onboarding"
       },
       {

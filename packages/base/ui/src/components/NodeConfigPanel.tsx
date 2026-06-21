@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { X, Trash2, AlertCircle, Loader, Info, PlayCircle, Zap, ChevronLeft, Key } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { 
@@ -11,7 +11,7 @@ import { setNodeConfigPanelOpen, setShowDownloadPrompt } from '../store/slices/u
 import { api } from '../lib/api';
 import DynamicForm from './DynamicForm';
 import ModuleDownloadPrompt from './ModuleDownloadPrompt';
-import ScriptNodeEditor from './ScriptNodeEditor';
+const ScriptNodeEditor = lazy(() => import('./ScriptNodeEditor'));
 import ScriptParamsEditor from './ScriptParamsEditor';
 import AuthField from './AuthField';
 import EnvVariablesPopover from './EnvVariablesPopover';
@@ -542,20 +542,28 @@ export default function NodeConfigPanel({ node }: NodeConfigPanelProps) {
           {/* Script Node Configuration */}
           {isScriptNode && (
             <>
-              <ScriptNodeEditor
-                script={nodeConfig?.params?.script || node.data.content || ''}
-                language={nodeConfig?.params?.language || node.data.language || 'deno'}
-                onScriptChange={(newValue) => handleParamsChange({
-                  ...nodeConfig?.params,
-                  script: newValue
-                })}
-                onLanguageChange={(newLanguage) => handleParamsChange({
-                  ...nodeConfig?.params,
-                  language: newLanguage
-                })}
-                height="300px"
-              />
-              
+              <Suspense
+                fallback={
+                  <div className="flex h-[300px] items-center justify-center rounded border border-slate-700 bg-slate-900 text-slate-400 text-sm">
+                    Loading script editor…
+                  </div>
+                }
+              >
+                <ScriptNodeEditor
+                  script={nodeConfig?.params?.script || node.data.content || ''}
+                  language={nodeConfig?.params?.language || node.data.language || 'deno'}
+                  onScriptChange={(newValue) => handleParamsChange({
+                    ...nodeConfig?.params,
+                    script: newValue
+                  })}
+                  onLanguageChange={(newLanguage) => handleParamsChange({
+                    ...nodeConfig?.params,
+                    language: newLanguage
+                  })}
+                  height="300px"
+                />
+              </Suspense>
+
               <ScriptParamsEditor
                 params={nodeConfig?.params || {}}
                 onChange={handleParamsChange}

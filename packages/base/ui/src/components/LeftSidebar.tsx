@@ -142,7 +142,10 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
           workflow = yaml.load(e.target?.result as string);
         }
         const { nodes, edges } = extractNodesAndEdges(workflow);
-        dispatch(addHabit({ name: file.name.replace(/\.(json|ya?ml)$/i, ''), nodes, edges }));
+        const baseName = file.name.replace(/\.(json|ya?ml)$/i, '');
+        const habitId =
+          (typeof workflow?.id === 'string' && workflow.id.trim()) || slugify(baseName);
+        dispatch(addHabit({ id: habitId, name: baseName, nodes, edges }));
       } catch (error: any) {
         setDialogConfig({ message: `Failed to load file: ${error.message}`, type: 'error' });
         setDialogOpen(true);

@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: idea-validator
+  title: Idea Validator
+  subtitle: Devil's advocate report for your startup or product idea
+  icon: "lucide:Lightbulb"
+
+theme:
+  preset: ha-bits-red
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Idea Validator, subtitle: "Stress-test your idea", icon: "lucide:Lightbulb" }
+  split: { left: left, right: right, ratio: "400px 1fr" }
+
+state:
+  idea: ""
+  report: null
+  error: null
+
+actions:
+  validate:
+    method: POST
+    endpoint: /api/idea-validator
+    body:
+      idea: "{{state.idea}}"
+    responsePath: output.Results
+    onSuccess: { set: { report: "$response", error: null }, toast: "Report ready" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Your idea
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: idea, type: textarea, label: Describe the idea, rows: 10, required: true, placeholder: "Problem, audience, solution, monetization..." }
+            submit: { label: Validate idea, action: validate, loadingLabel: "Analyzing..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.report
+        showWhen: state.report
+        title: Devil's advocate report
+        sections:
+          - { kind: markdown, source: state.report, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

@@ -1,0 +1,128 @@
+id: refresh-kyc-status
+name: Refresh KYC Status
+description: Fetch latest Sumsub status and summarize with local AI (Qwen3.5).
+
+input:
+  - id: applicantId
+    type: string
+    required: true
+  - id: firstName
+    type: string
+    required: true
+  - id: lastName
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: true
+  - id: country
+    type: string
+    required: false
+    default: GBR
+  - id: levelName
+    type: string
+    required: false
+    default: id-and-liveness
+
+nodes:
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{habits.input.applicantId}}"
+
+  - id: summarize-status
+    type: action
+    data:
+      label: Summarize with Local AI
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: generate-text
+      params:
+        modelId: "{{habits.env.HABITS_LOCAL_AI_MODEL || 'qwen3.5-0.8b'}}"
+        maxTokens: 700
+        prompts:
+          - role: system
+            content: You are a compliance assistant. Summarize Sumsub KYC cases clearly for operations analysts.
+          - role: user
+            content: |
+              Applicant: {{habits.input.firstName}} {{habits.input.lastName}} ({{habits.input.email}})
+              Country: {{habits.input.country || 'GBR'}}
+              Applicant ID: {{habits.input.applicantId}}
+              Level: {{habits.input.levelName || 'id-and-liveness'}}
+
+              Latest Sumsub status JSON:
+              {{get-sumsub-status}}
+
+              Explain:
+              1. Current verification state in plain language
+              2. Whether ID document and selfie steps appear complete
+              3. Next actions for the applicant and for ops
+              Keep it concise (4-6 short paragraphs max).
+
+  - id: save-status-to-db
+    type: action
+    data:
+      label: Save Status To Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        filter:
+          applicantId: "{{habits.input.applicantId}}"
+        update:
+          reviewStatus: "{{get-sumsub-status.status}}"
+          reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+          approved: "{{get-sumsub-status.approved}}"
+          allowNextSteps: "{{get-sumsub-status.allowNextSteps}}"
+          blockNextSteps: "{{get-sumsub-status.blockNextSteps}}"
+          moderationComment: "{{get-sumsub-status.moderationComment}}"
+
+  - id: load-customer-from-db
+    type: action
+    data:
+      label: Load Customer From Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          applicantId: "{{habits.input.applicantId}}"
+
+edges:
+  - source: get-sumsub-status
+    target: save-status-to-db
+  - source: save-status-to-db
+    target: summarize-status
+  - source: summarize-status
+    target: load-customer-from-db
+
+output:
+  applicantId: "{{habits.input.applicantId}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+  approved: "{{get-sumsub-status.approved}}"
+  moderationComment: "{{get-sumsub-status.moderationComment}}"
+  summary: "{{summarize-status.text}}"
+  allowNextSteps: "{{load-customer-from-db.results[0].allowNextSteps}}"
+  blockNextSteps: "{{load-customer-from-db.results[0].blockNextSteps}}"
+  customer: "{{load-customer-from-db.results[0]}}"
+  savedToDb: "{{save-status-to-db.success}}"

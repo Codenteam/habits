@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: study-flashcards
+  title: Study Flashcards
+  subtitle: Generate Q&A flashcards from study material
+  icon: "lucide:GraduationCap"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Study Flashcards, subtitle: "10 AI-generated Q&A pairs", icon: "lucide:GraduationCap" }
+
+state:
+  script: ""
+  flashcards: []
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/study-flashcards
+    body:
+      script: "{{state.script}}"
+    responsePath: output.Results
+    onSuccess:
+      set:
+        flashcards: "typeof $response === 'string' ? JSON.parse($response) : $response"
+        error: null
+      toast: "Flashcards generated"
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Study material
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: script, type: textarea, label: Paste text to study, rows: 10, required: true, placeholder: "Lecture notes, article, textbook excerpt..." }
+        submit: { label: Generate flashcards, action: generate, loadingLabel: "Generating..." }
+  - kind: card
+    title: Flashcards
+    showWhen: state.flashcards.length
+    children:
+      - kind: list
+        source: state.flashcards
+        empty: "Generate flashcards to see them here."
+        template:
+          - { kind: heading, level: 4, value: "Q{{index+1}}: {{item.question}}" }
+          - { kind: text, value: "{{item.answer}}", muted: true }
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

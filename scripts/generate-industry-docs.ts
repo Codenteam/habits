@@ -52,6 +52,11 @@ interface HabitData {
   description: string
   trigger: 'scheduler' | 'webhook' | 'email' | 'manual'
   bits: string[]
+  featured?: boolean
+  overview?: string
+  flow?: string[]
+  components?: string[]
+  integrations?: string[]
   stackFolder?: string // relative path from workspace root
 }
 
@@ -100,6 +105,11 @@ interface HabitEntry {
   description: string
   trigger: 'scheduler' | 'webhook' | 'email' | 'manual'
   bits: string[]
+  featured?: boolean
+  overview?: string
+  flow?: string[]
+  components?: string[]
+  integrations?: string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -223,6 +233,11 @@ function scanDepartments(): Map<string, DepartmentData[]> {
       description: h.description,
       trigger: h.trigger,
       bits: h.bits ?? [],
+      ...(h.featured ? { featured: h.featured } : {}),
+      ...(h.overview ? { overview: h.overview } : {}),
+      ...(h.flow ? { flow: h.flow } : {}),
+      ...(h.components ? { components: h.components } : {}),
+      ...(h.integrations ? { integrations: h.integrations } : {}),
       stackFolder: `showcase/${dir}`,
     }))
 

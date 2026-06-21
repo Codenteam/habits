@@ -5,7 +5,7 @@
 
 // Module load marker for testing
 window.__habitsModuleLoaded__ = true;
-window.__habitsModuleVersion__ = '2026-04-11-v3';  // Version marker for cache debugging
+window.__habitsModuleVersion__ = '2026-06-21-v5';  // Version marker for cache debugging
 console.log('[Habits] Module loaded, version:', window.__habitsModuleVersion__);
 
 // ============================================================================
@@ -18,6 +18,7 @@ const state = {
   appDataPath: null,
   keyringReady: false,
   activeDropdown: null,
+  habitImportLockCount: 0,
 };
 
 // Keyring constants - service name for storing secrets
@@ -480,41 +481,46 @@ async function extractHabitFile(filePath) {
 // ============================================================================
 
 async function importHabitFile(filePath) {
-  console.log('[Habits] Importing habit file:', filePath);
-  
-  const extraction = await extractHabitFile(filePath);
-  
-  if (!extraction.valid) {
-    showError(extraction.error.title, extraction.error.message);
-    return false;
+  beginHabitImport('Adding habit…');
+  try {
+    console.log('[Habits] Importing habit file:', filePath);
+    
+    const extraction = await extractHabitFile(filePath);
+    
+    if (!extraction.valid) {
+      showError(extraction.error.title, extraction.error.message);
+      return false;
+    }
+    
+    // Generate unique ID
+    const habitId = 'habit-' + Date.now();
+    
+    // Create habit entry with cached content
+    const habit = {
+      id: habitId,
+      name: extraction.habitName,
+      filePath: extraction.filePath,
+      // Cache the extracted content so we don't need to re-extract
+      cachedIndexHtml: extraction.indexHtml,
+      cachedBundleJs: extraction.bundleJs,
+      cachedFetchProxyJs: extraction.fetchProxyJs,
+      cachedFiles: extraction.files,
+      useAutoUi: extraction.useAutoUi || false,
+      installedAt: new Date().toISOString(),
+    };
+    
+    // Add to state and save
+    state.habits.push(habit);
+    await saveManifest();
+    
+    // Update UI
+    renderHabitsList();
+    
+    console.log('[Habits] Habit imported successfully:', habit.name);
+    return true;
+  } finally {
+    endHabitImport();
   }
-  
-  // Generate unique ID
-  const habitId = 'habit-' + Date.now();
-  
-  // Create habit entry with cached content
-  const habit = {
-    id: habitId,
-    name: extraction.habitName,
-    filePath: extraction.filePath,
-    // Cache the extracted content so we don't need to re-extract
-    cachedIndexHtml: extraction.indexHtml,
-    cachedBundleJs: extraction.bundleJs,
-    cachedFetchProxyJs: extraction.fetchProxyJs,
-    cachedFiles: extraction.files,
-    useAutoUi: extraction.useAutoUi || false,
-    installedAt: new Date().toISOString(),
-  };
-  
-  // Add to state and save
-  state.habits.push(habit);
-  await saveManifest();
-  
-  // Update UI
-  renderHabitsList();
-  
-  console.log('[Habits] Habit imported successfully:', habit.name);
-  return true;
 }
 
 /**
@@ -651,39 +657,44 @@ async function extractHabitFromBase64(base64Data, habitNameHint = null) {
  * @returns {Promise<{success: boolean, habitId?: string, error?: string}>}
  */
 async function importHabitFromBase64(base64Data, habitNameHint = null) {
-  console.log('[Habits] Importing habit from base64');
-  
-  const extraction = await extractHabitFromBase64(base64Data, habitNameHint);
-  
-  if (!extraction.valid) {
-    return { success: false, error: extraction.error.message };
+  beginHabitImport('Adding habit…');
+  try {
+    console.log('[Habits] Importing habit from base64');
+    
+    const extraction = await extractHabitFromBase64(base64Data, habitNameHint);
+    
+    if (!extraction.valid) {
+      return { success: false, error: extraction.error.message };
+    }
+    
+    // Generate unique ID
+    const habitId = 'habit-' + Date.now();
+    
+    // Create habit entry with cached content
+    const habit = {
+      id: habitId,
+      name: extraction.habitName,
+      filePath: null, // No file path for base64 imports
+      cachedIndexHtml: extraction.indexHtml,
+      cachedBundleJs: extraction.bundleJs,
+      cachedFetchProxyJs: extraction.fetchProxyJs,
+      cachedFiles: extraction.files,
+      useAutoUi: extraction.useAutoUi || false,
+      installedAt: new Date().toISOString(),
+    };
+    
+    // Add to state and save
+    state.habits.push(habit);
+    await saveManifest();
+    
+    // Update UI
+    renderHabitsList();
+    
+    console.log('[Habits] Habit imported from base64 successfully:', habit.name, 'id:', habitId);
+    return { success: true, habitId, habitName: habit.name };
+  } finally {
+    endHabitImport();
   }
-  
-  // Generate unique ID
-  const habitId = 'habit-' + Date.now();
-  
-  // Create habit entry with cached content
-  const habit = {
-    id: habitId,
-    name: extraction.habitName,
-    filePath: null, // No file path for base64 imports
-    cachedIndexHtml: extraction.indexHtml,
-    cachedBundleJs: extraction.bundleJs,
-    cachedFetchProxyJs: extraction.fetchProxyJs,
-    cachedFiles: extraction.files,
-    useAutoUi: extraction.useAutoUi || false,
-    installedAt: new Date().toISOString(),
-  };
-  
-  // Add to state and save
-  state.habits.push(habit);
-  await saveManifest();
-  
-  // Update UI
-  renderHabitsList();
-  
-  console.log('[Habits] Habit imported from base64 successfully:', habit.name, 'id:', habitId);
-  return { success: true, habitId, habitName: habit.name };
 }
 
 // Expose to window for testing
@@ -746,7 +757,108 @@ async function checkRequiredSecrets(habit) {
   return { allSet: missing.length === 0, missing };
 }
 
+/** Append JS via textContent so bundle source never goes through the HTML parser. */
+function appendScriptText(doc, id, js) {
+  if (!js || doc.getElementById(id)) return;
+  const el = doc.createElement('script');
+  el.id = id;
+  el.textContent = js;
+  doc.head.appendChild(el);
+}
+
+/**
+ * Load habit HTML into an iframe, injecting cortex-bundle + fetch-proxy into <head>
+ * before body scripts run. Avoids inlining JS in HTML strings (</script> breaks parsing).
+ */
+function writeHabitHtmlToIframe(iframeDoc, indexHtml, bundleJs, fetchProxyJs) {
+  const needsBundle = bundleJs && !indexHtml.includes('id="cortex-bundle"');
+  const needsProxy = fetchProxyJs && !indexHtml.includes('id="habits-fetch-proxy"');
+  const headClose = '</head>';
+  const headIdx = indexHtml.indexOf(headClose);
+
+  iframeDoc.open();
+
+  if ((needsBundle || needsProxy) && headIdx !== -1) {
+    iframeDoc.write(indexHtml.slice(0, headIdx));
+    iframeDoc.write(headClose);
+    if (needsBundle) appendScriptText(iframeDoc, 'cortex-bundle', bundleJs);
+    if (needsProxy) appendScriptText(iframeDoc, 'habits-fetch-proxy', fetchProxyJs);
+    iframeDoc.write(indexHtml.slice(headIdx + headClose.length));
+  } else {
+    iframeDoc.write(indexHtml);
+    if (needsBundle) appendScriptText(iframeDoc, 'cortex-bundle', bundleJs);
+    if (needsProxy) appendScriptText(iframeDoc, 'habits-fetch-proxy', fetchProxyJs);
+  }
+
+  iframeDoc.close();
+}
+
+/**
+ * Packed habits embed an older UI runtime that may not open file pickers inside
+ * sandboxed Tauri iframes. Bridge dropzone clicks to Tauri dialog + synthetic change.
+ */
+function injectFileUploadBridge(iframeWin) {
+  if (!iframeWin?.document || iframeWin.__HA_FILE_UPLOAD_V2__) return;
+  const doc = iframeWin.document;
+  const MIME = {
+    txt: 'text/plain', csv: 'text/csv', json: 'application/json', pdf: 'application/pdf',
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
+    mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4', webm: 'video/webm',
+  };
+  const guessMime = (name) => MIME[(String(name).split('.').pop() || '').toLowerCase()] || 'application/octet-stream';
+  const toFilters = (accept) => {
+    if (!accept) return undefined;
+    if (accept.includes('image/*')) {
+      return [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'] }];
+    }
+    const exts = accept.split(',').map((s) => s.trim().replace(/^\./, '')).filter((e) => e && !e.includes('/'));
+    return exts.length ? [{ name: 'Files', extensions: exts }] : undefined;
+  };
+  const attach = () => {
+    doc.querySelectorAll('[data-dropzone]').forEach((dz) => {
+      if (dz.dataset.haFileBridge) return;
+      dz.dataset.haFileBridge = '1';
+      dz.addEventListener('click', async (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'file') return;
+        const input = dz.querySelector('input[type="file"]');
+        if (!input) return;
+        const tauri = iframeWin.__TAURI__;
+        if (tauri?.dialog?.open && tauri?.fs?.readFile) {
+          try {
+            const accept = dz.getAttribute('data-accept');
+            const opts = { multiple: false, title: 'Choose file' };
+            const filters = toFilters(accept);
+            if (filters) opts.filters = filters;
+            const path = await tauri.dialog.open(opts);
+            if (!path) return;
+            const filePath = Array.isArray(path) ? path[0] : path;
+            const bytes = await tauri.fs.readFile(filePath);
+            const name = String(filePath).split(/[/\\]/).pop() || 'file';
+            const file = new File(
+              [bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)],
+              name,
+              { type: guessMime(name) },
+            );
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+          } catch (err) {
+            console.warn('[Habits] Tauri file picker failed, using native input:', err);
+          }
+        }
+        input.click();
+      });
+    });
+  };
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', attach);
+  else attach();
+}
+
 async function runHabit(habitId) {
+  if (isHabitImportBlocked()) return;
+
   const habit = state.habits.find(h => h.id === habitId);
   if (!habit) {
     showError('Error', 'Habit not found');
@@ -813,37 +925,6 @@ async function runHabit(habitId) {
     
     console.log('[Habits] Loading habit:', habit.name);
     
-    // Inject cortex-bundle.js into HTML at runtime (before </head>)
-    // The bundle is NOT inlined at pack time - Tauri apps inject it dynamically
-    let htmlContent = indexHtml;
-    if (bundleJs && !htmlContent.includes('id="cortex-bundle"')) {
-      const bundleScript = `<script id="cortex-bundle">\n${bundleJs}\n</script>`;
-      if (htmlContent.includes('</head>')) {
-        htmlContent = htmlContent.replace('</head>', () => bundleScript + '\n</head>');
-      } else if (htmlContent.includes('<body')) {
-        htmlContent = htmlContent.replace(/<body([^>]*)>/i, (m, attrs) => bundleScript + `\n<body${attrs}>`);
-      } else {
-        htmlContent = bundleScript + '\n' + htmlContent;
-      }
-      console.log('[Habits] Injected cortex-bundle.js at runtime');
-    }
-    
-    // Inject fetch-proxy.js after cortex-bundle.js (for Tauri to intercept /api/* calls)
-    // This MUST come after cortex-bundle.js since it depends on HabitsBundle being defined
-    if (fetchProxyJs && !htmlContent.includes('id="habits-fetch-proxy"')) {
-      const fetchProxyScript = `<script id="habits-fetch-proxy">\n${fetchProxyJs}\n</script>`;
-      if (htmlContent.includes('</head>')) {
-        htmlContent = htmlContent.replace('</head>', () => fetchProxyScript + '\n</head>');
-      } else if (htmlContent.includes('<body')) {
-        htmlContent = htmlContent.replace(/<body([^>]*)>/i, (m, attrs) => fetchProxyScript + `\n<body${attrs}>`);
-      } else {
-        htmlContent = fetchProxyScript + '\n' + htmlContent;
-      }
-      console.log('[Habits] Injected habits-fetch-proxy.js at runtime');
-    }
-    
-    console.log('[Habits] HTML prepared, size:', htmlContent.length, 'bytes');
-    
     // Show habit view
     document.getElementById('habit-view').classList.add('active');
     
@@ -856,7 +937,7 @@ async function runHabit(habitId) {
     
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width: 100%; height: 100%; border: none; background: transparent;';
-    iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals';
+    iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads';
     contentContainer.appendChild(iframe);
     
     // Bridge Tauri API to iframe - required for native plugin access from workflows
@@ -867,11 +948,10 @@ async function runHabit(habitId) {
       console.log('[Habits] Bridged __TAURI__ API to iframe');
     }
     
-    // Write the HTML content to the iframe
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(htmlContent);
-    iframeDoc.close();
+    writeHabitHtmlToIframe(iframeDoc, indexHtml, bundleJs, fetchProxyJs);
+    injectFileUploadBridge(iframe.contentWindow);
+    console.log('[Habits] HTML prepared, bundle:', bundleJs?.length || 0, 'bytes');
     
     console.log('[Habits] Habit loaded in iframe');
     
@@ -1302,6 +1382,8 @@ function simpleYamlParse(yamlContent) {
  * @param {string} workflowId - Optional specific workflow to run
  */
 async function runHabitWithForm(habitId, workflowId = null) {
+  if (isHabitImportBlocked()) return;
+
   const habit = state.habits.find(h => h.id === habitId);
   if (!habit) {
     showError('Error', 'Habit not found');
@@ -1633,6 +1715,51 @@ function showFormErrors(form, errors) {
 // UI Functions
 // ============================================================================
 
+function isHabitImportBlocked() {
+  return state.habitImportLockCount > 0;
+}
+
+function updateHabitImportOverlay(message) {
+  const overlay = document.getElementById('habit-import-overlay');
+  const messageEl = document.getElementById('habit-import-message');
+  if (!overlay) return;
+
+  if (messageEl && message) {
+    messageEl.textContent = message;
+  }
+
+  if (state.habitImportLockCount > 0) {
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-busy', 'true');
+    document.body.classList.add('habit-import-blocked');
+  } else {
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-busy', 'false');
+    document.body.classList.remove('habit-import-blocked');
+  }
+}
+
+function setQuickActionsDisabled(disabled) {
+  const btnIds = ['btn-open-habit', 'btn-visualize-yaml', 'btn-clear-all-habits'];
+  for (const id of btnIds) {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  }
+}
+
+function beginHabitImport(message = 'Adding habit…') {
+  state.habitImportLockCount += 1;
+  closeAllDropdowns();
+  setQuickActionsDisabled(true);
+  updateHabitImportOverlay(message);
+}
+
+function endHabitImport() {
+  state.habitImportLockCount = Math.max(0, state.habitImportLockCount - 1);
+  setQuickActionsDisabled(state.habitImportLockCount > 0);
+  updateHabitImportOverlay();
+}
+
 function renderHabitsList() {
   const listContainer = document.getElementById('habits-list');
   const emptyState = document.getElementById('empty-state');
@@ -1660,6 +1787,7 @@ function renderHabitsList() {
     item.className = 'habit-card';
     item.onclick = (e) => {
       // Only run if clicking on card itself, not menu button
+      if (isHabitImportBlocked()) return;
       if (!e.target.closest('.habit-menu-btn')) {
         runHabit(habit.id);
       }
@@ -1801,7 +1929,41 @@ function goBackToList(fromPopState = false) {
   }
 }
 
+const REQUIRED_MODAL_IDS = [
+  'open-habit-modal',
+  'showcase-modal',
+  'error-modal',
+  'file-select-modal',
+  'receive-habit-modal',
+  'secrets-modal',
+  'secrets-list',
+  'secrets-empty',
+];
+
+/** Reload if modal markup was removed from the DOM (e.g. after body.replace or overlay.remove()). */
+function ensureModalDom(requiredIds = REQUIRED_MODAL_IDS) {
+  const missing = requiredIds.filter((id) => !document.getElementById(id));
+  if (missing.length === 0) {
+    try { sessionStorage.removeItem('habits-modal-reload-attempted'); } catch (_) {}
+    return true;
+  }
+  console.error('[Habits] Modal UI missing from DOM:', missing.join(', '));
+  try {
+    if (!sessionStorage.getItem('habits-modal-reload-attempted')) {
+      sessionStorage.setItem('habits-modal-reload-attempted', '1');
+      location.reload();
+      return false;
+    }
+    sessionStorage.removeItem('habits-modal-reload-attempted');
+  } catch (_) {
+    location.reload();
+    return false;
+  }
+  return false;
+}
+
 function showError(title, message) {
+  if (!ensureModalDom(['error-modal', 'error-title', 'error-message'])) return;
   document.getElementById('error-title').textContent = title;
   document.getElementById('error-message').textContent = message;
   document.getElementById('error-modal').classList.add('active');
@@ -1816,6 +1978,7 @@ function hideError() {
 // ============================================================================
 
 function showOpenHabitModal() {
+  if (!ensureModalDom(['open-habit-modal'])) return;
   document.getElementById('open-habit-modal').classList.add('active');
 }
 
@@ -1895,7 +2058,8 @@ function renderShowcaseList(habits) {
 async function downloadAndImportShowcaseHabit(habit) {
   const listEl = document.getElementById('showcase-list');
   listEl.innerHTML = '<div class="showcase-loading">Downloading ' + habit.name + '...</div>';
-  
+
+  beginHabitImport(`Downloading ${habit.name}…`);
   try {
     const habitUrl = SHOWCASE_BASE_URL + habit.habitUrl;
     const response = await tauriFetch(habitUrl);
@@ -1932,10 +2096,14 @@ async function downloadAndImportShowcaseHabit(habit) {
     console.error('Failed to download habit:', err);
     showError('Download Error', 'Failed to download habit: ' + err.message);
     hideShowcaseModal();
+  } finally {
+    endHabitImport();
   }
 }
 
 async function deleteHabit(habitId, habitName) {
+  if (isHabitImportBlocked()) return;
+
   // Remove from state
   state.habits = state.habits.filter(h => h.id !== habitId);
   
@@ -1949,6 +2117,7 @@ async function deleteHabit(habitId, habitName) {
 }
 
 async function clearAllHabits() {
+  if (isHabitImportBlocked()) return;
   if (state.habits.length === 0) return;
   
   const count = state.habits.length;
@@ -2059,6 +2228,7 @@ async function _startReceiveFlow(wsUrl) {
 // ============================================================================
 
 function handleOpenHabitFile() {
+  if (isHabitImportBlocked()) return;
   // Show options modal (upload from device or browse showcase)
   showOpenHabitModal();
 }
@@ -2147,6 +2317,7 @@ async function importBuiltinHabit(habit) {
   const listEl = document.getElementById('showcase-list');
   listEl.innerHTML = '<div class="showcase-loading">Loading ' + habit.name + '...</div>';
 
+  beginHabitImport(`Adding ${habit.name}…`);
   try {
     const response = await fetch('/builtin-habits/' + habit.habitFile);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -2175,6 +2346,8 @@ async function importBuiltinHabit(habit) {
     console.error('Failed to import built-in habit:', err);
     showError('Import Error', 'Failed to import built-in habit: ' + err.message);
     hideShowcaseModal();
+  } finally {
+    endHabitImport();
   }
 }
 
@@ -2185,6 +2358,7 @@ async function handleBuiltinHabits() {
 }
 
 async function handleVisualizeYaml() {
+  if (isHabitImportBlocked()) return;
   try {
     const filePath = await openYamlFileDialog();
     
@@ -2492,6 +2666,48 @@ function extractRequiredEnvVars(habit) {
   return Array.from(requiredVars).sort();
 }
 
+const SECRET_EYE_ICON = `
+  <svg class="secret-eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+  </svg>`;
+
+const SECRET_EYE_OFF_ICON = `
+  <svg class="secret-eye-off-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+  </svg>`;
+
+function createSecretInputRow(key, placeholder) {
+  return `
+    <div class="secret-item-input-row">
+      <div class="secret-input-wrapper">
+        <input type="password" class="secret-input-inline" data-key="${escapeHtml(key)}" placeholder="${escapeHtml(placeholder)}">
+        <button type="button" class="secret-toggle-btn" title="Show secret" aria-label="Show secret">
+          ${SECRET_EYE_ICON}
+          ${SECRET_EYE_OFF_ICON}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function wireSecretToggleButtons(container) {
+  container.querySelectorAll('.secret-toggle-btn').forEach(btn => {
+    btn.onclick = () => {
+      const wrapper = btn.closest('.secret-input-wrapper');
+      const input = wrapper.querySelector('.secret-input-inline');
+      const eyeIcon = btn.querySelector('.secret-eye-icon');
+      const eyeOffIcon = btn.querySelector('.secret-eye-off-icon');
+      const showSecret = input.type === 'password';
+      input.type = showSecret ? 'text' : 'password';
+      eyeIcon.classList.toggle('hidden', showSecret);
+      eyeOffIcon.classList.toggle('hidden', !showSecret);
+      btn.title = showSecret ? 'Hide secret' : 'Show secret';
+      btn.setAttribute('aria-label', btn.title);
+    };
+  });
+}
+
 async function getSecretsIndex() {
   try {
     const indexData = await getSecretFromKeyring(SECRETS_INDEX_KEY);
@@ -2508,10 +2724,264 @@ async function saveSecretsIndex(keys) {
   await setSecretInKeyring(SECRETS_INDEX_KEY, JSON.stringify(keys));
 }
 
+// ============================================================================
+// OAuth token storage (keyring, separate from env secrets index)
+// ============================================================================
+
+function oauthKeyringKey(bitId) {
+  return `oauth:${bitId}`;
+}
+
+async function getOAuthTokenEntry(bitId) {
+  try {
+    const raw = await getSecretFromKeyring(oauthKeyringKey(bitId));
+    if (raw) return JSON.parse(raw);
+  } catch (err) {
+    console.log('[OAuth] No token for', bitId);
+  }
+  return null;
+}
+
+async function setOAuthTokenEntry(bitId, entry) {
+  const payload = { ...entry, storedAt: entry.storedAt ?? Date.now() };
+  await setSecretInKeyring(oauthKeyringKey(bitId), JSON.stringify(payload));
+  console.log('[OAuth] Token saved for', bitId);
+}
+
+async function clearOAuthToken(bitId) {
+  try {
+    await deleteSecretFromKeyring(oauthKeyringKey(bitId));
+    console.log('[OAuth] Token cleared for', bitId);
+  } catch (err) {
+    console.log('[OAuth] No token to clear for', bitId);
+  }
+}
+
+async function hasValidOAuthToken(bitId) {
+  const entry = await getOAuthTokenEntry(bitId);
+  if (!entry?.tokens?.accessToken) return false;
+  const expiresAt = entry.tokens.expiresAt;
+  if (!expiresAt) return true;
+  return Date.now() < expiresAt - 60000;
+}
+
+const ENV_EXPR_PATTERN = /\{\{habits\.env\.([A-Za-z_][A-Za-z0-9_]*)\}\}/;
+
+function extractBitModulesFromYaml(content) {
+  const results = [];
+  let current = null;
+  for (const line of content.split('\n')) {
+    const modMatch = line.match(/^\s*module:\s*["']?(@ha-bits\/[^"'\n]+)["']?/);
+    if (modMatch) {
+      current = { moduleName: modMatch[1].trim(), clientIdEnv: null, clientSecretEnv: null };
+      results.push(current);
+      continue;
+    }
+    if (!current) continue;
+    const cid = line.match(/clientId:\s*["']?(\{\{habits\.env\.[^}]+\}\}|[^"'\n]+)["']?/);
+    const cs = line.match(/clientSecret:\s*["']?(\{\{habits\.env\.[^}]+\}\}|[^"'\n]+)["']?/);
+    if (cid) {
+      const m = cid[1].match(ENV_EXPR_PATTERN);
+      if (m) current.clientIdEnv = m[1];
+    }
+    if (cs) {
+      const m = cs[1].match(ENV_EXPR_PATTERN);
+      if (m) current.clientSecretEnv = m[1];
+    }
+  }
+  return results;
+}
+
+function getOAuthBitsFromBundleSource(bundleJs) {
+  if (!bundleJs) return [];
+  const results = [];
+  const seen = new Set();
+  const modulePattern = /\/\/ \.\.\/nodes\/bits\/(@ha-bits\/bit-[^\s/]+)/g;
+  for (const match of bundleJs.matchAll(modulePattern)) {
+    const moduleName = match[1];
+    if (seen.has(moduleName)) continue;
+    seen.add(moduleName);
+    const bitId = moduleName.split('/').pop();
+    const slice = bundleJs.slice(match.index, match.index + 80000);
+    if (!/type:\s*["']OAUTH2/.test(slice)) continue;
+    const authIdx = slice.indexOf('auth: {');
+    if (authIdx < 0) continue;
+    const authSlice = slice.slice(authIdx, authIdx + 2000);
+
+    const displayName =
+      authSlice.match(/displayName:\s*["']([^"']+)["']/)?.[1] || bitId;
+    const authorizationUrl =
+      authSlice.match(/authorizationUrl:\s*["']([^"']+)["']/)?.[1];
+    const tokenUrl = authSlice.match(/tokenUrl:\s*["']([^"']+)["']/)?.[1];
+    const scopesMatch = authSlice.match(/scopes:\s*\[([^\]]+)\]/);
+    const scopes = scopesMatch
+      ? [...scopesMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1])
+      : [];
+    const clientSecret = authSlice.match(/clientSecret:\s*["']([^"']+)["']/)?.[1];
+    let extraAuthParams;
+    const extraMatch = authSlice.match(/extraAuthParams:\s*\{([^}]+)\}/);
+    if (extraMatch) {
+      extraAuthParams = {};
+      for (const p of extraMatch[1].matchAll(/(\w+):\s*["']([^"']+)["']/g)) {
+        extraAuthParams[p[1]] = p[2];
+      }
+    }
+
+    results.push({
+      moduleName,
+      bitId,
+      displayName,
+      authorizationUrl,
+      tokenUrl,
+      scopes,
+      extraAuthParams,
+      pkce: !clientSecret,
+    });
+  }
+  return results;
+}
+
+async function getOAuthBitsFromBundle(bundleJs) {
+  return getOAuthBitsFromBundleSource(bundleJs);
+}
+
+async function extractOAuthRequirements(habit) {
+  const oauthBits = await getOAuthBitsFromBundle(habit.cachedBundleJs);
+  if (!oauthBits.length) return [];
+
+  const moduleAuth = new Map();
+  for (const [path, content] of Object.entries(habit.cachedFiles || {})) {
+    if (!/\.ya?ml$/i.test(path) || path.startsWith('frontend/')) continue;
+    for (const entry of extractBitModulesFromYaml(content)) {
+      moduleAuth.set(entry.moduleName, entry);
+    }
+  }
+
+  const requirements = [];
+  const seen = new Set();
+  for (const bit of oauthBits) {
+    if (seen.has(bit.bitId)) continue;
+    const authInfo = moduleAuth.get(bit.moduleName);
+    const usedInHabit = authInfo
+      || Object.values(habit.cachedFiles || {}).some((c) => c.includes(bit.moduleName));
+    if (!usedInHabit) continue;
+    seen.add(bit.bitId);
+    requirements.push({
+      ...bit,
+      clientIdEnv: authInfo?.clientIdEnv || null,
+      clientSecretEnv: authInfo?.clientSecretEnv || null,
+    });
+  }
+  return requirements;
+}
+
+async function startOAuthConnection(req, isReconnect) {
+  if (!window.HabitsOAuth?.startOAuthFlow) {
+    showError('OAuth unavailable', 'OAuth handler is not loaded.');
+    return false;
+  }
+  if (isReconnect) await clearOAuthToken(req.bitId);
+
+  let clientId = null;
+  let clientSecret = null;
+  if (req.clientIdEnv) clientId = await getSecretFromKeyring(req.clientIdEnv);
+  if (req.clientSecretEnv) clientSecret = await getSecretFromKeyring(req.clientSecretEnv);
+
+  if (!clientId) {
+    showError('Missing credentials', `Set ${req.clientIdEnv || 'OAuth client ID'} in secrets first.`);
+    return false;
+  }
+
+  const pkce = req.pkce !== false && !clientSecret;
+  const flowConfig = {
+    clientId,
+    clientSecret: clientSecret || undefined,
+    authorizationUrl: req.authorizationUrl,
+    tokenUrl: req.tokenUrl,
+    scopes: req.scopes || [],
+    extraAuthParams: req.extraAuthParams,
+    pkce,
+  };
+
+  try {
+    const result = await window.HabitsOAuth.startOAuthFlow(req.bitId, flowConfig);
+    await setOAuthTokenEntry(req.bitId, {
+      tokens: result.tokens,
+      config: {
+        displayName: req.displayName,
+        required: true,
+        authorizationUrl: req.authorizationUrl,
+        tokenUrl: req.tokenUrl,
+        clientId,
+        clientSecret: clientSecret || undefined,
+        scopes: req.scopes || [],
+        extraAuthParams: req.extraAuthParams,
+        pkce,
+      },
+    });
+    return true;
+  } catch (err) {
+    console.error('[OAuth] Flow failed:', err);
+    showError('OAuth failed', err.message || String(err));
+    return false;
+  }
+}
+
+function renderOAuthConnectionRows(listContainer, oauthReqs, habit) {
+  if (!oauthReqs.length) return;
+
+  const divider = document.createElement('div');
+  divider.className = 'secrets-divider oauth-section-label';
+  divider.innerHTML = '<span>Connections</span>';
+  listContainer.appendChild(divider);
+
+  for (const req of oauthReqs) {
+    const row = document.createElement('div');
+    row.className = 'secret-item oauth-row';
+    row.dataset.bitId = req.bitId;
+
+    const connected = req.connected;
+    const btnLabel = connected ? 'Reconnect' : 'Connect';
+    const btnClass = connected ? 'oauth-connect-btn oauth-connect-btn--connected' : 'oauth-connect-btn';
+
+    row.innerHTML = `
+      <div class="secret-item-header">
+        <div class="secret-item-info">
+          <div class="secret-item-name oauth-row-name">${escapeHtml(req.displayName)}</div>
+          ${connected ? '<div class="secret-item-status set">Connected</div>' : ''}
+        </div>
+        <div class="secret-item-actions">
+          <button type="button" class="${btnClass}" data-bit-id="${escapeHtml(req.bitId)}">${btnLabel}</button>
+        </div>
+      </div>
+      ${!connected && req.clientIdEnv ? `<div class="oauth-row-hint">Requires ${escapeHtml(req.clientIdEnv)}</div>` : ''}
+    `;
+
+    const btn = row.querySelector('.oauth-connect-btn');
+    btn.onclick = async () => {
+      if (btn.disabled) return;
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Connecting…';
+      const ok = await startOAuthConnection(req, connected);
+      if (ok && secretsModalHabit) {
+        await showSecretsModal(secretsModalHabit);
+      } else {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    };
+
+    listContainer.appendChild(row);
+  }
+}
+
 // Store reference to current habit for secrets modal
 let secretsModalHabit = null;
 
 async function showSecretsModal(habit) {
+  if (!ensureModalDom(['secrets-modal', 'secrets-list', 'secrets-empty'])) return;
+
   secretsModalHabit = habit;
   
   // Initialize keyring if not already done
@@ -2525,7 +2995,12 @@ async function showSecretsModal(habit) {
   
   // Extract required env vars from this habit
   const requiredVars = extractRequiredEnvVars(habit);
+  const oauthReqs = await extractOAuthRequirements(habit);
+  for (const req of oauthReqs) {
+    req.connected = await hasValidOAuthToken(req.bitId);
+  }
   console.log('[Secrets] Required vars for', habit.name, ':', requiredVars);
+  console.log('[Secrets] OAuth requirements:', oauthReqs.map((r) => r.bitId));
   
   // Load and display secrets
   listContainer.innerHTML = '';
@@ -2540,7 +3015,7 @@ async function showSecretsModal(habit) {
   // Get all stored secrets
   const storedKeys = await getSecretsIndex();
   
-  if (requiredVars.length === 0 && storedKeys.length === 0) {
+  if (requiredVars.length === 0 && oauthReqs.length === 0 && storedKeys.length === 0) {
     emptyState.innerHTML = 'This habit doesn\'t require any secrets.';
     emptyState.classList.remove('hidden');
     modal.classList.add('active');
@@ -2548,30 +3023,41 @@ async function showSecretsModal(habit) {
   }
   
   emptyState.classList.add('hidden');
+
+  // OAuth connections (above env secret inputs)
+  renderOAuthConnectionRows(listContainer, oauthReqs, habit);
   
-  // Show required variables first
+  if (oauthReqs.length > 0 && requiredVars.length > 0) {
+    const secretsDivider = document.createElement('div');
+    secretsDivider.className = 'secrets-divider';
+    secretsDivider.innerHTML = '<span>Environment secrets</span>';
+    listContainer.appendChild(secretsDivider);
+  }
+  
+  // Show required variables first (pre-fill values already stored in keyring)
   for (const varName of requiredVars) {
-    const isSet = storedKeys.includes(varName);
+    const existingValue = storedKeys.includes(varName)
+      ? await getSecretFromKeyring(varName)
+      : null;
+    const isSet = !!existingValue;
+
     const secretItem = document.createElement('div');
     secretItem.className = 'secret-item';
     secretItem.innerHTML = `
       <div class="secret-item-header">
         <div class="secret-item-info">
           <div class="secret-item-name">${escapeHtml(varName)}</div>
-        </div>
-        <div class="secret-item-actions">
-            <button class="secret-delete-btn" data-key="${escapeHtml(varName)}" title="Delete">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+          ${isSet ? '<div class="secret-item-status set">Set</div>' : ''}
         </div>
       </div>
-      <div class="secret-item-input-row">
-        <input type="password" class="secret-input-inline" data-key="${escapeHtml(varName)}" placeholder="Enter secret value to replace...">
-      </div>
+      ${createSecretInputRow(varName, isSet ? 'Update secret value...' : 'Enter secret value...')}
     `;
-    
+
+    if (existingValue) {
+      const input = secretItem.querySelector('.secret-input-inline');
+      if (input) input.value = existingValue;
+    }
+
     listContainer.appendChild(secretItem);
   }
   
@@ -2591,13 +3077,6 @@ async function showSecretsModal(habit) {
           <div class="secret-item-info">
             <div class="secret-item-name">${escapeHtml(key)}</div>
             <div class="secret-item-status set">Set</div>
-          </div>
-          <div class="secret-item-actions">
-            <button class="secret-delete-btn" data-key="${escapeHtml(key)}" title="Delete">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
           </div>
         </div>
       `;
@@ -2655,13 +3134,7 @@ async function showSecretsModal(habit) {
     };
   }
   
-  listContainer.querySelectorAll('.secret-delete-btn').forEach(btn => {
-    btn.onclick = async () => {
-      const key = btn.dataset.key;
-      await deleteSecret(key);
-      showSecretsModal(habit); // Refresh
-    };
-  });
+  wireSecretToggleButtons(listContainer);
   
   modal.classList.add('active');
 }
@@ -2686,7 +3159,13 @@ function promptEditSecret(key, habit) {
         </div>
       </div>
       <div class="secret-item-input-row">
-        <input type="password" class="secret-input-inline" data-key="${escapeHtml(key)}" placeholder="Enter new value...">
+        <div class="secret-input-wrapper">
+          <input type="password" class="secret-input-inline" data-key="${escapeHtml(key)}" placeholder="Enter new value...">
+          <button type="button" class="secret-toggle-btn" title="Show secret" aria-label="Show secret">
+            ${SECRET_EYE_ICON}
+            ${SECRET_EYE_OFF_ICON}
+          </button>
+        </div>
         <button class="secret-save-btn" data-key="${escapeHtml(key)}" title="Save">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -2694,6 +3173,8 @@ function promptEditSecret(key, habit) {
         </button>
       </div>
     `;
+    
+    wireSecretToggleButtons(parentItem);
     
     const input = parentItem.querySelector('.secret-input-inline');
     const saveBtn = parentItem.querySelector('.secret-save-btn');
@@ -2791,6 +3272,8 @@ async function applyAppConfig() {
 async function init() {
   console.log('Habits initializing...');
 
+  if (!ensureModalDom()) return;
+
   // Display app version badge
   displayAppVersion();
 
@@ -2858,6 +3341,7 @@ async function init() {
   // Handle keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (isHabitImportBlocked()) return;
       if (document.getElementById('showcase-modal').classList.contains('active')) {
         hideShowcaseModal();
       } else if (document.getElementById('open-habit-modal').classList.contains('active')) {
@@ -2941,6 +3425,15 @@ try {
     sendMessage: window.sendMessage,
     getHabits: () => state.habits,
     getState: () => state,
+    isHabitImportBlocked,
+    getOAuthTokenEntry,
+    setOAuthTokenEntry,
+    clearOAuthToken,
+    hasValidOAuthToken,
+    showSecretsModalForHabit: (habitId) => {
+      const h = state.habits.find((x) => x.id === habitId);
+      if (h) return showSecretsModal(h);
+    },
   };
   console.log('[Habits] __habits__ pre-exposed successfully');
 } catch (e) {

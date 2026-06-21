@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { withBase, useData } from 'vitepress'
+import { SLOGAN } from '../../constants'
 import feather from 'feather-icons'
 import ScreenshotGallery from './ScreenshotGallery.vue'
 import ShowcaseCard from './ShowcaseCard.vue'
@@ -17,6 +18,20 @@ import bitsData from '../data/bits-data.json'
 
 const { isDark, frontmatter, theme } = useData()
 const navItems = computed(() => theme.value.nav ?? [])
+
+const openDropdown = ref(null)
+let dropdownCloseTimer = null
+
+function openNavDropdown(key) {
+  clearTimeout(dropdownCloseTimer)
+  openDropdown.value = key
+}
+
+function scheduleCloseNavDropdown() {
+  dropdownCloseTimer = setTimeout(() => {
+    openDropdown.value = null
+  }, 300)
+}
 
 const whoAreYouComponent = WhoAreYou
 const runEverywhereComponent = RunEverywhere
@@ -315,6 +330,34 @@ const recipesData = [
                 :href="withBase(item.link)"
                 class="header-nav-link"
               >{{ item.text }}</a>
+              <div
+                v-else-if="item.items"
+                class="header-nav-dropdown"
+              >
+                <button
+                  class="header-nav-link header-nav-dropdown-btn"
+                  @mouseenter="openNavDropdown(item.text)"
+                  @mouseleave="scheduleCloseNavDropdown"
+                >
+                  {{ item.text }}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div
+                  v-if="openDropdown === item.text"
+                  class="header-nav-dropdown-menu"
+                  @mouseenter="openNavDropdown(item.text)"
+                  @mouseleave="scheduleCloseNavDropdown"
+                >
+                  <a
+                    v-for="sub in item.items"
+                    :key="sub.link"
+                    :href="sub.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="header-nav-dropdown-item"
+                  >{{ sub.text }}</a>
+                </div>
+              </div>
             </template>
           </nav>
           <div class="header-actions">
@@ -348,8 +391,7 @@ const recipesData = [
         <div class="hero-left">
           <img :src="withBase('/logo.png')" alt="Habits" class="hero-logo" />
           <h1 class="hero-name">Habits</h1>
-          <p class="hero-text">Next-gen Automations, Agents, Full-Stacks, SaaS and Micro-Apps</p>
-          <p class="hero-tagline">Logic &amp; UI builder and decentralized runner that you can control, audit, monitor and extend (Free and Open-Source)</p>
+          <p class="hero-text">{{ SLOGAN }}</p>
           <div class="hero-actions">
             <a :href="withBase('/getting-started/first-habit')" class="action-btn brand">Build your first habit</a>
             <div class="hero-secondary-actions">
@@ -927,6 +969,58 @@ const recipesData = [
 }
 
 .header-nav-link:hover {
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-default-soft);
+}
+
+.header-nav-dropdown {
+  position: relative;
+}
+
+.header-nav-dropdown-btn {
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  font-family: inherit;
+}
+
+.header-nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 160px;
+  background: var(--vp-c-bg-elv);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-nav-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.header-nav-dropdown-item {
+  display: block;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+  text-decoration: none;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: color 0.2s, background 0.2s;
+}
+
+.header-nav-dropdown-item:hover {
   color: var(--vp-c-brand-1);
   background: var(--vp-c-default-soft);
 }

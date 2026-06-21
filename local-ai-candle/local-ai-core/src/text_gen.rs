@@ -7,6 +7,8 @@ use candle_core::quantized::tokenizer::TokenizerFromGguf;
 use candle_core::{Device, Tensor};
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::quantized_qwen2::ModelWeights as Qwen2;
+use candle_transformers::models::quantized_qwen3::ModelWeights as Qwen3;
+use candle_transformers::models::quantized_qwen35::ModelWeights as Qwen35;
 use candle_transformers::models::quantized_gemma3::ModelWeights as Gemma3;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -18,6 +20,10 @@ pub enum ModelType {
     /// Qwen2 models (default)
     #[default]
     Qwen2,
+    /// Qwen3 models
+    Qwen3,
+    /// Qwen3.5 hybrid SSM-Transformer models
+    Qwen35,
     /// Gemma 3 models
     Gemma3,
     /// Llama models (same format as Qwen2 with ChatML)
@@ -27,6 +33,8 @@ pub enum ModelType {
 /// Wrapper enum to hold different model architectures
 enum ModelWeights {
     Qwen2(Qwen2),
+    Qwen3(Qwen3),
+    Qwen35(Qwen35),
     Gemma3(Gemma3),
 }
 
@@ -34,6 +42,8 @@ impl ModelWeights {
     fn forward(&mut self, input: &Tensor, index_pos: usize) -> candle_core::Result<Tensor> {
         match self {
             ModelWeights::Qwen2(m) => m.forward(input, index_pos),
+            ModelWeights::Qwen3(m) => m.forward(input, index_pos),
+            ModelWeights::Qwen35(m) => m.forward(input, index_pos),
             ModelWeights::Gemma3(m) => m.forward(input, index_pos),
         }
     }
@@ -160,6 +170,12 @@ pub struct TextGenerator {
 /// Detect model type from GGUF metadata
 fn detect_model_type(ct: &gguf_file::Content) -> ModelType {
     // Check for model architecture in metadata
+    if ct.metadata.contains_key("qwen35.attention.head_count") {
+        return ModelType::Qwen35;
+    }
+    if ct.metadata.contains_key("qwen3.attention.head_count") {
+        return ModelType::Qwen3;
+    }
     if ct.metadata.contains_key("gemma3.attention.head_count") 
         || ct.metadata.contains_key("gemma2.attention.head_count")
         || ct.metadata.contains_key("gemma.attention.head_count") {
@@ -189,7 +205,7 @@ impl TextGenerator {
         let mut file = std::fs::File::open(model_path)?;
         let model_content =
             gguf_file::Content::read(&mut file).map_err(|e| e.with_path(model_path))?;
-        
+
         // Detect or use specified model type
         let model_type = if config.model_type != ModelType::Qwen2 {
             config.model_type
@@ -220,7 +236,7 @@ impl TextGenerator {
                     .or_else(|| vocab.get("<|im_end|>"))
                     .unwrap_or(&0)
             }
-            ModelType::Qwen2 => {
+            ModelType::Qwen2 | ModelType::Qwen3 | ModelType::Qwen35 => {
                 *vocab.get("<|im_end|>").unwrap_or(&0)
             }
         };
@@ -235,6 +251,14 @@ impl TextGenerator {
             ModelType::Gemma3 => {
                 let m = Gemma3::from_gguf(model_content, &mut file, &device)?;
                 ModelWeights::Gemma3(m)
+            }
+            ModelType::Qwen3 => {
+                let m = Qwen3::from_gguf(model_content, &mut file, &device)?;
+                ModelWeights::Qwen3(m)
+            }
+            ModelType::Qwen35 => {
+                let m = Qwen35::from_gguf(model_content, &mut file, &device)?;
+                ModelWeights::Qwen35(m)
             }
             ModelType::Qwen2 | ModelType::Llama => {
                 let m = Qwen2::from_gguf(model_content, &mut file, &device)?;
@@ -265,7 +289,7 @@ impl TextGenerator {
                 // Llama 3 uses ChatML-like format
                 format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt)
             }
-            ModelType::Qwen2 => {
+            ModelType::Qwen2 | ModelType::Qwen3 | ModelType::Qwen35 => {
                 format!("<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n", prompt)
             }
         }

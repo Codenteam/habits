@@ -51,6 +51,11 @@ nodes:
       # action properties...
 ```
 
+## Used In Showcases
+
+- [rss-social-poster](/showcase/rss-social-poster)
+- [rss-digest-summarizer](/showcase/rss-digest-summarizer)
+
 <style>
 .bit-meta {
   display: flex;

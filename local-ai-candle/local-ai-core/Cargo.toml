@@ -6,10 +6,10 @@ description = "Cross-platform AI inference core library using Candle"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Candle core dependencies - use crates.io versions so CI doesn't require a vendored candle directory.
-candle-core = "0.10.2"
-candle-nn = "0.10.2"
-candle-transformers = "0.10.2"
+# Candle from latentcollapse feat/quantized-qwen35 (vendored in ../candle)
+candle-core = { path = "../candle/candle-core" }
+candle-nn = { path = "../candle/candle-nn" }
+candle-transformers = { path = "../candle/candle-transformers" }
 
 # Tokenization
 tokenizers = { version = "0.22.0", default-features = false, features = ["onig"] }

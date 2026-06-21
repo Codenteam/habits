@@ -13,37 +13,66 @@ departments:
   - id: customer-onboarding
     name: Customer Onboarding
     icon: star
-    description: Automate KYC, account creation, identity checks, and re-engagement.
+    description: Automate customer applications, KYC, sanctions checks, account creation, and re-engagement.
     habits:
+      - id: customer-application-onboarding
+        name: Customer Application Onboarding
+        description: Accept a banking application, create a Sumsub applicant, run ComplyAdvantage sanctions screening, and create the approved client/account in Mambu.
+        trigger: manual
+        bits: [bit-sumsub, bit-complyadvantage, bit-mambu]
+        featured: true
+        overview: >
+          A complete application-to-account orchestration habit for banks that need Sumsub, ComplyAdvantage, and Mambu connected before a core banking account is opened.
+        flow:
+          - Customer submits an application.
+          - Sumsub creates the applicant and verification access token.
+          - Sumsub verification status is read back into the workflow.
+          - ComplyAdvantage screens the applicant against sanctions, PEP, and warning lists.
+          - Mambu creates the client and deposit account for approved applications.
+        components:
+          - Application intake
+          - Sumsub applicant and access token creation
+          - Sumsub verification status lookup
+          - ComplyAdvantage sanctions screening
+          - ComplyAdvantage normalized decision result
+          - Mambu client creation
+          - Mambu deposit account creation
+        integrations:
+          - Customer Application
+          - Habits Workflow
+          - Sumsub
+          - ComplyAdvantage
+          - Mambu
+
       - id: kyc-document-collection
         name: KYC Document Collection
         description: Receive an application via webhook, OCR the ID, AI-validate the match, and request any missing documents by email.
         trigger: webhook
-        bits: [bit-http, bit-ocr, bit-ai, bit-database-sql, bit-email]
+        bits: [bit-sumsub]
 
       - id: account-opening
         name: Account Opening Workflow
         description: On KYC approval, call the core-banking API to create the account, generate a welcome kit PDF, and email it to the new customer.
         trigger: webhook
-        bits: [bit-http, bit-pdf, bit-email, bit-database-sql]
+        bits: [bit-mambu]
 
       - id: identity-verification
         name: Identity Verification
         description: Receive a selfie/ID upload, call an identity-verification API, and email the pass/fail result to both the applicant and compliance.
         trigger: webhook
-        bits: [bit-http, bit-if, bit-email, bit-database-sql]
+        bits: [bit-sumsub]
 
       - id: onboarding-re-engagement
         name: Onboarding Drop-off Re-engagement
         description: At 24, 48, and 72 hours after a start, find incomplete applications and email a resume link with the next step highlighted.
         trigger: scheduler
-        bits: [bit-scheduler, bit-database-sql, bit-loop, bit-email]
+        bits: [bit-sumsub, bit-complyadvantage, bit-mambu]
 
       - id: first-transaction-tip
         name: First Transaction Education
         description: On the first transaction webhook, AI-personalises a financial tip based on the transaction category and emails it with a relevant product suggestion.
         trigger: webhook
-        bits: [bit-http, bit-ai, bit-email]
+        bits: [bit-mambu]
 
   - id: loan-processing
     name: Loan Processing

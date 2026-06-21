@@ -25,26 +25,31 @@ import { execSync } from 'child_process';
 import JSZip from 'jszip';
 import { LoggerFactory } from '@ha-bits/core/logger';
 import { createResponse } from '../helpers';
-import {query } from '@anthropic-ai/claude-agent-sdk';
 
 /**
  * Lazily import the ESM-only claude-agent-sdk.
  * Called only when AI generation is actually triggered, so the
  * server starts normally even when the SDK is not installed.
  */
-// async function loadClaudeAgent(): Promise<
-//   (opts: { prompt: string; options?: { allowedTools?: string[] } }) => AsyncIterable<unknown>
-// > {
-//   try {
-//     const mod = await import('@anthropic-ai/claude-agent-sdk');
-//     return mod.query;
-//   } catch {
-//     throw new Error(
-//       'Could not load @anthropic-ai/claude-agent-sdk. ' +
-//       'Install it with: npm g i @anthropic-ai/claude-agent-sdk',
-//     );
-//   }
-// }
+async function loadClaudeAgent(): Promise<
+  (opts: {
+    prompt: string;
+    options?: {
+      allowedTools?: string[];
+      pathToClaudeCodeExecutable?: string;
+    };
+  }) => AsyncIterable<unknown>
+> {
+  try {
+    const mod = await import('@anthropic-ai/claude-agent-sdk');
+    return mod.query;
+  } catch {
+    throw new Error(
+      'Could not load @anthropic-ai/claude-agent-sdk. ' +
+      'Install it with: npm install @anthropic-ai/claude-agent-sdk',
+    );
+  }
+}
 
 const logger = LoggerFactory.getRoot();
 
@@ -351,6 +356,7 @@ export class CreatorController {
       // SDK not found in node_modules; fall back and let the SDK try import.meta.url
     }
 
+    const query = await loadClaudeAgent();
     for await (const message of query({
       prompt,
       options: {

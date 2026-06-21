@@ -116,11 +116,24 @@ candle-bindings/index.d.ts
 
 untracked
 
+# Enterprise bits — canonical source in packages/manage/ee (manage repo submodule).
+# Linked locally via packages/manage/ee/scripts/link-ee-bits.sh
+nodes/bits/ee
+**/ee/**
 
+
+**/fixtures
 
 
 COMMANDS.md
 
 .tauri
 .build
+
+# Sumsub demo local data
+showcase/sumsub-openai-demo/sumsub-kyc.db
+
+
+
+
 

@@ -162,7 +162,10 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasRef, WorkflowCanvasProps>
           
           // Get nodes with actual dimensions from ReactFlow
           const nodesWithDimensions = reactFlowInstance.current.getNodes() as WorkflowNode[];
-          const layoutedNodes = applyDagreLayout(nodesWithDimensions, edges);
+          const viewport = containerRef.current
+            ? { width: containerRef.current.clientWidth, height: containerRef.current.clientHeight }
+            : undefined;
+          const layoutedNodes = applyDagreLayout(nodesWithDimensions, edges, { viewport });
           
           // Create position change events for each node
           const changes = layoutedNodes.map(node => ({

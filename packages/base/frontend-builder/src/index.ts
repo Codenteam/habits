@@ -1,9 +1,14 @@
-// Main component
-export { FrontendBuilderVanilla } from './FrontendBuilder.vanilla';
+// Legacy HTML/GrapesJS builder — import directly from './FrontendBuilder.vanilla' if needed.
+// Not re-exported here so Vite does not bundle grapesjs into the Base UI.
 
-// New: declarative UiSpec YAML builder (WYSIWYG drag-and-drop)
+// Declarative UiSpec YAML builder (WYSIWYG drag-and-drop)
 export { UiSpecBuilderVanilla } from './UiSpecBuilder.vanilla';
 export { builderRoundTripYaml } from './uiSpecYaml';
+export {
+  WIDGET_PRESETS,
+  UI_SPEC_TEMPLATES,
+} from './uiSpecPresets';
+export type { WidgetPreset, UiSpecTemplate } from './uiSpecPresets';
 export type { UiSpecBuilderProps } from './UiSpecBuilder.vanilla';
 
 // Types

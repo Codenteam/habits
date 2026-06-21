@@ -599,6 +599,35 @@ function getBitManifest() {
   return manifest;
 }
 
+function extractBitIdFromModule(moduleName) {
+  const parts = String(moduleName).split('/');
+  return parts[parts.length - 1];
+}
+
+// Return OAuth2-capable bits from the bundled registry (for secrets UI / discovery).
+function getOAuthBits() {
+  const result = [];
+  for (const [moduleName, mod] of Object.entries(bitsRegistry)) {
+    const piece = mod.default || mod[Object.keys(mod)[0]];
+    if (!piece || !piece.auth) continue;
+    const auth = piece.auth;
+    if (auth.type !== 'OAUTH2' && auth.type !== 'OAUTH2_PKCE') continue;
+    const bitId = extractBitIdFromModule(moduleName);
+    const clientSecret = auth.clientSecret;
+    result.push({
+      moduleName,
+      bitId,
+      displayName: auth.displayName || piece.displayName || bitId,
+      authorizationUrl: auth.authorizationUrl,
+      tokenUrl: auth.tokenUrl,
+      scopes: auth.scopes || [],
+      extraAuthParams: auth.extraAuthParams,
+      pkce: !clientSecret,
+    });
+  }
+  return result;
+}
+
 // Run a specific action from a registered bit
 async function runAction(moduleName, actionName, propsValue, credentials) {
   const mod = bitsRegistry[moduleName];
@@ -619,6 +648,7 @@ export const HabitsBundle = {
   getWorkflow,
   getBitsRegistry,
   getBitManifest,
+  getOAuthBits,
   runAction,
   getRequiredEnvVars,
   getMissingEnvVars,

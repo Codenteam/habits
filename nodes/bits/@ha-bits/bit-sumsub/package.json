@@ -1,0 +1,55 @@
+{
+  "name": "@ha-bits/bit-sumsub",
+  "version": "1.0.0",
+  "description": "Sumsub identity verification and KYC integration for Habits workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "bits-test -f bit-sumsub",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "sumsub",
+    "kyc",
+    "identity",
+    "verification",
+    "enterprise"
+  ],
+  "author": "Codenteam",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "form-data": "^4.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "habits": {
+    "catalog": false,
+    "enterprise": true,
+    "mobile": false
+  },
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-sumsub/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit",
+      "enterprise"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
+  }
+}

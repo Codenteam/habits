@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: habit-reflection
+  title: Habit Reflection
+  subtitle: Weekly check-in analysis with insights and a growth roadmap
+  icon: "lucide:Sparkles"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: single
+  header: { title: Habit Reflection, subtitle: "Analyze your week", icon: "lucide:Sparkles" }
+
+state:
+  reflection: ""
+  result: null
+  error: null
+
+actions:
+  analyze:
+    method: POST
+    endpoint: /api/habit-reflection
+    body:
+      Reflection: "{{state.reflection}}"
+    responsePath: output.Results
+    onSuccess: { set: { result: "$response", error: null }, toast: "Reflection complete" }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: card
+    title: Weekly check-in
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - { name: reflection, type: textarea, label: Your weekly answers, rows: 12, required: true, placeholder: "What went well? What was hard? What will you change next week?" }
+        submit: { label: Analyze my week, action: analyze, loadingLabel: "Reflecting..." }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Reflection
+    sections:
+      - kind: html-preview
+        source: state.result
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

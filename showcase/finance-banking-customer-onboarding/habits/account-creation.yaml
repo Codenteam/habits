@@ -1,0 +1,67 @@
+id: account-creation
+name: Account Creation
+description: Create a Mambu client and deposit account after onboarding approval.
+
+input:
+  - id: applicationId
+    type: string
+    required: true
+  - id: firstName
+    type: string
+    required: true
+  - id: lastName
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: true
+  - id: productType
+    type: string
+    required: true
+
+nodes:
+  - id: create-mambu-client
+    type: action
+    data:
+      label: Create Mambu Client
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: createClient
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        idempotencyKey: "customer-{{habits.input.applicationId}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        email: "{{habits.input.email}}"
+
+  - id: create-deposit-account
+    type: action
+    data:
+      label: Create Mambu Deposit Account
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: createDepositAccount
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        idempotencyKey: "account-{{habits.input.applicationId}}-{{habits.input.productType}}"
+        clientId: "{{create-mambu-client.clientId}}"
+        productType: "{{habits.input.productType}}"
+        approvalStatus: approved
+
+edges:
+  - source: create-mambu-client
+    target: create-deposit-account
+
+output:
+  provider: mambu
+  clientId: "{{create-mambu-client.clientId}}"
+  accountId: "{{create-deposit-account.accountId}}"
+  status: "{{create-deposit-account.status}}"

@@ -211,6 +211,15 @@ export function buildHabitGraph(input: BuildHabitGraphInput): HabitGraph {
         }
       }
 
+      for (const queryKey of action.queryKeys) {
+        if (action.workflowId) {
+          const inputId = `input:${action.workflowId}:${queryKey}`;
+          if (nodes.has(inputId) && !edges.some((e) => e.source === actId && e.target === inputId)) {
+            addEdge(edges, actId, inputId, `query:${queryKey}`);
+          }
+        }
+      }
+
       if (action.workflowId && habitById.has(action.workflowId)) {
         const habit = habitById.get(action.workflowId)!;
         for (const sk of action.onSuccessResponseTargets) {

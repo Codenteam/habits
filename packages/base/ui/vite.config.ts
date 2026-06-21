@@ -15,6 +15,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@ha-bits/core': path.resolve(__dirname, '../../core/src/index.ts'),
+      '@ha-bits/frontend-builder/ui-spec': path.resolve(__dirname, '../frontend-builder/src/ui-spec.ts'),
+      '@ha-bits/frontend-builder/legacy-html': path.resolve(__dirname, '../frontend-builder/src/legacy-html.ts'),
       '@ha-bits/frontend-builder': path.resolve(__dirname, '../frontend-builder/src/index.ts'),
       '@ha-bits/workflow-canvas': path.resolve(__dirname, '../../workflow-canvas/src/index.ts'),
       '@ha-bits/cortex-core/ui/compileUiSpec': path.resolve(__dirname, '../../cortex/core/src/ui/compileUiSpec.ts'),
@@ -30,6 +32,32 @@ export default defineConfig({
   build: {
     outDir: '../../../dist/packages/base/ui',
     emptyOutDir: true,
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter(
+          (dep) =>
+            !/[\\/]monaco(-editor)?[\\/]/.test(dep) &&
+            !/[\\/]reactflow[\\/]/.test(dep) &&
+            !/[\\/]grapesjs/.test(dep) &&
+            !/[\\/]lucide-react[\\/]dist[\\/]esm[\\/]icons[\\/]/.test(dep) &&
+            !/ScriptEditor/.test(dep) &&
+            !/NodeConfigPanel/.test(dep) &&
+            !/BackendWorkflowEditor/.test(dep) &&
+            !/ValidationModal/.test(dep) &&
+            !/ui-spec/.test(dep) &&
+            !/legacy-html/.test(dep)
+        );
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/jszip')) {
+            return 'jszip';
+          }
+        },
+      },
+    },
   },
   base: '/habits/base/',
   publicDir: path.resolve(__dirname, 'public'),

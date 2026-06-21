@@ -10,6 +10,15 @@ import { Tag, Zap } from 'lucide-vue-next'
 const images = [
     { img: '/showcase/ecommerce-retail-order-management/1.webp', caption: 'Ecommerce & Retail Order Management' }
 ]
+
+const habitTabs = [
+    { label: 'order-confirmation', url: '/showcase/ecommerce-retail-order-management/order-confirmation.yaml' },
+    { label: 'fulfilment-routing', url: '/showcase/ecommerce-retail-order-management/fulfilment-routing.yaml' },
+    { label: 'shipping-update', url: '/showcase/ecommerce-retail-order-management/shipping-update.yaml' },
+    { label: 'delivery-confirmation', url: '/showcase/ecommerce-retail-order-management/delivery-confirmation.yaml' },
+    { label: 'return-processing', url: '/showcase/ecommerce-retail-order-management/return-processing.yaml' },
+    { label: 'order-exception-alert', url: '/showcase/ecommerce-retail-order-management/order-exception-alert.yaml' }
+]
 </script>
 
 # Ecommerce & Retail Order Management
@@ -99,6 +108,39 @@ A collection of habits that keep every order moving smoothly: from placement thr
   </div>
 </div>
 
+
+
+<hr style="clear:both;">
+
+## Run Your .habit File
+
+<Checklist name="dot-habit/mobile" title="Run on Mobile" icon="smartphone">
+
+<!--@include: ../getting-started/checklists/dot-habit/mobile.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/desktop" title="Run on Desktop" icon="monitor">
+
+<!--@include: ../getting-started/checklists/dot-habit/desktop.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/server" title="Run on Server" icon="server">
+
+<!--@include: ../getting-started/checklists/dot-habit/server.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/serverless" title="Run Serverless" icon="cloud">
+
+<!--@include: ../getting-started/checklists/dot-habit/serverless.md{3,}-->
+
+</Checklist>
+
+## Workflow Visualization
+
+<HabitViewerTabs :tabs="habitTabs" :height="450" />
 
 
 <div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>

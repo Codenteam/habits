@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: product-changelog
+  title: Product Changelog
+  subtitle: Turn raw git logs into release notes
+  icon: "lucide:ScrollText"
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Product Changelog, subtitle: "What's new · improvements · fixes", icon: "lucide:ScrollText" }
+  split: { left: left, right: right, ratio: "400px 1fr" }
+
+state:
+  commitLog: ""
+  releaseNotes: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/product-changelog
+    body:
+      commit: "{{state.commitLog}}"
+    responsePath: output.Results
+    onSuccess: { set: { releaseNotes: "$response", error: null }, toast: "Release notes ready" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Git log
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: commitLog, type: textarea, label: Raw commits between tags, rows: 12, required: true, placeholder: "Paste git log output..." }
+            submit: { label: Generate release notes, action: generate, loadingLabel: "Generating..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.releaseNotes
+        showWhen: state.releaseNotes
+        title: Release notes
+        sections:
+          - { kind: markdown, source: state.releaseNotes, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

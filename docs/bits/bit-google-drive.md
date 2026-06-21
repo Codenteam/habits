@@ -51,6 +51,10 @@ nodes:
       # action properties...
 ```
 
+## Used In Showcases
+
+- [client-invoice-manager](/showcase/client-invoice-manager)
+
 <style>
 .bit-meta {
   display: flex;

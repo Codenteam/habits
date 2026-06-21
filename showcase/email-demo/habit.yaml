@@ -19,8 +19,8 @@ nodes:
         body: "This is a test email to verify IMAP works. Timestamp: {{habits.timestamp}}"
       credentials:
         auth:
-          host: "smtp.gmail.com"
-          port: 587
+          host: "{{habits.env.SMTP_HOST}}"
+          port: "{{habits.env.SMTP_PORT}}"
           user: "{{habits.env.EMAIL_USER}}"
           password: "{{habits.env.EMAIL_PASSWORD}}"
 
@@ -38,8 +38,8 @@ nodes:
         limit: 3
       credentials:
         auth:
-          host: "imap.gmail.com"
-          port: 993
+          host: "{{habits.env.IMAP_HOST}}"
+          port: "{{habits.env.IMAP_PORT}}"
           user: "{{habits.env.EMAIL_USER}}"
           password: "{{habits.env.EMAIL_PASSWORD}}"
 

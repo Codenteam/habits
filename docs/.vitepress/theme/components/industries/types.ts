@@ -4,7 +4,13 @@ export interface HabitData {
   description: string
   trigger: 'scheduler' | 'webhook' | 'email' | 'manual'
   bits: string[]
+  featured?: boolean
+  overview?: string
+  flow?: string[]
+  components?: string[]
+  integrations?: string[]
   stackFile?: string
+  stackFolder?: string
 }
 
 export interface DepartmentNotice {

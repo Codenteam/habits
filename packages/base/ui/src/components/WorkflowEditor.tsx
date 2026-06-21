@@ -1,373 +1,108 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Node,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  NodeTypes,
-  Panel,
-  Edge,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import yaml from 'js-yaml';
-
+import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { Waypoints, AlertTriangle } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { setNodes, setEdges, addNode, deleteNode, setSelectedNode, selectNodes, selectEdges, selectSelectedNode, selectExportedWorkflow, selectAllExportedHabits, selectActiveHabitDescription, setHabitDescription, selectActiveHabit } from '../store/slices/workflowSlice';
-import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
-import CustomNode from './CustomNode';
-import LeftSidebar from './LeftSidebar';
-import NodeConfigPanel from './NodeConfigPanel';
+import { selectActiveHabit, selectHabits } from '../store/slices/workflowSlice';
+import { setFrontendYaml, setViewMode } from '../store/slices/uiSlice';
+import { selectUiEditorAccess } from '../store/selectors/validationSelectors';
 import Toolbar from './Toolbar';
-import { NodeFactory } from '../lib/NodeFactory';
-import { FrontendBuilderVanilla, UiSpecBuilderVanilla } from '@ha-bits/frontend-builder';
 import { compilePreviewHtml } from '@/lib/uiPreviewCompile';
-import { WorkflowCanvas, applyDagreLayout, WorkflowCanvasRef, WorkflowNode } from '@ha-bits/workflow-canvas';
 
-const nodeTypes: NodeTypes = {
-  custom: CustomNode,
-};
+const BackendWorkflowEditor = lazy(() => import('./BackendWorkflowEditor'));
+const UiSpecWizard = lazy(() =>
+  import('@ha-bits/frontend-builder/ui-spec').then((m) => ({ default: m.UiSpecWizard }))
+);
+
+const showDebugYaml = import.meta.env.DEV;
 
 export default function WorkflowEditor() {
   const dispatch = useAppDispatch();
-  const storeNodes = useAppSelector(selectNodes);
-  const storeEdges = useAppSelector(selectEdges);
-  const selectedNode = useAppSelector(selectSelectedNode);
-  const viewMode = useAppSelector(state => state.ui.viewMode);
-  const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
-  const frontendYaml = useAppSelector(state => state.ui.frontendYaml);
+  const viewMode = useAppSelector((state) => state.ui.viewMode);
+  const frontendYaml = useAppSelector((state) => state.ui.frontendYaml);
   const activeHabit = useAppSelector(selectActiveHabit);
-  const habitDescription = useAppSelector(selectActiveHabitDescription);
-  const [nodes, setNodesState, onNodesChange] = useNodesState(storeNodes);
-  const [edges, setEdgesState, onEdgesChange] = useEdgesState(storeEdges);
-  const canvasRef = useRef<WorkflowCanvasRef>(null);
-  
-  // Description editing state
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [editedDescription, setEditedDescription] = useState(habitDescription);
-  
-  // Sync edited description when habit changes
-  useEffect(() => {
-    setEditedDescription(habitDescription);
-  }, [habitDescription]);
-  
-  // Get habit JSON for WorkflowCanvas code view (active habit only)
-  const habitJson = useAppSelector(selectExportedWorkflow);
-  
-  // Get all habits for FrontendBuilder AI generation
-  const allHabits = useAppSelector(selectAllExportedHabits);
+  const habits = useAppSelector(selectHabits);
+  const uiEditorAccess = useAppSelector(selectUiEditorAccess);
 
-  // Handle saving frontend HTML
-  const handleSaveFrontendHtml = useCallback((html: string) => {
-    dispatch(setFrontendHtml(html));
-  }, [dispatch]);
-
-  const handleSaveFrontendYaml = useCallback((yaml: string) => {
-    dispatch(setFrontendYaml(yaml));
-  }, [dispatch]);
-  
-  // Handle saving habit description
-  const handleSaveDescription = useCallback(() => {
-    dispatch(setHabitDescription(editedDescription));
-    setIsEditingDescription(false);
-  }, [dispatch, editedDescription]);
-  
-  const handleCancelEditDescription = useCallback(() => {
-    setEditedDescription(habitDescription);
-    setIsEditingDescription(false);
-  }, [habitDescription]);
-
-  // Sync store changes to React Flow
-  useEffect(() => {
-    setNodesState(storeNodes);
-  }, [storeNodes, setNodesState]);
+  const linkableHabits = useMemo(
+    () =>
+      habits
+        .filter((h) => h.nodes.length > 0)
+        .map((h) => ({ id: h.id, name: h.name })),
+    [habits],
+  );
 
   useEffect(() => {
-    setEdgesState(prev =>
-      storeEdges.map(se => ({ ...se, selected: prev.find(e => e.id === se.id)?.selected ?? false }))
-    );
-  }, [storeEdges, setEdgesState]);
+    if (viewMode === 'frontend-yaml' && !uiEditorAccess.allowed) {
+      dispatch(setViewMode('backend'));
+    }
+  }, [viewMode, uiEditorAccess.allowed, dispatch]);
 
-  // Sync with store
-  const handleNodesChange = useCallback(
-    (changes: any) => {
-      onNodesChange(changes);
-      // Propagate keyboard node deletions to Redux so connected edges are cleaned up
-      const removeChanges = changes.filter((c: any) => c.type === 'remove');
-      removeChanges.forEach((c: any) => dispatch(deleteNode(c.id)));
-      // Only update store for position changes, not for selection or drag
-      const positionChanges = changes.filter((c: any) => c.type === 'position' && c.dragging === false);
-      if (positionChanges.length > 0) {
-        const currentNodes = nodes.map((node) => {
-          const change = positionChanges.find((c: any) => c.id === node.id);
-          if (change && change.position) {
-            return { ...node, position: change.position };
-          }
-          return node;
-        });
-        dispatch(setNodes(currentNodes));
-      }
+  const handleSaveFrontendYaml = useCallback(
+    (yamlText: string) => {
+      dispatch(setFrontendYaml(yamlText));
     },
-    [nodes, onNodesChange, dispatch]
-  );
-
-  const handleEdgesDelete = useCallback(
-    (deletedEdges: Edge[]) => {
-      const updatedEdges = storeEdges.filter((edge) =>
-        !deletedEdges.some((deleted) => {
-          if (deleted.id && edge.id) {
-            return deleted.id === edge.id;
-          }
-          // Fall back to source+target+handle match for edges without ids
-          return (
-            deleted.source === edge.source &&
-            deleted.target === edge.target &&
-            deleted.sourceHandle === edge.sourceHandle &&
-            deleted.targetHandle === edge.targetHandle
-          );
-        })
-      );
-      dispatch(setEdges(updatedEdges));
-    },
-    [storeEdges, dispatch]
-  );
-
-  const handleEdgesChange = useCallback(
-    (changes: any) => {
-      onEdgesChange(changes);
-      // Also handle removes here as a safety net (onEdgesDelete may not fire for all cases)
-      const removeChanges = changes.filter((c: any) => c.type === 'remove');
-      if (removeChanges.length > 0) {
-        const removedIds = new Set(removeChanges.map((c: any) => c.id).filter(Boolean));
-        if (removedIds.size > 0) {
-          dispatch(setEdges(storeEdges.filter((e) => e.id ? !removedIds.has(e.id) : true)));
-        }
-      }
-    },
-    [onEdgesChange, dispatch, storeEdges]
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const src = connection.source!;
-      const tgt = connection.target!;
-      const sh = connection.sourceHandle;
-      const th = connection.targetHandle;
-      const id = `${src}-_-${tgt}-_-${sh ?? 'main'}-_-${th ?? 'main'}`;
-      const edgeWithId: Edge = {
-        id,
-        source: src,
-        target: tgt,
-        sourceHandle: sh,
-        targetHandle: th,
-      };
-      const newEdges = addEdge(edgeWithId, edges);
-      dispatch(setEdges(newEdges));
-    },
-    [edges, dispatch]
-  );
-
-  const onEdgeClick = useCallback(
-    (_event: React.MouseEvent, clickedEdge: Edge) => {
-      // Explicitly enforce single-edge selection — ReactFlow controlled mode
-      // does not reliably deselect other edges when a new one is clicked.
-      setEdgesState(prev =>
-        prev.map(e => ({ ...e, selected: e.id === clickedEdge.id }))
-      );
-    },
-    [setEdgesState]
-  );
-
-  const onNodeClick = useCallback(
-    (node: Node) => {
-      dispatch(setSelectedNode(node));
-    },
-    [dispatch]
-  );
-
-  // Handle auto-layout (re-arrange nodes using dagre with actual dimensions)
-  const handleAutoLayout = useCallback(() => {
-    // Get nodes with actual dimensions from ReactFlow instance if available
-    const instance = canvasRef.current?.getInstance();
-    const nodesWithDimensions = instance?.getNodes() as WorkflowNode[] | undefined;
-    
-    // Merge actual dimensions into nodes
-    const mergedNodes = nodes.map(node => {
-      const nodeWithDims = nodesWithDimensions?.find(n => n.id === node.id);
-      if (nodeWithDims?.width && nodeWithDims?.height) {
-        return { ...node, width: nodeWithDims.width, height: nodeWithDims.height };
-      }
-      return node;
-    });
-    
-    const layoutedNodes = applyDagreLayout(mergedNodes, edges);
-    setNodesState(layoutedNodes);
-    dispatch(setNodes(layoutedNodes));
-  }, [nodes, edges, setNodesState, dispatch]);
-
-  const handleAddNode = useCallback(
-    (template: { framework: 'script' | 'bits'; module: string; label: string }) => {
-      const instance = canvasRef.current?.getInstance();
-      const staggerOffset = nodes.length * 50;
-      const position = instance
-        ? instance.screenToFlowPosition({
-            x: window.innerWidth / 2 - 100 + staggerOffset,
-            y: window.innerHeight / 2 - 50 + staggerOffset,
-          })
-        : { x: 250 + staggerOffset, y: 100 + staggerOffset };
-
-      // Create node using NodeFactory for better type safety and consistency
-      const nodeDTO = NodeFactory.fromTemplate({
-        framework: template.framework,
-        module: template.module,
-        label: template.label,
-        position,
-      });
-
-      // Derive node type from module for ID generation: @ha-bits/bit-hello-world → hello-world
-      const nodeType = template.module
-        .replace(/^@[^/]+\/bit-/, '')
-        .replace(/^@[^/]+\//, '')
-        .replace(/^bit-/, '')
-        .replace(/^script-/, '') || 'node';
-
-      // Count existing nodes with this type prefix to assign a unique counter
-      const existingCount = nodes.filter(n => n.id.startsWith(`${nodeType}-`)).length;
-      const nodeId = `${nodeType}-${existingCount + 1}`;
-
-      // Convert to ReactFlow format and override generated ID
-      const newNode = { ...nodeDTO.toReactFlowNode(), id: nodeId };
-      dispatch(addNode(newNode));
-      dispatch(setSelectedNode(null));
-    },
-    [dispatch, nodes]
+    [dispatch],
   );
 
   return (
     <div className="flex flex-col h-screen">
       <Toolbar />
-      
-      {viewMode === 'backend' ? (
-        /* Backend Mode - Workflow Editor */
-        <div className="flex flex-1 overflow-hidden">
-          <LeftSidebar onAddNode={handleAddNode} />
-          
-          <div className="flex-1 relative bg-slate-900 workflow-canvas">
-            <WorkflowCanvas
-              ref={canvasRef}
-              nodes={nodes}
-              edges={edges}
-              editable={true}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-              onEdgesDelete={handleEdgesDelete}
-              onEdgeClick={onEdgeClick}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              onAutoLayout={handleAutoLayout}
-              nodeTypes={nodeTypes}
-              showControls={true}
-              showActionButtons={true}
-              fitView={true}
-              interactive={true}
-              habitCode={yaml.dump(habitJson, { indent: 2, lineWidth: -1 })}
-            >
-              <Panel position="top-right" className="bg-slate-800 p-3 rounded-lg shadow-lg border border-slate-700">
-                <div className="text-xs text-slate-400 space-y-1">
-                  <div>💡 Drag nodes from the palette</div>
-                  <div>🔗 Connect nodes by dragging handles</div>
-                  <div>⚙️ Click a node to configure it</div>
-                </div>
-              </Panel>
-              <Panel position="top-left" className="bg-slate-800 p-3 rounded-lg shadow-lg border border-slate-700 max-w-lg">
-                {isEditingDescription ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      className="w-full bg-slate-700 text-slate-200 text-xs rounded p-2 border border-slate-600 focus:border-blue-500 focus:outline-none resize-none"
-                      rows={3}
-                      placeholder="Enter habit description..."
-                      autoFocus
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={handleCancelEditDescription}
-                        className="text-xs px-2 py-1 rounded bg-slate-600 text-slate-300 hover:bg-slate-500"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSaveDescription}
-                        className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                ) : habitDescription ? (
-                  <div className="flex items-start gap-2">
-                    <p className="text-xs text-slate-300 flex-1">{habitDescription}</p>
-                    <button
-                      onClick={() => setIsEditingDescription(true)}
-                      className="text-slate-400 hover:text-slate-200 shrink-0"
-                      title="Edit description"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIsEditingDescription(true)}
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Habit Description
-                  </button>
-                )}
-              </Panel>
-            </WorkflowCanvas>
-          </div>
 
-          {selectedNode && (
-            <NodeConfigPanel
-              key={selectedNode.id}
-              node={selectedNode}
-            />
-          )}
-        </div>
-      ) : viewMode === 'frontend' ? (
-        /* Frontend Mode - classic HTML builder */
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
-          <div className="flex-1 overflow-hidden">
-            <FrontendBuilderVanilla
-              initialHtml={frontendHtml}
-              onChange={handleSaveFrontendHtml}
-              height="100%"
-              habitData={allHabits}
-            />
+      {viewMode === 'backend' ? (
+        <Suspense
+          fallback={
+            <div className="flex flex-1 items-center justify-center bg-slate-900 text-slate-400 text-sm">
+              Loading workflow editor…
+            </div>
+          }
+        >
+          <BackendWorkflowEditor />
+        </Suspense>
+      ) : !uiEditorAccess.allowed ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-slate-900 px-6 text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-400" />
+          <div className="max-w-md space-y-2">
+            <h2 className="text-lg font-semibold text-slate-100">Logic must be ready first</h2>
+            <p className="text-sm text-slate-400">{uiEditorAccess.reason}</p>
           </div>
+          {uiEditorAccess.issues.length > 0 && (
+            <ul className="max-w-lg w-full text-left text-xs text-slate-400 space-y-1 border border-slate-800 rounded-md p-3 bg-slate-950">
+              {uiEditorAccess.issues.slice(0, 6).map((issue, i) => (
+                <li key={`${issue.code}-${i}`}>• {issue.message}</li>
+              ))}
+            </ul>
+          )}
+          <button
+            type="button"
+            onClick={() => dispatch(setViewMode('backend'))}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-500"
+          >
+            <Waypoints className="w-4 h-4" />
+            Go to Logic
+          </button>
         </div>
       ) : (
-        /* Frontend YAML Mode - new declarative UiSpec builder */
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
           <div className="flex-1 overflow-hidden">
-            <UiSpecBuilderVanilla
-              initialYaml={frontendYaml}
-              onChange={handleSaveFrontendYaml}
-              height="100%"
-              compilePreviewHtml={compilePreviewHtml}
-              defaultMetaId={
-                activeHabit?.name
-                  ? activeHabit.name.toLowerCase().replace(/\s+/g, '-')
-                  : undefined
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center text-slate-400 text-sm">
+                  Loading UI wizard…
+                </div>
               }
-              defaultMetaTitle={activeHabit?.name}
-            />
+            >
+              <UiSpecWizard
+                initialYaml={frontendYaml}
+                onChange={handleSaveFrontendYaml}
+                height="100%"
+                compilePreviewHtml={compilePreviewHtml}
+                defaultMetaId={
+                  activeHabit?.name ? activeHabit.name.toLowerCase().replace(/\s+/g, '-') : undefined
+                }
+                defaultMetaTitle={activeHabit?.name}
+                linkableHabits={linkableHabits}
+                showDebugYaml={showDebugYaml}
+              />
+            </Suspense>
           </div>
         </div>
       )}

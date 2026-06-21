@@ -8,6 +8,14 @@ import { createAction, Property } from '@ha-bits/cortex-core';
 import { generateText, isSupported } from '@ha-bits/bit-local-ai/driver';
 import { ChatMessage, ModelRegistry } from '../common/common';
 
+/** Remove Qwen thinking blocks and trim assistant output for UI display. */
+function stripModelArtifacts(text: string): string {
+  return String(text)
+    .replace(/<(?:redacted_)?think(?:ing)?>[\s\S]*?<\/(?:redacted_)?think(?:ing)?>\s*/gi, '')
+    .replace(/`\s*(?:``\s*)?[\s\S]*?`\s*/g, '')
+    .trim();
+}
+
 // Build dropdown options from registry
 const modelOptions = Object.entries(ModelRegistry).map(([id, entry]) => ({
   label: `${entry.label} (${entry.size})`,
@@ -77,7 +85,7 @@ export const generateTextAction = createAction({
     try {
       const result = await generateText(prompts, modelId, maxTokens);
       console.log('[generate-text] generateText() returned, tokens:', result.tokensGenerated);
-      return result;
+      return { ...result, text: stripModelArtifacts(result.text) };
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error('[generate-text] generateText() threw:', msg);

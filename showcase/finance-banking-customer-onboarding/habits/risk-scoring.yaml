@@ -1,0 +1,63 @@
+id: risk-scoring
+name: Risk Scoring
+description: Use ComplyAdvantage screening to score an onboarding application and return the recommended route.
+
+input:
+  - id: applicationId
+    type: string
+    required: true
+  - id: riskTier
+    type: string
+    required: false
+  - id: sanctionsStatus
+    type: string
+    required: false
+
+nodes:
+  - id: screen-customer
+    type: action
+    data:
+      label: Screen Customer
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: screenCustomer
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        searchTerm: "{{habits.input.applicationId}}"
+        clientRef: "{{habits.input.applicationId}}"
+        riskTierHint: "{{habits.input.riskTier || ''}}"
+        sanctionsStatusHint: "{{habits.input.sanctionsStatus || ''}}"
+        types: [sanction, pep, warning]
+
+  - id: normalize-screening
+    type: action
+    data:
+      label: Normalize Risk Route
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: normalizeScreeningResult
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        screeningResult: "{{screen-customer}}"
+        clearStatus: auto_approve
+        possibleMatchStatus: manual_review
+        confirmedMatchStatus: reject
+
+edges:
+  - source: screen-customer
+    target: normalize-screening
+
+output:
+  applicationId: "{{habits.input.applicationId}}"
+  caseId: "{{screen-customer.caseId}}"
+  score: "{{normalize-screening.riskScore}}"
+  riskLevel: "{{normalize-screening.riskLevel}}"
+  route: "{{normalize-screening.status}}"

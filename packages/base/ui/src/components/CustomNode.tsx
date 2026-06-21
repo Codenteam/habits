@@ -1,12 +1,13 @@
-import { memo, useState, useCallback, useMemo } from 'react';
+import { lazy, memo, Suspense, useState, useCallback, useMemo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Activity, Zap, Play, Code, Pencil, Check, MessageSquare } from 'lucide-react';
 import { isTriggerNode } from '@ha-bits/workflow-canvas';
 import { useAppDispatch } from '../store/hooks';
 import { updateNode, updateNodeId } from '../store/slices/workflowSlice';
-import ScriptNodeEditor from './ScriptNodeEditor';
 import ModuleIcon from './ModuleIcon';
 import RichTextArea from './RichTextArea';
+
+const ScriptNodeEditor = lazy(() => import('./ScriptNodeEditor'));
 
 const LONG_VALUE_THRESHOLD = 10;
 
@@ -422,14 +423,25 @@ export default memo(({ data, selected, id }: NodeProps) => {
                     </label>
                   )}
                   {key === 'script' ? (
-                    <ScriptNodeEditor
-                      script={value}
-                      language={data.language || data.params?.language || 'deno'}
-                      onScriptChange={(newValue) => handleValueChange(key, newValue)}
-                      onLanguageChange={handleLanguageChange}
-                      height="200px"
-                      showLabel={false}
-                    />
+                    <Suspense
+                      fallback={
+                        <div
+                          className="flex items-center justify-center rounded border border-gray-600 bg-[#1e1e2e] text-slate-400"
+                          style={{ height: '200px' }}
+                        >
+                          Loading editor…
+                        </div>
+                      }
+                    >
+                      <ScriptNodeEditor
+                        script={value}
+                        language={data.language || data.params?.language || 'deno'}
+                        onScriptChange={(newValue) => handleValueChange(key, newValue)}
+                        onLanguageChange={handleLanguageChange}
+                        height="200px"
+                        showLabel={false}
+                      />
+                    </Suspense>
                   ) : (
                     <RichTextArea
                       defaultValue={value}

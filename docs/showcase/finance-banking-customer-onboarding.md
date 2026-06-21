@@ -1,6 +1,6 @@
 ---
 title: "Finance & Banking Customer Onboarding"
-description: "Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence."
+description: "Automate a full customer application path from intake through ID verification, sanctions screening, and core banking account creation."
 aside: false
 ---
 
@@ -9,6 +9,22 @@ import { Tag, Zap, Brain } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/finance-banking-customer-onboarding/1.webp', caption: 'Finance & Banking Customer Onboarding' }
+]
+
+const integrations = [
+    { name: 'Sumsub', subtitle: 'ID verification and KYC', logo: '/logos/sumsub.svg' },
+    { name: 'ComplyAdvantage', subtitle: 'Sanctions, PEP, and watchlist screening', logo: '/logos/complyadvantage.svg' },
+    { name: 'Mambu', subtitle: 'Core banking client and account creation', logo: '/logos/mambu.svg' }
+]
+
+const habitTabs = [
+    { label: 'customer-application-onboarding', url: '/showcase/finance-banking-customer-onboarding/customer-application-onboarding.yaml' },
+    { label: 'kyc-document-collection', url: '/showcase/finance-banking-customer-onboarding/kyc-document-collection.yaml' },
+    { label: 'risk-scoring', url: '/showcase/finance-banking-customer-onboarding/risk-scoring.yaml' },
+    { label: 'account-creation', url: '/showcase/finance-banking-customer-onboarding/account-creation.yaml' },
+    { label: 'credit-check', url: '/showcase/finance-banking-customer-onboarding/credit-check.yaml' },
+    { label: 'welcome-sequence', url: '/showcase/finance-banking-customer-onboarding/welcome-sequence.yaml' },
+    { label: 'onboarding-status-tracker', url: '/showcase/finance-banking-customer-onboarding/onboarding-status-tracker.yaml' }
 ]
 </script>
 
@@ -34,12 +50,13 @@ const images = [
 
 <div class="showcase-taxonomy"><div class="taxonomy-group"><span class="taxonomy-label">Industries</span><span class="taxonomy-values"><a href="../industries/finance-banking" class="taxonomy-pill">finance banking</a></span></div><div class="taxonomy-group"><span class="taxonomy-label">Departments</span><span class="taxonomy-values"><a href="../industries/finance-banking#customer-onboarding" class="taxonomy-pill">customer onboarding</a></span></div></div>
 
-<p class="showcase-description">Automate KYC document collection, risk scoring, account creation, credit checks, and the new customer welcome sequence.</p>
+<p class="showcase-description">Automate a full customer application path from intake through ID verification, sanctions screening, and core banking account creation.</p>
 
-A collection of habits that streamline the new customer journey: from document collection through to account activation. Each habit operates independently and can be deployed individually or as a complete onboarding automation suite.
+A collection of habits that streamline the new customer journey: from application intake through identity verification, sanctions screening, account activation, and ongoing status updates. Each habit operates independently and can be deployed individually or as a complete onboarding automation suite.
 
 ## What It Does
 
+- **Customer Application Onboarding**: orchestrate the complete application-to-account path across customer app, ID verification, sanctions screening, and core banking
 - **KYC Document Collection**: request and validate identity documents from new customers
 - **Risk Scoring**: run automated risk scoring and flag high-risk applications
 - **Account Creation**: provision accounts after approval and send welcome sequence
@@ -48,14 +65,27 @@ A collection of habits that streamline the new customer journey: from document c
 - **Onboarding Status Tracker**: update CRM on each onboarding milestone completion
 
 
+## Integrations
+
+<IntegrationLogos :items="integrations" />
+
+
 <div class="habits-grid">
+  <div class="habit-card">
+    <div class="habit-header">
+      <h3 class="habit-name">Customer Application Onboarding</h3>
+      <span class="trigger-badge trigger-manual">Manual</span>
+    </div>
+    <p class="habit-description">Accept a customer application, create a Sumsub applicant, run ComplyAdvantage sanctions screening, and create the approved client/account in Mambu.</p>
+    <div class="bit-list"><span class="bit-badge">bit-sumsub</span><span class="bit-badge">bit-complyadvantage</span><span class="bit-badge">bit-mambu</span></div>
+  </div>
   <div class="habit-card">
     <div class="habit-header">
       <h3 class="habit-name">KYC Document Collection</h3>
       <span class="trigger-badge trigger-webhook">Webhook</span>
     </div>
     <p class="habit-description">Request and validate identity documents from new customers upon application submission.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">email</span><span class="bit-badge">http</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-sumsub</span></div>
   </div>
   <div class="habit-card">
     <div class="habit-header">
@@ -63,7 +93,7 @@ A collection of habits that streamline the new customer journey: from document c
       <span class="trigger-badge trigger-webhook">Webhook</span>
     </div>
     <p class="habit-description">Run automated risk scoring on new applications and flag high-risk cases for review.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">ai</span><span class="bit-badge">http</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-complyadvantage</span></div>
   </div>
   <div class="habit-card">
     <div class="habit-header">
@@ -71,7 +101,7 @@ A collection of habits that streamline the new customer journey: from document c
       <span class="trigger-badge trigger-webhook">Webhook</span>
     </div>
     <p class="habit-description">Provision customer accounts after approval and trigger the welcome email sequence.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">email</span><span class="bit-badge">http</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-mambu</span></div>
   </div>
   <div class="habit-card">
     <div class="habit-header">
@@ -79,7 +109,7 @@ A collection of habits that streamline the new customer journey: from document c
       <span class="trigger-badge trigger-webhook">Webhook</span>
     </div>
     <p class="habit-description">Initiate credit bureau enquiries automatically and parse results into the application record.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">http</span><span class="bit-badge">ai</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-complyadvantage</span><span class="bit-badge">bit-mambu</span></div>
   </div>
   <div class="habit-card">
     <div class="habit-header">
@@ -87,7 +117,7 @@ A collection of habits that streamline the new customer journey: from document c
       <span class="trigger-badge trigger-scheduler">Scheduled</span>
     </div>
     <p class="habit-description">Send personalised onboarding emails to new customers over the first 30 days.</p>
-    <div class="bit-list"><span class="bit-badge">scheduler</span><span class="bit-badge">email</span><span class="bit-badge">ai</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-mambu</span></div>
   </div>
   <div class="habit-card">
     <div class="habit-header">
@@ -95,10 +125,43 @@ A collection of habits that streamline the new customer journey: from document c
       <span class="trigger-badge trigger-webhook">Webhook</span>
     </div>
     <p class="habit-description">Update the CRM automatically at each milestone of the onboarding journey.</p>
-    <div class="bit-list"><span class="bit-badge">webhook</span><span class="bit-badge">http</span><span class="bit-badge">slack</span></div>
+    <div class="bit-list"><span class="bit-badge">bit-sumsub</span><span class="bit-badge">bit-complyadvantage</span><span class="bit-badge">bit-mambu</span></div>
   </div>
 </div>
 
+
+
+<hr style="clear:both;">
+
+## Run Your .habit File
+
+<Checklist name="dot-habit/mobile" title="Run on Mobile" icon="smartphone">
+
+<!--@include: ../getting-started/checklists/dot-habit/mobile.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/desktop" title="Run on Desktop" icon="monitor">
+
+<!--@include: ../getting-started/checklists/dot-habit/desktop.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/server" title="Run on Server" icon="server">
+
+<!--@include: ../getting-started/checklists/dot-habit/server.md{3,}-->
+
+</Checklist>
+
+<Checklist name="dot-habit/serverless" title="Run Serverless" icon="cloud">
+
+<!--@include: ../getting-started/checklists/dot-habit/serverless.md{3,}-->
+
+</Checklist>
+
+## Workflow Visualization
+
+<HabitViewerTabs :tabs="habitTabs" :height="450" />
 
 
 <div class="showcase-notice"><p class="showcase-notice-title">Tailored to your systems & workflows</p><p class="showcase-notice-text">Every organization runs differently. Reach out to see how Habits can be up and running in your environment, tailored to your tools, your data, and your team's specific workflows.</p></div>

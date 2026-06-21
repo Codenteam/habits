@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: rss-digest-summarizer
+  title: RSS Digest Summarizer
+  subtitle: Automated RSS fetch, summarize, and Slack digest
+  icon: "lucide:Rss"
+
+theme:
+  preset: aurora
+  mode: dark
+
+layout:
+  type: single
+  header: { title: RSS Digest, subtitle: "RSS → AI → Slack", icon: "lucide:Rss" }
+
+state:
+  rssLive: false
+  error: null
+
+actions:
+  startRss:
+    method: POST
+    endpoint: /api/rss-digest
+    body:
+      digestDate: "{{new Date().toISOString()}}"
+    onSuccess: { set: { rssLive: true, error: null }, toast: "Automation started" }
+    onError: { set: { error: "$error.message" } }
+  stopRss:
+    method: DELETE
+    endpoint: /misc/trigger/rss-digest/fetch-rss
+    onSuccess: { set: { rssLive: false, error: null }, toast: "Automation stopped" }
+    onError: { set: { error: "$error.message" } }
+
+widgets:
+  - kind: status-banner
+    source: "Pipeline: fetch RSS feeds → AI summarize each → post digest to Slack"
+  - kind: card
+    title: RSS automation
+    children:
+      - kind: kv-grid
+        items:
+          - { label: Cron, value: "*/3 * * * *" }
+          - { label: Status, value: "{{state.rssLive ? 'Running' : 'Stopped'}}" }
+      - kind: button
+        label: Start automation
+        action: startRss
+        hideWhen: state.rssLive
+      - kind: button
+        label: Stop automation
+        action: stopRss
+        tone: danger
+        showWhen: state.rssLive
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error

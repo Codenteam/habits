@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: email-drafts
+  title: Email Drafts
+  subtitle: Generate formal, informal, and assertive email drafts from a situation
+  icon: "lucide:Mail"
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: split
+  header: { title: Email Drafts, subtitle: "Three tones, one situation", icon: "lucide:Mail" }
+  split: { left: left, right: right, ratio: "400px 1fr" }
+
+state:
+  situation: ""
+  result: null
+  error: null
+
+actions:
+  draft:
+    method: POST
+    endpoint: /api/email-drafts
+    body:
+      situation: "{{state.situation}}"
+    responsePath: output.Results
+    onSuccess: { set: { result: "$response", error: null }, toast: "Drafts ready" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Describe the situation
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: situation, type: textarea, label: What do you need to communicate?, rows: 10, required: true, placeholder: "e.g. Follow up on unpaid invoice, request time off..." }
+            submit: { label: Generate drafts, action: draft, loadingLabel: "Writing..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.result
+        showWhen: state.result
+        title: Email drafts
+        sections:
+          - { kind: markdown, source: state.result, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

@@ -79,6 +79,74 @@ export const selectHasValidationErrors = createSelector(
   (count) => count > 0,
 );
 
+// Real prerequisites for building a UI. `missing_input_params` is intentionally NOT here:
+// a habit with no {{habits.input.*}} is a valid automation (the warning itself says so), so it
+// must not block opening the UI editor.
+const UI_EDITOR_BLOCKING_CODES = new Set([
+  'missing_nodes',
+  'missing_output',
+  'missing_name',
+]);
+
+export interface UiEditorAccess {
+  allowed: boolean;
+  reason: string;
+  issues: UnifiedValidationIssue[];
+}
+
+/** UI editor is blocked only by Logic-tab habit issues — not connection/graph UI wiring errors. */
+export const selectUiEditorAccess = createSelector(
+  [(state: ValidationState) => state.workflow.habits, selectHabitValidationIssues],
+  (habits, habitIssues): UiEditorAccess => {
+    if (!habits.length) {
+      return {
+        allowed: false,
+        reason: 'Create at least one habit in Logic before building the UI.',
+        issues: [],
+      };
+    }
+
+    const errors = habitIssues.filter((i) => i.severity === 'error');
+    if (errors.length > 0) {
+      return {
+        allowed: false,
+        reason: 'Fix habit validation errors in Logic before opening the UI editor.',
+        issues: errors,
+      };
+    }
+
+    const incomplete = habitIssues.filter(
+      (i) => i.severity === 'warning' && UI_EDITOR_BLOCKING_CODES.has(i.code),
+    );
+    if (incomplete.length > 0) {
+      return {
+        allowed: false,
+        reason:
+          'Each habit needs a clear name, workflow nodes, outputs, and input parameters before building the UI.',
+        issues: incomplete,
+      };
+    }
+
+    const empty = habits.filter((h) => !h.nodes?.length);
+    if (empty.length > 0) {
+      return {
+        allowed: false,
+        reason: 'Add workflow nodes to every habit in Logic before building the UI.',
+        issues: empty.map((h) => ({
+          source: 'habit' as const,
+          severity: 'error' as const,
+          code: 'missing_nodes',
+          message: `Habit "${h.name || h.id}" has no nodes.`,
+          habitId: h.id,
+          habitName: h.name,
+        })),
+      };
+    }
+
+    return { allowed: true, reason: '', issues: [] };
+  },
+);
+
 export const selectHasValidationWarnings = createSelector(
   [selectValidationWarningCount],
   (count) => count > 0,

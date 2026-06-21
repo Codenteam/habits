@@ -68,6 +68,18 @@
       font-weight: 400;
     }
     .status { font-size: 12px; color: #555; margin-top: 8px; }
+    .dev-fallback {
+      display: none;
+      margin-top: 12px;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-dev {
+      background: #2a2a2a;
+      color: #e5e5e5;
+      border: 1px solid #3a3a3a;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +91,10 @@
     <a class="btn" id="openBtn" href="#">Open Cortex</a>
     <p class="status" id="statusMsg"></p>
     <a class="btn btn-ghost" href="https://habits.codenteam.com" id="storeLink" target="_blank">Get the app</a>
+  </div>
+  <div class="dev-fallback" id="devFallback">
+    <a class="btn btn-dev" id="devOpenBtn" href="#">Open Cortex Dev</a>
+    <p class="status">For local development builds only</p>
   </div>
 
   <script>
@@ -94,6 +110,7 @@
       var isDesktop = !isMobile; // Windows, macOS, Linux
 
       var deepLink = 'habits-cortex://oauth' + params + hash;
+      var devDeepLink = 'habits-cortex-dev://oauth' + params + hash;
 
       function showFallback(msg) {
         document.getElementById('spinner').style.display = 'none';
@@ -137,6 +154,16 @@
           showFallback("Cortex doesn't seem to be installed.");
         }, 2000);
       }
+
+      // Hidden dev shortcut: Ctrl+D reveals the dev build fallback.
+      var devFallback = document.getElementById('devFallback');
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'd' && e.key !== 'D') return;
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        devFallback.style.display = 'flex';
+        document.getElementById('devOpenBtn').href = devDeepLink;
+      });
     })();
   </script>
 </body>

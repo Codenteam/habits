@@ -138,6 +138,7 @@ function fieldMatches(fieldValue: any, condition: any): boolean {
 
 export function matchesFilter(data: Record<string, any>, filterObj: Record<string, any>, customId?: string): boolean {
   for (const [k, v] of Object.entries(filterObj)) {
+    if (v === '' || v === null || v === undefined) continue;
     if (k === '_id') {
       if (customId !== undefined ? customId !== v : data._id !== v) return false;
     } else if (!fieldMatches(data[k], v)) {
