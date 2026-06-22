@@ -178,7 +178,7 @@ import { withBase } from 'vitepress'
 
 const stats = [
   { value: 'AGPL-3.0', label: 'Open source license' },
-  { value: '$500', label: 'Per custom habit' },
+  { value: '$50', label: 'Per node per custom habit' },
   { value: '2', label: 'Global datacenters' },
 ]
 
@@ -206,8 +206,8 @@ const plans = [
     id: 'custom-habit',
     title: 'Custom Habit',
     tagline: 'We build it, you own it',
-    price: '500',
-    unit: '/ habit',
+    price: '50',
+    unit: '/ node',
     priceNote: 'Flat rate · no hourly billing',
     accent: '#6366f1',
     featured: true,
@@ -289,15 +289,15 @@ const regionColumns = [
 
 const steps = [
   { title: 'Describe your workflow', desc: 'Tell us what you want to automate: integrations, triggers, UI, and data flow.' },
-  { title: 'We build your habit', desc: 'Our team delivers a production-ready .habit file at a flat $500 rate.' },
+  { title: 'We build your habit', desc: 'Our team delivers a production-ready .habit file at a flat $50 rate per node.' },
   { title: 'Deploy on Hub or self-host', desc: 'Run on your infrastructure for free, or let us host it in US or EU datacenters.' },
   { title: 'Iterate & scale', desc: 'Add more habits, connect new services, and grow your automation library.' },
 ]
 
 const faq = [
   {
-    q: 'What counts as a "custom habit"?',
-    a: 'A custom habit is a complete workflow: backend logic, integrations, and optional YAML frontend, built to your specifications. One flat $500 fee covers the full delivery.',
+    q: 'What counts as a "node" in a "custom habit" ?',
+    a: 'A node is each individual component within a custom habit. A custom habit is a complete workflow: backend logic, integrations, and optional YAML frontend, built to your specifications. One flat $50 fee covers each node.',
   },
   {
     q: 'Is the platform itself free?',

@@ -1,0 +1,76 @@
+id: onboarding-status-tracker
+name: Onboarding Status Tracker
+description: Return the latest provider statuses for a customer onboarding application.
+
+input:
+  - id: applicationId
+    type: string
+    required: true
+  - id: status
+    type: string
+    required: true
+  - id: nextStep
+    type: string
+    required: false
+  - id: note
+    type: string
+    required: false
+
+nodes:
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{habits.input.applicationId}}"
+
+  - id: get-complyadvantage-case
+    type: action
+    data:
+      label: Get ComplyAdvantage Case
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: getSearchResult
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        caseId: "{{habits.input.applicationId}}"
+
+  - id: get-mambu-account
+    type: action
+    data:
+      label: Get Mambu Account
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: getAccount
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        applicationId: "{{habits.input.applicationId}}"
+
+edges:
+  - source: get-sumsub-status
+    target: get-complyadvantage-case
+  - source: get-complyadvantage-case
+    target: get-mambu-account
+
+output:
+  applicationId: "{{habits.input.applicationId}}"
+  idVerificationStatus: "{{get-sumsub-status.status}}"
+  sanctionsStatus: "{{get-complyadvantage-case.status}}"
+  accountStatus: "{{get-mambu-account.status}}"

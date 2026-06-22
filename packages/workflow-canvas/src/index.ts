@@ -8,6 +8,7 @@ export { Panel } from 'reactflow';
 
 // Utilities
 export { parseHabitContent, convertToCanvasFormat, applyDagreLayout } from './utils/parser';
+export type { DagreLayoutOptions } from './utils/parser';
 export { exportElement, downloadExport, prepareForExport } from './utils/exporter';
 
 // Node definitions

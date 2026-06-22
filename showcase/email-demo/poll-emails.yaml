@@ -21,8 +21,8 @@ nodes:
         limit: 10
       credentials:
         auth:
-          host: "imap.gmail.com"
-          port: 993
+          host: "{{habits.env.IMAP_HOST}}"
+          port: "{{habits.env.IMAP_PORT}}"
           user: "{{habits.env.EMAIL_USER}}"
           password: "{{habits.env.EMAIL_PASSWORD}}"
 

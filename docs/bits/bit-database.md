@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-database">📥 <span class="download-count">404</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-database">📥 <span class="download-count">421</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">persist</span></span>
 </div>
 
@@ -53,10 +53,22 @@ nodes:
 
 ## Used In Showcases
 
+- [study-flashcards](/showcase/study-flashcards)
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
+- [resume-tailor](/showcase/resume-tailor)
 - [resume-analyzer](/showcase/resume-analyzer)
 - [qr-database](/showcase/qr-database)
+- [product-changelog](/showcase/product-changelog)
+- [pr-review-brief](/showcase/pr-review-brief)
+- [meeting-notes](/showcase/meeting-notes)
+- [idea-validator](/showcase/idea-validator)
+- [habit-reflection](/showcase/habit-reflection)
+- [email-drafts](/showcase/email-drafts)
+- [daily-standup](/showcase/daily-standup)
+- [client-invoice-manager](/showcase/client-invoice-manager)
+- [budget-analyst](/showcase/budget-analyst)
 - [ai-journal](/showcase/ai-journal)
+- [ai-invoice-mailer](/showcase/ai-invoice-mailer)
 - [ai-cookbook](/showcase/ai-cookbook)
 
 <style>

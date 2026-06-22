@@ -1,0 +1,40 @@
+id: welcome-sequence
+name: Welcome Sequence
+description: Read the Mambu account status used to trigger the first customer welcome sequence.
+
+input:
+  - id: firstName
+    type: string
+    required: true
+  - id: email
+    type: string
+    required: true
+  - id: accountId
+    type: string
+    required: false
+
+nodes:
+  - id: get-mambu-account
+    type: action
+    data:
+      label: Get Mambu Account
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: getAccount
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        accountId: "{{habits.input.accountId}}"
+        customerEmail: "{{habits.input.email}}"
+
+edges: []
+
+output:
+  recipient: "{{habits.input.email}}"
+  provider: mambu
+  accountId: "{{get-mambu-account.accountId}}"
+  accountStatus: "{{get-mambu-account.status}}"
+  nextStep: send_welcome_message

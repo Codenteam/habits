@@ -1,0 +1,203 @@
+id: customer-application-onboarding
+name: Customer Application Onboarding
+description: >
+  Accepts a banking customer application, starts Sumsub ID verification, runs
+  ComplyAdvantage sanctions screening, and creates the approved customer and
+  deposit account in Mambu.
+
+input:
+  - id: firstName
+    type: string
+    required: true
+    description: Applicant first name
+  - id: lastName
+    type: string
+    required: true
+    description: Applicant last name
+  - id: email
+    type: string
+    required: true
+    description: Applicant email address
+  - id: phone
+    type: string
+    required: false
+    description: Applicant phone number
+  - id: country
+    type: string
+    required: true
+    description: Country of residence
+  - id: productType
+    type: string
+    required: true
+    description: Account product requested
+  - id: riskTier
+    type: string
+    required: false
+    description: "Demo risk tier: low, medium, or high"
+
+nodes:
+  - id: create-sumsub-applicant
+    type: action
+    data:
+      label: Create Sumsub Applicant
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createApplicant
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        externalUserId: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        email: "{{habits.input.email}}"
+        phone: "{{habits.input.phone || ''}}"
+        country: "{{habits.input.country}}"
+        levelName: banking-kyc
+
+  - id: create-sumsub-access-token
+    type: action
+    data:
+      label: Create Sumsub Access Token
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: createAccessToken
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+        levelName: banking-kyc
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Verification Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{create-sumsub-applicant.applicantId}}"
+
+  - id: screen-customer
+    type: action
+    data:
+      label: Run ComplyAdvantage Screening
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: screenCustomer
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        searchTerm: "{{habits.input.firstName}} {{habits.input.lastName}}"
+        clientRef: "{{habits.input.email}}"
+        country: "{{habits.input.country}}"
+        types: [sanction, pep, warning]
+        fuzziness: 0.7
+
+  - id: normalize-screening
+    type: action
+    data:
+      label: Normalize Screening Decision
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: normalizeScreeningResult
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        screeningResult: "{{screen-customer}}"
+        possibleMatchStatus: manual_review
+        clearStatus: approved
+        confirmedMatchStatus: rejected
+
+  - id: create-mambu-client
+    type: action
+    data:
+      label: Create Mambu Client
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: createClient
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        idempotencyKey: "customer-{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        email: "{{habits.input.email}}"
+        mobilePhone: "{{habits.input.phone || ''}}"
+        country: "{{habits.input.country}}"
+        kycStatus: "{{get-sumsub-status.status}}"
+        screeningStatus: "{{normalize-screening.status}}"
+
+  - id: create-mambu-account
+    type: action
+    data:
+      label: Create Mambu Deposit Account
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: createDepositAccount
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        idempotencyKey: "account-{{habits.input.email}}-{{habits.input.productType}}"
+        clientId: "{{create-mambu-client.clientId}}"
+        productType: "{{habits.input.productType}}"
+        approvalStatus: "{{normalize-screening.status}}"
+        kycStatus: "{{get-sumsub-status.status}}"
+
+edges:
+  - source: create-sumsub-applicant
+    target: create-sumsub-access-token
+  - source: create-sumsub-access-token
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: screen-customer
+  - source: screen-customer
+    target: normalize-screening
+  - source: normalize-screening
+    target: create-mambu-client
+  - source: create-mambu-client
+    target: create-mambu-account
+
+output:
+  applicationId: "{{habits.input.email}}"
+  status: "{{normalize-screening.status}}"
+  nextStep: "{{create-mambu-account.nextStep}}"
+  decisionReason: "{{normalize-screening.decisionReason}}"
+  idVerification:
+    provider: sumsub
+    applicantId: "{{create-sumsub-applicant.applicantId}}"
+    accessToken: "{{create-sumsub-access-token.token}}"
+    status: "{{get-sumsub-status.status}}"
+  sanctionsScreening:
+    provider: complyadvantage
+    caseId: "{{screen-customer.caseId}}"
+    status: "{{normalize-screening.status}}"
+  coreBanking:
+    provider: mambu
+    clientId: "{{create-mambu-client.clientId}}"
+    accountId: "{{create-mambu-account.accountId}}"

@@ -163,7 +163,7 @@ export async function generateText(
     tokenizerPath,
     fullPrompt,
     maxTokens,
-    0.7,  // temperature
+    0.2,  // temperature — lower for factual KYC replies
     undefined, // seed
     'Auto'  // device - Auto will use Metal on macOS, CUDA on Linux/Windows with GPU
   );

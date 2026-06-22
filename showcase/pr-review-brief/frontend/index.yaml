@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: pr-review-brief
+  title: PR Review Brief
+  subtitle: Turn a git diff into a concise review brief
+  icon: "lucide:GitPullRequest"
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: split
+  header: { title: PR Review Brief, subtitle: "Diff in · brief out", icon: "lucide:GitPullRequest" }
+  split: { left: left, right: right, ratio: "420px 1fr" }
+
+state:
+  gitDiff: ""
+  brief: null
+  error: null
+
+actions:
+  generate:
+    method: POST
+    endpoint: /api/pr-review-brief
+    body:
+      git_diff: "{{state.gitDiff}}"
+    responsePath: output.Results
+    onSuccess: { set: { brief: "$response", error: null }, toast: "Brief ready" }
+    onError: { set: { error: "$error.message" } }
+
+views:
+  left:
+    widgets:
+      - kind: card
+        title: Git diff
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: gitDiff, type: textarea, label: Paste diff, rows: 16, required: true, placeholder: "Paste git diff output here..." }
+            submit: { label: Generate brief, action: generate, loadingLabel: "Generating..." }
+  right:
+    widgets:
+      - kind: result-panel
+        source: state.brief
+        showWhen: state.brief
+        title: Review brief
+        sections:
+          - { kind: markdown, source: state.brief, copy: true }
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

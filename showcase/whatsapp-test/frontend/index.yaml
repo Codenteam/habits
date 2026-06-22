@@ -12,19 +12,13 @@ theme:
   mode: dark
 
 state:
-  to: ""
-  templateName: hello_world
-  languageCode: en_US
   result: null
 
 actions:
   send:
     method: POST
     endpoint: /api/send-hello
-    body:
-      to: "{{state.to}}"
-      templateName: "{{state.templateName}}"
-      languageCode: "{{state.languageCode}}"
+    body: {}
     responsePath: output
     onSuccess:
       set: { result: "$response" }
@@ -37,16 +31,13 @@ actions:
 widgets:
   - kind: card
     title: Send Hello
-    subtitle: Leave phone blank to use HABITS_WHATSAPP_PHONE from env
+    subtitle: Sends hello_world template to HABITS_WHATSAPP_PHONE from env
     children:
-      - kind: form
-        bindTo: state
-        fields:
-          - name: to
-            type: text
-            label: Recipient phone
-            placeholder: "+14155238886"
-        submit: { label: Send hello, action: send, loadingLabel: "Sending..." }
+      - kind: button
+        label: Send hello
+        action: send
+        loadingLabel: "Sending..."
+        fullWidth: true
   - kind: result-panel
     source: state.result
     showWhen: state.result

@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: minimal-blog
+  title: My Blog
+  subtitle: Welcome to my blog
+  icon: "lucide:PenLine"
+
+theme:
+  preset: cyberpunk
+  mode: dark
+
+layout:
+  type: single
+  header: { title: My Blog, subtitle: "Welcome to my blog", icon: "lucide:PenLine" }
+
+state:
+  posts: []
+  error: null
+
+actions:
+  loadPosts:
+    method: POST
+    endpoint: /api/get-posts
+    body: {}
+    responsePath: output.posts
+    onSuccess: { set: { posts: "$response", error: null } }
+    onError: { set: { error: "$error.message" } }
+
+onMount:
+  - loadPosts
+
+widgets:
+  - kind: card
+    title: Latest posts
+    children:
+      - kind: list
+        source: state.posts
+        empty: "No posts yet."
+        itemKey: _id
+        template:
+          - { kind: heading, level: 3, value: "{{item.title}}" }
+          - { kind: text, value: "{{item._createdAt | date}}", muted: true }
+          - { kind: markdown, source: item.content, truncate: 280 }
+      - kind: button
+        label: Refresh posts
+        action: loadPosts
+        variant: secondary
+  - kind: alert
+    level: error
+    showWhen: state.error
+    text: "{{state.error}}"

@@ -1,50 +1,136 @@
-import { memo } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { memo, useEffect, useState, type ComponentType } from 'react';
+import {
+  Bot,
+  Brain,
+  Cookie,
+  Database,
+  FolderOpen,
+  GitBranch,
+  Github,
+  Globe,
+  Hand,
+  Inbox,
+  Key,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Package,
+  Play,
+  Repeat,
+  Send,
+  Server,
+  Shield,
+  Sparkles,
+  Terminal,
+  Type,
+  Users,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
 
 interface ModuleIconProps {
   logoUrl?: string;
   className?: string;
-  fallbackIcon?: keyof typeof LucideIcons;
+  fallbackIcon?: string;
+}
+
+/** Icons referenced by bits-catalog and common module metadata — kept as static imports. */
+const STATIC_ICONS: Record<string, LucideIcon> = {
+  Bot,
+  Brain,
+  Cookie,
+  Database,
+  FolderOpen,
+  GitBranch,
+  Github,
+  Globe,
+  Hand,
+  Inbox,
+  Key,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Package,
+  Play,
+  Repeat,
+  Send,
+  Server,
+  Shield,
+  Sparkles,
+  Terminal,
+  Type,
+  Users,
+  Zap,
+};
+
+function resolveIconName(logoUrl: string): string {
+  return logoUrl.startsWith('lucide:') ? logoUrl.slice('lucide:'.length) : logoUrl;
+}
+
+function DynamicLucideIcon({
+  name,
+  className,
+  fallbackName = 'Package',
+}: {
+  name: string;
+  className?: string;
+  fallbackName?: string;
+}) {
+  const [Icon, setIcon] = useState<LucideIcon | null>(STATIC_ICONS[name] ?? null);
+
+  useEffect(() => {
+    if (STATIC_ICONS[name]) {
+      setIcon(STATIC_ICONS[name]);
+      return;
+    }
+
+    const importer = dynamicIconImports[name as keyof typeof dynamicIconImports];
+    if (!importer) {
+      setIcon(STATIC_ICONS[fallbackName] ?? Package);
+      return;
+    }
+
+    let cancelled = false;
+    importer()
+      .then((mod) => {
+        if (!cancelled) setIcon(() => mod.default);
+      })
+      .catch(() => {
+        if (!cancelled) setIcon(STATIC_ICONS[fallbackName] ?? Package);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [name, fallbackName]);
+
+  const Resolved = Icon ?? STATIC_ICONS[fallbackName] ?? Package;
+  return <Resolved className={className} />;
 }
 
 /**
  * Renders a module icon from either:
  * - A Lucide icon reference: "lucide:IconName" (e.g., "lucide:Database")
  * - An image URL: "https://..." or any other string
- * 
- * @example
- * <ModuleIcon logoUrl="lucide:Database" className="w-4 h-4" />
- * <ModuleIcon logoUrl="https://example.com/icon.png" className="w-4 h-4" />
  */
 function ModuleIcon({ logoUrl, className = 'w-4 h-4', fallbackIcon = 'Package' }: ModuleIconProps) {
   if (!logoUrl) {
-    const FallbackIcon = LucideIcons[fallbackIcon] as React.ComponentType<{ className?: string }>;
-    return FallbackIcon ? <FallbackIcon className={className} /> : null;
+    const Fallback = STATIC_ICONS[fallbackIcon] ?? Package;
+    return <Fallback className={className} />;
   }
 
-  // Handle Lucide icon format: "lucide:IconName"
   if (logoUrl.startsWith('lucide:')) {
-    const iconName = logoUrl.replace('lucide:', '') as keyof typeof LucideIcons;
-    const IconComponent = LucideIcons[iconName] as React.ComponentType<{ className?: string }>;
-    
-    if (IconComponent) {
-      return <IconComponent className={className} />;
-    }
-    
-    // Fallback if icon not found
-    console.warn(`Lucide icon "${iconName}" not found, using fallback`);
-    const FallbackIcon = LucideIcons[fallbackIcon] as React.ComponentType<{ className?: string }>;
-    return FallbackIcon ? <FallbackIcon className={className} /> : null;
+    const iconName = resolveIconName(logoUrl);
+    return <DynamicLucideIcon name={iconName} className={className} fallbackName={fallbackIcon} />;
   }
 
-  // Handle image URLs
   return (
-    <img 
-      src={logoUrl} 
-      alt="" 
+    <img
+      src={logoUrl}
+      alt=""
       className={className}
       onError={(e) => {
-        // Hide broken images
         (e.target as HTMLImageElement).style.display = 'none';
       }}
     />
@@ -53,21 +139,12 @@ function ModuleIcon({ logoUrl, className = 'w-4 h-4', fallbackIcon = 'Package' }
 
 export default memo(ModuleIcon);
 
-/**
- * Get a Lucide icon component by name
- * Useful when you need the component directly instead of rendering
- */
-export function getLucideIcon(iconName: string): React.ComponentType<{ className?: string }> | null {
-  if (iconName.startsWith('lucide:')) {
-    iconName = iconName.replace('lucide:', '');
-  }
-  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName];
-  return IconComponent || null;
+/** Resolve a Lucide icon component by name (loads on demand for unknown icons). */
+export function getLucideIcon(iconName: string): ComponentType<{ className?: string }> | null {
+  const name = resolveIconName(iconName);
+  return STATIC_ICONS[name] ?? null;
 }
 
-/**
- * Check if a logoUrl is a Lucide icon reference
- */
 export function isLucideIcon(logoUrl?: string): boolean {
   return !!logoUrl?.startsWith('lucide:');
 }

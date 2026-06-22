@@ -11,6 +11,7 @@ export interface UiActionBinding {
   actionId: string;
   workflowId: string | null;
   bodyKeys: string[];
+  queryKeys: string[];
   bodyStateRefs: Record<string, string[]>;
   responsePath?: string;
   onSuccessStateKeys: string[];
@@ -124,10 +125,14 @@ export function analyzeUiSpec(spec: UiSpec): UiSpecAnalysis {
   const actions: UiActionBinding[] = [];
   for (const [actionId, action] of Object.entries(actionMap)) {
     const onSuccess = collectOnSuccessStateKeys(action);
+    const isClientOnly = !action.endpoint && !action.method;
     actions.push({
       actionId,
-      workflowId: parseWorkflowIdFromEndpoint(action.endpoint, defaultWorkflowId),
+      workflowId: isClientOnly
+        ? null
+        : parseWorkflowIdFromEndpoint(action.endpoint, defaultWorkflowId),
       bodyKeys: extractBodyKeys(action.body),
+      queryKeys: extractBodyKeys(action.query),
       bodyStateRefs: analyzeActionBody(action.body),
       responsePath: action.responsePath ?? 'output',
       onSuccessStateKeys: onSuccess.keys,

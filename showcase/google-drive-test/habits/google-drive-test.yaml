@@ -1,0 +1,47 @@
+id: google-drive-test
+name: Google Drive Test
+description: Upload a file to Google Drive, then list by ID to confirm it exists
+
+nodes:
+  - id: upload
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: uploadFile
+      credentials:
+        google:
+          clientId: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: "{{habits.input.fileName}}"
+        content: "{{habits.input.content}}"
+        mimeType: "{{habits.input.mimeType}}"
+        folderId: "{{habits.input.folderId}}"
+
+  - id: verify
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: listFiles
+      credentials:
+        google:
+          clientId: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        query: "id = '{{upload.file.id}}'"
+        limit: 1
+
+edges:
+  - source: upload
+    target: verify
+
+output:
+  file: "{{upload.file}}"
+  uploadSuccess: "{{upload.success}}"
+  exists: "{{verify.totalCount > 0}}"
+  verifiedCount: "{{verify.totalCount}}"
+  verifiedFiles: "{{verify.files}}"

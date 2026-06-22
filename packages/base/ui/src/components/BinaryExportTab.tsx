@@ -310,6 +310,7 @@ export default function BinaryExportTab({ habits, serverConfig, envContent, fron
         stackName,
         envContent,
         frontendHtml,
+        frontendYaml: exportBundle.frontendYaml,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

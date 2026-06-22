@@ -53,9 +53,9 @@ ${opts.builderPreview ? BUILDER_PREVIEW_CSS : ''}
 </head>
 <body>
 ${body}
-<script type="application/json" id="__ha_cfg">${safeJson(cfg)}</script>
-<script>${runtimeJs}</script>
-${opts.builderPreview ? `<script>${BUILDER_PREVIEW_JS}</script>` : ''}
+<script type="application/json" id="__ha_cfg">${safeJson(cfg)}<\/script>
+<script>${runtimeJs}<\/script>
+${opts.builderPreview ? `<script>${BUILDER_PREVIEW_JS}<\/script>` : ''}
 </body>
 </html>`;
   return { html };

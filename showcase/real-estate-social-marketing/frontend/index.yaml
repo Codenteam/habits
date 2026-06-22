@@ -1,0 +1,218 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: real-estate-social-marketing
+  title: Real Estate Social Marketing
+  subtitle: Extract listings, generate posts, and publish to social
+  icon: "lucide:Share2"
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: Real Estate Social Marketing
+    subtitle: "Add property · drafts · scheduled queue"
+    icon: "lucide:Share2"
+  nav:
+    - { id: add, label: Add Property, icon: "lucide:Link" }
+    - { id: properties, label: Properties, icon: "lucide:Building" }
+    - { id: process, label: Process, icon: "lucide:Settings" }
+    - { id: scheduled, label: Scheduled, icon: "lucide:Clock" }
+
+state:
+  propertyUrl: ""
+  addResult: null
+  properties: []
+  scheduled: []
+  selectedPropertyId: ""
+  selectedProperty: null
+  scheduleAt: ""
+  scheduleTimezone: UTC
+  error: null
+
+actions:
+  addProperty:
+    method: POST
+    endpoint: /api/add-property
+    body:
+      propertyUrl: "{{state.propertyUrl}}"
+      createdAt: "{{new Date().toISOString()}}"
+    responsePath: output
+    onSuccess:
+      set: { addResult: "$response", propertyUrl: "", error: null }
+      dispatch: [listProperties, loadScheduled]
+      toast: "Property added"
+    onError: { set: { error: "$error.message" } }
+
+  listProperties:
+    method: POST
+    endpoint: /api/list-properties
+    body: {}
+    responsePath: output.properties
+    onSuccess: { set: { properties: "$response" } }
+
+  loadScheduled:
+    method: POST
+    endpoint: /api/get-scheduled-properties
+    body: {}
+    responsePath: output.properties
+    onSuccess: { set: { scheduled: "$response" } }
+
+  loadProperty:
+    method: POST
+    endpoint: /api/get-property
+    body:
+      propertyId: "{{state.selectedPropertyId}}"
+    responsePath: output.property
+    onSuccess: { set: { selectedProperty: "$response" } }
+
+  deleteProperty:
+    method: POST
+    endpoint: /api/delete-property
+    body:
+      propertyId: "{{state.selectedPropertyId}}"
+    confirm: "Delete this property?"
+    onSuccess:
+      set: { selectedPropertyId: "", selectedProperty: null, __view: properties }
+      dispatch: [listProperties, loadScheduled]
+      toast: "Property deleted"
+
+  publishNow:
+    method: POST
+    endpoint: /api/publish-property-now
+    body:
+      propertyId: "{{state.selectedPropertyId}}"
+    confirm: "Publish to Twitter/X and LinkedIn now?"
+    onSuccess:
+      set: { selectedPropertyId: "", selectedProperty: null, __view: properties }
+      dispatch: [listProperties, loadScheduled]
+      toast: "Published"
+
+  setSchedule:
+    method: POST
+    endpoint: /api/set-property-schedule
+    body:
+      propertyId: "{{state.selectedPropertyId}}"
+      scheduledAt: "{{new Date(state.scheduleAt).toISOString()}}"
+      scheduleTimezone: "{{state.scheduleTimezone}}"
+    onSuccess:
+      set: { selectedPropertyId: "", selectedProperty: null, __view: scheduled }
+      dispatch: [listProperties, loadScheduled]
+      toast: "Schedule saved"
+
+  returnToDraft:
+    method: POST
+    endpoint: /api/return-property-to-draft
+    body:
+      propertyId: "{{state.selectedPropertyId}}"
+    onSuccess:
+      dispatch: [listProperties, loadScheduled]
+      toast: "Returned to draft"
+
+onMount:
+  - listProperties
+  - loadScheduled
+
+defaultView: add
+
+views:
+  add:
+    widgets:
+      - kind: card
+        title: Add listing URL
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: propertyUrl, type: text, label: Property URL, required: true, placeholder: "https://..." }
+            submit: { label: Extract and generate posts, action: addProperty, loadingLabel: "Extracting..." }
+      - kind: result-panel
+        source: state.addResult
+        showWhen: state.addResult
+        title: Generated property
+        sections:
+          - { kind: kv-grid, source: state.addResult }
+          - kind: section
+            title: Twitter / X
+            children:
+              - { kind: markdown, source: state.addResult.twitter, copy: true }
+          - kind: section
+            title: LinkedIn
+            children:
+              - { kind: markdown, source: state.addResult.linkedin, copy: true }
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+
+  properties:
+    onEnter: listProperties
+    widgets:
+      - kind: card
+        title: Draft properties
+        children:
+          - kind: button
+            label: Refresh
+            action: listProperties
+            variant: secondary
+          - kind: list
+            source: state.properties
+            empty: "No draft properties yet. Add a listing URL to get started."
+            itemKey: _id
+            onItemClick:
+              set: { selectedPropertyId: "$item._id", selectedProperty: null, __view: process }
+              dispatch: loadProperty
+            template:
+              - { kind: text, value: "{{item.title || 'Untitled'}}", strong: true }
+              - { kind: badge, value: "{{item.status || 'draft'}}" }
+              - { kind: text, value: "{{item.price}} · {{item.listingType}}", muted: true }
+
+  process:
+    widgets:
+      - kind: card
+        title: Property details
+        showWhen: state.selectedProperty
+        children:
+          - { kind: kv-grid, source: state.selectedProperty }
+          - kind: section
+            title: Twitter / X post
+            children:
+              - { kind: markdown, source: state.selectedProperty.twitter, copy: true }
+          - kind: section
+            title: LinkedIn post
+            children:
+              - { kind: markdown, source: state.selectedProperty.linkedin, copy: true }
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: scheduleAt, type: datetime-local, label: Schedule for }
+              - { name: scheduleTimezone, type: select, label: Timezone, default: UTC, options: [UTC, America/New_York, America/Los_Angeles, Europe/London] }
+          - kind: button-row
+            buttons:
+              - { label: Publish now, action: publishNow, variant: primary }
+              - { label: Set schedule, action: setSchedule, variant: secondary }
+              - { label: Return to draft, action: returnToDraft, variant: secondary }
+              - { label: Delete, action: deleteProperty, tone: danger }
+      - kind: status-banner
+        showWhen: "!state.selectedProperty"
+        source: "Select a property from the Properties tab to process it."
+
+  scheduled:
+    onEnter: loadScheduled
+    widgets:
+      - kind: card
+        title: Scheduled queue
+        children:
+          - kind: button
+            label: Refresh
+            action: loadScheduled
+            variant: secondary
+          - kind: list
+            source: state.scheduled
+            empty: "No scheduled properties."
+            itemKey: _id
+            template:
+              - { kind: text, value: "{{item.title || 'Untitled'}}", strong: true }
+              - { kind: text, value: "Scheduled: {{item.scheduledAt | date}}", muted: true }

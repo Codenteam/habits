@@ -34,7 +34,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
-      min-height: 100vh;
+      height: 100%;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -48,6 +48,7 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 0;
       margin: 0 auto;
     }
 
@@ -138,6 +139,12 @@
       overflow: hidden;
       min-height: 0;
     }
+
+    #habits-list-view > .header,
+    #habits-list-view > .quick-actions,
+    #habits-list-view > .section {
+      flex-shrink: 0;
+    }
     
     /* Quick Actions */
     .quick-actions {
@@ -180,6 +187,12 @@
     
     .action-btn.primary:hover {
       background: var(--accent-hover);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
     }
     
     .action-icon {
@@ -239,7 +252,10 @@
     /* Habits List */
     .habits-list {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding-bottom: 20px;
     }
     
@@ -859,15 +875,68 @@
     .secret-item-status.missing {
       color: var(--warning);
     }
+
+    .oauth-row .oauth-row-name {
+      font-family: inherit;
+    }
+
+    .oauth-row-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: -4px;
+    }
+
+    .oauth-connect-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .oauth-connect-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .oauth-connect-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .oauth-connect-btn--connected {
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+
+    .oauth-connect-btn--connected:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .oauth-section-label {
+      margin-top: 0;
+    }
     
     .secret-item-input-row {
       display: flex;
       gap: 8px;
     }
     
-    .secret-input-inline {
+    .secret-input-wrapper {
+      position: relative;
       flex: 1;
-      padding: 10px 12px;
+      min-width: 0;
+    }
+    
+    .secret-input-inline {
+      width: 100%;
+      padding: 10px 40px 10px 12px;
       background: var(--bg-primary);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -875,6 +944,7 @@
       font-size: 13px;
       outline: none;
       transition: border-color 0.2s ease;
+      box-sizing: border-box;
     }
     
     .secret-input-inline:focus {
@@ -883,6 +953,35 @@
     
     .secret-input-inline::placeholder {
       color: var(--text-muted);
+    }
+    
+    .secret-toggle-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      padding: 0;
+    }
+    
+    .secret-toggle-btn svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    
+    .secret-toggle-btn:hover svg {
+      color: var(--text-primary);
     }
     
     .secret-save-btn, .secret-edit-btn, .secret-cancel-btn {
@@ -924,7 +1023,7 @@
       color: var(--accent);
     }
     
-    .secret-delete-btn, .secret-cancel-btn {
+    .secret-cancel-btn {
       width: 28px;
       height: 28px;
       background: transparent;
@@ -938,19 +1037,19 @@
       flex-shrink: 0;
     }
     
-    .secret-delete-btn:hover, .secret-cancel-btn:hover {
+    .secret-cancel-btn:hover {
       background: rgba(239, 68, 68, 0.15);
       border-color: rgba(239, 68, 68, 0.3);
     }
     
-    .secret-delete-btn svg, .secret-cancel-btn svg {
+    .secret-cancel-btn svg {
       width: 14px;
       height: 14px;
       color: var(--text-muted);
       transition: color 0.2s ease;
     }
     
-    .secret-delete-btn:hover svg, .secret-cancel-btn:hover svg {
+    .secret-cancel-btn:hover svg {
       color: var(--error);
     }
     
@@ -1038,6 +1137,52 @@
     .secret-input-inline:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    /* Habit import blocking overlay */
+    .habit-import-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: all;
+      cursor: wait;
+    }
+
+    .habit-import-overlay-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 32px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      max-width: 280px;
+      text-align: center;
+    }
+
+    .habit-import-spinner {
+      width: 32px;
+      height: 32px;
+    }
+
+    #habit-import-message {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    body.habit-import-blocked .habit-card,
+    body.habit-import-blocked .picker-item,
+    body.habit-import-blocked .showcase-item {
+      pointer-events: none;
     }
     
     /* Utilities */
@@ -1277,7 +1422,7 @@
         </div>
         <div class="secrets-content">
           <p class="secrets-description">
-            Required secrets are automatically detected from the habit's workflows. Fill in the values below to store them securely on your device.
+            Required secrets and OAuth connections are detected from the habit's workflows. Store env values securely and connect OAuth providers before running.
           </p>
           <div id="secrets-list"></div>
           <div id="secrets-empty" class="secrets-empty hidden">
@@ -1290,6 +1435,17 @@
 
   <script src="schema-form.js"></script>
   <script src="habit-mirror.js"></script>
+
+  <!-- Blocks all interaction while a habit is being added -->
+  <div id="habit-import-overlay" class="habit-import-overlay hidden" aria-live="polite" aria-busy="false">
+    <div class="habit-import-overlay-content">
+      <svg class="habit-import-spinner spinner" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.4" stroke-dashoffset="10"/>
+      </svg>
+      <p id="habit-import-message">Adding habit…</p>
+    </div>
+  </div>
+
   <script type="module" src="runner.js"></script>
 </body>
 </html>

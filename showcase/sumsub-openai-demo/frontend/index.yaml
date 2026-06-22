@@ -1,0 +1,588 @@
+version: 1
+meta:
+  id: sumsub-openai-demo
+  title: Sumsub KYC Demo
+  subtitle: Start verification · upload documents · local AI · department email
+  icon: "lucide:ShieldCheck"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+  customCss: |
+    .step-hint {
+      font-size: 13px;
+      color: var(--ha-text-muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .applicant-pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--ha-primary) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--ha-primary) 28%, transparent);
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .ha-table__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .case-chat-layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: 16px;
+      align-items: stretch;
+      min-height: 420px;
+    }
+    @media (max-width: 768px) {
+      .case-chat-layout { grid-template-columns: 1fr; }
+    }
+    .case-chat-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .case-chat-main {
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+    }
+    .case-chat-main .ha-chat {
+      flex: 1;
+      min-height: 320px;
+    }
+    .case-id-preview {
+      display: block;
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid var(--ha-border);
+      background: #fff;
+    }
+
+layout:
+  type: tabs
+  header:
+    title: Sumsub + Local AI KYC
+    subtitle: "Person ID · Sumsub KYC · Qwen3.5 summaries · department email"
+    icon: "lucide:ShieldCheck"
+  nav:
+    - { id: start, label: "Start", icon: "lucide:UserPlus" }
+    - { id: people, label: "People", icon: "lucide:Users" }
+    - { id: case-chat, label: "Case chat", icon: "lucide:MessagesSquare" }
+    - { id: results, label: "Results", icon: "lucide:Sparkles" }
+
+state:
+  personId: EMP-1001
+  firstName: Jane
+  lastName: Doe
+  email: jane.doe@example.com
+  country: GBR
+  levelName: id-and-liveness
+  applicantId: ""
+  idDocType: ID_CARD
+  idCardImage: ""
+  selfieImage: ""
+  kycResult: null
+  statusResult: null
+  customerResult: null
+  allPeople: []
+  fetchResult: null
+  sendResult: null
+  chatCasePersonId: ""
+  chatCaseApplicantId: ""
+  chatCaseCustomer: null
+  chatCaseIdImage: ""
+  chatCaseIdMime: "image/jpeg"
+  caseChatMessages: []
+  chatMessage: ""
+  error: null
+
+actions:
+  startKyc:
+    method: POST
+    endpoint: /api/start-kyc
+    body:
+      personId: "{{state.personId}}"
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      country: "{{state.country}}"
+      levelName: "{{state.levelName}}"
+      idDocType: "{{state.idDocType}}"
+      idCardImage: "{{state.idCardImage}}"
+      idCardMimeType: "{{state.idCardImage__type}}"
+      idCardFileName: "{{state.idCardImage__name}}"
+      selfieImage: "{{state.selfieImage}}"
+      selfieMimeType: "{{state.selfieImage__type}}"
+      selfieFileName: "{{state.selfieImage__name}}"
+    responsePath: output
+    onSuccess:
+      set:
+        kycResult: "$response"
+        applicantId: "$response.applicantId"
+        chatCasePersonId: "$response.personId"
+        chatCaseApplicantId: "$response.applicantId"
+        chatCaseIdImage: "{{state.idCardImage}}"
+        chatCaseIdMime: "{{state.idCardImage__type || 'image/jpeg'}}"
+        error: null
+      dispatch: listPeople
+      toast: "KYC submitted — applicant created and documents uploaded"
+    onError:
+      set: { error: "$error.message" }
+
+  refreshStatus:
+    method: POST
+    endpoint: /api/refresh-kyc-status
+    body:
+      applicantId: "{{state.applicantId}}"
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      email: "{{state.email}}"
+      country: "{{state.country}}"
+      levelName: "{{state.levelName}}"
+    responsePath: output
+    onSuccess:
+      set:
+        statusResult: "$response"
+        customerResult: "$response.customer"
+        error: null
+      dispatch: listPeople
+      toast: "Status refreshed"
+    onError:
+      set: { error: "$error.message" }
+
+  loadCustomer:
+    method: POST
+    endpoint: /api/get-kyc-customer
+    body:
+      personId: "{{state.personId}}"
+      applicantId: "{{state.applicantId}}"
+      email: "{{state.email}}"
+    responsePath: output
+    onSuccess:
+      set:
+        customerResult: "$response.customer"
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+  listPeople:
+    method: POST
+    endpoint: /api/list-people
+    body: {}
+    responsePath: output.people
+    onSuccess:
+      set: { allPeople: "$response" }
+
+  fetchSumsubResults:
+    method: POST
+    endpoint: /api/fetch-sumsub-results
+    body:
+      personId: "{{params.personId}}"
+      applicantId: "{{params.applicantId}}"
+    responsePath: output
+    onSuccess:
+      set:
+        fetchResult: "$response"
+        error: null
+      dispatch: listPeople
+      toast: "Fetched latest Sumsub results"
+    onError:
+      set: { error: "$error.message" }
+
+  sendResultsToDepartment:
+    method: POST
+    endpoint: /api/send-results-to-department
+    body:
+      personId: "{{params.personId}}"
+      applicantId: "{{params.applicantId}}"
+    responsePath: output
+    onSuccess:
+      set:
+        sendResult: "$response"
+        error: null
+      dispatch: listPeople
+      toast: "Department email sent"
+    onError:
+      set: { error: "$error.message" }
+
+  openCaseChat:
+    method: POST
+    endpoint: /api/get-kyc-customer
+    body:
+      personId: "{{params.personId}}"
+      applicantId: "{{params.applicantId}}"
+    responsePath: output.customer
+    onSuccess:
+      set:
+        chatCaseCustomer: "$response"
+        chatCasePersonId: "$response.personId"
+        chatCaseApplicantId: "$response.applicantId"
+        chatCaseIdImage: "$response.idCardImageBase64"
+        chatCaseIdMime: "$response.idCardMimeType"
+        caseChatMessages: []
+        chatMessage: ""
+        error: null
+      goto: case-chat
+    onError:
+      set: { error: "$error.message" }
+
+  loadCaseForChat:
+    method: POST
+    endpoint: /api/get-kyc-customer
+    body:
+      personId: "{{state.chatCasePersonId || state.personId}}"
+      applicantId: "{{state.chatCaseApplicantId || state.applicantId}}"
+    responsePath: output.customer
+    onSuccess:
+      set:
+        chatCaseCustomer: "$response"
+        chatCasePersonId: "$response.personId"
+        chatCaseApplicantId: "$response.applicantId"
+        chatCaseIdImage: "$response.idCardImageBase64"
+        chatCaseIdMime: "$response.idCardMimeType"
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+  sendCaseChat:
+    method: POST
+    endpoint: /api/chat-case
+    body:
+      personId: "{{state.chatCasePersonId || state.personId}}"
+      applicantId: "{{state.chatCaseApplicantId || state.applicantId}}"
+      idCardImage: "{{state.chatCaseIdImage || state.idCardImage}}"
+      idCardMimeType: "{{state.chatCaseIdMime || state.idCardImage__type || 'image/jpeg'}}"
+      history: "{{state.caseChatMessages}}"
+      message: "{{state.chatMessage}}"
+    responsePath: output.reply
+    onSuccess:
+      append:
+        caseChatMessages:
+          role: assistant
+          content: "$response"
+      set:
+        chatMessage: ""
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+  useCurrentCaseForChat:
+    method: POST
+    endpoint: /api/get-kyc-customer
+    body:
+      personId: "{{state.personId}}"
+      applicantId: "{{state.applicantId}}"
+    responsePath: output.customer
+    onSuccess:
+      set:
+        chatCaseCustomer: "$response"
+        chatCasePersonId: "$response.personId"
+        chatCaseApplicantId: "$response.applicantId"
+        chatCaseIdImage: "$response.idCardImageBase64"
+        chatCaseIdMime: "$response.idCardMimeType"
+        caseChatMessages: []
+        chatMessage: ""
+        error: null
+      goto: case-chat
+    onError:
+      set: { error: "$error.message" }
+
+defaultView: start
+
+onMount:
+  - listPeople
+
+views:
+  start:
+    widgets:
+      - kind: card
+        title: Start KYC verification
+        subtitle: Create Sumsub applicant and upload ID card + selfie in one step
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - { name: personId, type: text, label: Person ID, placeholder: "EMP-1001, CUST-42, any unique ref", required: true }
+              - { name: firstName, type: text, label: First name, required: true }
+              - { name: lastName, type: text, label: Last name, required: true }
+              - { name: email, type: email, label: Email, required: true }
+              - { name: country, type: text, label: Country (ISO alpha-3), placeholder: GBR, required: true }
+              - { name: levelName, type: text, label: Sumsub level name, required: true }
+              - name: idDocType
+                type: select
+                label: ID document type
+                options:
+                  - { label: ID card, value: ID_CARD }
+                  - { label: Passport, value: PASSPORT }
+                  - { label: Residence permit, value: RESIDENCE_PERMIT }
+                  - { label: Driving licence, value: DRIVERS }
+              - name: idCardImage
+                type: file-upload
+                label: ID card (front)
+                accept: "image/*"
+                asBase64: true
+                required: true
+              - name: selfieImage
+                type: file-upload
+                label: Selfie
+                accept: "image/*"
+                asBase64: true
+                required: true
+            submit:
+              label: Submit KYC
+              action: startKyc
+              loadingLabel: Creating applicant & uploading documents...
+              disabledWhen: "!state.personId || !state.firstName || !state.lastName || !state.email || !state.idCardImage || !state.selfieImage"
+          - kind: alert
+            level: info
+            text: "Creates a Sumsub applicant, uploads documents, requests review, and saves everything to SQLite with your Person ID."
+      - kind: result-panel
+        source: state.kycResult
+        title: KYC submitted
+        showWhen: state.kycResult
+        sections:
+          - kind: kv-grid
+            source: state.kycResult
+            fields:
+              - { key: personId, label: Person ID }
+              - { key: applicantId, label: Sumsub applicant ID }
+              - { key: kycStatus, label: Status }
+              - { key: reviewAnswer, label: Review answer }
+              - { key: message, label: Summary }
+          - kind: json-dump
+            source: state.kycResult
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger
+
+  people:
+    onEnter: listPeople
+    widgets:
+      - kind: card
+        title: All people
+        subtitle: Fetch latest Sumsub status or email the department via local AI (Qwen3.5)
+        children:
+          - kind: button
+            label: Refresh table
+            action: listPeople
+            tone: secondary
+          - kind: data-table
+            source: state.allPeople
+            empty: "No people yet — create someone on Start."
+            columns:
+              - { key: personId, label: Person ID }
+              - { key: firstName, label: First name }
+              - { key: lastName, label: Last name }
+              - { key: email, label: Email }
+              - { key: applicantId, label: Sumsub ID }
+              - { key: reviewStatus, label: Status }
+              - { key: reviewAnswer, label: Answer }
+            rowActions:
+              - { label: Fetch Sumsub, action: fetchSumsubResults, tone: secondary, params: { personId: "{{item.personId}}", applicantId: "{{item.applicantId}}" } }
+              - { label: Send to dept, action: sendResultsToDepartment, tone: primary, params: { personId: "{{item.personId}}", applicantId: "{{item.applicantId}}" } }
+              - { label: Chat, action: openCaseChat, tone: secondary, params: { personId: "{{item.personId}}", applicantId: "{{item.applicantId}}" } }
+      - kind: result-panel
+        source: state.fetchResult
+        title: Fetch result
+        showWhen: state.fetchResult
+        sections:
+          - kind: kv-grid
+            source: state.fetchResult
+            fields:
+              - { key: personId, label: Person ID }
+              - { key: kycStatus, label: Status }
+              - { key: reviewAnswer, label: Review answer }
+              - { key: allowNextSteps, label: Allow next steps }
+              - { key: blockNextSteps, label: Block next steps }
+          - kind: json-dump
+            source: state.fetchResult.sumsubPayload
+            copy: true
+      - kind: result-panel
+        source: state.sendResult
+        title: Department email
+        showWhen: state.sendResult
+        sections:
+          - kind: kv-grid
+            source: state.sendResult
+            fields:
+              - { key: personId, label: Person ID }
+              - { key: to, label: Sent to }
+              - { key: emailSent, label: Email sent }
+              - { key: kycStatus, label: KYC status }
+              - { key: model, label: Local AI model }
+          - kind: markdown
+            source: state.sendResult.emailDraft
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger
+
+  case-chat:
+    widgets:
+      - kind: card
+        title: Chat about a KYC case
+        subtitle: Local AI (Qwen3.5) — every message includes Person ID, Sumsub applicant ID, and the uploaded ID image context
+        children:
+          - kind: alert
+            level: warning
+            showWhen: "!state.chatCasePersonId && !state.personId"
+            text: "Select a person from the People table (Chat action) or complete Start (create applicant + upload documents)."
+          - kind: row
+            showWhen: state.allPeople.length
+            children:
+              - kind: form
+                bindTo: state
+                fields:
+                  - name: chatCasePersonId
+                    type: select
+                    label: Person ID
+                    optionsFrom: state.allPeople
+                    optionLabel: personId
+                    optionValue: personId
+              - kind: button
+                label: Load case
+                action: loadCaseForChat
+                tone: secondary
+                disabledWhen: "!state.chatCasePersonId"
+          - kind: button
+            label: Use current session (Start tab)
+            action: useCurrentCaseForChat
+            tone: secondary
+            disabledWhen: "!state.personId"
+      - kind: card
+        showWhen: state.chatCasePersonId || state.personId
+        className: case-chat-layout
+        children:
+          - kind: card
+            title: Case file
+            className: case-chat-sidebar
+            children:
+              - kind: kv-grid
+                source: state.chatCaseCustomer
+                fields:
+                  - { key: personId, label: Person ID }
+                  - { key: applicantId, label: Sumsub applicant ID }
+                  - { key: firstName, label: First name }
+                  - { key: lastName, label: Last name }
+                  - { key: reviewStatus, label: Status }
+                  - { key: reviewAnswer, label: Answer }
+              - kind: section
+                title: ID document
+                children:
+                  - kind: image
+                    source: "{{state.chatCaseIdImage || state.idCardImage}}"
+                    mimeSource: "{{state.chatCaseIdMime || state.idCardImage__type || 'image/jpeg'}}"
+                    alt: Uploaded ID document
+                    className: case-id-preview
+                  - kind: alert
+                    level: info
+                    showWhen: "!state.chatCaseIdImage && !state.idCardImage"
+                    text: "No ID image in database yet — upload documents on Start."
+              - kind: button
+                label: Refresh case from database
+                action: loadCaseForChat
+                tone: secondary
+          - kind: card
+            title: Conversation
+            className: case-chat-main
+            children:
+              - kind: empty-state
+                icon: "lucide:MessagesSquare"
+                title: Ask about this case
+                subtitle: "Example: What should we do if Sumsub returned RED? What documents are still missing?"
+                showWhen: "!state.caseChatMessages.length"
+              - kind: chat-panel
+                messages: state.caseChatMessages
+                inputAction: sendCaseChat
+                inputField: state.chatMessage
+                placeholder: "Ask about this KYC case…"
+                autoScroll: true
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger
+
+  results:
+    widgets:
+      - kind: card
+        title: Banking decision (from database)
+        subtitle: Updated when Sumsub review completes via webhook or manual refresh
+        children:
+          - kind: alert
+            level: success
+            showWhen: state.customerResult && state.customerResult.allowNextSteps
+            text: "Allow next steps — KYC approved (GREEN). This customer can proceed with account onboarding."
+          - kind: alert
+            level: danger
+            showWhen: state.customerResult && state.customerResult.blockNextSteps
+            text: "Block next steps — KYC declined (RED). Do not proceed with banking onboarding for this customer."
+          - kind: alert
+            level: warning
+            showWhen: state.customerResult && !state.customerResult.allowNextSteps && !state.customerResult.blockNextSteps
+            text: "Review pending — wait for Sumsub webhook or refresh status after review completes."
+          - kind: button
+            label: Load customer record from database
+            action: loadCustomer
+            tone: secondary
+            disabledWhen: "!state.personId && !state.applicantId"
+          - kind: result-panel
+            source: state.customerResult
+            title: Persisted customer record
+            showWhen: state.customerResult
+            sections:
+              - kind: kv-grid
+                source: state.customerResult
+                fields:
+                  - { key: personId, label: Person ID }
+                  - { key: applicantId, label: Applicant ID }
+                  - { key: reviewStatus, label: Review status }
+                  - { key: reviewAnswer, label: Review answer }
+                  - { key: allowNextSteps, label: Allow next steps }
+                  - { key: blockNextSteps, label: Block next steps }
+      - kind: card
+        title: Status & local AI summary
+        subtitle: Poll Sumsub and explain the case with Qwen3.5 (bit-local-ai)
+        children:
+          - kind: alert
+            level: info
+            showWhen: state.applicantId
+            text: "Person ID: {{state.personId}} · Applicant ID: {{state.applicantId}}"
+          - kind: button
+            label: Chat about this case
+            action: useCurrentCaseForChat
+            tone: secondary
+            disabledWhen: "!state.personId"
+          - kind: button
+            label: Refresh status & generate summary
+            action: refreshStatus
+            tone: primary
+            disabledWhen: "!state.applicantId"
+      - kind: result-panel
+        source: state.statusResult
+        title: KYC summary
+        showWhen: state.statusResult
+        sections:
+          - kind: kv-grid
+            source: state.statusResult
+            fields:
+              - { key: kycStatus, label: Status }
+              - { key: reviewAnswer, label: Review answer }
+              - { key: approved, label: Approved }
+              - { key: allowNextSteps, label: Allow next steps (DB) }
+              - { key: blockNextSteps, label: Block next steps (DB) }
+          - kind: section
+            title: Local AI summary (Qwen3.5)
+            children:
+              - kind: markdown
+                source: state.statusResult.summary
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: danger

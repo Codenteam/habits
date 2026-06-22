@@ -46,6 +46,7 @@ interface ShowcaseMetadata {
   industries?: string[];
   departments?: string[];
   notice?: { title: string; text: string };
+  integrationPartners?: { name: string; subtitle: string; logo: string }[];
 }
 
 interface DownloadFile {
@@ -247,8 +248,23 @@ function scanExamples(): ExampleData[] {
             }
             return true;
           });
+        } else {
+          // Resolve HabitEntry objects to habits/{id}.yaml for workflow visualization
+          habitFiles = (metadata.habits as Record<string, unknown>[])
+            .map(h => {
+              const id = h['id'];
+              return typeof id === 'string' ? `habits/${id}.yaml` : null;
+            })
+            .filter((file): file is string => {
+              if (!file) return false;
+              const fullPath = join(examplePath, file);
+              if (!existsSync(fullPath)) {
+                console.log(`  ⚠️  Habit file not found: ${file}`);
+                return false;
+              }
+              return true;
+            });
         }
-        // If habits are objects (HabitEntry), skip file validation, used only for industry docs
       } else {
         // Auto-detect from habits/ folder
         const habitsDir = join(examplePath, 'habits');
@@ -381,6 +397,30 @@ function buildHabitsGrid(example: ExampleData): string {
   return `\n<div class="habits-grid">\n${cards}\n</div>\n`;
 }
 
+function buildIntegrationLogosSection(example: ExampleData): {
+  script: string;
+  markdown: string;
+} {
+  const partners = example.integrationPartners;
+  if (!partners?.length) {
+    return { script: '', markdown: '' };
+  }
+
+  const integrationsArray = partners.map(p =>
+    `{ name: '${p.name.replace(/'/g, "\\'")}', subtitle: '${p.subtitle.replace(/'/g, "\\'")}', logo: '${p.logo}' }`
+  ).join(',\n    ');
+
+  return {
+    script: `const integrations = [\n    ${integrationsArray}\n]`,
+    markdown: `
+
+## Integrations
+
+<IntegrationLogos :items="integrations" />
+`,
+  };
+}
+
 function generateLandingPage(example: ExampleData): string {
   const imagesList = example.images
     .map(img => `{ img: '/showcase/${example.slug}/${img}', caption: '${example.name}' }`)
@@ -477,10 +517,13 @@ function generateLandingPage(example: ExampleData): string {
 `
     : '';
 
+  const integrationLogos = buildIntegrationLogosSection(example);
+
   // Build script setup content
   const scriptSetupContent = [
     iconImport,
     `const images = [\n    ${imagesList}\n]`,
+    integrationLogos.script,
     viewerHabitFiles.length > 0 ? `const habitTabs = [\n    ${habitTabsArray}\n]` : '',
     example.downloads.length > 0 ? `const downloads = [\n    ${downloadsData}\n]` : '',
   ].filter(Boolean).join('\n\n');
@@ -521,7 +564,7 @@ ${(example.industries?.length || example.departments?.length) ? `<div class="sho
 
 <p class="showcase-description">${example.description}</p>
 
-${example.longDescription || ''}
+${example.longDescription || ''}${integrationLogos.markdown}
 ${buildHabitsGrid(example)}
 ${appDownloadsSection}${habitViewerSection}${requirements}
 ${example.quickDownload !== false ? `## Quick Start

@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-database-sql`</span>
   <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-database-sql">📥 <span class="download-count">92</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-database-sql">📥 <span class="download-count">96</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">database</span> <span class="bit-category">storage</span> <span class="bit-category">sql</span> <span class="bit-category">sqlite</span> <span class="bit-category">drizzle</span></span>
 </div>
 
@@ -56,6 +56,8 @@ nodes:
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [resume-analyzer](/showcase/resume-analyzer)
 - [qr-database](/showcase/qr-database)
+- [client-invoice-manager](/showcase/client-invoice-manager)
+- [ai-invoice-mailer](/showcase/ai-invoice-mailer)
 
 <style>
 .bit-meta {

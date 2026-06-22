@@ -452,6 +452,8 @@ export interface HtmlPreviewWidget extends BaseWidget {
 export interface ImageWidget extends BaseWidget {
   kind: 'image';
   source: string; // url, base64, or template
+  /** Optional mime type template (e.g. state.idCardMimeType) for raw base64 sources. */
+  mimeSource?: string;
   alt?: string;
   width?: number | string;
   height?: number | string;
@@ -521,6 +523,8 @@ export interface DataTableWidget extends BaseWidget {
   source: string;
   columns: Array<{ key: string; label: string; align?: 'left' | 'right' | 'center'; format?: string }>;
   empty?: string;
+  /** Per-row action buttons; params values may use {{item.field}} templates. */
+  rowActions?: Array<{ label: string; action: string; params?: Record<string, string>; tone?: Tone; variant?: Tone }>;
 }
 
 export interface KvGridWidget extends BaseWidget {

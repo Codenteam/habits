@@ -1,0 +1,135 @@
+id: send-results-to-department
+name: Send Results To Department
+description: Summarize Sumsub KYC results with local AI and email the compliance department.
+
+input:
+  - id: personId
+    type: string
+    required: true
+  - id: applicantId
+    type: string
+    required: false
+  - id: departmentEmail
+    type: string
+    required: false
+
+nodes:
+  - id: load-person
+    type: action
+    data:
+      label: Load Person From Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          personId: "{{habits.input.personId}}"
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Latest Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{habits.input.applicantId || load-person.results[0].applicantId}}"
+
+  - id: draft-email
+    type: action
+    data:
+      label: Draft Department Email With Local AI
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-local-ai"
+      operation: generate-text
+      params:
+        modelId: "{{habits.env.HABITS_LOCAL_AI_MODEL || 'qwen3.5-0.8b'}}"
+        maxTokens: 700
+        prompts:
+          - role: system
+            content: |
+              You are a KYC compliance coordinator writing internal email to a banking operations department.
+              Today's date is {{habits.env.HABITS_TODAY || '2026-06-16'}}.
+              The recipient must complete their review within 3 business days — always mention this deadline explicitly in the email body.
+              Write a concise professional email with Subject line on the first line as "Subject: ...", then a blank line, then the email body.
+              State exactly what is needed from the department based on the Sumsub results (documents, re-review, approval to proceed, or escalation).
+              Keep the tone factual and actionable.
+          - role: user
+            content: |
+              Person ID: {{habits.input.personId}}
+              Name: {{load-person.results[0].firstName}} {{load-person.results[0].lastName}}
+              Email: {{load-person.results[0].email}}
+              Sumsub applicant ID: {{habits.input.applicantId || load-person.results[0].applicantId}}
+
+              Latest Sumsub status JSON:
+              {{get-sumsub-status}}
+
+  - id: send-email
+    type: action
+    data:
+      label: Send Email To Department
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST || 'smtp.gmail.com'}}"
+          port: "{{habits.env.HABITS_SMTP_PORT || 587}}"
+          user: "{{habits.env.EMAIL_USER}}"
+          password: "{{habits.env.EMAIL_PASSWORD}}"
+      params:
+        from: "{{habits.env.EMAIL_USER}}"
+        to: "{{habits.input.departmentEmail || habits.env.EMAIL_USER}}"
+        subject: "KYC action required — {{habits.input.personId}} ({{load-person.results[0].firstName}} {{load-person.results[0].lastName}})"
+        body: "{{draft-email.text}}"
+
+  - id: save-email-to-db
+    type: action
+    data:
+      label: Save Email Sent Timestamp
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        filter:
+          personId: "{{habits.input.personId}}"
+        update:
+          lastDepartmentEmailAt: "sent"
+          lastDepartmentEmailBody: "{{draft-email.text}}"
+
+edges:
+  - source: load-person
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: draft-email
+  - source: draft-email
+    target: send-email
+  - source: send-email
+    target: save-email-to-db
+
+output:
+  personId: "{{habits.input.personId}}"
+  applicantId: "{{habits.input.applicantId || load-person.results[0].applicantId}}"
+  emailDraft: "{{draft-email.text}}"
+  emailSent: "{{send-email.success}}"
+  messageId: "{{send-email.messageId}}"
+  to: "{{habits.input.departmentEmail || habits.env.EMAIL_USER}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+  model: "{{draft-email.model}}"
+  savedToDb: "{{save-email-to-db.success}}"

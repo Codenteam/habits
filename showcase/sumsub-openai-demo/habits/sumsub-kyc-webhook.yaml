@@ -1,0 +1,124 @@
+id: sumsub-kyc-webhook
+name: Sumsub KYC Webhook Handler
+description: >
+  Receives Sumsub verification webhooks and persists review status to SQLite.
+  Register in Sumsub Dashboard → Webhooks → target:
+  https://<your-public-host>/webhook/v/sumsub
+
+nodes:
+  - id: sumsub-kyc-webhook
+    type: trigger
+    data:
+      label: Sumsub Verification Webhook
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: verificationWebhook
+      triggerType: webhook
+      isTrigger: true
+
+  - id: parse-webhook
+    type: action
+    data:
+      label: Parse Webhook Event
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: parseWebhookEvent
+      params:
+        payload: "{{sumsub-kyc-webhook.body}}"
+
+  - id: save-review-to-db
+    type: action
+    data:
+      label: Save Review To Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        filter:
+          applicantId: "{{parse-webhook.applicantId}}"
+        update:
+          personId: "{{parse-webhook.externalUserId}}"
+          applicantId: "{{parse-webhook.applicantId}}"
+          externalUserId: "{{parse-webhook.externalUserId}}"
+          reviewStatus: "{{parse-webhook.reviewStatus}}"
+          reviewAnswer: "{{parse-webhook.reviewAnswer}}"
+          approved: "{{parse-webhook.approved}}"
+          allowNextSteps: "{{parse-webhook.allowNextSteps}}"
+          blockNextSteps: "{{parse-webhook.blockNextSteps}}"
+          moderationComment: "{{parse-webhook.moderationComment}}"
+          clientComment: "{{parse-webhook.clientComment}}"
+          rejectLabels: "{{parse-webhook.rejectLabels}}"
+          reviewRejectType: "{{parse-webhook.reviewRejectType}}"
+          lastWebhookType: "{{parse-webhook.webhookType}}"
+
+  - id: upsert-branch
+    type: action
+    data:
+      label: Insert If Customer Missing
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: if
+        includeElse: true
+        defaultOutput: insert
+        branches:
+          - label: Already updated
+            value1: "{{save-review-to-db.success}}"
+            operator: equals
+            value2: true
+            output: updated
+
+  - id: insert-if-missing
+    type: action
+    data:
+      label: Insert New Customer Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        document:
+          personId: "{{parse-webhook.externalUserId}}"
+          applicantId: "{{parse-webhook.applicantId}}"
+          externalUserId: "{{parse-webhook.externalUserId}}"
+          email: "{{parse-webhook.externalUserId}}"
+          reviewStatus: "{{parse-webhook.reviewStatus}}"
+          reviewAnswer: "{{parse-webhook.reviewAnswer}}"
+          approved: "{{parse-webhook.approved}}"
+          allowNextSteps: "{{parse-webhook.allowNextSteps}}"
+          blockNextSteps: "{{parse-webhook.blockNextSteps}}"
+          moderationComment: "{{parse-webhook.moderationComment}}"
+          clientComment: "{{parse-webhook.clientComment}}"
+          rejectLabels: "{{parse-webhook.rejectLabels}}"
+          reviewRejectType: "{{parse-webhook.reviewRejectType}}"
+          lastWebhookType: "{{parse-webhook.webhookType}}"
+
+edges:
+  - source: sumsub-kyc-webhook
+    target: parse-webhook
+  - source: parse-webhook
+    target: save-review-to-db
+  - source: save-review-to-db
+    target: upsert-branch
+  - source: upsert-branch
+    target: insert-if-missing
+    sourceHandle: branch-1
+
+output:
+  saved: "{{save-review-to-db.success}}"
+  inserted: "{{insert-if-missing.success}}"
+  applicantId: "{{parse-webhook.applicantId}}"
+  reviewStatus: "{{parse-webhook.reviewStatus}}"
+  reviewAnswer: "{{parse-webhook.reviewAnswer}}"
+  allowNextSteps: "{{parse-webhook.allowNextSteps}}"
+  blockNextSteps: "{{parse-webhook.blockNextSteps}}"
+  webhookType: "{{parse-webhook.webhookType}}"

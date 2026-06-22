@@ -21,6 +21,7 @@ import ComparisonLayout from './components/ComparisonLayout.vue'
 import IndustryBrowser from './components/industries/IndustryBrowser.vue'
 import IndustryPage from './components/industries/IndustryPage.vue'
 import ContactForm from './components/ContactForm.vue'
+import IntegrationLogos from './components/IntegrationLogos.vue'
 import RegisterHubForm from './components/RegisterHubForm.vue'
 import UseCasesMegaMenu from './components/UseCasesMegaMenu.vue'
 import EnterprisePricing from './components/EnterprisePricing.vue'
@@ -52,6 +53,7 @@ export default {
     app.component('IndustryBrowser', IndustryBrowser)
     app.component('IndustryPage', IndustryPage)
     app.component('ContactForm', ContactForm)
+    app.component('IntegrationLogos', IntegrationLogos)
     app.component('RegisterHubForm', RegisterHubForm)
     app.component('UseCasesMegaMenu', UseCasesMegaMenu)
     app.component('EnterprisePricing', EnterprisePricing)

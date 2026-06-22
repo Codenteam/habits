@@ -111,8 +111,11 @@ export function validateHabitGraph(
 
     for (const action of ui.actions) {
       const actNode = nodeMap.get(`action:${action.actionId}`);
+      const rawAction = uiSpec.actions?.[action.actionId];
+      const isClientOnly = rawAction && !rawAction.endpoint && !rawAction.method;
 
       if (!action.workflowId) {
+        if (isClientOnly) continue;
         const issue: GraphIssue = {
           severity: 'error',
           code: 'UNKNOWN_WORKFLOW',

@@ -56,9 +56,21 @@ curl http://localhost:13000/misc/workflows
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| EMAIL_HOST | Mail server hostname | imap.gmail.com |
-| IMAP_PORT | IMAP port | 993 |
+| SMTP_HOST | SMTP server hostname | smtp.gmail.com |
 | SMTP_PORT | SMTP port | 587 |
+| IMAP_HOST | IMAP server hostname | imap.gmail.com |
+| IMAP_PORT | IMAP port | 993 |
 | EMAIL_USER | Email address | your-email@gmail.com |
 | EMAIL_PASSWORD | Email password/app password | xxxx-xxxx-xxxx-xxxx |
 | FORWARD_TO | Recipient for forwarded emails | recipient@example.com |
+
+For local e2e runs with the shared development services, use GreenMail-compatible values:
+
+```bash
+SMTP_HOST=localhost
+SMTP_PORT=3025
+IMAP_HOST=localhost
+IMAP_PORT=3143
+EMAIL_USER=e2e@localhost
+EMAIL_PASSWORD=e2e
+```

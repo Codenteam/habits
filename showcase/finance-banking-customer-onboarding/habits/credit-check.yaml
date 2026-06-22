@@ -1,0 +1,58 @@
+id: credit-check
+name: Credit Check
+description: Use ComplyAdvantage and Mambu context to collect credit and eligibility signals.
+
+input:
+  - id: applicationId
+    type: string
+    required: true
+  - id: applicantName
+    type: string
+    required: true
+  - id: country
+    type: string
+    required: true
+
+nodes:
+  - id: get-mambu-client
+    type: action
+    data:
+      label: Get Mambu Customer Context
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-mambu"
+      operation: getAccount
+      credentials:
+        mambu:
+          apiKey: "{{habits.env.HABITS_MAMBU_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_MAMBU_BASE_URL}}"
+      params:
+        applicationId: "{{habits.input.applicationId}}"
+
+  - id: screen-credit-risk
+    type: action
+    data:
+      label: Screen Credit Risk
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-complyadvantage"
+      operation: screenCustomer
+      credentials:
+        complyadvantage:
+          apiKey: "{{habits.env.HABITS_COMPLYADVANTAGE_API_KEY}}"
+          baseUrl: "{{habits.env.HABITS_COMPLYADVANTAGE_BASE_URL || 'https://api.complyadvantage.com'}}"
+      params:
+        searchTerm: "{{habits.input.applicantName}}"
+        clientRef: "{{habits.input.applicationId}}"
+        country: "{{habits.input.country}}"
+        types: [warning, adverse-media]
+
+edges:
+  - source: get-mambu-client
+    target: screen-credit-risk
+
+output:
+  applicationId: "{{habits.input.applicationId}}"
+  accountContext: "{{get-mambu-client}}"
+  riskCaseId: "{{screen-credit-risk.caseId}}"
+  status: "{{screen-credit-risk.status}}"

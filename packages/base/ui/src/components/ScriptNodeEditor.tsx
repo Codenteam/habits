@@ -1,6 +1,7 @@
-import { memo } from 'react';
-import { Code } from 'lucide-react';
-import ScriptEditor from './ScriptEditor';
+import { lazy, memo, Suspense } from 'react';
+import { Code, Loader2 } from 'lucide-react';
+
+const ScriptEditor = lazy(() => import('./ScriptEditor'));
 
 export interface ScriptNodeEditorProps {
   /** Current script content */
@@ -66,13 +67,24 @@ const ScriptNodeEditor = memo(({
             Script
           </label>
         )}
-        <ScriptEditor
-          value={script}
-          onChange={onScriptChange}
-          language={language || 'deno'}
-          height={height}
-          readOnly={readonly}
-        />
+        <Suspense
+          fallback={
+            <div
+              className="flex items-center justify-center rounded border border-gray-600 bg-[#1e1e2e] text-slate-400"
+              style={{ height }}
+            >
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          }
+        >
+          <ScriptEditor
+            value={script}
+            onChange={onScriptChange}
+            language={language || 'deno'}
+            height={height}
+            readOnly={readonly}
+          />
+        </Suspense>
       </div>
     </div>
   );

@@ -1,64 +1,253 @@
-# Finance & Banking Customer Onboarding — converted from finance-banking-customer-onboarding.html
-# Showcase dashboard rendered by @ha-bits/cortex-core compileUiSpec.
-
 version: 1
 meta:
   id: finance-banking-customer-onboarding
   title: "Finance & Banking Customer Onboarding"
-  subtitle: "Automation suite · 6 habits active"
+  subtitle: "Featured habit · customer application to account creation"
   icon: "lucide:Landmark"
   documentTitle: "Finance & Banking Customer Onboarding"
 
 theme:
   preset: showcase-flat
   mode: dark
+  customCss: |
+    .featured-habit-card {
+      border-color: color-mix(in srgb, var(--ha-primary) 36%, var(--ha-border));
+      box-shadow: 0 22px 70px rgba(37, 99, 235, 0.14);
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+    .feature-panel {
+      background: var(--ha-bg-elevated);
+      border: 1px solid var(--ha-border);
+      border-radius: var(--ha-radius);
+      padding: var(--ha-pad-lg);
+    }
+    .integration-diagram {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .integration-node {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(79, 124, 255, 0.12);
+      border: 1px solid rgba(79, 124, 255, 0.22);
+      color: var(--ha-text);
+      font-weight: 650;
+    }
+    .integration-arrow {
+      color: var(--ha-primary);
+      font-weight: 800;
+    }
+    @media (max-width: 820px) {
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
 layout:
   type: showcase
   header:
     title: "Finance & Banking Customer Onboarding"
-    subtitle: "Automation suite · 6 habits active"
+    subtitle: "Customer application, ID verification, sanctions screening, and core banking handoff in one auditable flow"
     icon: "lucide:Landmark"
+    badge:
+      text: Featured Habit
+      tone: primary
   footerStatus:
     dot: live
-    text: "All habits running · Port 13010 · Habits v1.0"
+    text: "Improving · Provider bits planned · Download disabled"
     port: 13010
+
+state:
+  application:
+    firstName: Maya
+    lastName: Haddad
+    email: maya.haddad@example.com
+    phone: "+44 20 7946 0100"
+    country: GB
+    productType: current-account
+    riskTier: low
+  result: null
+  flowSteps:
+    - Customer submits an application from a web or mobile experience.
+    - Sumsub creates the applicant and verification access token.
+    - Sumsub verification status is read back into the workflow.
+    - ComplyAdvantage screens the applicant against sanctions, PEP, and warning lists.
+    - Mambu creates the client and deposit account for approved applications.
+  components:
+    - Customer application intake
+    - Sumsub applicant and access token creation
+    - Sumsub verification status lookup
+    - ComplyAdvantage sanctions screening
+    - ComplyAdvantage normalized decision result
+    - Mambu client creation
+    - Mambu deposit account creation
+  integrationDiagramHtml: |
+    <div class="integration-diagram">
+      <span class="integration-node">Customer Application</span>
+      <span class="integration-arrow">→</span>
+      <span class="integration-node">Habits Workflow</span>
+      <span class="integration-arrow">→</span>
+      <span class="integration-node">Sumsub ID Verification</span>
+      <span class="integration-arrow">→</span>
+      <span class="integration-node">ComplyAdvantage Sanctions Screening</span>
+      <span class="integration-arrow">→</span>
+      <span class="integration-node">Mambu Core Banking</span>
+    </div>
+
+actions:
+  submitApplication:
+    method: POST
+    endpoint: /api/customer-application-onboarding
+    body:
+      firstName: "{{state.application.firstName}}"
+      lastName: "{{state.application.lastName}}"
+      email: "{{state.application.email}}"
+      phone: "{{state.application.phone}}"
+      country: "{{state.application.country}}"
+      productType: "{{state.application.productType}}"
+      riskTier: "{{state.application.riskTier}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+      toast: "Application onboarding flow completed"
+    onError:
+      toast:
+        message: "Could not run onboarding flow"
+        level: error
 
 widgets:
   - kind: metric-grid
     columns: 4
     metrics:
-      - { value: "6", label: Active habits }
-      - { value: "38", label: Applications processed today }
-      - { value: "94%", label: Same-day approval rate }
-      - { value: 2.1h, label: Average onboarding time }
+      - { value: "1", label: Featured habit, icon: "lucide:Star" }
+      - { value: "3", label: Provider bits, icon: "lucide:PlugZap" }
+      - { value: "6", label: Main components, icon: "lucide:Blocks" }
+      - { value: "WIP", label: Improving, icon: "lucide:Construction" }
+
+  - kind: card
+    className: featured-habit-card
+    title: Customer Application Onboarding
+    subtitle: End-to-end onboarding from application intake through ID verification, sanctions screening, policy routing, and core banking handoff.
+    children:
+      - kind: row
+        className: feature-grid
+        children:
+          - kind: column
+            className: feature-panel
+            children:
+              - kind: heading
+                level: 3
+                value: How the habit works
+              - kind: text
+                value: "The customer app posts one application payload. Habits creates the Sumsub verification session, screens the applicant through ComplyAdvantage, and provisions the approved customer and deposit account in Mambu."
+              - kind: badge-list
+                values: [bit-sumsub, bit-complyadvantage, bit-mambu]
+                tone: primary
+              - kind: numbered-list
+                source: state.flowSteps
+          - kind: column
+            className: feature-panel
+            children:
+              - kind: heading
+                level: 3
+                value: Integration diagram
+              - kind: html-preview
+                source: state.integrationDiagramHtml
+              - kind: heading
+                level: 4
+                value: Main components
+              - kind: badge-list
+                source: state.components
+                tone: info
+
+  - kind: card
+    title: Try the Featured Habit
+    subtitle: This workflow intentionally depends on provider bits that still need to be implemented, so the showcase is marked improving and download is disabled.
+    children:
+      - kind: form
+        bindTo: state.application
+        fields:
+          - { name: firstName, type: text, label: First name, required: true }
+          - { name: lastName, type: text, label: Last name, required: true }
+          - { name: email, type: email, label: Email, required: true }
+          - { name: phone, type: text, label: Phone }
+          - { name: country, type: text, label: Country, required: true }
+          - name: productType
+            type: select
+            label: Product type
+            required: true
+            options:
+              - { label: Current Account, value: current-account }
+              - { label: Savings Account, value: savings-account }
+              - { label: Business Account, value: business-account }
+          - name: riskTier
+            type: radio-cards
+            label: Demo risk tier
+            options:
+              - { label: Low, value: low, description: Auto-approve and stage account creation }
+              - { label: Medium, value: medium, description: Route to compliance review }
+              - { label: High, value: high, description: Reject under screening policy }
+        submit:
+          label: Run onboarding flow
+          loadingLabel: Running onboarding...
+          action: submitApplication
+          icon: "lucide:Play"
+
+  - kind: result-panel
+    source: state.result
+    title: Onboarding Result
+    sections:
+      - kind: kv-grid
+        columns: 2
+        items:
+          - { label: Application ID, value: "{{state.result.applicationId}}" }
+          - { label: Status, value: "{{state.result.status}}" }
+          - { label: Next Step, value: "{{state.result.nextStep}}" }
+          - { label: Decision Reason, value: "{{state.result.decisionReason}}" }
+      - kind: json-dump
+        source: state.result
+        copy: true
+
   - kind: section
-    title: Habits
+    title: Related Habits in This Banking Suite
     children:
       - kind: habit-grid
         columns: 3
         items:
+          - name: Customer Application Onboarding
+            description: Orchestrate the full application path across Sumsub, ComplyAdvantage, and Mambu.
+            trigger: manual
+            tags: [featured, bit-sumsub, bit-complyadvantage, bit-mambu]
           - name: KYC Document Collection
             description: Request and validate identity documents from new customers upon application submission.
             trigger: webhook
-            tags: [webhook, email, http]
+            tags: [bit-sumsub]
           - name: Risk Scoring
             description: Run automated risk scoring on new applications and flag high-risk cases for review.
             trigger: webhook
-            tags: [webhook, ai, http]
+            tags: [bit-complyadvantage]
           - name: Account Creation
             description: Provision customer accounts after approval and trigger the welcome email sequence.
             trigger: webhook
-            tags: [webhook, email, http]
+            tags: [bit-mambu]
           - name: Credit Check
             description: Initiate credit bureau enquiries automatically and parse results into the application record.
             trigger: webhook
-            tags: [webhook, http, ai]
+            tags: [bit-complyadvantage, bit-mambu]
           - name: Welcome Sequence
             description: Send personalised onboarding emails to new customers over the first 30 days.
             trigger: scheduler
-            tags: [scheduler, email, ai]
+            tags: [bit-mambu]
           - name: Onboarding Status Tracker
             description: Update the CRM automatically at each milestone of the onboarding journey.
             trigger: webhook
-            tags: [webhook, http, slack]
+            tags: [bit-sumsub, bit-complyadvantage, bit-mambu]

@@ -56,6 +56,12 @@ import {
 } from 'lucide-react';
 import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui/icons';
 import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
+import { createApiActionForHabit, defaultActionIdForHabit, type ActionReference } from './actionLinking';
+import {
+  WIDGET_PRESETS,
+  WIDGET_PRESETS_BY_ID,
+  UI_SPEC_TEMPLATES,
+} from './uiSpecPresets';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,6 +82,17 @@ export interface UiSpecBuilderProps {
   defaultMetaTitle?: string;
   /** Compile preview HTML in-browser (must pass `builderPreview: true`). */
   compilePreviewHtml?: (yaml: string) => Promise<string>;
+  /** `embedded` hides templates and app-settings for wizard canvas. */
+  chrome?: 'full' | 'embedded';
+  hideTemplates?: boolean;
+  hidePalette?: boolean;
+  hideAppSettings?: boolean;
+  /** Hide raw YAML tab (production). */
+  hideYamlTab?: boolean;
+  defaultRightTab?: 'yaml' | 'settings' | 'app-settings';
+  /** Habits with workflows — enables “connect to habit” on action fields */
+  linkableHabits?: Array<{ id: string; name?: string }>;
+  onSelectedNodeChange?: (node: WidgetNode | null) => void;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -570,6 +587,16 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, '') || 'habit';
 }
 
+/** App ID field — preserves hyphens the user types (unlike broad slugify on titles). */
+function normalizeMetaId(s: string): string {
+  return (s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'habit';
+}
+
 function setDeep(obj: any, path: string, value: any): any {
   const parts = path.split('.');
   const next = { ...obj };
@@ -765,26 +792,63 @@ export function UiSpecBuilderVanilla({
   defaultMetaId,
   defaultMetaTitle,
   compilePreviewHtml,
+  chrome = 'full',
+  hideTemplates = false,
+  hidePalette = false,
+  hideAppSettings = false,
+  hideYamlTab = false,
+  defaultRightTab: defaultRightTabProp,
+  linkableHabits,
+  onSelectedNodeChange,
 }: UiSpecBuilderProps) {
   const [spec, setSpec] = useState<SpecState>(() =>
     tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle),
   );
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
+  const selectedUidRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedUidRef.current = selectedUid;
+  }, [selectedUid]);
 
   // Reload when a new habit/stack is opened while this builder is mounted.
   useEffect(() => {
     setSpec(tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle));
     setSelectedUid(null);
   }, [initialYaml, defaultMetaId, defaultMetaTitle]);
-  const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>('settings');
+  const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>(
+    () => {
+      const preferred = defaultRightTabProp ?? 'settings';
+      if (hideYamlTab && preferred === 'yaml') return 'settings';
+      return preferred;
+    },
+  );
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  useEffect(() => {
+    if (!defaultRightTabProp) return;
+    if (hideYamlTab && defaultRightTabProp === 'yaml') {
+      setRightTab('settings');
+      return;
+    }
+    setRightTab(defaultRightTabProp);
+  }, [defaultRightTabProp, hideYamlTab]);
+
+  useEffect(() => {
+    if (hideYamlTab && rightTab === 'yaml') setRightTab('settings');
+  }, [hideYamlTab, rightTab]);
+
+  const showPalette = !hidePalette && chrome !== 'embedded';
+  const showTemplatesSection = !hideTemplates && chrome === 'full';
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CATEGORIES.map((c) => [c, true])),
+    Object.fromEntries([
+      ['Templates', true],
+      ['Presets', true],
+      ...CATEGORIES.map((c) => [c, true]),
+    ]),
   );
   // Drag state — kept in refs to avoid re-renders mid-drag.
-  const dragRef = useRef<{ kind?: string; sourceUid?: string }>({});
+  const dragRef = useRef<{ kind?: string; sourceUid?: string; presetId?: string }>({});
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
   const previewSelectCleanupRef = useRef<(() => void) | null>(null);
 
@@ -887,27 +951,6 @@ export function UiSpecBuilderVanilla({
     highlightPreviewSelection(selectedUid);
   }, [selectedUid, previewHtml, highlightPreviewSelection]);
 
-  useEffect(() => {
-    const bridge = {
-      select(id: string) {
-        setSelectedUid(id);
-        setRightTab('settings');
-      },
-    };
-    (window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge }).__HA_BUILDER_BRIDGE__ = bridge;
-    const onMessage = (e: MessageEvent) => {
-      if (e.data?.type === 'ha-builder-select' && typeof e.data.id === 'string') {
-        bridge.select(e.data.id);
-      }
-    };
-    window.addEventListener('message', onMessage);
-    return () => {
-      window.removeEventListener('message', onMessage);
-      const w = window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge };
-      if (w.__HA_BUILDER_BRIDGE__ === bridge) delete w.__HA_BUILDER_BRIDGE__;
-    };
-  }, []);
-
   // ----------------- mutation helpers -----------------
 
   const updateMeta = useCallback((patch: Partial<SpecState['meta']>) => {
@@ -930,6 +973,54 @@ export function UiSpecBuilderVanilla({
   }, []);
   const updateActions = useCallback((actions: Record<string, any>) => {
     setSpec((s) => ({ ...s, actions }));
+  }, []);
+
+  const updateLayoutNav = useCallback((nav: Array<{ id: string; label?: string; icon?: string }>) => {
+    setSpec((s) => {
+      const navIds = new Set(nav.map((n) => n.id).filter(Boolean));
+      const views: Record<string, Record<string, unknown>> = { ...(s.views ?? {}) };
+      for (const item of nav) {
+        if (!item.id) continue;
+        if (!views[item.id]) views[item.id] = { widgets: [] };
+      }
+      for (const id of Object.keys(views)) {
+        if (!navIds.has(id)) delete views[id];
+      }
+      const defaultView =
+        s.defaultView && navIds.has(s.defaultView) ? s.defaultView : nav[0]?.id;
+      const next: SpecState = {
+        ...s,
+        layout: { ...s.layout, nav },
+        views,
+        defaultView,
+      };
+      const activeViewId = resolveActiveViewId(next as Parameters<typeof resolveActiveViewId>[0]);
+      const rawWidgets = activeViewId ? views[activeViewId]?.widgets : undefined;
+      const widgets = Array.isArray(rawWidgets)
+        ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+        : [];
+      return { ...next, activeViewId: activeViewId ?? defaultView, widgets };
+    });
+    setSelectedUid(null);
+  }, []);
+
+  const updateDefaultView = useCallback((defaultView: string) => {
+    setSpec((s) => ({ ...s, defaultView }));
+  }, []);
+
+  const updateActiveViewMeta = useCallback((patch: Record<string, unknown>) => {
+    setSpec((s) => {
+      if (!s.views) return s;
+      const viewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
+      if (!viewId) return s;
+      return {
+        ...s,
+        views: {
+          ...s.views,
+          [viewId]: { ...(s.views[viewId] ?? {}), ...patch },
+        },
+      };
+    });
   }, []);
 
   const switchView = useCallback((newViewId: string) => {
@@ -964,6 +1055,35 @@ export function UiSpecBuilderVanilla({
 
   const activeViewId = resolveActiveViewId(spec as Parameters<typeof resolveActiveViewId>[0]);
 
+  const insertWidgetNodes = useCallback((
+    nodes: WidgetNode[],
+    atIndex?: number,
+    parentUid?: string | null,
+  ) => {
+    if (nodes.length === 0) return;
+    setSpec((s) => {
+      if (!parentUid) {
+        const widgets = [...s.widgets];
+        const i = atIndex == null ? widgets.length : Math.min(atIndex, widgets.length);
+        widgets.splice(i, 0, ...nodes);
+        return { ...s, widgets };
+      }
+      const insertIntoChildren = (tree: WidgetNode[]): WidgetNode[] =>
+        tree.map((n) => {
+          if (n.uid === parentUid) {
+            const children = [...(n.children ?? [])];
+            const i = atIndex == null ? children.length : Math.min(atIndex, children.length);
+            children.splice(i, 0, ...nodes);
+            return { ...n, children };
+          }
+          return n.children ? { ...n, children: insertIntoChildren(n.children) } : n;
+        });
+      return { ...s, widgets: insertIntoChildren(s.widgets) };
+    });
+    setSelectedUid(nodes[0].uid);
+    selectedUidRef.current = nodes[0].uid;
+  }, []);
+
   const addWidget = useCallback((kind: string, atIndex?: number, parentUid?: string | null) => {
     const def = CATALOG_BY_KIND.get(kind);
     if (!def) return;
@@ -973,27 +1093,30 @@ export function UiSpecBuilderVanilla({
       props: def.defaults(),
       children: def.container ? [] : undefined,
     };
-    setSpec((s) => {
-      if (!parentUid) {
-        const widgets = [...s.widgets];
-        const i = atIndex == null ? widgets.length : Math.min(atIndex, widgets.length);
-        widgets.splice(i, 0, node);
-        return { ...s, widgets };
-      }
-      const insertIntoChildren = (nodes: WidgetNode[]): WidgetNode[] =>
-        nodes.map((n) => {
-          if (n.uid === parentUid) {
-            const children = [...(n.children ?? [])];
-            const i = atIndex == null ? children.length : Math.min(atIndex, children.length);
-            children.splice(i, 0, node);
-            return { ...n, children };
-          }
-          return n.children ? { ...n, children: insertIntoChildren(n.children) } : n;
-        });
-      return { ...s, widgets: insertIntoChildren(s.widgets) };
-    });
-    setSelectedUid(node.uid);
-  }, []);
+    insertWidgetNodes([node], atIndex, parentUid);
+  }, [insertWidgetNodes]);
+
+  const addPreset = useCallback((presetId: string, atIndex?: number, parentUid?: string | null) => {
+    const preset = WIDGET_PRESETS_BY_ID.get(presetId);
+    if (!preset) return;
+    const nodes = preset.widgets.map((w) => objectToWidgetNode(w));
+    insertWidgetNodes(nodes, atIndex, parentUid);
+  }, [insertWidgetNodes]);
+
+  const applyTemplate = useCallback((templateId: string, skipConfirm = false) => {
+    const template = UI_SPEC_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) return false;
+    if (!skipConfirm) {
+      const confirmed = window.confirm(
+        `Replace everything with the "${template.label}" template?\n\n` +
+        'This overwrites widgets, theme, layout, starting values, interactions, and metadata.',
+      );
+      if (!confirmed) return false;
+    }
+    setSpec(parseYamlToSpecState(template.yaml, defaultMetaId, defaultMetaTitle) as SpecState);
+    setSelectedUid(null);
+    return true;
+  }, [defaultMetaId, defaultMetaTitle]);
 
   const removeWidget = useCallback((targetUid: string) => {
     setSpec((s) => {
@@ -1071,12 +1194,85 @@ export function UiSpecBuilderVanilla({
 
   const selectedNode = findNode(selectedUid);
 
+  useEffect(() => {
+    onSelectedNodeChange?.(selectedNode);
+  }, [selectedNode, onSelectedNodeChange]);
+
+  const slotKindForPropPath = (propPath: string): ActionReference['slotKind'] => {
+    if (propPath === 'submit.action') return 'form-submit';
+    if (propPath === 'loadAction') return 'load';
+    if (propPath === 'onClick.action') return 'get';
+    return 'button';
+  };
+
+  const linkFieldToHabit = useCallback(
+    (habitId: string, actionId: string, propPath: string) => {
+      const slotKind = slotKindForPropPath(propPath);
+      setSpec((s) => ({
+        ...s,
+        actions: {
+          ...s.actions,
+          [actionId]: createApiActionForHabit(habitId, actionId, s, slotKind),
+        },
+      }));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const bridge = {
+      select(id: string) {
+        setSelectedUid(id);
+        setRightTab('settings');
+      },
+      switchView(id: string) {
+        switchView(id);
+      },
+      addWidget(kind: string, parentUid?: string | null) {
+        addWidget(kind, undefined, parentUid ?? null);
+        setRightTab('settings');
+      },
+      addPreset(presetId: string, parentUid?: string | null) {
+        addPreset(presetId, undefined, parentUid ?? null);
+        setRightTab('settings');
+      },
+      getSelectedUid() {
+        return selectedUidRef.current;
+      },
+      applyTemplate(templateId: string, skipConfirm = false) {
+        return applyTemplate(templateId, skipConfirm);
+      },
+      getYaml() {
+        const spec2 = specStateToSpec(spec);
+        return emitYaml(spec2);
+      },
+    };
+    (window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge }).__HA_BUILDER_BRIDGE__ = bridge;
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'ha-builder-select' && typeof e.data.id === 'string') {
+        bridge.select(e.data.id);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      const w = window as unknown as { __HA_BUILDER_BRIDGE__?: typeof bridge };
+      if (w.__HA_BUILDER_BRIDGE__ === bridge) delete w.__HA_BUILDER_BRIDGE__;
+    };
+  }, [switchView, addWidget, addPreset, applyTemplate, spec]);
+
   // ----------------- drag & drop wiring -----------------
 
   const onPaletteDragStart = (e: React.DragEvent<HTMLButtonElement>, kind: string) => {
     dragRef.current = { kind };
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('text/uispec-kind', kind);
+  };
+
+  const onPresetDragStart = (e: React.DragEvent<HTMLButtonElement>, presetId: string) => {
+    dragRef.current = { presetId };
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/uispec-preset', presetId);
   };
 
   const onCanvasDragStart = (e: React.DragEvent<HTMLDivElement>, sourceUid: string) => {
@@ -1088,8 +1284,10 @@ export function UiSpecBuilderVanilla({
   const onDropAt = (parentUid: string | null, atIndex: number) => (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const { kind, sourceUid } = dragRef.current;
-    if (kind) {
+    const { kind, sourceUid, presetId } = dragRef.current;
+    if (presetId) {
+      addPreset(presetId, atIndex, parentUid);
+    } else if (kind) {
       addWidget(kind, atIndex, parentUid);
     } else if (sourceUid) {
       moveWidget(sourceUid, parentUid, atIndex);
@@ -1108,44 +1306,107 @@ export function UiSpecBuilderVanilla({
       <div className="flex flex-1 min-h-0">
 
         {/* Palette */}
-        <aside className="w-56 flex-shrink-0 border-r border-slate-800 bg-slate-900 overflow-y-auto">
-          <div className="px-3 py-2 text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
+        {showPalette && (
+        <aside className="w-56 flex-shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col min-h-0">
+          <div className="flex-shrink-0 px-3 py-2 text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2 border-b border-slate-800 bg-slate-900">
             <Layers className="w-3.5 h-3.5" /> Widgets
           </div>
-          {CATEGORIES.map((cat) => {
-            const open = expandedCats[cat];
-            const items = CATALOG.filter((w) => w.category === cat);
-            return (
-              <div key={cat} className="border-t border-slate-800/60">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {/* Full-page templates — click to replace everything */}
+            {showTemplatesSection && (
+            <div className="border-t border-slate-800/60 first:border-t-0">
+              <button
+                className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                onClick={() => setExpandedCats((s) => ({ ...s, Templates: !s.Templates }))}
+                type="button"
+              >
+                {expandedCats.Templates ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                Templates
+              </button>
+              {expandedCats.Templates && UI_SPEC_TEMPLATES.map((template) => (
                 <button
-                  className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
-                  onClick={() => setExpandedCats((s) => ({ ...s, [cat]: !s[cat] }))}
+                  key={template.id}
                   type="button"
+                  onClick={() => applyTemplate(template.id)}
+                  title={`${template.description} — replaces the entire page`}
+                  className="w-full flex flex-col items-start gap-0.5 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 border-l-2 border-transparent hover:border-amber-500/50"
                 >
-                  {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                  {cat}
+                  <span className="flex items-center gap-2 w-full">
+                    <FileCode className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>{template.label}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 pl-5 leading-snug">{template.description}</span>
                 </button>
-                {open && items.map((def) => {
-                  const Icon = def.icon;
-                  return (
-                    <button
-                      key={def.kind}
-                      type="button"
-                      draggable
-                      onDragStart={(e) => onPaletteDragStart(e, def.kind)}
-                      onDoubleClick={() => addWidget(def.kind)}
-                      title="Drag to canvas, or double-click to append"
-                      className="w-full flex items-center gap-2 px-4 py-1.5 text-sm text-slate-200 hover:bg-slate-800 cursor-grab active:cursor-grabbing"
-                    >
-                      <Icon className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{def.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
+              ))}
+            </div>
+            )}
+
+            {/* Widget presets — multi-widget groups that unfurl on drop */}
+            <div className="border-t border-slate-800/60">
+              <button
+                className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                onClick={() => setExpandedCats((s) => ({ ...s, Presets: !s.Presets }))}
+                type="button"
+              >
+                {expandedCats.Presets ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                Presets
+              </button>
+              {expandedCats.Presets && WIDGET_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  draggable
+                  onDragStart={(e) => onPresetDragStart(e, preset.id)}
+                  onDoubleClick={() => addPreset(preset.id)}
+                  title={`${preset.description} — drag to canvas to insert ${preset.widgets.length} widget(s)`}
+                  className="w-full flex flex-col items-start gap-0.5 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 cursor-grab active:cursor-grabbing border-l-2 border-transparent hover:border-violet-500/50"
+                >
+                  <span className="flex items-center gap-2 w-full">
+                    <LayoutTemplate className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
+                    <span>{preset.label}</span>
+                    <span className="text-[10px] text-slate-500 ml-auto">{preset.widgets.length}×</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 pl-5 leading-snug">{preset.description}</span>
+                </button>
+              ))}
+            </div>
+
+            {CATEGORIES.map((cat) => {
+              const open = expandedCats[cat];
+              const items = CATALOG.filter((w) => w.category === cat);
+              return (
+                <div key={cat} className="border-t border-slate-800/60">
+                  <button
+                    className="w-full flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800"
+                    onClick={() => setExpandedCats((s) => ({ ...s, [cat]: !s[cat] }))}
+                    type="button"
+                  >
+                    {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    {cat}
+                  </button>
+                  {open && items.map((def) => {
+                    const Icon = def.icon;
+                    return (
+                      <button
+                        key={def.kind}
+                        type="button"
+                        draggable
+                        onDragStart={(e) => onPaletteDragStart(e, def.kind)}
+                        onDoubleClick={() => addWidget(def.kind)}
+                        title="Drag to canvas, or double-click to append"
+                        className="w-full flex items-center gap-2 px-4 py-1.5 text-sm text-slate-200 hover:bg-slate-800 cursor-grab active:cursor-grabbing"
+                      >
+                        <Icon className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{def.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </aside>
+        )}
 
         {/* Canvas */}
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-slate-950">
@@ -1215,11 +1476,15 @@ export function UiSpecBuilderVanilla({
         <aside className="w-[420px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0">
           <div className="flex border-b border-slate-800 flex-shrink-0">
             <PaneTab active={rightTab === 'settings'} onClick={() => setRightTab('settings')} icon={FormInput} label="Settings" />
-            <PaneTab active={rightTab === 'yaml'} onClick={() => setRightTab('yaml')} icon={FileCode} label="YAML" />
-            <PaneTab active={rightTab === 'app-settings'} onClick={() => setRightTab('app-settings')} icon={Settings} label="App Settings" />
+            {!hideYamlTab && (
+              <PaneTab active={rightTab === 'yaml'} onClick={() => setRightTab('yaml')} icon={FileCode} label="YAML" />
+            )}
+            {!hideAppSettings && chrome !== 'embedded' && (
+              <PaneTab active={rightTab === 'app-settings'} onClick={() => setRightTab('app-settings')} icon={Settings} label="App Settings" />
+            )}
           </div>
 
-          {rightTab === 'yaml' && (
+          {rightTab === 'yaml' && !hideYamlTab && (
             <pre className="flex-1 overflow-auto p-3 text-xs text-slate-200 font-mono whitespace-pre min-h-0">
 {yamlText}
             </pre>
@@ -1231,6 +1496,10 @@ export function UiSpecBuilderVanilla({
                 node={selectedNode}
                 onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
                 onRemove={() => removeWidget(selectedNode.uid)}
+                linkableHabits={linkableHabits}
+                onLinkHabit={(habitId, actionId, propPath) =>
+                  linkFieldToHabit(habitId, actionId, propPath)
+                }
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center min-h-0">
@@ -1243,13 +1512,17 @@ export function UiSpecBuilderVanilla({
             )
           )}
 
-          {rightTab === 'app-settings' && (
+          {!hideAppSettings && chrome !== 'embedded' && rightTab === 'app-settings' && (
             <SpecSettingsPanel
               spec={spec}
+              activeViewId={activeViewId}
               onUpdateMeta={updateMeta}
               onUpdateTheme={updateTheme}
               onUpdateLayoutType={updateLayoutType}
               onUpdateLayoutHeader={updateLayoutHeader}
+              onUpdateLayoutNav={updateLayoutNav}
+              onUpdateDefaultView={updateDefaultView}
+              onUpdateActiveViewMeta={updateActiveViewMeta}
               onUpdateState={updateState}
               onUpdateActions={updateActions}
             />
@@ -1368,20 +1641,28 @@ function CanvasList({ nodes, parentUid, onDropAt, onDragStartNode, onSelect, sel
 
 interface SpecSettingsPanelProps {
   spec: SpecState;
+  activeViewId?: string;
   onUpdateMeta: (patch: Partial<SpecState['meta']>) => void;
   onUpdateTheme: (patch: Partial<SpecState['theme']>) => void;
   onUpdateLayoutType: (type: SpecState['layout']['type']) => void;
   onUpdateLayoutHeader: (patch: Partial<NonNullable<SpecState['layout']['header']>>) => void;
+  onUpdateLayoutNav: (nav: Array<{ id: string; label?: string; icon?: string }>) => void;
+  onUpdateDefaultView: (id: string) => void;
+  onUpdateActiveViewMeta: (patch: Record<string, unknown>) => void;
   onUpdateState: (state: Record<string, any>) => void;
   onUpdateActions: (actions: Record<string, any>) => void;
 }
 
 function SpecSettingsPanel({
   spec,
+  activeViewId,
   onUpdateMeta,
   onUpdateTheme,
   onUpdateLayoutType,
   onUpdateLayoutHeader,
+  onUpdateLayoutNav,
+  onUpdateDefaultView,
+  onUpdateActiveViewMeta,
   onUpdateState,
   onUpdateActions,
 }: SpecSettingsPanelProps) {
@@ -1413,7 +1694,7 @@ function SpecSettingsPanel({
             <input
               className={INPUT}
               value={spec.meta.id}
-              onChange={(e) => onUpdateMeta({ id: slugify(e.target.value) })}
+              onChange={(e) => onUpdateMeta({ id: normalizeMetaId(e.target.value) })}
               placeholder="my-app"
             />
           </Field>
@@ -1503,10 +1784,123 @@ function SpecSettingsPanel({
         </div>
       </div>
 
+      {(spec.layout.type === 'tabs' || spec.layout.type === 'sidebar') && (
+        <ViewsNavEditor
+          spec={spec}
+          activeViewId={activeViewId}
+          onUpdateNav={onUpdateLayoutNav}
+          onUpdateDefaultView={onUpdateDefaultView}
+          onUpdateActiveViewMeta={onUpdateActiveViewMeta}
+        />
+      )}
+
       <div className="space-y-4">
         <StartingValuesEditor state={spec.state} onChange={onUpdateState} />
         <InteractionsEditor actions={spec.actions} onChange={onUpdateActions} stateKeys={Object.keys(spec.state)} />
       </div>
+    </div>
+  );
+}
+
+function ViewsNavEditor({
+  spec,
+  activeViewId,
+  onUpdateNav,
+  onUpdateDefaultView,
+  onUpdateActiveViewMeta,
+}: {
+  spec: SpecState;
+  activeViewId?: string;
+  onUpdateNav: (nav: Array<{ id: string; label?: string; icon?: string }>) => void;
+  onUpdateDefaultView: (id: string) => void;
+  onUpdateActiveViewMeta: (patch: Record<string, unknown>) => void;
+}) {
+  const nav = spec.layout.nav ?? [];
+  const activeMeta = activeViewId && spec.views ? spec.views[activeViewId] : undefined;
+
+  const patchRow = (i: number, patch: Partial<{ id: string; label?: string; icon?: string }>) => {
+    onUpdateNav(nav.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  };
+
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-100">Navigation tabs</h3>
+        <p className="text-xs text-slate-500 mt-1">
+          Each tab is a separate view with its own widgets. Use the tab bar above the canvas to switch views while editing.
+        </p>
+      </div>
+      {nav.length === 0 && (
+        <p className="text-xs text-slate-500">No tabs yet — add one to enable multi-view layouts.</p>
+      )}
+      <div className="space-y-2">
+        {nav.map((row, i) => (
+          <div key={i} className="flex flex-wrap items-center gap-2 rounded border border-slate-700 bg-slate-950 p-2">
+            <input
+              className={`${INPUT} w-24`}
+              value={row.id}
+              placeholder="id"
+              onChange={(e) => patchRow(i, { id: slugify(e.target.value) })}
+            />
+            <input
+              className={`${INPUT} flex-1 min-w-[100px]`}
+              value={row.label ?? ''}
+              placeholder="Label"
+              onChange={(e) => patchRow(i, { label: e.target.value || undefined })}
+            />
+            <input
+              className={`${INPUT} flex-1 min-w-[120px]`}
+              value={row.icon ?? ''}
+              placeholder="lucide:Icon"
+              onChange={(e) => patchRow(i, { icon: e.target.value || undefined })}
+            />
+            <button
+              type="button"
+              className="text-slate-400 hover:text-red-400 p-1"
+              onClick={() => onUpdateNav(nav.filter((_, idx) => idx !== i))}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className={BTN_SECONDARY}
+        onClick={() =>
+          onUpdateNav([
+            ...nav,
+            { id: nav.length === 0 ? 'main' : `view-${nav.length + 1}`, label: `Tab ${nav.length + 1}` },
+          ])
+        }
+      >
+        <Plus className="w-3 h-3" /> Add tab
+      </button>
+      {nav.length > 0 && (
+        <>
+          <Field label="Default view">
+            <select
+              className={INPUT}
+              value={spec.defaultView ?? nav[0]?.id ?? ''}
+              onChange={(e) => onUpdateDefaultView(e.target.value)}
+            >
+              {nav.map((n) => (
+                <option key={n.id} value={n.id}>{n.label ?? n.id}</option>
+              ))}
+            </select>
+          </Field>
+          {activeViewId && (
+            <Field label="On enter action (active view)" help="Action id to run when this tab opens, e.g. listHistory">
+              <input
+                className={INPUT}
+                value={(activeMeta?.onEnter as string) ?? ''}
+                placeholder="listHistory"
+                onChange={(e) => onUpdateActiveViewMeta({ onEnter: e.target.value || undefined })}
+              />
+            </Field>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -1519,9 +1913,11 @@ interface PropertyPanelProps {
   node: WidgetNode;
   onChange: (patch: (props: Record<string, any>) => Record<string, any>) => void;
   onRemove: () => void;
+  linkableHabits?: Array<{ id: string; name?: string }>;
+  onLinkHabit?: (habitId: string, actionId: string, propPath: string) => void;
 }
 
-function PropertyPanel({ node, onChange, onRemove }: PropertyPanelProps) {
+function PropertyPanel({ node, onChange, onRemove, linkableHabits, onLinkHabit }: PropertyPanelProps) {
   const def = CATALOG_BY_KIND.get(node.kind);
   if (!def) {
     return (
@@ -1550,6 +1946,12 @@ function PropertyPanel({ node, onChange, onRemove }: PropertyPanelProps) {
             key={f.key}
             field={f}
             value={getDeep(node.props, f.key)}
+            linkableHabits={linkableHabits}
+            onLinkHabit={
+              onLinkHabit
+                ? (habitId, actionId) => onLinkHabit(habitId, actionId, f.key)
+                : undefined
+            }
             onChange={(v) =>
               onChange((props) => {
                 if (v === undefined || v === '' || (typeof v === 'object' && v !== null && Array.isArray(v) && v.length === 0)) {
@@ -1597,9 +1999,15 @@ interface PropertyFieldProps {
   field: FieldDef;
   value: any;
   onChange: (v: any) => void;
+  linkableHabits?: Array<{ id: string; name?: string }>;
+  onLinkHabit?: (habitId: string, actionId: string) => void;
 }
 
-function PropertyField({ field, value, onChange }: PropertyFieldProps) {
+function isActionIdField(key: string): boolean {
+  return key === 'action' || key === 'loadAction' || key.endsWith('.action');
+}
+
+function PropertyField({ field, value, onChange, linkableHabits, onLinkHabit }: PropertyFieldProps) {
   if (field.type === 'icon') {
     return (
       <Field label={field.label} help={field.help ?? 'Lucide icon name, or leave empty'}>
@@ -1608,6 +2016,12 @@ function PropertyField({ field, value, onChange }: PropertyFieldProps) {
     );
   }
   if (field.type === 'text' || field.type === 'number') {
+    const showHabitLink =
+      field.type === 'text' &&
+      isActionIdField(field.key) &&
+      linkableHabits &&
+      linkableHabits.length > 0 &&
+      onLinkHabit;
     return (
       <Field label={field.label} help={field.help}>
         <input
@@ -1621,6 +2035,30 @@ function PropertyField({ field, value, onChange }: PropertyFieldProps) {
               : e.target.value)
           }
         />
+        {showHabitLink && (
+          <select
+            className={`${INPUT} mt-1.5 text-xs`}
+            defaultValue=""
+            onChange={(e) => {
+              const habitId = e.target.value;
+              if (!habitId) return;
+              const actionId =
+                value && String(value).trim()
+                  ? String(value).trim()
+                  : defaultActionIdForHabit(habitId);
+              onChange(actionId);
+              onLinkHabit(habitId, actionId);
+              e.target.value = '';
+            }}
+          >
+            <option value="">Connect to habit workflow…</option>
+            {linkableHabits.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name ? `${h.name} (${h.id})` : h.id}
+              </option>
+            ))}
+          </select>
+        )}
       </Field>
     );
   }
@@ -1775,6 +2213,25 @@ function FieldsArrayEditor({ value, onChange }: { value: any[]; onChange: (v: an
                 word count
               </label>
             </div>
+          )}
+          {(f.type === 'select' || f.type === 'chip-group' || f.type === 'radio-cards' || f.type === 'multi-select') && (
+            <>
+              <input
+                className={`${INPUT} text-xs`}
+                value={Array.isArray(f.options) ? f.options.join(', ') : ''}
+                placeholder="options (comma-separated)"
+                onChange={(e) => {
+                  const options = e.target.value.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+                  update(i, { options: options.length ? options : undefined });
+                }}
+              />
+              <input
+                className={`${INPUT} text-xs`}
+                value={f.default ?? ''}
+                placeholder="default value"
+                onChange={(e) => update(i, { default: e.target.value || undefined })}
+              />
+            </>
           )}
         </div>
       ))}

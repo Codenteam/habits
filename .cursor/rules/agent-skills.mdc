@@ -18,6 +18,7 @@ When a task matches a skill, read and follow that skill's `SKILL.md` before proc
 | `manage-admin-mode` | `@ha-bits/admin` package |
 | `hub-mode` | `@codenteam/hub` package |
 | `app-publishing` | iOS/Android/macOS builds, signing, store uploads |
+| `record-browser-demo` | Recording headed browser tutorial videos (WebM) via Browser DevTools MCP |
 
 `server-cortex-mode` and `tauri-app-mode` are mutually exclusive — pick one based on the runtime target.
 

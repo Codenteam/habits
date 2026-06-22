@@ -15,7 +15,9 @@ const URL_PREFIX = /^(https?:\/\/|\/|\.\/|\.\.\/)/i;
 export function sanitizeSvg(raw: string): string {
   let s = raw.trim();
   if (!SVG_OPEN.test(s)) return '';
-  s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+  // Use RegExp constructor so bundled cortex-bundle.js never contains a raw
+  // `</script>` substring (breaks HTML when the bundle is inlined in <script>).
+  s = s.replace(new RegExp('<script[\\s\\S]*?<\\/script>', 'gi'), '');
   s = s.replace(/\s(on\w+|xmlns:xlink)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
   if (!/xmlns=/.test(s)) {
     s = s.replace(/^<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');

@@ -179,13 +179,26 @@ fn get_cli_args() -> Option<CliArgs> {
     }
 }
 
+/// OAuth / deep-link URL scheme for this build.
+/// Dev app (`com.codenteam-oss.habits.dev`) uses a separate scheme so it does not
+/// compete with the production Cortex install for `habits-cortex://`.
+fn oauth_url_scheme(identifier: &str) -> &'static str {
+    if identifier.ends_with(".dev") {
+        "habits-cortex-dev"
+    } else {
+        "habits-cortex"
+    }
+}
+
 /// Returns build-time feature flags to the frontend.
 /// noExternalHabits: true when compiled with --features no-external-habits.
 /// Used for App Store builds (iOS + macOS) where side-loading external habits is not allowed.
 #[tauri::command]
-fn get_app_config() -> serde_json::Value {
+fn get_app_config(app: tauri::AppHandle) -> serde_json::Value {
+    let identifier = app.config().identifier.as_str();
     serde_json::json!({
-        "noExternalHabits": cfg!(feature = "no-external-habits")
+        "noExternalHabits": cfg!(feature = "no-external-habits"),
+        "urlScheme": oauth_url_scheme(identifier)
     })
 }
 
@@ -204,9 +217,10 @@ pub fn run() {
     let builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
         // When a second instance is launched (e.g., via habits-cortex:// deep link on macOS),
         // forward the URL arguments to the already-running instance by emitting a deep-link event.
+        let scheme_prefix = format!("{}://", oauth_url_scheme(app.config().identifier.as_str()));
         let urls: Vec<String> = args
             .iter()
-            .filter(|a: &&String| a.starts_with("habits-cortex://"))
+            .filter(|a: &&String| a.starts_with(scheme_prefix.as_str()))
             .cloned()
             .collect();
         if !urls.is_empty() {

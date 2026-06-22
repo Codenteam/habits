@@ -1,0 +1,101 @@
+id: fetch-sumsub-results
+name: Fetch Sumsub Results
+description: Fetch latest Sumsub status for a person using their Sumsub applicant ID.
+
+input:
+  - id: personId
+    type: string
+    required: true
+  - id: applicantId
+    type: string
+    required: false
+
+nodes:
+  - id: load-person
+    type: action
+    data:
+      label: Load Person From Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          personId: "{{habits.input.personId}}"
+
+  - id: get-sumsub-status
+    type: action
+    data:
+      label: Get Sumsub Status
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-sumsub"
+      operation: getApplicantStatus
+      credentials:
+        sumsub:
+          appToken: "{{habits.env.HABITS_SUMSUB_APP_TOKEN}}"
+          secretKey: "{{habits.env.HABITS_SUMSUB_SECRET_KEY}}"
+          baseUrl: "{{habits.env.HABITS_SUMSUB_BASE_URL || 'https://api.sumsub.com'}}"
+      params:
+        applicantId: "{{habits.input.applicantId || load-person.results[0].applicantId}}"
+
+  - id: save-status-to-db
+    type: action
+    data:
+      label: Save Status To Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        filter:
+          personId: "{{habits.input.personId}}"
+        update:
+          reviewStatus: "{{get-sumsub-status.status}}"
+          reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+          approved: "{{get-sumsub-status.approved}}"
+          allowNextSteps: "{{get-sumsub-status.allowNextSteps}}"
+          blockNextSteps: "{{get-sumsub-status.blockNextSteps}}"
+          moderationComment: "{{get-sumsub-status.moderationComment}}"
+          lastFetchedAt: "{{get-sumsub-status.timestamp || 'now'}}"
+
+  - id: reload-person
+    type: action
+    data:
+      label: Reload Person Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: kyc_customers
+        database: "{{habits.env.HABITS_KYC_DATABASE || 'showcase/sumsub-openai-demo/sumsub-kyc.db'}}"
+        limit: 1
+        filter:
+          personId: "{{habits.input.personId}}"
+
+edges:
+  - source: load-person
+    target: get-sumsub-status
+  - source: get-sumsub-status
+    target: save-status-to-db
+  - source: save-status-to-db
+    target: reload-person
+
+output:
+  personId: "{{habits.input.personId}}"
+  applicantId: "{{get-sumsub-status.applicantId || habits.input.applicantId || load-person.results[0].applicantId}}"
+  kycStatus: "{{get-sumsub-status.status}}"
+  reviewAnswer: "{{get-sumsub-status.reviewAnswer}}"
+  approved: "{{get-sumsub-status.approved}}"
+  allowNextSteps: "{{get-sumsub-status.allowNextSteps}}"
+  blockNextSteps: "{{get-sumsub-status.blockNextSteps}}"
+  moderationComment: "{{get-sumsub-status.moderationComment}}"
+  sumsubPayload: "{{get-sumsub-status}}"
+  person: "{{reload-person.results[0]}}"
+  savedToDb: "{{save-status-to-db.success}}"

@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-loop`</span>
   <span class="bit-version">v1.0.2</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-loop">📥 <span class="download-count">501</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-loop">📥 <span class="download-count">520</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">loop</span> <span class="bit-category">foreach</span> <span class="bit-category">iteration</span> <span class="bit-category">subworkflow</span></span>
 </div>
 
@@ -54,6 +54,12 @@ nodes:
 ## Used In Showcases
 
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
+- [rss-social-poster](/showcase/rss-social-poster)
+- [rss-digest-summarizer](/showcase/rss-digest-summarizer)
+- [invoices-processing](/showcase/invoices-processing)
+- [emails-categorization](/showcase/emails-categorization)
+- [email-ticket-routing](/showcase/email-ticket-routing)
+- [email-digest-summarizer](/showcase/email-digest-summarizer)
 
 <style>
 .bit-meta {

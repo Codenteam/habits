@@ -31,7 +31,7 @@ onMounted(async () => {
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-openai`</span>
   <span class="bit-version">v0.1.15</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">877</span> downloads</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-openai">📥 <span class="download-count">914</span> downloads</span>
   <span class="bit-categories"><span class="bit-category">openai</span> <span class="bit-category">openai</span> <span class="bit-category">ai</span></span>
 </div>
 
@@ -68,8 +68,27 @@ nodes:
 
 ## Used In Showcases
 
+- [study-flashcards](/showcase/study-flashcards)
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
+- [rss-social-poster](/showcase/rss-social-poster)
+- [rss-digest-summarizer](/showcase/rss-digest-summarizer)
+- [resume-tailor](/showcase/resume-tailor)
 - [resume-analyzer](/showcase/resume-analyzer)
+- [product-changelog](/showcase/product-changelog)
+- [pr-review-brief](/showcase/pr-review-brief)
+- [meeting-notes](/showcase/meeting-notes)
+- [invoices-processing](/showcase/invoices-processing)
+- [idea-validator](/showcase/idea-validator)
+- [habit-reflection](/showcase/habit-reflection)
+- [emails-categorization](/showcase/emails-categorization)
+- [email-ticket-routing](/showcase/email-ticket-routing)
+- [email-drafts](/showcase/email-drafts)
+- [email-digest-summarizer](/showcase/email-digest-summarizer)
+- [daily-standup](/showcase/daily-standup)
+- [client-invoice-manager](/showcase/client-invoice-manager)
+- [budget-analyst](/showcase/budget-analyst)
+- [ai-invoice-mailer](/showcase/ai-invoice-mailer)
+- [ai-agent-lead-enrichment](/showcase/ai-agent-lead-enrichment)
 
 <style>
 .bit-meta {

@@ -8,5 +8,23 @@
         "title": "Cortex Dev"
       }
     ]
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["habits-cortex-dev"],
+          "appLink": false
+        },
+        {
+          "host": "habits.codenteam.com",
+          "scheme": ["https"],
+          "appLink": true
+        }
+      ],
+      "desktop": {
+        "schemes": ["habits-cortex-dev"]
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, WallpaperIcon, Send, KeyRound, Blocks } from 'lucide-react';
+import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
+import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, Send, KeyRound, Blocks } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
 import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectExportBundle, selectActiveEnvVariables } from '../store/slices/workflowSlice';
@@ -15,16 +15,18 @@ import ServeNotEnabledModal from './ServeNotEnabledModal';
 import ShareLinkModal from './ShareLinkModal';
 import SendHabitModal from './SendHabitModal';
 import GenerateModal from './GenerateModal';
-import ValidationModal from './ValidationModal';
+const ValidationModal = lazy(() => import('./ValidationModal'));
 import { selectHabitGraphReport } from '../store/selectors/habitGraphSelectors';
 import {
   selectAllValidationIssues,
   selectHasValidationErrors,
+  selectUiEditorAccess,
   selectValidationSeverity,
 } from '../store/selectors/validationSelectors';
 import EnvSetupModal from './EnvSetupModal';
 import Dialog from './Dialog';
 import type { ValidatableHabit } from '../store/validation/habitValidation';
+import { HABITS_REQUEST_EXPORT_EVENT } from '../lib/habitsEvents';
 
 export default function Toolbar() {
   const dispatch = useAppDispatch();
@@ -32,13 +34,13 @@ export default function Toolbar() {
   const stackDescription = useAppSelector(selectStackDescription);
   const habits = useAppSelector(selectHabits);
   const activeHabit = useAppSelector(selectActiveHabit);
-  const frontendHtml = useAppSelector(state => state.ui.frontendHtml);
   const frontendYaml = useAppSelector(state => state.ui.frontendYaml);
   const envContent = useAppSelector(state => state.ui.envContent);
   const viewMode = useAppSelector(state => state.ui.viewMode);
   const graphReport = useAppSelector(selectHabitGraphReport);
   const allValidationIssues = useAppSelector(selectAllValidationIssues);
   const hasValidationErrors = useAppSelector(selectHasValidationErrors);
+  const uiEditorAccess = useAppSelector(selectUiEditorAccess);
   const validationSeverity = useAppSelector(selectValidationSeverity);
   const serverFlags = useAppSelector(selectServerFlags);
   const [serving, setServing] = useState(false);
@@ -167,7 +169,7 @@ export default function Toolbar() {
     setShowShareLinkModal(true);
   };
 
-  const handlePublishDeploy = () => {
+  const handlePublishDeploy = useCallback(() => {
     // Check if any habit has nodes
     const habitsWithNodes = habits.filter(h => h.nodes.length > 0);
     if (habitsWithNodes.length === 0) {
@@ -177,7 +179,13 @@ export default function Toolbar() {
     }
 
     setShowPublishDeployModal(true);
-  };
+  }, [habits]);
+
+  useEffect(() => {
+    const onWizardExport = () => handlePublishDeploy();
+    window.addEventListener(HABITS_REQUEST_EXPORT_EVENT, onWizardExport);
+    return () => window.removeEventListener(HABITS_REQUEST_EXPORT_EVENT, onWizardExport);
+  }, [handlePublishDeploy]);
 
   return (
     <>
@@ -356,27 +364,26 @@ export default function Toolbar() {
             <span className="hidden sm:inline">Logic</span>
           </button>
           <button
-            onClick={() => dispatch(setViewMode('frontend'))}
+            onClick={() => {
+              if (!uiEditorAccess.allowed) {
+                setShowValidationModal(true);
+                return;
+              }
+              dispatch(setViewMode('frontend-yaml'));
+            }}
+            title={
+              uiEditorAccess.allowed
+                ? 'Declarative YAML UI builder (no HTML/CSS)'
+                : uiEditorAccess.reason
+            }
             className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
-              viewMode === 'frontend'
-                ? 'bg-purple-600 text-white'
-                : frontendHtml
-                  ? 'text-purple-300 hover:bg-slate-600'
-                  : 'text-slate-300 hover:bg-slate-600'
-            }`}
-          >
-            <WallpaperIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">UI</span>
-          </button>
-          <button
-            onClick={() => dispatch(setViewMode('frontend-yaml'))}
-            title="Declarative YAML UI builder (no HTML/CSS)"
-            className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors border-l border-slate-600 ${
               viewMode === 'frontend-yaml'
                 ? 'bg-emerald-600 text-white'
-                : frontendYaml
-                  ? 'text-emerald-300 hover:bg-slate-600'
-                  : 'text-slate-300 hover:bg-slate-600'
+                : uiEditorAccess.allowed
+                  ? frontendYaml
+                    ? 'text-emerald-300 hover:bg-slate-600'
+                    : 'text-slate-300 hover:bg-slate-600'
+                  : 'text-slate-500 hover:bg-slate-600 cursor-not-allowed opacity-60'
             }`}
           >
             <Blocks className="w-4 h-4" />
@@ -620,15 +627,19 @@ export default function Toolbar() {
       />
 
       {/* Validation Modal (habit checks + connection graph) */}
-      <ValidationModal
-        isOpen={showValidationModal}
-        onClose={() => setShowValidationModal(false)}
-        habits={habits as ValidatableHabit[]}
-        graphReport={graphReport}
-        allIssues={allValidationIssues}
-        frontendYaml={frontendYaml}
-        envContent={envContent}
-      />
+      {showValidationModal && (
+        <Suspense fallback={null}>
+          <ValidationModal
+            isOpen={showValidationModal}
+            onClose={() => setShowValidationModal(false)}
+            habits={habits as ValidatableHabit[]}
+            graphReport={graphReport}
+            allIssues={allValidationIssues}
+            frontendYaml={frontendYaml}
+            envContent={envContent}
+          />
+        </Suspense>
+      )}
 
       {/* Dialog */}
       <Dialog

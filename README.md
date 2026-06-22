@@ -7,9 +7,7 @@
 
 
 
-Habits allows you to create Agents, Automations, Full-Stacks, SaaS and Micro-Apps. 
-
-Under the hood Habits is a Logic & UI builder (Base, from Basal Ganglia) and decentralized runner (Cortex, as in Frontal Cortex) that you can control, audit, monitor and extend (AGPL-3.0)
+The world's most portable workflows: ship automations, agents, and SaaS on server, mobile, desktop, or edge.
 
 https://github.com/user-attachments/assets/5280e6ec-5dfb-46c6-a995-5c7f03b87c5b
 
