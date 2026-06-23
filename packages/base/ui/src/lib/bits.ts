@@ -32,3 +32,10 @@ export const BITS: BitDefinition[] = catalogData
     level: entry.level,
   }));
 
+export const BUILTIN_BIT_NAMES = new Set(BITS.map((b) => b.name));
+
+export function formatBitModuleLabel(name: string, displayName?: string): string {
+  if (displayName) return displayName;
+  return name.replace(/^@ha-bits\/bit-/, '').replace(/^@ha-bits\//, '');
+}
+

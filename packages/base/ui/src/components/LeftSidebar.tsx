@@ -17,7 +17,7 @@ import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 import { convertWorkflowWithConnections, detectWorkflowType } from '../lib/workflowConverter';
 import { slugify } from '../lib/exportUtils';
 import { api } from '../lib/api';
-import { BITS } from '../lib/bits';
+import { BITS, BUILTIN_BIT_NAMES, formatBitModuleLabel } from '../lib/bits';
 import AddModuleModal from './AddModuleModal';
 import CodeViewModal from './CodeViewModal';
 import ModuleIcon from './ModuleIcon';
@@ -244,6 +244,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
 
   // ===== NODE PALETTE HANDLERS =====
   const bitsModules = availableModules.filter((m) => m.framework === 'bits');
+  const extraBitsModules = bitsModules.filter((m) => !BUILTIN_BIT_NAMES.has(m.name));
   const scriptModules = availableModules.filter((m) => m.framework === 'script');
 
   const handleAddNode = (framework: 'script' | 'bits', module: string, label: string) => {
@@ -566,7 +567,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                   Add Script
                 </button>
 
-                {/* Built-in Bits */}
+                {/* Built-in Bits (catalog + modules added via Add Module) */}
                 <div className="space-y-1">
                   <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Built-in Bits</h4>
                   {BITS.map((bit) => {
@@ -589,31 +590,27 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                       </button>
                     );
                   })}
-                </div>
-
-                {/* Custom Bits modules */}
-                {false && bitsModules.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Custom Bits</h4>
-                    {bitsModules.map((module) => (
+                  {extraBitsModules.map((module) => {
+                    const label = formatBitModuleLabel(module.name, module.displayName);
+                    return (
                       <button
-                        key={`bits-${module.name}`}
-                        onClick={() => handleAddNode('bits', module.name, module.name.replace('bit-', ''))}
+                        key={`bit-${module.name}`}
+                        onClick={() => handleAddNode('bits', module.name, label)}
                         className="w-full text-left px-2 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 rounded transition-colors group"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between overflow-hidden">
                           <div className="flex items-center gap-1.5">
                             <ModuleIcon logoUrl={module.logoUrl} className="w-3.5 h-3.5 text-emerald-400 shrink-0" fallbackIcon="Zap" />
                             <span className="text-xs text-emerald-400 truncate">
-                              {module.displayName || module.name.replace('bit-', '')}
+                              {label}
                             </span>
                           </div>
                           <Plus className="w-3.5 h-3.5 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </div>
                       </button>
-                    ))}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
 
                 {/* Script modules */}
                 {scriptModules.length > 0 && (
