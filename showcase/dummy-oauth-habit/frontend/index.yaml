@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: dummy-oauth-habit
+  title: Dummy OAuth Habit
+  subtitle: Verify Mock OAuth against localhost:9999
+  icon: "lucide:Key"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Dummy OAuth Habit
+    subtitle: "Connect Mock OAuth, then verify userinfo"
+    icon: "lucide:Key"
+
+state:
+  verifyResult: null
+  error: null
+
+actions:
+  checkAuth:
+    type: oauth
+    oauth:
+      statusUrl: /oauth/status
+      initUrl: /oauth/bit-oauth-mock/init
+  verify:
+    method: POST
+    endpoint: /api/dummy-oauth-habit
+    body: {}
+    responsePath: output
+    onSuccess:
+      set:
+        verifyResult: "$response"
+        error: null
+    onError:
+      set:
+        error: "$error.message"
+        verifyResult: null
+
+widgets:
+  - kind: oauth-status-card
+    action: checkAuth
+    provider: Mock OAuth
+    connectedLabel: Connected to Mock OAuth (localhost:9999)
+    disconnectedLabel: Connect Mock OAuth to verify against the mock server
+  - kind: card
+    title: Verify connection
+    subtitle: Calls GET http://localhost:9999/userinfo with your OAuth token
+    children:
+      - kind: button
+        label: Test Mock OAuth
+        action: verify
+        tone: primary
+        loadingLabel: "Checking..."
+      - kind: alert
+        level: success
+        showWhen: state.verifyResult && state.verifyResult.profile && state.verifyResult.profile.sub && !state.verifyResult.profile._skipped
+        text: "Mock OAuth is connected. Fetched userinfo from http://localhost:9999."
+      - kind: result-panel
+        showWhen: state.verifyResult && state.verifyResult.profile && state.verifyResult.profile.sub && !state.verifyResult.profile._skipped
+        title: Userinfo
+        source: state.verifyResult.profile
+        sections:
+          - kind: kv-grid
+            source: state.verifyResult.profile
+            fields:
+              - { key: sub, label: Subject }
+              - { key: name, label: Name }
+              - { key: email, label: Email }
+              - { key: preferred_username, label: Username }
+      - kind: alert
+        level: error
+        showWhen: state.verifyResult && state.verifyResult.failure && state.verifyResult.failure.result
+        text: "{{state.verifyResult.failure.result.message}}"
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

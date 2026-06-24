@@ -2,7 +2,7 @@
  * @ha-bits/bit-oauth-mock
  * 
  * Mock OAuth2 integration bit for testing OAuth2 authentication flow.
- * Works with the mock OAuth server in playgrounds/oauth2/mock-oauth-server.ts.
+ * Works with @ha-bits/mock-oauth (oauth2-mock-server on localhost:9999).
  * 
  * This bit demonstrates:
  * - Using BitAuth.OAuth2 for authentication (with PKCE support)
@@ -23,16 +23,15 @@ interface OAuthMockContext {
 }
 
 interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  avatar: string;
-  scope: string;
-  authenticated_at: string;
+  sub?: string;
+  name?: string;
+  email?: string;
+  preferred_username?: string;
+  picture?: string;
+  [key: string]: unknown;
 }
 
-// Mock OAuth server configuration (localhost:9999)
+// Mock OAuth server (@ha-bits/mock-oauth, default port 9999)
 const MOCK_OAUTH_SERVER = 'http://localhost:9999';
 
 /**
@@ -67,17 +66,17 @@ const oauthMockBit = {
   runtime: 'all',
   
   // OAuth2 PKCE authentication configuration
-  // This tells the system to use OAuth2 PKCE flow with the mock server
+  // Use string literals for authorizationUrl/tokenUrl (Tauri secrets UI parses the bundle with regex).
   auth: {
     type: 'OAUTH2',
     displayName: 'Mock OAuth',
     description: 'OAuth2 authentication with the mock server',
     required: true,
-    authorizationUrl: `${MOCK_OAUTH_SERVER}/authorize`,
-    tokenUrl: `${MOCK_OAUTH_SERVER}/token`,
+    authorizationUrl: 'http://localhost:9999/authorize',
+    tokenUrl: 'http://localhost:9999/token',
     clientId: 'mock-client-id',
     // clientSecret is optional for PKCE flow
-    scopes: ['read', 'profile'],
+    scopes: ['openid', 'profile', 'email'],
   },
   
   actions: {
@@ -94,7 +93,7 @@ const oauthMockBit = {
           throw new Error('No OAuth token available. Please complete the OAuth flow first.');
         }
         
-        const profile = await authenticatedRequest('/api/me', context.auth.accessToken);
+        const profile = await authenticatedRequest('/userinfo', context.auth.accessToken);
         return profile;
       },
     },

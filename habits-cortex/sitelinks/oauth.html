@@ -67,18 +67,30 @@
       font-size: 13px;
       font-weight: 400;
     }
-    .status { font-size: 12px; color: #555; margin-top: 8px; }
-    .dev-fallback {
+    .alt-fallback {
       display: none;
       margin-top: 12px;
       flex-direction: column;
       align-items: center;
       gap: 10px;
     }
-    .btn-dev {
+    .btn-alt {
       background: #2a2a2a;
       color: #e5e5e5;
       border: 1px solid #3a3a3a;
+    }
+    .hint {
+      font-size: 12px;
+      color: #555;
+    }
+    kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #3a3a3a;
+      background: #1a1a1a;
+      font-size: 11px;
+      color: #aaa;
     }
   </style>
 </head>
@@ -89,35 +101,49 @@
   <div class="spinner" id="spinner"></div>
   <div class="fallback" id="fallback">
     <a class="btn" id="openBtn" href="#">Open Cortex</a>
-    <p class="status" id="statusMsg"></p>
     <a class="btn btn-ghost" href="https://habits.codenteam.com" id="storeLink" target="_blank">Get the app</a>
   </div>
-  <div class="dev-fallback" id="devFallback">
-    <a class="btn btn-dev" id="devOpenBtn" href="#">Open Cortex Dev</a>
-    <p class="status">For local development builds only</p>
+  <div class="alt-fallback" id="devFallback">
+    <a class="btn btn-alt" id="devOpenBtn" href="#">Open Cortex Dev</a>
+    <p class="hint">Local <code>tauri dev</code> builds · <kbd>Ctrl</kbd>+<kbd>D</kbd></p>
+  </div>
+  <div class="alt-fallback" id="buildDebugFallback">
+    <a class="btn btn-alt" id="buildDebugOpenBtn" href="#">Open Cortex Debug</a>
+    <p class="hint"><code>pnpm build:debug</code> builds · <kbd>Ctrl</kbd>+<kbd>B</kbd></p>
   </div>
 
   <script>
     (function () {
       var ua = navigator.userAgent;
-      var params = window.location.search; // keep full query string, e.g. ?code=...&state=...
-      var hash   = window.location.hash;   // keep hash too if present
+      var params = window.location.search;
+      var hash   = window.location.hash;
 
-      // Detect platform
       var isIOS     = /iP(hone|ad|od)/.test(ua);
       var isAndroid = /Android/.test(ua);
       var isMobile  = isIOS || isAndroid;
-      var isDesktop = !isMobile; // Windows, macOS, Linux
+      var isDesktop = !isMobile;
 
       var deepLink = 'habits-cortex://oauth' + params + hash;
       var devDeepLink = 'habits-cortex-dev://oauth' + params + hash;
+      var buildDebugDeepLink = 'habits-cortex-build-debug://oauth' + params + hash;
+
+      var devFallback = document.getElementById('devFallback');
+      var buildDebugFallback = document.getElementById('buildDebugFallback');
+
+      function showAltFallbacks() {
+        if (!isDesktop) return;
+        devFallback.style.display = 'flex';
+        buildDebugFallback.style.display = 'flex';
+        document.getElementById('devOpenBtn').href = devDeepLink;
+        document.getElementById('buildDebugOpenBtn').href = buildDebugDeepLink;
+      }
 
       function showFallback(msg) {
         document.getElementById('spinner').style.display = 'none';
         document.getElementById('msg').textContent = msg;
-        var fb = document.getElementById('fallback');
-        fb.style.display = 'flex';
+        document.getElementById('fallback').style.display = 'flex';
         document.getElementById('openBtn').href = deepLink;
+        showAltFallbacks();
         if (isIOS) {
           document.getElementById('storeLink').href = 'https://apps.apple.com/app/id6741418040';
           document.getElementById('storeLink').textContent = 'Download on the App Store';
@@ -130,39 +156,25 @@
         }
       }
 
-      if (isDesktop) {
-        // Desktop: custom scheme redirect. Show fallback after 2s if app not installed.
-        document.getElementById('msg').textContent = 'Opening the desktop app...';
+      document.getElementById('msg').textContent = 'Opening the app...';
+      window.location.href = deepLink;
+      setTimeout(function () {
+        showFallback(isMobile ? "Cortex doesn't seem to be installed." : "Couldn't open the app automatically.");
+      }, 2000);
 
-        // Try to open the custom scheme
-        window.location.href = deepLink;
-
-        setTimeout(function () {
-          // If we're still here, the app didn't open
-          showFallback("Couldn't open the app automatically.");
-          document.getElementById('statusMsg').textContent = 'If Cortex is installed, click the button above.';
-        }, 2000);
-
-      } else {
-        // Mobile: universal/app links should have already intercepted this URL.
-        // If we're here, app isn't installed. Try custom scheme anyway.
-        document.getElementById('msg').textContent = 'Opening the app...';
-
-        window.location.href = deepLink;
-
-        setTimeout(function () {
-          showFallback("Cortex doesn't seem to be installed.");
-        }, 2000);
-      }
-
-      // Hidden dev shortcut: Ctrl+D reveals the dev build fallback.
-      var devFallback = document.getElementById('devFallback');
       document.addEventListener('keydown', function (e) {
-        if (e.key !== 'd' && e.key !== 'D') return;
         if (!e.ctrlKey) return;
-        e.preventDefault();
-        devFallback.style.display = 'flex';
-        document.getElementById('devOpenBtn').href = devDeepLink;
+        if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          devFallback.style.display = 'flex';
+          document.getElementById('devOpenBtn').href = devDeepLink;
+          return;
+        }
+        if (e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          buildDebugFallback.style.display = 'flex';
+          document.getElementById('buildDebugOpenBtn').href = buildDebugDeepLink;
+        }
       });
     })();
   </script>

@@ -54,6 +54,7 @@ nodes:
 ## Used In Showcases
 
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
 
 <style>
 .bit-meta {

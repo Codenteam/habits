@@ -22,13 +22,32 @@ import { getBaseUiDistPath } from "@ha-bits/core/pathUtils";
 import { LoggerFactory } from "@ha-bits/core/logger";
 import { setupRoutes } from "./setupRoutes";
 import { createResponse } from "./helpers";
-import { loadModulesConfig, isModuleCloned, isModuleBuilt } from "@ha-bits/cortex/utils/moduleLoader";
-import { ensureModuleReady } from "@ha-bits/cortex/utils/moduleCloner";
+import { preinstallModules } from "@ha-bits/cortex/utils/moduleLoader";
+import { ensureHabitsProjectFiles } from "@ha-bits/cortex-core/utils/ensureProject";
+import { defaultModules } from "@ha-bits/core";
 
 const logger = LoggerFactory.getRoot();
 
 const base = "/api";
 const uiApiBase = "/habits/base/api"; // UI sends requests here, we rewrite to /api
+
+const projectSetup = ensureHabitsProjectFiles();
+
+if (projectSetup.firstRun) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('  First-time Habits setup');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  if (projectSetup.createdEnv) {
+    console.log('  ✅ Created .env');
+  }
+  if (projectSetup.createdModules) {
+    console.log(`  ✅ Created modules.json (${defaultModules.modules.length} bits)`);
+  }
+  if (projectSetup.createdEnv || projectSetup.createdModules) {
+    console.log('');
+  }
+  console.log('📦 Downloading bits (first run — may take a minute)...\n');
+}
 
 // Load .env from server directory first, then fall back to workspace root
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -137,46 +156,24 @@ app.use((req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// Pre-install Modules
-// ============================================================================
-
-/**
- * Pre-install modules from modules.json if not already installed
- */
-async function preinstallModules() {
-  try {
-    const config = loadModulesConfig();
-    const modulesToInstall = config.modules.filter(m => !isModuleCloned(m) || !isModuleBuilt(m));
-    
-    if (modulesToInstall.length === 0) {
-      logger.info('✓ All modules already installed');
-      return;
-    }
-    
-    console.log(`📦 Pre-installing ${modulesToInstall.length} module(s)...`);
-    // Install sequentially to avoid race conditions when multiple npm installs
-    // write to the same prefix package.json (causes corruption on Windows)
-    for (const module of modulesToInstall) {
-      try {
-        const moduleName = module.repository;
-        logger.info(`⏳ Installing: ${moduleName}`);
-        await ensureModuleReady(module);
-        logger.info(`✓ Installed: ${moduleName}`);
-      } catch (error) {
-        logger.warn(`Failed to pre-install ${module.repository}`, { error: String(error) });
-      }
-    }
-    
-    console.log('✓ Module pre-installation complete\n');
-  } catch (error) {
-    logger.warn('Module pre-installation failed', { error: String(error) });
-  }
-}
-
-// Start server after pre-installing modules
-preinstallModules().then(() => {
+// Start server after pre-installing modules (unless CLI already did)
+function startListening() {
   app.listen(PORT, () => {
     console.log(`🚀 Habits API running on http://${HOST}:${PORT}`);
   });
-});
+}
+
+if (process.env.HABITS_SKIP_PREINSTALL === '1') {
+  startListening();
+} else {
+  preinstallModules({ verbose: projectSetup.firstRun })
+    .catch((error) => {
+      logger.warn('Module pre-installation failed', { error: String(error) });
+    })
+    .then(() => {
+      if (projectSetup.firstRun) {
+        console.log('');
+      }
+      startListening();
+    });
+}

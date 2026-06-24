@@ -57,6 +57,8 @@ nodes:
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [resume-tailor](/showcase/resume-tailor)
 - [resume-analyzer](/showcase/resume-analyzer)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [qr-database](/showcase/qr-database)
 - [product-changelog](/showcase/product-changelog)
 - [pr-review-brief](/showcase/pr-review-brief)

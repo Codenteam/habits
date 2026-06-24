@@ -160,6 +160,20 @@
     ]
   },
   {
+    "packageName": "@ha-bits/bit-sumsub",
+    "displayName": "Sumsub",
+    "description": "Sumsub identity verification and KYC integration for Habits workflows",
+    "icon": "Shield",
+    "level": "l1",
+    "categories": [
+      "sumsub",
+      "kyc",
+      "kyb",
+      "identity",
+      "verification"
+    ]
+  },
+  {
     "packageName": "@ha-bits/bit-any-of",
     "displayName": "Any Of (Race)",
     "description": "Any-of flow control bit - continues when any one incoming edge completes without waiting for others",
@@ -728,6 +742,18 @@
     ]
   },
   {
+    "packageName": "@ha-bits/bit-whatsapp",
+    "displayName": "Verify Token",
+    "description": "WhatsApp Business API integration bit for sending messages",
+    "icon": "MessageCircle",
+    "level": "l1",
+    "categories": [
+      "whatsapp",
+      "messaging",
+      "business"
+    ]
+  },
+  {
     "packageName": "@ha-bits/bit-voice",
     "displayName": "Voice",
     "description": "Always-listening voice trigger. Captures speech via microphone and triggers workflows when you stop talking or say a specific phrase.",
@@ -752,18 +778,6 @@
       "data-extraction",
       "html",
       "leads"
-    ]
-  },
-  {
-    "packageName": "@ha-bits/bit-whatsapp",
-    "displayName": "WhatsApp",
-    "description": "WhatsApp Business API integration bit for sending messages",
-    "icon": "MessageCircle",
-    "level": "l1",
-    "categories": [
-      "whatsapp",
-      "messaging",
-      "business"
     ]
   },
   {

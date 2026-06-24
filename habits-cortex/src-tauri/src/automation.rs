@@ -2,6 +2,8 @@
 #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
 use std::path::PathBuf;
 #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
+use tauri::Emitter;
+#[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
 use xcap::Window;
 
 #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
@@ -23,6 +25,8 @@ pub fn start_automation_server(app: tauri::AppHandle) {
                 let mut buf = [0; 4096];
                 if let Ok(n) = stream.read(&mut buf) {
                     let req = String::from_utf8_lossy(&buf[..n]);
+                    let first_line = req.lines().next().unwrap_or("");
+
                     if let Some(start) = req.find("\r\n\r\n") {
                         let body = req[start + 4..].trim();
 

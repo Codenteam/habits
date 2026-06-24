@@ -1,4 +1,8 @@
 /**
+ * @deprecated Use @ha-bits/mock-oauth instead:
+ *   cd packages/manage/mock-oauth && pnpm dev
+ *   or: npx tsx packages/manage/mock-oauth/src/index.ts
+ *
  * Mock OAuth2 Server with PKCE Support
  * 
  * A simple Express server that implements OAuth2 Authorization Code Flow with PKCE

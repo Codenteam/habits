@@ -2,7 +2,6 @@
  * Habits CLI - Unified command line interface
  * 
  * Usage:
- *   npx habits init
  *   npx habits cortex --config ./config.json
  *   npx habits execute --config ./config.json --id <workflow-id>
  *   npx habits discover --config ./stack.yaml
@@ -16,7 +15,6 @@
  *   npx habits pack --config ./stack.yaml --format single-executable
  * 
  * Commands:
- *   init     Initialize a new Habits project with .env and modules.json
  *   cortex   Start the Habits server (Cortex mode)
  *   execute  Execute a workflow from file or config
  *   discover Discover and validate data-flow wiring (no input required)
@@ -47,7 +45,7 @@ import {
   stringifyDataFlowBlueprint,
 } from '@ha-bits/cortex-lab';
 import { convertWorkflow, convertWorkflowWithConnections } from '@ha-bits/core';
-import { defaultModules } from './modules';
+import { ensureHabitsProject } from '@ha-bits/cortex';
 import {
   getSupportedPlatforms,
   runPackCommand as executePackCommand,
@@ -269,6 +267,11 @@ export async function runCLI(): Promise<void> {
         describe: 'Server port',
         type: 'number',
       },
+      'skip-install': {
+        describe: 'Skip installing bits from modules.json (project files only)',
+        type: 'boolean',
+        default: false,
+      },
     })
     .command('edit', false, {
       port: {
@@ -276,11 +279,8 @@ export async function runCLI(): Promise<void> {
         describe: 'Server port',
         type: 'number',
       },
-    })
-    .command('init', 'Initialize a new Habits project with .env and modules.json', {
-      force: {
-        alias: 'f',
-        describe: 'Overwrite existing files',
+      'skip-install': {
+        describe: 'Skip installing bits from modules.json (project files only)',
         type: 'boolean',
         default: false,
       },
@@ -383,9 +383,6 @@ export async function runCLI(): Promise<void> {
       case 'base':
         await runEditCommand(argv);
         break;
-      case 'init':
-        await runInitCommand(argv);
-        break;
       case 'bundle':
         await runPackCommand(argv);
         break;
@@ -442,11 +439,23 @@ async function runServerCommand(argv: any): Promise<void> {
  * Run the edit command (Base server mode)
  */
 async function runEditCommand(argv: any): Promise<void> {
-  console.log('🚀 Starting Base server (edit mode)...\n');
-  
+  const skipInstall = argv['skip-install'] === true;
+
+  await ensureHabitsProject({ skipInstall });
+
+  if (!skipInstall) {
+    process.env.HABITS_SKIP_PREINSTALL = '1';
+  }
+
+  console.log('🚀 Starting Habits Base...\n');
+
   const server = await startBaseServer({
     port: argv.port,
+    skipSetup: true,
   });
+
+  const port = argv.port || Number(process.env.PORT) || 3000;
+  console.log(`\n🎨 Habits Base ready at http://localhost:${port}/habits/base`);
   
   // Keep the process running
   process.on('SIGINT', async () => {
@@ -636,44 +645,6 @@ async function runConvertCommand(argv: any): Promise<void> {
   } else {
     console.log(output);
   }
-}
-/**
- * Run the init command - initialize a new Habits project
- */
-async function runInitCommand(argv: any): Promise<void> {
-  const cwd = process.cwd();
-  const envPath = path.join(cwd, '.env');
-  const modulesPath = path.join(cwd, 'modules.json');
-  
-  console.log('🚀 Initializing Habits project...\n');
-  
-  // Default .env content
-  const envContent = `HABITS_MODULES_MODE=open
-HABITS_ALLOW_SERVE=true
-`;
-
-  // Default modules.json content
-  const modulesContent = defaultModules;
-
-  // Create .env file
-  if (fs.existsSync(envPath) && !argv.force) {
-    console.log(`⚠️  .env already exists (use --force to overwrite)`);
-  } else {
-    fs.writeFileSync(envPath, envContent);
-    console.log(`✅ Created .env`);
-  }
-
-  // Create modules.json file
-  if (fs.existsSync(modulesPath) && !argv.force) {
-    console.log(`⚠️  modules.json already exists (use --force to overwrite)`);
-  } else {
-    fs.writeFileSync(modulesPath, JSON.stringify(modulesContent, null, 2));
-    console.log(`✅ Created modules.json`);
-  }
-
-  console.log('\n📦 Project initialized! Next steps:');
-  console.log('   1. Run: npx habits base');
-  console.log('   2. Open: http://localhost:3000/habits/base');
 }
 
 /**

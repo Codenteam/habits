@@ -1,11 +1,11 @@
 ---
-title: "HubSpot CRM"
-description: "HubSpot CRM integration bit for contacts, deals, and lead management"
+title: "Sumsub"
+description: "Sumsub identity verification and KYC integration for Habits workflows"
 aside: false
 ---
 
 <script setup>
-import { Users } from 'lucide-vue-next'
+import { Shield } from 'lucide-vue-next'
 import { onMounted } from 'vue'
 import { useData } from 'vitepress'
 
@@ -16,9 +16,9 @@ onMounted(async () => {
     const res = await fetch(`${base}bits-stats.json`)
     if (res.ok) {
       const data = await res.json()
-      const stats = data.stats['@ha-bits/bit-hubspot']
+      const stats = data.stats['@ha-bits/bit-sumsub']
       if (stats) {
-        const el = document.querySelector('[data-package="@ha-bits/bit-hubspot"] .download-count')
+        const el = document.querySelector('[data-package="@ha-bits/bit-sumsub"] .download-count')
         if (el) el.textContent = stats.downloadsFormatted
       }
     }
@@ -26,26 +26,26 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="Users" :size="32" class="inline-icon" /> HubSpot CRM
+# <component :is="Shield" :size="32" class="inline-icon" /> Sumsub
 
 <div class="bit-meta">
-  <span class="bit-package">`@ha-bits/bit-hubspot`</span>
-  <span class="bit-version">v1.0.1</span>
-  <span class="bit-downloads" data-package="@ha-bits/bit-hubspot">📥 <span class="download-count">78</span> downloads</span>
-  <span class="bit-categories"><span class="bit-category">hubspot</span> <span class="bit-category">crm</span> <span class="bit-category">contacts</span> <span class="bit-category">deals</span> <span class="bit-category">leads</span></span>
+  <span class="bit-package">`@ha-bits/bit-sumsub`</span>
+  <span class="bit-version">v1.0.0</span>
+  <span class="bit-downloads" data-package="@ha-bits/bit-sumsub">📥 <span class="download-count">-</span> downloads</span>
+  <span class="bit-categories"><span class="bit-category">sumsub</span> <span class="bit-category">kyc</span> <span class="bit-category">kyb</span> <span class="bit-category">identity</span> <span class="bit-category">verification</span></span>
 </div>
 
-HubSpot CRM integration bit for contacts, deals, and lead management
+Sumsub identity verification and KYC integration for Habits workflows
 
 ## Usage
 
 ```yaml
 # In your habit YAML
 nodes:
-  - id: my-bit-hubspot-node
+  - id: my-bit-sumsub-node
     type: bit
     framework: bits
-    module: "@ha-bits/bit-hubspot"
+    module: "@ha-bits/bit-sumsub"
     action: "action_name"
     data:
       # action properties...
@@ -53,8 +53,7 @@ nodes:
 
 ## Used In Showcases
 
-- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
-- [ai-agent-lead-enrichment](/showcase/ai-agent-lead-enrichment)
+- [finance-banking-customer-onboarding](/showcase/finance-banking-customer-onboarding)
 
 <style>
 .bit-meta {

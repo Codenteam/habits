@@ -1,0 +1,92 @@
+# habit: dummy-oauth-habit
+#
+# Verifies Mock OAuth connection by calling the mock server's /userinfo endpoint.
+# If OAuth is not connected, returns a structured failure (no thrown error).
+
+id: dummy-oauth-habit
+name: Dummy OAuth Habit
+description: Verify Mock OAuth connection against http://localhost:9999
+version: "1.3"
+
+nodes:
+  - id: checkToken
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-oauth-mock"
+      operation: checkToken
+      label: Check OAuth Token
+      auth:
+        clientId: "{{habits.env.MOCK_OAUTH_CLIENT_ID}}"
+      params: {}
+
+  - id: routeConnected
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      label: Connected?
+      params:
+        mode: if
+        branches:
+          - value1: "{{checkToken.isValid}}"
+            operator: equals
+            value2: true
+            output: connected
+        includeElse: true
+        defaultOutput: disconnected
+
+  - id: getProfile
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-oauth-mock"
+      operation: getProfile
+      label: Fetch Mock Userinfo
+      auth:
+        clientId: "{{habits.env.MOCK_OAUTH_CLIENT_ID}}"
+      params: {}
+
+  - id: failureResult
+    type: script
+    data:
+      framework: script
+      source: inline
+      label: OAuth verify failure
+      params:
+        tokenInfo: "{{checkToken}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(tokenInfo) {
+            let message = 'Mock OAuth is not connected. Connect Mock OAuth in Secrets, then try again.';
+            if (tokenInfo?.hasToken && tokenInfo?.isExpired) {
+              message = 'Mock OAuth token expired. Reconnect Mock OAuth and try again.';
+            } else if (tokenInfo?.hasToken && !tokenInfo?.isValid) {
+              message = 'Mock OAuth token is invalid. Reconnect Mock OAuth and try again.';
+            }
+            return {
+              ok: false,
+              status: 'failure',
+              message,
+              tokenInfo,
+            };
+          }
+
+edges:
+  - source: checkToken
+    target: routeConnected
+  - source: routeConnected
+    target: getProfile
+    sourceHandle: branch-0
+  - source: routeConnected
+    target: failureResult
+    sourceHandle: branch-1
+
+output:
+  profile: "{{getProfile}}"
+  failure: "{{failureResult}}"

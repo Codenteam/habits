@@ -10,7 +10,7 @@
 import express, { Application, Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { startServer as startCortexServer, WorkflowExecutorServer, customRequire } from '@ha-bits/cortex';
+import { startServer as startCortexServer, WorkflowExecutorServer, customRequire, ensureHabitsProject } from '@ha-bits/cortex';
 import { findBaseServerPath, findUiPath } from "@ha-bits/core/pathUtils";
 export interface HabitsServerOptions {
   /** Path to config file for workflows */
@@ -148,6 +148,8 @@ export async function startHabitsServer(options: HabitsServerOptions): Promise<W
 export interface BaseServerOptions {
   /** Port to listen on (optional, defaults to 3000) */
   port?: number;
+  /** Skip implicit project setup (CLI already ran ensureHabitsProject) */
+  skipSetup?: boolean;
 }
 
 export interface BaseServer {
@@ -158,6 +160,11 @@ export interface BaseServer {
  * Start the Base server (edit mode) - serves only the Base UI and API
  */
 export async function startBaseServer(options: BaseServerOptions): Promise<BaseServer> {
+  if (!options.skipSetup) {
+    await ensureHabitsProject({ quiet: true });
+    process.env.HABITS_SKIP_PREINSTALL = '1';
+  }
+
   // Dynamic import to avoid loading base server code when not needed
   const baseServerPath = findBaseServerPath();
   
@@ -180,9 +187,6 @@ export async function startBaseServer(options: BaseServerOptions): Promise<BaseS
   // The base server auto-starts on import (app.listen at bottom of file)
   // Use customRequire to dynamically require at runtime (includes semver pre-load fix)
   customRequire(baseServerPath, baseServerDir);
-  
-  const port = options.port || 3000;
-  console.log(`\n🎨 Base UI available at: http://localhost:${port}/habits/base`);
   
   return {
     stop: async () => {

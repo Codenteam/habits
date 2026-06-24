@@ -1,0 +1,26 @@
+name: Dummy OAuth Habit
+description: Minimal habit for testing OAuth Connect in Cortex dev
+
+longDescription: |
+  Use this habit to verify the full OAuth flow in the Tauri dev app:
+  mock OAuth server → system browser → habits.codenteam.com/oauth.html → habits-cortex-dev deep link.
+
+  The workflow checks whether Mock OAuth is connected, then calls GET /userinfo on
+  http://localhost:9999. The frontend shows a clear success or failure result.
+
+tags:
+  - oauth
+  - testing
+  - dev
+
+difficulty: beginner
+
+featured: false
+quickDownload: false
+
+requirements:
+  - MOCK_OAUTH_CLIENT_ID environment key
+  - @ha-bits/mock-oauth server on port 9999
+
+habits:
+  - habit.yaml

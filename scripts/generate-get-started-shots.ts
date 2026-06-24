@@ -105,7 +105,7 @@ const SHOTS: ShotDef[] = [
   { name: 'desktop-offline',            source: 'template' },
 
   // ── Developer ───────────────────────────────────────────────────────────────
-  // Terminal mockup: `npx habits@latest init my-habit` scaffold command + output
+  // Terminal mockup: `npx habits@latest base` first-run setup + server output
   { name: 'developer-init',             source: 'template' },
   // VS Code mockup with habit.ts open and TypeScript bit definitions visible
   { name: 'developer-vscode',           source: 'template' },

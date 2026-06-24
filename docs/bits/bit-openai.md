@@ -74,6 +74,8 @@ nodes:
 - [rss-digest-summarizer](/showcase/rss-digest-summarizer)
 - [resume-tailor](/showcase/resume-tailor)
 - [resume-analyzer](/showcase/resume-analyzer)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [product-changelog](/showcase/product-changelog)
 - [pr-review-brief](/showcase/pr-review-brief)
 - [meeting-notes](/showcase/meeting-notes)

@@ -2522,9 +2522,13 @@ function openHabitViewer(yamlContentOrHabitId) {
     yamlContent = foundYaml;
   }
   
-  // URL-encode the YAML content for the habit parameter
-  const encodedContent = encodeURIComponent(yamlContent);
-  const habitViewerUrl = `./habit-viewer/index.html#habit=${encodedContent}&hideMinimap=true`;
+  // Pass YAML via localStorage to avoid URL length limits and encoding issues
+  const storageKey = `habit-viewer-${Date.now()}`;
+  localStorage.setItem(storageKey, yamlContent);
+  const viewerParams = new URLSearchParams();
+  viewerParams.set('storageKey', storageKey);
+  viewerParams.set('hideMinimap', 'true');
+  const habitViewerUrl = `./habit-viewer/index.html#${viewerParams.toString()}`;
   
   // Create fullscreen iframe with small close button
   const viewerHtml = `
@@ -2792,6 +2796,25 @@ function extractBitModulesFromYaml(content) {
   return results;
 }
 
+function parseScopesFromBundleSlice(authSlice, moduleSlice) {
+  const inlineMatch = authSlice.match(/scopes:\s*\[([^\]]+)\]/);
+  if (inlineMatch) {
+    return [...inlineMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+  }
+
+  const varMatch = authSlice.match(/scopes:\s*([A-Za-z_][A-Za-z0-9_]*)/);
+  if (varMatch) {
+    const varName = varMatch[1];
+    const varDefPattern = new RegExp(`(?:var|const|let)\\s+${varName}\\s*=\\s*\\[([^\\]]+)\\]`);
+    const varDefMatch = moduleSlice.match(varDefPattern);
+    if (varDefMatch) {
+      return [...varDefMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1]);
+    }
+  }
+
+  return [];
+}
+
 function getOAuthBitsFromBundleSource(bundleJs) {
   if (!bundleJs) return [];
   const results = [];
@@ -2813,10 +2836,7 @@ function getOAuthBitsFromBundleSource(bundleJs) {
     const authorizationUrl =
       authSlice.match(/authorizationUrl:\s*["']([^"']+)["']/)?.[1];
     const tokenUrl = authSlice.match(/tokenUrl:\s*["']([^"']+)["']/)?.[1];
-    const scopesMatch = authSlice.match(/scopes:\s*\[([^\]]+)\]/);
-    const scopes = scopesMatch
-      ? [...scopesMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1])
-      : [];
+    const scopes = parseScopesFromBundleSlice(authSlice, slice);
     const clientSecret = authSlice.match(/clientSecret:\s*["']([^"']+)["']/)?.[1];
     let extraAuthParams;
     const extraMatch = authSlice.match(/extraAuthParams:\s*\{([^}]+)\}/);

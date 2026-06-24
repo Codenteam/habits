@@ -51,6 +51,10 @@ nodes:
       # action properties...
 ```
 
+## Used In Showcases
+
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
+
 <style>
 .bit-meta {
   display: flex;

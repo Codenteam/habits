@@ -146,6 +146,8 @@ function getUrlParams() {
   return {
     // Habit content - passed as URL-encoded string (use \n for newlines)
     habit: get('habit'),
+    // localStorage key set by parent frame (Cortex app) to avoid URL length limits
+    storageKey: get('storageKey'),
     // URL to fetch habit content from (relative or absolute)
     url: get('url'),
     // Render format: svg, png, html, or interactive (default)
@@ -178,6 +180,12 @@ function resolveUrl(url: string): string {
   // Relative URL - resolve against current origin
   return new URL(url, window.location.origin).href;
 }
+
+/**
+ * Cache habit content read from localStorage so React StrictMode's double-mount
+ * does not fail when the storage key is cleared on the first effect run.
+ */
+const habitStorageCache = new Map<string, string>();
 
 /**
  * Decode habit content - handles URL-encoded content (potentially double-encoded)
@@ -222,11 +230,15 @@ function App() {
     const hashParams = new URLSearchParams(hashStr);
 
     if (formParams.habit) {
-      hashParams.set('habit', encodeURIComponent(formParams.habit));
+      const storageKey = `habit-viewer-${Date.now()}`;
+      localStorage.setItem(storageKey, formParams.habit);
+      hashParams.set('storageKey', storageKey);
+      hashParams.delete('habit');
       hashParams.delete('url');
     } else if (formParams.url) {
       hashParams.set('url', formParams.url);
       hashParams.delete('habit');
+      hashParams.delete('storageKey');
     }
 
     // Set hash then force reload (hash-only changes don't trigger navigation/reload)
@@ -270,7 +282,7 @@ function App() {
 
   useEffect(() => {
     async function loadHabit() {
-      if (!params.habit && !params.url) {
+      if (!params.habit && !params.url && !params.storageKey) {
         // Show input form instead of error
         setShowInputForm(true);
         setState(s => ({
@@ -283,7 +295,18 @@ function App() {
       let content = '';
 
       try {
-        if (params.url) {
+        if (params.storageKey) {
+          if (habitStorageCache.has(params.storageKey)) {
+            content = habitStorageCache.get(params.storageKey)!;
+          } else {
+            content = localStorage.getItem(params.storageKey) || '';
+            if (!content) {
+              throw new Error('Habit content not found. Please select or paste the YAML again.');
+            }
+            habitStorageCache.set(params.storageKey, content);
+            localStorage.removeItem(params.storageKey);
+          }
+        } else if (params.url) {
           // Fetch content from URL
           const resolvedUrl = resolveUrl(params.url);
           const response = await fetch(resolvedUrl);
@@ -344,7 +367,7 @@ function App() {
     }
 
     loadHabit();
-  }, [params.habit, params.url]);
+  }, [params.habit, params.url, params.storageKey]);
 
   // Handle export after render
   useEffect(() => {

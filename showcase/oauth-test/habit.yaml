@@ -4,7 +4,7 @@
 # 
 # This workflow tests the OAuth2 PKCE flow with the mock OAuth server.
 # Before running:
-#   1. Start the mock OAuth server: cd playgrounds/oauth2 && npx ts-node mock-oauth-server.ts
+#   1. Start the mock OAuth server: cd packages/manage/mock-oauth && pnpm dev
 #   2. Start Cortex with this workflow: npx nx dev @ha-bits/cortex --config showcase/oauth-test/stack.yaml
 #   3. Visit the OAuth URL printed in the terminal
 #   4. Click "Allow" on the consent page

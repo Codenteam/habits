@@ -162,6 +162,30 @@ export function getTauriOAuthHandlerScript(options: TauriOAuthHandlerOptions): s
   }
 
   /**
+   * Resolve fetch for outbound HTTP (e.g. OAuth token exchange).
+   * Uses Tauri HTTP plugin when available — same backend as habits-fetch-proxy
+   * pass-through — so requests bypass webview CORS restrictions.
+   */
+  function getProxiedFetch() {
+    var w = window;
+    while (w) {
+      try {
+        var tauri = w.__TAURI__;
+        if (tauri && tauri.http && typeof tauri.http.fetch === 'function') {
+          return function (url, init) {
+            return tauri.http.fetch(url, init);
+          };
+        }
+        if (!w.parent || w.parent === w) break;
+        w = w.parent;
+      } catch (e) {
+        break;
+      }
+    }
+    return window.fetch.bind(window);
+  }
+
+  /**
    * Exchange authorization code for tokens
    */
   async function exchangeCodeForTokens(code, state, config) {
@@ -180,7 +204,8 @@ export function getTauriOAuthHandlerScript(options: TauriOAuthHandlerOptions): s
       params.set('client_secret', config.clientSecret);
     }
     
-    var response = await fetch(config.tokenUrl, {
+    var proxiedFetch = getProxiedFetch();
+    var response = await proxiedFetch(config.tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
