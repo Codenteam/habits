@@ -203,6 +203,22 @@ export default defineConfig({
           { text: 'Conditional (If)', link: '/bits/bit-if' },
         ]
       },
+      // Integrations
+      {
+        text: 'Integrations',
+        items: [
+          { text: 'Browse All', link: '/integrations/' },
+          { text: 'Gmail (IMAP/SMTP)', link: '/integrations/gmail/' },
+          { text: 'OpenAI', link: '/integrations/openai/' },
+          { text: 'Slack', link: '/integrations/slack/' },
+          { text: 'HubSpot CRM', link: '/integrations/hubspot/' },
+          { text: 'Google Drive', link: '/integrations/google-drive/' },
+          { text: 'Google Sheets', link: '/integrations/google-sheets/' },
+          { text: 'Telegram', link: '/integrations/telegram/' },
+          { text: 'LinkedIn', link: '/integrations/linkedin/' },
+          { text: 'WhatsApp Business', link: '/integrations/whatsapp/' },
+        ]
+      },
       // Extra reading
       {
         text: 'Extra Reading',

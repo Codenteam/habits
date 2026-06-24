@@ -31,7 +31,7 @@ HABITS_WHATSAPP_VERIFY_TOKEN=your_verify_token
 ## 1. Create a Meta Business Account
 
 1. Log in to your [Facebook account](https://www.facebook.com/).
-2. Open [Meta Business login](https://business.facebook.com/business/loginpage/?next=https%3A%2F%2Fbusiness.facebook.com%2F%3Futm_source%3Dchatgpt.com%26nav_ref%3Dbiz_unified_f3_login_page_to_mbs&login_options%5B0%5D=FB&login_options%5B1%5D=IG&login_options%5B2%5D=SSO&config_ref=biz_login_tool_flavor_mbs).
+2. Open [Meta Business login](https://business.facebook.com/).
 3. Sign in with your Facebook account, complete the form, and submit to create your business account.
 
 ## 2. Create a Meta App

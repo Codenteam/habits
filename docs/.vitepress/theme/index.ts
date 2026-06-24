@@ -16,6 +16,8 @@ import ShowcaseCard from './components/ShowcaseCard.vue'
 import ShowcaseHero from './components/ShowcaseHero.vue'
 import BitsGrid from './components/BitsGrid.vue'
 import BitsCard from './components/BitsCard.vue'
+import IntegrationsGrid from './components/IntegrationsGrid.vue'
+import IntegrationsCard from './components/IntegrationsCard.vue'
 import Icon from './components/Icon.vue'
 import ComparisonLayout from './components/ComparisonLayout.vue'
 import IndustryBrowser from './components/industries/IndustryBrowser.vue'
@@ -48,6 +50,8 @@ export default {
     app.component('ShowcaseHero', ShowcaseHero)
     app.component('BitsGrid', BitsGrid)
     app.component('BitsCard', BitsCard)
+    app.component('IntegrationsGrid', IntegrationsGrid)
+    app.component('IntegrationsCard', IntegrationsCard)
     app.component('Icon', Icon)
     app.component('ComparisonLayout', ComparisonLayout)
     app.component('IndustryBrowser', IndustryBrowser)
