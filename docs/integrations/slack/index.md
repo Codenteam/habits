@@ -75,8 +75,4 @@ HABITS_SLACK_BOT_TOKEN=xoxb-...
 HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 ```
 
-## Used in Showcases
-
-- [Email Digest Summarizer](/showcase/email-digest-summarizer)
-- [RSS Digest Summarizer](/showcase/rss-digest-summarizer)
-- [Agent MCP Demo](/showcase/agent-mcp-demo) (MCP Slack server)
+<IntegrationShowcases integration="slack" />

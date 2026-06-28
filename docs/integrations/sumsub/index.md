@@ -77,9 +77,7 @@ When review completes (`applicantReviewed` with `reviewAnswer: GREEN|RED`), the 
 | `allowNextSteps` | `true` when review is completed and GREEN |
 | `blockNextSteps` | `true` when review is completed and RED |
 
-## Used in Showcases
-
-- [Sumsub + Local AI Demo](https://github.com/codenteam/habits/tree/main/showcase/sumsub-openai-demo)
+<IntegrationShowcases integration="sumsub" />
 
 ## Related Integrations
 

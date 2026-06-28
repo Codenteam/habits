@@ -84,12 +84,4 @@ EMAIL_PASSWORD=e2e
 
 Start Docker services from the project root: `cd docker && docker compose up -d`
 
-## Used in Showcases
-
-- [Email Digest Summarizer](/showcase/email-digest-summarizer)
-- [Emails Categorization](/showcase/emails-categorization)
-- [Email Ticket Routing](/showcase/email-ticket-routing)
-- [Email Send & Receive Demo](/showcase/email-demo)
-- [Email Classification](/showcase/email-classification)
-- [Invoices Processing](/showcase/invoices-processing)
-- [Smart Contact Form](https://github.com/codenteam/habits/tree/main/showcase/smart-contact-form) (SMTP notifications)
+<IntegrationShowcases integration="gmail" />

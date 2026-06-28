@@ -35,19 +35,4 @@ HABITS_OPENAI_API_KEY=sk-...
 HABITS_OPENAI_API_KEY=sk-proj-...
 ```
 
-## Used in Showcases
-
-- [Email Digest Summarizer](/showcase/email-digest-summarizer)
-- [RSS Digest Summarizer](/showcase/rss-digest-summarizer)
-- [Emails Categorization](/showcase/emails-categorization)
-- [Email Ticket Routing](/showcase/email-ticket-routing)
-- [Email Classification](/showcase/email-classification)
-- [AI Agent Lead Enrichment](/showcase/ai-agent-lead-enrichment)
-- [Client Invoice Manager](/showcase/client-invoice-manager)
-- [Invoices Processing](/showcase/invoices-processing)
-- [Real Estate Agent Leads Management](/showcase/real-estate-agent-leads-management)
-- [Real Estate Social Marketing](/showcase/real-estate-social-marketing)
-- [Social Media Multi-Posting](/showcase/social-media-multi-posting)
-- [Marketing Campaign](/showcase/marketing-campaign)
-- [Smart Contact Form](https://github.com/codenteam/habits/tree/main/showcase/smart-contact-form)
-- [Agent MCP Demo](/showcase/agent-mcp-demo)
+<IntegrationShowcases integration="openai" />

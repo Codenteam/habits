@@ -79,6 +79,4 @@ When you start the Cortex server, it prints an authorization URL. Open it in you
 HABITS_GOOGLE_DRIVE_FOLDER_ID=your-folder-id
 ```
 
-## Used in Showcases
-
-- [Client Invoice Manager](/showcase/client-invoice-manager)
+<IntegrationShowcases integration="google-drive" />
