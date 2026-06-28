@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { extractInputFields } from '@ha-bits/core';
 import { Waypoints, AlertTriangle } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectActiveHabit, selectHabits } from '../store/slices/workflowSlice';
@@ -26,7 +27,11 @@ export default function WorkflowEditor() {
     () =>
       habits
         .filter((h) => h.nodes.length > 0)
-        .map((h) => ({ id: h.id, name: h.name })),
+        .map((h) => ({
+          id: h.id,
+          name: h.name,
+          inputs: extractInputFields({ nodes: h.nodes, output: h.output }),
+        })),
     [habits],
   );
 

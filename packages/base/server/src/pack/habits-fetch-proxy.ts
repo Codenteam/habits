@@ -1,33 +1,34 @@
 /**
- * Tauri Fetch Proxy Script Template
- * 
- * Generates a script.js file that overrides the fetch function
- * to either:
- * 1. FULL mode: Execute workflows directly via HabitsBundle functions (no server)
- * 2. API mode: Proxy requests to a backend URL
+ * Habits Fetch Proxy Script
+ *
+ * Generates habits-fetch-proxy.js bundled inside .habit archives.
+ * Intercepts fetch calls for direct HabitsBundle execution in habits-cortex.
  */
 
-export type TauriFetchProxyMode = 'full' | 'api';
+export type HabitsFetchProxyMode = 'full' | 'api';
 
-export interface TauriFetchProxyOptions {
+export interface HabitsFetchProxyOptions {
   /** Execution mode: 'full' for direct function calls, 'api' for backend proxy */
-  mode: TauriFetchProxyMode;
+  mode: HabitsFetchProxyMode;
   /** Backend URL for API mode (ignored in full mode) */
   backendUrl?: string;
 }
 
+/** @deprecated Use getHabitsFetchProxyScript */
+export type TauriFetchProxyMode = HabitsFetchProxyMode;
+/** @deprecated Use HabitsFetchProxyOptions */
+export type TauriFetchProxyOptions = HabitsFetchProxyOptions;
+
 /**
  * Generate the fetch proxy script content
- * @param options Proxy configuration options
  */
-export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | string): string {
-  // Support legacy string parameter (backendUrl only, API mode)
-  const config: TauriFetchProxyOptions = typeof options === 'string' 
+export function getHabitsFetchProxyScript(options: HabitsFetchProxyOptions | string): string {
+  const config: HabitsFetchProxyOptions = typeof options === 'string'
     ? { mode: 'api', backendUrl: options }
     : options;
-  
+
   const { mode, backendUrl = '' } = config;
-  
+
   return `/**
  * Habits Fetch Proxy
  * Auto-generated - intercepts fetch calls for habit execution
@@ -89,17 +90,17 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
    */
   function shouldProxy(url) {
     if (!url) return false;
-    
+
     // Already an absolute URL - don't proxy
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return false;
     }
-    
+
     // Data URLs, blob URLs, etc - don't proxy
     if (url.startsWith('data:') || url.startsWith('blob:')) {
       return false;
     }
-    
+
     // Relative paths should be proxied
     return true;
   }
@@ -109,10 +110,10 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
    */
   function rewriteUrl(url) {
     if (!shouldProxy(url)) return url;
-    
+
     // Ensure path starts with /
     var path = url.startsWith('/') ? url : '/' + url;
-    
+
     return BACKEND_URL + path;
   }
 
@@ -123,7 +124,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
     var params = {};
     var queryStart = url.indexOf('?');
     if (queryStart === -1) return params;
-    
+
     var queryString = url.substring(queryStart + 1);
     var pairs = queryString.split('&');
     for (var i = 0; i < pairs.length; i++) {
@@ -160,17 +161,17 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
     if (method === 'GET') {
       var queryInput = parseQueryParams(fullUrl || '');
       console.log('[Habits] GET workflow execution:', workflowId, 'input:', queryInput);
-      
+
       try {
         var env = await loadSecretsEnv();
         // HabitsBundle.executeWorkflow wraps input internally as habits.input
         var execution = await window.HabitsBundle.executeWorkflow(workflowId, queryInput, { env: env });
-        
+
         console.log('[Habits] Execution result:', execution);
         console.log('[Habits] Execution output:', execution.output);
-        
+
         // Return the workflow output directly (matches server API format)
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           success: true,
           workflowId: workflowId,
           output: execution.output || {}
@@ -178,10 +179,10 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
-        
+
       } catch (error) {
         console.error('[Habits] Workflow execution error:', error);
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           error: error.message || 'Workflow execution failed',
           workflowId: workflowId
         }), {
@@ -200,12 +201,12 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
       if (isStream && window.HabitsBundle.executeWorkflowStreaming) {
         var encoder = new TextEncoder();
         var executionId = 'exec-' + Date.now();
-        
+
         var stream = new ReadableStream({
           start: function(controller) {
             window.HabitsBundle.executeWorkflowStreaming(workflowId, input, function(event) {
               var line = null;
-              
+
               if (event.type === 'node_completed') {
                 line = JSON.stringify({
                   executionId: event.executionId || executionId,
@@ -233,7 +234,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
                   error: event.error
                 });
               }
-              
+
               if (line) {
                 controller.enqueue(encoder.encode(line + '\\n'));
               }
@@ -263,18 +264,18 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
         var env = await loadSecretsEnv();
         // HabitsBundle.executeWorkflow wraps input internally as habits.input
         var execution = await window.HabitsBundle.executeWorkflow(workflowId, input, { env: env });
-        
-        return new Response(JSON.stringify({ 
+
+        return new Response(JSON.stringify({
           success: true,
           workflowId: workflowId,
-          output: execution.output || {} 
+          output: execution.output || {}
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error) {
         console.error('[Habits] Workflow execution error:', error);
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           error: error.message || 'Workflow execution failed',
           workflowId: workflowId
         }), {
@@ -298,7 +299,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
     var url;
     var method = (init && init.method) || 'GET';
     var body = null;
-    
+
     // Parse URL from input
     if (typeof input === 'string') {
       url = input;
@@ -318,7 +319,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
 
     // Check if this is an API call
     var apiInfo = parseApiPath(url);
-    
+
     if (apiInfo.isApiCall) {
       // Guard: ensure required components are present before intercepting
       var _isTauri = typeof window.__TAURI__ !== 'undefined';
@@ -352,12 +353,12 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
         console.log('[Habits] Direct execution:', method, url, apiInfo.isStream ? '(streaming)' : '');
         return executeWorkflowDirect(apiInfo.workflowId, method.toUpperCase(), body, apiInfo.isStream, url);
       }
-      
+
       // API mode: Proxy to backend
       if (MODE === 'api' && BACKEND_URL) {
         var newUrl = rewriteUrl(url);
         console.log('[Habits] Proxying API:', url, '->', newUrl);
-        
+
         if (typeof input === 'string') {
           return originalFetch.call(this, newUrl, init);
         } else {
@@ -378,7 +379,7 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
         }
       }
     }
-    
+
     // Pass through unchanged
     return originalFetch.call(this, input, init);
   };
@@ -411,21 +412,21 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
       try {
         var invoke = window.__TAURI__.core ? window.__TAURI__.core.invoke : window.__TAURI__.invoke;
         if (!invoke) return;
-        
+
         var testArgs = await invoke('get_test_args');
         if (!testArgs) return;
-        
+
         var habit = testArgs[0];
         var input = testArgs[1];
         console.log('[Habits] Test mode - executing:', habit);
-        
+
         // Wait for bundle to be ready
         await new Promise(function(r) { setTimeout(r, 500); });
         if (!window.HabitsBundle) throw new Error('HabitsBundle not loaded');
-        
+
         var parsedInput = input;
         try { parsedInput = JSON.parse(input); } catch(e) {}
-        
+
         var result = await window.HabitsBundle.executeWorkflow(habit, parsedInput);
         await invoke('test_complete', { result: JSON.stringify({ success: true, result: result }) });
       } catch (e) {
@@ -438,3 +439,5 @@ export function getTauriFetchProxyScript(options: TauriFetchProxyOptions | strin
 `;
 }
 
+/** @deprecated Use getHabitsFetchProxyScript */
+export const getTauriFetchProxyScript = getHabitsFetchProxyScript;

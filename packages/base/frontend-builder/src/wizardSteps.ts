@@ -6,9 +6,8 @@ export type WizardStepId =
   | 'identity'
   | 'layout'
   | 'pages'
-  | 'data'
   | 'actions'
-  | 'advanced';
+  | 'overview';
 
 export interface WizardStepDef {
   id: WizardStepId;
@@ -39,21 +38,15 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     showCanvas: true,
   },
   {
-    id: 'data',
-    label: 'Data',
-    description: 'What data flows where — UI, state, and habits',
-    showCanvas: true,
-  },
-  {
     id: 'actions',
     label: 'Actions',
-    description: 'Wire any remaining habit links',
+    description: 'Wire habits, map inputs, and connect triggers',
     showCanvas: true,
   },
   {
-    id: 'advanced',
-    label: 'Advanced',
-    description: 'Templates, app settings, and power tools',
+    id: 'overview',
+    label: 'Overview',
+    description: 'Review your app and fine-tune in the full editor',
     showCanvas: true,
     fullBuilder: true,
   },
@@ -97,19 +90,20 @@ export function canAdvanceStep(
       if (!hasViewWidgets) return { ok: false, reason: 'Add a page pattern or widget' };
       return { ok: true };
     }
-    case 'data':
-      return { ok: true };
     case 'actions': {
       const missing = missingActionReferences(spec, ctx.linkableHabitIds);
       if (missing.length > 0) {
         return {
           ok: false,
-          reason: `Link ${missing.length} action${missing.length === 1 ? '' : 's'} to a habit`,
+          reason: `Connect ${missing.length} widget trigger${missing.length === 1 ? '' : 's'} to an action`,
         };
+      }
+      if (Object.keys(spec.actions ?? {}).length === 0 && ctx.linkableHabitIds.length > 0) {
+        return { ok: false, reason: 'Configure at least one habit action' };
       }
       return { ok: true };
     }
-    case 'advanced':
+    case 'overview':
       return { ok: true };
     default:
       return { ok: true };
@@ -130,7 +124,7 @@ export function prevStep(id: WizardStepId): WizardStepId | null {
   return i <= 0 ? null : WIZARD_STEPS[i - 1].id;
 }
 
-/** Reopening a finished spec skips straight to Advanced editing. */
+/** Reopening a finished spec skips straight to Overview editing. */
 export function initialWizardStep(yaml: string): WizardStepId {
   if (!yaml.trim()) return 'identity';
   try {
@@ -140,7 +134,7 @@ export function initialWizardStep(yaml: string): WizardStepId {
       Object.values(spec.views ?? {}).some(
         (v) => Array.isArray(v?.widgets) && (v.widgets as unknown[]).length > 0,
       );
-    if (hasWidgets && Object.keys(spec.actions ?? {}).length > 0) return 'advanced';
+    if (hasWidgets && Object.keys(spec.actions ?? {}).length > 0) return 'overview';
   } catch {
     /* fresh start */
   }

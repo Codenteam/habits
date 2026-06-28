@@ -321,39 +321,17 @@ Cortex reads from `config.json` in the project root:
 
 ## Packing & Distributing
 
-Pack your habits into portable formats for different deployment targets:
+Pack your habits into a `.habit` file for import into Habits Cortex:
 
 | Format | Output | Use Case |
 |--------|--------|----------|
-| `single-executable` | Standalone binary | FullStack, Frontend + backend, Server/CLI, no Node.js needed |
-| `desktop` | Electron app | Desktop UI connecting to remote backend (or local execution: Early Access) |
-| `mobile` | Cordova app | iOS/Android app connecting to remote backend (or local exeuction: Early Access) |
+| `habit` | `.habit` ZIP | Desktop/mobile via Habits Cortex |
 
-### Single Executable (Server Binary)
+<PackCommandsAll appName="my-app" />
 
-<PackCommandsAll appName="my-app" targets="node" />
+For server-side API hosting, use `npx habits cortex --config ./stack.yaml`.
 
-### Desktop & Mobile Apps (Client Mode)
-
-<PackCommandsAll appName="my-app" targets="dmg,exe,android" modes="client" />
-
-**Desktop platforms:** `dmg`, `exe`, `appimage`, `deb`, `rpm`, `msi`  
-**Mobile targets:** `android`, `ios`
-
-#### Platform Requirements
-
-| Format | Requirements |
-|--------|-------------|
-| `single-executable` | Node.js 20+ (build only), macOS requires code signing |
-| `desktop` | Node.js 18+, electron-builder (auto-installed) |
-| `mobile` | Cordova CLI (`npm i -g cordova`), Android SDK (gradle, etc) or Xcode |
-
-::: details Mobile Setup
-**Android:** Install Android Studio, set `ANDROID_HOME`, ensure `gradle` 8.x is available  
-**iOS:** macOS only, requires Xcode with command line tools
-:::
-
-See [Binary Export](/deep-dive/pack-distribute) for details on single-executable binaries.
+See [Pack & Distribute](/deep-dive/pack-distribute) for details.
 
 ---
 

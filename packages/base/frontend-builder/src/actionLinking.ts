@@ -7,6 +7,8 @@ import { getFormFieldNames } from './inferState';
 export interface HabitOption {
   id: string;
   name?: string;
+  /** Input field names extracted from habits.input.* in the workflow */
+  inputs?: string[];
 }
 
 export interface ActionReference {

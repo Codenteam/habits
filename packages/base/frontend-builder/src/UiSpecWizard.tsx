@@ -9,11 +9,8 @@ import {
   Sparkles,
   Wand2,
   LayoutTemplate,
-  Link2,
-  ArrowRight,
   Layers,
   Plus,
-  CheckCircle2,
 } from 'lucide-react';
 import { UiSpecBuilderVanilla, type UiSpecBuilderProps } from './UiSpecBuilder.vanilla';
 import {
@@ -23,7 +20,6 @@ import {
 } from './uiSpecYaml';
 import type { SpecState } from './uiSpecYaml';
 import { syncSpecWithInferredState, getFormFieldNames } from './inferState';
-import { describeDataFlow } from './dataFlow';
 import {
   WIZARD_STEPS,
   canAdvanceStep,
@@ -44,10 +40,10 @@ import {
   defaultActionIdForHabit,
   habitIdFromEndpoint,
   linkHabitToAction,
-  missingActionReferences,
-  type ActionReference,
   type HabitOption,
 } from './actionLinking';
+import { ActionsStep } from './ActionsStep';
+import { OverviewStep } from './OverviewStep';
 import { WIDGET_PRESETS } from './uiSpecPresets';
 import {
   WIZARD_WIDGET_CATEGORIES,
@@ -164,7 +160,7 @@ export function UiSpecWizard({
   const validation = canAdvanceStep(step, spec, ctx);
   const currentStepDef = WIZARD_STEPS.find((s) => s.id === step)!;
   const showCanvas = currentStepDef.showCanvas;
-  const fullBuilder = currentStepDef.fullBuilder === true;
+  const overviewMode = currentStepDef.fullBuilder === true;
 
   useEffect(() => {
     if (step !== 'pages') return;
@@ -201,23 +197,13 @@ export function UiSpecWizard({
       <WizardHeader step={step} onStepClick={setStep} />
 
       <div className="flex flex-1 min-h-0 flex-col">
-        {fullBuilder && (
-          <div className="flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 py-2 flex items-center justify-between gap-3">
-            <AdvancedStep showDebugYaml={showDebugYaml} />
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:bg-slate-800 flex-shrink-0"
-              onClick={goBack}
-            >
-              <ChevronLeft className="w-4 h-4" /> Back to Actions
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-1 min-h-0">
-        {/* Step panel — hidden on Advanced for maximum canvas space */}
-        {!fullBuilder && (
-        <aside className="w-[340px] flex-shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col min-h-0">
+        <aside
+          className={
+            (overviewMode ? 'w-[380px]' : 'w-[340px]') +
+            ' flex-shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col min-h-0'
+          }
+        >
           <div className="px-4 py-3 border-b border-slate-800">
             <h2 className="text-sm font-semibold text-slate-100">{currentStepDef.label}</h2>
             <p className="text-xs text-slate-500 mt-0.5">{currentStepDef.description}</p>
@@ -240,13 +226,15 @@ export function UiSpecWizard({
                 onUpdate={updateSpec}
               />
             )}
-            {step === 'data' && <DataStep spec={spec} />}
             {step === 'actions' && (
-              <ActionsLinkStep
+              <ActionsStep
                 spec={spec}
                 linkableHabits={linkableHabits}
                 onUpdate={updateSpec}
               />
+            )}
+            {step === 'overview' && (
+              <OverviewStep spec={spec} linkableHabits={linkableHabits} showDebugYaml={showDebugYaml} />
             )}
           </div>
 
@@ -259,12 +247,12 @@ export function UiSpecWizard({
             >
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            {!validation.ok && step !== 'data' && (
+            {!validation.ok && (
               <span className="text-xs text-amber-400 flex-1 text-center truncate" title={validation.reason}>
                 {validation.reason}
               </span>
             )}
-            {step !== 'advanced' ? (
+            {step !== 'overview' ? (
               <button
                 type="button"
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40"
@@ -276,7 +264,6 @@ export function UiSpecWizard({
             ) : null}
           </div>
         </aside>
-        )}
 
         {/* Canvas + builder */}
         {showCanvas ? (
@@ -288,13 +275,13 @@ export function UiSpecWizard({
               compilePreviewHtml={compilePreviewHtml}
               defaultMetaId={defaultMetaId}
               defaultMetaTitle={defaultMetaTitle}
-              chrome={fullBuilder ? 'full' : 'embedded'}
-              hideTemplates={!fullBuilder}
-              hideAppSettings={!fullBuilder}
+              chrome={overviewMode ? 'full' : 'embedded'}
+              hideTemplates={!overviewMode}
+              hideAppSettings={!overviewMode}
               linkableHabits={linkableHabits}
               onSelectedNodeChange={(node) => setSelectedWidgetKind(node?.kind ?? null)}
               hideYamlTab={!showDebugYaml}
-              defaultRightTab={fullBuilder ? 'app-settings' : 'settings'}
+              defaultRightTab={overviewMode ? 'app-settings' : 'settings'}
             />
           </div>
         ) : (
@@ -566,102 +553,6 @@ function LayoutStep({
   );
 }
 
-function ActionsLinkStep({
-  spec,
-  linkableHabits,
-  onUpdate,
-}: {
-  spec: SpecState;
-  linkableHabits: HabitOption[];
-  onUpdate: (patch: (s: SpecState) => SpecState) => void;
-}) {
-  const linkableIds = linkableHabits.map((h) => h.id);
-  const missing = missingActionReferences(spec, linkableIds);
-  const defined = Object.entries(spec.actions ?? {});
-
-  const linkRef = (ref: ActionReference, habitId: string) => {
-    const actionId = ref.actionId || defaultActionIdForHabit(habitId);
-    onUpdate((s) => linkHabitToAction(s, actionId, habitId, ref.slotKind));
-  };
-
-  const applyCookbookPreset = () => {
-    onUpdate((s) => applyCookbookActions(s));
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-xs text-slate-400 leading-relaxed">
-        Habits live in the <strong className="text-slate-300">Logic</strong> tab. Link them here if anything is still
-        missing, or use the settings panel while building pages.
-      </p>
-
-      {linkableHabits.length === 0 ? (
-        <p className="text-xs text-amber-400/90 border border-amber-900/40 rounded p-2 bg-amber-950/20">
-          No habits with workflows yet. Open workflow YAML from the sidebar in Logic, then return here.
-        </p>
-      ) : null}
-
-      {missing.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-            <Link2 className="w-3.5 h-3.5" /> Needs a habit link
-          </h3>
-          {missing.map((ref) => (
-            <div key={`${ref.location}-${ref.actionId}`} className="rounded border border-slate-700 bg-slate-950 p-2 space-y-1">
-              <div className="text-xs text-slate-400">{ref.location}</div>
-              <div className="text-xs font-mono text-slate-200">action: {ref.actionId || '(unset)'}</div>
-              <select
-                className={`${INPUT} text-xs`}
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) linkRef(ref, e.target.value);
-                }}
-              >
-                <option value="">Connect to habit…</option>
-                {linkableHabits.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.name ? `${h.name} (${h.id})` : h.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {missing.length === 0 && defined.length > 0 && (
-        <p className="text-xs text-emerald-400 flex items-center gap-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5" /> All widget actions are linked
-        </p>
-      )}
-
-      {defined.length > 0 && (
-        <div className="text-xs text-slate-500 pt-2 border-t border-slate-800 space-y-1">
-          <p className="font-medium text-slate-400">Defined actions</p>
-          {defined.map(([id, action]) => {
-            const a = action as Record<string, unknown>;
-            const habit = habitIdFromEndpoint(a.endpoint);
-            return (
-              <div key={id} className="font-mono text-slate-400">
-                {id}
-                {habit ? ` → ${habit}` : a.set ? ' (client)' : ''}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <button
-        type="button"
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-amber-700/50 text-sm hover:bg-slate-800 text-left"
-        onClick={applyCookbookPreset}
-      >
-        <LayoutTemplate className="w-4 h-4 text-amber-400" />
-        AI Cookbook action presets
-      </button>
-    </div>
-  );
-}
 
 function PagesStep({
   spec,
@@ -1015,51 +906,5 @@ function PagesStep({
   );
 }
 
-function DataStep({ spec }: { spec: SpecState }) {
-  const routes = describeDataFlow(spec);
-  return (
-    <div className="space-y-4">
-      <p className="text-xs text-slate-500">
-        How user input, app state, and habit workflows connect.
-      </p>
-      {routes.length === 0 ? (
-        <p className="text-sm text-slate-400">No data routes yet — add forms, actions, or displays.</p>
-      ) : (
-        <ul className="space-y-3 max-h-[min(420px,60vh)] overflow-y-auto">
-          {routes.map((route) => (
-            <li key={route.trigger} className="text-xs border border-slate-800 rounded p-2.5 bg-slate-950">
-              <div className="font-medium text-slate-200 mb-2">{route.trigger}</div>
-              <ul className="space-y-1.5">
-                {route.hops.map((hop, i) => (
-                  <li key={`${route.trigger}-${i}`} className="flex items-start gap-1.5 text-slate-400">
-                    <span className="text-slate-300 flex-1 min-w-0">{hop.from}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300 flex-1 min-w-0 text-right">{hop.to}</span>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function AdvancedStep({ showDebugYaml }: { showDebugYaml?: boolean }) {
-  return (
-    <p className="text-xs text-slate-400">
-      Full editor: <span className="text-slate-300">widget palette</span>,{' '}
-      <span className="text-slate-300">page templates</span>,{' '}
-      <span className="text-slate-300">App Settings</span> (theme, layout, interactions, state)
-      {showDebugYaml ? (
-        <>
-          , and <span className="text-slate-300">raw YAML</span>
-        </>
-      ) : null}
-      .
-    </p>
-  );
-}
 
 export default UiSpecWizard;

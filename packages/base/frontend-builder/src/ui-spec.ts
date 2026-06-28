@@ -17,7 +17,7 @@ export { WIZARD_STEPS, canAdvanceStep, initialWizardStep } from './wizardSteps';
 export type { WizardStepId } from './wizardSteps';
 import { initialWizardStep } from './wizardSteps';
 
-/** True when YAML already has widgets and actions — reopen on Advanced step. */
+/** True when YAML already has widgets and actions — reopen on Overview step. */
 export function isRichUiSpecYaml(yaml: string): boolean {
-  return initialWizardStep(yaml) === 'advanced';
+  return initialWizardStep(yaml) === 'overview';
 }
