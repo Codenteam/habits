@@ -3,7 +3,7 @@ import { extractInputFields } from '@ha-bits/core';
 import { Waypoints, AlertTriangle } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectActiveHabit, selectHabits } from '../store/slices/workflowSlice';
-import { setFrontendYaml, setViewMode } from '../store/slices/uiSlice';
+import { setFrontendYaml, setViewMode, clearFrontendHtml } from '../store/slices/uiSlice';
 import { selectUiEditorAccess } from '../store/selectors/validationSelectors';
 import Toolbar from './Toolbar';
 import { compilePreviewHtml } from '@/lib/uiPreviewCompile';
@@ -44,6 +44,9 @@ export default function WorkflowEditor() {
   const handleSaveFrontendYaml = useCallback(
     (yamlText: string) => {
       dispatch(setFrontendYaml(yamlText));
+      if (!yamlText.trim()) {
+        dispatch(clearFrontendHtml());
+      }
     },
     [dispatch],
   );

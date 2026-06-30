@@ -182,6 +182,15 @@ const defaultWorkflow: Workflow = {
 
 const initialHabit = createDefaultHabit();
 
+const resetSharedStackState = (state: WorkflowState) => {
+  state.id = generateUUID();
+  state.workflow = { ...defaultWorkflow, id: generateUUID() };
+  state.moduleSchemas = {};
+  state.moduleAvailability = {};
+  state.loadingStates = {};
+  state.errors = {};
+};
+
 const initialState: WorkflowState = {
   // Stack ID for build caching
   id: generateUUID(),
@@ -398,20 +407,28 @@ export const workflowSlice = createSlice({
     },
     
     clearWorkflow: (state) => {
-      // Create a fresh habit and reset the entire habits list
       const newHabit = createDefaultHabit();
       state.habits = [newHabit];
       state.activeHabitId = newHabit.id;
-      
-      // Generate new stack ID
-      state.id = generateUUID();
-      
-      // Reset shared state
-      state.workflow = { ...defaultWorkflow, id: generateUUID() };
-      state.moduleSchemas = {};
-      state.moduleAvailability = {};
-      state.loadingStates = {};
-      state.errors = {};
+      resetSharedStackState(state);
+    },
+
+    loadHabits: (state, action: PayloadAction<Partial<Habit>[]>) => {
+      const habits = action.payload.map((habit) => ({
+        ...createDefaultHabit(),
+        ...habit,
+      }));
+
+      if (habits.length === 0) {
+        const newHabit = createDefaultHabit();
+        state.habits = [newHabit];
+        state.activeHabitId = newHabit.id;
+      } else {
+        state.habits = habits;
+        state.activeHabitId = habits[0].id;
+      }
+
+      resetSharedStackState(state);
     },
     
     setAvailableModules: (state, action: PayloadAction<AvailableModuleDefinition[]>) => {
@@ -961,6 +978,7 @@ export const {
   setWorkflowDescription, 
   loadWorkflow, 
   clearWorkflow,
+  loadHabits,
   setAvailableModules, 
   setModuleSchema, 
   setModuleAvailability, 

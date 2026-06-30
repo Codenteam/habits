@@ -1,10 +1,10 @@
 import type { SpecState } from './uiSpecYaml';
 import { parseYamlToSpecState } from './uiSpecYaml';
-import { missingActionReferences } from './actionLinking';
+import { missingActionReferences, type HabitOption } from './actionLinking';
+import { findUnmatchedInputsAcrossHabits } from './actionSimpleMode';
 
 export type WizardStepId =
   | 'identity'
-  | 'layout'
   | 'pages'
   | 'actions'
   | 'overview';
@@ -26,21 +26,15 @@ export const WIZARD_STEPS: WizardStepDef[] = [
     showCanvas: false,
   },
   {
-    id: 'layout',
-    label: 'Layout',
-    description: 'Single page or tabs',
-    showCanvas: true,
-  },
-  {
     id: 'pages',
     label: 'Build pages',
-    description: 'Pick a template, then add presets and widgets',
+    description: 'Choose layout, then pick a template or add widgets',
     showCanvas: true,
   },
   {
     id: 'actions',
-    label: 'Actions',
-    description: 'Wire habits, map inputs, and connect triggers',
+    label: 'Connect',
+    description: 'Link your form to workflows and choose what users see',
     showCanvas: true,
   },
   {
@@ -55,11 +49,31 @@ export const WIZARD_STEPS: WizardStepDef[] = [
 export interface WizardContext {
   /** Habits with workflow nodes (from Logic tab) */
   linkableHabitIds: string[];
+  linkableHabits?: HabitOption[];
 }
 
 export interface StepValidation {
   ok: boolean;
   reason?: string;
+}
+
+export function validateLayoutStep(spec: SpecState): StepValidation {
+  if (spec.layout.type === 'tabs' || spec.layout.type === 'sidebar') {
+    if (!spec.layout.nav?.length) return { ok: false, reason: 'Add at least one tab' };
+    if (!spec.defaultView) return { ok: false, reason: 'Choose a default tab' };
+  }
+  return { ok: true };
+}
+
+export function validatePagesContentStep(spec: SpecState): StepValidation {
+  const hasViewWidgets =
+    spec.widgets.length > 0 ||
+    (spec.views &&
+      Object.values(spec.views).some(
+        (v) => Array.isArray(v?.widgets) && (v.widgets as unknown[]).length > 0,
+      ));
+  if (!hasViewWidgets) return { ok: false, reason: 'Add a page pattern or widget' };
+  return { ok: true };
 }
 
 export function canAdvanceStep(
@@ -73,33 +87,22 @@ export function canAdvanceStep(
       if (!spec.meta.id?.trim()) return { ok: false, reason: 'Enter an app ID' };
       return { ok: true };
     }
-    case 'layout': {
-      if (spec.layout.type === 'tabs' || spec.layout.type === 'sidebar') {
-        if (!spec.layout.nav?.length) return { ok: false, reason: 'Add at least one tab' };
-        if (!spec.defaultView) return { ok: false, reason: 'Choose a default tab' };
-      }
-      return { ok: true };
-    }
-    case 'pages': {
-      const hasViewWidgets =
-        spec.widgets.length > 0 ||
-        (spec.views &&
-          Object.values(spec.views).some(
-            (v) => Array.isArray(v?.widgets) && (v.widgets as unknown[]).length > 0,
-          ));
-      if (!hasViewWidgets) return { ok: false, reason: 'Add a page pattern or widget' };
-      return { ok: true };
-    }
+    case 'pages':
+      return validatePagesContentStep(spec);
     case 'actions': {
       const missing = missingActionReferences(spec, ctx.linkableHabitIds);
       if (missing.length > 0) {
-        return {
-          ok: false,
-          reason: `Connect ${missing.length} widget trigger${missing.length === 1 ? '' : 's'} to an action`,
-        };
+        return { ok: false, reason: "Connect your form's Submit button" };
       }
       if (Object.keys(spec.actions ?? {}).length === 0 && ctx.linkableHabitIds.length > 0) {
-        return { ok: false, reason: 'Configure at least one habit action' };
+        return { ok: false, reason: 'Connect at least one workflow to your page' };
+      }
+      const habits = ctx.linkableHabits ?? [];
+      if (habits.length > 0) {
+        const unmatched = findUnmatchedInputsAcrossHabits(spec, habits);
+        if (unmatched.length > 0) {
+          return { ok: false, reason: 'Match all workflow fields to form fields' };
+        }
       }
       return { ok: true };
     }

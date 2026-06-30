@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Trash2, Layers,
   Puzzle, FileCode,
-  ArrowUpFromLineIcon,
-  FolderOpen,
   AlertTriangle,
   SquareArrowRightExitIcon,
   Pencil
@@ -14,7 +12,6 @@ import {
   setAvailableModules, selectHabits, selectActiveHabitId 
 } from '../store/slices/workflowSlice';
 import { selectServerFlags } from '../store/slices/serverFlagsSlice';
-import { convertWorkflowWithConnections, detectWorkflowType } from '../lib/workflowConverter';
 import { slugify } from '../lib/exportUtils';
 import { api } from '../lib/api';
 import { BITS, BUILTIN_BIT_NAMES, formatBitModuleLabel } from '../lib/bits';
@@ -23,7 +20,6 @@ import CodeViewModal from './CodeViewModal';
 import ModuleIcon from './ModuleIcon';
 import OutputsModal from './OutputsModal';
 import Dialog from './Dialog';
-import yaml from 'js-yaml';
 
 // Now using a Set to allow multiple sections to be visible
 interface VisibleSections {
@@ -44,10 +40,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   const serverFlags = useAppSelector(selectServerFlags);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [converting, setConverting] = useState(false);
   const [showOutputsModal, setShowOutputsModal] = useState(false);
-  const convertInputRef = useRef<HTMLInputElement>(null);
-  const openInputRef = useRef<HTMLInputElement>(null);
 
   // Node palette state
   const availableModules = useAppSelector(state => state.workflow.availableModules);
@@ -114,92 +107,6 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   };
 
   // ===== HABITS HANDLERS =====
-  const extractNodesAndEdges = (workflow: any) => {
-    const nodes = (workflow.nodes || []).map((node: any) => ({
-      id: node.id,
-      type: 'custom',
-      position: node.position || { x: 0, y: 0 },
-      data: node.data || node,
-    }));
-    const edges = workflow.edges || [];
-    return { nodes, edges };
-  };
-
-  const handleOpenFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        // Try to parse as JSON first
-        let workflow;
-        try {
-          workflow = JSON.parse(e.target?.result as string);
-        } catch {
-          // If JSON fails, try YAML
-
-          workflow = yaml.load(e.target?.result as string);
-        }
-        const { nodes, edges } = extractNodesAndEdges(workflow);
-        const baseName = file.name.replace(/\.(json|ya?ml)$/i, '');
-        const habitId =
-          (typeof workflow?.id === 'string' && workflow.id.trim()) || slugify(baseName);
-        dispatch(addHabit({ id: habitId, name: baseName, nodes, edges }));
-      } catch (error: any) {
-        setDialogConfig({ message: `Failed to load file: ${error.message}`, type: 'error' });
-        setDialogOpen(true);
-      }
-    };
-    reader.readAsText(file);
-    if (openInputRef.current) openInputRef.current.value = '';
-  };
-
-  const handleConvert = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setConverting(true);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const workflow = JSON.parse(e.target?.result as string);
-        const workflowType = detectWorkflowType(workflow);
-        
-        if (workflowType === 'unknown') {
-          setDialogConfig({ message: 'Unknown workflow format. Supported format: Habits native format.', type: 'error' });
-          setDialogOpen(true);
-          return;
-        }
-
-        if (workflowType === 'habits') {
-          const { nodes, edges } = extractNodesAndEdges(workflow);
-          dispatch(addHabit({ name: file.name.replace('.json', ''), nodes, edges }));
-          return;
-        }
-
-        const result = convertWorkflowWithConnections(workflow);
-        const { nodes, edges } = extractNodesAndEdges(result.workflow);
-        dispatch(addHabit({ name: file.name.replace('.json', ''), nodes, edges }));
-        
-        if (result.connections.length > 0) {
-          setDialogConfig({ message: `Converted ${workflowType} workflow and added as new habit!\n${result.connections.length} connection(s) found.`, type: 'success' });
-          setDialogOpen(true);
-        } else {
-          setDialogConfig({ message: `Converted ${workflowType} workflow and added as new habit!`, type: 'success' });
-          setDialogOpen(true);
-        }
-      } catch (error: any) {
-        setDialogConfig({ message: `Failed to convert workflow: ${error.message}`, type: 'error' });
-        setDialogOpen(true);
-      } finally {
-        setConverting(false);
-      }
-    };
-    reader.readAsText(file);
-    if (convertInputRef.current) convertInputRef.current.value = '';
-  };
-
   const handleAddHabit = () => {
     dispatch(addHabit());
   };
@@ -331,7 +238,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
             >
               {/* Header */}
               <div className="p-3 border-b border-slate-700 flex-shrink-0">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-slate-300">
                     <Layers className="w-4 h-4" />
                     <span className="text-sm font-medium">Habits Stack</span>
@@ -343,42 +250,6 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                   >
                     <Plus className="w-4 h-4" />
                   </button>
-                </div>
-                
-                {/* Action buttons */}
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => openInputRef.current?.click()}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
-                    title="Open a habit workflow file"
-                  >
-                    <FolderOpen className="w-3.5 h-3.5" />
-                    Open
-                  </button>
-                  <input
-                    ref={openInputRef}
-                    type="file"
-                    accept=".json,.yaml,.yml"
-                    onChange={handleOpenFile}
-                    className="hidden"
-                  />
-                  
-                  <button
-                    onClick={() => convertInputRef.current?.click()}
-                    disabled={converting}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded transition-colors disabled:opacity-50"
-                    title="Import workflow"
-                  >
-                    <ArrowUpFromLineIcon className={`w-3.5 h-3.5 ${converting ? 'animate-spin' : ''}`} />
-                    Import
-                  </button>
-                  <input
-                    ref={convertInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleConvert}
-                    className="hidden"
-                  />
                 </div>
               </div>
 

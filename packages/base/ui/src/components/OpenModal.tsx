@@ -1,14 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AlertCircle, Check, X, Loader2, Upload } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
-import { addHabit, setActiveHabit, clearWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
-import {
-  setFrontendHtml,
-  setFrontendYaml,
-  clearFrontendHtml,
-  clearFrontendYaml,
-  clearEnvContent,
-} from '../store/slices/uiSlice';
+import { loadHabits } from '../store/slices/workflowSlice';
+import { clearFrontendHtml, clearFrontendYaml, clearEnvContent } from '../store/slices/uiSlice';
+import { applyParsedStackToStore } from '../lib/showcaseLoader';
 import {
   ParsedStack,
   parseHabitFile,
@@ -49,28 +44,7 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
   }, []);
 
   const applyParsedStack = useCallback((parsed: ParsedStack) => {
-    dispatch(clearWorkflow());
-    dispatch(clearFrontendHtml());
-    dispatch(clearFrontendYaml());
-    dispatch(clearEnvContent());
-
-    if (parsed.habits.length > 0) {
-      parsed.habits.forEach((habit) => {
-        dispatch(addHabit(habit));
-      });
-      dispatch(setActiveHabit(parsed.habits[0].id));
-    }
-
-    if (parsed.frontendHtml) {
-      dispatch(setFrontendHtml(parsed.frontendHtml));
-    }
-    if (parsed.frontendYaml) {
-      dispatch(setFrontendYaml(parsed.frontendYaml));
-    }
-
-    if (parsed.envVariables && Object.keys(parsed.envVariables).length > 0) {
-      dispatch(setEnvVariables(parsed.envVariables));
-    }
+    applyParsedStackToStore(parsed, dispatch);
 
     setResult({
       type: 'habit',
@@ -102,12 +76,10 @@ export default function OpenModal({ isOpen, onClose }: OpenModalProps) {
         const habitYaml = parseHabitYaml(content, file.name);
         const parsedHabit = convertHabitYamlToHabit(habitYaml);
 
-        dispatch(clearWorkflow());
         dispatch(clearFrontendHtml());
         dispatch(clearFrontendYaml());
         dispatch(clearEnvContent());
-        dispatch(addHabit(parsedHabit));
-        dispatch(setActiveHabit(parsedHabit.id));
+        dispatch(loadHabits([parsedHabit]));
 
         setResult({
           type: 'file',

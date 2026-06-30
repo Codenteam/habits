@@ -324,6 +324,29 @@ export function listTriggerOptions(spec: SpecState): TriggerOption[] {
     }
   }
 
+  const nav = spec.layout.nav ?? [];
+  const viewIds = nav.length > 0 ? nav.map((n) => n.id) : Object.keys(spec.views ?? {});
+  if (viewIds.length > 1) {
+    for (const viewId of viewIds) {
+      if (options.some((o) => o.ref.propPath === 'onEnter' && o.ref.viewId === viewId)) continue;
+      const navItem = nav.find((n) => n.id === viewId);
+      const tabLabel = navItem?.label ?? viewId;
+      const ref: ActionReference = {
+        location: `Tab "${tabLabel}" › on enter`,
+        actionId: '',
+        slotKind: 'load',
+        viewId,
+        propPath: 'onEnter',
+      };
+      options.push({
+        id: `${ref.location}|onEnter|${viewId}`,
+        label: ref.location,
+        ref,
+        currentActionId: '',
+      });
+    }
+  }
+
   return options;
 }
 

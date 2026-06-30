@@ -1,8 +1,6 @@
 import type { AppDispatch } from '../store/store';
 import {
-  addHabit,
-  clearWorkflow,
-  setActiveHabit,
+  loadHabits,
   setEnvVariables,
   setWorkflowName,
 } from '../store/slices/workflowSlice';
@@ -79,20 +77,14 @@ export async function parseShowcaseHabit(slug: string): Promise<ParsedStack> {
 }
 
 export function applyParsedStackToStore(parsed: ParsedStack, dispatch: AppDispatch): void {
-  dispatch(clearWorkflow());
   dispatch(clearFrontendHtml());
   dispatch(clearFrontendYaml());
   dispatch(clearEnvContent());
 
+  dispatch(loadHabits(parsed.habits));
+
   if (parsed.config.name) {
     dispatch(setWorkflowName(parsed.config.name));
-  }
-
-  for (const habit of parsed.habits) {
-    dispatch(addHabit(habit));
-  }
-  if (parsed.habits[0]) {
-    dispatch(setActiveHabit(parsed.habits[0].id));
   }
 
   if (parsed.frontendHtml) {

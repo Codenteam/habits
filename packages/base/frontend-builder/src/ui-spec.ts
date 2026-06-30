@@ -11,9 +11,11 @@ export type { WidgetPreset, UiSpecTemplate } from './uiSpecPresets';
 export type { UiSpecBuilderProps } from './UiSpecBuilder.vanilla';
 export { describeAppMemory, syncSpecWithInferredState } from './inferState';
 export { describeDataFlow } from './dataFlow';
+export { buildStateProfiles, stateKeysForAction } from './stateConnections';
+export type { StateKeyProfile } from './stateConnections';
 export type { DataFlowRoute } from './dataFlow';
 export type { AppMemoryEntry } from './inferState';
-export { WIZARD_STEPS, canAdvanceStep, initialWizardStep } from './wizardSteps';
+export { WIZARD_STEPS, canAdvanceStep, initialWizardStep, validateLayoutStep, validatePagesContentStep } from './wizardSteps';
 export type { WizardStepId } from './wizardSteps';
 import { initialWizardStep } from './wizardSteps';
 

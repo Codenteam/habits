@@ -94,6 +94,8 @@ export interface UiSpecBuilderProps {
   /** Habits with workflows — enables “connect to habit” on action fields */
   linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   onSelectedNodeChange?: (node: WidgetNode | null) => void;
+  /** Show the drag-and-drop widget canvas between palette and preview. Defaults to true in full chrome, false in embedded. */
+  showWidgetCanvas?: boolean;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -801,7 +803,9 @@ export function UiSpecBuilderVanilla({
   defaultRightTab: defaultRightTabProp,
   linkableHabits,
   onSelectedNodeChange,
+  showWidgetCanvas: showWidgetCanvasProp,
 }: UiSpecBuilderProps) {
+  const showWidgetCanvas = showWidgetCanvasProp ?? chrome !== 'embedded';
   const [spec, setSpec] = useState<SpecState>(() =>
     tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle),
   );
@@ -1414,6 +1418,7 @@ export function UiSpecBuilderVanilla({
         )}
 
         {/* Canvas */}
+        {showWidgetCanvas && (
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-slate-950">
           {viewNavItems.length > 1 && (
             <div className="px-4 pt-3 flex flex-wrap gap-1 border-b border-slate-800">
@@ -1452,9 +1457,15 @@ export function UiSpecBuilderVanilla({
             depth={0}
           />
         </main>
+        )}
 
         {/* Live preview */}
-        <aside className="w-[380px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0">
+        <aside
+          className={
+            (showWidgetCanvas ? 'w-[380px]' : 'flex-1 min-w-0') +
+            ' flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0'
+          }
+        >
           <div className="px-3 py-2 text-xs text-slate-500 flex items-center gap-2 border-b border-slate-800 flex-shrink-0">
             {previewLoading ? (
               <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiling…</>
