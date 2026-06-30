@@ -10,9 +10,10 @@ import {
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { 
-  addHabit, removeHabit, setActiveHabit, updateHabit, 
+  addHabit, setActiveHabit, updateHabit, 
   setAvailableModules, selectHabits, selectActiveHabitId 
 } from '../store/slices/workflowSlice';
+import { removeHabitAndPruneUi } from '../store/thunks/removeHabitAndPruneUi';
 import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 import { convertWorkflowWithConnections, detectWorkflowType } from '../lib/workflowConverter';
 import { slugify } from '../lib/exportUtils';
@@ -213,7 +214,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   const handleRemoveHabit = (e: React.MouseEvent, habitId: string) => {
     e.stopPropagation();
     if (habits.length > 1) {
-      dispatch(removeHabit(habitId));
+      dispatch(removeHabitAndPruneUi(habitId));
     }
   };
 
