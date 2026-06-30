@@ -8,9 +8,10 @@ import {
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { 
-  addHabit, removeHabit, setActiveHabit, updateHabit, 
+  addHabit, setActiveHabit, 
   setAvailableModules, selectHabits, selectActiveHabitId 
 } from '../store/slices/workflowSlice';
+import { removeHabitAndPruneUi, updateHabitAndRenameInUi } from '../store/thunks/habitUiSyncThunks';
 import { selectServerFlags } from '../store/slices/serverFlagsSlice';
 import { slugify } from '../lib/exportUtils';
 import { api } from '../lib/api';
@@ -120,7 +121,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   const handleRemoveHabit = (e: React.MouseEvent, habitId: string) => {
     e.stopPropagation();
     if (habits.length > 1) {
-      dispatch(removeHabit(habitId));
+      dispatch(removeHabitAndPruneUi(habitId));
     }
   };
 
@@ -134,7 +135,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
     if (editName.trim()) {
       const trimmedName = editName.trim();
       const newId = slugify(trimmedName);
-      dispatch(updateHabit({ habitId, updates: { name: trimmedName, id: newId } }));
+      dispatch(updateHabitAndRenameInUi(habitId, { name: trimmedName, id: newId }));
     }
     setEditingId(null);
     setEditName('');

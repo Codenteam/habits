@@ -4,6 +4,12 @@ export { UiSpecWizard } from './UiSpecWizard';
 export type { UiSpecWizardProps } from './UiSpecWizard';
 export { builderRoundTripYaml, parseYamlToSpecState } from './uiSpecYaml';
 export {
+  pruneSpecForRemovedHabits,
+  pruneFrontendYamlForRemovedHabits,
+  renameHabitEndpointsInSpec,
+  renameHabitInFrontendYaml,
+} from './pruneHabitUi';
+export {
   WIDGET_PRESETS,
   UI_SPEC_TEMPLATES,
 } from './uiSpecPresets';
