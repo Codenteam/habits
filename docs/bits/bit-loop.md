@@ -56,6 +56,8 @@ nodes:
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [rss-social-poster](/showcase/rss-social-poster)
 - [rss-digest-summarizer](/showcase/rss-digest-summarizer)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [invoices-processing](/showcase/invoices-processing)
 - [emails-categorization](/showcase/emails-categorization)
 - [email-ticket-routing](/showcase/email-ticket-routing)

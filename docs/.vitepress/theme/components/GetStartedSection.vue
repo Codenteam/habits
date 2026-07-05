@@ -31,7 +31,7 @@ services:
   habits:
     image: node:24
     working_dir: /app
-    command: sh -c "npx habits@latest init && npx habits@latest base"
+    command: sh -c "npx habits@latest base"
     ports:
       - "3000:3000"
       - "13000:13000"
@@ -54,7 +54,6 @@ npx habits@latest`
   {
     label: 'Create',
     code: `# Start Habits Base (visual builder)
-habits init
 habits base`
   },
   {

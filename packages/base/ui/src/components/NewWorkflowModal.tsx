@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileJson, Sparkles, X, Loader2, Wand2 } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { clearWorkflow } from '../store/slices/workflowSlice';
-import { clearFrontendHtml, clearEnvContent } from '../store/slices/uiSlice';
+import { clearFrontendHtml, clearFrontendYaml, clearEnvContent } from '../store/slices/uiSlice';
 import GenerateModal from './GenerateModal';
 import Dialog from './Dialog';
 import {
@@ -64,6 +64,7 @@ export default function NewWorkflowModal({ isOpen, onClose }: NewWorkflowModalPr
       onConfirm: () => {
         dispatch(clearWorkflow());
         dispatch(clearFrontendHtml());
+        dispatch(clearFrontendYaml());
         dispatch(clearEnvContent());
         onClose();
       },

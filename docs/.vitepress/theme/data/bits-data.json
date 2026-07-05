@@ -39,7 +39,7 @@
     "icon": "Database",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 17,
+    "showcaseCount": 19,
     "downloads": 421,
     "downloadsFormatted": "421"
   },
@@ -62,7 +62,7 @@
     "icon": "Database",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 5,
+    "showcaseCount": 7,
     "downloads": 96,
     "downloadsFormatted": "96"
   },
@@ -198,7 +198,7 @@
     "icon": "GitBranch",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "downloads": 372,
     "downloadsFormatted": "372"
   },
@@ -240,7 +240,7 @@
     "icon": "Sparkles",
     "actionCount": 10,
     "triggerCount": 0,
-    "showcaseCount": 21,
+    "showcaseCount": 23,
     "downloads": 914,
     "downloadsFormatted": "914"
   },
@@ -264,6 +264,29 @@
     "actionCount": 7,
     "triggerCount": 0,
     "showcaseCount": 0,
+    "downloads": 0,
+    "downloadsFormatted": "-"
+  },
+  {
+    "slug": "bit-sumsub",
+    "packageName": "@ha-bits/bit-sumsub",
+    "name": "Sumsub",
+    "displayName": "Sumsub",
+    "description": "Sumsub identity verification and KYC integration for Habits workflows",
+    "version": "1.0.0",
+    "categories": [
+      "sumsub",
+      "kyc",
+      "kyb",
+      "identity",
+      "verification"
+    ],
+    "level": "l1",
+    "featured": true,
+    "icon": "Shield",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 1,
     "downloads": 0,
     "downloadsFormatted": "-"
   },
@@ -547,7 +570,7 @@
     "icon": "Repeat",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 7,
+    "showcaseCount": 9,
     "downloads": 520,
     "downloadsFormatted": "520"
   },
@@ -676,7 +699,7 @@
     "icon": "Globe",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 0,
+    "showcaseCount": 1,
     "downloads": 498,
     "downloadsFormatted": "498"
   },
@@ -720,7 +743,7 @@
     "icon": "Users",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "downloads": 78,
     "downloadsFormatted": "78"
   },
@@ -803,7 +826,7 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 2,
+    "showcaseCount": 3,
     "downloads": 79,
     "downloadsFormatted": "79"
   },
@@ -1044,7 +1067,7 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "downloads": 0,
     "downloadsFormatted": "-"
   },
@@ -1236,9 +1259,30 @@
     "icon": "Package",
     "actionCount": 0,
     "triggerCount": 0,
-    "showcaseCount": 2,
+    "showcaseCount": 3,
     "downloads": 85,
     "downloadsFormatted": "85"
+  },
+  {
+    "slug": "bit-whatsapp",
+    "packageName": "@ha-bits/bit-whatsapp",
+    "name": "Whatsapp",
+    "displayName": "Verify Token",
+    "description": "WhatsApp Business API integration bit for sending messages",
+    "version": "1.0.1",
+    "categories": [
+      "whatsapp",
+      "messaging",
+      "business"
+    ],
+    "level": "l1",
+    "featured": false,
+    "icon": "MessageCircle",
+    "actionCount": 0,
+    "triggerCount": 0,
+    "showcaseCount": 0,
+    "downloads": 415,
+    "downloadsFormatted": "415"
   },
   {
     "slug": "bit-voice",
@@ -1284,27 +1328,6 @@
     "showcaseCount": 0,
     "downloads": 90,
     "downloadsFormatted": "90"
-  },
-  {
-    "slug": "bit-whatsapp",
-    "packageName": "@ha-bits/bit-whatsapp",
-    "name": "Whatsapp",
-    "displayName": "WhatsApp",
-    "description": "WhatsApp Business API integration bit for sending messages",
-    "version": "1.0.1",
-    "categories": [
-      "whatsapp",
-      "messaging",
-      "business"
-    ],
-    "level": "l1",
-    "featured": false,
-    "icon": "MessageCircle",
-    "actionCount": 0,
-    "triggerCount": 0,
-    "showcaseCount": 0,
-    "downloads": 415,
-    "downloadsFormatted": "415"
   },
   {
     "slug": "bit-wise",

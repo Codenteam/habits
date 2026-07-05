@@ -1,5 +1,5 @@
 ---
-title: "WhatsApp"
+title: "Verify Token"
 description: "WhatsApp Business API integration bit for sending messages"
 aside: false
 ---
@@ -26,7 +26,7 @@ onMounted(async () => {
 })
 </script>
 
-# <component :is="MessageCircle" :size="32" class="inline-icon" /> WhatsApp
+# <component :is="MessageCircle" :size="32" class="inline-icon" /> Verify Token
 
 <div class="bit-meta">
   <span class="bit-package">`@ha-bits/bit-whatsapp`</span>

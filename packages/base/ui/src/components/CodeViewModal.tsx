@@ -621,11 +621,6 @@ export default function CodeViewModal({ isOpen, onClose }: CodeViewModalProps) {
             <BinaryExportTab
               habits={habits}
               exportBundle={exportBundle}
-              serverConfig={{
-                port: config.port,
-                openapi: config.openapi,
-                webhookTimeout: config.webhookTimeout,
-              }}
               envContent={envContent}
               frontendHtml={frontendHtml || undefined}
               stackName={stackName}

@@ -356,6 +356,86 @@ export async function installModule(packageName: string, version: string = 'late
   }
 }
 
+/**
+ * Pre-install modules listed in modules.json (or defaultModules fallback).
+ * Used by Base server startup and implicit `habits base` project setup.
+ */
+export async function preinstallModules(options?: {
+  verbose?: boolean;
+}): Promise<{
+  total: number;
+  pending: number;
+  installed: number;
+  failed: string[];
+}> {
+  const verbose = options?.verbose ?? false;
+  const config = loadModulesConfig();
+  const modulesToInstall = config.modules.filter(
+    (m) => !isModuleCloned(m) || !isModuleBuilt(m),
+  );
+
+  if (modulesToInstall.length === 0) {
+    if (verbose) {
+      console.log('✅ All bits already installed');
+    }
+    return {
+      total: config.modules.length,
+      pending: 0,
+      installed: 0,
+      failed: [],
+    };
+  }
+
+  if (verbose) {
+    console.log(`📦 Pre-installing ${modulesToInstall.length} module(s)...`);
+  } else {
+    console.log(`📦 Pre-installing ${modulesToInstall.length} module(s)...`);
+  }
+
+  const failed: string[] = [];
+  let installed = 0;
+
+  // Install sequentially to avoid race conditions when multiple npm installs
+  // write to the same prefix package.json (causes corruption on Windows)
+  for (const module of modulesToInstall) {
+    try {
+      const moduleName = module.repository;
+      if (verbose) {
+        console.log(`  ⏳ Installing: ${moduleName}`);
+      } else {
+        logger.info(`⏳ Installing: ${moduleName}`);
+      }
+      await ensureModuleReady(module);
+      if (verbose) {
+        console.log(`  ✓ Installed: ${moduleName}`);
+      } else {
+        logger.info(`✓ Installed: ${moduleName}`);
+      }
+      installed++;
+    } catch (error) {
+      failed.push(module.repository);
+      if (verbose) {
+        console.warn(`  ✗ Failed to install ${module.repository}: ${String(error)}`);
+      } else {
+        logger.warn(`Failed to pre-install ${module.repository}`, {
+          error: String(error),
+        });
+      }
+    }
+  }
+
+  if (!verbose) {
+    console.log('✓ Module pre-installation complete\n');
+  }
+
+  return {
+    total: config.modules.length,
+    pending: modulesToInstall.length,
+    installed,
+    failed,
+  };
+}
+
 export async function listAvailableModules(framework?: string): Promise<any[]> {
   const config = loadModulesConfig();
   let modules = config.modules;

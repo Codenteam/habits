@@ -235,74 +235,7 @@ export const api = {
     throw new Error('Not implemented');
   },
 
-  // Binary export (SEA)
-  async checkBinarySupport(): Promise<{
-    supported: boolean;
-    version: string;
-    message?: string;
-    currentPlatform: string;
-    supportedPlatforms: string[];
-    mobile?: {
-      gradleVersion?: string | null;
-      javaVersion?: string | null;
-      cordovaVersion?: string | null;
-      androidSdkVersion?: string | null;
-      xcodeVersion?: string | null;
-      xcodebuildVersion?: string | null;
-      androidHome?: string;
-      androidSdkRoot?: string;
-      compatibility?: {
-        compatible: boolean;
-        javaVersion: number;
-        gradleVersion: string;
-        minJava?: number;
-        maxJava?: number;
-        recommended?: number;
-        message: string;
-      };
-    };
-    desktop?: {
-      electronVersion?: string | null;
-      electronBuilderVersion?: string | null;
-      tauriVersion?: string | null;
-      cargoVersion?: string | null;
-      rustcVersion?: string | null;
-    };
-  }> {
-    const response = await axios.get(`${API_BASE_URL}/export/binary/support`);
-    return response.data.data;
-  },
-
-  async exportBinary(data: {
-    habits: any[];
-    serverConfig: { port: number; openapi?: boolean; webhookTimeout?: number };
-    envContent?: string;
-    frontendHtml?: string;
-    platform?: string;
-  }): Promise<Blob> {
-    const response = await axios.post(`${API_BASE_URL}/export/binary`, data, {
-      responseType: 'blob',
-      timeout: 300000, // 5 minute timeout for binary generation
-    });
-    return response.data;
-  },
-
-  async exportDocker(data: {
-    habits: any[];
-    serverConfig: { port: number; openapi?: boolean; webhookTimeout?: number };
-    envContent: string;
-    frontendHtml?: string;
-    stackYaml: string;
-    habitFiles: Array<{ filename: string; content: string }>;
-    stackName?: string;
-  }): Promise<Blob> {
-    const response = await axios.post(`${API_BASE_URL}/export/pack/docker`, data, {
-      responseType: 'blob',
-      timeout: 60000, // 1 minute timeout for Docker package generation
-    });
-    return response.data;
-  },
-
+  // .habit export
   async exportHabit(data: {
     habits: any[];
     stackYaml: string;

@@ -55,6 +55,8 @@ nodes:
 
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [resume-analyzer](/showcase/resume-analyzer)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [qr-database](/showcase/qr-database)
 - [client-invoice-manager](/showcase/client-invoice-manager)
 - [ai-invoice-mailer](/showcase/ai-invoice-mailer)

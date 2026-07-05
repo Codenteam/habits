@@ -55,6 +55,7 @@ nodes:
 
 - [social-media-multi-posting](/showcase/social-media-multi-posting)
 - [rss-social-poster](/showcase/rss-social-poster)
+- [real-estate-social-marketing](/showcase/real-estate-social-marketing)
 
 <style>
 .bit-meta {

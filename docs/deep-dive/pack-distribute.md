@@ -1,191 +1,62 @@
-# Binary Export
+# Pack & Distribute (.habit)
 
-Export your habits as standalone applications: server binaries, desktop apps, or mobile apps.
+Export your habits as a `.habit` file for import into **Habits Cortex** on desktop and mobile.
 
 ## Overview
 
-The Pack feature allows you to package your habits configuration into distributable formats:
+The pack command packages your `stack.yaml`, habit workflows, optional frontend, and an embedded `cortex-bundle.js` into a single portable ZIP archive.
 
-- **Single Executable** - Standalone server binary
-- **Desktop** - Electron desktop application
-- **Mobile** - Cordova mobile application (iOS/Android)
+| Format | Description | Status |
+|--------|-------------|--------|
+| `habit` | Self-contained `.habit` ZIP for Habits Cortex | Available |
 
-## Pack Formats
+For server-side hosting, run `npx habits cortex --config ./stack.yaml` instead of exporting from Base.
 
-| Format | Description | Backend | Status |
-|--------|-------------|---------|--------|
-| `single-executable` | Node.js Full-stack Binary | Embedded | <Icon name="check-circle" /> Available |
-| `desktop` | Electron app | Remote URL | <Icon name="check-circle" /> Available |
-| `desktop-full` | Electron with embedded backend | Embedded | <Icon name="wrench" /> Early Access |
-| `mobile` | Cordova app | Remote URL | <Icon name="check-circle" /> Available |
-| `mobile-full` | Mobile with embedded backend | Embedded | <Icon name="wrench" /> Early Access |
+See the [`.habit` format specification](/dot-habit) for archive layout details.
 
 ---
 
-## Single Executable (Server Binary)
-
-Package your entire habits configuration into a single executable file that can run without Node.js installed.
-
-
-### Using the Base UI
+## Using the Base UI
 
 1. Open the **Export/Deploy** modal in Habits Base UI
-2. Navigate to the **Binary** tab
-3. Select your target platform
-4. Click **Generate Standalone Binary**
-5. The binary will download automatically
+2. Click **Generate .habit File**
+3. Import the downloaded file into Habits Cortex
 
 ![Binary Export UI](/images/export.webp)
 
+---
 
-### Using the CLI
-
-<PackCommandsAll appName="my-app" targets="node" />
-
-**CLI Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--config` | Path to stack.yaml configuration | Required |
-| `--output` | Output path for the binary | Required |
-| `--platform` | Target platform | `current` |
-
-**Supported `--platform` values:** `darwin-arm64`, `darwin-x64`, `linux-x64`, `win32-x64`, `current`
-
-### Features
-
-- **Standalone execution** - No Node.js installation required
-- **Embedded configuration** - All habits, stack.yaml, and .env bundled inside
-- **Environment override** - Place a `.env` file beside the binary to override bundled settings
-- **Cross-platform** - Supports macOS (ARM64, x64), Linux (x64), and Windows (x64)
-
-### Environment Override
-
-The binary checks for a `.env` file in the same directory. If found, those values override the bundled environment variables:
+## Using the CLI
 
 ```bash
-# Run the binary
-./habits
-
-# Or with a local .env override
-echo "PORT=8080" > .env
-./habits  # Now runs on port 8080
+npx habits pack --config ./stack.yaml --format habit
 ```
 
-### Supported Platforms
-
-| Platform | Architecture | Binary Name |
-|----------|--------------|-------------|
-| macOS | ARM64 | `habits` |
-| macOS | x64 | `habits` |
-| Linux | x64 | `habits` |
-| Windows | x64 | `habits.exe` |
-
----
-
-## Desktop (Electron)
-
-Package your habits frontend as a desktop application that connects to a remote backend.
-
-### Using the CLI
-
-<PackCommandsAll appName="my-app" targets="dmg,exe,appimage" modes="client" />
-
-**CLI Options:**
+**CLI options:**
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--config` | Path to stack.yaml configuration | Required |
-| `--format` | Must be `desktop` | Required |
-| `--backend-url` | URL of your deployed backend API | Required |
-| `--desktop-platform` | Target desktop platform | `all` |
-| `--output` | Output path for the app | Auto-generated |
-
-**Supported `--desktop-platform` values:**
-
-| Value | Description |
-|-------|-------------|
-| `dmg` | macOS disk image |
-| `exe` | Windows executable installer |
-| `appimage` | Linux AppImage |
-| `deb` | Debian/Ubuntu package |
-| `rpm` | Red Hat/Fedora package |
-| `msi` | Windows MSI installer |
-| `all` | All platforms |
-
-### Features
-
-- **Native desktop app** - Runs as a proper desktop application with system integration
-- **API proxy** - All API calls automatically routed to your backend URL
-- **Cross-platform** - Build for macOS, Windows, and Linux from a single codebase
-
-### Requirements
-
-- Node.js 20+
-- Your frontend must be defined in `stack.yaml` under `server.frontend`
-- Backend must be deployed and accessible at the provided URL
+| `--config` | Path to `stack.yaml` | Required |
+| `--output` | Output path for `.habit` file | `./dist/<name>.habit` |
+| `--format` | Must be `habit` | `habit` |
+| `--include-env` | Include `.env` values in bundle | `false` |
+| `--skip-bundle` | Skip `cortex-bundle.js` generation | `false` |
 
 ---
 
-## Mobile (Cordova)
+## Distribution workflow
 
-Package your habits frontend as a mobile application for iOS and Android.
+1. **Author** — Build habits in Base (`npx habits base`) or edit `stack.yaml` directly
+2. **Pack** — `habits pack --format habit`
+3. **Import** — Open Habits Cortex and import the `.habit` file
+4. **Run** — Execute workflows offline in the Cortex app
 
-### Using the CLI
-
-<PackCommandsAll appName="my-app" targets="android,ios" modes="client" />
-
-**CLI Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--config` | Path to stack.yaml configuration | Required |
-| `--format` | Must be `mobile` | Required |
-| `--backend-url` | URL of your deployed backend API | Required |
-| `--mobile-target` | Target mobile platform | `both` |
-| `--output` | Output path for the app | Auto-generated |
-
-**Supported `--mobile-target` values:**
-
-| Value | Description |
-|-------|-------------|
-| `ios` | iOS app (requires macOS with Xcode) |
-| `android` | Android app (requires Android SDK) |
-| `both` | Both iOS and Android |
-
-### Features
-
-- **Native mobile app** - Proper mobile application with native capabilities
-- **API proxy** - All API calls automatically routed to your backend URL
-- **Cross-platform** - Build for iOS and Android from the same frontend
-
-### Requirements
-
-- Node.js 20+
-- **iOS:** macOS with Xcode installed
-- **Android:** Android SDK and build tools
-- Your frontend must be defined in `stack.yaml` under `server.frontend`
-- Backend must be deployed and accessible at the provided URL
+For programmatic server execution, use `npx habits cortex` with your `stack.yaml` or Cortex Docker images.
 
 ---
 
-## Early Access
+## Related
 
-### Desktop Full (`desktop-full`)
-
-Full Electron application with the backend embedded, enabling completely offline operation.
-
-<PackCommandsAll appName="my-app" targets="dmg,exe,appimage" modes="full" />
-
-### Mobile Full (`mobile-full`)
-
-Full mobile application with the backend embedded, enabling completely offline operation.
-
-<PackCommandsAll appName="my-app" targets="android,ios" modes="full" />
-
----
-
-## General Requirements
-
-- Node.js 20+ (for generation only)
-- Signing of packages isn't included
+- [`.habit` format](/dot-habit) — Full archive specification
+- [Running habits](/deep-dive/running) — Cortex server and CLI execution
+- [Mobile app recipe](/recipes/mobile-app) — Importing `.habit` files on device

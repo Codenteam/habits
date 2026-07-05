@@ -35,7 +35,15 @@ onMounted(async () => {
   <span class="bit-categories"><span class="bit-category">oauth</span> <span class="bit-category">oauth2</span> <span class="bit-category">pkce</span> <span class="bit-category">mock</span> <span class="bit-category">testing</span></span>
 </div>
 
-Mock OAuth2 integration bit for testing OAuth2 PKCE authentication flow
+Mock OAuth2 integration bit for testing OAuth2 PKCE authentication flow.
+
+Requires [@ha-bits/mock-oauth](https://github.com/codenteam-ai/habits/tree/main/packages/manage/mock-oauth) running on `http://localhost:9999`:
+
+```bash
+cd packages/manage/mock-oauth && pnpm dev
+```
+
+For Tauri app testing, use `showcase/dummy-oauth-habit` and set `MOCK_OAUTH_CLIENT_ID` to `mock-client-id` in Secrets before connecting.
 
 ## Usage
 

@@ -8,5 +8,23 @@
         "title": "Cortex Debug"
       }
     ]
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["habits-cortex-build-debug"],
+          "appLink": false
+        },
+        {
+          "host": "habits.codenteam.com",
+          "scheme": ["https"],
+          "appLink": true
+        }
+      ],
+      "desktop": {
+        "schemes": ["habits-cortex-build-debug"]
+      }
+    }
   }
 }

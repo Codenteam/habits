@@ -21,7 +21,6 @@ echo "✅ Local bits linked to /tmp/habits-nodes/node_modules/@ha-bits"
 echo "📦 Installing habits from local package..."
 cd /habits-pkg && npm link --force
 
-# Run the habits commands
+# Run the habits command (auto-creates .env, modules.json, and installs bits on first run)
 cd /app
-habits init
 habits base

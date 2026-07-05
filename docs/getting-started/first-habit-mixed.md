@@ -115,4 +115,4 @@ Ready to explore more? Check out the [Examples](/showcase/) section for real-wor
 
 ### Deployment Options
 
-- [Binary Export](/deep-dive/pack-distribute) - Package your habit as a standalone executable file.
+- [Pack & Distribute](/deep-dive/pack-distribute) - Export your habit as a `.habit` file for Habits Cortex.

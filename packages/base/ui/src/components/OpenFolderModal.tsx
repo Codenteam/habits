@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { FolderOpen, FileJson, AlertCircle, Check, X, Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
-import { addHabit, setActiveHabit, clearWorkflow, setEnvVariables } from '../store/slices/workflowSlice';
-import { setFrontendHtml, setFrontendYaml } from '../store/slices/uiSlice';
+import { applyParsedStackToStore } from '../lib/showcaseLoader';
 import {
   FileEntry,
   detectConfigFiles,
@@ -96,37 +95,8 @@ export default function OpenFolderModal({ isOpen, onClose }: OpenFolderModalProp
     
     try {
       const parsed = await parseStack(fileEntries, configPath);
-      
-      // Clear existing workflow and load habits
-      if (parsed.habits.length > 0) {
-        dispatch(clearWorkflow());
-        
-        // Add each habit to the store
-        parsed.habits.forEach((habit, index) => {
-          dispatch(addHabit(habit));
-          
-          // Set the first habit as active
-          if (index === 0) {
-            dispatch(setActiveHabit(habit.id));
-          }
-        });
-      }
-      
-      // Load frontend HTML if available
-      if (parsed.frontendHtml) {
-        dispatch(setFrontendHtml(parsed.frontendHtml));
-      }
+      applyParsedStackToStore(parsed, dispatch);
 
-      // Load frontend YAML if available
-      if (parsed.frontendYaml) {
-        dispatch(setFrontendYaml(parsed.frontendYaml));
-      }
-      
-      // Load environment variables if available
-      if (parsed.envVariables && Object.keys(parsed.envVariables).length > 0) {
-        dispatch(setEnvVariables(parsed.envVariables));
-      }
-      
       setResult({
         habitsLoaded: parsed.habits.length,
         errors: parsed.errors,

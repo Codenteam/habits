@@ -1,67 +1,20 @@
 /**
  * Pack Command Types
- * 
- * Shared types for all pack formats: single-executable, desktop, and mobile.
+ *
+ * Shared types for .habit packaging.
  */
 
-export type PackFormat = 
-  | 'single-executable'
-  | 'desktop'
-  | 'desktop-full'
-  | 'mobile'
-  | 'mobile-full'
-  | 'docker'
-  | 'bundle'
-  | 'tauri'
-  | 'habit';
-
-export type DesktopPlatform = 
-  | 'dmg'
-  | 'exe'
-  | 'appimage'
-  | 'deb'
-  | 'rpm'
-  | 'msi'
-  | 'all';
-
-export type DesktopFramework = 'electron' | 'tauri';
-
-export type MobileTarget = 'ios' | 'android' | 'both';
-
-export type MobileFramework = 'capacitor' | 'cordova' | 'tauri';
-
-export type SeaPlatform = 
-  | 'darwin-arm64'
-  | 'darwin-x64'
-  | 'linux-x64'
-  | 'win32-x64'
-  | 'current';
+export type PackFormat = 'habit';
 
 export interface PackCommandOptions {
   /** Path to stack.yaml config file */
   config: string;
   /** Output path for the generated artifact */
   output?: string;
-  /** Pack format */
-  format: PackFormat;
-  /** Target platform for single-executable (darwin-arm64, darwin-x64, linux-x64, win32-x64, or current) */
-  platform?: SeaPlatform;
-  /** Backend URL for frontend-only apps (desktop/mobile) */
-  backendUrl?: string;
-  /** Desktop platform output format */
-  desktopPlatform?: DesktopPlatform;
-  /** Desktop framework (electron or tauri) */
-  desktopFramework?: DesktopFramework;
-  /** Mobile target platform */
-  mobileTarget?: MobileTarget;
-  /** Mobile framework (capacitor, cordova, or tauri) */
-  mobileFramework?: MobileFramework;
+  /** Pack format (only 'habit' is supported) */
+  format?: PackFormat;
   /** Custom app name (overrides stack.yaml name) */
   appName?: string;
-  /** Path to app icon (PNG file) */
-  appIcon?: string;
-  /** Build in debug mode */
-  debug?: boolean;
   /** Include .env values in bundle (default: false for security) */
   includeEnv?: boolean;
   /** Skip generating cortex-bundle.js (use when cortex-bundle-all.js is pre-loaded) */
@@ -79,14 +32,16 @@ export interface HabitData {
   id?: string;
   /** The relative path from config directory (e.g., "habits/generate-recipe.yaml") */
   relativePath?: string;
-  [key: string]: any; // Allow additional habit properties
+  filename?: string;
+  content?: string;
+  [key: string]: any;
 }
 
 export interface ParsedConfig {
   workflows?: Array<{ id?: string; path: string; enabled?: boolean }>;
-  server?: { 
-    port?: number; 
-    openapi?: boolean; 
+  server?: {
+    port?: number;
+    openapi?: boolean;
     webhookTimeout?: number;
     frontend?: string;
   };

@@ -86,11 +86,6 @@ export function setupRoutes(
 
   // Export routes
   if (allowExport) {
-    app.get(basePath + '/export/binary/support', exportController.checkSupport);
-    app.post(basePath + '/export/binary', exportController.generateBinary);
-    app.post(basePath + '/export/pack/desktop', exportController.packDesktop);
-    app.post(basePath + '/export/pack/mobile', exportController.packMobile);
-    app.post(basePath + '/export/pack/docker', exportController.packDocker);
     app.post(basePath + '/export/pack/habit', exportController.packHabit);
   }
 

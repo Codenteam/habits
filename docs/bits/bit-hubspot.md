@@ -53,6 +53,7 @@ nodes:
 
 ## Used In Showcases
 
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [ai-agent-lead-enrichment](/showcase/ai-agent-lead-enrichment)
 
 <style>

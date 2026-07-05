@@ -6,6 +6,8 @@ argument-hint: 'Describe the build/publish task or validation error to fix'
 
 # App Building and Publishing
 
+> **Scope:** This skill applies to the **habits-cortex** native app (`habits-cortex/`), not per-stack apps generated from Base. Habit authors distribute via `.habit` files imported into habits-cortex.
+
 ## iOS App Store Connect
 
 ### Build and Upload Command

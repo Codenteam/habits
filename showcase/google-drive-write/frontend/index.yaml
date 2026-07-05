@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: google-drive-write
+  title: Google Drive Write
+  subtitle: Write a file to a specific Drive folder
+  icon: "lucide:FilePen"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Google Drive Write
+    subtitle: "OAuth → upload one file to a folder"
+    icon: "lucide:FilePen"
+
+state:
+  folderId: ""
+  fileName: "notes.txt"
+  content: ""
+  result: null
+  error: null
+
+actions:
+  write:
+    method: POST
+    endpoint: /api/write-file
+    body:
+      folderId: "{{state.folderId}}"
+      fileName: "{{state.fileName}}"
+      content: "{{state.content}}"
+      mimeType: "text/plain"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: null
+      toast: "File written to Google Drive"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+widgets:
+  - kind: status-banner
+    source: "Connect Google Drive first: habit card ⋮ → Secrets → set HABITS_GOOGLE_DRIVE_CLIENT_ID / HABITS_GOOGLE_DRIVE_CLIENT_SECRET → Connect."
+  - kind: card
+    title: Write file
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: folderId
+            type: text
+            label: Folder ID
+            placeholder: "Target folder ID from the Drive URL"
+            required: true
+          - name: fileName
+            type: text
+            label: File name
+            placeholder: "report.txt"
+            required: true
+          - name: content
+            type: textarea
+            label: File content
+            rows: 10
+            placeholder: "Text to write"
+            required: true
+        submit:
+          label: Write to Drive
+          action: write
+          disabledWhen: "!state.folderId || !state.fileName || !state.content"
+          loadingLabel: "Writing..."
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Written
+    sections:
+      - kind: kv-grid
+        source: state.result.file
+        fields:
+          - { key: name, label: File name }
+          - { key: id, label: File ID }
+          - { key: webViewLink, label: Drive link }

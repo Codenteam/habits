@@ -7,6 +7,8 @@ import { getFormFieldNames } from './inferState';
 export interface HabitOption {
   id: string;
   name?: string;
+  /** Input field names extracted from habits.input.* in the workflow */
+  inputs?: string[];
 }
 
 export interface ActionReference {
@@ -84,12 +86,30 @@ export function createApiActionForHabit(
   };
 }
 
+function asWidgetNode(raw: unknown): WidgetNode {
+  if (!raw || typeof raw !== 'object') {
+    return { uid: 'w', kind: '', props: {} };
+  }
+  const obj = raw as Record<string, unknown>;
+  if ('props' in obj && obj.props && typeof obj.props === 'object') {
+    return raw as WidgetNode;
+  }
+  const { kind, uid, children, ...rest } = obj;
+  return {
+    uid: typeof uid === 'string' ? uid : `w-${String(kind ?? 'node')}`,
+    kind: String(kind ?? ''),
+    props: rest,
+    children: Array.isArray(children) ? children.map((c) => asWidgetNode(c)) : undefined,
+  };
+}
+
 function walkWidgetNodes(
   nodes: WidgetNode[],
   visit: (node: WidgetNode, path: string) => void,
   prefix = '',
 ): void {
-  for (const node of nodes) {
+  for (const item of nodes) {
+    const node = asWidgetNode(item);
     const path = prefix ? `${prefix} › ${node.kind}` : node.kind;
     visit(node, path);
     if (node.children?.length) walkWidgetNodes(node.children, visit, path);
@@ -97,7 +117,11 @@ function walkWidgetNodes(
 }
 
 function refsFromWidget(node: WidgetNode, location: string, viewId?: string): ActionReference[] {
-  const p = node.props;
+  const flat = node as unknown as Record<string, unknown>;
+  const p = { ...flat, ...(node.props ?? {}) } as Record<string, unknown>;
+  delete p.kind;
+  delete p.uid;
+  delete p.children;
   const refs: ActionReference[] = [];
   const base = { viewId, widgetUid: node.uid };
   const submit = p.submit as { action?: unknown } | undefined;

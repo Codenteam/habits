@@ -10,7 +10,7 @@ before public exposure using the environment variables listed below.
 |---|---|---|
 | `HABITS_ALLOW_MODULES_INSTALL` | `true` | Disables `POST /api/modules/install` and `POST /api/modules/add`. Prevents anyone from cloning GitHub repos or installing npm packages onto the server. |
 | `HABITS_ALLOW_SERVE` | `true` | Disables all `POST /api/serve/start`, `/stop`, `/kill-port`, `/kill-process`, `/openapi` routes. Prevents subprocess spawning and arbitrary process killing. |
-| `HABITS_ALLOW_EXPORT` | `true` | Disables `POST /api/export/binary`, `/export/pack/desktop`, `/mobile`, `/docker`, `/habit`, and `GET /api/export/binary/support`. Prevents build tooling (`cargo`, `gradle`, `xcodebuild`, etc.) from being invoked by callers and stops SDK path/version disclosure. |
+| `HABITS_ALLOW_EXPORT` | `true` | Disables `POST /api/export/pack/habit`. Prevents callers from triggering bundle generation and packaging workloads. |
 | `HABITS_ALLOW_EXECUTE` | `true` | Disables `POST /api/execute`. Only disable if you do not need workflow execution on this instance. If execution is the public feature, leave this enabled but add sandboxing. |
 | `HABITS_ALLOW_FORMS_AUTH` | `true` | Disables `POST /api/forms/verify-auth` and `/api/forms/populate-options`. Prevents credential-stuffing attacks against connected third-party services. |
 | `HABITS_ALLOW_SECURITY_API` | `true` | Disables `GET /api/security/capabilities` and `POST /api/security/generate-policy`. Prevents disclosure of internal package presence. |

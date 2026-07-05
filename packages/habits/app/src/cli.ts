@@ -2,31 +2,24 @@
  * Habits CLI - Unified command line interface
  * 
  * Usage:
- *   npx habits init
  *   npx habits cortex --config ./config.json
  *   npx habits execute --config ./config.json --id <workflow-id>
  *   npx habits discover --config ./stack.yaml
  *   npx habits convert --input ./workflow.json --output ./habits.json
  *   npx habits edit [--port 3000]
  *   npx habits base [--port 3000]  (alias for edit)
- *   npx habits bundle [--config ./stack.yaml]
- *   npx habits pack --config ./stack.yaml --format bundle
  *   npx habits pack --config ./stack.yaml --format habit
- *   npx habits pack --config ./stack.yaml --format tauri
- *   npx habits pack --config ./stack.yaml --format single-executable
- * 
+ *
  * Commands:
- *   init     Initialize a new Habits project with .env and modules.json
  *   cortex   Start the Habits server (Cortex mode)
  *   execute  Execute a workflow from file or config
  *   discover Discover and validate data-flow wiring (no input required)
  *   convert  Convert a workflow from Script format to Habits format
  *   edit|base     Start the Base server for editing modules and workflows
- *   bundle   Generate cortex-bundle.js for browser/Tauri (shortcut for pack --format bundle)
- *   pack     Generate standalone bundle, Tauri app, binary (SEA), .habit file, or mobile app
- * 
+ *   pack     Generate a .habit file for Habits Cortex
+ *
  * Pack formats:
- *   habit    Self-contained .habit file (zip with index.html + cortex-bundle.js) for Cortex app
+ *   habit    Self-contained .habit file (zip with cortex-bundle.js) for Habits Cortex
  */
 
 import * as fs from 'fs';
@@ -47,13 +40,10 @@ import {
   stringifyDataFlowBlueprint,
 } from '@ha-bits/cortex-lab';
 import { convertWorkflow, convertWorkflowWithConnections } from '@ha-bits/core';
-import { defaultModules } from './modules';
+import { ensureHabitsProject } from '@ha-bits/cortex';
 import {
-  getSupportedPlatforms,
   runPackCommand as executePackCommand,
   getSupportedPackFormats,
-  getSupportedDesktopPlatforms,
-  getSupportedMobileTargets,
   PackFormat,
 } from '@ha-bits/base';
 
@@ -269,6 +259,11 @@ export async function runCLI(): Promise<void> {
         describe: 'Server port',
         type: 'number',
       },
+      'skip-install': {
+        describe: 'Skip installing bits from modules.json (project files only)',
+        type: 'boolean',
+        default: false,
+      },
     })
     .command('edit', false, {
       port: {
@@ -276,29 +271,13 @@ export async function runCLI(): Promise<void> {
         describe: 'Server port',
         type: 'number',
       },
-    })
-    .command('init', 'Initialize a new Habits project with .env and modules.json', {
-      force: {
-        alias: 'f',
-        describe: 'Overwrite existing files',
+      'skip-install': {
+        describe: 'Skip installing bits from modules.json (project files only)',
         type: 'boolean',
         default: false,
       },
     })
-    .command('bundle', 'Generate a cortex-bundle.js for browser/Tauri execution (shortcut for pack --format bundle)', {
-      config: {
-        alias: 'c',
-        describe: 'Path to stack.yaml config file (defaults to ./stack.yaml)',
-        type: 'string',
-        default: './stack.yaml',
-      },
-      output: {
-        alias: 'o',
-        describe: 'Output path for the bundle (defaults to ./dist/cortex-bundle.js)',
-        type: 'string',
-      },
-    })
-    .command(['pack', 'bundle'], 'Package habits into executable, bundle, Tauri app, desktop app, or mobile app', {
+    .command('pack', 'Package habits into a .habit file for Habits Cortex', {
       config: {
         alias: 'c',
         describe: 'Path to stack.yaml config file',
@@ -307,53 +286,27 @@ export async function runCLI(): Promise<void> {
       },
       output: {
         alias: 'o',
-        describe: 'Output path for the generated artifact',
+        describe: 'Output path for the .habit file',
         type: 'string',
       },
       format: {
         alias: 'f',
-        describe: 'Output format: single-executable, bundle, habit, tauri, desktop, desktop-full, mobile, mobile-full',
+        describe: 'Output format (only habit is supported)',
         type: 'string',
-        default: 'single-executable',
+        default: 'habit',
         choices: getSupportedPackFormats(),
-      },
-      platform: {
-        describe: 'Target platform for single-executable (darwin-arm64, darwin-x64, linux-x64, win32-x64, current)',
-        type: 'string',
-        default: 'current',
-        choices: getSupportedPlatforms(),
-      },
-      'backend-url': {
-        describe: 'Backend API URL for desktop/mobile apps (required for frontend-only modes)',
-        type: 'string',
-      },
-      'desktop-platform': {
-        describe: 'Desktop output format: dmg, exe, appimage, deb, rpm, msi, all',
-        type: 'string',
-        default: 'all',
-        choices: getSupportedDesktopPlatforms(),
-      },
-      'mobile-target': {
-        describe: 'Mobile target: ios, android, both',
-        type: 'string',
-        default: 'both',
-        choices: getSupportedMobileTargets(),
       },
       'app-name': {
         describe: 'Custom app name (overrides stack.yaml name)',
         type: 'string',
       },
-      'app-icon': {
-        describe: 'Path to app icon (PNG file)',
-        type: 'string',
-      },
-      'debug': {
-        describe: 'Build in debug mode',
+      'include-env': {
+        describe: 'Include .env values in bundle (default: false for security)',
         type: 'boolean',
         default: false,
       },
-      'include-env': {
-        describe: 'Include .env values in bundle (default: false for security)',
+      'skip-bundle': {
+        describe: 'Skip generating cortex-bundle.js (use when cortex-bundle-all.js is pre-loaded)',
         type: 'boolean',
         default: false,
       },
@@ -382,12 +335,6 @@ export async function runCLI(): Promise<void> {
       case 'edit':
       case 'base':
         await runEditCommand(argv);
-        break;
-      case 'init':
-        await runInitCommand(argv);
-        break;
-      case 'bundle':
-        await runPackCommand(argv);
         break;
       case 'pack':
         await runPackCommand(argv);
@@ -442,11 +389,23 @@ async function runServerCommand(argv: any): Promise<void> {
  * Run the edit command (Base server mode)
  */
 async function runEditCommand(argv: any): Promise<void> {
-  console.log('🚀 Starting Base server (edit mode)...\n');
-  
+  const skipInstall = argv['skip-install'] === true;
+
+  await ensureHabitsProject({ skipInstall });
+
+  if (!skipInstall) {
+    process.env.HABITS_SKIP_PREINSTALL = '1';
+  }
+
+  console.log('🚀 Starting Habits Base...\n');
+
   const server = await startBaseServer({
     port: argv.port,
+    skipSetup: true,
   });
+
+  const port = argv.port || Number(process.env.PORT) || 3000;
+  console.log(`\n🎨 Habits Base ready at http://localhost:${port}/habits/base`);
   
   // Keep the process running
   process.on('SIGINT', async () => {
@@ -637,61 +596,18 @@ async function runConvertCommand(argv: any): Promise<void> {
     console.log(output);
   }
 }
-/**
- * Run the init command - initialize a new Habits project
- */
-async function runInitCommand(argv: any): Promise<void> {
-  const cwd = process.cwd();
-  const envPath = path.join(cwd, '.env');
-  const modulesPath = path.join(cwd, 'modules.json');
-  
-  console.log('🚀 Initializing Habits project...\n');
-  
-  // Default .env content
-  const envContent = `HABITS_MODULES_MODE=open
-HABITS_ALLOW_SERVE=true
-`;
-
-  // Default modules.json content
-  const modulesContent = defaultModules;
-
-  // Create .env file
-  if (fs.existsSync(envPath) && !argv.force) {
-    console.log(`⚠️  .env already exists (use --force to overwrite)`);
-  } else {
-    fs.writeFileSync(envPath, envContent);
-    console.log(`✅ Created .env`);
-  }
-
-  // Create modules.json file
-  if (fs.existsSync(modulesPath) && !argv.force) {
-    console.log(`⚠️  modules.json already exists (use --force to overwrite)`);
-  } else {
-    fs.writeFileSync(modulesPath, JSON.stringify(modulesContent, null, 2));
-    console.log(`✅ Created modules.json`);
-  }
-
-  console.log('\n📦 Project initialized! Next steps:');
-  console.log('   1. Run: npx habits base');
-  console.log('   2. Open: http://localhost:3000/habits/base');
-}
 
 /**
- * Run the pack command - package habits into executable, desktop app, or mobile app
+ * Run the pack command - package habits into a .habit file
  */
 async function runPackCommand(argv: any): Promise<void> {
   const result = await executePackCommand({
     config: argv.config,
     output: argv.output,
-    format: argv.format as PackFormat,
-    platform: argv.platform,
-    backendUrl: argv['backend-url'],
-    desktopPlatform: argv['desktop-platform'],
-    mobileTarget: argv['mobile-target'],
+    format: (argv.format || 'habit') as PackFormat,
     appName: argv['app-name'],
-    appIcon: argv['app-icon'],
-    debug: argv.debug,
     includeEnv: argv['include-env'],
+    skipBundle: argv['skip-bundle'],
   });
 
   if (!result.success) {

@@ -60,7 +60,19 @@ export { PollingStore, createPollingStore, DedupStrategy, PollingItemContext, Se
 export { BitsPollingStore } from './bits/bitsRoutine';
 
 // Module management utilities
-export { ensureModuleInstalled, registerBundledModule, getBundledModule, isBundledModule } from './utils/moduleLoader';
+export {
+  ensureModuleInstalled,
+  preinstallModules,
+  registerBundledModule,
+  getBundledModule,
+  isBundledModule,
+} from './utils/moduleLoader';
+export {
+  ensureHabitsProject,
+  ensureHabitsProjectFiles,
+  type EnsureProjectResult,
+  type EnsureProjectFilesResult,
+} from './utils/ensureProject';
 export { customRequire, registerCortexModule } from './utils/customRequire';
 export { getNodesBasePath, getNodesPath, getModuleFullPath, getLocalModulePath, clearNodesBasePathCache } from './utils/utils';
 export { assertNotNullOrUndefined } from './utils';

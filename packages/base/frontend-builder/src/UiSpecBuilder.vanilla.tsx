@@ -57,6 +57,7 @@ import {
 import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui/icons';
 import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
 import { createApiActionForHabit, defaultActionIdForHabit, type ActionReference } from './actionLinking';
+import { allHabitInputNames } from './actionConfig';
 import {
   WIDGET_PRESETS,
   WIDGET_PRESETS_BY_ID,
@@ -91,8 +92,10 @@ export interface UiSpecBuilderProps {
   hideYamlTab?: boolean;
   defaultRightTab?: 'yaml' | 'settings' | 'app-settings';
   /** Habits with workflows — enables “connect to habit” on action fields */
-  linkableHabits?: Array<{ id: string; name?: string }>;
+  linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   onSelectedNodeChange?: (node: WidgetNode | null) => void;
+  /** Show the drag-and-drop widget canvas between palette and preview. Defaults to true in full chrome, false in embedded. */
+  showWidgetCanvas?: boolean;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -800,7 +803,9 @@ export function UiSpecBuilderVanilla({
   defaultRightTab: defaultRightTabProp,
   linkableHabits,
   onSelectedNodeChange,
+  showWidgetCanvas: showWidgetCanvasProp,
 }: UiSpecBuilderProps) {
+  const showWidgetCanvas = showWidgetCanvasProp ?? chrome !== 'embedded';
   const [spec, setSpec] = useState<SpecState>(() =>
     tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle),
   );
@@ -810,11 +815,6 @@ export function UiSpecBuilderVanilla({
     selectedUidRef.current = selectedUid;
   }, [selectedUid]);
 
-  // Reload when a new habit/stack is opened while this builder is mounted.
-  useEffect(() => {
-    setSpec(tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle));
-    setSelectedUid(null);
-  }, [initialYaml, defaultMetaId, defaultMetaTitle]);
   const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>(
     () => {
       const preferred = defaultRightTabProp ?? 'settings';
@@ -846,6 +846,10 @@ export function UiSpecBuilderVanilla({
       ['Presets', true],
       ...CATEGORIES.map((c) => [c, true]),
     ]),
+  );
+  const habitInputNames = useMemo(
+    () => allHabitInputNames(linkableHabits ?? []),
+    [linkableHabits],
   );
   // Drag state — kept in refs to avoid re-renders mid-drag.
   const dragRef = useRef<{ kind?: string; sourceUid?: string; presetId?: string }>({});
@@ -1409,6 +1413,7 @@ export function UiSpecBuilderVanilla({
         )}
 
         {/* Canvas */}
+        {showWidgetCanvas && (
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto bg-slate-950">
           {viewNavItems.length > 1 && (
             <div className="px-4 pt-3 flex flex-wrap gap-1 border-b border-slate-800">
@@ -1447,9 +1452,15 @@ export function UiSpecBuilderVanilla({
             depth={0}
           />
         </main>
+        )}
 
         {/* Live preview */}
-        <aside className="w-[380px] flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0">
+        <aside
+          className={
+            (showWidgetCanvas ? 'w-[380px]' : 'flex-1 min-w-0') +
+            ' flex-shrink-0 border-l border-slate-800 bg-slate-900 flex flex-col min-h-0'
+          }
+        >
           <div className="px-3 py-2 text-xs text-slate-500 flex items-center gap-2 border-b border-slate-800 flex-shrink-0">
             {previewLoading ? (
               <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Compiling…</>
@@ -1497,6 +1508,7 @@ export function UiSpecBuilderVanilla({
                 onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
                 onRemove={() => removeWidget(selectedNode.uid)}
                 linkableHabits={linkableHabits}
+                habitInputNames={habitInputNames}
                 onLinkHabit={(habitId, actionId, propPath) =>
                   linkFieldToHabit(habitId, actionId, propPath)
                 }
@@ -1913,11 +1925,12 @@ interface PropertyPanelProps {
   node: WidgetNode;
   onChange: (patch: (props: Record<string, any>) => Record<string, any>) => void;
   onRemove: () => void;
-  linkableHabits?: Array<{ id: string; name?: string }>;
+  linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
+  habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string, propPath: string) => void;
 }
 
-function PropertyPanel({ node, onChange, onRemove, linkableHabits, onLinkHabit }: PropertyPanelProps) {
+function PropertyPanel({ node, onChange, onRemove, linkableHabits, habitInputNames, onLinkHabit }: PropertyPanelProps) {
   const def = CATALOG_BY_KIND.get(node.kind);
   if (!def) {
     return (
@@ -1947,6 +1960,7 @@ function PropertyPanel({ node, onChange, onRemove, linkableHabits, onLinkHabit }
             field={f}
             value={getDeep(node.props, f.key)}
             linkableHabits={linkableHabits}
+            habitInputNames={habitInputNames}
             onLinkHabit={
               onLinkHabit
                 ? (habitId, actionId) => onLinkHabit(habitId, actionId, f.key)
@@ -1999,7 +2013,8 @@ interface PropertyFieldProps {
   field: FieldDef;
   value: any;
   onChange: (v: any) => void;
-  linkableHabits?: Array<{ id: string; name?: string }>;
+  linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
+  habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string) => void;
 }
 
@@ -2007,7 +2022,7 @@ function isActionIdField(key: string): boolean {
   return key === 'action' || key === 'loadAction' || key.endsWith('.action');
 }
 
-function PropertyField({ field, value, onChange, linkableHabits, onLinkHabit }: PropertyFieldProps) {
+function PropertyField({ field, value, onChange, linkableHabits, habitInputNames, onLinkHabit }: PropertyFieldProps) {
   if (field.type === 'icon') {
     return (
       <Field label={field.label} help={field.help ?? 'Lucide icon name, or leave empty'}>
@@ -2125,7 +2140,12 @@ function PropertyField({ field, value, onChange, linkableHabits, onLinkHabit }: 
   if (field.type === 'fields-array') {
     return (
       <Field label={field.label} help={field.help}>
-        <FieldsArrayEditor value={value ?? []} onChange={onChange} />
+        <FieldsArrayEditor
+          value={value ?? []}
+          onChange={onChange}
+          nameSuggestions={habitInputNames ?? []}
+          linkableHabits={linkableHabits ?? []}
+        />
       </Field>
     );
   }
@@ -2164,21 +2184,60 @@ function PropertyField({ field, value, onChange, linkableHabits, onLinkHabit }: 
 // Array editors (form fields, metrics, kv pairs, columns)
 // ---------------------------------------------------------------------------
 
-function FieldsArrayEditor({ value, onChange }: { value: any[]; onChange: (v: any[]) => void }) {
+function FieldsArrayEditor({
+  value,
+  onChange,
+  nameSuggestions = [],
+  linkableHabits = [],
+}: {
+  value: any[];
+  onChange: (v: any[]) => void;
+  nameSuggestions?: string[];
+  linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
+}) {
   const update = (i: number, patch: any) =>
     onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
+  const suggestionListId = 'form-field-name-suggestions';
   return (
     <div className="space-y-2">
       {value.map((f, i) => (
         <div key={i} className="rounded border border-slate-700 bg-slate-950 p-2 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <input className={`${INPUT} flex-1`} value={f.name ?? ''} placeholder="name"
-                   onChange={(e) => update(i, { name: e.target.value })} />
-            <select className={INPUT} value={f.type ?? 'text'}
-                    onChange={(e) => update(i, { type: e.target.value })}>
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <input
+              className={`${INPUT} flex-1 min-w-[6rem]`}
+              value={f.name ?? ''}
+              placeholder="name"
+              list={suggestionListId}
+              onChange={(e) => update(i, { name: e.target.value })}
+            />
+            {nameSuggestions.length > 0 && (
+              <select
+                className={`${INPUT} w-full sm:w-28 text-xs flex-shrink-0 max-w-full`}
+                value=""
+                title="Pick from habit inputs"
+                onChange={(e) => {
+                  if (e.target.value) update(i, { name: e.target.value });
+                  e.target.value = '';
+                }}
+              >
+                <option value="">Habit input…</option>
+                {linkableHabits.flatMap((h) =>
+                  (h.inputs ?? []).map((input) => (
+                    <option key={`${h.id}-${input}`} value={input}>
+                      {h.name ? `${h.name}: ${input}` : input}
+                    </option>
+                  )),
+                )}
+              </select>
+            )}
+            <select
+              className={`${INPUT} w-full sm:w-auto sm:max-w-[9rem] flex-shrink-0`}
+              value={f.type ?? 'text'}
+              onChange={(e) => update(i, { type: e.target.value })}
+            >
               {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
-            <button type="button" className="text-slate-400 hover:text-red-400 p-1"
+            <button type="button" className="text-slate-400 hover:text-red-400 p-1 flex-shrink-0"
                     onClick={() => onChange(value.filter((_, idx) => idx !== i))}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -2235,6 +2294,11 @@ function FieldsArrayEditor({ value, onChange }: { value: any[]; onChange: (v: an
           )}
         </div>
       ))}
+      <datalist id={suggestionListId}>
+        {nameSuggestions.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
       <button type="button" className={BTN_SECONDARY}
               onClick={() => onChange([...value, { name: `field${value.length + 1}`, type: 'text', label: 'Label' }])}>
         <Plus className="w-3 h-3" /> Add field

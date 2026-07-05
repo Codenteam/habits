@@ -53,6 +53,7 @@ nodes:
 
 ## Used In Showcases
 
+- [real-estate-agent-leads-management](/showcase/real-estate-agent-leads-management)
 - [email-ticket-routing](/showcase/email-ticket-routing)
 
 <style>

@@ -86,6 +86,7 @@
    * Works for both:
    *   - habits-cortex://oauth?code=...&state=...        (production desktop)
    *   - habits-cortex-dev://oauth?code=...&state=...    (dev desktop, via oauth.html shortcut)
+   *   - habits-cortex-build-debug://oauth?code=...&state=...  (debug desktop build)
    *   - https://habits.codenteam.com/oauth.html?code=...&state=...  (mobile App Links)
    */
   function handleDeepLink(url) {
@@ -174,6 +175,30 @@
   // ============================================================================
 
   /**
+   * Resolve fetch for outbound HTTP (e.g. OAuth token exchange).
+   * Uses Tauri HTTP plugin when available — same backend as habits-fetch-proxy
+   * pass-through — so requests bypass webview CORS restrictions.
+   */
+  function getProxiedFetch() {
+    var w = window;
+    while (w) {
+      try {
+        var tauri = w.__TAURI__;
+        if (tauri && tauri.http && typeof tauri.http.fetch === 'function') {
+          return function (url, init) {
+            return tauri.http.fetch(url, init);
+          };
+        }
+        if (!w.parent || w.parent === w) break;
+        w = w.parent;
+      } catch (e) {
+        break;
+      }
+    }
+    return window.fetch.bind(window);
+  }
+
+  /**
    * Exchange an authorization code for tokens via PKCE.
    */
   async function exchangeCodeForTokens(code, state, config) {
@@ -191,7 +216,8 @@
       body.set('client_secret', config.clientSecret);
     }
 
-    var response = await fetch(config.tokenUrl, {
+    var proxiedFetch = getProxiedFetch();
+    var response = await proxiedFetch(config.tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -272,6 +298,11 @@
       throw new Error('[OAuth] clientId is required to start OAuth flow for: ' + bitId);
     }
 
+    var scopes = (config.scopes || []).filter(Boolean);
+    if (!scopes.length) {
+      throw new Error('[OAuth] scopes are required to start OAuth flow for: ' + bitId);
+    }
+
     var state = generateState();
     var pkce = config.pkce !== false ? await generatePkce() : {};
 
@@ -279,7 +310,7 @@
       response_type: 'code',
       client_id: config.clientId,
       redirect_uri: OAUTH_REDIRECT_URI,
-      scope: (config.scopes || []).join(' '),
+      scope: scopes.join(' '),
       state: state,
     });
 
@@ -305,6 +336,7 @@
 
       pendingFlows.set(state, {
         bitId: bitId,
+        authUrl: authUrl,
         config: {
           bitId: bitId,
           clientId: config.clientId,
@@ -360,6 +392,28 @@
     return cancelled;
   }
 
+  function getPendingOAuthFlows() {
+    var flows = [];
+    for (var entry of pendingFlows.entries()) {
+      var state = entry[0];
+      var flow = entry[1];
+      flows.push({
+        state: state,
+        bitId: flow.bitId,
+        authUrl: flow.authUrl || null,
+      });
+    }
+    return flows;
+  }
+
+  function deliverOAuthDeepLink(url) {
+    handleDeepLink(url);
+  }
+
+  function getActiveUrlScheme() {
+    return URL_SCHEME;
+  }
+
   // ============================================================================
   // Bootstrap
   // ============================================================================
@@ -372,8 +426,11 @@
       hasPendingFlow: hasPendingFlow,
       cancelFlowsForBit: cancelFlowsForBit,
       parseCallbackUrl: parseCallbackUrl,
-      URL_SCHEME: URL_SCHEME,
-      OAUTH_REDIRECT_URI: OAUTH_REDIRECT_URI,
+      getPendingOAuthFlows: getPendingOAuthFlows,
+      deliverOAuthDeepLink: deliverOAuthDeepLink,
+      getActiveUrlScheme: getActiveUrlScheme,
+      get OAUTH_REDIRECT_URI() { return OAUTH_REDIRECT_URI; },
+      get URL_SCHEME() { return URL_SCHEME; },
     };
 
     console.log('[OAuth] Habits OAuth handler loaded');

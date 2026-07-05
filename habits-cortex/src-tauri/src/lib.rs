@@ -182,9 +182,12 @@ fn get_cli_args() -> Option<CliArgs> {
 /// OAuth / deep-link URL scheme for this build.
 /// Dev app (`com.codenteam-oss.habits.dev`) uses a separate scheme so it does not
 /// compete with the production Cortex install for `habits-cortex://`.
+/// Debug app (`com.codenteam-oss.habits.debug`) uses `habits-cortex-build-debug://`.
 fn oauth_url_scheme(identifier: &str) -> &'static str {
     if identifier.ends_with(".dev") {
         "habits-cortex-dev"
+    } else if identifier.ends_with(".debug") {
+        "habits-cortex-build-debug"
     } else {
         "habits-cortex"
     }
@@ -285,8 +288,8 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, _event| {
+        .run(|app_handle, _event| {
             #[cfg(all(debug_assertions, feature = "debug-tools", desktop))]
-            automation::start_automation_server(_app_handle.clone());
+            automation::start_automation_server(app_handle.clone());
         });
 }

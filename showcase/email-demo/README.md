@@ -26,14 +26,13 @@ cp .env.example .env
 pnpm nx dev @ha-bits/cortex --config showcase/email-demo/stack.yaml
 ```
 
-### Tauri Desktop
+### Habits Cortex (.habit)
 
 ```bash
-# Pack the habit first
-pnpm nx pack habits --config showcase/email-demo/stack.yaml --format tauri
+# Pack the habit for import into Habits Cortex
+pnpm nx run habits pack --config showcase/email-demo/stack.yaml --format habit
 
-# Run the Tauri app
-# The tauri app will use the tauri-plugin-email for IMAP/SMTP operations
+# Import the generated .habit file into the Habits Cortex app
 ```
 
 ## Testing

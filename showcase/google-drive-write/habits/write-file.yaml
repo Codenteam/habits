@@ -1,0 +1,27 @@
+id: write-file
+name: Write File to Google Drive
+description: Upload a file to a specific Google Drive folder using OAuth
+
+nodes:
+  - id: upload
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-drive"
+      operation: uploadFile
+      credentials:
+        google:
+          clientId: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_GOOGLE_DRIVE_CLIENT_SECRET}}"
+      params:
+        fileName: "{{habits.input.fileName}}"
+        content: "{{habits.input.content}}"
+        mimeType: "{{habits.input.mimeType || 'text/plain'}}"
+        folderId: "{{habits.input.folderId}}"
+
+edges: []
+
+output:
+  success: "{{upload.success}}"
+  file: "{{upload.file}}"

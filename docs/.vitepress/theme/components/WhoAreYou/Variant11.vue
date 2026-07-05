@@ -240,7 +240,7 @@ const personas = [
     ],
     shotsGrid: 'shots-grid-2',
     captionLabel: (i) => `Step ${i + 1}`,
-    cmd: 'npx habits@latest init my-habit\ncd my-habit && habits base',
+    cmd: 'mkdir my-habit && cd my-habit && npx habits@latest base',
     stores: null,
     cta: { href: '/recipes/build-for-customers', text: 'Developer quickstart →' },
   },

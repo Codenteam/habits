@@ -2,8 +2,8 @@ import { useState, useCallback, useRef } from 'react';
 import { X, Wand2, Loader2, Check, AlertCircle, AlertTriangle, Sparkles, Code2, Repeat, CheckCircle2 } from 'lucide-react';
 import JSZip from 'jszip';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { addHabit, setActiveHabit, clearWorkflow, selectHabits } from '../store/slices/workflowSlice';
-import { setFrontendHtml, clearFrontendHtml, setFrontendYaml, clearFrontendYaml } from '../store/slices/uiSlice';
+import { selectHabits } from '../store/slices/workflowSlice';
+import { applyParsedStackToStore } from '../lib/showcaseLoader';
 import { api } from '../lib/api';
 import {
   FileEntry,
@@ -102,32 +102,8 @@ export default function GenerateModal({ isOpen, onClose, onOpenValidation }: Gen
     }
     
     // Replace entire state with generated content
-    dispatch(clearWorkflow());
-    dispatch(clearFrontendHtml());
-    dispatch(clearFrontendYaml());
+    applyParsedStackToStore(parsed, dispatch);
 
-    if (parsed.habits.length > 0) {
-      // Add each habit to the store
-      parsed.habits.forEach((habit, index) => {
-        dispatch(addHabit(habit));
-        
-        // Set the first habit as active
-        if (index === 0) {
-          dispatch(setActiveHabit(habit.id));
-        }
-      });
-    }
-    
-    // Load frontend HTML if available
-    if (parsed.frontendHtml) {
-      dispatch(setFrontendHtml(parsed.frontendHtml));
-    }
-
-    // Load frontend YAML if available
-    if (parsed.frontendYaml) {
-      dispatch(setFrontendYaml(parsed.frontendYaml));
-    }
-    
     setResult({
       habitsLoaded: parsed.habits.length,
       errors: parsed.errors,

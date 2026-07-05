@@ -91,6 +91,13 @@
       "options": {
         "lintFilePatterns": ["packages/cortex/core/**/*.ts"]
       }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config packages/cortex/core/jest.config.js",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

@@ -74,68 +74,31 @@ For detailed explanations of how habits work, see:
 
 ## Packaging Your App
 
-Once your app is working locally, you can package it for distribution. See the [Binary Export](/deep-dive/pack-distribute) guide for full details.
+Once your app is working locally, export it as a `.habit` file for Habits Cortex. See [Pack & Distribute](/deep-dive/pack-distribute) for full details.
 
-### Full App vs Client App
+### Export as `.habit`
 
-Before packaging, decide on your deployment architecture:
+Package your stack as a portable file for import into Habits Cortex on desktop and mobile.
 
-| Approach | Best For | Pros | Cons |
-|----------|----------|------|------|
-| **Full App (Standalone)** | Internal tools, demos, kiosk apps | Doesn't require a backend, single package | API keys bundled in app |
-| **Client App (Remote Backend)** | Production apps, public distribution | Secure key storage, scalable, updatable | Requires deployed API |
-
-::: danger <Icon name="alert-triangle" /> Security Warning: Full App Builds
-When you package with `--execution-mode full`, your `.env` file (including API keys) is **bundled inside the app**. Anyone with the app can extract these keys.
-
-**For distributable apps with sensitive keys:**
-1. **Use a remote backend**: Deploy your habits server and have the app connect via API
-2. **Use `@codenteam/intersect`**: Secrets vault and management for standalone deployments
-
-Only use full app builds for:
-- Development and testing
-- Internal tools with non-sensitive credentials
-- Demos where key exposure is acceptable
-- Internal/Kiosk Micro-Apps that would be only used internally
-:::
-
-### Full App (Standalone)
-
-Package your entire stack as a standalone native app. Doesn't require a separate backend deployment.
-
-<PackCommandsAll appName="ResumeAnalyzer" modes="full" />
+<PackCommandsAll appName="ResumeAnalyzer" />
 
 **After packaging:**
-```bash
-# The app runs standalone: no server needed
-# To override bundled environment variables, place a .env file beside the app
-```
-
-### Client App (Remote Backend)
-
-Package the frontend as a native app that connects to your deployed backend. This keeps API keys secure on your server.
-
-<PackCommandsAll appName="ResumeAnalyzer" modes="client" />
-
-**Requirements:**
-- Node.js 24+
-- Backend deployed and accessible at the provided URL
-- **Desktop:** For Tauri builds, Rust and Cargo installed
-- **Android:** Java, Gradle, Android SDK (`ANDROID_HOME` or `ANDROID_SDK_ROOT` set)
-- **iOS:** macOS with Xcode (iOS builds only work on macOS)
+1. Download **Habits Cortex** from your app store
+2. Import the `.habit` file
+3. Run workflows offline in the app
 
 ### Using Base UI for Export
-
-You can also export from the Base UI:
 
 1. Open Base UI: `npx habits base`
 2. Load your stack
 3. Go to **Export** tab
-4. Select export type (Binary, Desktop, or Mobile)
-5. Configure target platform
-6. Click **Export** to download
+4. Click **Generate .habit File**
 
 ![Binary Export UI](/images/export.webp)
+
+### Server-side hosting
+
+For production API hosting with secrets on the server, run `npx habits cortex --config ./stack.yaml` instead of packaging a native app.
 
 ---
 
@@ -154,5 +117,5 @@ You can also export from the Base UI:
 ## Next Steps
 
 - **[Resume Analyzer Showcase](/showcase/resume-analyzer)**: Full showcase page with images and details
-- **[Binary Export](/deep-dive/pack-distribute)**: Complete export documentation with all options
+- **[Pack & Distribute](/deep-dive/pack-distribute)**: Export as `.habit` for Habits Cortex
 - **[Browse All Examples](/showcase/)**: Explore more ready-to-use showcases

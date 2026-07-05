@@ -237,13 +237,10 @@ export function convertToCanvasFormat(habitYaml: HabitYaml): ParsedHabit {
     throw new Error('Invalid habit content: missing or invalid "nodes" array');
   }
   
-  if (!Array.isArray(habitYaml.edges)) {
-    // Can still work without edges, one node workflow is valid
-    console.log('Missing or invalid "edges" array, weird but can still work');
-  }
-  
   const nodes = habitYaml.nodes.map(convertHabitNode);
-  const edges = habitYaml.edges.map(convertHabitEdge);
+  const edges = Array.isArray(habitYaml.edges)
+    ? habitYaml.edges.map(convertHabitEdge)
+    : [];
   
   return {
     id: habitYaml.id,

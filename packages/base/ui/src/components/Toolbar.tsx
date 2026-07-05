@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
-import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, Send, KeyRound, Blocks } from 'lucide-react';
+import { Server, FilePlus, Rocket, FolderOpen, ExternalLink, X, AlertTriangle, Play, RefreshCw, Settings, Link, Square, Pencil, Plus, Wand2, Info, AlertCircle, WaypointsIcon, Send, KeyRound, Blocks, ArrowUpFromLine } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { store } from '../store/store';
 import { setWorkflowName, setStackDescription, selectHabits, selectActiveHabit, selectStackDescription, selectExportBundle, selectActiveEnvVariables } from '../store/slices/workflowSlice';
@@ -9,6 +9,7 @@ import { api } from '../lib/api';
 import { habitToYaml, parseStackYaml, extractEnvVariables } from '../lib/exportUtils';
 import CodeViewModal from './CodeViewModal';
 import OpenModal from './OpenModal';
+import ImportModal from './ImportModal';
 import NewWorkflowModal from './NewWorkflowModal';
 import ServePopup from './ServePopup';
 import ServeNotEnabledModal from './ServeNotEnabledModal';
@@ -59,6 +60,7 @@ export default function Toolbar() {
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showEnvSetup, setShowEnvSetup] = useState(false);
   const [showServeNotEnabledModal, setShowServeNotEnabledModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const activeEnvVariables = useAppSelector(selectActiveEnvVariables);
   const envHasMissing = useMemo(() => {
@@ -349,6 +351,19 @@ export default function Toolbar() {
           </div>
         </div>
 
+        {/* Import */}
+        <div className="relative group">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center justify-center w-9 h-9 text-blue-300 bg-blue-900/30 hover:bg-blue-800/40 rounded-md transition-colors cursor-pointer"
+          >
+            <ArrowUpFromLine className="w-4 h-4" />
+          </button>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            Import
+          </div>
+        </div>
+
 
         {/* Backend/Frontend Toggle */}
         <div className="flex items-center bg-slate-700 rounded-md overflow-hidden">
@@ -584,6 +599,11 @@ export default function Toolbar() {
       <OpenModal
         isOpen={showOpenModal}
         onClose={() => setShowOpenModal(false)}
+      />
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
       />
 
       {/* New Workflow Modal */}

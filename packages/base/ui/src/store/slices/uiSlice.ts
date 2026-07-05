@@ -28,6 +28,9 @@ interface UIState {
 
   // Frontend YAML (UiSpec) state
   frontendYaml: string;
+
+  /** Bumped on external loads/resets so the UI wizard remounts without echo-loop resets. */
+  frontendYamlRevision: number;
   
   // Env content state
   envContent: string;
@@ -56,6 +59,8 @@ const initialState: UIState = {
   frontendHtml: '',
 
   frontendYaml: '',
+
+  frontendYamlRevision: 0,
   
   envContent: '',
 };
@@ -154,6 +159,11 @@ export const uiSlice = createSlice({
 
     clearFrontendYaml: (state) => {
       state.frontendYaml = '';
+      state.frontendYamlRevision += 1;
+    },
+
+    bumpFrontendYamlRevision: (state) => {
+      state.frontendYamlRevision += 1;
     },
     
     // Env content actions
@@ -208,6 +218,7 @@ export const {
   clearFrontendHtml,
   setFrontendYaml,
   clearFrontendYaml,
+  bumpFrontendYamlRevision,
   setEnvContent,
   clearEnvContent,
 } = uiSlice.actions;

@@ -65,10 +65,7 @@ yarn global add habits
 Then run:
 
 ```bash
-# If you haven't initialized base bafore, run:
-habits init
-
-# Start serving the base:
+# Starts Base and sets up the project on first run (.env, modules.json, bits)
 habits base
 ```
 

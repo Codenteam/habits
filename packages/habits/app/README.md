@@ -14,14 +14,20 @@ npx habits
 
 ## Commands
 
-### Initialize Project
+### Base Mode (Module Manager)
 
-Create a new Habits project with `.env` and `modules.json`:
+Start the server in Base mode for building and testing workflows. On first run, Habits automatically creates `.env` and `modules.json` and downloads required bits.
 
 ```bash
-habits init
-habits init --force  # Overwrite existing files
+habits base
+habits base --port 8080
+habits base --skip-install  # Create project files only, skip bit download
+# Alias: habits edit
 ```
+
+Options:
+- `--port, -p` - Server port (default: 3000)
+- `--skip-install` - Skip installing bits from modules.json
 
 ### Cortex Mode (Workflow Executor)
 
@@ -40,19 +46,6 @@ When running in Cortex mode:
 - Workflow execution API available at `/api/:workflowId`
 - Cortex management UI at `/habits/cortex`
 - Base UI embedded at `/habits/base`
-
-### Base Mode (Module Manager)
-
-Start the server in Base mode for building and testing workflows:
-
-```bash
-habits base
-habits base --port 8080
-# Alias: habits edit
-```
-
-Options:
-- `--port, -p` - Server port (default: 3000)
 
 ### Execute Workflow
 

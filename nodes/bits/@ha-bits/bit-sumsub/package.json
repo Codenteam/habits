@@ -12,14 +12,17 @@
   "keywords": [
     "habits",
     "bits",
+    "l1",
     "sumsub",
     "kyc",
+    "kyb",
     "identity",
     "verification",
-    "enterprise"
+    "enterprise",
+    "finance"
   ],
   "author": "Codenteam",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
     "form-data": "^4.0.2"
   },
@@ -31,9 +34,19 @@
     "dist",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codenteam/habits.git",
+    "directory": "nodes/bits/@ha-bits/bit-sumsub"
+  },
   "habits": {
-    "catalog": false,
+    "catalog": true,
+    "featured": true,
     "enterprise": true,
+    "icon": "Shield",
     "mobile": false
   },
   "nx": {
@@ -49,7 +62,10 @@
         "outputs": [
           "{projectRoot}/dist"
         ]
-      }
+      },
+      "publish-verdaccio": {},
+      "publish-npm": {},
+      "publish-private": {}
     }
   }
 }

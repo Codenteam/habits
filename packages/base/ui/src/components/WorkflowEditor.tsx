@@ -1,8 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { extractInputFields } from '@ha-bits/core';
 import { Waypoints, AlertTriangle } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectActiveHabit, selectHabits } from '../store/slices/workflowSlice';
-import { setFrontendYaml, setViewMode } from '../store/slices/uiSlice';
+import { setFrontendYaml, setViewMode, clearFrontendHtml } from '../store/slices/uiSlice';
 import { selectUiEditorAccess } from '../store/selectors/validationSelectors';
 import Toolbar from './Toolbar';
 import { compilePreviewHtml } from '@/lib/uiPreviewCompile';
@@ -18,6 +19,7 @@ export default function WorkflowEditor() {
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector((state) => state.ui.viewMode);
   const frontendYaml = useAppSelector((state) => state.ui.frontendYaml);
+  const frontendYamlRevision = useAppSelector((state) => state.ui.frontendYamlRevision);
   const activeHabit = useAppSelector(selectActiveHabit);
   const habits = useAppSelector(selectHabits);
   const uiEditorAccess = useAppSelector(selectUiEditorAccess);
@@ -26,7 +28,11 @@ export default function WorkflowEditor() {
     () =>
       habits
         .filter((h) => h.nodes.length > 0)
-        .map((h) => ({ id: h.id, name: h.name })),
+        .map((h) => ({
+          id: h.id,
+          name: h.name,
+          inputs: extractInputFields({ nodes: h.nodes, output: h.output }),
+        })),
     [habits],
   );
 
@@ -39,6 +45,9 @@ export default function WorkflowEditor() {
   const handleSaveFrontendYaml = useCallback(
     (yamlText: string) => {
       dispatch(setFrontendYaml(yamlText));
+      if (!yamlText.trim()) {
+        dispatch(clearFrontendHtml());
+      }
     },
     [dispatch],
   );
@@ -92,6 +101,7 @@ export default function WorkflowEditor() {
             >
               <UiSpecWizard
                 initialYaml={frontendYaml}
+                loadRevision={frontendYamlRevision}
                 onChange={handleSaveFrontendYaml}
                 height="100%"
                 compilePreviewHtml={compilePreviewHtml}
