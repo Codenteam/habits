@@ -17,8 +17,8 @@ import {
   clearFrontendHtml,
   clearFrontendYaml,
   setFrontendHtml,
-  setFrontendYaml,
 } from '../store/slices/uiSlice';
+import { loadFrontendYaml } from '../store/thunks/habitUiSyncThunks';
 import { parseHabitFile, type ParsedHabit, type ParsedStack } from '../lib/stackParser';
 
 interface ImportModalProps {
@@ -188,7 +188,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
     let uiReplaced = false;
     if (importUi && hasUi) {
       if (parsed.frontendYaml) {
-        dispatch(setFrontendYaml(parsed.frontendYaml));
+        dispatch(loadFrontendYaml(parsed.frontendYaml));
       }
       if (parsed.frontendHtml) {
         dispatch(setFrontendHtml(parsed.frontendHtml));

@@ -19,6 +19,7 @@ export default function WorkflowEditor() {
   const dispatch = useAppDispatch();
   const viewMode = useAppSelector((state) => state.ui.viewMode);
   const frontendYaml = useAppSelector((state) => state.ui.frontendYaml);
+  const frontendYamlRevision = useAppSelector((state) => state.ui.frontendYamlRevision);
   const activeHabit = useAppSelector(selectActiveHabit);
   const habits = useAppSelector(selectHabits);
   const uiEditorAccess = useAppSelector(selectUiEditorAccess);
@@ -100,6 +101,7 @@ export default function WorkflowEditor() {
             >
               <UiSpecWizard
                 initialYaml={frontendYaml}
+                loadRevision={frontendYamlRevision}
                 onChange={handleSaveFrontendYaml}
                 height="100%"
                 compilePreviewHtml={compilePreviewHtml}

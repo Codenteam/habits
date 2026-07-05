@@ -8,6 +8,7 @@ import {
   clearEnvContent,
   clearFrontendHtml,
   clearFrontendYaml,
+  bumpFrontendYamlRevision,
   setFrontendYaml,
   setFrontendHtml,
 } from '../store/slices/uiSlice';
@@ -92,6 +93,7 @@ export function applyParsedStackToStore(parsed: ParsedStack, dispatch: AppDispat
   }
   if (parsed.frontendYaml) {
     dispatch(setFrontendYaml(parsed.frontendYaml));
+    dispatch(bumpFrontendYamlRevision());
   }
   if (parsed.envVariables && Object.keys(parsed.envVariables).length > 0) {
     dispatch(setEnvVariables(parsed.envVariables));

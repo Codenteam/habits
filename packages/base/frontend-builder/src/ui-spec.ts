@@ -8,6 +8,7 @@ export {
   pruneFrontendYamlForRemovedHabits,
   renameHabitEndpointsInSpec,
   renameHabitInFrontendYaml,
+  shouldResetStaleFrontendYaml,
 } from './pruneHabitUi';
 export {
   WIDGET_PRESETS,

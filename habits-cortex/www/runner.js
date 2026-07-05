@@ -1973,6 +1973,25 @@ function hideError() {
   document.getElementById('error-modal').classList.remove('active');
 }
 
+function clearSecretsError() {
+  document.getElementById('secrets-error-banner')?.remove();
+}
+
+function showSecretsError(message) {
+  clearSecretsError();
+  const listContainer = document.getElementById('secrets-list');
+  if (!listContainer) {
+    showError('Error', message);
+    return;
+  }
+  const banner = document.createElement('div');
+  banner.id = 'secrets-error-banner';
+  banner.className = 'secrets-error-banner';
+  banner.setAttribute('role', 'alert');
+  banner.textContent = message;
+  listContainer.parentNode?.insertBefore(banner, listContainer);
+}
+
 // ============================================================================
 // Open Habit Modal (Upload or Browse Showcase)
 // ============================================================================
@@ -2360,16 +2379,51 @@ async function handleBuiltinHabits() {
 async function handleVisualizeYaml() {
   if (isHabitImportBlocked()) return;
   try {
-    const filePath = await openYamlFileDialog();
-    
-    if (filePath) {
-      const yamlContent = await readTextFile(filePath);
-      openHabitViewer(yamlContent);
+    const rawPath = await openYamlFileDialog();
+    if (!rawPath) return;
+
+    const filePath = Array.isArray(rawPath) ? rawPath[0] : rawPath;
+    if (!filePath) return;
+
+    const yamlContent = await readTextFile(filePath);
+    if (!yamlContent?.trim()) {
+      showError('Empty file', 'The selected YAML file is empty.');
+      return;
     }
+
+    const validation = validateWorkflowYamlContent(yamlContent);
+    if (!validation.ok) {
+      showError('Invalid workflow file', validation.message);
+      return;
+    }
+
+    openHabitViewer(yamlContent);
   } catch (err) {
     console.error('Failed to visualize YAML:', err);
     showError('Error', 'Failed to visualize YAML: ' + err.message);
   }
+}
+
+function validateWorkflowYamlContent(yamlContent) {
+  if (/^\s*version:\s*1/m.test(yamlContent) && /^\s*meta:/m.test(yamlContent)) {
+    return {
+      ok: false,
+      message: 'This looks like frontend UI YAML, not a workflow. Open a habit file that contains nodes: instead.',
+    };
+  }
+  if (/^\s*(workflows|habits):/m.test(yamlContent)) {
+    return {
+      ok: false,
+      message: 'This is a stack file. Open a single habit workflow YAML (with nodes:), not stack.yaml.',
+    };
+  }
+  if (!/\bnodes\s*:/m.test(yamlContent)) {
+    return {
+      ok: false,
+      message: 'No nodes: section found. Select a single habit workflow YAML file.',
+    };
+  }
+  return { ok: true };
 }
 
 // ============================================================================
@@ -2896,8 +2950,9 @@ async function extractOAuthRequirements(habit) {
 }
 
 async function startOAuthConnection(req, isReconnect) {
+  clearSecretsError();
   if (!window.HabitsOAuth?.startOAuthFlow) {
-    showError('OAuth unavailable', 'OAuth handler is not loaded.');
+    showSecretsError('OAuth handler is not loaded.');
     return false;
   }
   if (isReconnect) await clearOAuthToken(req.bitId);
@@ -2908,7 +2963,7 @@ async function startOAuthConnection(req, isReconnect) {
   if (req.clientSecretEnv) clientSecret = await getSecretFromKeyring(req.clientSecretEnv);
 
   if (!clientId) {
-    showError('Missing credentials', `Set ${req.clientIdEnv || 'OAuth client ID'} in secrets first.`);
+    showSecretsError(`Set ${req.clientIdEnv || 'OAuth client ID'} in secrets first.`);
     return false;
   }
 
@@ -2942,7 +2997,7 @@ async function startOAuthConnection(req, isReconnect) {
     return true;
   } catch (err) {
     console.error('[OAuth] Flow failed:', err);
-    showError('OAuth failed', err.message || String(err));
+    showSecretsError(err.message || String(err));
     return false;
   }
 }
@@ -3002,6 +3057,7 @@ let secretsModalHabit = null;
 async function showSecretsModal(habit) {
   if (!ensureModalDom(['secrets-modal', 'secrets-list', 'secrets-empty'])) return;
 
+  clearSecretsError();
   secretsModalHabit = habit;
   
   // Initialize keyring if not already done

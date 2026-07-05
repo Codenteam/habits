@@ -188,3 +188,33 @@ export function renameHabitInFrontendYaml(
   if (renamed === spec) return yamlText;
   return emitSpecStateAsYaml(renamed);
 }
+
+function specHasUiContent(spec: SpecState): boolean {
+  if (spec.widgets.length > 0) return true;
+  return Object.values(spec.views ?? {}).some(
+    (v) => Array.isArray(v?.widgets) && (v.widgets as unknown[]).length > 0,
+  );
+}
+
+/** True when frontend YAML has pages/widgets but no actions linked to current logic habits. */
+export function shouldResetStaleFrontendYaml(
+  yamlText: string,
+  currentHabitIds: string[],
+): boolean {
+  if (!yamlText.trim()) return false;
+
+  try {
+    const spec = parseYamlToSpecState(yamlText);
+    if (!specHasUiContent(spec)) return false;
+
+    const current = new Set(currentHabitIds);
+    const hasValidLink = Object.values(spec.actions ?? {}).some((action) => {
+      const habitId = habitIdFromEndpoint((action as Record<string, unknown>).endpoint);
+      return habitId != null && current.has(habitId);
+    });
+
+    return !hasValidLink;
+  } catch {
+    return false;
+  }
+}

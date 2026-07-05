@@ -172,6 +172,8 @@ function patchLayoutNav(
 
 export interface UiSpecWizardProps extends Omit<UiSpecBuilderProps, 'onChange'> {
   onChange: (yaml: string) => void;
+  /** Increment when frontend YAML is loaded externally (import/open/reset). */
+  loadRevision?: number;
   /** Habits with workflow nodes (from Logic tab) — used for in-place action linking */
   linkableHabits?: HabitOption[];
   /** Show raw YAML tab in the builder preview panel (dev only). */
@@ -191,6 +193,7 @@ const INPUT =
 export function UiSpecWizard({
   initialYaml,
   onChange,
+  loadRevision = 0,
   height = '100%',
   defaultMetaId,
   defaultMetaTitle,
@@ -202,22 +205,26 @@ export function UiSpecWizard({
   const [yamlText, setYamlText] = useState(initialYaml ?? '');
   const yamlTextRef = useRef(yamlText);
   yamlTextRef.current = yamlText;
+  const lastLoadRevisionRef = useRef(loadRevision);
+  const [builderKey, setBuilderKey] = useState(0);
   const [manualStateKeys] = useState(() => new Set<string>());
   const [selectedWidgetKind, setSelectedWidgetKind] = useState<string | null>(null);
   const [pagesWidgetsMode, setPagesWidgetsMode] = useState(false);
   const [pagesPhase, setPagesPhase] = useState<PagesPhase>('layout');
   const pagesStepRef = useRef<PagesStepHandle>(null);
 
-  // Reload when a new habit/stack is opened while this wizard is mounted.
+  // Reload when a stack is opened/imported/reset — not on wizard self-edits echoed from Redux.
   useEffect(() => {
+    if (loadRevision === lastLoadRevisionRef.current) return;
+    lastLoadRevisionRef.current = loadRevision;
     const next = initialYaml ?? '';
-    if (yamlTextRef.current === next) return;
     setYamlText(next);
     setStep(initialWizardStep(next));
     setSelectedWidgetKind(null);
     setPagesWidgetsMode(false);
     setPagesPhase('layout');
-  }, [initialYaml]);
+    setBuilderKey((k) => k + 1);
+  }, [loadRevision, initialYaml]);
 
   useEffect(() => {
     if (step !== 'pages' || pagesPhase !== 'build') setPagesWidgetsMode(false);
@@ -325,6 +332,7 @@ export function UiSpecWizard({
     setStep('identity');
     setPagesPhase('layout');
     setSelectedWidgetKind(null);
+    setBuilderKey((k) => k + 1);
   }, [yamlText, step, onChange]);
 
   const resetUiDisabled = !yamlText.trim() && step === 'identity';
@@ -420,6 +428,7 @@ export function UiSpecWizard({
         {showCanvas ? (
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             <UiSpecBuilderVanilla
+              key={builderKey}
               initialYaml={yamlText}
               onChange={handleBuilderChange}
               height="100%"

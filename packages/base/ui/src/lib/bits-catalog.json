@@ -135,7 +135,7 @@
   },
   {
     "packageName": "@ha-bits/bit-openai",
-    "displayName": "List Models",
+    "displayName": "OpenAI",
     "description": "OpenAI AI services including ChatGPT, GPT-4, Assistants, DALL-E, and more. Implements the @ha-bits/bit-ai interface.",
     "icon": "Sparkles",
     "level": "l1",

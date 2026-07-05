@@ -815,11 +815,6 @@ export function UiSpecBuilderVanilla({
     selectedUidRef.current = selectedUid;
   }, [selectedUid]);
 
-  // Reload when a new habit/stack is opened while this builder is mounted.
-  useEffect(() => {
-    setSpec(tryParseExisting(initialYaml, defaultMetaId, defaultMetaTitle));
-    setSelectedUid(null);
-  }, [initialYaml, defaultMetaId, defaultMetaTitle]);
   const [rightTab, setRightTab] = useState<'yaml' | 'settings' | 'app-settings'>(
     () => {
       const preferred = defaultRightTabProp ?? 'settings';
@@ -2207,9 +2202,9 @@ function FieldsArrayEditor({
     <div className="space-y-2">
       {value.map((f, i) => (
         <div key={i} className="rounded border border-slate-700 bg-slate-950 p-2 space-y-1.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <input
-              className={`${INPUT} flex-1`}
+              className={`${INPUT} flex-1 min-w-[6rem]`}
               value={f.name ?? ''}
               placeholder="name"
               list={suggestionListId}
@@ -2217,7 +2212,7 @@ function FieldsArrayEditor({
             />
             {nameSuggestions.length > 0 && (
               <select
-                className={`${INPUT} w-28 text-xs flex-shrink-0`}
+                className={`${INPUT} w-full sm:w-28 text-xs flex-shrink-0 max-w-full`}
                 value=""
                 title="Pick from habit inputs"
                 onChange={(e) => {
@@ -2235,11 +2230,14 @@ function FieldsArrayEditor({
                 )}
               </select>
             )}
-            <select className={INPUT} value={f.type ?? 'text'}
-                    onChange={(e) => update(i, { type: e.target.value })}>
+            <select
+              className={`${INPUT} w-full sm:w-auto sm:max-w-[9rem] flex-shrink-0`}
+              value={f.type ?? 'text'}
+              onChange={(e) => update(i, { type: e.target.value })}
+            >
               {FIELD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
-            <button type="button" className="text-slate-400 hover:text-red-400 p-1"
+            <button type="button" className="text-slate-400 hover:text-red-400 p-1 flex-shrink-0"
                     onClick={() => onChange(value.filter((_, idx) => idx !== i))}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>

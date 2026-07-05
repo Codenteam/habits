@@ -1,10 +1,32 @@
 import type { AppDispatch, RootState } from '../store';
 import { removeHabit, updateHabit } from '../slices/workflowSlice';
-import { setFrontendYaml } from '../slices/uiSlice';
+import {
+  bumpFrontendYamlRevision,
+  clearFrontendHtml,
+  clearFrontendYaml,
+  setFrontendYaml,
+} from '../slices/uiSlice';
 import {
   pruneFrontendYamlForRemovedHabits,
   renameHabitInFrontendYaml,
+  shouldResetStaleFrontendYaml,
 } from '@ha-bits/frontend-builder/ui-spec';
+
+function reconcileFrontendAfterLogicChange(
+  dispatch: AppDispatch,
+  getState: () => RootState,
+) {
+  const { frontendYaml } = getState().ui;
+  const habitIds = getState().workflow.habits.map((h) => h.id);
+
+  if (!frontendYaml.trim()) return;
+
+  if (shouldResetStaleFrontendYaml(frontendYaml, habitIds)) {
+    dispatch(clearFrontendYaml());
+    dispatch(clearFrontendHtml());
+    return;
+  }
+}
 
 /** Remove a habit from Logic and prune only its UI actions/refs from the frontend YAML. */
 export function removeHabitAndPruneUi(habitId: string) {
@@ -13,12 +35,14 @@ export function removeHabitAndPruneUi(habitId: string) {
 
     dispatch(removeHabit(habitId));
 
-    if (!frontendYaml.trim()) return;
-
-    const nextYaml = pruneFrontendYamlForRemovedHabits(frontendYaml, [habitId]);
-    if (nextYaml !== frontendYaml) {
-      dispatch(setFrontendYaml(nextYaml));
+    if (frontendYaml.trim()) {
+      const nextYaml = pruneFrontendYamlForRemovedHabits(frontendYaml, [habitId]);
+      if (nextYaml !== frontendYaml) {
+        dispatch(setFrontendYaml(nextYaml));
+      }
     }
+
+    reconcileFrontendAfterLogicChange(dispatch, getState);
   };
 }
 
@@ -40,5 +64,13 @@ export function updateHabitAndRenameInUi(
     if (nextYaml !== frontendYaml) {
       dispatch(setFrontendYaml(nextYaml));
     }
+  };
+}
+
+/** Call after external frontend YAML loads (import, open, showcase). */
+export function loadFrontendYaml(yaml: string) {
+  return (dispatch: AppDispatch) => {
+    dispatch(setFrontendYaml(yaml));
+    dispatch(bumpFrontendYamlRevision());
   };
 }

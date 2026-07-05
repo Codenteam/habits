@@ -137,7 +137,9 @@ export function initialWizardStep(yaml: string): WizardStepId {
       Object.values(spec.views ?? {}).some(
         (v) => Array.isArray(v?.widgets) && (v.widgets as unknown[]).length > 0,
       );
-    if (hasWidgets && Object.keys(spec.actions ?? {}).length > 0) return 'overview';
+    const hasActions = Object.keys(spec.actions ?? {}).length > 0;
+    if (hasWidgets && hasActions) return 'overview';
+    if (hasWidgets) return 'pages';
   } catch {
     /* fresh start */
   }
