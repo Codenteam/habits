@@ -49,12 +49,20 @@ actions:
     endpoint: /api/check-pending-posts
     body: {}
     responsePath: output
-    onSuccess: { set: { cronCheckedAt: "$response.checkedAt", cronNextExecution: "$response.nextExecution" } }
+    poll:
+      auto: true
+      intervalMs: 60000
+    onSuccess:
+      set: { cronCheckedAt: "$response.checkedAt", cronNextExecution: "$response.nextExecution" }
+      dispatch: getQueue
   getQueue:
     method: POST
     endpoint: /api/get-queue
     body: {}
     responsePath: output.posts
+    poll:
+      auto: true
+      intervalMs: 60000
     onSuccess: { set: { queue: "$response" } }
   publishNow:
     method: POST
@@ -117,6 +125,9 @@ views:
       - kind: card
         title: Scheduled posts
         children:
+          - kind: alert
+            level: info
+            text: "Due posts are published automatically. Published posts disappear from this list."
           - kind: list
             source: state.queue
             empty: "No posts queued."
