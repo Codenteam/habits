@@ -2874,12 +2874,19 @@ function getOAuthBitsFromBundleSource(bundleJs) {
   const results = [];
   const seen = new Set();
   const modulePattern = /\/\/ \.\.\/nodes\/bits\/(@ha-bits\/bit-[^\s/]+)/g;
-  for (const match of bundleJs.matchAll(modulePattern)) {
+  const matches = [...bundleJs.matchAll(modulePattern)];
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
     const moduleName = match[1];
     if (seen.has(moduleName)) continue;
     seen.add(moduleName);
+
     const bitId = moduleName.split('/').pop();
-    const slice = bundleJs.slice(match.index, match.index + 80000);
+    // Only scan this bit's bundled section (until the next bit marker).
+    // A fixed 80k window bleeds into later bits and false-positives OAUTH2 on unrelated modules.
+    const sliceEnd = i + 1 < matches.length ? matches[i + 1].index : bundleJs.length;
+    const slice = bundleJs.slice(match.index, sliceEnd);
     if (!/type:\s*["']OAUTH2/.test(slice)) continue;
     const authIdx = slice.indexOf('auth: {');
     if (authIdx < 0) continue;
