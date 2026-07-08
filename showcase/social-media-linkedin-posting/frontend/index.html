@@ -424,7 +424,7 @@
     <!-- PANEL: Scheduled Queue -->
     <div class="panel" id="panel-queue">
       <div class="content-wrap">
-        <p class="queue-until-hint" style="margin-bottom:12px">Pending posts are automatically checked and published.</p>
+        <p class="queue-until-hint" style="margin-bottom:12px">Due posts are published automatically. Published posts disappear from this list.</p>
         <div class="queue-cron-bar">
           <div class="cron-item">
             <span class="cron-label">Last Checked</span>
@@ -588,6 +588,7 @@
   function resetQueueInterval() {
     if (queueInterval) clearInterval(queueInterval);
     queueInterval = setInterval(() => {
+      triggerCronCheck();
       advanceCronBar();
       loadQueue();
     }, QUEUE_POLL_MS);
@@ -621,7 +622,9 @@
     const posts = data.posts || [];
     const hintEl = document.getElementById('queue-until-hint');
     if (hintEl) {
-      hintEl.textContent = posts.length > 0 ? 'Showing all pending posts.' : '';
+      hintEl.textContent = posts.length > 0
+        ? 'Published posts are marked and no longer shown here.'
+        : '';
     }
     const countEl = document.getElementById('queue-count');
     if (posts.length > 0) { countEl.textContent = posts.length; countEl.style.display = 'inline'; }
@@ -705,14 +708,7 @@
         body: JSON.stringify({ postId }),
       });
       if (!res.ok) throw new Error('Server error ' + res.status);
-      const card = document.getElementById('qcard-' + postId);
-      if (card) {
-        card.style.opacity = '0.5';
-        card.style.pointerEvents = 'none';
-        const statusEl = card.querySelector('.queue-card-status');
-        if (statusEl) { statusEl.textContent = 'Published'; statusEl.style.borderColor = 'var(--ha-accent-emerald)'; statusEl.style.color = 'var(--ha-accent-emerald)'; statusEl.style.background = 'var(--ha-accent-emerald-dim)'; }
-        setTimeout(() => { card.remove(); updateQueueCount(); }, 1800);
-      }
+      await loadQueue();
     } catch (err) {
       alert('Failed to publish: ' + err.message);
       if (pubBtn) { pubBtn.disabled = false; pubBtn.textContent = '⚡ Publish Now'; }

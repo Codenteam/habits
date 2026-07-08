@@ -17,6 +17,20 @@ nodes:
         inputKey: trigger
         collectResults: true
 
+  - id: log-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "1-get-emails"
+        message:
+          count: "{{get-emails.results[0].output.count}}"
+          successCount: "{{get-emails.successCount}}"
+          errorCount: "{{get-emails.errorCount}}"
+
   # Node 2: Loop each fetched email and send to extract-invoice habit
   - id: extract-invoices
     type: action
@@ -32,6 +46,20 @@ nodes:
         delayMs: 300
         continueOnError: true
         collectResults: true
+
+  - id: log-extract
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "2-extract-invoices"
+        message:
+          totalItems: "{{extract-invoices.totalItems}}"
+          successCount: "{{extract-invoices.successCount}}"
+          errorCount: "{{extract-invoices.errorCount}}"
 
   # Node 3: Flatten all per-attachment invoice results from every email into a single list
   - id: flatten-invoices
@@ -60,6 +88,17 @@ nodes:
             return flat;
           }
 
+  - id: log-flatten
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "3-flatten-invoices"
+        message: "{{flatten-invoices.result}}"
+
   # Node 4: Save each extracted invoice row to Google Sheets
   - id: save-to-sheets
     type: action
@@ -76,13 +115,35 @@ nodes:
         continueOnError: true
         collectResults: true
 
+  - id: log-sheets
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: "4-save-to-sheets"
+        message:
+          totalItems: "{{save-to-sheets.totalItems}}"
+          successCount: "{{save-to-sheets.successCount}}"
+          errorCount: "{{save-to-sheets.errorCount}}"
+
 edges:
   - source: get-emails
+    target: log-emails
+  - source: log-emails
     target: extract-invoices
   - source: extract-invoices
+    target: log-extract
+  - source: log-extract
     target: flatten-invoices
   - source: flatten-invoices
+    target: log-flatten
+  - source: log-flatten
     target: save-to-sheets
+  - source: save-to-sheets
+    target: log-sheets
 
 output:
   invoices: "{{flatten-invoices.result}}"

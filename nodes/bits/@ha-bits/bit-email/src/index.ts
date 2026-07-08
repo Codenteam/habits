@@ -173,6 +173,12 @@ const emailBit = {
         );
         
         console.log(`📧 Fetch Emails: Retrieved ${emails.length} email(s) from ${folder}`);
+        if (emails.length > 0) {
+          const subjectLines = emails
+            .map((email, i) => `  [${i + 1}] ${email.subject || '(no subject)'}`)
+            .join('\n');
+          console.log(`📧 Email subjects:\n${subjectLines}`);
+        }
         
         return {
           emails,

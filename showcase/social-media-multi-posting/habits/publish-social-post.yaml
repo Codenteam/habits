@@ -61,5 +61,4 @@ edges:
     target: mark-published
 
 output:
-  # linkedinId: "{{post-to-linkedin.postId}}"
   status: "published"

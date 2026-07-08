@@ -68,6 +68,44 @@ function parseFilter(filter) {
   return filter;
 }
 
+/**
+ * Check if a field value satisfies a filter condition.
+ * Supports MongoDB-style operators: $lte, $gte, $lt, $gt, $ne, $in.
+ */
+function fieldMatches(fieldValue, condition) {
+  if (condition !== null && typeof condition === 'object' && !Array.isArray(condition)) {
+    var ops = Object.keys(condition);
+    for (var i = 0; i < ops.length; i++) {
+      var op = ops[i];
+      var operand = condition[op];
+      switch (op) {
+        case '$lte': if (!(fieldValue <= operand)) return false; break;
+        case '$gte': if (!(fieldValue >= operand)) return false; break;
+        case '$lt':  if (!(fieldValue <  operand)) return false; break;
+        case '$gt':  if (!(fieldValue >  operand)) return false; break;
+        case '$ne':  if (fieldValue === operand) return false; break;
+        case '$in':  if (!Array.isArray(operand) || operand.indexOf(fieldValue) === -1) return false; break;
+        default: if (fieldValue !== condition) return false;
+      }
+    }
+    return true;
+  }
+  return fieldValue === condition;
+}
+
+function matchesFilter(data, filterObj, customId) {
+  for (var k in filterObj) {
+    var v = filterObj[k];
+    if (v === '' || v === null || v === undefined) continue;
+    if (k === '_id') {
+      if (customId !== undefined ? customId !== v : data._id !== v) return false;
+    } else if (!fieldMatches(data[k], v)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 async function store(params) {
   await ensureDb();
   var invoke = getInvoke();
@@ -194,14 +232,8 @@ async function update(params) {
   for (var i = 0; i < (rows || []).length; i++) {
     var row = rows[i];
     var data = JSON.parse(row.data);
-    var matches = true;
-    
-    for (var k in filter) { 
-      if (k === '_id' && row.custom_id !== filter[k]) { matches = false; break; } 
-      else if (k !== '_id' && data[k] !== filter[k]) { matches = false; break; } 
-    }
-    
-    if (matches) {
+
+    if (matchesFilter(data, filter, row.custom_id)) {
       var updatedData = Object.assign({}, data, updateData, { _id: row.custom_id });
       await invoke('plugin:sql|execute', { 
         db: dbPath, 
@@ -236,13 +268,8 @@ async function query(params) {
   for (var i = 0; i < (rows || []).length && results.length < limit; i++) {
     var row = rows[i];
     var data = JSON.parse(row.data);
-    var matches = true;
-    
-    for (var k in filter) { 
-      if (data[k] !== filter[k]) { matches = false; break; } 
-    }
-    
-    if (matches) {
+
+    if (matchesFilter(data, filter, row.custom_id)) {
       results.push(Object.assign({}, data, { _id: row.custom_id, _createdAt: row.created_at }));
     }
   }
@@ -280,6 +307,25 @@ async function increment(params) {
   });
   
   return { collection: String(collection), key: String(key), previousValue: previousValue, newValue: newValue, amount: Number(amount) };
+}
+
+async function deleteDoc(params) {
+  await ensureDb();
+  var invoke = getInvoke();
+  var collection = params.collection;
+  var id = String(params.id);
+  var docId = collection + ':' + id;
+
+  tauriLog('info', 'Deleting document: collection=' + collection + ', id=' + id);
+
+  await invoke('plugin:sql|execute', {
+    db: dbPath,
+    query: 'DELETE FROM documents WHERE id = ? OR custom_id = ?',
+    values: [docId, id],
+  });
+
+  tauriLog('info', 'Delete completed for id=' + id);
+  return { success: true, deleted: true, collection: String(collection), key: id };
 }
 
 // ============ Vector actions (plugin:sqlite-vec) ============
@@ -335,9 +381,9 @@ async function vectorSearch(params) {
   for (var i = 0; i < (rows || []).length && results.length < limit; i++) {
     var row = rows[i];
     var data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-    var ok = true;
-    for (var k in filter) { if (data[k] !== filter[k]) { ok = false; break; } }
-    if (ok) results.push(Object.assign({}, data, { _id: data._id, _createdAt: row.created_at, _distance: row.distance }));
+    if (matchesFilter(data, filter, data._id)) {
+      results.push(Object.assign({}, data, { _id: data._id, _createdAt: row.created_at, _distance: row.distance }));
+    }
   }
   return { collection: String(collection), results: results, count: results.length };
 }
@@ -356,15 +402,18 @@ async function vectorDelete(params) {
 module.exports = { 
   generateId: generateId, 
   parseValue: parseValue, 
-  parseFilter: parseFilter, 
+  parseFilter: parseFilter,
+  fieldMatches: fieldMatches,
+  matchesFilter: matchesFilter,
   store: store, 
   get: get, 
   del: del, 
   list: list, 
   insert: insert, 
   update: update, 
-  query: query, 
+  query: query,
   increment: increment,
+  deleteDoc: deleteDoc,
   vectorInsert: vectorInsert,
   vectorSearch: vectorSearch,
   vectorDelete: vectorDelete,
