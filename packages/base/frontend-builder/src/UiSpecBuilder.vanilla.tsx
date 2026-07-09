@@ -2548,33 +2548,75 @@ interface StartingValuesEditorProps {
   onChange: (state: Record<string, unknown>) => void;
 }
 
-function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
-  const entries = Object.entries(state);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+interface StartingValueRow {
+  /** Stable React key — must not change when the user renames the field. */
+  id: string;
+  key: string;
+  value: unknown;
+}
 
-  const setEntry = (index: number, key: string, value: unknown) => {
-    const next = { ...state };
-    const oldKey = entries[index]?.[0];
-    if (oldKey && oldKey !== key) delete next[oldKey];
-    if (key.trim()) next[key.trim()] = value;
-    else if (oldKey) delete next[oldKey];
-    onChange(next);
+function rowsFromState(state: Record<string, unknown>): StartingValueRow[] {
+  return Object.entries(state).map(([key, value]) => ({ id: uid(), key, value }));
+}
+
+function stateFromRows(rows: StartingValueRow[]): Record<string, unknown> {
+  const next: Record<string, unknown> = {};
+  for (const row of rows) {
+    const k = row.key.trim();
+    if (k) next[k] = row.value;
+  }
+  return next;
+}
+
+function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
+  const [rows, setRows] = useState<StartingValueRow[]>(() => rowsFromState(state));
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  /** Signature of the last state we pushed via onChange — skip echo sync. */
+  const lastEmittedSigRef = useRef(JSON.stringify(state));
+
+  // Re-hydrate rows when parent state changes from outside (infer/sync), not from our own edits.
+  useEffect(() => {
+    const sig = JSON.stringify(state);
+    if (sig === lastEmittedSigRef.current) return;
+    lastEmittedSigRef.current = sig;
+    setRows((prev) => {
+      const prevByKey = new Map(prev.map((r) => [r.key, r]));
+      const used = new Set<string>();
+      return Object.entries(state).map(([key, value]) => {
+        const existing = prevByKey.get(key);
+        if (existing && !used.has(existing.id)) {
+          used.add(existing.id);
+          return { id: existing.id, key, value };
+        }
+        return { id: uid(), key, value };
+      });
+    });
+  }, [state]);
+
+  const commit = (nextRows: StartingValueRow[]) => {
+    setRows(nextRows);
+    const nextState = stateFromRows(nextRows);
+    lastEmittedSigRef.current = JSON.stringify(nextState);
+    onChange(nextState);
   };
 
-  const removeEntry = (key: string) => {
-    const next = { ...state };
-    delete next[key];
-    onChange(next);
+  const updateRow = (id: string, patch: Partial<Pick<StartingValueRow, 'key' | 'value'>>) => {
+    commit(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const removeRow = (id: string) => {
+    commit(rows.filter((r) => r.id !== id));
   };
 
   const addEntry = () => {
+    const existing = new Set(rows.map((r) => r.key.trim()).filter(Boolean));
     let n = 1;
     let candidate = 'field1';
-    while (candidate in state) {
+    while (existing.has(candidate)) {
       n += 1;
       candidate = `field${n}`;
     }
-    onChange({ ...state, [candidate]: '' });
+    commit([...rows, { id: uid(), key: candidate, value: '' }]);
   };
 
   return (
@@ -2591,25 +2633,25 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-xs text-slate-500 italic mb-3">No starting values yet. Add one when a widget needs stored data.</p>
       ) : (
         <div className="space-y-2 mb-3">
-          {entries.map(([key, value], i) => {
-            const kind = inferStateValueKind(value);
+          {rows.map((row) => {
+            const kind = inferStateValueKind(row.value);
             return (
-              <div key={key} className="rounded-md border border-slate-800 bg-slate-900/80 p-2.5 space-y-2">
+              <div key={row.id} className="rounded-md border border-slate-800 bg-slate-900/80 p-2.5 space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <label className="text-[10px] uppercase tracking-wide text-slate-500">Name</label>
                     <input
                       className={`${INPUT} w-full mt-0.5`}
-                      value={key}
+                      value={row.key}
                       placeholder="e.g. recipientEmail"
-                      onChange={(e) => setEntry(i, e.target.value, value)}
+                      onChange={(e) => updateRow(row.id, { key: e.target.value })}
                     />
-                    {key && (
-                      <span className="text-[10px] text-slate-600 mt-0.5 block">{humanizeKey(key)}</span>
+                    {row.key.trim() && (
+                      <span className="text-[10px] text-slate-600 mt-0.5 block">{humanizeKey(row.key.trim())}</span>
                     )}
                   </div>
                   <div className="w-28 flex-shrink-0">
@@ -2619,7 +2661,7 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                       value={kind}
                       onChange={(e) => {
                         const nextKind = e.target.value as StateValueKind;
-                        setEntry(i, key, stateValueFromKind(nextKind, value));
+                        updateRow(row.id, { value: stateValueFromKind(nextKind, row.value) });
                       }}
                     >
                       <option value="text">Text</option>
@@ -2633,7 +2675,7 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                     type="button"
                     className="mt-4 text-slate-500 hover:text-red-400 p-1"
                     title="Remove"
-                    onClick={() => removeEntry(key)}
+                    onClick={() => removeRow(row.id)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2642,9 +2684,9 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <Field label="Default text">
                     <input
                       className={INPUT}
-                      value={String(value ?? '')}
+                      value={String(row.value ?? '')}
                       placeholder="Leave blank to start empty"
-                      onChange={(e) => setEntry(i, key, e.target.value)}
+                      onChange={(e) => updateRow(row.id, { value: e.target.value })}
                     />
                   </Field>
                 )}
@@ -2653,8 +2695,8 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                     <input
                       className={INPUT}
                       type="number"
-                      value={Number(value) || 0}
-                      onChange={(e) => setEntry(i, key, Number(e.target.value))}
+                      value={Number(row.value) || 0}
+                      onChange={(e) => updateRow(row.id, { value: Number(e.target.value) })}
                     />
                   </Field>
                 )}
@@ -2662,8 +2704,8 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <label className="inline-flex items-center gap-2 text-sm text-slate-300">
                     <input
                       type="checkbox"
-                      checked={!!value}
-                      onChange={(e) => setEntry(i, key, e.target.checked)}
+                      checked={!!row.value}
+                      onChange={(e) => updateRow(row.id, { value: e.target.checked })}
                     />
                     Starts as yes
                   </label>
@@ -2672,14 +2714,14 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <Field label="List items" help="Comma-separated; usually starts empty">
                     <input
                       className={INPUT}
-                      value={Array.isArray(value) ? value.join(', ') : ''}
+                      value={Array.isArray(row.value) ? row.value.join(', ') : ''}
                       placeholder="item one, item two"
                       onChange={(e) =>
-                        setEntry(
-                          i,
-                          key,
-                          e.target.value ? e.target.value.split(',').map((s) => s.trim()) : [],
-                        )
+                        updateRow(row.id, {
+                          value: e.target.value
+                            ? e.target.value.split(',').map((s) => s.trim())
+                            : [],
+                        })
                       }
                     />
                   </Field>
@@ -2711,7 +2753,12 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
             className={`${INPUT} font-mono text-xs w-full mt-2 min-h-[80px]`}
             value={JSON.stringify(state, null, 2)}
             onChange={(e) => {
-              try { onChange(JSON.parse(e.target.value)); } catch { /* ignore while typing */ }
+              try {
+                const parsed = JSON.parse(e.target.value) as Record<string, unknown>;
+                lastEmittedSigRef.current = JSON.stringify(parsed);
+                setRows(rowsFromState(parsed));
+                onChange(parsed);
+              } catch { /* ignore while typing */ }
             }}
           />
         )}
