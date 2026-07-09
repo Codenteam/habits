@@ -211,6 +211,8 @@ export function UiSpecWizard({
   const [selectedWidgetKind, setSelectedWidgetKind] = useState<string | null>(null);
   const [pagesWidgetsMode, setPagesWidgetsMode] = useState(false);
   const [pagesPhase, setPagesPhase] = useState<PagesPhase>('layout');
+  /** Tab currently being built in PagesStep — drives the builder preview active view. */
+  const [editingViewId, setEditingViewId] = useState<string | undefined>(undefined);
   const pagesStepRef = useRef<PagesStepHandle>(null);
 
   // Reload when a stack is opened/imported/reset — not on wizard self-edits echoed from Redux.
@@ -227,7 +229,10 @@ export function UiSpecWizard({
   }, [loadRevision, initialYaml]);
 
   useEffect(() => {
-    if (step !== 'pages' || pagesPhase !== 'build') setPagesWidgetsMode(false);
+    if (step !== 'pages' || pagesPhase !== 'build') {
+      setPagesWidgetsMode(false);
+      setEditingViewId(undefined);
+    }
   }, [step, pagesPhase]);
 
   const linkableHabitIds = useMemo(
@@ -379,6 +384,7 @@ export function UiSpecWizard({
                 selectedWidgetKind={selectedWidgetKind}
                 onUpdate={updateSpec}
                 onWidgetsModeChange={setPagesWidgetsMode}
+                onEditingViewChange={setEditingViewId}
                 onBackToLayout={() => {
                   setPagesPhase('layout');
                   setPagesWidgetsMode(false);
@@ -443,6 +449,9 @@ export function UiSpecWizard({
               hideYamlTab={!showDebugYaml}
               defaultRightTab={overviewMode ? 'app-settings' : 'settings'}
               showWidgetCanvas={overviewMode || (step === 'pages' && pagesPhase === 'build' && pagesWidgetsMode)}
+              activeViewId={
+                step === 'pages' && pagesPhase === 'build' ? editingViewId : undefined
+              }
             />
           </div>
         ) : (
@@ -693,12 +702,15 @@ const PagesStep = forwardRef(function PagesStep(
     selectedWidgetKind,
     onUpdate,
     onWidgetsModeChange,
+    onEditingViewChange,
     onBackToLayout,
   }: {
     spec: SpecState;
     selectedWidgetKind: string | null;
     onUpdate: (patch: (s: SpecState) => SpecState) => void;
     onWidgetsModeChange?: (active: boolean) => void;
+    /** Notify parent which tab is being edited so the live preview can switch. */
+    onEditingViewChange?: (viewId: string | undefined) => void;
     onBackToLayout?: () => void;
   },
   ref: ForwardedRef<PagesStepHandle>,
@@ -731,6 +743,11 @@ const PagesStep = forwardRef(function PagesStep(
   }, [showWidgets, onWidgetsModeChange]);
 
   useEffect(() => {
+    // Only drive the preview while a specific tab is open (not the tab-list screen).
+    onEditingViewChange?.(selectedTabId ?? undefined);
+  }, [selectedTabId, onEditingViewChange]);
+
+  useEffect(() => {
     if (!hasMultipleTabs) {
       setSelectedTabId(viewIds[0] ?? 'main');
     }
@@ -739,12 +756,14 @@ const PagesStep = forwardRef(function PagesStep(
   const selectTab = (viewId: string) => {
     setSelectedTabId(viewId);
     setStartedBlank(false);
+    onEditingViewChange?.(viewId);
     onUpdate((s) => switchSpecView(s, viewId));
   };
 
   const backToTabList = () => {
     setSelectedTabId(null);
     setStartedBlank(false);
+    onEditingViewChange?.(undefined);
   };
 
   useImperativeHandle(ref, () => ({

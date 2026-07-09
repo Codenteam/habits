@@ -53,10 +53,18 @@ import {
   Zap,
   LayoutTemplate,
   Settings,
+  FolderOpen,
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui/icons';
 import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
-import { createApiActionForHabit, defaultActionIdForHabit, type ActionReference } from './actionLinking';
+import {
+  createApiActionForHabit,
+  defaultActionIdForHabit,
+  habitIdFromEndpoint,
+  type ActionReference,
+} from './actionLinking';
 import { allHabitInputNames } from './actionConfig';
 import {
   WIDGET_PRESETS,
@@ -96,6 +104,11 @@ export interface UiSpecBuilderProps {
   onSelectedNodeChange?: (node: WidgetNode | null) => void;
   /** Show the drag-and-drop widget canvas between palette and preview. Defaults to true in full chrome, false in embedded. */
   showWidgetCanvas?: boolean;
+  /**
+   * Which tab/view the parent (wizard) is editing. Applied to local builder state so the
+   * preview opens that tab even though YAML only stores `defaultView` (not `activeViewId`).
+   */
+  activeViewId?: string;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -775,6 +788,29 @@ function tryParseExisting(yamlText: string | undefined, defaultMetaId?: string, 
   return parseYamlToSpecState(yamlText, defaultMetaId, defaultMetaTitle) as SpecState;
 }
 
+/** Switch the builder canvas/preview to `newViewId`, persisting the current canvas into views. */
+function applyActiveViewId(s: SpecState, newViewId: string): SpecState {
+  if (!s.views) return { ...s, activeViewId: newViewId };
+  const currentViewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
+  if (!currentViewId || currentViewId === newViewId) {
+    if (s.activeViewId === newViewId) return s;
+    return { ...s, activeViewId: newViewId };
+  }
+  const savedViews = {
+    ...s.views,
+    [currentViewId]: {
+      ...(s.views[currentViewId] ?? {}),
+      widgets: s.widgets.map(widgetNodeToObject),
+    },
+  };
+  const targetView = savedViews[newViewId];
+  const rawWidgets = targetView?.widgets;
+  const newWidgets = Array.isArray(rawWidgets)
+    ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+    : [];
+  return { ...s, views: savedViews, widgets: newWidgets, activeViewId: newViewId };
+}
+
 function debounce<T extends (...a: any[]) => void>(fn: T, ms: number): T {
   let t: any;
   return ((...args: any[]) => {
@@ -804,6 +840,7 @@ export function UiSpecBuilderVanilla({
   linkableHabits,
   onSelectedNodeChange,
   showWidgetCanvas: showWidgetCanvasProp,
+  activeViewId: activeViewIdProp,
 }: UiSpecBuilderProps) {
   const showWidgetCanvas = showWidgetCanvasProp ?? chrome !== 'embedded';
   const [spec, setSpec] = useState<SpecState>(() =>
@@ -873,8 +910,39 @@ export function UiSpecBuilderVanilla({
   // Propagate to parent (debounced).
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
-  const debouncedEmit = useMemo(() => debounce((y: string) => onChangeRef.current(y), 250), []);
+  /** Last YAML this builder emitted — used to ignore parent echo of our own edits. */
+  const lastEmittedYamlRef = useRef<string | null>(null);
+  /** Last external `initialYaml` we applied into local spec state. */
+  const lastAppliedInitialYamlRef = useRef(initialYaml ?? '');
+  const debouncedEmit = useMemo(
+    () =>
+      debounce((y: string) => {
+        lastEmittedYamlRef.current = y;
+        onChangeRef.current(y);
+      }, 250),
+    [],
+  );
   useEffect(() => { debouncedEmit(yamlText); }, [yamlText, debouncedEmit]);
+
+  // Keep local spec in sync when the parent updates YAML (e.g. wizard tab rename).
+  // Skip when the change is only an echo of what we just emitted.
+  useEffect(() => {
+    const next = initialYaml ?? '';
+    if (next === lastAppliedInitialYamlRef.current) return;
+    if (lastEmittedYamlRef.current !== null && next === lastEmittedYamlRef.current) {
+      lastAppliedInitialYamlRef.current = next;
+      return;
+    }
+    // Drop any pending emit of the previous local YAML so it cannot overwrite
+    // a fresher parent edit (tab rename, layout change, etc.).
+    lastAppliedInitialYamlRef.current = next;
+    lastEmittedYamlRef.current = null;
+    let parsed = tryParseExisting(next, defaultMetaId, defaultMetaTitle);
+    // YAML has no activeViewId — restore the tab the wizard is editing.
+    if (activeViewIdProp) parsed = applyActiveViewId(parsed, activeViewIdProp);
+    setSpec(parsed);
+    setSelectedUid(null);
+  }, [initialYaml, defaultMetaId, defaultMetaTitle, debouncedEmit, activeViewIdProp]);
 
   // Live HTML preview — compiled in-browser so builder selection markup is always present.
   const compile = useCallback(async (yaml: string) => {
@@ -1028,28 +1096,20 @@ export function UiSpecBuilderVanilla({
   }, []);
 
   const switchView = useCallback((newViewId: string) => {
-    setSpec((s) => {
-      if (!s.views) return s;
-      const currentViewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
-      if (!currentViewId || currentViewId === newViewId) {
-        return { ...s, activeViewId: newViewId };
-      }
-      const savedViews = {
-        ...s.views,
-        [currentViewId]: {
-          ...(s.views[currentViewId] ?? {}),
-          widgets: s.widgets.map(widgetNodeToObject),
-        },
-      };
-      const targetView = savedViews[newViewId];
-      const rawWidgets = targetView?.widgets;
-      const newWidgets = Array.isArray(rawWidgets)
-        ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
-        : [];
-      return { ...s, views: savedViews, widgets: newWidgets, activeViewId: newViewId };
-    });
+    setSpec((s) => applyActiveViewId(s, newViewId));
     setSelectedUid(null);
   }, []);
+
+  // Wizard "Build this tab" sets activeViewId in memory only — YAML keeps defaultView.
+  // Follow the parent's editing tab so the preview opens the selected view.
+  useEffect(() => {
+    if (!activeViewIdProp) return;
+    setSpec((s) => {
+      const next = applyActiveViewId(s, activeViewIdProp);
+      return next === s ? s : next;
+    });
+    setSelectedUid(null);
+  }, [activeViewIdProp]);
 
   const viewNavItems = useMemo(() => {
     if (!spec.views) return [];
@@ -1425,13 +1485,16 @@ export function UiSpecBuilderVanilla({
                     type="button"
                     onClick={() => switchView(nav.id)}
                     className={
-                      'px-3 py-1.5 rounded-md text-xs font-medium transition-colors ' +
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ' +
                       (active
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800')
                     }
                   >
-                    {nav.icon ? `${nav.icon} ` : ''}{nav.label ?? nav.id}
+                    {nav.icon ? (
+                      <LucideIconByName name={nav.icon} className="w-3.5 h-3.5 shrink-0" />
+                    ) : null}
+                    {nav.label ?? nav.id}
                   </button>
                 );
               })}
@@ -1507,6 +1570,7 @@ export function UiSpecBuilderVanilla({
                 node={selectedNode}
                 onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
                 onRemove={() => removeWidget(selectedNode.uid)}
+                actions={spec.actions}
                 linkableHabits={linkableHabits}
                 habitInputNames={habitInputNames}
                 onLinkHabit={(habitId, actionId, propPath) =>
@@ -1925,12 +1989,13 @@ interface PropertyPanelProps {
   node: WidgetNode;
   onChange: (patch: (props: Record<string, any>) => Record<string, any>) => void;
   onRemove: () => void;
+  actions?: Record<string, unknown>;
   linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string, propPath: string) => void;
 }
 
-function PropertyPanel({ node, onChange, onRemove, linkableHabits, habitInputNames, onLinkHabit }: PropertyPanelProps) {
+function PropertyPanel({ node, onChange, onRemove, actions, linkableHabits, habitInputNames, onLinkHabit }: PropertyPanelProps) {
   const def = CATALOG_BY_KIND.get(node.kind);
   if (!def) {
     return (
@@ -1959,6 +2024,7 @@ function PropertyPanel({ node, onChange, onRemove, linkableHabits, habitInputNam
             key={f.key}
             field={f}
             value={getDeep(node.props, f.key)}
+            actions={actions}
             linkableHabits={linkableHabits}
             habitInputNames={habitInputNames}
             onLinkHabit={
@@ -2013,16 +2079,28 @@ interface PropertyFieldProps {
   field: FieldDef;
   value: any;
   onChange: (v: any) => void;
+  actions?: Record<string, unknown>;
   linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string) => void;
+}
+
+function linkedHabitIdForAction(
+  actions: Record<string, unknown> | undefined,
+  actionId: unknown,
+): string {
+  const id = actionId != null ? String(actionId).trim() : '';
+  if (!id || !actions) return '';
+  const action = actions[id];
+  if (!action || typeof action !== 'object') return '';
+  return habitIdFromEndpoint((action as Record<string, unknown>).endpoint) ?? '';
 }
 
 function isActionIdField(key: string): boolean {
   return key === 'action' || key === 'loadAction' || key.endsWith('.action');
 }
 
-function PropertyField({ field, value, onChange, linkableHabits, habitInputNames, onLinkHabit }: PropertyFieldProps) {
+function PropertyField({ field, value, onChange, actions, linkableHabits, habitInputNames, onLinkHabit }: PropertyFieldProps) {
   if (field.type === 'icon') {
     return (
       <Field label={field.label} help={field.help ?? 'Lucide icon name, or leave empty'}>
@@ -2053,7 +2131,7 @@ function PropertyField({ field, value, onChange, linkableHabits, habitInputNames
         {showHabitLink && (
           <select
             className={`${INPUT} mt-1.5 text-xs`}
-            defaultValue=""
+            value={linkedHabitIdForAction(actions, value)}
             onChange={(e) => {
               const habitId = e.target.value;
               if (!habitId) return;
@@ -2063,7 +2141,6 @@ function PropertyField({ field, value, onChange, linkableHabits, habitInputNames
                   : defaultActionIdForHabit(habitId);
               onChange(actionId);
               onLinkHabit(habitId, actionId);
-              e.target.value = '';
             }}
           >
             <option value="">Connect to habit workflow…</option>
@@ -2198,6 +2275,14 @@ function FieldsArrayEditor({
   const update = (i: number, patch: any) =>
     onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
   const suggestionListId = 'form-field-name-suggestions';
+  const habitInputOptions = linkableHabits.flatMap((h) =>
+    (h.inputs ?? []).map((input) => ({
+      value: input,
+      label: h.name ? `${h.name}: ${input}` : input,
+      optionKey: `${h.id}-${input}`,
+    })),
+  );
+  const habitInputValues = new Set(habitInputOptions.map((o) => o.value));
   return (
     <div className="space-y-2">
       {value.map((f, i) => (
@@ -2210,24 +2295,21 @@ function FieldsArrayEditor({
               list={suggestionListId}
               onChange={(e) => update(i, { name: e.target.value })}
             />
-            {nameSuggestions.length > 0 && (
+            {habitInputOptions.length > 0 && (
               <select
-                className={`${INPUT} w-full sm:w-28 text-xs flex-shrink-0 max-w-full`}
-                value=""
-                title="Pick from habit inputs"
+                className={`${INPUT} w-full sm:w-36 text-xs flex-shrink-0 max-w-full`}
+                value={habitInputValues.has(f.name ?? '') ? (f.name as string) : ''}
+                title="Set field name from a Logic habit input"
                 onChange={(e) => {
                   if (e.target.value) update(i, { name: e.target.value });
-                  e.target.value = '';
                 }}
               >
                 <option value="">Habit input…</option>
-                {linkableHabits.flatMap((h) =>
-                  (h.inputs ?? []).map((input) => (
-                    <option key={`${h.id}-${input}`} value={input}>
-                      {h.name ? `${h.name}: ${input}` : input}
-                    </option>
-                  )),
-                )}
+                {habitInputOptions.map((o) => (
+                  <option key={o.optionKey} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
             )}
             <select
@@ -2471,33 +2553,75 @@ interface StartingValuesEditorProps {
   onChange: (state: Record<string, unknown>) => void;
 }
 
-function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
-  const entries = Object.entries(state);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+interface StartingValueRow {
+  /** Stable React key — must not change when the user renames the field. */
+  id: string;
+  key: string;
+  value: unknown;
+}
 
-  const setEntry = (index: number, key: string, value: unknown) => {
-    const next = { ...state };
-    const oldKey = entries[index]?.[0];
-    if (oldKey && oldKey !== key) delete next[oldKey];
-    if (key.trim()) next[key.trim()] = value;
-    else if (oldKey) delete next[oldKey];
-    onChange(next);
+function rowsFromState(state: Record<string, unknown>): StartingValueRow[] {
+  return Object.entries(state).map(([key, value]) => ({ id: uid(), key, value }));
+}
+
+function stateFromRows(rows: StartingValueRow[]): Record<string, unknown> {
+  const next: Record<string, unknown> = {};
+  for (const row of rows) {
+    const k = row.key.trim();
+    if (k) next[k] = row.value;
+  }
+  return next;
+}
+
+function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
+  const [rows, setRows] = useState<StartingValueRow[]>(() => rowsFromState(state));
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  /** Signature of the last state we pushed via onChange — skip echo sync. */
+  const lastEmittedSigRef = useRef(JSON.stringify(state));
+
+  // Re-hydrate rows when parent state changes from outside (infer/sync), not from our own edits.
+  useEffect(() => {
+    const sig = JSON.stringify(state);
+    if (sig === lastEmittedSigRef.current) return;
+    lastEmittedSigRef.current = sig;
+    setRows((prev) => {
+      const prevByKey = new Map(prev.map((r) => [r.key, r]));
+      const used = new Set<string>();
+      return Object.entries(state).map(([key, value]) => {
+        const existing = prevByKey.get(key);
+        if (existing && !used.has(existing.id)) {
+          used.add(existing.id);
+          return { id: existing.id, key, value };
+        }
+        return { id: uid(), key, value };
+      });
+    });
+  }, [state]);
+
+  const commit = (nextRows: StartingValueRow[]) => {
+    setRows(nextRows);
+    const nextState = stateFromRows(nextRows);
+    lastEmittedSigRef.current = JSON.stringify(nextState);
+    onChange(nextState);
   };
 
-  const removeEntry = (key: string) => {
-    const next = { ...state };
-    delete next[key];
-    onChange(next);
+  const updateRow = (id: string, patch: Partial<Pick<StartingValueRow, 'key' | 'value'>>) => {
+    commit(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const removeRow = (id: string) => {
+    commit(rows.filter((r) => r.id !== id));
   };
 
   const addEntry = () => {
+    const existing = new Set(rows.map((r) => r.key.trim()).filter(Boolean));
     let n = 1;
     let candidate = 'field1';
-    while (candidate in state) {
+    while (existing.has(candidate)) {
       n += 1;
       candidate = `field${n}`;
     }
-    onChange({ ...state, [candidate]: '' });
+    commit([...rows, { id: uid(), key: candidate, value: '' }]);
   };
 
   return (
@@ -2514,25 +2638,25 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-xs text-slate-500 italic mb-3">No starting values yet. Add one when a widget needs stored data.</p>
       ) : (
         <div className="space-y-2 mb-3">
-          {entries.map(([key, value], i) => {
-            const kind = inferStateValueKind(value);
+          {rows.map((row) => {
+            const kind = inferStateValueKind(row.value);
             return (
-              <div key={key} className="rounded-md border border-slate-800 bg-slate-900/80 p-2.5 space-y-2">
+              <div key={row.id} className="rounded-md border border-slate-800 bg-slate-900/80 p-2.5 space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <label className="text-[10px] uppercase tracking-wide text-slate-500">Name</label>
                     <input
                       className={`${INPUT} w-full mt-0.5`}
-                      value={key}
+                      value={row.key}
                       placeholder="e.g. recipientEmail"
-                      onChange={(e) => setEntry(i, e.target.value, value)}
+                      onChange={(e) => updateRow(row.id, { key: e.target.value })}
                     />
-                    {key && (
-                      <span className="text-[10px] text-slate-600 mt-0.5 block">{humanizeKey(key)}</span>
+                    {row.key.trim() && (
+                      <span className="text-[10px] text-slate-600 mt-0.5 block">{humanizeKey(row.key.trim())}</span>
                     )}
                   </div>
                   <div className="w-28 flex-shrink-0">
@@ -2542,7 +2666,7 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                       value={kind}
                       onChange={(e) => {
                         const nextKind = e.target.value as StateValueKind;
-                        setEntry(i, key, stateValueFromKind(nextKind, value));
+                        updateRow(row.id, { value: stateValueFromKind(nextKind, row.value) });
                       }}
                     >
                       <option value="text">Text</option>
@@ -2556,7 +2680,7 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                     type="button"
                     className="mt-4 text-slate-500 hover:text-red-400 p-1"
                     title="Remove"
-                    onClick={() => removeEntry(key)}
+                    onClick={() => removeRow(row.id)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -2565,9 +2689,9 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <Field label="Default text">
                     <input
                       className={INPUT}
-                      value={String(value ?? '')}
+                      value={String(row.value ?? '')}
                       placeholder="Leave blank to start empty"
-                      onChange={(e) => setEntry(i, key, e.target.value)}
+                      onChange={(e) => updateRow(row.id, { value: e.target.value })}
                     />
                   </Field>
                 )}
@@ -2576,8 +2700,8 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                     <input
                       className={INPUT}
                       type="number"
-                      value={Number(value) || 0}
-                      onChange={(e) => setEntry(i, key, Number(e.target.value))}
+                      value={Number(row.value) || 0}
+                      onChange={(e) => updateRow(row.id, { value: Number(e.target.value) })}
                     />
                   </Field>
                 )}
@@ -2585,8 +2709,8 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <label className="inline-flex items-center gap-2 text-sm text-slate-300">
                     <input
                       type="checkbox"
-                      checked={!!value}
-                      onChange={(e) => setEntry(i, key, e.target.checked)}
+                      checked={!!row.value}
+                      onChange={(e) => updateRow(row.id, { value: e.target.checked })}
                     />
                     Starts as yes
                   </label>
@@ -2595,14 +2719,14 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
                   <Field label="List items" help="Comma-separated; usually starts empty">
                     <input
                       className={INPUT}
-                      value={Array.isArray(value) ? value.join(', ') : ''}
+                      value={Array.isArray(row.value) ? row.value.join(', ') : ''}
                       placeholder="item one, item two"
                       onChange={(e) =>
-                        setEntry(
-                          i,
-                          key,
-                          e.target.value ? e.target.value.split(',').map((s) => s.trim()) : [],
-                        )
+                        updateRow(row.id, {
+                          value: e.target.value
+                            ? e.target.value.split(',').map((s) => s.trim())
+                            : [],
+                        })
                       }
                     />
                   </Field>
@@ -2634,7 +2758,12 @@ function StartingValuesEditor({ state, onChange }: StartingValuesEditorProps) {
             className={`${INPUT} font-mono text-xs w-full mt-2 min-h-[80px]`}
             value={JSON.stringify(state, null, 2)}
             onChange={(e) => {
-              try { onChange(JSON.parse(e.target.value)); } catch { /* ignore while typing */ }
+              try {
+                const parsed = JSON.parse(e.target.value) as Record<string, unknown>;
+                lastEmittedSigRef.current = JSON.stringify(parsed);
+                setRows(rowsFromState(parsed));
+                onChange(parsed);
+              } catch { /* ignore while typing */ }
             }}
           />
         )}
@@ -2967,6 +3096,33 @@ function KvRowsEditor({
 // ---------------------------------------------------------------------------
 
 const INPUT = 'bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-slate-100 focus:outline-none focus:border-blue-500 placeholder-slate-500';
+
+/** Nav icons we render in the canvas tab bar. Unknown names show label only. */
+const STATIC_LUCIDE_ICONS: Record<string, LucideIcon> = {
+  FolderOpen,
+  Sparkles,
+  LayoutGrid,
+  Database,
+  Zap,
+  Settings,
+};
+
+function resolveLucideIconName(raw: string): string {
+  return raw.startsWith('lucide:') ? raw.slice('lucide:'.length) : raw;
+}
+
+/** Renders a `lucide:Name` only if it exists in STATIC_LUCIDE_ICONS; otherwise nothing. */
+function LucideIconByName({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) {
+  const Icon = STATIC_LUCIDE_ICONS[resolveLucideIconName(name)];
+  if (!Icon) return null;
+  return <Icon className={className} aria-hidden />;
+}
 
 function IconPicker({
   value,
