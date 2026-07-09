@@ -53,10 +53,18 @@ import {
   Zap,
   LayoutTemplate,
   Settings,
+  FolderOpen,
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 import { LUCIDE_ICON_NAMES } from '@ha-bits/cortex-core/ui/icons';
 import { parseYamlToSpecState, objectToWidgetNode, widgetNodeToObject, resolveActiveViewId, syncWidgetsToSpecState } from './uiSpecYaml';
-import { createApiActionForHabit, defaultActionIdForHabit, type ActionReference } from './actionLinking';
+import {
+  createApiActionForHabit,
+  defaultActionIdForHabit,
+  habitIdFromEndpoint,
+  type ActionReference,
+} from './actionLinking';
 import { allHabitInputNames } from './actionConfig';
 import {
   WIDGET_PRESETS,
@@ -96,6 +104,11 @@ export interface UiSpecBuilderProps {
   onSelectedNodeChange?: (node: WidgetNode | null) => void;
   /** Show the drag-and-drop widget canvas between palette and preview. Defaults to true in full chrome, false in embedded. */
   showWidgetCanvas?: boolean;
+  /**
+   * Which tab/view the parent (wizard) is editing. Applied to local builder state so the
+   * preview opens that tab even though YAML only stores `defaultView` (not `activeViewId`).
+   */
+  activeViewId?: string;
 }
 
 /** Internal widget node: kind + arbitrary props + children (for containers). */
@@ -775,6 +788,29 @@ function tryParseExisting(yamlText: string | undefined, defaultMetaId?: string, 
   return parseYamlToSpecState(yamlText, defaultMetaId, defaultMetaTitle) as SpecState;
 }
 
+/** Switch the builder canvas/preview to `newViewId`, persisting the current canvas into views. */
+function applyActiveViewId(s: SpecState, newViewId: string): SpecState {
+  if (!s.views) return { ...s, activeViewId: newViewId };
+  const currentViewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
+  if (!currentViewId || currentViewId === newViewId) {
+    if (s.activeViewId === newViewId) return s;
+    return { ...s, activeViewId: newViewId };
+  }
+  const savedViews = {
+    ...s.views,
+    [currentViewId]: {
+      ...(s.views[currentViewId] ?? {}),
+      widgets: s.widgets.map(widgetNodeToObject),
+    },
+  };
+  const targetView = savedViews[newViewId];
+  const rawWidgets = targetView?.widgets;
+  const newWidgets = Array.isArray(rawWidgets)
+    ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
+    : [];
+  return { ...s, views: savedViews, widgets: newWidgets, activeViewId: newViewId };
+}
+
 function debounce<T extends (...a: any[]) => void>(fn: T, ms: number): T {
   let t: any;
   return ((...args: any[]) => {
@@ -804,6 +840,7 @@ export function UiSpecBuilderVanilla({
   linkableHabits,
   onSelectedNodeChange,
   showWidgetCanvas: showWidgetCanvasProp,
+  activeViewId: activeViewIdProp,
 }: UiSpecBuilderProps) {
   const showWidgetCanvas = showWidgetCanvasProp ?? chrome !== 'embedded';
   const [spec, setSpec] = useState<SpecState>(() =>
@@ -873,8 +910,39 @@ export function UiSpecBuilderVanilla({
   // Propagate to parent (debounced).
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
-  const debouncedEmit = useMemo(() => debounce((y: string) => onChangeRef.current(y), 250), []);
+  /** Last YAML this builder emitted — used to ignore parent echo of our own edits. */
+  const lastEmittedYamlRef = useRef<string | null>(null);
+  /** Last external `initialYaml` we applied into local spec state. */
+  const lastAppliedInitialYamlRef = useRef(initialYaml ?? '');
+  const debouncedEmit = useMemo(
+    () =>
+      debounce((y: string) => {
+        lastEmittedYamlRef.current = y;
+        onChangeRef.current(y);
+      }, 250),
+    [],
+  );
   useEffect(() => { debouncedEmit(yamlText); }, [yamlText, debouncedEmit]);
+
+  // Keep local spec in sync when the parent updates YAML (e.g. wizard tab rename).
+  // Skip when the change is only an echo of what we just emitted.
+  useEffect(() => {
+    const next = initialYaml ?? '';
+    if (next === lastAppliedInitialYamlRef.current) return;
+    if (lastEmittedYamlRef.current !== null && next === lastEmittedYamlRef.current) {
+      lastAppliedInitialYamlRef.current = next;
+      return;
+    }
+    // Drop any pending emit of the previous local YAML so it cannot overwrite
+    // a fresher parent edit (tab rename, layout change, etc.).
+    lastAppliedInitialYamlRef.current = next;
+    lastEmittedYamlRef.current = null;
+    let parsed = tryParseExisting(next, defaultMetaId, defaultMetaTitle);
+    // YAML has no activeViewId — restore the tab the wizard is editing.
+    if (activeViewIdProp) parsed = applyActiveViewId(parsed, activeViewIdProp);
+    setSpec(parsed);
+    setSelectedUid(null);
+  }, [initialYaml, defaultMetaId, defaultMetaTitle, debouncedEmit, activeViewIdProp]);
 
   // Live HTML preview — compiled in-browser so builder selection markup is always present.
   const compile = useCallback(async (yaml: string) => {
@@ -1028,28 +1096,20 @@ export function UiSpecBuilderVanilla({
   }, []);
 
   const switchView = useCallback((newViewId: string) => {
-    setSpec((s) => {
-      if (!s.views) return s;
-      const currentViewId = resolveActiveViewId(s as Parameters<typeof resolveActiveViewId>[0]);
-      if (!currentViewId || currentViewId === newViewId) {
-        return { ...s, activeViewId: newViewId };
-      }
-      const savedViews = {
-        ...s.views,
-        [currentViewId]: {
-          ...(s.views[currentViewId] ?? {}),
-          widgets: s.widgets.map(widgetNodeToObject),
-        },
-      };
-      const targetView = savedViews[newViewId];
-      const rawWidgets = targetView?.widgets;
-      const newWidgets = Array.isArray(rawWidgets)
-        ? rawWidgets.map((w) => objectToWidgetNode(w as Record<string, unknown>))
-        : [];
-      return { ...s, views: savedViews, widgets: newWidgets, activeViewId: newViewId };
-    });
+    setSpec((s) => applyActiveViewId(s, newViewId));
     setSelectedUid(null);
   }, []);
+
+  // Wizard "Build this tab" sets activeViewId in memory only — YAML keeps defaultView.
+  // Follow the parent's editing tab so the preview opens the selected view.
+  useEffect(() => {
+    if (!activeViewIdProp) return;
+    setSpec((s) => {
+      const next = applyActiveViewId(s, activeViewIdProp);
+      return next === s ? s : next;
+    });
+    setSelectedUid(null);
+  }, [activeViewIdProp]);
 
   const viewNavItems = useMemo(() => {
     if (!spec.views) return [];
@@ -1425,13 +1485,16 @@ export function UiSpecBuilderVanilla({
                     type="button"
                     onClick={() => switchView(nav.id)}
                     className={
-                      'px-3 py-1.5 rounded-md text-xs font-medium transition-colors ' +
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ' +
                       (active
                         ? 'bg-blue-600 text-white'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800')
                     }
                   >
-                    {nav.icon ? `${nav.icon} ` : ''}{nav.label ?? nav.id}
+                    {nav.icon ? (
+                      <LucideIconByName name={nav.icon} className="w-3.5 h-3.5 shrink-0" />
+                    ) : null}
+                    {nav.label ?? nav.id}
                   </button>
                 );
               })}
@@ -1507,6 +1570,7 @@ export function UiSpecBuilderVanilla({
                 node={selectedNode}
                 onChange={(patch) => updateWidgetProps(selectedNode.uid, patch)}
                 onRemove={() => removeWidget(selectedNode.uid)}
+                actions={spec.actions}
                 linkableHabits={linkableHabits}
                 habitInputNames={habitInputNames}
                 onLinkHabit={(habitId, actionId, propPath) =>
@@ -1925,12 +1989,13 @@ interface PropertyPanelProps {
   node: WidgetNode;
   onChange: (patch: (props: Record<string, any>) => Record<string, any>) => void;
   onRemove: () => void;
+  actions?: Record<string, unknown>;
   linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string, propPath: string) => void;
 }
 
-function PropertyPanel({ node, onChange, onRemove, linkableHabits, habitInputNames, onLinkHabit }: PropertyPanelProps) {
+function PropertyPanel({ node, onChange, onRemove, actions, linkableHabits, habitInputNames, onLinkHabit }: PropertyPanelProps) {
   const def = CATALOG_BY_KIND.get(node.kind);
   if (!def) {
     return (
@@ -1959,6 +2024,7 @@ function PropertyPanel({ node, onChange, onRemove, linkableHabits, habitInputNam
             key={f.key}
             field={f}
             value={getDeep(node.props, f.key)}
+            actions={actions}
             linkableHabits={linkableHabits}
             habitInputNames={habitInputNames}
             onLinkHabit={
@@ -2013,16 +2079,28 @@ interface PropertyFieldProps {
   field: FieldDef;
   value: any;
   onChange: (v: any) => void;
+  actions?: Record<string, unknown>;
   linkableHabits?: Array<{ id: string; name?: string; inputs?: string[] }>;
   habitInputNames?: string[];
   onLinkHabit?: (habitId: string, actionId: string) => void;
+}
+
+function linkedHabitIdForAction(
+  actions: Record<string, unknown> | undefined,
+  actionId: unknown,
+): string {
+  const id = actionId != null ? String(actionId).trim() : '';
+  if (!id || !actions) return '';
+  const action = actions[id];
+  if (!action || typeof action !== 'object') return '';
+  return habitIdFromEndpoint((action as Record<string, unknown>).endpoint) ?? '';
 }
 
 function isActionIdField(key: string): boolean {
   return key === 'action' || key === 'loadAction' || key.endsWith('.action');
 }
 
-function PropertyField({ field, value, onChange, linkableHabits, habitInputNames, onLinkHabit }: PropertyFieldProps) {
+function PropertyField({ field, value, onChange, actions, linkableHabits, habitInputNames, onLinkHabit }: PropertyFieldProps) {
   if (field.type === 'icon') {
     return (
       <Field label={field.label} help={field.help ?? 'Lucide icon name, or leave empty'}>
@@ -2053,7 +2131,7 @@ function PropertyField({ field, value, onChange, linkableHabits, habitInputNames
         {showHabitLink && (
           <select
             className={`${INPUT} mt-1.5 text-xs`}
-            defaultValue=""
+            value={linkedHabitIdForAction(actions, value)}
             onChange={(e) => {
               const habitId = e.target.value;
               if (!habitId) return;
@@ -2063,7 +2141,6 @@ function PropertyField({ field, value, onChange, linkableHabits, habitInputNames
                   : defaultActionIdForHabit(habitId);
               onChange(actionId);
               onLinkHabit(habitId, actionId);
-              e.target.value = '';
             }}
           >
             <option value="">Connect to habit workflow…</option>
@@ -2967,6 +3044,33 @@ function KvRowsEditor({
 // ---------------------------------------------------------------------------
 
 const INPUT = 'bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-slate-100 focus:outline-none focus:border-blue-500 placeholder-slate-500';
+
+/** Nav icons we render in the canvas tab bar. Unknown names show label only. */
+const STATIC_LUCIDE_ICONS: Record<string, LucideIcon> = {
+  FolderOpen,
+  Sparkles,
+  LayoutGrid,
+  Database,
+  Zap,
+  Settings,
+};
+
+function resolveLucideIconName(raw: string): string {
+  return raw.startsWith('lucide:') ? raw.slice('lucide:'.length) : raw;
+}
+
+/** Renders a `lucide:Name` only if it exists in STATIC_LUCIDE_ICONS; otherwise nothing. */
+function LucideIconByName({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) {
+  const Icon = STATIC_LUCIDE_ICONS[resolveLucideIconName(name)];
+  if (!Icon) return null;
+  return <Icon className={className} aria-hidden />;
+}
 
 function IconPicker({
   value,
