@@ -2275,6 +2275,14 @@ function FieldsArrayEditor({
   const update = (i: number, patch: any) =>
     onChange(value.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
   const suggestionListId = 'form-field-name-suggestions';
+  const habitInputOptions = linkableHabits.flatMap((h) =>
+    (h.inputs ?? []).map((input) => ({
+      value: input,
+      label: h.name ? `${h.name}: ${input}` : input,
+      optionKey: `${h.id}-${input}`,
+    })),
+  );
+  const habitInputValues = new Set(habitInputOptions.map((o) => o.value));
   return (
     <div className="space-y-2">
       {value.map((f, i) => (
@@ -2287,24 +2295,21 @@ function FieldsArrayEditor({
               list={suggestionListId}
               onChange={(e) => update(i, { name: e.target.value })}
             />
-            {nameSuggestions.length > 0 && (
+            {habitInputOptions.length > 0 && (
               <select
-                className={`${INPUT} w-full sm:w-28 text-xs flex-shrink-0 max-w-full`}
-                value=""
-                title="Pick from habit inputs"
+                className={`${INPUT} w-full sm:w-36 text-xs flex-shrink-0 max-w-full`}
+                value={habitInputValues.has(f.name ?? '') ? (f.name as string) : ''}
+                title="Set field name from a Logic habit input"
                 onChange={(e) => {
                   if (e.target.value) update(i, { name: e.target.value });
-                  e.target.value = '';
                 }}
               >
                 <option value="">Habit input…</option>
-                {linkableHabits.flatMap((h) =>
-                  (h.inputs ?? []).map((input) => (
-                    <option key={`${h.id}-${input}`} value={input}>
-                      {h.name ? `${h.name}: ${input}` : input}
-                    </option>
-                  )),
-                )}
+                {habitInputOptions.map((o) => (
+                  <option key={o.optionKey} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
             )}
             <select
