@@ -65,9 +65,7 @@ VITE_CONTACT_FORM_API_URL=https://contact-form.<instance>.hub.codenteam.com/api/
 
 The reCAPTCHA site key is fetched at runtime from `POST /api/contact-config`.
 
-## Used in Showcases
-
-- [Smart Contact Form](https://github.com/codenteam/habits/tree/main/showcase/smart-contact-form)
+<IntegrationShowcases integration="recaptcha" />
 
 ## Related Integrations
 

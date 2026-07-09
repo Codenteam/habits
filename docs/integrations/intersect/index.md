@@ -65,6 +65,4 @@ Request body:
 }
 ```
 
-## Used in Showcases
-
-- [Marketing Campaign](/showcase/marketing-campaign)
+<IntegrationShowcases integration="intersect" />

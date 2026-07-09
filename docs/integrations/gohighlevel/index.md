@@ -42,9 +42,7 @@ curl -X POST http://localhost:13000/misc/flows/sync-crm/trigger \
   }'
 ```
 
-## Used in Showcases
-
-- [Lead Generation](https://github.com/codenteam/habits/tree/main/showcase/lead-generation)
+<IntegrationShowcases integration="gohighlevel" />
 
 ## Related Integrations
 

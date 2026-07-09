@@ -77,8 +77,4 @@ HABITS_LINKEDIN_CLIENT_SECRET=your-client-secret
 HABITS_LINKEDIN_ORGANIZATION_ID=12345678
 ```
 
-## Used in Showcases
-
-- [Social Media Multi-Posting](/showcase/social-media-multi-posting)
-- [LinkedIn Posting](https://github.com/codenteam/habits/tree/main/showcase/social-media-linkedin-posting)
-- [Real Estate Social Marketing](/showcase/real-estate-social-marketing)
+<IntegrationShowcases integration="linkedin" />

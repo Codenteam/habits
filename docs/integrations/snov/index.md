@@ -37,10 +37,7 @@ SNOV_CLIENT_ID=your_client_id
 SNOV_CLIENT_SECRET=your_client_secret
 ```
 
-## Used in Showcases
-
-- [Lead Generation](https://github.com/codenteam/habits/tree/main/showcase/lead-generation) — `enrich-lead` workflow fetches prospect and company info
-- [Brieflens Calendar Assistant](https://github.com/codenteam/habits/tree/main/showcase/brieflens-habits) — researches meeting participants
+<IntegrationShowcases integration="snov" />
 
 ## Related Integrations
 

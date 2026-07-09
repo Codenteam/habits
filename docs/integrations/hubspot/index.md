@@ -67,8 +67,4 @@ For [Real Estate Agent Leads Management](/showcase/real-estate-agent-leads-manag
 2. Click **Edit columns** (or **+ Add column**).
 3. Search for each property and add it to the table view.
 
-## Used in Showcases
-
-- [AI Agent Lead Enrichment](/showcase/ai-agent-lead-enrichment)
-- [Real Estate Agent Leads Management](/showcase/real-estate-agent-leads-management)
-- [Lead Generation](https://github.com/codenteam/habits/tree/main/showcase/lead-generation) (via `sync-crm` workflow)
+<IntegrationShowcases integration="hubspot" />

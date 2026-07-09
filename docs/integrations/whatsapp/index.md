@@ -95,7 +95,4 @@ HABITS_WHATSAPP_PHONE=+201234567890
 HABITS_WHATSAPP_VERIFY_TOKEN=your_verify_token
 ```
 
-## Used in Showcases
-
-- [WhatsApp Test](https://github.com/codenteam/habits/tree/main/showcase/whatsapp-test)
-- [Email Classification](/showcase/email-classification) (not-important emails routed to WhatsApp)
+<IntegrationShowcases integration="whatsapp" />

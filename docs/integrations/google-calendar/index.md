@@ -51,9 +51,7 @@ The bit supports scopes such as:
 - `https://www.googleapis.com/auth/calendar.readonly` — read events
 - `https://www.googleapis.com/auth/calendar` — read and write events
 
-## Used in Showcases
-
-- [Brieflens Calendar Assistant](https://github.com/codenteam/habits/tree/main/showcase/brieflens-habits) — syncs events every 3 hours, researches participants, sends daily digests
+<IntegrationShowcases integration="google-calendar" />
 
 ## Related Integrations
 

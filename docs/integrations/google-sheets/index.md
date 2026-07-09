@@ -80,6 +80,4 @@ For [Invoices Processing](/showcase/invoices-processing), add these headers to r
 |---|---|---|---|---|---|---|---|---|
 | Invoice Number | Invoice Date | Vendor Name | Vendor Email | Customer Name | Total Amount | Currency | Due Date | Notes |
 
-## Used in Showcases
-
-- [Invoices Processing](/showcase/invoices-processing)
+<IntegrationShowcases integration="google-sheets" />

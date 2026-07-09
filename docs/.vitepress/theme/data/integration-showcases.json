@@ -1,0 +1,226 @@
+{
+  "gmail": [
+    {
+      "slug": "ai-invoice-mailer",
+      "name": "AI Invoice Mailer"
+    },
+    {
+      "slug": "email-digest-summarizer",
+      "name": "Email Digest Summarizer"
+    },
+    {
+      "slug": "email-demo",
+      "name": "Email Send & Receive Demo"
+    },
+    {
+      "slug": "email-ticket-routing",
+      "name": "Email Ticket Routing"
+    },
+    {
+      "slug": "emails-categorization",
+      "name": "Emails Categorization"
+    },
+    {
+      "slug": "invoices-processing",
+      "name": "Invoices Processing"
+    }
+  ],
+  "openai": [
+    {
+      "slug": "ai-agent-lead-enrichment",
+      "name": "AI Agent Lead Enrichment"
+    },
+    {
+      "slug": "ai-invoice-mailer",
+      "name": "AI Invoice Mailer"
+    },
+    {
+      "slug": "resume-tailor",
+      "name": "AI Resume Tailor"
+    },
+    {
+      "slug": "budget-analyst",
+      "name": "Budget Analyst habit"
+    },
+    {
+      "slug": "client-invoice-manager",
+      "name": "Client Invoice Manager"
+    },
+    {
+      "slug": "daily-standup",
+      "name": "Daily Standup"
+    },
+    {
+      "slug": "email-digest-summarizer",
+      "name": "Email Digest Summarizer"
+    },
+    {
+      "slug": "email-drafts",
+      "name": "Email Drafts"
+    },
+    {
+      "slug": "email-ticket-routing",
+      "name": "Email Ticket Routing"
+    },
+    {
+      "slug": "emails-categorization",
+      "name": "Emails Categorization"
+    },
+    {
+      "slug": "habit-reflection",
+      "name": "Habit Reflection"
+    },
+    {
+      "slug": "idea-validator",
+      "name": "Idea Validator"
+    },
+    {
+      "slug": "invoices-processing",
+      "name": "Invoices Processing"
+    },
+    {
+      "slug": "meeting-notes",
+      "name": "Meeting Notes"
+    },
+    {
+      "slug": "pr-review-brief",
+      "name": "PR Review Brief"
+    },
+    {
+      "slug": "product-changelog",
+      "name": "Product Changelog"
+    },
+    {
+      "slug": "real-estate-agent-leads-management",
+      "name": "Real Estate Agent Leads Management"
+    },
+    {
+      "slug": "real-estate-social-marketing",
+      "name": "Real Estate Social Marketing"
+    },
+    {
+      "slug": "resume-analyzer",
+      "name": "Resume Analyzer"
+    },
+    {
+      "slug": "rss-digest-summarizer",
+      "name": "RSS Digest Summarizer"
+    },
+    {
+      "slug": "rss-social-poster",
+      "name": "RSS Social Poster"
+    },
+    {
+      "slug": "sleep-journal",
+      "name": "Sleep Journal",
+      "improving": true
+    },
+    {
+      "slug": "social-media-multi-posting",
+      "name": "Social Media Multi-Posting"
+    },
+    {
+      "slug": "study-flashcards",
+      "name": "Study Flashcards"
+    }
+  ],
+  "slack": [
+    {
+      "slug": "email-digest-summarizer",
+      "name": "Email Digest Summarizer"
+    },
+    {
+      "slug": "rss-digest-summarizer",
+      "name": "RSS Digest Summarizer"
+    }
+  ],
+  "hubspot": [
+    {
+      "slug": "ai-agent-lead-enrichment",
+      "name": "AI Agent Lead Enrichment"
+    },
+    {
+      "slug": "real-estate-agent-leads-management",
+      "name": "Real Estate Agent Leads Management"
+    }
+  ],
+  "google-drive": [
+    {
+      "slug": "client-invoice-manager",
+      "name": "Client Invoice Manager"
+    }
+  ],
+  "google-sheets": [
+    {
+      "slug": "invoices-processing",
+      "name": "Invoices Processing"
+    }
+  ],
+  "google-calendar": [],
+  "telegram": [
+    {
+      "slug": "emails-categorization",
+      "name": "Emails Categorization"
+    }
+  ],
+  "linkedin": [
+    {
+      "slug": "real-estate-social-marketing",
+      "name": "Real Estate Social Marketing"
+    },
+    {
+      "slug": "rss-social-poster",
+      "name": "RSS Social Poster"
+    },
+    {
+      "slug": "social-media-multi-posting",
+      "name": "Social Media Multi-Posting"
+    }
+  ],
+  "twitter": [
+    {
+      "slug": "real-estate-social-marketing",
+      "name": "Real Estate Social Marketing"
+    },
+    {
+      "slug": "rss-social-poster",
+      "name": "RSS Social Poster"
+    },
+    {
+      "slug": "social-media-multi-posting",
+      "name": "Social Media Multi-Posting"
+    }
+  ],
+  "whatsapp": [],
+  "intersect": [
+    {
+      "slug": "ai-cookbook",
+      "name": "AI Cookbook"
+    },
+    {
+      "slug": "ai-journal",
+      "name": "AI Journal"
+    },
+    {
+      "slug": "marketing-campaign",
+      "name": "Marketing Campaign Generator"
+    }
+  ],
+  "snov": [],
+  "salesforce": [],
+  "gohighlevel": [],
+  "recaptcha": [],
+  "sumsub": [
+    {
+      "slug": "finance-banking-customer-onboarding",
+      "name": "Finance & Banking Customer Onboarding",
+      "improving": true
+    }
+  ],
+  "mcp-servers": [
+    {
+      "slug": "agent-mcp-demo",
+      "name": "Agent MCP Demo"
+    }
+  ]
+}

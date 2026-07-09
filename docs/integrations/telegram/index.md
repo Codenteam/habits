@@ -65,7 +65,4 @@ HABITS_TELEGRAM_BOT_TOKEN=123456789:AAF...
 HABITS_TELEGRAM_CHAT_ID=-1001234567890
 ```
 
-## Used in Showcases
-
-- [Emails Categorization](/showcase/emails-categorization)
-- [Email Classification](/showcase/email-classification) (important emails routed to Telegram)
+<IntegrationShowcases integration="telegram" />

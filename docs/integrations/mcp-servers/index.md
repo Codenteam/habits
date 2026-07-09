@@ -87,9 +87,7 @@ mcpServers:
 - "Find messages about the product launch in Slack" — searches Slack
 - "What files are in my current directory?" — uses filesystem tools
 
-## Used in Showcases
-
-- [Agent MCP Demo](/showcase/agent-mcp-demo)
+<IntegrationShowcases integration="mcp-servers" />
 
 ## Related Integrations
 

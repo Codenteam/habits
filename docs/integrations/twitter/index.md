@@ -55,7 +55,4 @@ Use `@ha-bits/bit-twitter` to publish tweets from Habits workflows.
 HABITS_TWITTER_CLIENT_ID=your-twitter-client-id
 ```
 
-## Used in Showcases
-
-- [Social Media Multi-Posting](/showcase/social-media-multi-posting)
-- [Real Estate Social Marketing](/showcase/real-estate-social-marketing)
+<IntegrationShowcases integration="twitter" />
