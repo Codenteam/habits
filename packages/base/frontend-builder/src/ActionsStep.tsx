@@ -1,7 +1,7 @@
 /**
  * Simplified Actions wizard step — guided flow for non-technical users.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { SpecState } from './uiSpecYaml';
 import type { HabitOption } from './actionLinking';
@@ -41,18 +41,31 @@ export function ActionsStep({
   linkableHabits: HabitOption[];
   onUpdate: (patch: (s: SpecState) => SpecState) => void;
 }) {
+  // Only re-ensure actions when the habit catalog changes — not when the builder
+  // emits YAML (which used to recreate `onUpdate` and clear widget selection).
+  // Form↔habit mapping is resolved live in HabitActionCard via resolveBodyMapping.
+  const habitsKey = linkableHabits
+    .map((h) => `${h.id}:${(h.inputs ?? []).join(',')}`)
+    .join('|');
+  const linkableHabitsRef = useRef(linkableHabits);
+  linkableHabitsRef.current = linkableHabits;
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+
   useEffect(() => {
-    if (linkableHabits.length === 0) return;
-    onUpdate((s) => {
+    const habits = linkableHabitsRef.current;
+    if (habits.length === 0) return;
+    onUpdateRef.current((s) => {
       let next = s;
-      for (const h of linkableHabits) {
+      for (const h of habits) {
         if (!findActionIdForHabit(next, h.id)) {
-          next = ensureActionForHabit(next, h.id, linkableHabits).spec;
+          next = ensureActionForHabit(next, h.id, habits).spec;
         }
       }
-      return ensureAutoMatchedActions(next, linkableHabits);
+      next = ensureAutoMatchedActions(next, habits);
+      return next === s ? s : next;
     });
-  }, [linkableHabits, onUpdate]);
+  }, [habitsKey]);
 
   if (linkableHabits.length === 0) {
     return (

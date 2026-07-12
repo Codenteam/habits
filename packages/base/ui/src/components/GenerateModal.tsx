@@ -198,10 +198,10 @@ export default function GenerateModal({ isOpen, onClose, onOpenValidation }: Gen
               <div className="flex rounded-lg bg-slate-700 p-1">
                 <button
                   onClick={() => setGenerationType('habit')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 flex items-center cursor-pointer justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     generationType === 'habit'
                       ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-slate-400 hover:text-white '
                   }`}
                 >
                   <Repeat className="w-4 h-4" />
@@ -209,10 +209,11 @@ export default function GenerateModal({ isOpen, onClose, onOpenValidation }: Gen
                 </button>
                 <button
                   onClick={() => setGenerationType('bit')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  disabled={true}
+                  className={`flex-1 flex opacity-50 cursor-not-allowed items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     generationType === 'bit'
                       ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      : 'text-slate-400 '
                   }`}
                 >
                   <Code2 className="w-4 h-4" />
