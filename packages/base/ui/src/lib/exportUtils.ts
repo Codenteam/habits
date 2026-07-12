@@ -203,12 +203,13 @@ export function habitToYaml(habit: Habit): string {
 
       return yamlNode;
     }),
-    edges: habit.edges.length > 0 ? habit.edges.map(edge => ({
+    // Always include edges (default to []) so share/export works for single-node habits
+    edges: (habit.edges ?? []).map(edge => ({
       source: edge.source,
       target: edge.target,
       ...(edge.sourceHandle && { sourceHandle: edge.sourceHandle }),
       ...(edge.targetHandle && { targetHandle: edge.targetHandle }),
-    })) : undefined,
+    })),
     // Include output mappings if defined
     output: habit.output && Object.keys(habit.output).length > 0 ? habit.output : undefined,
   };

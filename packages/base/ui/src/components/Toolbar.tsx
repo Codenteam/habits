@@ -163,8 +163,12 @@ export default function Toolbar() {
       return;
     }
     
-    // Convert habit to YAML (cast to any for compatibility between Redux Habit and exportUtils Habit types)
-    const yamlContent = habitToYaml(activeHabit as any);
+    // Convert habit to YAML (cast to any for compatibility between Redux Habit and exportUtils Habit types).
+    // Assume missing edges as [] so single-node / unconnected habits can still be shared.
+    const yamlContent = habitToYaml({
+      ...activeHabit,
+      edges: activeHabit.edges ?? [],
+    } as any);
     
     // Store YAML and show modal
     setShareHabitYaml(yamlContent);
