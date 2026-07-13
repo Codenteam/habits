@@ -19,6 +19,7 @@ import { BITS, BUILTIN_BIT_NAMES, formatBitModuleLabel } from '../lib/bits';
 import AddModuleModal from './AddModuleModal';
 import CodeViewModal from './CodeViewModal';
 import ModuleIcon from './ModuleIcon';
+import NodePaletteSearch from './NodePaletteSearch';
 import OutputsModal from './OutputsModal';
 import Dialog from './Dialog';
 
@@ -47,10 +48,11 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   const availableModules = useAppSelector(state => state.workflow.availableModules);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showCodeViewModal, setShowCodeViewModal] = useState(false);
+  const [nodeSearchQuery, setNodeSearchQuery] = useState('');
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogConfig, setDialogConfig] = useState<{
+  const [dialogConfig] = useState<{
     message: string;
     type: 'confirm' | 'alert' | 'success' | 'error';
     onConfirm?: () => void;
@@ -154,6 +156,23 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
   const bitsModules = availableModules.filter((m) => m.framework === 'bits');
   const extraBitsModules = bitsModules.filter((m) => !BUILTIN_BIT_NAMES.has(m.name));
   const scriptModules = availableModules.filter((m) => m.framework === 'script');
+
+  const normalizedSearch = nodeSearchQuery.trim().toLowerCase();
+  const matchesNodeName = (...names: Array<string | undefined>) => {
+    if (!normalizedSearch) return true;
+    return names.some((name) => name?.toLowerCase().includes(normalizedSearch));
+  };
+
+  const filteredBits = BITS.filter((bit) =>
+    matchesNodeName(bit.displayName, bit.name)
+  );
+  const filteredExtraBitsModules = extraBitsModules.filter((module) =>
+    matchesNodeName(
+      formatBitModuleLabel(module.name, module.displayName),
+      module.displayName,
+      module.name
+    )
+  );
 
   const handleAddNode = (framework: 'script' | 'bits', module: string, label: string) => {
     onAddNode({ framework, module, label });
@@ -402,7 +421,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
               style={visibleSections.habits ? { height: `${(1 - splitRatio) * 100}%` } : { flex: 1 }}
             >
               <div className="p-3 border-b border-slate-700 flex-shrink-0">
-                <div className="flex items-center justify-between">
+                <div className="flex mb-2 items-center justify-between">
                   <div className="flex items-center gap-2 text-slate-300">
                     <Puzzle className="w-4 h-4" />
                     <span className="text-sm font-medium">Node Palette</span>
@@ -427,9 +446,18 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                     )}
                   </div>
                 </div>
+
+                <NodePaletteSearch
+                  value={nodeSearchQuery}
+                  onChange={setNodeSearchQuery}
+              />
               </div>
 
+
+
               <div className="flex-1 overflow-y-auto p-2 space-y-2 max-h-100vh">
+
+
                 {/* Add Script Button */}
                 <button
                   onClick={() => handleAddNode('script', 'script-deno', 'Code/Script')}
@@ -442,7 +470,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                 {/* Built-in Bits (catalog + modules added via Add Module) */}
                 <div className="space-y-1">
                   <h4 className="text-xs font-medium text-emerald-400 border-b border-emerald-500/30 pb-1 px-1">Built-in Bits</h4>
-                  {BITS.map((bit) => {
+                  {filteredBits.map((bit) => {
                     const IconComponent = bit.icon;
                     return (
                       <button
@@ -462,7 +490,7 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                       </button>
                     );
                   })}
-                  {extraBitsModules.map((module) => {
+                  {filteredExtraBitsModules.map((module) => {
                     const label = formatBitModuleLabel(module.name, module.displayName);
                     return (
                       <button
@@ -482,6 +510,11 @@ export default function LeftSidebar({ onAddNode }: LeftSidebarProps) {
                       </button>
                     );
                   })}
+                  {normalizedSearch && filteredBits.length === 0 && filteredExtraBitsModules.length === 0 && (
+                    <div className="text-xs text-slate-500 text-center py-3">
+                      No bits match &ldquo;{nodeSearchQuery.trim()}&rdquo;
+                    </div>
+                  )}
                 </div>
 
                 {/* Script modules */}

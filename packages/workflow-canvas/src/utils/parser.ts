@@ -273,7 +273,8 @@ export function validateHabitContent(content: unknown): content is HabitYaml {
   if (!habit.id || typeof habit.id !== 'string') return false;
   if (!habit.name || typeof habit.name !== 'string') return false;
   if (!Array.isArray(habit.nodes)) return false;
-  if (!Array.isArray(habit.edges)) return false;
+  // Missing edges is valid — treat as empty (single-node / unconnected habits)
+  if (habit.edges != null && !Array.isArray(habit.edges)) return false;
   
   return true;
 }

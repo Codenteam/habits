@@ -247,22 +247,29 @@ export function UiSpecWizard({
     ),
     [yamlText, defaultMetaId, defaultMetaTitle, manualStateKeys],
   );
+  const specRef = useRef(spec);
+  specRef.current = spec;
 
   const commitSpec = useCallback(
     (next: SpecState) => {
       const synced = syncSpecWithInferredState(next, manualStateKeys);
       const y = specToYaml(synced);
+      // Skip no-op commits so the builder does not treat them as external YAML
+      // and clear the selected widget.
+      if (y === yamlTextRef.current) return;
       setYamlText(y);
       onChange(y);
     },
     [manualStateKeys, onChange],
   );
 
+  // Stable identity — must not change when `spec` updates from builder emits,
+  // or step effects (e.g. ActionsStep) re-fire and rewrite YAML.
   const updateSpec = useCallback(
     (patch: (s: SpecState) => SpecState) => {
-      commitSpec(patch(spec));
+      commitSpec(patch(specRef.current));
     },
-    [commitSpec, spec],
+    [commitSpec],
   );
 
   const handleBuilderChange = useCallback(
