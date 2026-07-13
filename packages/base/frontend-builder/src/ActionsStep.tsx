@@ -9,7 +9,6 @@ import {
   assignActionToTrigger,
   ensureActionForHabit,
   findActionIdForHabit,
-  findTriggersForAction,
   listTriggerOptions,
 } from './actionConfig';
 import {
@@ -116,7 +115,11 @@ function HabitActionCard({
     [spec],
   );
   const displayWidgets = useMemo(() => listDisplayWidgets(spec), [spec]);
-  const wired = actionId ? findTriggersForAction(spec, actionId) : [];
+  // Resolve from the same list the <select> renders so value always matches an option id.
+  const selectedTrigger = useMemo(() => {
+    if (!actionId) return null;
+    return friendlyTriggers.find((t) => t.currentActionId === actionId) ?? null;
+  }, [friendlyTriggers, actionId]);
 
   const mapping = useMemo(() => {
     const existing = getBodyMappingFromAction(spec, actionId, habitInputs);
@@ -182,15 +185,15 @@ function HabitActionCard({
         <p className="text-[11px] text-slate-500">
           Pick a button, submit control, or tab that starts this workflow.
         </p>
-        {wired.length > 0 && (
+        {selectedTrigger && (
           <p className="text-[11px] text-emerald-400 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Connected: {friendlyTriggerLabel(wired[0], spec)}
+            Connected: {selectedTrigger.friendly}
           </p>
         )}
         <select
           className={`${INPUT} text-xs`}
-          value={wired[0]?.id ?? ''}
+          value={selectedTrigger?.id ?? ''}
           onChange={(e) => wireTrigger(e.target.value)}
         >
           <option value="">Choose a trigger…</option>

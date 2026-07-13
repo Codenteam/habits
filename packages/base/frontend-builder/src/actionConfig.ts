@@ -277,21 +277,24 @@ export function listTriggerOptions(spec: SpecState): TriggerOption[] {
       if (kind === 'form') {
         const submit = (w.submit ?? {}) as Record<string, unknown>;
         const actionId = submit.action ? String(submit.action) : '';
-        const ref: ActionReference = {
-          location: `${loc} › form submit`,
-          actionId,
-          slotKind: 'form-submit',
-          viewId,
-          widgetUid: typeof w.uid === 'string' ? w.uid : undefined,
-          propPath: 'submit.action',
-        };
-        if (!options.some((o) => o.ref.location === ref.location)) {
-          options.push({
-            id: `${ref.location}|${ref.propPath}|`,
-            label: ref.location,
-            ref,
-            currentActionId: actionId,
-          });
+        // Wired forms already come from collectActionReferences — only offer empty slots here.
+        if (!actionId) {
+          const ref: ActionReference = {
+            location: `${loc} › form submit`,
+            actionId: '',
+            slotKind: 'form-submit',
+            viewId,
+            widgetUid: typeof w.uid === 'string' ? w.uid : undefined,
+            propPath: 'submit.action',
+          };
+          if (!options.some((o) => o.ref.location === ref.location)) {
+            options.push({
+              id: `${ref.location}|${ref.propPath}|`,
+              label: ref.location,
+              ref,
+              currentActionId: '',
+            });
+          }
         }
       }
       if (kind === 'button' && !w.action) {
@@ -303,12 +306,14 @@ export function listTriggerOptions(spec: SpecState): TriggerOption[] {
           widgetUid: typeof w.uid === 'string' ? w.uid : undefined,
           propPath: 'action',
         };
-        options.push({
-          id: `${ref.location}|action|`,
-          label: ref.location,
-          ref,
-          currentActionId: '',
-        });
+        if (!options.some((o) => o.ref.location === ref.location)) {
+          options.push({
+            id: `${ref.location}|action|`,
+            label: ref.location,
+            ref,
+            currentActionId: '',
+          });
+        }
       }
       if (Array.isArray(w.children)) {
         walk(w.children as Array<Record<string, unknown>>, viewId, `${prefix}${kind} › `);
@@ -316,12 +321,15 @@ export function listTriggerOptions(spec: SpecState): TriggerOption[] {
     }
   };
 
-  walk(collectWidgetsFromSpec(spec) as Array<Record<string, unknown>>);
-  if (spec.views) {
+  // Walk nested trees only. Never use collectWidgetsFromSpec here — it flattens children into
+  // siblings and duplicates form submit options. When views exist, widgets is only a mirror.
+  if (spec.views && Object.keys(spec.views).length > 0) {
     for (const [viewId, view] of Object.entries(spec.views)) {
       const raw = view?.widgets;
       if (Array.isArray(raw)) walk(raw as Array<Record<string, unknown>>, viewId);
     }
+  } else {
+    walk(spec.widgets.map((n) => widgetNodeToRecord(n)));
   }
 
   const nav = spec.layout.nav ?? [];
@@ -348,6 +356,35 @@ export function listTriggerOptions(spec: SpecState): TriggerOption[] {
   }
 
   return options;
+}
+
+/** Flatten WidgetNode keeping children nested (not sibling-duplicated). */
+function widgetNodeToRecord(node: {
+  kind: string;
+  uid?: string;
+  props?: Record<string, unknown>;
+  children?: unknown[];
+}): Record<string, unknown> {
+  const children = Array.isArray(node.children)
+    ? node.children.map((c) => {
+        if (!c || typeof c !== 'object') return {};
+        const child = c as {
+          kind: string;
+          uid?: string;
+          props?: Record<string, unknown>;
+          children?: unknown[];
+        };
+        return child.props && typeof child.props === 'object'
+          ? widgetNodeToRecord(child)
+          : (c as Record<string, unknown>);
+      })
+    : undefined;
+  return {
+    kind: node.kind,
+    uid: node.uid,
+    ...(node.props ?? {}),
+    ...(children ? { children } : {}),
+  };
 }
 
 export function findTriggersForAction(spec: SpecState, actionId: string): TriggerOption[] {
