@@ -140,9 +140,12 @@
       min-height: 0;
     }
 
+    /* do NOT include .habits-list here — it also has
+       class "section", and flex-shrink:0 on it prevents overflow scroll
+       (list grows to content height, parent clips the rest). */
     #habits-list-view > .header,
     #habits-list-view > .quick-actions,
-    #habits-list-view > .section {
+    #habits-list-view > .section:not(.habits-list) {
       flex-shrink: 0;
     }
     
@@ -249,9 +252,9 @@
       color: white;
     }
     
-    /* Habits List */
+    /* Habits List — must shrink so overflow-y:auto can scroll all habits */
     .habits-list {
-      flex: 1;
+      flex: 1 1 0;
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
