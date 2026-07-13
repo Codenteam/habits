@@ -82,6 +82,41 @@ function walkWidgetTree(
   }
 }
 
+/** Walk each widget once — when views exist, skip `spec.widgets` (active-view mirror). */
+function walkSpecWidgetTree(
+  spec: SpecState,
+  visit: (w: Record<string, unknown>, parents: Record<string, unknown>[]) => void,
+): void {
+  if (spec.views && Object.keys(spec.views).length > 0) {
+    for (const view of Object.values(spec.views)) {
+      walkWidgetTree(view?.widgets as unknown[], visit);
+    }
+    return;
+  }
+  walkWidgetTree(widgetNodesToRecords(spec.widgets as unknown[]), visit);
+}
+
+/** Normalize WidgetNode `{ kind, props, children }` into flat records for tree walks. */
+function widgetNodesToRecords(widgets: unknown[] | undefined): Record<string, unknown>[] {
+  if (!widgets) return [];
+  return widgets.map((item) => {
+    if (!item || typeof item !== 'object') return {};
+    const n = item as Record<string, unknown>;
+    if (n.props && typeof n.props === 'object') {
+      return {
+        kind: n.kind,
+        uid: n.uid,
+        ...(n.props as Record<string, unknown>),
+        children: Array.isArray(n.children) ? widgetNodesToRecords(n.children as unknown[]) : undefined,
+      };
+    }
+    return {
+      ...n,
+      children: Array.isArray(n.children) ? widgetNodesToRecords(n.children as unknown[]) : n.children,
+    };
+  });
+}
+
 function findParentCardTitle(spec: SpecState, ref: TriggerOption['ref']): string | null {
   let found: string | null = null;
   const match = (w: Record<string, unknown>, parents: Record<string, unknown>[]) => {
@@ -228,6 +263,7 @@ export function listDisplayWidgets(spec: SpecState): DisplayWidgetOption[] {
   const kinds = new Set(['result-panel', 'status-banner', 'pre', 'code-block', 'markdown', 'text']);
   const out: DisplayWidgetOption[] = [];
   let n = 0;
+  const seen = new Set<string>();
   const scan = (w: Record<string, unknown>) => {
     const kind = String(w.kind ?? '');
     if (!kinds.has(kind)) return;
@@ -235,14 +271,12 @@ export function listDisplayWidgets(spec: SpecState): DisplayWidgetOption[] {
     const title = typeof w.title === 'string' ? w.title : humanizeFieldName(kind);
     const source = typeof w.source === 'string' ? w.source : undefined;
     const id = typeof w.uid === 'string' ? w.uid : `display-${n}`;
+    const key = typeof w.uid === 'string' ? `uid:${w.uid}` : `${kind}|${source ?? ''}|${title}`;
+    if (seen.has(key)) return;
+    seen.add(key);
     out.push({ id, label: title, kind, source });
   };
-  walkWidgetTree(collectWidgetsFromSpec(spec) as unknown[], scan);
-  if (spec.views) {
-    for (const view of Object.values(spec.views)) {
-      walkWidgetTree(view?.widgets as unknown[], scan);
-    }
-  }
+  walkSpecWidgetTree(spec, scan);
   return out;
 }
 
@@ -254,12 +288,7 @@ function hasErrorBanner(spec: SpecState): boolean {
       if (typeof src === 'string' && src.includes('error')) found = true;
     }
   };
-  walkWidgetTree(collectWidgetsFromSpec(spec) as unknown[], scan);
-  if (spec.views) {
-    for (const view of Object.values(spec.views)) {
-      walkWidgetTree(view?.widgets as unknown[], scan);
-    }
-  }
+  walkSpecWidgetTree(spec, scan);
   return found;
 }
 

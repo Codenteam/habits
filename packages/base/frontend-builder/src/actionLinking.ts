@@ -177,8 +177,8 @@ export function collectActionReferences(spec: SpecState): ActionReference[] {
     });
   };
 
-  scanWidgets(spec.widgets);
-  if (spec.views) {
+  // When views exist, `spec.widgets` mirrors the active view — scanning both duplicates triggers.
+  if (spec.views && Object.keys(spec.views).length > 0) {
     for (const [viewId, view] of Object.entries(spec.views)) {
       const raw = view?.widgets;
       if (!Array.isArray(raw)) continue;
@@ -214,6 +214,8 @@ export function collectActionReferences(spec: SpecState): ActionReference[] {
         });
       }
     }
+  } else {
+    scanWidgets(spec.widgets);
   }
 
   return refs;
