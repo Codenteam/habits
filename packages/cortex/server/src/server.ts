@@ -88,6 +88,46 @@ function extractOutputNodeIds(workflow: Workflow): Set<string> {
 }
 
 // ============================================================================
+// Webhook verification handshake helpers
+// ============================================================================
+
+/** True when the request looks like a URL verification handshake (query or body patterns). */
+function isWebhookVerificationRequest(req: Request): boolean {
+  if (req.method === 'GET' && req.query['hub.mode'] === 'subscribe') {
+    return true;
+  }
+  if (
+    req.method === 'POST' &&
+    (req.body as { type?: string })?.type === 'url_verification'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Resolve the challenge string to echo back after a successful onHandshake.
+ * Uses the handler return value when it is a string; otherwise reads from query or body.
+ */
+function resolveWebhookVerificationChallenge(
+  req: Request,
+  handshakeResponse: unknown,
+): string {
+  if (typeof handshakeResponse === 'string') {
+    return handshakeResponse;
+  }
+  const fromQuery = req.query['hub.challenge'];
+  if (fromQuery != null && fromQuery !== '') {
+    return String(fromQuery);
+  }
+  const fromBody = (req.body as { challenge?: string })?.challenge;
+  if (fromBody != null && fromBody !== '') {
+    return String(fromBody);
+  }
+  return String(handshakeResponse ?? '');
+}
+
+// ============================================================================
 // Workflow Executor Server (HTTP API)
 // ============================================================================
 
@@ -289,6 +329,72 @@ class WorkflowExecutorServer {
   }
 
   /**
+   * Run URL verification handshake when the request matches known query/body patterns.
+   * Each registered trigger's onHandshake validates the request and may return the challenge.
+   * @returns true if this was a verification request (response sent); false to continue dispatch.
+   */
+  private async tryWebhookVerificationHandshake(
+    req: Request,
+    res: Response,
+    moduleId: string,
+    webhookName: string | undefined,
+    filterPayload: {
+      body: unknown;
+      headers: Record<string, string>;
+      query: Record<string, string>;
+      method: string;
+      rawBody?: Buffer;
+    },
+    webhookPath: string,
+  ): Promise<boolean> {
+    if (!isWebhookVerificationRequest(req)) {
+      return false;
+    }
+
+    const listeners = this.webhookRegistry.getListeners(moduleId, webhookName);
+    if (listeners.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: `No listeners registered for module: ${moduleId}${webhookName ? ' / ' + webhookName : ''}`,
+      });
+      return true;
+    }
+
+    const env = this.executor.getEnvVars();
+    const resolveContext = { habits: { env } };
+
+    for (const listener of listeners) {
+      if (!listener.onHandshake) continue;
+
+      try {
+        const triggerProps = listener.triggerProps
+          ? this.executor.resolveNodeParams(listener.triggerProps, resolveContext)
+          : {};
+
+        const handshakeContext = {
+          propsValue: triggerProps,
+          payload: filterPayload,
+          webhookPayload: filterPayload,
+        };
+
+        const response = await listener.onHandshake(handshakeContext);
+        if (response != null && response !== false) {
+          const challenge = resolveWebhookVerificationChallenge(req, response);
+          console.log(`✅ Webhook verification succeeded for ${moduleId} (${listener.workflowId}/${listener.nodeId})`);
+          res.status(200).send(challenge);
+          return true;
+        }
+      } catch (error) {
+        console.error(`❌ Handshake error for ${listener.workflowId}/${listener.nodeId}:`, error);
+      }
+    }
+
+    console.warn(`⚠️ Webhook verification failed for ${webhookPath}`);
+    res.status(403).send('Forbidden');
+    return true;
+  }
+
+  /**
    * Handle vendor-based webhook.
    * Routes webhooks to all registered listeners for the module, filtering by each trigger's filter function.
    * Starts new workflow executions for matching triggers.
@@ -317,64 +423,8 @@ class WorkflowExecutorServer {
       rawBody,
     };
 
-    // Vendor webhook verification handshakes:
-    // - Meta (WhatsApp): GET ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...
-    //   Each trigger's onHandshake compares hub.verify_token to its verifyToken param.
-    // - Slack Events API: POST { type: "url_verification", challenge: "..." }
-    //   Each trigger's onHandshake returns the challenge when type is url_verification.
-  // @see https://docs.slack.dev/apis/events-api/using-http-request-urls/
-    const hubMode = req.query['hub.mode'];
-    const isMetaWebhookVerification =
-      req.method === 'GET' && hubMode === 'subscribe';
-    const isSlackUrlVerification =
-      req.method === 'POST' &&
-      (req.body as { type?: string })?.type === 'url_verification';
-
-    if (isMetaWebhookVerification || isSlackUrlVerification) {
-      const listeners = this.webhookRegistry.getListeners(moduleId, webhookName);
-      if (listeners.length === 0) {
-        res.status(404).json({
-          success: false,
-          message: `No listeners registered for module: ${moduleId}${webhookName ? ' / ' + webhookName : ''}`,
-        });
-        return;
-      }
-
-      const env = this.executor.getEnvVars();
-      const resolveContext = { habits: { env } };
-
-      for (const listener of listeners) {
-        if (!listener.onHandshake) continue;
-
-        try {
-          const triggerProps = listener.triggerProps
-            ? this.executor.resolveNodeParams(listener.triggerProps, resolveContext)
-            : {};
-
-          const handshakeContext = {
-            propsValue: triggerProps,
-            payload: filterPayload,
-            webhookPayload: filterPayload,
-          };
-
-          const response = await listener.onHandshake(handshakeContext);
-          if (response != null && response !== false) {
-            const challenge = typeof response === 'string'
-              ? response
-              : isMetaWebhookVerification
-                ? String(req.query['hub.challenge'] ?? response)
-                : String((req.body as { challenge?: string })?.challenge ?? response);
-            console.log(`✅ Webhook verification succeeded for ${moduleId} (${listener.workflowId}/${listener.nodeId})`);
-            res.status(200).send(challenge);
-            return;
-          }
-        } catch (error) {
-          console.error(`❌ Handshake error for ${listener.workflowId}/${listener.nodeId}:`, error);
-        }
-      }
-
-      console.warn(`⚠️ Webhook verification failed for ${webhookPath}`);
-      res.status(403).send('Forbidden');
+    // URL verification handshake (GET hub.mode=subscribe or POST type=url_verification)
+    if (await this.tryWebhookVerificationHandshake(req, res, moduleId, webhookName, filterPayload, webhookPath)) {
       return;
     }
 
