@@ -317,14 +317,20 @@ class WorkflowExecutorServer {
       rawBody,
     };
 
-    // Meta webhook verification handshake (WhatsApp, etc.):
-    // When you register a callback URL in the Meta App Dashboard, Meta sends a GET with
-    // ?hub.mode=subscribe&hub.verify_token=<token>&hub.challenge=<random>.
-    // Each registered trigger's onHandshake compares hub.verify_token to its verifyToken param
-    // (same value as in .env / Meta webhook config). On match, we respond 200 with hub.challenge
-    // as plain text so Meta confirms that this endpoint is an active and then send any msg direct if triggered
+    // Vendor webhook verification handshakes:
+    // - Meta (WhatsApp): GET ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...
+    //   Each trigger's onHandshake compares hub.verify_token to its verifyToken param.
+    // - Slack Events API: POST { type: "url_verification", challenge: "..." }
+    //   Each trigger's onHandshake returns the challenge when type is url_verification.
+  // @see https://docs.slack.dev/apis/events-api/using-http-request-urls/
     const hubMode = req.query['hub.mode'];
-    if (req.method === 'GET' && hubMode === 'subscribe') {
+    const isMetaWebhookVerification =
+      req.method === 'GET' && hubMode === 'subscribe';
+    const isSlackUrlVerification =
+      req.method === 'POST' &&
+      (req.body as { type?: string })?.type === 'url_verification';
+
+    if (isMetaWebhookVerification || isSlackUrlVerification) {
       const listeners = this.webhookRegistry.getListeners(moduleId, webhookName);
       if (listeners.length === 0) {
         res.status(404).json({
@@ -355,7 +361,9 @@ class WorkflowExecutorServer {
           if (response != null && response !== false) {
             const challenge = typeof response === 'string'
               ? response
-              : String(req.query['hub.challenge'] ?? response);
+              : isMetaWebhookVerification
+                ? String(req.query['hub.challenge'] ?? response)
+                : String((req.body as { challenge?: string })?.challenge ?? response);
             console.log(`✅ Webhook verification succeeded for ${moduleId} (${listener.workflowId}/${listener.nodeId})`);
             res.status(200).send(challenge);
             return;

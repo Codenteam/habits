@@ -1,0 +1,68 @@
+id: receive-message
+name: Receive Slack Message
+description: >-
+  Webhook listener for inbound Slack channel messages via Events API.
+  Register Request URL in Slack app Event Subscriptions: http://<host>:13000/webhook/v/slack
+version: "1.0"
+
+nodes:
+  - id: slack-inbound
+    type: trigger
+    data:
+      label: Slack Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{slack-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const event = payload?.event ?? {};
+            return {
+              channel: String(event.channel || ''),
+              user: String(event.user || ''),
+              text: String(event.text || ''),
+              timestamp: String(event.ts || event.event_ts || ''),
+              threadTs: String(event.thread_ts || ''),
+              team: String(payload?.team_id || ''),
+              subtype: String(event.subtype || ''),
+            };
+          }
+
+  - id: log-inbound
+    type: action
+    data:
+      label: Log Parsed Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Slack Inbound
+        message: "{{parse-inbound}}"
+
+edges:
+  - source: slack-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: log-inbound
+
+output:
+  channel: "{{parse-inbound.result.channel}}"
+  user: "{{parse-inbound.result.user}}"
+  text: "{{parse-inbound.result.text}}"
+  timestamp: "{{parse-inbound.result.timestamp}}"
+  threadTs: "{{parse-inbound.result.threadTs}}"

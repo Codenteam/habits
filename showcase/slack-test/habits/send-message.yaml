@@ -1,0 +1,32 @@
+id: send-message
+name: Send Slack Message
+description: Sends a text message to a Slack channel via @ha-bits/bit-slack.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+
+input:
+  - id: text
+    type: string
+    required: true
+
+nodes:
+  - id: post-slack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        text: "{{habits.input.text}}"
+
+edges: []
+
+output:
+  success: "{{post-slack.success}}"
+  channel: "{{post-slack.channel}}"
+  timestamp: "{{post-slack.timestamp}}"

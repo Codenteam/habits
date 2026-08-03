@@ -1,0 +1,36 @@
+id: update-message
+name: Update Slack Message
+description: Updates an existing Slack message via @ha-bits/bit-slack.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+
+input:
+  - id: text
+    type: string
+    required: true
+  - id: timestamp
+    type: string
+    required: true
+
+nodes:
+  - id: update-slack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: updateMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        timestamp: "{{habits.input.timestamp}}"
+        text: "{{habits.input.text}}"
+
+edges: []
+
+output:
+  success: "{{update-slack.success}}"
+  channel: "{{update-slack.channel}}"
+  timestamp: "{{update-slack.timestamp}}"

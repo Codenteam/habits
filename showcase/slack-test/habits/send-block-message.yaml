@@ -1,0 +1,66 @@
+id: send-block-message
+name: Send Slack Block Message
+description: Sends a Block Kit message to a Slack channel via @ha-bits/bit-slack.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+
+input:
+  - id: text
+    type: string
+    required: true
+
+nodes:
+  - id: build-blocks
+    type: action
+    data:
+      framework: script
+      source: inline
+      module: block-builder
+      label: Build Block Kit Message
+      params:
+        text: "{{habits.input.text}}"
+        language: javascript
+        script: |
+          async function main(text) {
+            const blocks = [
+              {
+                type: 'header',
+                text: { type: 'plain_text', text: 'Block Message Test :rocket:', emoji: true },
+              },
+              {
+                type: 'section',
+                text: { type: 'mrkdwn', text: text || '(empty)' },
+              },
+              {
+                type: 'context',
+                elements: [
+                  { type: 'mrkdwn', text: '_Sent via @ha-bits/bit-slack sendBlockMessage_' },
+                ],
+              },
+            ];
+            return { blocks: JSON.stringify(blocks), fallbackText: text };
+          }
+
+  - id: post-slack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendBlockMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        text: "{{build-blocks.result.fallbackText}}"
+        blocks: "{{build-blocks.result.blocks}}"
+
+edges:
+  - source: build-blocks
+    target: post-slack
+
+output:
+  success: "{{post-slack.success}}"
+  channel: "{{post-slack.channel}}"
+  timestamp: "{{post-slack.timestamp}}"
