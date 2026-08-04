@@ -127,6 +127,22 @@ function resolveWebhookVerificationChallenge(
   return String(handshakeResponse ?? '');
 }
 
+/**
+ * True when the webhook body is an event_callback with an event_id.
+ * Deliveries of this type must be acknowledged immediately (HTTP 200) so the
+ * provider does not retry the same event while workflows are still running.
+ */
+function shouldAcknowledgeWebhookEarly(body: unknown): boolean {
+  if (!body || typeof body !== 'object') {
+    return false;
+  }
+  const record = body as Record<string, unknown>;
+  const eventId = record.event_id;
+  const hasEventId = typeof eventId === 'string' && eventId.length > 0;
+  const isEventCallback = record.type === 'event_callback';
+  return hasEventId && isEventCallback;
+}
+
 // ============================================================================
 // Workflow Executor Server (HTTP API)
 // ============================================================================
@@ -451,15 +467,18 @@ class WorkflowExecutorServer {
       );
     }
 
-    // Start workflow executions for matched listeners
+    const acknowledgeEarly = shouldAcknowledgeWebhookEarly(req.body);
+    if (acknowledgeEarly) {
+      res.status(200).send('');
+    }
+
     const executions: { workflowId: string; nodeId: string; status: string; error?: string; executionId?: string; output?: unknown }[] = [];
-    
+
     for (const result of matchedResults) {
       const { listener } = result;
       console.log(`🚀 Starting workflow ${listener.workflowId} for trigger ${listener.triggerName}`);
-      
+
       try {
-        // Get the workflow
         const loadedWorkflow = this.executor.getWorkflow(listener.workflowId);
         if (!loadedWorkflow) {
           console.error(`   ❌ Workflow not found: ${listener.workflowId}`);
@@ -467,12 +486,11 @@ class WorkflowExecutorServer {
             workflowId: listener.workflowId,
             nodeId: listener.nodeId,
             status: 'error',
-            error: 'Workflow not found'
+            error: 'Workflow not found',
           });
           continue;
         }
 
-        // Execute the workflow with the webhook payload as initial context
         const execution = await this.executor.executeWorkflow(loadedWorkflow.workflow, {
           webhookHandler: this.getWebhookHandler(),
           initialContext: {
@@ -482,7 +500,6 @@ class WorkflowExecutorServer {
             triggerQuery: req.query,
             triggerMethod: req.method,
           },
-          // Skip the trigger node itself since we're providing the payload directly
           skipTriggerWait: true,
           triggerNodeId: listener.nodeId,
         });
@@ -501,22 +518,24 @@ class WorkflowExecutorServer {
           workflowId: listener.workflowId,
           nodeId: listener.nodeId,
           status: 'error',
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
 
-    res.json({
-      success: true,
-      message: `Webhook processed for ${moduleId}`,
-      moduleId,
-      webhookName: webhookName || 'default',
-      listenersEvaluated: results.length,
-      listenersMatched: matchedResults.length,
-      executionsStarted: executions.filter(e => e.status !== 'error').length,
-      executions,
-      timestamp: new Date().toISOString(),
-    });
+    if (!acknowledgeEarly) {
+      res.json({
+        success: true,
+        message: `Webhook processed for ${moduleId}`,
+        moduleId,
+        webhookName: webhookName || 'default',
+        listenersEvaluated: results.length,
+        listenersMatched: matchedResults.length,
+        executionsStarted: executions.filter(e => e.status !== 'error').length,
+        executions,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   /**

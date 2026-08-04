@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: ai-reply-routing-assistant
+  title: AI Reply and Routing Assistant
+  subtitle: Slack inbound → classify → acknowledge → route
+  icon: "lucide:MessagesSquare"
+  documentTitle: AI Reply and Routing Assistant
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: AI Reply and Routing Assistant
+    subtitle: Background automation for Slack
+    icon: "lucide:MessagesSquare"
+
+widgets:
+  - kind: hero
+    icon: "lucide:Bot"
+    title: This showcase runs without a UI
+    subtitle: Send a message in Slack where the bot is present — classification, acknowledgement, and routing happen automatically in the background.
+
+  - kind: card
+    title: Status
+    children:
+      - kind: badge-list
+        values:
+          - Listening on /webhook/v/slack
+          - No manual actions required
+        tone: success
+      - kind: text
+        value: Post in Slack to trigger the pipeline. Low-risk questions get an auto-reply; sensitive messages are forwarded to the right team channel for review.
+        muted: true
+
+  - kind: empty-state
+    icon: "lucide:MessageSquareMore"
+    title: Waiting for inbound messages
+    subtitle: Configure Slack Event Subscriptions and channel IDs in .env — see the showcase README for setup.

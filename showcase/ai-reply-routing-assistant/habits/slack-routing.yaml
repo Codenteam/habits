@@ -1,0 +1,85 @@
+id: slack-routing
+name: Slack Message Routing
+description: >
+  Orchestrates the full Slack AI routing pipeline:
+  1. Receives inbound Slack messages via Events API
+  2. Analyzes each message with OpenAI
+  3. Sends an acknowledgement and forwards to the correct team channel
+  4. For low-risk messages, sends an AI answer in the same channel after the ack
+
+nodes:
+  - id: slack-inbound
+    type: trigger
+    data:
+      label: Slack Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{slack-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const event = payload?.event ?? {};
+            return {
+              channel: String(event.channel || ''),
+              user: String(event.user || ''),
+              text: String(event.text || ''),
+              timestamp: String(event.ts || event.event_ts || ''),
+              threadTs: String(event.thread_ts || ''),
+              team: String(payload?.team_id || ''),
+            };
+          }
+
+  - id: analyze-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{parse-inbound.result}}"
+        habitId: analyze-message
+        inputKey: message
+        continueOnError: true
+        collectResults: true
+
+  - id: process-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{analyze-messages.results}}"
+        habitId: process-message
+        inputKey: analyzedMessage
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: slack-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: analyze-messages
+  - source: analyze-messages
+    target: process-messages
+
+output:
+  messagesProcessed: "{{process-messages.successCount}}"
+  results: "{{process-messages.results}}"

@@ -1,0 +1,24 @@
+id: send-auto-reply
+name: Send Auto Reply
+description: Post the AI-generated final answer in the same Slack channel (low-risk only)
+
+nodes:
+  - id: reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{ticket.output.sourceChannel}}"
+        text: "{{ticket.output.finalReply}}"
+        threadTs: "{{ticket.output.threadTs}}"
+
+edges: []
+
+output:
+  success: "{{reply.success}}"
+  channel: "{{reply.channel}}"
+  timestamp: "{{reply.timestamp}}"
