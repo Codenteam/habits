@@ -1,0 +1,64 @@
+id: process-urgent-message
+name: Process Urgent Message
+description: >
+  For urgent messages only, post a structured escalation to the on-call channel
+  and register a pending acknowledgement record in the database.
+
+nodes:
+  - id: check-urgent
+    type: bits
+    data:
+      label: Is Urgent?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Urgent
+            value1: "{{analyzedMessage.output.isUrgent}}"
+            operator: equals
+            value2: true
+            output: urgent
+        includeElse: true
+        defaultOutput: not_urgent
+
+  - id: post-escalation
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "[{{analyzedMessage}}]"
+        habitId: post-escalation
+        inputKey: analyzedMessage
+        collectResults: true
+
+  - id: register-pending-ack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{post-escalation.results}}"
+        habitId: register-pending-ack
+        inputKey: escalation
+        collectResults: true
+
+edges:
+  - source: check-urgent
+    target: post-escalation
+    sourceHandle: branch-0
+  - source: post-escalation
+    target: register-pending-ack
+
+output:
+  isUrgent: "{{analyzedMessage.output.isUrgent}}"
+  urgencyLevel: "{{analyzedMessage.output.urgencyLevel}}"
+  escalated: "{{post-escalation.successCount}}"
+  registered: "{{register-pending-ack.successCount}}"

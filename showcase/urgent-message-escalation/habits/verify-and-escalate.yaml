@@ -1,0 +1,195 @@
+id: verify-and-escalate
+name: Verify and Escalate
+description: >
+  Check thread replies and reactions for an escalation, use OpenAI to decide if it
+  was acknowledged, then either mark it acknowledged or re-post the escalation.
+
+nodes:
+  - id: get-replies
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: getConversationReplies
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{escalation.escalationChannel}}"
+        ts: "{{escalation.escalationMessageTs}}"
+
+  - id: get-reactions
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: getReactions
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{escalation.escalationChannel}}"
+        timestamp: "{{escalation.escalationMessageTs}}"
+
+  - id: ai-check-ack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are verifying whether a Slack escalation has been acknowledged by a human.
+
+          ESCALATION CONTEXT:
+          - Urgency: {{escalation.urgencyLevel}}
+          - Summary: {{escalation.summary}}
+          - Suggested action: {{escalation.suggestedAction}}
+          - Escalation round: {{escalation.escalationRound}}
+
+          THREAD MESSAGES (from conversations.replies):
+          {{get-replies.messages}}
+
+          REACTIONS (from reactions.get):
+          {{get-reactions.reactions}}
+
+          RULES:
+          - Ignore the bot's original escalation post itself
+          - A human thread reply such as "on it", "looking", "ack", "got it", or a substantive response = acknowledged
+          - Human reactions like eyes, white_check_mark, +1, raised_hands = acknowledged
+          - Bot-only activity or no human response = NOT acknowledged
+          - When uncertain, return acknowledged: false
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences:
+            - acknowledged: boolean
+            - reason: brief explanation
+        maxTokens: 400
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: branch-on-ack
+    type: bits
+    data:
+      label: Acknowledged?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Acknowledged
+            value1: "{{ai-check-ack.acknowledged}}"
+            operator: equals
+            value2: true
+            output: acknowledged
+        includeElse: true
+        defaultOutput: not_acknowledged
+
+  - id: mark-acknowledged
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: urgent_escalations
+        filter:
+          _id: "{{escalation._id}}"
+        update:
+          status: acknowledged
+          acknowledgedAt: "{{habits.now}}"
+
+  - id: compute-next-deadline
+    type: script
+    data:
+      label: Compute Next Escalation Deadline
+      framework: script
+      source: inline
+      params:
+        round: "{{escalation.escalationRound}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(round) {
+            const currentRound = Number(round) || 1;
+            const now = new Date();
+            // TESTING: 3 min — revert to 15 * 60 * 1000
+            const escalateAt = new Date(now.getTime() + 3 * 60 * 1000);
+            return {
+              escalationRound: currentRound + 1,
+              escalateAt: escalateAt.toISOString(),
+              lastEscalatedAt: now.toISOString(),
+            };
+          }
+
+  - id: re-post-escalation
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{escalation.escalationChannel}}"
+        text: |
+          ⚠️ *UNACKNOWLEDGED — No response received*
+
+          This urgent escalation has not been acknowledged within the expected timeframe.
+
+          *Urgency:* {{escalation.urgencyLevel}}
+          *From:* <@{{escalation.senderUserId}}>
+          *Summary:* {{escalation.summary}}
+
+          See the *original escalation* at the top of this thread for full details.
+
+          ────────────────────────────
+          • Reply in this thread with a brief status update (e.g. "On it — investigating"), or
+          • Add :eyes: or :white_check_mark: to the *original escalation post above* — not this reminder.
+
+          Acknowledgements on this reminder message will not be counted.
+        threadTs: "{{escalation.escalationMessageTs}}"
+
+  - id: bump-deadline
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: urgent_escalations
+        filter:
+          _id: "{{escalation._id}}"
+        update:
+          escalationRound: "{{compute-next-deadline.result.escalationRound}}"
+          escalateAt: "{{compute-next-deadline.result.escalateAt}}"
+          lastEscalatedAt: "{{compute-next-deadline.result.lastEscalatedAt}}"
+
+edges:
+  - source: get-replies
+    target: get-reactions
+  - source: get-reactions
+    target: ai-check-ack
+  - source: ai-check-ack
+    target: branch-on-ack
+  - source: branch-on-ack
+    target: mark-acknowledged
+    sourceHandle: branch-0
+  - source: branch-on-ack
+    target: compute-next-deadline
+    sourceHandle: branch-1
+  - source: compute-next-deadline
+    target: re-post-escalation
+  - source: re-post-escalation
+    target: bump-deadline
+
+output:
+  escalationId: "{{escalation._id}}"
+  acknowledged: "{{ai-check-ack.acknowledged}}"
+  reason: "{{ai-check-ack.reason}}"
+  action: "{{branch-on-ack.output}}"

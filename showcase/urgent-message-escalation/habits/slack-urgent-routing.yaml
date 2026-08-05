@@ -1,0 +1,158 @@
+id: slack-urgent-routing
+name: Slack Urgent Message Routing
+description: >
+  Orchestrates the urgent message escalation pipeline:
+  1. Receives inbound Slack messages via Events API
+  2. Skips thread replies in the escalation channel (acks handled by cron)
+  3. Analyzes each remaining message with OpenAI for urgency
+  4. Posts structured escalations and registers pending acknowledgements
+
+nodes:
+  - id: slack-inbound
+    type: trigger
+    data:
+      label: Slack Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{slack-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const event = payload?.event ?? {};
+            return {
+              channel: String(event.channel || ''),
+              user: String(event.user || ''),
+              text: String(event.text || ''),
+              timestamp: String(event.ts || event.event_ts || ''),
+              threadTs: String(event.thread_ts || ''),
+              team: String(payload?.team_id || ''),
+            };
+          }
+
+  - id: filter-intake-messages
+    type: script
+    data:
+      label: Filter Intake Messages
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-inbound.result}}"
+        escalationChannel: "{{habits.env.HABITS_SLACK_CHANNEL_ESCALATION}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed, escalationChannel) {
+            if (!parsed?.text) {
+              return { skip: true, reason: 'empty_message' };
+            }
+
+            const isThreadReply = Boolean(parsed.threadTs);
+            const inEscalationChannel = parsed.channel === escalationChannel;
+
+            if (isThreadReply && inEscalationChannel) {
+              console.log('[UME] Skipping thread reply in escalation channel — ack handled by cron');
+              return { skip: true, reason: 'thread_reply_in_escalation_channel' };
+            }
+
+            return { skip: false, message: parsed };
+          }
+
+  - id: check-should-analyze
+    type: bits
+    data:
+      label: Should Analyze Message?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Analyze
+            value1: "{{filter-intake-messages.result.skip}}"
+            operator: equals
+            value2: false
+            output: analyze
+        includeElse: true
+        defaultOutput: skip
+
+  - id: log-skipped-message
+    type: action
+    data:
+      label: Log Skipped Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-SKIP-INBOUND
+        message:
+          reason: "{{filter-intake-messages.result.reason}}"
+          channel: "{{parse-inbound.result.channel}}"
+          threadTs: "{{parse-inbound.result.threadTs}}"
+          text: "{{parse-inbound.result.text}}"
+
+  - id: analyze-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{filter-intake-messages.result.message}}"
+        habitId: analyze-urgency
+        inputKey: message
+        continueOnError: true
+        collectResults: true
+
+  - id: process-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{analyze-messages.results}}"
+        habitId: process-urgent-message
+        inputKey: analyzedMessage
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: slack-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: filter-intake-messages
+  - source: filter-intake-messages
+    target: check-should-analyze
+  - source: check-should-analyze
+    target: analyze-messages
+    sourceHandle: branch-0
+  - source: check-should-analyze
+    target: log-skipped-message
+    sourceHandle: branch-1
+  - source: analyze-messages
+    target: process-messages
+
+output:
+  skipped: "{{filter-intake-messages.result.skip}}"
+  skipReason: "{{filter-intake-messages.result.reason}}"
+  messagesProcessed: "{{process-messages.successCount}}"
+  results: "{{process-messages.results}}"

@@ -75,6 +75,32 @@ actions:
       toast:
         message: "{{state.error}}"
         level: error
+  getReactions:
+    method: POST
+    endpoint: /api/get-reactions
+    body:
+      timestamp: "{{state.timestamp}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Reactions fetched!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  getConversationReplies:
+    method: POST
+    endpoint: /api/get-conversation-replies
+    body:
+      timestamp: "{{state.timestamp}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Thread replies fetched!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
   sendWebhook:
     method: POST
     endpoint: /api/send-webhook
@@ -122,6 +148,8 @@ widgets:
           - { label: Send block message, action: sendBlock, loadingLabel: "Sending...", variant: secondary }
           - { label: Update message, action: update, loadingLabel: "Updating...", variant: secondary }
           - { label: Add reaction, action: addReaction, loadingLabel: "Adding...", variant: secondary }
+          - { label: Get reactions, action: getReactions, loadingLabel: "Fetching...", variant: secondary }
+          - { label: Get replies, action: getConversationReplies, loadingLabel: "Fetching...", variant: secondary }
           - { label: Send webhook, action: sendWebhook, loadingLabel: "Sending...", variant: secondary }
   - kind: result-panel
     source: state.result

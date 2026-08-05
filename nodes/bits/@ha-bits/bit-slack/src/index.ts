@@ -53,18 +53,31 @@ interface SlackResponse {
 async function slackRequest(
   endpoint: string,
   body: any,
-  token: string
+  token: string,
+  method: 'GET' | 'POST' = 'POST',
 ): Promise<any> {
-  const url = `https://slack.com/api/${endpoint}`;
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
+  let url = `https://slack.com/api/${endpoint}`;
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const options: RequestInit = { method, headers };
+
+  if (method === 'GET') {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+      if (value !== undefined && value !== null) {
+        searchParams.set(key, String(value));
+      }
+    }
+    const qs = searchParams.toString();
+    if (qs) url += `?${qs}`;
+  } else {
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
   
   const result = await response.json() as SlackResponse;
   
@@ -460,6 +473,106 @@ const slackBit = {
       },
     },
     
+    /**
+     * Retrieve a thread of messages posted to a conversation
+     * @see https://docs.slack.dev/reference/methods/conversations.replies/
+     */
+    getConversationReplies: {
+      name: 'getConversationReplies',
+      displayName: 'Get Conversation Replies',
+      description: 'Retrieve a thread of messages posted to a conversation',
+      props: {
+        token: {
+          type: 'SECRET_TEXT',
+          displayName: 'Bot Token',
+          description: 'Slack Bot OAuth Token',
+          required: true,
+        },
+        channel: {
+          type: 'SHORT_TEXT',
+          displayName: 'Channel',
+          description: 'Conversation ID to fetch thread from',
+          required: true,
+        },
+        ts: {
+          type: 'SHORT_TEXT',
+          displayName: 'Thread Timestamp',
+          description: 'Parent message ts (thread root)',
+          required: true,
+        },
+      },
+      async run(context: SlackContext) {
+        const { token, channel, ts } = context.propsValue;
+
+        const authToken = context.auth?.token || token;
+        if (!authToken) {
+          throw new Error('Slack Bot Token is required');
+        }
+
+        console.log(`💬 Slack: Fetching replies for ${channel} thread ${ts}...`);
+
+        const result = await slackRequest('conversations.replies', { channel, ts }, authToken, 'GET');
+
+        return {
+          success: true,
+          channel,
+          ts,
+          messages: result.messages ?? [],
+          hasMore: result.has_more ?? false,
+        };
+      },
+    },
+
+    /**
+     * Get reactions for a specific message
+     * @see https://docs.slack.dev/reference/methods/reactions.get/
+     */
+    getReactions: {
+      name: 'getReactions',
+      displayName: 'Get Reactions',
+      description: 'Gets reactions for a specific message',
+      props: {
+        token: {
+          type: 'SECRET_TEXT',
+          displayName: 'Bot Token',
+          description: 'Slack Bot OAuth Token',
+          required: true,
+        },
+        channel: {
+          type: 'SHORT_TEXT',
+          displayName: 'Channel',
+          description: 'Channel where the message was posted',
+          required: true,
+        },
+        timestamp: {
+          type: 'SHORT_TEXT',
+          displayName: 'Message Timestamp',
+          description: 'Timestamp of the message to get reactions for',
+          required: true,
+        },
+      },
+      async run(context: SlackContext) {
+        const { token, channel, timestamp } = context.propsValue;
+
+        const authToken = context.auth?.token || token;
+        if (!authToken) {
+          throw new Error('Slack Bot Token is required');
+        }
+
+        console.log(`💬 Slack: Fetching reactions for ${channel} message ${timestamp}...`);
+
+        const result = await slackRequest('reactions.get', { channel, timestamp }, authToken, 'GET');
+
+        return {
+          success: true,
+          channel,
+          timestamp,
+          reactions: result.message?.reactions ?? [],
+          message: result.message,
+        };
+      },
+    },
+
     /**
      * Add a reaction to a message
      */

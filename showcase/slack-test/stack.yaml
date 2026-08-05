@@ -20,6 +20,14 @@ workflows:
     path: ./habits/add-reaction.yaml
     enabled: true
 
+  - id: get-reactions
+    path: ./habits/get-reactions.yaml
+    enabled: true
+
+  - id: get-conversation-replies
+    path: ./habits/get-conversation-replies.yaml
+    enabled: true
+
   - id: send-webhook
     path: ./habits/send-webhook.yaml
     enabled: true

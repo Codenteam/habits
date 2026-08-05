@@ -1,0 +1,85 @@
+id: register-pending-ack
+name: Register Pending Acknowledgement
+description: Save an escalation record with a 3-minute acknowledgement deadline (TESTING — revert to 15)
+
+nodes:
+  - id: compute-deadline
+    type: script
+    data:
+      label: Compute Escalation Deadline
+      framework: script
+      source: inline
+      params:
+        type: script
+        language: javascript
+        script: |
+          async function main() {
+            const now = new Date();
+            // TESTING: 3 min — revert to 15 * 60 * 1000
+            const escalateAt = new Date(now.getTime() + 3 * 60 * 1000);
+            return {
+              createdAt: now.toISOString(),
+              escalateAt: escalateAt.toISOString(),
+            };
+          }
+
+  - id: save-record
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: urgent_escalations
+        document:
+          status: "pending_ack"
+          senderUserId: "{{escalation.output.senderUserId}}"
+          sourceChannel: "{{escalation.output.sourceChannel}}"
+          sourceMessageTs: "{{escalation.output.sourceMessageTs}}"
+          escalationChannel: "{{escalation.output.escalationChannel}}"
+          escalationMessageTs: "{{escalation.output.escalationMessageTs}}"
+          escalationText: "{{escalation.output.escalationText}}"
+          summary: "{{escalation.output.summary}}"
+          urgencyLevel: "{{escalation.output.urgencyLevel}}"
+          suggestedAction: "{{escalation.output.suggestedAction}}"
+          urgencyReason: "{{escalation.output.urgencyReason}}"
+          extractedDetails: "{{escalation.output.extractedDetails}}"
+          escalationRound: 1
+          createdAt: "{{compute-deadline.result.createdAt}}"
+          escalateAt: "{{compute-deadline.result.escalateAt}}"
+          acknowledgedAt: ""
+          lastEscalatedAt: ""
+
+  - id: log-saved-record
+    type: action
+    data:
+      label: Log Saved Escalation Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-REGISTER-SAVED
+        message:
+          id: "{{save-record.id}}"
+          status: "pending_ack"
+          escalateAt: "{{compute-deadline.result.escalateAt}}"
+          createdAt: "{{compute-deadline.result.createdAt}}"
+          escalationChannel: "{{escalation.output.escalationChannel}}"
+          escalationMessageTs: "{{escalation.output.escalationMessageTs}}"
+          senderUserId: "{{escalation.output.senderUserId}}"
+          summary: "{{escalation.output.summary}}"
+          urgencyLevel: "{{escalation.output.urgencyLevel}}"
+          document: "{{save-record.document}}"
+
+edges:
+  - source: compute-deadline
+    target: save-record
+  - source: save-record
+    target: log-saved-record
+
+output:
+  id: "{{save-record.id}}"
+  status: "pending_ack"
+  escalateAt: "{{compute-deadline.result.escalateAt}}"
