@@ -39,7 +39,7 @@ Actions:
 
 ### Receive inbound messages (Events API)
 
-The `receive-message` workflow listens at `/webhook/v/slack`. Slack verifies the URL with a `url_verification` handshake ([docs](https://docs.slack.dev/apis/events-api/using-http-request-urls/)); `@ha-bits/bit-slack` responds with the `challenge` automatically.
+The `receive-message` workflow listens at `/webhook/v/slack`. Slack verifies the URL with a `url_verification` handshake, `@ha-bits/bit-slack` responds with the `challenge` automatically.
 
 **Before adding the Request URL in Slack**, start the showcase and ngrok:
 
