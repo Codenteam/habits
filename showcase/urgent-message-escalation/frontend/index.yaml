@@ -40,4 +40,4 @@ widgets:
   - kind: empty-state
     icon: "lucide:MessageSquareWarning"
     title: Waiting for inbound messages
-    subtitle: Configure Slack Event Subscriptions and channel IDs in .env — see the showcase README for setup.
+    subtitle: Configure Slack Event Subscriptions and channel IDs in .env.
