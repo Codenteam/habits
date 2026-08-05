@@ -1,6 +1,6 @@
 id: register-pending-ack
 name: Register Pending Acknowledgement
-description: Save an escalation record with a 3-minute acknowledgement deadline (TESTING — revert to 15)
+description: Save an escalation record with a 15-minute acknowledgement deadline
 
 nodes:
   - id: compute-deadline
@@ -15,8 +15,7 @@ nodes:
         script: |
           async function main() {
             const now = new Date();
-            // TESTING: 3 min — revert to 15 * 60 * 1000
-            const escalateAt = new Date(now.getTime() + 3 * 60 * 1000);
+            const escalateAt = new Date(now.getTime() + 15 * 60 * 1000);
             return {
               createdAt: now.toISOString(),
               escalateAt: escalateAt.toISOString(),

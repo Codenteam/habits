@@ -117,8 +117,7 @@ nodes:
           async function main(round) {
             const currentRound = Number(round) || 1;
             const now = new Date();
-            // TESTING: 3 min — revert to 15 * 60 * 1000
-            const escalateAt = new Date(now.getTime() + 3 * 60 * 1000);
+            const escalateAt = new Date(now.getTime() + 15 * 60 * 1000);
             return {
               escalationRound: currentRound + 1,
               escalateAt: escalateAt.toISOString(),
