@@ -14,8 +14,11 @@ Use `@ha-bits/bit-slack` to post curated digests and notifications to Slack chan
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `HABITS_SLACK_BOT_TOKEN` | Bot User OAuth Token | `xoxb-...` |
+| `HABITS_SLACK_SIGNING_SECRET` | App signing secret (verifies inbound Events API requests) | From app **Basic Information** → **Signing Secret** |
 | `HABITS_SLACK_DIGEST_CHANNEL` | Channel ID for digest posts | `C08XXXXXXXX` |
 | `SLACK_BOT_TOKEN` | Alternate naming (MCP demo) | `xoxb-...` |
+
+Get `HABITS_SLACK_SIGNING_SECRET` from [api.slack.com/apps](https://api.slack.com/apps) → your app → **Basic Information** → **App Credentials** → **Signing Secret** → **Show**.
 
 ## Setup
 
@@ -75,6 +78,7 @@ HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 
 ```env
 HABITS_SLACK_BOT_TOKEN=xoxb-...
+HABITS_SLACK_SIGNING_SECRET=your-signing-secret-here
 HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 ```
 
@@ -93,7 +97,7 @@ Pass `webhookUrl` and `text` to `sendWebhook` in a habit workflow, or try it in 
 
 ## Event Subscriptions (inbound message trigger)
 
-The `inboundMessage` trigger receives user messages from channels your app is subscribed to. Habits Cortex exposes it at:
+The `inboundMessage` trigger receives user messages from channels your app is subscribed to. Habits Cortex verifies each request with `HABITS_SLACK_SIGNING_SECRET` before dispatching to your workflow. The endpoint is:
 
 ```
 /webhook/v/slack

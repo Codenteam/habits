@@ -654,5 +654,14 @@ const slackBit = {
   },
 };
 
+export {
+  verifySlackRequestSignature,
+  getSlackSignatureHeaders,
+} from './verifySignature';
+export type {
+  VerifySlackRequestSignatureParams,
+  VerifySlackRequestSignatureResult,
+} from './verifySignature';
+
 export const slack = slackBit;
 export default slackBit;

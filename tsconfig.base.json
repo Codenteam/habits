@@ -33,6 +33,8 @@
       "@ha-bits/habit-viewer/*": ["packages/habit-viewer/src/*"],
       "@ha-bits/bindings": ["packages/bindings/src/index.ts"],
       "@ha-bits/bindings/*": ["packages/bindings/src/*"],
+      "@ha-bits/bit-slack": ["nodes/bits/@ha-bits/bit-slack/src/index.ts"],
+      "@ha-bits/bit-slack/*": ["nodes/bits/@ha-bits/bit-slack/src/*"],
       "habits": ["packages/habits/app/src/index.ts"],
       "habits/*": ["packages/habits/app/src/*"],
       "@habits/shared/types": ["packages/core/src/types.ts"],

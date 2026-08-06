@@ -9,12 +9,16 @@ Create a `.env` file in this directory:
 | Variable | Description |
 |----------|-------------|
 | `HABITS_SLACK_BOT_TOKEN` | Slack Bot OAuth Token (`xoxb-...`) |
+| `HABITS_SLACK_SIGNING_SECRET` | Slack app signing secret (verifies inbound Events API requests) |
 | `HABITS_SLACK_DIGEST_CHANNEL` | Channel ID (e.g. `C08XXXXXXXX`) or `#channel-name` |
 
 ```bash
 HABITS_SLACK_BOT_TOKEN=xoxb-your-token-here
+HABITS_SLACK_SIGNING_SECRET=your-signing-secret-here
 HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 ```
+
+Get `HABITS_SLACK_SIGNING_SECRET` from [api.slack.com/apps](https://api.slack.com/apps) → your app → **Basic Information** → **App Credentials** → **Signing Secret** → **Show**.
 
 ### Slack app scopes
 
@@ -39,7 +43,7 @@ Actions:
 
 ### Receive inbound messages (Events API)
 
-The `receive-message` workflow listens at `/webhook/v/slack`. Slack verifies the URL with a `url_verification` handshake, `@ha-bits/bit-slack` responds with the `challenge` automatically.
+The `receive-message` workflow listens at `/webhook/v/slack`. Cortex verifies each request with `HABITS_SLACK_SIGNING_SECRET`, then Slack's `url_verification` handshake is handled by `@ha-bits/bit-slack` (responds with the `challenge`).
 
 **Before adding the Request URL in Slack**, start the showcase and ngrok:
 

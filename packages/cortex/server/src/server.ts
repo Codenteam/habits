@@ -41,6 +41,10 @@ import { WebhookRegistry, webhookRegistry } from './WebhookRegistry';
 import { OAuthCallbackServer, initOAuthCallbackServer } from './OAuthCallbackServer';
 import { setupOpenAPIRoutes } from './openapi';
 import { setupManageRoutes, ManageModule } from './manage';
+import {
+  verifySlackRequestSignature,
+  getSlackSignatureHeaders,
+} from '@ha-bits/bit-slack';
 
 // Load environment variables
 dotenv.config();
@@ -438,6 +442,29 @@ class WorkflowExecutorServer {
       method: req.method,
       rawBody,
     };
+
+    // Slack: verify signing secret before handshake or dispatch
+    if (moduleId === 'slack' && req.method === 'POST') {
+      const env = this.executor.getEnvVars();
+      const { timestamp, signature } = getSlackSignatureHeaders(req.headers);
+      const verification = verifySlackRequestSignature({
+        signingSecret: env.HABITS_SLACK_SIGNING_SECRET,
+        rawBody,
+        timestamp,
+        signature,
+      });
+
+      if (!verification.valid) {
+        console.warn(`🔒 Slack signature verification failed for ${webhookPath}: ${verification.reason}`);
+        res.status(403).json({
+          success: false,
+          message: verification.reason ?? 'Invalid Slack signature',
+        });
+        return;
+      }
+
+      console.log(`🔒 Slack signature verified for ${webhookPath}`);
+    }
 
     // URL verification handshake (GET hub.mode=subscribe or POST type=url_verification)
     if (await this.tryWebhookVerificationHandshake(req, res, moduleId, webhookName, filterPayload, webhookPath)) {

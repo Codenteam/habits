@@ -26,7 +26,10 @@ cp .env.example .env
 |----------|-------------|
 | `HABITS_OPENAI_API_KEY` | OpenAI API key for urgency analysis and ack detection |
 | `HABITS_SLACK_BOT_TOKEN` | Bot token for posting escalations and reading threads |
+| `HABITS_SLACK_SIGNING_SECRET` | Slack app signing secret (verifies inbound Events API requests) |
 | `HABITS_SLACK_CHANNEL_ESCALATION` | On-call / incident channel ID for escalations |
+
+Get `HABITS_SLACK_SIGNING_SECRET` from [api.slack.com/apps](https://api.slack.com/apps) → your app → **Basic Information** → **App Credentials** → **Signing Secret** → **Show**.
 
 ### Slack app scopes
 
@@ -47,7 +50,7 @@ pnpm habits dev showcase/urgent-message-escalation/stack.yaml
 
 ## Event Subscriptions
 
-The `slack-urgent-routing` workflow listens at `/webhook/v/slack`.
+The `slack-urgent-routing` workflow listens at `/webhook/v/slack`. Cortex verifies each inbound request with `HABITS_SLACK_SIGNING_SECRET` before dispatching to the trigger.
 
 **Before** adding the Request URL in Slack, start the server and ngrok:
 
