@@ -1,15 +1,10 @@
 import * as crypto from 'crypto';
 
 export interface VerifySlackRequestSignatureParams {
-  /** Slack app signing secret (HABITS_SLACK_SIGNING_SECRET) */
   signingSecret: string | undefined;
-  /** Raw request body bytes — must not be re-serialized JSON */
   rawBody: Buffer | string | undefined;
-  /** X-Slack-Request-Timestamp header value */
   timestamp: string | undefined;
-  /** X-Slack-Signature header value */
   signature: string | undefined;
-  /** Max age for timestamp replay protection (default 5 minutes) */
   maxAgeSeconds?: number;
 }
 
@@ -34,24 +29,24 @@ export function verifySlackRequestSignature(
   } = params;
 
   if (!signingSecret) {
-    console.log('[bit-slack] verifySlackRequestSignature — FAILED: HABITS_SLACK_SIGNING_SECRET not configured');
+    console.log('[cortex] Slack signature — FAILED: HABITS_SLACK_SIGNING_SECRET not configured');
     return { valid: false, reason: 'HABITS_SLACK_SIGNING_SECRET not configured' };
   }
 
   if (!timestamp || !signature) {
-    console.log('[bit-slack] verifySlackRequestSignature — FAILED: missing Slack signature headers');
+    console.log('[cortex] Slack signature — FAILED: missing Slack signature headers');
     return { valid: false, reason: 'Missing X-Slack-Signature or X-Slack-Request-Timestamp' };
   }
 
   const requestTs = Number(timestamp);
   if (!Number.isFinite(requestTs)) {
-    console.log('[bit-slack] verifySlackRequestSignature — FAILED: invalid timestamp');
+    console.log('[cortex] Slack signature — FAILED: invalid timestamp');
     return { valid: false, reason: 'Invalid X-Slack-Request-Timestamp' };
   }
 
   const ageSeconds = Math.abs(Date.now() / 1000 - requestTs);
   if (ageSeconds > maxAgeSeconds) {
-    console.log('[bit-slack] verifySlackRequestSignature — FAILED: request timestamp too old');
+    console.log('[cortex] Slack signature — FAILED: request timestamp too old');
     return { valid: false, reason: 'Request timestamp is too old' };
   }
 
@@ -69,21 +64,18 @@ export function verifySlackRequestSignature(
   const receivedBuf = Buffer.from(signature, 'utf8');
 
   if (expectedBuf.length !== receivedBuf.length) {
-    console.log('[bit-slack] verifySlackRequestSignature — INVALID: signature mismatch');
+    console.log('[cortex] Slack signature — INVALID: signature mismatch');
     return { valid: false, reason: 'Signature mismatch' };
   }
 
   const valid = crypto.timingSafeEqual(expectedBuf, receivedBuf);
-  console.log(`[bit-slack] verifySlackRequestSignature — ${valid ? 'VALID' : 'INVALID: signature mismatch'}`);
+  console.log(`[cortex] Slack signature — ${valid ? 'VALID' : 'INVALID: signature mismatch'}`);
 
   return valid
     ? { valid: true }
     : { valid: false, reason: 'Signature mismatch' };
 }
 
-/**
- * Read Slack signature headers from an Express-style headers object (case-insensitive).
- */
 export function getSlackSignatureHeaders(
   headers: Record<string, string | string[] | undefined>,
 ): { timestamp?: string; signature?: string } {

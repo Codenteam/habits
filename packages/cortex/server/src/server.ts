@@ -44,7 +44,7 @@ import { setupManageRoutes, ManageModule } from './manage';
 import {
   verifySlackRequestSignature,
   getSlackSignatureHeaders,
-} from '@ha-bits/bit-slack';
+} from './webhooks/slackSignature';
 
 // Load environment variables
 dotenv.config();
