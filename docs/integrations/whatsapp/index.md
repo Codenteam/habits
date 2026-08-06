@@ -57,14 +57,30 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
    - `whatsapp_business_messaging`
 6. Copy the token to `.env` as `HABITS_WHATSAPP_ACCESS_TOKEN`.
 
-## Step 5: Get the Phone Number ID
+## Step 5: Try it out — test number and credentials
 
-1. In your Meta app, open **Use cases → Customize → API Setup**.
-2. Under **Send and receive messages → From**, select the test phone number.
-3. Copy the **Phone number ID** → `HABITS_WHATSAPP_PHONE_NUMBER_ID`.
-4. Under **To**, add the recipient phone number (must match `HABITS_WHATSAPP_PHONE`).
+Open **Use cases → Customize → Basic setup** (Step 1: **Try it out**).
 
-> In development/test mode, you can only message numbers added under **To**.
+### Claim a WhatsApp test number
+
+1. Complete **Claim a WhatsApp test number**.
+2. Copy **Phone Number ID** → `HABITS_WHATSAPP_PHONE_NUMBER_ID`.
+3. Note **WhatsApp Business Account ID** for Step 8 (`subscribed_apps`).
+4. The dashboard **Access token** may show *Not generated yet* — use the system user token from Step 4 instead.
+
+### Send a message from your test number
+
+| Field | Value |
+|-------|--------|
+| **From** (your test number) | Pre-filled, e.g. `+1-555-204-9466` |
+| **Recipient / To** | Your phone — must match `HABITS_WHATSAPP_PHONE` |
+| **Message** | Test template (e.g. Order Confirmation) |
+
+Production numbers are configured in **Step 2. Production setup** — not needed for this showcase.
+
+> In development/test mode, only **Recipient / To** numbers can receive messages.
+
+Legacy **API Setup** uses the same **From / To** fields instead of the Try it out wizard.
 
 ## Step 6: Configure the Webhook
 
@@ -81,10 +97,44 @@ https://<your-ngrok-host>/webhook/v/whatsapp
 ```
 
 1. Start the showcase so Cortex listens on port `13000`.
-2. In your Meta app → WhatsApp → **Configuration**.
+2. In your Meta app → **Use cases → Customize → Configuration**.
 3. Paste the callback URL.
 4. Set **Verify token** to any string — save the same value as `HABITS_WHATSAPP_VERIFY_TOKEN`.
 5. Click **Verify and save** (ngrok and Cortex must be running).
+
+Meta may redirect to **Permissions and features** after verify — return to **Configuration** for the steps below.
+
+## Step 7: Subscribe to the `messages` webhook field
+
+1. On **Configuration**, open **Webhook fields** → **Manage**.
+2. Subscribe to **`messages`** and save.
+3. Optional: click **Test** next to **`messages`** — ngrok inspector (`http://127.0.0.1:4040`) should show a POST.
+
+> **Check test webhooks** (Try it out) shows payloads inside Meta’s UI only; it does not confirm delivery to your callback URL.
+
+## Step 8: Subscribe your Meta app to the WABA
+
+Inbound messages are POSTed only to the Meta app subscribed to your WABA. Use [Graph API Explorer](https://developers.facebook.com/tools/explorer) (select **your app**, use your system user token).
+
+### Get WABA ID
+
+Copy from **Basic setup → Try it out → Claim a WhatsApp test number**, or **GET** `/{PHONE_NUMBER_ID}?fields=whatsapp_business_account`.
+
+### Check subscription
+
+**GET** `/{WABA_ID}/subscribed_apps`
+
+Your app should appear in `data`. If `data` is empty or only **WA DevX Webhook Events 1P App** is listed, your app is not subscribed.
+
+### Subscribe (if needed)
+
+**POST** `/{WABA_ID}/subscribed_apps` (empty body). Confirm with GET again.
+
+Reference: [Webhooks for WhatsApp Business Accounts](https://developers.facebook.com/docs/graph-api/webhooks/getting-started/webhooks-for-whatsapp)
+
+### Connect WABA in dashboard (if not linked)
+
+**Basic setup → Try it out** → **Claim a WhatsApp test number** (or legacy **API Setup** → connect WABA) → repeat the check above.
 
 ## Example `.env`
 
