@@ -1,0 +1,142 @@
+id: re-escalate-unacked
+name: Re-escalate Unacknowledged
+description: >
+  Re-send a WhatsApp reminder for an unacknowledged escalation and push the
+  next re-escalation deadline forward by 15 minutes.
+
+nodes:
+  - id: refresh-record
+    type: bits
+    data:
+      label: Refresh Escalation Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: whatsapp_urgent_escalations
+        filter: '{"_id": "{{escalation._id}}", "status": "pending_ack", "acknowledged": false}'
+        limit: 1
+
+  - id: check-still-pending
+    type: bits
+    data:
+      label: Still Pending?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Pending
+            value1: "{{refresh-record.count}}"
+            operator: greaterThan
+            value2: 0
+            output: pending
+        includeElse: true
+        defaultOutput: already_acknowledged
+
+  - id: compute-next-deadline
+    type: script
+    data:
+      label: Compute Next Escalation Deadline
+      framework: script
+      source: inline
+      params:
+        round: "{{escalation.escalationRound}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(round) {
+            const currentRound = Number(round) || 1;
+            const now = new Date();
+            const escalateAt = new Date(now.getTime() + 15 * 60 * 1000);
+            return {
+              escalationRound: currentRound + 1,
+              escalateAt: escalateAt.toISOString(),
+              lastEscalatedAt: now.toISOString(),
+            };
+          }
+
+  - id: re-post-escalation
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{escalation.escalationPhone}}"
+        replyToMessageId: "{{escalation.escalationMessageId}}"
+        message: |
+          ⚠️ UNACKNOWLEDGED — No response received
+
+          This urgent escalation has not been acknowledged within the expected timeframe.
+
+          Urgency: {{escalation.urgencyLevel}}
+          From: {{escalation.senderName}} ({{escalation.senderPhone}})
+          Summary: {{escalation.summary}}
+
+          Suggested action: {{escalation.suggestedAction}}
+
+          Original message:
+          {{escalation.sourceMessageText}}
+
+          ────────────────────────────
+          Reply to the original escalation message above or react with 👍 or ✅ on it to acknowledge.
+          Replies or reactions to this reminder will not be counted.
+
+  - id: bump-deadline
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: whatsapp_urgent_escalations
+        filter:
+          _id: "{{escalation._id}}"
+        update:
+          escalationRound: "{{compute-next-deadline.result.escalationRound}}"
+          escalateAt: "{{compute-next-deadline.result.escalateAt}}"
+          lastEscalatedAt: "{{compute-next-deadline.result.lastEscalatedAt}}"
+
+  - id: log-re-escalated
+    type: action
+    data:
+      label: Log Re-escalated
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-RE-ESCALATED
+        message:
+          escalationId: "{{escalation._id}}"
+          round: "{{compute-next-deadline.result.escalationRound}}"
+          escalateAt: "{{compute-next-deadline.result.escalateAt}}"
+          reminderMessageId: "{{re-post-escalation.messageId}}"
+
+edges:
+  - source: refresh-record
+    target: check-still-pending
+  - source: check-still-pending
+    target: compute-next-deadline
+    sourceHandle: branch-0
+  - source: compute-next-deadline
+    target: re-post-escalation
+  - source: re-post-escalation
+    target: bump-deadline
+  - source: bump-deadline
+    target: log-re-escalated
+
+output:
+  escalationId: "{{escalation._id}}"
+  action: "{{check-still-pending.output}}"
+  escalationRound: "{{compute-next-deadline.result.escalationRound}}"
+  escalateAt: "{{compute-next-deadline.result.escalateAt}}"
+  reminderMessageId: "{{re-post-escalation.messageId}}"

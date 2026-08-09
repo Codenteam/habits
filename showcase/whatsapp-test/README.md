@@ -2,6 +2,8 @@
 
 Minimal showcase to verify WhatsApp Business Cloud API messaging: send the `hello_world` template and receive inbound messages via webhook.
 
+> You can also try sending a message from the Meta app under **Use cases → Customize → Basic setup → Try it out → Send a message from your test number** before running this showcase locally.
+
 ## Prerequisites
 
 - A Facebook account
@@ -292,7 +294,7 @@ This opens the conversation with the **Recipient / To** phone from §5.2 and `HA
 
 1. Confirm §6.3 (`messages` subscribed) and §6.4 (your app in `subscribed_apps`) are complete.
 2. Keep ngrok and Cortex running. Open the ngrok inspector at `http://127.0.0.1:4040`.
-3. Reply from WhatsApp on the phone you set as **Recipient / To** in §5.2 — message the **test number** (**From**, e.g. `+1-555-204-9466`), not your own number.
+3. Reply from WhatsApp on the phone you set as **Recipient / To** in §5.2 — message the **test number** **From**, not your own number.
 4. You should see a **POST** to `/webhook/v/whatsapp` in ngrok, then in Cortex:
 
    ```

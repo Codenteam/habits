@@ -1,0 +1,75 @@
+id: post-escalation
+name: Post Escalation
+description: Post a structured urgent escalation message to the on-call WhatsApp number
+
+nodes:
+  - id: build-message
+    type: script
+    data:
+      label: Build Escalation Message
+      framework: script
+      source: inline
+      params:
+        analyzed: "{{analyzedMessage.output}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(analyzed) {
+            const level = String(analyzed.urgencyLevel || 'high').toUpperCase();
+            const text = [
+              `🚨 Urgent Message Escalation (${level})`,
+              '',
+              `From: ${String(analyzed.contactName || analyzed.from || 'Unknown')} (${String(analyzed.from || '')})`,
+              '',
+              `Summary:`,
+              String(analyzed.summary || ''),
+              '',
+              `Urgency reason: ${String(analyzed.urgencyReason || '')}`,
+              '',
+              `Suggested next action:`,
+              String(analyzed.suggestedAction || ''),
+              '',
+              `Details:`,
+              String(analyzed.extractedDetails || ''),
+              '',
+              `Original message:`,
+              String(analyzed.text || ''),
+              '',
+              '────────────────────────────',
+              'Reply to this message or react with 👍 or ✅ to acknowledge.',
+            ].join('\n');
+            return { escalationText: text };
+          }
+
+  - id: post
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
+        message: "{{build-message.result.escalationText}}"
+
+edges:
+  - source: build-message
+    target: post
+
+output:
+  senderPhone: "{{analyzedMessage.output.from}}"
+  senderName: "{{analyzedMessage.output.contactName}}"
+  senderWaId: "{{analyzedMessage.output.waId}}"
+  sourceMessageId: "{{analyzedMessage.output.messageId}}"
+  sourceMessageText: "{{analyzedMessage.output.text}}"
+  sourceTimestamp: "{{analyzedMessage.output.timestamp}}"
+  escalationPhone: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
+  escalationMessageId: "{{post.messageId}}"
+  escalationText: "{{build-message.result.escalationText}}"
+  summary: "{{analyzedMessage.output.summary}}"
+  urgencyLevel: "{{analyzedMessage.output.urgencyLevel}}"
+  suggestedAction: "{{analyzedMessage.output.suggestedAction}}"
+  urgencyReason: "{{analyzedMessage.output.urgencyReason}}"
+  extractedDetails: "{{analyzedMessage.output.extractedDetails}}"

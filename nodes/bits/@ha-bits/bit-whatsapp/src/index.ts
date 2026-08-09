@@ -38,6 +38,16 @@ interface WhatsAppInboundMessage {
   displayPhoneNumber: string;
   contactName: string;
   waId: string;
+  /** ID of the message being replied to (context.id), when this is a contextual reply */
+  replyToMessageId?: string;
+  /** Sender phone number of the message being replied to (context.from) */
+  replyToFrom?: string;
+  /** ID of the message being reacted to (reaction.message_id), when type is reaction */
+  reactedToMessageId?: string;
+  /** Emoji character; empty when the user removed a reaction */
+  reactionEmoji?: string;
+  /** Original/parent message ID — reply context.id or reaction.message_id */
+  parentMessageId?: string;
   raw: any;
 }
 
@@ -123,16 +133,33 @@ function extractInboundMessages(body: any): WhatsAppInboundMessage[] {
       for (const msg of inbound) {
         const from = String(msg?.from ?? '');
         const contact = contactByWaId.get(from);
-        messages.push({
+        const msgType = String(msg?.type ?? 'unknown');
+
+        const replyToMessageId = msg?.context?.id != null
+          ? String(msg.context.id)
+          : undefined;
+        const replyToFrom = msg?.context?.from != null
+          ? String(msg.context.from)
+          : undefined;
+        const reactedToMessageId = msgType === 'reaction' && msg?.reaction?.message_id != null
+          ? String(msg.reaction.message_id)
+          : undefined;
+        const reactionEmoji = msgType === 'reaction' && msg?.reaction
+          ? String(msg.reaction.emoji ?? '')
+          : undefined;
+        const parentMessageId = replyToMessageId ?? reactedToMessageId;
+
+        const extracted: WhatsAppInboundMessage = {
           messageId: String(msg?.id ?? ''),
           from,
           timestamp: String(msg?.timestamp ?? ''),
-          type: String(msg?.type ?? 'unknown'),
+          type: msgType,
           text: String(
             msg?.text?.body
             ?? msg?.button?.text
             ?? msg?.interactive?.button_reply?.title
             ?? msg?.interactive?.list_reply?.title
+            ?? reactionEmoji
             ?? ''
           ),
           phoneNumberId,
@@ -140,7 +167,25 @@ function extractInboundMessages(body: any): WhatsAppInboundMessage[] {
           contactName: String(contact?.profile?.name ?? ''),
           waId: String(contact?.wa_id ?? from),
           raw: msg,
-        });
+        };
+
+        if (replyToMessageId) {
+          extracted.replyToMessageId = replyToMessageId;
+        }
+        if (replyToFrom) {
+          extracted.replyToFrom = replyToFrom;
+        }
+        if (reactedToMessageId) {
+          extracted.reactedToMessageId = reactedToMessageId;
+        }
+        if (reactionEmoji !== undefined) {
+          extracted.reactionEmoji = reactionEmoji;
+        }
+        if (parentMessageId) {
+          extracted.parentMessageId = parentMessageId;
+        }
+
+        messages.push(extracted);
       }
     }
   }
@@ -275,10 +320,16 @@ const whatsappBit = {
           required: false,
           defaultValue: false,
         },
+        replyToMessageId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Reply To Message ID',
+          description: 'Optional WhatsApp message ID (wamid) to send this as a contextual reply',
+          required: false,
+        },
       },
       async run(context: WhatsAppContext) {
         const { 
-          accessToken, phoneNumberId, to, message, previewUrl = false
+          accessToken, phoneNumberId, to, message, previewUrl = false, replyToMessageId
         } = context.propsValue;
         
         const token = context.auth?.accessToken || accessToken;
@@ -293,8 +344,9 @@ const whatsappBit = {
         }
         
         const formattedPhone = formatPhoneNumber(String(to));
-        
-        const body = {
+        const replyId = String(replyToMessageId ?? '').trim();
+
+        const body: Record<string, unknown> = {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
           to: formattedPhone,
@@ -304,8 +356,12 @@ const whatsappBit = {
             body: String(message),
           },
         };
+
+        if (replyId) {
+          body.context = { message_id: replyId };
+        }
         
-        console.log(`💬 WhatsApp: Sending message to ${formattedPhone}...`);
+        console.log(`💬 WhatsApp: Sending message to ${formattedPhone}${replyId ? ` (reply to ${replyId})` : ''}...`);
         
         const result = await whatsappRequest(numberId, 'messages', body, token);
         
@@ -315,6 +371,7 @@ const whatsappBit = {
         return {
           success: true,
           messageId,
+          replyToMessageId: replyId || undefined,
           to: formattedPhone,
           waId: result.contacts?.[0]?.wa_id,
           timestamp: new Date().toISOString(),
