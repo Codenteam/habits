@@ -1,0 +1,25 @@
+id: send-auto-reply
+name: Send Auto Reply
+description: Send the AI-generated final answer back to the customer on WhatsApp (low-risk only)
+
+nodes:
+  - id: reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{ticket.output.from}}"
+        replyToMessageId: "{{ticket.output.messageId}}"
+        message: "{{ticket.output.finalReply}}"
+
+edges: []
+
+output:
+  success: "{{reply.success}}"
+  messageId: "{{reply.messageId}}"
+  to: "{{reply.to}}"

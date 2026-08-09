@@ -1,0 +1,42 @@
+id: forward-to-group
+name: Forward to Team Phone
+description: Forward a summarized request to the routed team phone number (high-risk)
+
+nodes:
+  - id: forward
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{ticket.output.targetPhone}}"
+        message: |
+          *New {{ticket.output.routeCategory}} inquiry* ({{ticket.output.priority}} priority)
+
+          *From:* {{ticket.output.contactName}} ({{ticket.output.from}})
+
+          *Risk:* {{ticket.output.riskLevel}} — {{ticket.output.riskReason}}
+          *Requires human review*
+
+          *Summary:*
+          {{ticket.output.summary}}
+
+          *Details:*
+          {{ticket.output.extractedDetails}}
+
+          *Original message:*
+          {{ticket.output.text}}
+
+          ────────────────────────────
+
+edges: []
+
+output:
+  success: "{{forward.success}}"
+  messageId: "{{forward.messageId}}"
+  targetPhone: "{{ticket.output.targetPhone}}"
+  routeCategory: "{{ticket.output.routeCategory}}"

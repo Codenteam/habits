@@ -1,0 +1,25 @@
+id: send-acknowledgement
+name: Send Acknowledgement
+description: Send an immediate receipt acknowledgement back to the customer on WhatsApp
+
+nodes:
+  - id: reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{message.from}}"
+        replyToMessageId: "{{message.messageId}}"
+        message: "{{habits.env.HABITS_WHATSAPP_ACK_MESSAGE || 'Thank you for contacting us. We have received your message and will get back to you shortly.'}}"
+
+edges: []
+
+output:
+  success: "{{reply.success}}"
+  messageId: "{{reply.messageId}}"
+  to: "{{reply.to}}"

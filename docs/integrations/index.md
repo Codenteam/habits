@@ -124,7 +124,7 @@ const integrations = [
       "messaging"
     ],
     "bitPackage": "@ha-bits/bit-whatsapp",
-    "showcaseCount": 0,
+    "showcaseCount": 3,
     "icon": "MessageCircle"
   },
   {

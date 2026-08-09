@@ -1,0 +1,78 @@
+id: analyze-message
+name: Analyze WhatsApp Message
+description: Classify an inbound WhatsApp message with OpenAI and generate a reply
+
+nodes:
+  - id: analyze
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are a WhatsApp message routing assistant.
+
+          Classify the incoming message into exactly one category.
+
+          CATEGORIES:
+          - sales:    pricing, demos, partnerships, product interest
+          - support:  general help, account issues, how-to questions
+          - billing:  invoices, refunds, payments, subscription changes
+          - technical: bugs, outages, integrations, API issues
+          - hr:       hiring, payroll, benefits, internal people topics
+          - general:  anything that does not clearly fit the categories above
+
+          ROUTING PHONES (use category to pick targetPhone value):
+          - sales:     {{habits.env.HABITS_WHATSAPP_TEAM_SALES_PHONE}}
+          - support:   {{habits.env.HABITS_WHATSAPP_TEAM_SUPPORT_PHONE}}
+          - billing:   {{habits.env.HABITS_WHATSAPP_TEAM_BILLING_PHONE}}
+          - technical: {{habits.env.HABITS_WHATSAPP_TEAM_TECHNICAL_PHONE}}
+          - hr:        {{habits.env.HABITS_WHATSAPP_TEAM_HR_PHONE}}
+          - general:   {{habits.env.HABITS_WHATSAPP_TEAM_GENERAL_PHONE}}
+
+          INCOMING MESSAGE:
+          - From: {{message.from}} ({{message.contactName}})
+          - Text:
+          {{message.text}}
+
+          RISK ASSESSMENT (for auto-reply decision):
+          - low:  safe to answer automatically — general FAQs, public product info, office hours, simple how-tos with no account-specific or financial impact
+          - high: requires human review — refunds, billing disputes, cancellations, legal/compliance, HR personal matters, security or account access, angry or escalated tone, sensitive PII, or anything needing approval. When in doubt, choose high.
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - category:       one of (sales, support, billing, technical, hr, general)
+            - confidence:     number from 0.0 to 1.0
+            - summary:        brief 1-2 sentence summary for the team
+            - priority:       one of (high, medium, low)
+            - riskLevel:      exactly one of (low, high) — see RISK ASSESSMENT above; never use any other value
+            - riskReason:     brief reason for the risk level
+            - finalReply:     when riskLevel is low, a complete helpful answer to the customer's question (use "we", be concise). When riskLevel is high, use an empty string.
+            - extractedDetails: key facts as a short bullet list (names, dates, amounts, product names)
+            - targetPhone:    the exact team phone number from ROUTING PHONES for the selected category
+        maxTokens: 900
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  from: "{{message.from}}"
+  contactName: "{{message.contactName}}"
+  waId: "{{message.waId}}"
+  text: "{{message.text}}"
+  messageId: "{{message.messageId}}"
+  timestamp: "{{message.timestamp}}"
+  routeCategory: "{{analyze.category}}"
+  confidence: "{{analyze.confidence}}"
+  summary: "{{analyze.summary}}"
+  priority: "{{analyze.priority}}"
+  riskLevel: "{{analyze.riskLevel}}"
+  riskReason: "{{analyze.riskReason}}"
+  finalReply: "{{analyze.finalReply}}"
+  extractedDetails: "{{analyze.extractedDetails}}"
+  targetPhone: "{{analyze.targetPhone}}"

@@ -1,0 +1,66 @@
+id: route-category
+name: Route by Category
+description: Branch on routeCategory and resolve the matching team phone number
+
+nodes:
+  - id: route-category
+    type: bits
+    data:
+      label: Route by Category
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Sales
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: sales
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_SALES_PHONE}}"
+          - label: Support
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: support
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_SUPPORT_PHONE}}"
+          - label: Billing
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: billing
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_BILLING_PHONE}}"
+          - label: Technical
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: technical
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_TECHNICAL_PHONE}}"
+          - label: HR
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: hr
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_HR_PHONE}}"
+          - label: General
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: general
+            output: "{{habits.env.HABITS_WHATSAPP_TEAM_GENERAL_PHONE}}"
+        includeElse: true
+        defaultOutput: "{{habits.env.HABITS_WHATSAPP_TEAM_GENERAL_PHONE}}"
+
+edges: []
+
+output:
+  targetPhone: "{{route-category.output}}"
+  from: "{{analyzedMessage.output.from}}"
+  contactName: "{{analyzedMessage.output.contactName}}"
+  waId: "{{analyzedMessage.output.waId}}"
+  messageId: "{{analyzedMessage.output.messageId}}"
+  text: "{{analyzedMessage.output.text}}"
+  routeCategory: "{{analyzedMessage.output.routeCategory}}"
+  confidence: "{{analyzedMessage.output.confidence}}"
+  summary: "{{analyzedMessage.output.summary}}"
+  priority: "{{analyzedMessage.output.priority}}"
+  riskLevel: "{{analyzedMessage.output.riskLevel}}"
+  riskReason: "{{analyzedMessage.output.riskReason}}"
+  finalReply: "{{analyzedMessage.output.finalReply}}"
+  extractedDetails: "{{analyzedMessage.output.extractedDetails}}"

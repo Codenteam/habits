@@ -1,0 +1,44 @@
+id: forward-with-auto-reply
+name: Forward with Auto Reply
+description: Forward a low-risk inquiry to the team phone, including the auto-reply sent to the customer
+
+nodes:
+  - id: forward
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{ticket.output.targetPhone}}"
+        message: |
+          *New {{ticket.output.routeCategory}} inquiry* ({{ticket.output.priority}} priority) — *auto-replied*
+
+          *From:* {{ticket.output.contactName}} ({{ticket.output.from}})
+
+          *Risk:* {{ticket.output.riskLevel}} — {{ticket.output.riskReason}}
+
+          *Summary:*
+          {{ticket.output.summary}}
+
+          *Auto-reply sent to customer:*
+          {{ticket.output.finalReply}}
+
+          *Details:*
+          {{ticket.output.extractedDetails}}
+
+          *Original message:*
+          {{ticket.output.text}}
+
+          ────────────────────────────
+
+edges: []
+
+output:
+  success: "{{forward.success}}"
+  messageId: "{{forward.messageId}}"
+  targetPhone: "{{ticket.output.targetPhone}}"
+  routeCategory: "{{ticket.output.routeCategory}}"

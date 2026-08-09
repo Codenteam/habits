@@ -191,7 +191,20 @@
       "name": "Social Media Multi-Posting"
     }
   ],
-  "whatsapp": [],
+  "whatsapp": [
+    {
+      "slug": "whatsapp-test",
+      "name": "WhatsApp Test"
+    },
+    {
+      "slug": "ai-reply-and-routing-assistant-whatsapp",
+      "name": "AI Reply and Routing Assistant (WhatsApp)"
+    },
+    {
+      "slug": "urgent-message-escalation-whatsapp",
+      "name": "Urgent Message Escalation (WhatsApp)"
+    }
+  ],
   "intersect": [
     {
       "slug": "ai-cookbook",

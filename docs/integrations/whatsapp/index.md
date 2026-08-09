@@ -76,9 +76,18 @@ Open **Use cases → Customize → Basic setup** (Step 1: **Try it out**).
 | **Recipient / To** | Your phone — must match `HABITS_WHATSAPP_PHONE` |
 | **Message** | Test template (e.g. Order Confirmation) |
 
-Production numbers are configured in **Step 2. Production setup** — not needed for this showcase.
+Production numbers are configured in **Step 2. Production setup** — not needed for local testing.
 
-> In development/test mode, only **Recipient / To** numbers can receive messages.
+### Register every outbound recipient (test mode)
+
+In development/test mode, WhatsApp only delivers messages to phone numbers listed as **Recipient / To** in **Send a message from your test number**. Add **every** number your workflows send to — not just one:
+
+- Customer or test sender phones (inbound testers you auto-reply to)
+- Team routing phones (`HABITS_WHATSAPP_TEAM_*_PHONE`)
+- On-call or escalation phones (`HABITS_WHATSAPP_ESCALATION_PHONE`)
+- Any other `to` value used by `sendTextMessage` in your habits
+
+If a number is missing from the list, the API returns **`(#131030) Recipient phone number not in allowed list`**.
 
 Legacy **API Setup** uses the same **From / To** fields instead of the Try it out wizard.
 
@@ -108,7 +117,7 @@ Meta may redirect to **Permissions and features** after verify — return to **C
 
 1. On **Configuration**, open **Webhook fields** → **Manage**.
 2. Subscribe to **`messages`** and save.
-3. Optional: click **Test** next to **`messages`** — ngrok inspector (`http://127.0.0.1:4040`) should show a POST.
+3. Optional: click **Test** next to **`messages`** — ngrok inspector (`<Forwarding Url>`) should show a POST.
 
 > **Check test webhooks** (Try it out) shows payloads inside Meta’s UI only; it does not confirm delivery to your callback URL.
 
