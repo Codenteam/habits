@@ -2,8 +2,9 @@ id: send-whatsapp-session-aware
 name: Send WhatsApp (Session Aware)
 description: >
   Send a WhatsApp text message. Cold start (branch-0): template then text then DB.
-  Warm session (branch-1): text then DB. Meta's 24h window for team/outbound numbers
-  is tracked via lastTemplateSentAt (not lastSentAt). Invoked via bit-loop inputKey spread.
+  Warm session (branch-1): text then DB. The 24h window is tracked via lastSentAt
+  (updated on every send). lastTemplateSentAt is set on cold path only. Invoked via
+  bit-loop inputKey spread.
 
 nodes:
   - id: lookup-contact
@@ -34,15 +35,14 @@ nodes:
           async function main(recipient, records) {
             const phone = String(recipient || '').trim();
             const record = Array.isArray(records) && records.length > 0 ? records[0] : null;
-            const lastTemplateSentAt = record?.lastTemplateSentAt ? new Date(record.lastTemplateSentAt) : null;
+            const lastSentAt = record?.lastSentAt ? new Date(record.lastSentAt) : null;
             const now = new Date();
             const twentyFourHours = 24 * 60 * 60 * 1000;
-            // Meta allows free-form text only within 24h of a template sent TO this number
-            // (or inbound from them — not tracked here). Do not use lastSentAt for this check.
+            // Session window resets on every successful send (cold or warm).
             const sessionActive = Boolean(
-              lastTemplateSentAt
-              && !Number.isNaN(lastTemplateSentAt.getTime())
-              && (now.getTime() - lastTemplateSentAt.getTime()) < twentyFourHours,
+              lastSentAt
+              && !Number.isNaN(lastSentAt.getTime())
+              && (now.getTime() - lastSentAt.getTime()) < twentyFourHours,
             );
 
             return {
@@ -50,6 +50,7 @@ nodes:
               needsTemplate: !sessionActive,
               sessionActive,
               existingId: record?._id || '',
+              lastSentAt: record?.lastSentAt || '',
               lastTemplateSentAt: record?.lastTemplateSentAt || '',
             };
           }
@@ -99,6 +100,7 @@ nodes:
           hasRecipient: "{{resolve-payload.result.hasRecipient}}"
           hasMessage: "{{resolve-payload.result.hasMessage}}"
           needsTemplate: "{{check-session.result.needsTemplate}}"
+          lastSentAt: "{{check-session.result.lastSentAt}}"
           lastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
           replyToMessageId: "{{resolve-payload.result.replyToMessageId}}"
 
@@ -248,7 +250,7 @@ nodes:
           recipient: "{{resolve-payload.result.recipient}}"
           messageLength: "{{resolve-payload.result.messageLength}}"
           messagePreview: "{{resolve-payload.result.messagePreview}}"
-          lastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
+          lastSentAt: "{{check-session.result.lastSentAt}}"
 
   - id: send-text-warm
     type: action
