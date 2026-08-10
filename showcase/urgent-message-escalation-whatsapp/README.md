@@ -26,6 +26,7 @@ HABITS_OPENAI_API_KEY=your_openai_api_key
 HABITS_WHATSAPP_ACCESS_TOKEN=your_whatsapp_access_token
 HABITS_WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 HABITS_WHATSAPP_VERIFY_TOKEN=your_webhook_verify_token
+HABITS_WHATSAPP_APP_SECRET=your_app_secret
 HABITS_WHATSAPP_ESCALATION_PHONE=+14155238886
 ```
 
@@ -35,7 +36,10 @@ HABITS_WHATSAPP_ESCALATION_PHONE=+14155238886
 | `HABITS_WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API permanent access token |
 | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
+| `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhook POSTs) |
 | `HABITS_WHATSAPP_ESCALATION_PHONE` | On-call phone number that receives escalation messages (E.164) |
+
+Get `HABITS_WHATSAPP_APP_SECRET` from [Meta for Developers](https://developers.facebook.com/apps) → your app → **App settings** → **Basic** → **App secret** → **Show**.
 
 ## Run
 
@@ -45,7 +49,7 @@ pnpm habits dev showcase/urgent-message-escalation-whatsapp/stack.yaml
 
 ## Meta Webhook Setup
 
-Both `whatsapp-urgent-routing` and `handle-whatsapp-ack` listen on `/webhook/v/whatsapp`.
+Both `whatsapp-urgent-routing` and `handle-whatsapp-ack` listen on `/webhook/v/whatsapp`. Cortex verifies each inbound POST with `HABITS_WHATSAPP_APP_SECRET` before dispatching to the trigger. The `whatsapp-inbound` nodes use `HABITS_WHATSAPP_VERIFY_TOKEN` only for the GET webhook handshake.
 
 1. Start the server and expose it (e.g. ngrok):
 

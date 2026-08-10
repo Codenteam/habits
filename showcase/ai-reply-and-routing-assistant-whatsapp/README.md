@@ -33,12 +33,15 @@ cp .env.example .env
 | `HABITS_WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API permanent access token |
 | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
+| `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhook POSTs) |
 | `HABITS_WHATSAPP_TEAM_SALES_PHONE` | Sales team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_SUPPORT_PHONE` | Support team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_BILLING_PHONE` | Billing team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_TECHNICAL_PHONE` | Technical team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_HR_PHONE` | HR team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_GENERAL_PHONE` | General inquiry team phone (E.164) |
+
+Get `HABITS_WHATSAPP_APP_SECRET` from [Meta for Developers](https://developers.facebook.com/apps) → your app → **App settings** → **Basic** → **App secret** → **Show**.
 
 ## Run
 
@@ -48,7 +51,7 @@ pnpm habits dev showcase/ai-reply-and-routing-assistant-whatsapp/stack.yaml
 
 ## Meta Webhook Setup
 
-The `whatsapp-routing` workflow listens at `/webhook/v/whatsapp`.
+The `whatsapp-routing` workflow listens at `/webhook/v/whatsapp`. Cortex verifies each inbound POST with `HABITS_WHATSAPP_APP_SECRET` before dispatching to the trigger. The `whatsapp-inbound` node uses `HABITS_WHATSAPP_VERIFY_TOKEN` only for the GET webhook handshake.
 
 1. Start the server and expose it (e.g. ngrok):
 

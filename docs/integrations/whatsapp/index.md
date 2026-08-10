@@ -17,6 +17,7 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
 | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | Phone number ID from Meta app | `1234567890` |
 | `HABITS_WHATSAPP_PHONE` | Recipient in E.164 format | `+201234567890` |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (your choice) | `my-secret-token` |
+| `HABITS_WHATSAPP_APP_SECRET` | Meta app secret for `X-Hub-Signature-256` on inbound POSTs | From App settings → Basic |
 | `WHATSAPP_ACCESS_TOKEN` | Alternate naming | `EAAG...` |
 | `WHATSAPP_PHONE_NUMBER_ID` | Alternate naming | `1234567890` |
 | `WHATSAPP_PHONE` | Alternate naming | `+1234567890` |
@@ -57,7 +58,24 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
    - `whatsapp_business_messaging`
 6. Copy the token to `.env` as `HABITS_WHATSAPP_ACCESS_TOKEN`.
 
-## Step 5: Try it out — test number and credentials
+## Step 5: Get the App Secret
+
+Cortex verifies inbound webhook POSTs using `X-Hub-Signature-256` and your Meta **App Secret** ([Meta webhooks docs](https://developers.facebook.com/docs/graph-api/webhooks/getting-started)).
+
+1. Go to [Meta for Developers — Apps](https://developers.facebook.com/apps) and open your app.
+2. In the left sidebar, open **App settings** → **Basic**.
+3. Find **App secret** and click **Show** (you may need to re-enter your Facebook password).
+4. Copy the value to `.env` as `HABITS_WHATSAPP_APP_SECRET`.
+
+> **Do not confuse these credentials:**
+>
+> | Variable | Used for |
+> |----------|----------|
+> | `HABITS_WHATSAPP_VERIFY_TOKEN` | GET webhook handshake (`hub.verify_token`) — you choose this string |
+> | `HABITS_WHATSAPP_ACCESS_TOKEN` | Sending messages via the Cloud API |
+> | `HABITS_WHATSAPP_APP_SECRET` | Verifying `X-Hub-Signature-256` on inbound POST webhooks |
+
+## Step 6: Try it out — test number and credentials
 
 Open **Use cases → Customize → Basic setup** (Step 1: **Try it out**).
 
@@ -65,7 +83,7 @@ Open **Use cases → Customize → Basic setup** (Step 1: **Try it out**).
 
 1. Complete **Claim a WhatsApp test number**.
 2. Copy **Phone Number ID** → `HABITS_WHATSAPP_PHONE_NUMBER_ID`.
-3. Note **WhatsApp Business Account ID** for Step 8 (`subscribed_apps`).
+3. Note **WhatsApp Business Account ID** for Step 9 (`subscribed_apps`).
 4. The dashboard **Access token** may show *Not generated yet* — use the system user token from Step 4 instead.
 
 ### Send a message from your test number
@@ -91,7 +109,7 @@ If a number is missing from the list, the API returns **`(#131030) Recipient pho
 
 Legacy **API Setup** uses the same **From / To** fields instead of the Try it out wizard.
 
-## Step 6: Configure the Webhook
+## Step 7: Configure the Webhook
 
 Meta must reach your local Cortex server. Use ngrok:
 
@@ -113,7 +131,7 @@ https://<your-ngrok-host>/webhook/v/whatsapp
 
 Meta may redirect to **Permissions and features** after verify — return to **Configuration** for the steps below.
 
-## Step 7: Subscribe to the `messages` webhook field
+## Step 8: Subscribe to the `messages` webhook field
 
 1. On **Configuration**, open **Webhook fields** → **Manage**.
 2. Subscribe to **`messages`** and save.
@@ -121,7 +139,7 @@ Meta may redirect to **Permissions and features** after verify — return to **C
 
 > **Check test webhooks** (Try it out) shows payloads inside Meta’s UI only; it does not confirm delivery to your callback URL.
 
-## Step 8: Subscribe your Meta app to the WABA
+## Step 9: Subscribe your Meta app to the WABA
 
 Inbound messages are POSTed only to the Meta app subscribed to your WABA. Use [Graph API Explorer](https://developers.facebook.com/tools/explorer) (select **your app**, use your system user token).
 
@@ -152,6 +170,7 @@ HABITS_WHATSAPP_ACCESS_TOKEN=your_permanent_access_token
 HABITS_WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 HABITS_WHATSAPP_PHONE=+201234567890
 HABITS_WHATSAPP_VERIFY_TOKEN=your_verify_token
+HABITS_WHATSAPP_APP_SECRET=your_app_secret
 ```
 
 <IntegrationShowcases integration="whatsapp" />

@@ -41,10 +41,7 @@ import { WebhookRegistry, webhookRegistry } from './WebhookRegistry';
 import { OAuthCallbackServer, initOAuthCallbackServer } from './OAuthCallbackServer';
 import { setupOpenAPIRoutes } from './openapi';
 import { setupManageRoutes, ManageModule } from './manage';
-import {
-  verifySlackRequestSignature,
-  getSlackSignatureHeaders,
-} from './webhooks/slackSignature';
+import { authenticateWebhook } from './webhooks/authenticateWebhook';
 
 // Load environment variables
 dotenv.config();
@@ -443,27 +440,19 @@ class WorkflowExecutorServer {
       rawBody,
     };
 
-    // Slack: verify signing secret before handshake or dispatch
-    if (moduleId === 'slack' && req.method === 'POST') {
+    // Verify vendor webhook signature when a known signature header is present
+    if (req.method === 'POST') {
       const env = this.executor.getEnvVars();
-      const { timestamp, signature } = getSlackSignatureHeaders(req.headers);
-      const verification = verifySlackRequestSignature({
-        signingSecret: env.HABITS_SLACK_SIGNING_SECRET,
-        rawBody,
-        timestamp,
-        signature,
-      });
+      const authResult = await authenticateWebhook(req, rawBody, env);
 
-      if (!verification.valid) {
-        console.warn(`🔒 Slack signature verification failed for ${webhookPath}: ${verification.reason}`);
-        res.status(403).json({
+      if (!authResult.success) {
+        console.warn(`🔒 Webhook signature verification failed for ${webhookPath}`);
+        res.status(authResult.statusCode ?? 401).json({
           success: false,
-          message: verification.reason ?? 'Invalid Slack signature',
+          message: authResult.message ?? 'Invalid webhook signature',
         });
         return;
       }
-
-      console.log(`🔒 Slack signature verified for ${webhookPath}`);
     }
 
     // URL verification handshake (GET hub.mode=subscribe or POST type=url_verification)

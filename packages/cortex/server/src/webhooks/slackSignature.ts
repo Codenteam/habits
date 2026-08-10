@@ -91,3 +91,20 @@ export function getSlackSignatureHeaders(
     signature: normalized['x-slack-signature'],
   };
 }
+
+export async function validateSlackSignature(params: {
+  signature: string;
+  rawBody: Buffer | string | undefined;
+  req: { headers: Record<string, string | string[] | undefined> };
+  env: Record<string, string | undefined>;
+}): Promise<boolean> {
+  const { timestamp, signature } = getSlackSignatureHeaders(params.req.headers);
+  const verification = verifySlackRequestSignature({
+    signingSecret: params.env.HABITS_SLACK_SIGNING_SECRET,
+    rawBody: params.rawBody,
+    timestamp,
+    signature: signature ?? params.signature,
+  });
+
+  return verification.valid;
+}
