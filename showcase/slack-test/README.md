@@ -60,6 +60,8 @@ https://<your-ngrok-host>/webhook/v/slack
 
 Then in [api.slack.com/apps](https://api.slack.com/apps):
 
+> **Disable Socket Mode first.** Habits uses HTTP Event Subscriptions (a Request URL), not Socket Mode. If **Event Subscriptions** shows *"Socket Mode is enabled. You won't need to specify a Request URL"*, open **Socket Mode** in the left sidebar, turn **Enable Socket Mode** **off**, save, then return to **Event Subscriptions**.
+
 1. Go to **Event Subscriptions** → turn it **On**.
 2. Paste the ngrok URL above as **Request URL**. Slack sends a verification request to your server — you should see **Verified** once the handshake succeeds.
 3. Under **Subscribe to bot events**, add `message.channels` (and/or `message.groups` for private channels).

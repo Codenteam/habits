@@ -59,7 +59,7 @@ nodes:
       operation: forEach
       params:
         items: "{{get-route.results}}"
-        habitId: forward-to-group
+        habitId: forward-msg
         inputKey: ticket
         collectResults: true
 

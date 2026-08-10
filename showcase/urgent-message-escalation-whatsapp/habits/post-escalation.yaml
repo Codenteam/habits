@@ -41,22 +41,46 @@ nodes:
             return { escalationText: text };
           }
 
-  - id: post
+  - id: build-outbound
+    type: script
+    data:
+      label: Build Outbound Payload
+      framework: script
+      source: inline
+      params:
+        recipient: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
+        message: "{{build-message.result.escalationText}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(recipient, message) {
+            return {
+              items: [{
+                recipient: String(recipient || '').trim(),
+                message: String(message || ''),
+                replyToMessageId: '',
+              }],
+            };
+          }
+
+  - id: send
     type: action
     data:
       framework: bits
       source: npm
-      module: "@ha-bits/bit-whatsapp"
-      operation: sendTextMessage
+      module: "@ha-bits/bit-loop"
+      operation: forEach
       params:
-        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
-        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
-        to: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
-        message: "{{build-message.result.escalationText}}"
+        items: "{{build-outbound.result.items}}"
+        habitId: send-whatsapp-session-aware
+        inputKey: spread
+        collectResults: true
 
 edges:
   - source: build-message
-    target: post
+    target: build-outbound
+  - source: build-outbound
+    target: send
 
 output:
   senderPhone: "{{analyzedMessage.output.from}}"
@@ -66,7 +90,8 @@ output:
   sourceMessageText: "{{analyzedMessage.output.text}}"
   sourceTimestamp: "{{analyzedMessage.output.timestamp}}"
   escalationPhone: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
-  escalationMessageId: "{{post.messageId}}"
+  escalationMessageId: "{{send.results[0].output.messageId}}"
+  templateSent: "{{send.results[0].output.templateSent}}"
   escalationText: "{{build-message.result.escalationText}}"
   summary: "{{analyzedMessage.output.summary}}"
   urgencyLevel: "{{analyzedMessage.output.urgencyLevel}}"

@@ -12,7 +12,8 @@ Detects urgent WhatsApp messages with AI, posts structured escalations to an on-
 | `handle-whatsapp-ack` | Ack handler: reply/reaction to escalation → OpenAI → mark acknowledged |
 | `analyze-urgency` | AI urgency detection, summary, and suggested action |
 | `process-urgent-message` | Urgent-only branch → post escalation → register DB record |
-| `post-escalation` | Structured WhatsApp message to the on-call number |
+| `post-escalation` | Structured WhatsApp message to the on-call number (session-aware) |
+| `send-whatsapp-session-aware` | Sends template + text on cold start, text only within 24h window |
 | `register-pending-ack` | Save pending record with `escalateAt = message time + 15 min` |
 | `check-pending-acks` | Cron every 1 min → query overdue unacknowledged records |
 | `re-escalate-unacked` | Re-send reminder WhatsApp and bump `escalateAt` +15 min |
@@ -37,6 +38,8 @@ HABITS_WHATSAPP_ESCALATION_PHONE=+14155238886
 | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
 | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhook POSTs) |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE` | Approved template for first outbound to on-call (outside 24h window) — see [Create a message template](#create-a-message-template) |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | Template language code (default `en_US`) — must match Meta exactly |
 | `HABITS_WHATSAPP_ESCALATION_PHONE` | On-call phone number that receives escalation messages (E.164) |
 
 Get `HABITS_WHATSAPP_APP_SECRET` from [Meta for Developers](https://developers.facebook.com/apps) → your app → **App settings** → **Basic** → **App secret** → **Show**.
@@ -65,6 +68,25 @@ ngrok http 13000
    - Subscribe to the `messages` webhook field
 
 3. Send a test urgent message from a WhatsApp user to your business number.
+
+## Create a message template
+
+Escalations to the on-call number (`send-whatsapp-session-aware`) require an approved template for the first outbound message to that phone. Set `HABITS_WHATSAPP_SESSION_TEMPLATE` and `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` in `.env`.
+
+**Development:** use Meta’s built-in test template:
+
+```env
+HABITS_WHATSAPP_SESSION_TEMPLATE=hello_world
+HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE=en_US
+```
+
+**Production:** create and approve a template in Meta:
+
+1. [WhatsApp Manager → Message templates](https://business.facebook.com/wa/manage/message-templates/) → **Create template**.
+2. After approval, copy the **template name** and **language code** into `.env`.
+3. See [Message templates (Meta)](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates) and the [WhatsApp integration guide](../../docs/integrations/whatsapp/index.md#step-10-create-a-message-template-session-outbound).
+
+> Template name and language must match the approved template exactly or the API returns `#132001`.
 
 ## Flow
 

@@ -18,6 +18,8 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
 | `HABITS_WHATSAPP_PHONE` | Recipient in E.164 format | `+201234567890` |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (your choice) | `my-secret-token` |
 | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret for `X-Hub-Signature-256` on inbound POSTs | From App settings → Basic |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE` | Approved template name for session-aware outbound (see Step 10) | `hello_world` |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | Template language code — must match Meta exactly | `en_US` |
 | `WHATSAPP_ACCESS_TOKEN` | Alternate naming | `EAAG...` |
 | `WHATSAPP_PHONE_NUMBER_ID` | Alternate naming | `1234567890` |
 | `WHATSAPP_PHONE` | Alternate naming | `+1234567890` |
@@ -163,6 +165,34 @@ Reference: [Webhooks for WhatsApp Business Accounts](https://developers.facebook
 
 **Basic setup → Try it out** → **Claim a WhatsApp test number** (or legacy **API Setup** → connect WABA) → repeat the check above.
 
+## Step 10: Create a message template (session outbound)
+
+Showcases that notify team or on-call phones (`send-whatsapp-session-aware`) send an approved **template message** first when there is no open 24-hour session with that recipient. You need a template name and language code for `.env`.
+
+### Quick start (development)
+
+Meta provides a pre-approved test template you can use immediately:
+
+| Variable | Value |
+|----------|--------|
+| `HABITS_WHATSAPP_SESSION_TEMPLATE` | `hello_world` |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | `en_US` |
+
+### Create your own template (production)
+
+1. Open [WhatsApp Manager → Message templates](https://business.facebook.com/wa/manage/message-templates/) (or **Meta Business Suite** → **WhatsApp Manager** → **Message templates**).
+2. Click **Create template** and follow the wizard (name, category, language, body text).
+3. Submit for Meta review. Status must be **Approved** before you can send it via the API.
+4. Copy the **template name** exactly as shown (lowercase, underscores — e.g. `urgent_message_alert`) into `HABITS_WHATSAPP_SESSION_TEMPLATE`.
+5. Copy the **language code** exactly (e.g. `en_US`, `en`) into `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE`. A mismatch causes error `#132001` (template not in translation).
+
+Official guides:
+
+- [Message templates overview](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
+- [Template components and guidelines](https://developers.facebook.com/docs/whatsapp/message-templates/guidelines)
+
+> **Tip:** The template name and language in `.env` must match the approved template in WhatsApp Manager character-for-character.
+
 ## Example `.env`
 
 ```env
@@ -171,6 +201,10 @@ HABITS_WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 HABITS_WHATSAPP_PHONE=+201234567890
 HABITS_WHATSAPP_VERIFY_TOKEN=your_verify_token
 HABITS_WHATSAPP_APP_SECRET=your_app_secret
+
+# Session template — see Step 10 above
+HABITS_WHATSAPP_SESSION_TEMPLATE=hello_world
+HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE=en_US
 ```
 
 <IntegrationShowcases integration="whatsapp" />

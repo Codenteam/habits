@@ -14,6 +14,10 @@ workflows:
     path: ./habits/post-escalation.yaml
     enabled: true
 
+  - id: send-whatsapp-session-aware
+    path: ./habits/send-whatsapp-session-aware.yaml
+    enabled: true
+
   - id: process-urgent-message
     path: ./habits/process-urgent-message.yaml
     enabled: true

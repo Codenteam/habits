@@ -1,0 +1,400 @@
+id: send-whatsapp-session-aware
+name: Send WhatsApp (Session Aware)
+description: >
+  Send a WhatsApp text message. Cold start (branch-0): template then text then DB.
+  Warm session (branch-1): text then DB. Meta's 24h window for team/outbound numbers
+  is tracked via lastTemplateSentAt (not lastSentAt). Invoked via bit-loop inputKey spread.
+
+nodes:
+  - id: lookup-contact
+    type: bits
+    data:
+      label: Lookup Contact Session
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: whatsapp_contact_sessions
+        filter: '{"phone": "{{recipient}}"}'
+        limit: 1
+
+  - id: check-session
+    type: script
+    data:
+      label: Check 24h Session Window
+      framework: script
+      source: inline
+      params:
+        recipient: "{{recipient}}"
+        records: "{{lookup-contact.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(recipient, records) {
+            const phone = String(recipient || '').trim();
+            const record = Array.isArray(records) && records.length > 0 ? records[0] : null;
+            const lastTemplateSentAt = record?.lastTemplateSentAt ? new Date(record.lastTemplateSentAt) : null;
+            const now = new Date();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            // Meta allows free-form text only within 24h of a template sent TO this number
+            // (or inbound from them — not tracked here). Do not use lastSentAt for this check.
+            const sessionActive = Boolean(
+              lastTemplateSentAt
+              && !Number.isNaN(lastTemplateSentAt.getTime())
+              && (now.getTime() - lastTemplateSentAt.getTime()) < twentyFourHours,
+            );
+
+            return {
+              phone,
+              needsTemplate: !sessionActive,
+              sessionActive,
+              existingId: record?._id || '',
+              lastTemplateSentAt: record?.lastTemplateSentAt || '',
+            };
+          }
+
+  - id: resolve-payload
+    type: script
+    data:
+      label: Resolve Outbound Payload
+      framework: script
+      source: inline
+      params:
+        recipient: "{{recipient}}"
+        message: "{{message}}"
+        replyToMessageId: "{{replyToMessageId}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(recipient, message, replyToMessageId) {
+            const resolvedRecipient = String(recipient || '').trim();
+            const resolvedMessage = String(message ?? '');
+            const resolvedReplyTo = String(replyToMessageId || '').trim();
+            return {
+              recipient: resolvedRecipient,
+              message: resolvedMessage,
+              replyToMessageId: resolvedReplyTo,
+              messageLength: resolvedMessage.length,
+              messagePreview: resolvedMessage.slice(0, 300),
+              hasRecipient: Boolean(resolvedRecipient),
+              hasMessage: Boolean(resolvedMessage.trim()),
+            };
+          }
+
+  - id: log-payload
+    type: action
+    data:
+      label: Log Outbound Payload
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-SESSION-AWARE-PAYLOAD
+        message:
+          recipient: "{{resolve-payload.result.recipient}}"
+          messageLength: "{{resolve-payload.result.messageLength}}"
+          messagePreview: "{{resolve-payload.result.messagePreview}}"
+          hasRecipient: "{{resolve-payload.result.hasRecipient}}"
+          hasMessage: "{{resolve-payload.result.hasMessage}}"
+          needsTemplate: "{{check-session.result.needsTemplate}}"
+          lastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
+          replyToMessageId: "{{resolve-payload.result.replyToMessageId}}"
+
+  - id: branch-template
+    type: bits
+    data:
+      label: Needs Template?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Cold start
+            value1: "{{check-session.result.needsTemplate}}"
+            operator: equals
+            value2: true
+            output: cold
+        includeElse: true
+        defaultOutput: warm
+
+  # ── Branch 0: cold start — template → text → DB ──────────────────────────
+
+  - id: send-template
+    type: action
+    data:
+      label: Send Session Template
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTemplateMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{resolve-payload.result.recipient}}"
+        templateName: "{{habits.env.HABITS_WHATSAPP_SESSION_TEMPLATE}}"
+        languageCode: "{{habits.env.HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE || 'en_US'}}"
+
+  - id: log-before-text-cold
+    type: action
+    data:
+      label: Log Before Text (cold)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-SESSION-SEND-TEXT-COLD
+        message:
+          recipient: "{{resolve-payload.result.recipient}}"
+          messageLength: "{{resolve-payload.result.messageLength}}"
+          messagePreview: "{{resolve-payload.result.messagePreview}}"
+
+  - id: send-text-cold
+    type: action
+    data:
+      label: Send Text Message (after template)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{resolve-payload.result.recipient}}"
+        message: "{{resolve-payload.result.message}}"
+        replyToMessageId: "{{resolve-payload.result.replyToMessageId}}"
+
+  - id: prepare-upsert-cold
+    type: script
+    data:
+      label: Prepare Session Timestamp (cold)
+      framework: script
+      source: inline
+      params:
+        type: script
+        language: javascript
+        script: |
+          async function main() {
+            const now = new Date().toISOString();
+            return { lastSentAt: now, lastTemplateSentAt: now };
+          }
+
+  - id: branch-upsert-cold
+    type: bits
+    data:
+      label: Insert or Update Session? (cold)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Update existing
+            value1: "{{check-session.result.existingId}}"
+            operator: isNotEmpty
+            output: update
+        includeElse: true
+        defaultOutput: insert
+
+  - id: update-session-cold
+    type: bits
+    data:
+      label: Update Session Record (cold)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: whatsapp_contact_sessions
+        filter:
+          _id: "{{check-session.result.existingId}}"
+        update:
+          lastSentAt: "{{prepare-upsert-cold.result.lastSentAt}}"
+          lastTemplateSentAt: "{{prepare-upsert-cold.result.lastTemplateSentAt}}"
+
+  - id: insert-session-cold
+    type: bits
+    data:
+      label: Insert Session Record (cold)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: whatsapp_contact_sessions
+        document:
+          phone: "{{check-session.result.phone}}"
+          lastSentAt: "{{prepare-upsert-cold.result.lastSentAt}}"
+          lastTemplateSentAt: "{{prepare-upsert-cold.result.lastTemplateSentAt}}"
+
+  # ── Branch 1: warm session — text → DB ───────────────────────────────────
+
+  - id: log-before-text-warm
+    type: action
+    data:
+      label: Log Before Text (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-SESSION-SEND-TEXT-WARM
+        message:
+          recipient: "{{resolve-payload.result.recipient}}"
+          messageLength: "{{resolve-payload.result.messageLength}}"
+          messagePreview: "{{resolve-payload.result.messagePreview}}"
+          lastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
+
+  - id: send-text-warm
+    type: action
+    data:
+      label: Send Text Message (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{resolve-payload.result.recipient}}"
+        message: "{{resolve-payload.result.message}}"
+        replyToMessageId: "{{resolve-payload.result.replyToMessageId}}"
+
+  - id: log-after-text-warm
+    type: action
+    data:
+      label: Log After Text (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-SESSION-SENT-TEXT-WARM
+        message:
+          recipient: "{{send-text-warm.to}}"
+          messageId: "{{send-text-warm.messageId}}"
+          success: "{{send-text-warm.success}}"
+
+  - id: prepare-upsert-warm
+    type: script
+    data:
+      label: Prepare Session Timestamp (warm)
+      framework: script
+      source: inline
+      params:
+        type: script
+        language: javascript
+        script: |
+          async function main() {
+            return { lastSentAt: new Date().toISOString() };
+          }
+
+  - id: branch-upsert-warm
+    type: bits
+    data:
+      label: Insert or Update Session? (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Update existing
+            value1: "{{check-session.result.existingId}}"
+            operator: isNotEmpty
+            output: update
+        includeElse: true
+        defaultOutput: insert
+
+  - id: update-session-warm
+    type: bits
+    data:
+      label: Update Session Record (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: whatsapp_contact_sessions
+        filter:
+          _id: "{{check-session.result.existingId}}"
+        update:
+          lastSentAt: "{{prepare-upsert-warm.result.lastSentAt}}"
+
+  - id: insert-session-warm
+    type: bits
+    data:
+      label: Insert Session Record (warm)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: whatsapp_contact_sessions
+        document:
+          phone: "{{check-session.result.phone}}"
+          lastSentAt: "{{prepare-upsert-warm.result.lastSentAt}}"
+          lastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
+
+edges:
+  - source: lookup-contact
+    target: check-session
+  - source: check-session
+    target: resolve-payload
+  - source: resolve-payload
+    target: log-payload
+  - source: log-payload
+    target: branch-template
+
+  # Cold flow
+  - source: branch-template
+    target: send-template
+    sourceHandle: branch-0
+  - source: send-template
+    target: log-before-text-cold
+  - source: log-before-text-cold
+    target: send-text-cold
+  - source: send-text-cold
+    target: prepare-upsert-cold
+  - source: prepare-upsert-cold
+    target: branch-upsert-cold
+  - source: branch-upsert-cold
+    target: update-session-cold
+    sourceHandle: branch-0
+  - source: branch-upsert-cold
+    target: insert-session-cold
+    sourceHandle: branch-1
+
+  # Warm flow
+  - source: branch-template
+    target: log-before-text-warm
+    sourceHandle: branch-1
+  - source: log-before-text-warm
+    target: send-text-warm
+  - source: send-text-warm
+    target: log-after-text-warm
+  - source: log-after-text-warm
+    target: prepare-upsert-warm
+  - source: prepare-upsert-warm
+    target: branch-upsert-warm
+  - source: branch-upsert-warm
+    target: update-session-warm
+    sourceHandle: branch-0
+  - source: branch-upsert-warm
+    target: insert-session-warm
+    sourceHandle: branch-1
+
+output:
+  success: "{{send-text-cold.success || send-text-warm.success}}"
+  messageId: "{{send-text-cold.messageId || send-text-warm.messageId}}"
+  to: "{{resolve-payload.result.recipient}}"
+  templateSent: "{{check-session.result.needsTemplate}}"
+  sessionWasActive: "{{check-session.result.sessionActive}}"
+  lastSentAt: "{{prepare-upsert-cold.result.lastSentAt || prepare-upsert-warm.result.lastSentAt}}"
+  lastTemplateSentAt: "{{prepare-upsert-cold.result.lastTemplateSentAt || check-session.result.lastTemplateSentAt}}"

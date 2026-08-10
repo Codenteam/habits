@@ -122,6 +122,8 @@ Register a workflow with an `inboundMessage` trigger node (`module: "@ha-bits/bi
 
 ### In the Slack app
 
+> **Disable Socket Mode first.** Habits uses HTTP Event Subscriptions (a Request URL), not Socket Mode. If **Event Subscriptions** shows *"Socket Mode is enabled. You won't need to specify a Request URL"*, open **Socket Mode** in the left sidebar, turn **Enable Socket Mode** **off**, save, then return to **Event Subscriptions**.
+
 1. Go to **Event Subscriptions** → turn it **On**.
 2. Paste the endpoint above as **Request URL**. Slack sends a verification request — status should show **Verified** when the server is running and the trigger is registered.
 3. Under **Subscribe to bot events**, add `message.channels` (public channels) and/or `message.groups` (private channels).

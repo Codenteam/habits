@@ -72,6 +72,8 @@ https://<your-ngrok-host>/webhook/v/slack
 
 In [api.slack.com/apps](https://api.slack.com/apps):
 
+> **Disable Socket Mode first.** Habits uses HTTP Event Subscriptions (a Request URL), not Socket Mode. If **Event Subscriptions** shows *"Socket Mode is enabled. You won't need to specify a Request URL"*, open **Socket Mode** in the left sidebar, turn **Enable Socket Mode** **off**, save, then return to **Event Subscriptions**.
+
 1. **Event Subscriptions** → On → paste the ngrok URL (wait for **Verified**).
 2. Subscribe to bot event `message.channels`.
 3. Save, reinstall the app, invite the bot to your intake channel and each team channel.

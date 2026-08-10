@@ -15,8 +15,9 @@ Listens for inbound WhatsApp customer messages, classifies them with OpenAI, sen
 | `route-category` | `bit-if` branch → team phone from `.env` |
 | `send-acknowledgement` | Immediate receipt acknowledgement to the customer (before AI) |
 | `send-auto-reply` | Full AI answer to the customer (low-risk only) |
-| `forward-to-group` | Summary to team phone (high-risk, human review) |
-| `forward-with-auto-reply` | Summary + auto-reply to team phone (low-risk) |
+| `forward-msg` | Summary to team phone (high-risk, session-aware) |
+| `forward-with-auto-reply` | Summary + auto-reply to team phone (low-risk, session-aware) |
+| `send-whatsapp-session-aware` | Sends template + text on cold start, text only within 24h window |
 | `process-message` | Orchestrates route → ack → risk branch → auto-reply/forward |
 
 ## Environment Variables
@@ -34,6 +35,8 @@ cp .env.example .env
 | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
 | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
 | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhook POSTs) |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE` | Approved template for first outbound to team phones (outside 24h window) — see [Create a message template](#create-a-message-template) |
+| `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | Template language code (default `en_US`) — must match Meta exactly |
 | `HABITS_WHATSAPP_TEAM_SALES_PHONE` | Sales team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_SUPPORT_PHONE` | Support team phone (E.164) |
 | `HABITS_WHATSAPP_TEAM_BILLING_PHONE` | Billing team phone (E.164) |
@@ -68,6 +71,25 @@ ngrok http 13000
 
 3. Send a test message from a customer phone to your business number.
 
+## Create a message template
+
+Session-aware forwards to team phones (`send-whatsapp-session-aware`) require an approved template for the first outbound message to each recipient. Set `HABITS_WHATSAPP_SESSION_TEMPLATE` and `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` in `.env`.
+
+**Development:** use Meta’s built-in test template:
+
+```env
+HABITS_WHATSAPP_SESSION_TEMPLATE=hello_world
+HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE=en_US
+```
+
+**Production:** create and approve a template in Meta:
+
+1. [WhatsApp Manager → Message templates](https://business.facebook.com/wa/manage/message-templates/) → **Create template**.
+2. After approval, copy the **template name** and **language code** into `.env`.
+3. See also [WhatsApp integration docs](../../docs/integrations/whatsapp/index.md#step-10-create-a-message-template-session-outbound) and [Message templates (Meta)](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates).
+
+> Template name and language must match the approved template exactly or the API returns `#132001`.
+
 ## Flow
 
 ```
@@ -79,7 +101,7 @@ WhatsApp message (new customer message)
       → route-category (pick team phone from .env)
       → route-by-risk (bit-if: low vs high)
       → low:  send-auto-reply to customer + forward-with-auto-reply to team
-      → high: forward-to-group to team only (no auto-reply to customer)
+      → high: forward-msg to team only (no auto-reply to customer)
 ```
 
 ### Risk handling

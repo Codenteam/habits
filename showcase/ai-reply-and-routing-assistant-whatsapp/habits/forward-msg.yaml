@@ -1,6 +1,6 @@
-id: forward-with-auto-reply
-name: Forward with Auto Reply
-description: Forward a low-risk inquiry to the team phone, including the auto-reply sent to the customer
+id: forward-msg
+name: Forward to Team Phone
+description: Forward a summarized request to the routed team phone number (high-risk)
 
 nodes:
   - id: build-message
@@ -16,17 +16,15 @@ nodes:
         script: |
           async function main(ticket) {
             const text = [
-              `*New ${ticket.routeCategory} inquiry* (${ticket.priority} priority) — *auto-replied*`,
+              `*New ${ticket.routeCategory} inquiry* (${ticket.priority} priority)`,
               '',
               `*From:* ${ticket.contactName} (${ticket.from})`,
               '',
               `*Risk:* ${ticket.riskLevel} — ${ticket.riskReason}`,
+              '*Requires human review*',
               '',
               '*Summary:*',
               String(ticket.summary || ''),
-              '',
-              '*Auto-reply sent to customer:*',
-              String(ticket.finalReply || ''),
               '',
               '*Details:*',
               String(ticket.extractedDetails || ''),

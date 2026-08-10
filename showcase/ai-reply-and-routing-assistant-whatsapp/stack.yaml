@@ -22,12 +22,16 @@ workflows:
     path: ./habits/send-auto-reply.yaml
     enabled: true
 
-  - id: forward-to-group
-    path: ./habits/forward-to-group.yaml
+  - id: forward-msg
+    path: ./habits/forward-msg.yaml
     enabled: true
 
   - id: forward-with-auto-reply
     path: ./habits/forward-with-auto-reply.yaml
+    enabled: true
+
+  - id: send-whatsapp-session-aware
+    path: ./habits/send-whatsapp-session-aware.yaml
     enabled: true
 
   - id: process-message

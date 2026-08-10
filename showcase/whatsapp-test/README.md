@@ -290,6 +290,8 @@ Keep ngrok running in a separate terminal while testing webhooks.
 
 This opens the conversation with the **Recipient / To** phone from §5.2 and `HABITS_WHATSAPP_PHONE` in your `.env`.
 
+To create your own approved templates (name + language for `.env`), see [WhatsApp integration docs — Step 10](../../docs/integrations/whatsapp/index.md#step-10-create-a-message-template-session-outbound) and [WhatsApp Manager → Message templates](https://business.facebook.com/wa/manage/message-templates/).
+
 ### Receive messages
 
 1. Confirm §6.3 (`messages` subscribed) and §6.4 (your app in `subscribed_apps`) are complete.
