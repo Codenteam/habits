@@ -76,11 +76,47 @@ nodes:
         inputKey: spread
         collectResults: true
 
+  - id: resolve-send-result
+    type: script
+    data:
+      label: Resolve Send Result
+      framework: script
+      source: inline
+      params:
+        sendResults: "{{send.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(sendResults) {
+            const output = sendResults?.[0]?.output || {};
+            const pick = (cold, warm) => {
+              const c = cold != null && cold !== '' ? cold : null;
+              const w = warm != null && warm !== '' ? warm : null;
+              return c ?? w ?? '';
+            };
+            const pickBool = (cold, warm) => {
+              if (cold === true || cold === 'true') return true;
+              if (warm === true || warm === 'true') return true;
+              return false;
+            };
+            return {
+              success: pickBool(output.coldSuccess, output.warmSuccess),
+              messageId: pick(output.coldMessageId, output.warmMessageId),
+              lastSentAt: pick(output.coldLastSentAt, output.warmLastSentAt),
+              lastTemplateSentAt: pick(output.coldLastTemplateSentAt, output.warmLastTemplateSentAt),
+              templateSent: output.templateSent,
+              to: output.to,
+              sessionWasActive: output.sessionWasActive,
+            };
+          }
+
 edges:
   - source: build-message
     target: build-outbound
   - source: build-outbound
     target: send
+  - source: send
+    target: resolve-send-result
 
 output:
   senderPhone: "{{analyzedMessage.output.from}}"
@@ -90,8 +126,8 @@ output:
   sourceMessageText: "{{analyzedMessage.output.text}}"
   sourceTimestamp: "{{analyzedMessage.output.timestamp}}"
   escalationPhone: "{{habits.env.HABITS_WHATSAPP_ESCALATION_PHONE}}"
-  escalationMessageId: "{{send.results[0].output.messageId}}"
-  templateSent: "{{send.results[0].output.templateSent}}"
+  escalationMessageId: "{{resolve-send-result.result.messageId}}"
+  templateSent: "{{resolve-send-result.result.templateSent}}"
   escalationText: "{{build-message.result.escalationText}}"
   summary: "{{analyzedMessage.output.summary}}"
   urgencyLevel: "{{analyzedMessage.output.urgencyLevel}}"

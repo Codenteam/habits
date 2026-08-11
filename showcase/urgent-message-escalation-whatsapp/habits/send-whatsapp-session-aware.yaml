@@ -170,6 +170,21 @@ nodes:
         message: "{{resolve-payload.result.message}}"
         replyToMessageId: "{{resolve-payload.result.replyToMessageId}}"
 
+  - id: log-after-text-cold
+    type: action
+    data:
+      label: Log After Text (cold)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-SESSION-SENT-TEXT-COLD
+        message:
+          recipient: "{{send-text-cold.to}}"
+          messageId: "{{send-text-cold.messageId}}"
+          success: "{{send-text-cold.success}}"
+
   - id: prepare-upsert-cold
     type: script
     data:
@@ -358,45 +373,103 @@ edges:
   - source: branch-template
     target: send-template
     sourceHandle: branch-0
+  - source: branch-template
+    target: log-before-text-cold
+    sourceHandle: branch-0
   - source: send-template
     target: log-before-text-cold
+    optional: true
+  - source: branch-template
+    target: send-text-cold
+    sourceHandle: branch-0
   - source: log-before-text-cold
     target: send-text-cold
+    optional: true
+  - source: branch-template
+    target: log-after-text-cold
+    sourceHandle: branch-0
   - source: send-text-cold
+    target: log-after-text-cold
+    optional: true
+  - source: branch-template
     target: prepare-upsert-cold
+    sourceHandle: branch-0
+  - source: log-after-text-cold
+    target: prepare-upsert-cold
+    optional: true
+  - source: branch-template
+    target: branch-upsert-cold
+    sourceHandle: branch-0
   - source: prepare-upsert-cold
     target: branch-upsert-cold
+    optional: true
+  - source: branch-template
+    target: update-session-cold
+    sourceHandle: branch-0
   - source: branch-upsert-cold
     target: update-session-cold
+    sourceHandle: branch-0
+    optional: true
+  - source: branch-template
+    target: insert-session-cold
     sourceHandle: branch-0
   - source: branch-upsert-cold
     target: insert-session-cold
     sourceHandle: branch-1
+    optional: true
 
   # Warm flow
   - source: branch-template
     target: log-before-text-warm
     sourceHandle: branch-1
+  - source: branch-template
+    target: send-text-warm
+    sourceHandle: branch-1
   - source: log-before-text-warm
     target: send-text-warm
+    optional: true
+  - source: branch-template
+    target: log-after-text-warm
+    sourceHandle: branch-1
   - source: send-text-warm
     target: log-after-text-warm
+    optional: true
+  - source: branch-template
+    target: prepare-upsert-warm
+    sourceHandle: branch-1
   - source: log-after-text-warm
     target: prepare-upsert-warm
+    optional: true
+  - source: branch-template
+    target: branch-upsert-warm
+    sourceHandle: branch-1
   - source: prepare-upsert-warm
     target: branch-upsert-warm
+    optional: true
+  - source: branch-template
+    target: update-session-warm
+    sourceHandle: branch-1
   - source: branch-upsert-warm
     target: update-session-warm
     sourceHandle: branch-0
+    optional: true
+  - source: branch-template
+    target: insert-session-warm
+    sourceHandle: branch-1
   - source: branch-upsert-warm
     target: insert-session-warm
     sourceHandle: branch-1
+    optional: true
 
 output:
-  success: "{{send-text-cold.success || send-text-warm.success}}"
-  messageId: "{{send-text-cold.messageId || send-text-warm.messageId}}"
+  coldSuccess: "{{send-text-cold.success}}"
+  warmSuccess: "{{send-text-warm.success}}"
+  coldMessageId: "{{send-text-cold.messageId}}"
+  warmMessageId: "{{send-text-warm.messageId}}"
   to: "{{resolve-payload.result.recipient}}"
   templateSent: "{{check-session.result.needsTemplate}}"
   sessionWasActive: "{{check-session.result.sessionActive}}"
-  lastSentAt: "{{prepare-upsert-cold.result.lastSentAt || prepare-upsert-warm.result.lastSentAt}}"
-  lastTemplateSentAt: "{{prepare-upsert-cold.result.lastTemplateSentAt || check-session.result.lastTemplateSentAt}}"
+  coldLastSentAt: "{{prepare-upsert-cold.result.lastSentAt}}"
+  warmLastSentAt: "{{prepare-upsert-warm.result.lastSentAt}}"
+  coldLastTemplateSentAt: "{{prepare-upsert-cold.result.lastTemplateSentAt}}"
+  warmLastTemplateSentAt: "{{check-session.result.lastTemplateSentAt}}"
