@@ -10,6 +10,13 @@ on:
         description: 'Version to build (e.g., 1.0.0)'
         required: true
         default: '1.0.0'
+      build_only:
+        description: 'Build + artifacts only (no GitHub Release, no store uploads)'
+        type: boolean
+        default: true
+
+env:
+  BUILD_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.build_only || false }}
 
 jobs:
   build-macos:
@@ -55,7 +62,12 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform macos --output ./release --upload-macos --skip-notarize 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          # DMG for GitHub Release / direct download
+          npx tsx build-release.ts --platform macos --output ./release --skip-notarize 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          # Mac App Store PKG upload (production only)
+          if [ "$BUILD_ONLY" != "true" ]; then
+            npx tsx build-release.ts --platform macos --output ./release --upload-macos --skip-notarize 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          fi
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -99,7 +111,11 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform ios --output ./release --upload-ios 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          if [ "$BUILD_ONLY" = "true" ]; then
+            npx tsx build-release.ts --platform ios --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          else
+            npx tsx build-release.ts --platform ios --output ./release --upload-ios 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          fi
       
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v4
@@ -161,7 +177,11 @@ jobs:
         run: |
           set -o pipefail
           cd habits-cortex
-          npx tsx build-release.ts --platform android --output ./release --upload-android 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          if [ "$BUILD_ONLY" = "true" ]; then
+            npx tsx build-release.ts --platform android --output ./release 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          else
+            npx tsx build-release.ts --platform android --output ./release --upload-android 2>&1 | npx tsx ../scripts/log-sanitizer.ts
+          fi
       
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
@@ -245,6 +265,7 @@ jobs:
           retention-days: 7
   
   create-release:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.build_only) }}
     needs: [build-macos, build-ios, build-android, build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
