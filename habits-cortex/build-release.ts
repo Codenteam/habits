@@ -115,6 +115,18 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Lucide icon manifest (gitignored; generated from lucide-static)
+    const syncLucideScript = path.resolve(__dirname, '..', 'scripts', 'sync-lucide-icons.mjs');
+    if (fs.existsSync(syncLucideScript)) {
+      logSection('Syncing Lucide icons');
+      exec(`node "${syncLucideScript}"`, {
+        cwd: path.resolve(__dirname, '..'),
+      });
+      console.log('success', 'Synced Lucide icons to cortex-core assets');
+    } else {
+      console.log('warn', 'sync-lucide-icons.mjs not found, skipping');
+    }
+
     // Generate bundle-all.js with all bits
     logSection('Generating cortex-bundle-all.js');
     const bundleAllScript = path.resolve(__dirname, '..', 'bundle-generator', 'bundle-all.js');
