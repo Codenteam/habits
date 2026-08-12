@@ -23,8 +23,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -46,7 +45,7 @@ jobs:
 
       - name: Install habits-cortex dependencies
         working-directory: habits-cortex
-        run: npm ci
+        run: npm install
       
       - name: Build macOS
         env:
@@ -90,8 +89,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -116,7 +114,7 @@ jobs:
 
       - name: Install habits-cortex dependencies
         working-directory: habits-cortex
-        run: npm ci
+        run: npm install
 
       - name: Build iOS
         env:
@@ -148,8 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -191,7 +188,7 @@ jobs:
 
       - name: Install habits-cortex dependencies
         working-directory: habits-cortex
-        run: npm ci
+        run: npm install
       
       - name: Build Android
         env:
@@ -226,8 +223,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
@@ -250,7 +246,7 @@ jobs:
 
       - name: Install habits-cortex dependencies
         working-directory: habits-cortex
-        run: npm ci
+        run: npm install
       
       - name: Build Windows (unsigned)
         shell: bash
@@ -273,8 +269,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      
       - name: Install Tauri dependencies
         run: |
           sudo apt-get update
@@ -299,7 +294,7 @@ jobs:
 
       - name: Install habits-cortex dependencies
         working-directory: habits-cortex
-        run: npm ci
+        run: npm install
       
       - name: Build Linux (unsigned)
         run: |
