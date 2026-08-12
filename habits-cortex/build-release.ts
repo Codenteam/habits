@@ -143,6 +143,15 @@ async function main(): Promise<void> {
       console.log('warn', 'bundle-all.js not found, skipping bundle generation');
     }
 
+    const corePkg = path.resolve(__dirname, '..', 'dist/packages/cortex/core/index.cjs');
+    if (!fs.existsSync(corePkg)) {
+      logSection('Building @ha-bits/cortex-core');
+      exec('pnpm nx build @ha-bits/cortex-core', {
+        cwd: path.resolve(__dirname, '..'),
+      });
+      console.log('success', 'Built @ha-bits/cortex-core');
+    }
+
     const syncAssetsScript = path.resolve(__dirname, '..', 'scripts', 'sync-cortex-ha-assets.mjs');
     if (fs.existsSync(syncAssetsScript)) {
       exec(`node "${syncAssetsScript}" "${path.resolve(__dirname, 'www')}"`, {
