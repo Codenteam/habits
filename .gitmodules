@@ -1,3 +1,7 @@
 [submodule "habits-manage"]
 	path = packages/manage
 	url = https://github.com/Codenteam/habits-testing
+[submodule "local-ai-candle/candle"]
+	path = local-ai-candle/candle
+	url = https://github.com/latentcollapse/candle.git
+	branch = feat/quantized-qwen35
