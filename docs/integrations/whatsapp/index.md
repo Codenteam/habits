@@ -44,12 +44,7 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
 5. Under **Use cases**, select **Connect with customers through WhatsApp**.
 6. Choose your business account and click **Create app**.
 
-## Step 3: Open the WhatsApp Use Case
-
-1. In the left sidebar, click **Use cases**.
-2. Find WhatsApp and click **Customize**.
-
-## Step 4: Get the Access Token
+## Step 3: Get the Access Token
 
 1. Open [Meta Business Settings](https://business.facebook.com/settings) → **System users**.
 2. Click **Add**, enter a name, set **Role** to **Admin**.
@@ -60,7 +55,7 @@ Use `@ha-bits/bit-whatsapp` to send template messages and receive inbound messag
    - `whatsapp_business_messaging`
 6. Copy the token to `.env` as `HABITS_WHATSAPP_ACCESS_TOKEN`.
 
-## Step 5: Get the App Secret
+## Step 4: Get the App Secret
 
 Cortex verifies inbound webhook POSTs using `X-Hub-Signature-256` and your Meta **App Secret** ([Meta webhooks docs](https://developers.facebook.com/docs/graph-api/webhooks/getting-started)).
 
@@ -77,7 +72,7 @@ Cortex verifies inbound webhook POSTs using `X-Hub-Signature-256` and your Meta 
 > | `HABITS_WHATSAPP_ACCESS_TOKEN` | Sending messages via the Cloud API |
 > | `HABITS_WHATSAPP_APP_SECRET` | Verifying `X-Hub-Signature-256` on inbound POST webhooks |
 
-## Step 6: Try it out — test number and credentials
+## Step 5: Try it out — test number and credentials
 
 Open **Use cases → Customize → Basic setup** (Step 1: **Try it out**).
 
@@ -111,7 +106,7 @@ If a number is missing from the list, the API returns **`(#131030) Recipient pho
 
 Legacy **API Setup** uses the same **From / To** fields instead of the Try it out wizard.
 
-## Step 7: Configure the Webhook
+## Step 6: Configure the Webhook
 
 Meta must reach your local Cortex server. Use ngrok:
 
@@ -126,14 +121,14 @@ https://<your-ngrok-host>/webhook/v/whatsapp
 ```
 
 1. Start the showcase so Cortex listens on port `13000`.
-2. In your Meta app → **Use cases → Customize → Configuration**.
+2. In your Meta app → **Use cases → Customize → Production Setup → Configure Webhooks**.
 3. Paste the callback URL.
 4. Set **Verify token** to any string — save the same value as `HABITS_WHATSAPP_VERIFY_TOKEN`.
 5. Click **Verify and save** (ngrok and Cortex must be running).
 
 Meta may redirect to **Permissions and features** after verify — return to **Configuration** for the steps below.
 
-## Step 8: Subscribe to the `messages` webhook field
+## Step 7: Subscribe to the `messages` webhook field
 
 1. On **Configuration**, open **Webhook fields** → **Manage**.
 2. Subscribe to **`messages`** and save.
@@ -141,7 +136,7 @@ Meta may redirect to **Permissions and features** after verify — return to **C
 
 > **Check test webhooks** (Try it out) shows payloads inside Meta’s UI only; it does not confirm delivery to your callback URL.
 
-## Step 9: Subscribe your Meta app to the WABA
+## Step 8: Subscribe your Meta app to the WABA
 
 Inbound messages are POSTed only to the Meta app subscribed to your WABA. Use [Graph API Explorer](https://developers.facebook.com/tools/explorer) (select **your app**, use your system user token).
 
@@ -161,11 +156,7 @@ Your app should appear in `data`. If `data` is empty or only **WA DevX Webhook E
 
 Reference: [Webhooks for WhatsApp Business Accounts](https://developers.facebook.com/docs/graph-api/webhooks/getting-started/webhooks-for-whatsapp)
 
-### Connect WABA in dashboard (if not linked)
-
-**Basic setup → Try it out** → **Claim a WhatsApp test number** (or legacy **API Setup** → connect WABA) → repeat the check above.
-
-## Step 10: Create a message template (session outbound)
+## Step 9: Create a message template (session outbound)
 
 Showcases that notify team or on-call phones (`send-whatsapp-session-aware`) send an approved **template message** first when there is no open 24-hour session with that recipient. You need a template name and language code for `.env`.
 

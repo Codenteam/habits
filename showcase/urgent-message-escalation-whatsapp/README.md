@@ -44,6 +44,18 @@ HABITS_WHATSAPP_ESCALATION_PHONE=+14155238886
 
 Get `HABITS_WHATSAPP_APP_SECRET` from [Meta for Developers](https://developers.facebook.com/apps) → your app → **App settings** → **Basic** → **App secret** → **Show**.
 
+## WhatsApp setup — read the docs first
+
+The variables above are not enough on their own. **Before you run this showcase**, open the Habits documentation and read the **WhatsApp integration guide** from start to finish. It covers:
+
+- Meta app and WhatsApp Business setup
+- Access tokens, phone number ID, and app secret
+- Webhook URL, verify token, and `messages` subscription
+- Test recipients and message templates
+- Common errors and troubleshooting
+
+Follow every step in that guide to make sure WhatsApp is fully configured and working before testing this showcase.
+
 ## Run
 
 ```bash
