@@ -23,6 +23,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -89,6 +91,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -146,6 +150,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -223,6 +229,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -269,6 +277,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Install Tauri dependencies
         run: |
