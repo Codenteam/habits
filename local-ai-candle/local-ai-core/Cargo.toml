@@ -6,10 +6,10 @@ description = "Cross-platform AI inference core library using Candle"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Candle from latentcollapse feat/quantized-qwen35 (vendored in ../candle)
-candle-core = { path = "../candle/candle-core" }
-candle-nn = { path = "../candle/candle-nn" }
-candle-transformers = { path = "../candle/candle-transformers" }
+# Candle fork with quantized Qwen3.5 (fetched by Cargo from GitHub at build time)
+candle-core = { git = "https://github.com/latentcollapse/candle.git", rev = "1765abe919b634bbea282a310c768ffe7bc28100" }
+candle-nn = { git = "https://github.com/latentcollapse/candle.git", rev = "1765abe919b634bbea282a310c768ffe7bc28100" }
+candle-transformers = { git = "https://github.com/latentcollapse/candle.git", rev = "1765abe919b634bbea282a310c768ffe7bc28100" }
 
 # Tokenization
 tokenizers = { version = "0.22.0", default-features = false, features = ["onig"] }
