@@ -695,9 +695,8 @@ dependencies = [
 
 [[package]]
 name = "candle-core"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706"
+version = "0.10.2"
+source = "git+https://github.com/latentcollapse/candle.git?rev=1765abe919b634bbea282a310c768ffe7bc28100#1765abe919b634bbea282a310c768ffe7bc28100"
 dependencies = [
  "accelerate-src",
  "byteorder",
@@ -720,15 +719,13 @@ dependencies = [
  "thiserror 2.0.18",
  "tokenizers",
  "yoke 0.8.2",
- "zerocopy",
  "zip",
 ]
 
 [[package]]
 name = "candle-metal-kernels"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "242e83c6acf639bb273c929d73c67a882bb4dd08a140f121096e19ba2f213d3e"
+version = "0.10.2"
+source = "git+https://github.com/latentcollapse/candle.git?rev=1765abe919b634bbea282a310c768ffe7bc28100#1765abe919b634bbea282a310c768ffe7bc28100"
 dependencies = [
  "block2",
  "half",
@@ -742,9 +739,8 @@ dependencies = [
 
 [[package]]
 name = "candle-nn"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaa10b6ccc365b33210ce404fbf45e60d3e0bdac1004463cf1052e6ee1c1739a"
+version = "0.10.2"
+source = "git+https://github.com/latentcollapse/candle.git?rev=1765abe919b634bbea282a310c768ffe7bc28100#1765abe919b634bbea282a310c768ffe7bc28100"
 dependencies = [
  "accelerate-src",
  "candle-core",
@@ -761,9 +757,8 @@ dependencies = [
 
 [[package]]
 name = "candle-transformers"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bcbbf7ff00ff6fe2af22b93600195917fe90e90ff48424a140d1a926c44b1c1"
+version = "0.10.2"
+source = "git+https://github.com/latentcollapse/candle.git?rev=1765abe919b634bbea282a310c768ffe7bc28100#1765abe919b634bbea282a310c768ffe7bc28100"
 dependencies = [
  "accelerate-src",
  "byteorder",
@@ -781,9 +776,8 @@ dependencies = [
 
 [[package]]
 name = "candle-ug"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "257411c33abf7d898a31ac20d80813dfe96ff09e23a73039e22ab293aea9b871"
+version = "0.10.2"
+source = "git+https://github.com/latentcollapse/candle.git?rev=1765abe919b634bbea282a310c768ffe7bc28100#1765abe919b634bbea282a310c768ffe7bc28100"
 dependencies = [
  "ug",
  "ug-metal",

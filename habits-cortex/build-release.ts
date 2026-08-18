@@ -115,6 +115,14 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Temporary: patch latentcollapse/candle @ 1765abe to remove broken qwen35 KV-cache helpers so the Rust build compiles.
+    const patchCandleScript = path.resolve(__dirname, '..', 'scripts', 'patch-candle-qwen35.mjs');
+    if (fs.existsSync(patchCandleScript)) {
+      logSection('Patching candle quantized_qwen35 (temporary)');
+      exec(`node "${patchCandleScript}"`, { cwd: path.resolve(__dirname, '..') });
+      console.log('success', 'candle patch applied');
+    }
+
     // Generate bundle-all.js with all bits
     logSection('Generating cortex-bundle-all.js');
     const bundleAllScript = path.resolve(__dirname, '..', 'bundle-generator', 'bundle-all.js');
