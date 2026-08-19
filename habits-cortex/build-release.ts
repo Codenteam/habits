@@ -469,7 +469,7 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
 
   // Always use no-external-habits for App Store / direct-distribution macOS builds
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits --no-sign ${configArg}`.trimEnd(), { env: buildEnv });
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${configArg}`.trimEnd(), { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
