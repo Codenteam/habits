@@ -39,6 +39,7 @@ export interface CLIOptions {
   output: string;
   debug: boolean;
   skipNotarize: boolean;
+  buildOnly: boolean;
   dryRun: boolean;
   verbose: boolean;
   help: boolean;
@@ -521,6 +522,11 @@ export function parseArgs(): CLIOptions {
       type: 'boolean',
       default: false,
     })
+    .option('build-only', {
+      describe: 'Build artifacts only (skips macOS code signing via tauri --no-sign)',
+      type: 'boolean',
+      default: process.env.BUILD_ONLY === 'true',
+    })
     .option('upload-ios', {
       describe: 'Upload iOS build to App Store Connect',
       type: 'boolean',
@@ -565,6 +571,7 @@ export function parseArgs(): CLIOptions {
     output: argv.output,
     debug: argv.debug,
     skipNotarize: argv['skip-notarize'],
+    buildOnly: argv['build-only'],
     dryRun: argv['dry-run'],
     verbose: argv.verbose,
     help: false, // Yargs handles --help automatically

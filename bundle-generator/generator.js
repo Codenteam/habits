@@ -262,7 +262,7 @@ function run(stack, workflows, env){
         name: 'node-polyfill',
         setup(build) {
             // Stub packages that can't work in browser/QuickJS (tiktoken and @ha-bits/cortex handled via alias)
-            const stubPackages = ['typescript', 'dotenv', 'winston', 'yaml', 'yargs', 'express', 'debug', 'form-data', '@tauri-apps/plugin-shell', '@tauri-apps/api'];
+            const stubPackages = ['typescript', 'dotenv', 'winston', 'yargs', 'express', 'debug', 'form-data', '@tauri-apps/plugin-shell', '@tauri-apps/api'];
             
             build.onResolve({ filter: new RegExp(`^(${stubPackages.join('|')})$`) }, (args) => {
                 return {
