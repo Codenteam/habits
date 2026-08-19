@@ -116,6 +116,11 @@ jobs:
         working-directory: habits-cortex
         run: npm ci
 
+      - name: Reset Swift Package Manager cache
+        run: |
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
+
       - name: Build iOS
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
