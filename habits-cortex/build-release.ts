@@ -21,6 +21,7 @@
  *   --output <dir>    Output directory for artifacts (default: ./release)
  *   --debug           Build in debug mode (faster, no optimization)
  *   --skip-notarize   Skip macOS notarization step
+ *   --build-only      Build artifacts only (skips macOS code signing; also set via BUILD_ONLY=true)
  *   --dry-run         Validate environment only, don't build
  *   --verbose         Show all command output
  *   --help            Show this help message
@@ -84,6 +85,9 @@ async function main(): Promise<void> {
   console.log('info', `Dry run: ${options.dryRun ? 'yes' : 'no'}`);
   if (options.skipNotarize) {
     console.log('info', 'Notarization: skipped');
+  }
+  if (options.buildOnly) {
+    console.log('info', 'Build only: macOS code signing disabled (--no-sign)');
   }
   
   // Validate environment
@@ -431,9 +435,10 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
     ? ctx.appStoreIdentity 
     : (ctx.developerIdIdentity || ctx.appStoreIdentity);
   
-  const buildEnv: Record<string, string | undefined> = {
-    APPLE_SIGNING_IDENTITY: signingIdentity,
-  };
+  const skipCodesign = options.buildOnly && !options.uploadMacos;
+  const buildEnv: Record<string, string | undefined> = skipCodesign
+    ? {}
+    : { APPLE_SIGNING_IDENTITY: signingIdentity };
   
   // Disable notarization at build time (we handle it separately)
   if (options.skipNotarize || !ctx.hasDevIdCert) {
@@ -452,11 +457,14 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
     }
   }
   
-  console.log('step', `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
+  console.log('step', skipCodesign
+    ? 'Building unsigned (build-only, --no-sign)...'
+    : `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
   
   // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
   // Build both app and dmg for direct distribution
   const bundles = options.uploadMacos ? 'app' : 'app,dmg';
+  const noSignArg = skipCodesign ? '--no-sign' : '';
 
   // For App Store uploads, override tauri.conf.json to use Entitlements.store.plist.
   // For non-App-Store (Developer ID) builds, tauri.conf.json references Entitlements.plist.
@@ -469,7 +477,7 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
 
   // Always use no-external-habits for App Store / direct-distribution macOS builds
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${configArg}`.trimEnd(), { env: buildEnv });
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${noSignArg} ${configArg}`.trimEnd(), { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
