@@ -1,0 +1,60 @@
+# Showcase metadata for Urgent Message Escalation (WhatsApp) example
+name: Urgent Message Escalation (WhatsApp)
+type: automation
+description: Detects urgent WhatsApp messages with AI, posts structured escalations to an on-call number, and re-escalates if nobody acknowledges within 15 minutes.
+
+longDescription: |
+  **Urgent Message Escalation (WhatsApp)** monitors incoming WhatsApp messages, uses AI to detect
+  urgency, posts structured escalations to an on-call number, and re-escalates if nobody
+  acknowledges within 15 minutes.
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for urgency analysis and acknowledgement detection |
+  | `HABITS_WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API permanent access token |
+  | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
+  | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
+  | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhooks) |
+  | `HABITS_WHATSAPP_SESSION_TEMPLATE` | Approved template for first outbound to on-call (outside 24h window) |
+  | `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | Template language code (e.g. `en_US`) |
+  | `HABITS_WHATSAPP_ESCALATION_PHONE` | On-call phone number that receives escalations (E.164) |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables above.
+  2. For Meta app setup, access tokens, webhooks, test recipients, and message templates, follow the [WhatsApp integration guide] in documentation integrations.
+
+tags:
+  - ai
+  - automation
+  - integration
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key for urgency analysis and acknowledgement detection)
+  - WHATSAPP_ACCESS_TOKEN (WhatsApp Cloud API permanent access token)
+  - WHATSAPP_PHONE_NUMBER_ID (WhatsApp Business phone number ID)
+  - WHATSAPP_VERIFY_TOKEN (Webhook verify token)
+  - WHATSAPP_APP_SECRET (Meta app secret for inbound webhook verification)
+  - WHATSAPP_SESSION_TEMPLATE (Approved template for session-aware outbound)
+  - WHATSAPP_SESSION_TEMPLATE_LANGUAGE (Template language code)
+  - WHATSAPP_ESCALATION_PHONE (On-call phone number in E.164 format)
+
+habits:
+  - habits/whatsapp-urgent-routing.yaml
+  - habits/handle-whatsapp-ack.yaml
+  - habits/analyze-urgency.yaml
+  - habits/process-urgent-message.yaml
+  - habits/post-escalation.yaml
+  - habits/send-whatsapp-session-aware.yaml
+  - habits/register-pending-ack.yaml
+  - habits/check-pending-acks.yaml
+  - habits/re-escalate-unacked.yaml

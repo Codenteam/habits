@@ -25,7 +25,7 @@ const integrations = [
       "ai"
     ],
     "bitPackage": "@ha-bits/bit-openai",
-    "showcaseCount": 23,
+    "showcaseCount": 27,
     "icon": "Sparkles"
   },
   {
@@ -36,7 +36,7 @@ const integrations = [
       "messaging"
     ],
     "bitPackage": "@ha-bits/bit-slack",
-    "showcaseCount": 2,
+    "showcaseCount": 4,
     "icon": "MessageSquare"
   },
   {
@@ -124,7 +124,7 @@ const integrations = [
       "messaging"
     ],
     "bitPackage": "@ha-bits/bit-whatsapp",
-    "showcaseCount": 3,
+    "showcaseCount": 2,
     "icon": "MessageCircle"
   },
   {
