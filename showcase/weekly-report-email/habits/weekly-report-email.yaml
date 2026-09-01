@@ -1,0 +1,298 @@
+id: weekly-report-email
+name: Weekly Report Email
+description: >-
+  Cron trigger (weekly, Monday 09:00 UTC) reads a Google Sheet tab, formats
+  the rows, asks OpenAI to write a report email, and sends it via SMTP.
+version: "1.0"
+
+nodes:
+  - id: schedule
+    type: trigger
+    data:
+      label: Schedule Trigger
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      isTrigger: true
+      params:
+        cronExpression: "0 9 * * 1"
+        timezone: "UTC"
+        enabled: true
+        description: "Weekly report email (Mondays 09:00 UTC)"
+
+  - id: read-sheet
+    type: action
+    data:
+      label: Read Google Sheet
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: readRange
+      auth:
+        clientId: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_GOOGLE_SHEETS_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.HABITS_GOOGLE_SPREADSHEET_ID}}"
+        range: "{{habits.env.HABITS_GOOGLE_SHEET_RANGE}}"
+
+  - id: format-sheet-data
+    type: script
+    data:
+      label: Format Sheet Data
+      framework: script
+      source: inline
+      params:
+        sheetData: "{{read-sheet}}"
+        sheetRange: "{{habits.env.HABITS_GOOGLE_SHEET_RANGE}}"
+        executedAt: "{{schedule.executedAt}}"
+        stakeholderName: "{{habits.env.HABITS_REPORT_STAKEHOLDER_NAME}}"
+        senderName: "{{habits.env.HABITS_REPORT_SENDER_NAME}}"
+        senderPosition: "{{habits.env.HABITS_REPORT_SENDER_POSITION}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(
+            sheetData,
+            sheetRange,
+            executedAt,
+            stakeholderName,
+            senderName,
+            senderPosition
+          ) {
+            const stakeholder = String(stakeholderName || '').trim() || 'Stakeholder';
+            const sender = String(senderName || '').trim() || 'Team';
+            const position = String(senderPosition || '').trim();
+
+            const greeting = `Dear ${stakeholder},`;
+            const signOffLines = ['Best regards,', sender];
+            if (position) signOffLines.push(position);
+            const signOff = signOffLines.join('\n');
+
+            const payload = sheetData || {};
+            const values = Array.isArray(payload.values)
+              ? payload.values
+              : Array.isArray(payload)
+                ? payload
+                : [];
+
+            if (!values.length) {
+              return {
+                isEmpty: true,
+                rowCount: 0,
+                headers: [],
+                records: [],
+                formatted: `No data found in range ${sheetRange || '(unknown)'}.`,
+                reportDate: executedAt || new Date().toISOString(),
+                greeting,
+                signOff,
+              };
+            }
+
+            const headers = values[0].map((header, index) => {
+              const label = header == null ? '' : String(header).trim();
+              return label || `Column ${index + 1}`;
+            });
+
+            const records = values.slice(1).map((row, index) => {
+              const record = { rowNumber: index + 2 };
+              headers.forEach((header, colIndex) => {
+                record[header] = row?.[colIndex] ?? '';
+              });
+              return record;
+            });
+
+            const lines = [
+              `Sheet range: ${sheetRange || payload.range || ''}`,
+              `Generated at: ${executedAt || new Date().toISOString()}`,
+              `Row count (excluding header): ${records.length}`,
+              '',
+              '### Data',
+              '',
+              headers.join(' | '),
+              headers.map(() => '---').join(' | '),
+            ];
+
+            records.forEach((record) => {
+              lines.push(headers.map((header) => String(record[header] ?? '')).join(' | '));
+            });
+
+            const nameColumnCandidates = [
+              'employee',
+              'name',
+              'employee name',
+              'staff',
+              'team member',
+              'person',
+            ];
+            const nameHeader =
+              headers.find((header) => nameColumnCandidates.includes(header.toLowerCase())) ||
+              headers[0];
+
+            const formattedByPerson = records
+              .map((record) => {
+                const personName = String(record[nameHeader] ?? 'Unknown').trim() || 'Unknown';
+                const detailLines = headers
+                  .filter((header) => header !== nameHeader)
+                  .map((header) => `- ${header}: ${record[header] ?? ''}`);
+                return `${personName}\n${detailLines.join('\n')}`;
+              })
+              .join('\n\n');
+
+            return {
+              isEmpty: records.length === 0,
+              rowCount: records.length,
+              headers,
+              records,
+              formatted: lines.join('\n'),
+              formattedByPerson,
+              reportDate: executedAt || new Date().toISOString(),
+              greeting,
+              signOff,
+            };
+          }
+
+  - id: generate-email
+    type: action
+    data:
+      label: Generate Report Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.4
+        maxTokens: 1200
+        prompt: |
+          You are writing the middle section of a weekly performance report email.
+
+          Use ONLY the spreadsheet data below. Do not invent numbers, names, or metrics.
+          If the sheet is empty, say that no data was available for this period.
+
+          Spreadsheet data:
+          {{format-sheet-data.result.formatted}}
+
+          Per-person rows (one section per person in part 2):
+          {{format-sheet-data.result.formattedByPerson}}
+
+          Write ONLY the report content (no greeting, no sign-off) in plain text with
+          EXACTLY this two-part structure:
+
+          PART 1 — Executive summary (conclusion first)
+          - Start with 2-4 sentences summarizing overall team performance, totals, and key takeaways.
+          - Then add a short bullet list of team-level highlights (totals, who is ahead, who needs support).
+          - Use exact numbers from the data.
+
+          PART 2 — Individual breakdown
+          - After a blank line, add a heading: "Individual Details"
+          - For EACH person/row in the data, create a subsection:
+            - Person name on its own line (e.g. "Ahmed" or "Sara")
+            - Bullet points for every column/metric from their row (tasks completed, hours worked, status, remaining tasks, notes, etc.)
+            - Use the exact values from the spreadsheet — do not skip any column that has data.
+          - Cover every person in the sheet; do not merge people into one paragraph.
+
+          Keep it clear and professional. Return ONLY the report body — do not include
+          "Dear …", "Best regards", names from the sign-off, or a subject line.
+
+  - id: send-email
+    type: action
+    data:
+      label: Send Report Email
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{habits.env.HABITS_SMTP_USER}}"
+          password: "{{habits.env.HABITS_SMTP_PASSWORD}}"
+      params:
+        from: "{{habits.env.HABITS_EMAIL_FROM}}"
+        to: "{{habits.env.HABITS_REPORT_EMAIL_TO}}"
+        subject: "{{habits.env.HABITS_REPORT_EMAIL_SUBJECT}}"
+        body: |
+          {{format-sheet-data.result.greeting}}
+
+          {{generate-email}}
+
+          {{format-sheet-data.result.signOff}}
+
+  - id: extract-report-parts
+    type: script
+    data:
+      label: Extract Conclusion and Report
+      framework: script
+      source: inline
+      params:
+        emailContent: "{{generate-email}}"
+        reportDate: "{{format-sheet-data.result.reportDate}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(emailContent, reportDate) {
+            const text = String(emailContent || '').trim();
+            const marker = 'Individual Details';
+            const markerIndex = text.indexOf(marker);
+
+            let conclusion = text;
+            let report = '';
+
+            if (markerIndex >= 0) {
+              conclusion = text.slice(0, markerIndex).trim();
+              report = text.slice(markerIndex).trim();
+            }
+
+            return {
+              reportDate: reportDate || new Date().toISOString(),
+              conclusion,
+              report,
+            };
+          }
+
+  - id: save-report
+    type: action
+    data:
+      label: Save Report to Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: weekly_report_email_reports
+        document:
+          reportDate: "{{extract-report-parts.result.reportDate}}"
+          conclusion: "{{extract-report-parts.result.conclusion}}"
+          report: "{{extract-report-parts.result.report}}"
+          rowCount: "{{format-sheet-data.result.rowCount}}"
+          emailSent: "{{send-email.success}}"
+
+edges:
+  - source: schedule
+    target: read-sheet
+  - source: read-sheet
+    target: format-sheet-data
+  - source: format-sheet-data
+    target: generate-email
+  - source: generate-email
+    target: send-email
+  - source: send-email
+    target: extract-report-parts
+  - source: extract-report-parts
+    target: save-report
+
+output:
+  executedAt: "{{schedule.executedAt}}"
+  nextExecution: "{{schedule.nextExecution}}"
+  sheetRange: "{{read-sheet.range}}"
+  rowCount: "{{format-sheet-data.result.rowCount}}"
+  emailBody: "{{generate-email}}"
+  emailSent: "{{send-email.success}}"
+  messageId: "{{send-email.messageId}}"
+  savedReportId: "{{save-report.id}}"
