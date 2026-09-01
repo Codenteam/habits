@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+import { validateHubSpotV3Signature } from './hubspotSignature';
 import { validateSlackSignature } from './slackSignature';
 import { validateWhatsAppSignature } from './whatsappSignature';
 
@@ -18,11 +19,13 @@ export interface AuthenticateWebhookResult {
 }
 
 const SIGNATURE_HEADERS = [
+  'x-hubspot-signature-v3', // HubSpot webhooks (v3)
   'x-hub-signature-256', // Meta (WhatsApp, etc.)
   'x-slack-signature', // Slack
 ] as const;
 
 const validators: Record<string, WebhookValidator> = {
+  'x-hubspot-signature-v3': validateHubSpotV3Signature,
   'x-hub-signature-256': validateWhatsAppSignature,
   'x-slack-signature': validateSlackSignature,
 };
