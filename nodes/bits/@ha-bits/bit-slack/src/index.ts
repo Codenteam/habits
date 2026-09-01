@@ -10,6 +10,27 @@ interface SlackContext {
     token: string;
   };
   propsValue: Record<string, any>;
+  payload?: unknown;
+  webhookPayload?: WebhookFilterPayload;
+}
+
+interface WebhookFilterPayload {
+  body: any;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+  method: string;
+}
+
+interface SlackInboundMessage {
+  channel: string;
+  user: string;
+  text: string;
+  timestamp: string;
+  threadTs: string;
+  team: string;
+  eventType: string;
+  subtype: string;
+  raw: any;
 }
 
 interface SlackMessage {
@@ -32,18 +53,31 @@ interface SlackResponse {
 async function slackRequest(
   endpoint: string,
   body: any,
-  token: string
+  token: string,
+  method: 'GET' | 'POST' = 'POST',
 ): Promise<any> {
-  const url = `https://slack.com/api/${endpoint}`;
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
+  let url = `https://slack.com/api/${endpoint}`;
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const options: RequestInit = { method, headers };
+
+  if (method === 'GET') {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+      if (value !== undefined && value !== null) {
+        searchParams.set(key, String(value));
+      }
+    }
+    const qs = searchParams.toString();
+    if (qs) url += `?${qs}`;
+  } else {
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(url, options);
   
   const result = await response.json() as SlackResponse;
   
@@ -54,7 +88,90 @@ async function slackRequest(
   return result;
 }
 
+/**
+ * Extract inbound user messages from a Slack Events API event_callback payload.
+ * @see https://docs.slack.dev/apis/events-api/
+ */
+function extractInboundMessages(body: any): SlackInboundMessage[] {
+  if (!body || body.type !== 'event_callback' || !body.event) {
+    return [];
+  }
+
+  const event = body.event;
+  if (event.type !== 'message') {
+    return [];
+  }
+
+  // Skip bot messages and non-user message subtypes (edits, deletes, etc.)
+  if (event.bot_id || event.subtype === 'bot_message') {
+    return [];
+  }
+  if (event.subtype && !['file_share', 'thread_broadcast'].includes(event.subtype)) {
+    return [];
+  }
+
+  return [{
+    channel: String(event.channel ?? ''),
+    user: String(event.user ?? event.bot_id ?? ''),
+    text: String(event.text ?? ''),
+    timestamp: String(event.ts ?? event.event_ts ?? ''),
+    threadTs: String(event.thread_ts ?? ''),
+    team: String(body.team_id ?? ''),
+    eventType: String(event.type ?? 'message'),
+    subtype: String(event.subtype ?? ''),
+    raw: event,
+  }];
+}
+
+function hasInboundMessages(body: any): boolean {
+  return extractInboundMessages(body).length > 0;
+}
+
+function inboundMessageFilter(payload: WebhookFilterPayload): boolean {
+  if (payload.method === 'POST' && payload.body?.type === 'url_verification') {
+    return true;
+  }
+
+  if (payload.method !== 'POST') {
+    return false;
+  }
+
+  return payload.body?.type === 'event_callback' && hasInboundMessages(payload.body);
+}
+
+/**
+ * Slack Events API URL verification handshake.
+ * @see https://docs.slack.dev/apis/events-api/using-http-request-urls/
+ */
+async function inboundMessageHandshake(context: SlackContext): Promise<string | false> {
+  const body = context.webhookPayload?.body ?? {};
+  if (body.type !== 'url_verification') {
+    return false;
+  }
+
+  const challenge = String(body.challenge ?? '');
+  if (!challenge) {
+    return false;
+  }
+
+  console.log('[bit-slack] URL verification handshake succeeded');
+  return challenge;
+}
+
+async function inboundMessageRun(context: SlackContext) {
+  const body = context.webhookPayload?.body ?? context.payload;
+  const messages = extractInboundMessages(body);
+
+  return messages.map((msg) => ({
+    event: 'inboundMessage',
+    ...msg,
+    raw: body,
+  }));
+}
+
 const slackBit = {
+  // Vendor webhook routing: POST /webhook/v/slack
+  id: 'slack',
   displayName: 'Slack',
   description: 'Send messages and notifications to Slack channels',
   logoUrl: 'lucide:MessageSquareText',
@@ -357,6 +474,106 @@ const slackBit = {
     },
     
     /**
+     * Retrieve a thread of messages posted to a conversation
+     * @see https://docs.slack.dev/reference/methods/conversations.replies/
+     */
+    getConversationReplies: {
+      name: 'getConversationReplies',
+      displayName: 'Get Conversation Replies',
+      description: 'Retrieve a thread of messages posted to a conversation',
+      props: {
+        token: {
+          type: 'SECRET_TEXT',
+          displayName: 'Bot Token',
+          description: 'Slack Bot OAuth Token',
+          required: true,
+        },
+        channel: {
+          type: 'SHORT_TEXT',
+          displayName: 'Channel',
+          description: 'Conversation ID to fetch thread from',
+          required: true,
+        },
+        ts: {
+          type: 'SHORT_TEXT',
+          displayName: 'Thread Timestamp',
+          description: 'Parent message ts (thread root)',
+          required: true,
+        },
+      },
+      async run(context: SlackContext) {
+        const { token, channel, ts } = context.propsValue;
+
+        const authToken = context.auth?.token || token;
+        if (!authToken) {
+          throw new Error('Slack Bot Token is required');
+        }
+
+        console.log(`💬 Slack: Fetching replies for ${channel} thread ${ts}...`);
+
+        const result = await slackRequest('conversations.replies', { channel, ts }, authToken, 'GET');
+
+        return {
+          success: true,
+          channel,
+          ts,
+          messages: result.messages ?? [],
+          hasMore: result.has_more ?? false,
+        };
+      },
+    },
+
+    /**
+     * Get reactions for a specific message
+     * @see https://docs.slack.dev/reference/methods/reactions.get/
+     */
+    getReactions: {
+      name: 'getReactions',
+      displayName: 'Get Reactions',
+      description: 'Gets reactions for a specific message',
+      props: {
+        token: {
+          type: 'SECRET_TEXT',
+          displayName: 'Bot Token',
+          description: 'Slack Bot OAuth Token',
+          required: true,
+        },
+        channel: {
+          type: 'SHORT_TEXT',
+          displayName: 'Channel',
+          description: 'Channel where the message was posted',
+          required: true,
+        },
+        timestamp: {
+          type: 'SHORT_TEXT',
+          displayName: 'Message Timestamp',
+          description: 'Timestamp of the message to get reactions for',
+          required: true,
+        },
+      },
+      async run(context: SlackContext) {
+        const { token, channel, timestamp } = context.propsValue;
+
+        const authToken = context.auth?.token || token;
+        if (!authToken) {
+          throw new Error('Slack Bot Token is required');
+        }
+
+        console.log(`💬 Slack: Fetching reactions for ${channel} message ${timestamp}...`);
+
+        const result = await slackRequest('reactions.get', { channel, timestamp }, authToken, 'GET');
+
+        return {
+          success: true,
+          channel,
+          timestamp,
+          reactions: result.message?.reactions ?? [],
+          message: result.message,
+        };
+      },
+    },
+
+    /**
      * Add a reaction to a message
      */
     addReaction: {
@@ -382,41 +599,59 @@ const slackBit = {
           description: 'The ts of the message',
           required: true,
         },
-        emoji: {
+        name: {
           type: 'SHORT_TEXT',
-          displayName: 'Emoji',
+          displayName: 'Reaction Name',
           description: 'Emoji name without colons (e.g., thumbsup)',
           required: true,
         },
       },
       async run(context: SlackContext) {
-        const { token, channel, timestamp, emoji } = context.propsValue;
+        const { token, channel, timestamp, name } = context.propsValue;
         
         const authToken = context.auth?.token || token;
         if (!authToken) {
           throw new Error('Slack Bot Token is required');
         }
         
+        const reactionName = String(name).replace(/:/g, '');
+        
         const body = {
           channel,
           timestamp,
-          name: emoji.replace(/:/g, ''),
+          name: reactionName,
         };
         
-        console.log(`💬 Slack: Adding reaction :${emoji}: to message...`);
+        console.log(`💬 Slack: Adding reaction :${reactionName}: to message...`);
         
         await slackRequest('reactions.add', body, authToken);
         
         return {
           success: true,
-          emoji,
+          name: reactionName,
           timestamp,
         };
       },
     },
   },
   
-  triggers: {},
+  triggers: {
+    /**
+     * Inbound message trigger (Slack Events API).
+     * Configure Request URL in Slack app Event Subscriptions: https://<host>/webhook/v/slack
+     * @see https://docs.slack.dev/apis/events-api/using-http-request-urls/
+     */
+    inboundMessage: {
+      name: 'inboundMessage',
+      displayName: 'Inbound Message',
+      description: 'Triggers when a user posts a message in a channel the app is subscribed to',
+      type: 'WEBHOOK',
+      props: {},
+      filter: inboundMessageFilter,
+      onHandshake: inboundMessageHandshake,
+      run: inboundMessageRun,
+    },
+  },
 };
 
 export const slack = slackBit;

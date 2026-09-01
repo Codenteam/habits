@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: urgent-message-escalation-whatsapp
+  title: Urgent Message Escalation (WhatsApp)
+  subtitle: WhatsApp inbound → detect urgency → escalate → re-escalate if unacked
+  icon: "lucide:AlarmClock"
+  documentTitle: Urgent Message Escalation (WhatsApp)
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Urgent Message Escalation (WhatsApp)
+    subtitle: Background automation for WhatsApp Business
+    icon: "lucide:AlarmClock"
+
+widgets:
+  - kind: hero
+    icon: "lucide:Siren"
+    title: This showcase runs without a UI
+    subtitle: Send an urgent WhatsApp message — AI classifies it, posts a structured escalation to the on-call number, and re-escalates if nobody acknowledges within 15 minutes.
+
+  - kind: card
+    title: Status
+    children:
+      - kind: badge-list
+        values:
+          - Listening on /webhook/v/whatsapp
+          - Cron checks pending acks every 1 minute
+        tone: success
+      - kind: text
+        value: Send urgent phrases like "production down" or "client waiting" from a WhatsApp user to your business number. Escalations go to the configured on-call phone. Acknowledge by replying to the escalation message or reacting with ✅.
+        muted: true
+
+  - kind: empty-state
+    icon: "lucide:MessageSquareWarning"
+    title: Waiting for inbound messages
+    subtitle: Configure Meta webhook, WhatsApp credentials, and escalation phone in .env.

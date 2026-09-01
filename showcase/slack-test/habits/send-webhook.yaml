@@ -1,0 +1,29 @@
+id: send-webhook
+name: Send Slack Webhook Message
+description: Sends a message via Slack Incoming Webhook using @ha-bits/bit-slack.
+
+input:
+  - id: webhookUrl
+    type: string
+    required: true
+  - id: text
+    type: string
+    required: true
+
+nodes:
+  - id: post-webhook
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendWebhook
+      params:
+        webhookUrl: "{{habits.input.webhookUrl}}"
+        text: "{{habits.input.text}}"
+
+edges: []
+
+output:
+  success: "{{post-webhook.success}}"
+  timestamp: "{{post-webhook.timestamp}}"

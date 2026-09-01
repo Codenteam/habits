@@ -1,0 +1,35 @@
+id: get-conversation-replies
+name: Get Conversation Replies
+description: Retrieves thread replies via @ha-bits/bit-slack conversations.replies.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+# Slack scope: channels:history
+
+input:
+  - id: timestamp
+    type: string
+    required: true
+
+nodes:
+  - id: get-replies
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: getConversationReplies
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        ts: "{{habits.input.timestamp}}"
+
+edges: []
+
+output:
+  success: "{{get-replies.success}}"
+  channel: "{{get-replies.channel}}"
+  ts: "{{get-replies.ts}}"
+  messages: "{{get-replies.messages}}"
+  hasMore: "{{get-replies.hasMore}}"

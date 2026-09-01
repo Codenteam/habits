@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: ai-reply-and-routing-assistant-whatsapp
+  title: AI Reply and Routing Assistant (WhatsApp)
+  subtitle: WhatsApp inbound → classify → acknowledge → route
+  icon: "lucide:MessagesSquare"
+  documentTitle: AI Reply and Routing Assistant (WhatsApp)
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: AI Reply and Routing Assistant (WhatsApp)
+    subtitle: Background automation for WhatsApp Business
+    icon: "lucide:MessagesSquare"
+
+widgets:
+  - kind: hero
+    icon: "lucide:Bot"
+    title: This showcase runs without a UI
+    subtitle: Send a WhatsApp message to your business number — classification, acknowledgement, and routing happen automatically in the background.
+
+  - kind: card
+    title: Status
+    children:
+      - kind: badge-list
+        values:
+          - Listening on /webhook/v/whatsapp
+          - No manual actions required
+        tone: success
+      - kind: text
+        value: Customers get an immediate acknowledgement, then low-risk questions receive an AI reply. Every message is forwarded to the correct team phone — with or without the AI reply depending on risk.
+        muted: true
+
+  - kind: empty-state
+    icon: "lucide:MessageSquareMore"
+    title: Waiting for inbound messages
+    subtitle: Configure Meta webhook and team phone numbers in .env.

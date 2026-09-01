@@ -1,0 +1,42 @@
+id: forward-to-channel
+name: Forward to Team Channel
+description: Forward a summarized request to the routed Slack team channel
+
+nodes:
+  - id: forward
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{ticket.output.targetChannel}}"
+        text: |
+          *New {{ticket.output.routeCategory}} inquiry* ({{ticket.output.priority}} priority)
+
+          *From:* <@{{ticket.output.user}}>
+          *Channel:* <#{{ticket.output.sourceChannel}}>
+
+          *Risk:* {{ticket.output.riskLevel}} — {{ticket.output.riskReason}}
+          *Requires human review*
+
+          *Summary:*
+          {{ticket.output.summary}}
+
+          *Details:*
+          {{ticket.output.extractedDetails}}
+
+          *Original message:*
+          {{ticket.output.text}}
+
+          ────────────────────────────
+
+edges: []
+
+output:
+  success: "{{forward.success}}"
+  channel: "{{forward.channel}}"
+  timestamp: "{{forward.timestamp}}"
+  routeCategory: "{{ticket.output.routeCategory}}"

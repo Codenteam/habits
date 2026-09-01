@@ -1,0 +1,37 @@
+id: add-reaction
+name: Add Slack Reaction
+description: Adds an emoji reaction to a message via @ha-bits/bit-slack.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+# Slack scope: reactions:write
+
+input:
+  - id: timestamp
+    type: string
+    required: true
+  - id: name
+    type: string
+    required: true
+
+nodes:
+  - id: add-reaction
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: addReaction
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        timestamp: "{{habits.input.timestamp}}"
+        name: "{{habits.input.name}}"
+
+edges: []
+
+output:
+  success: "{{add-reaction.success}}"
+  name: "{{add-reaction.name}}"
+  timestamp: "{{add-reaction.timestamp}}"

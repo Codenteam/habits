@@ -1,0 +1,95 @@
+id: register-pending-ack
+name: Register Pending Acknowledgement
+description: Save an escalation record with a 15-minute acknowledgement deadline from the source message time
+
+nodes:
+  - id: compute-deadline
+    type: script
+    data:
+      label: Compute Escalation Deadline
+      framework: script
+      source: inline
+      params:
+        sourceTimestamp: "{{escalation.output.sourceTimestamp}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(sourceTimestamp) {
+            const now = new Date();
+            const tsSeconds = Number(sourceTimestamp);
+            const messageTime = Number.isFinite(tsSeconds) && tsSeconds > 0
+              ? new Date(tsSeconds * 1000)
+              : now;
+            const escalateAt = new Date(messageTime.getTime() + 15 * 60 * 1000);
+            return {
+              createdAt: now.toISOString(),
+              messageAt: messageTime.toISOString(),
+              escalateAt: escalateAt.toISOString(),
+            };
+          }
+
+  - id: save-record
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: whatsapp_urgent_escalations
+        document:
+          status: "pending_ack"
+          acknowledged: false
+          senderPhone: "{{escalation.output.senderPhone}}"
+          senderName: "{{escalation.output.senderName}}"
+          senderWaId: "{{escalation.output.senderWaId}}"
+          sourceMessageId: "{{escalation.output.sourceMessageId}}"
+          sourceMessageText: "{{escalation.output.sourceMessageText}}"
+          sourceTimestamp: "{{escalation.output.sourceTimestamp}}"
+          escalationPhone: "{{escalation.output.escalationPhone}}"
+          escalationMessageId: "{{escalation.output.escalationMessageId}}"
+          escalationText: "{{escalation.output.escalationText}}"
+          summary: "{{escalation.output.summary}}"
+          urgencyLevel: "{{escalation.output.urgencyLevel}}"
+          suggestedAction: "{{escalation.output.suggestedAction}}"
+          urgencyReason: "{{escalation.output.urgencyReason}}"
+          extractedDetails: "{{escalation.output.extractedDetails}}"
+          escalationRound: 1
+          createdAt: "{{compute-deadline.result.createdAt}}"
+          messageAt: "{{compute-deadline.result.messageAt}}"
+          escalateAt: "{{compute-deadline.result.escalateAt}}"
+          acknowledgedAt: ""
+          lastEscalatedAt: ""
+
+  - id: log-saved-record
+    type: action
+    data:
+      label: Log Saved Escalation Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-REGISTER-SAVED
+        message:
+          id: "{{save-record.id}}"
+          status: "pending_ack"
+          acknowledged: false
+          escalateAt: "{{compute-deadline.result.escalateAt}}"
+          escalationMessageId: "{{escalation.output.escalationMessageId}}"
+          senderPhone: "{{escalation.output.senderPhone}}"
+          summary: "{{escalation.output.summary}}"
+          urgencyLevel: "{{escalation.output.urgencyLevel}}"
+
+edges:
+  - source: compute-deadline
+    target: save-record
+  - source: save-record
+    target: log-saved-record
+
+output:
+  id: "{{save-record.id}}"
+  status: "pending_ack"
+  acknowledged: false
+  escalateAt: "{{compute-deadline.result.escalateAt}}"
+  escalationMessageId: "{{escalation.output.escalationMessageId}}"

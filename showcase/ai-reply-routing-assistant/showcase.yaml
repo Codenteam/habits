@@ -1,0 +1,61 @@
+# Showcase metadata for AI Reply and Routing Assistant example
+name: AI Reply and Routing Assistant
+type: automation
+description: Listens for inbound Slack messages, classifies them with AI, sends an acknowledgement, auto-replies for low-risk questions, and forwards to the correct team channel.
+
+longDescription: |
+  **AI Reply and Routing Assistant** listens for inbound Slack messages, classifies them with OpenAI,
+  sends an automatic acknowledgement in the same channel, optionally auto-replies for low-risk
+  questions, and forwards a summary to the correct team channel.
+
+  ## Environment variables 
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for message analysis |
+  | `HABITS_SLACK_BOT_TOKEN` | Slack bot token (`xoxb-...`) |
+  | `HABITS_SLACK_SIGNING_SECRET` | Slack app signing secret (verifies inbound Events API webhooks) |
+  | `HABITS_SLACK_CHANNEL_SALES` | Sales team channel ID |
+  | `HABITS_SLACK_CHANNEL_SUPPORT` | Support team channel ID |
+  | `HABITS_SLACK_CHANNEL_BILLING` | Billing team channel ID |
+  | `HABITS_SLACK_CHANNEL_TECHNICAL` | Technical team channel ID |
+  | `HABITS_SLACK_CHANNEL_HR` | HR team channel ID |
+  | `HABITS_SLACK_CHANNEL_GENERAL` | General inquiry channel ID |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables above.
+  2. For Slack app setup, scopes, event subscriptions, and webhook configuration, follow the [Slack integration guide] in documentation integrations.
+
+tags:
+  - ai
+  - automation
+  - integration
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key for message analysis)
+  - SLACK_BOT_TOKEN (Slack bot token)
+  - SLACK_SIGNING_SECRET (Slack app signing secret)
+  - SLACK_CHANNEL_SALES (Sales team channel ID)
+  - SLACK_CHANNEL_SUPPORT (Support team channel ID)
+  - SLACK_CHANNEL_BILLING (Billing team channel ID)
+  - SLACK_CHANNEL_TECHNICAL (Technical team channel ID)
+  - SLACK_CHANNEL_HR (HR team channel ID)
+  - SLACK_CHANNEL_GENERAL (General inquiry channel ID)
+
+habits:
+  - habits/slack-routing.yaml
+  - habits/analyze-message.yaml
+  - habits/route-category.yaml
+  - habits/send-acknowledgement.yaml
+  - habits/send-auto-reply.yaml
+  - habits/forward-to-channel.yaml
+  - habits/forward-with-auto-reply.yaml
+  - habits/process-message.yaml

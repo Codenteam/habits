@@ -1,0 +1,72 @@
+id: post-escalation
+name: Post Escalation
+description: Post a structured urgent escalation message to the on-call Slack channel
+
+nodes:
+  - id: build-message
+    type: script
+    data:
+      label: Build Escalation Message
+      framework: script
+      source: inline
+      params:
+        analyzed: "{{analyzedMessage.output}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(analyzed) {
+            const level = String(analyzed.urgencyLevel || 'high').toUpperCase();
+            const text = [
+              `🚨 *Urgent Message Escalation* (${level})`,
+              '',
+              `*From:* <@${analyzed.user}>`,
+              `*Source channel:* <#${analyzed.channel}>`,
+              '',
+              `*Summary:*`,
+              String(analyzed.summary || ''),
+              '',
+              `*Urgency reason:* ${String(analyzed.urgencyReason || '')}`,
+              '',
+              `*Suggested next action:*`,
+              String(analyzed.suggestedAction || ''),
+              '',
+              `*Details:*`,
+              String(analyzed.extractedDetails || ''),
+              '',
+              `*Original message:*`,
+              String(analyzed.text || ''),
+              '',
+              '────────────────────────────',
+              '_Reply in this thread or react with :eyes: or :white_check_mark: to acknowledge._',
+            ].join('\n');
+            return { escalationText: text };
+          }
+
+  - id: post
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_CHANNEL_ESCALATION}}"
+        text: "{{build-message.result.escalationText}}"
+
+edges:
+  - source: build-message
+    target: post
+
+output:
+  senderUserId: "{{analyzedMessage.output.user}}"
+  sourceChannel: "{{analyzedMessage.output.channel}}"
+  sourceMessageTs: "{{analyzedMessage.output.timestamp}}"
+  escalationChannel: "{{post.channel}}"
+  escalationMessageTs: "{{post.timestamp}}"
+  escalationText: "{{build-message.result.escalationText}}"
+  summary: "{{analyzedMessage.output.summary}}"
+  urgencyLevel: "{{analyzedMessage.output.urgencyLevel}}"
+  suggestedAction: "{{analyzedMessage.output.suggestedAction}}"
+  urgencyReason: "{{analyzedMessage.output.urgencyReason}}"
+  extractedDetails: "{{analyzedMessage.output.extractedDetails}}"

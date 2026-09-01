@@ -1,6 +1,6 @@
 ---
 title: "Slack"
-description: "Post messages and digests to Slack channels with a bot token"
+description: "Post messages, use Incoming Webhooks, and receive channel events with @ha-bits/bit-slack"
 ---
 
 # Slack
@@ -14,8 +14,11 @@ Use `@ha-bits/bit-slack` to post curated digests and notifications to Slack chan
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `HABITS_SLACK_BOT_TOKEN` | Bot User OAuth Token | `xoxb-...` |
+| `HABITS_SLACK_SIGNING_SECRET` | App signing secret (verifies inbound Events API requests) | From app **Basic Information** → **Signing Secret** |
 | `HABITS_SLACK_DIGEST_CHANNEL` | Channel ID for digest posts | `C08XXXXXXXX` |
 | `SLACK_BOT_TOKEN` | Alternate naming (MCP demo) | `xoxb-...` |
+
+Get `HABITS_SLACK_SIGNING_SECRET` from [api.slack.com/apps](https://api.slack.com/apps) → your app → **Basic Information** → **App Credentials** → **Signing Secret** → **Show**.
 
 ## Setup
 
@@ -42,6 +45,9 @@ If you don't already have a workspace:
    |-------|---------|
    | `chat:write` | Post messages to channels |
    | `channels:read` | List public channels (to find channel IDs) |
+   | `reactions:write` | Add reaction on msg |
+   | `reactions:read` | Read msg reaction |
+   | `channels:history` | View msgs sent to the channels |
 
 3. Click **Save Changes**.
 
@@ -72,7 +78,57 @@ HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 
 ```env
 HABITS_SLACK_BOT_TOKEN=xoxb-...
+HABITS_SLACK_SIGNING_SECRET=your-signing-secret-here
 HABITS_SLACK_DIGEST_CHANNEL=C08XXXXXXXX
 ```
+
+> **Note:** After adding or changing scopes (**OAuth & Permissions** → **Bot Token Scopes**), click **Reinstall to Workspace** and copy the new **Bot User OAuth Token** into `.env`. Tokens issued before reinstall do not include newly added scopes.
+
+## Incoming Webhook (no bot token)
+
+Use the `sendWebhook` action to post a message with only a **webhook URL** and **text** — no `HABITS_SLACK_BOT_TOKEN` or channel ID in `.env`. Messages go to the channel you pick when creating the webhook.
+
+1. Open [api.slack.com/apps](https://api.slack.com/apps) and select your app.
+2. Go to **Incoming Webhooks** → turn **Activate Incoming Webhooks** on.
+3. Click **Add New Webhook to Workspace**, choose the target channel, and authorize.
+4. Copy the webhook URL (`https://hooks.slack.com/services/...`) into your workflow or UI showcase **Webhook URL** field.
+
+Pass `webhookUrl` and `text` to `sendWebhook` in a habit workflow, or try it in the slack-test UI.
+
+## Event Subscriptions (inbound message trigger)
+
+The `inboundMessage` trigger receives user messages from channels your app is subscribed to. Habits Cortex verifies each request with `HABITS_SLACK_SIGNING_SECRET` before dispatching to your workflow. The endpoint is:
+
+```
+/webhook/v/slack
+```
+
+### On your system
+
+**Before** pasting the Request URL in Slack, start your habit server and expose it (local dev needs a public URL):
+
+```bash
+pnpm habits dev showcase/slack-test/stack.yaml
+ngrok http 13000
+```
+
+Use the ngrok HTTPS URL:
+
+```
+https://<your-ngrok-host>/webhook/v/slack
+```
+
+Register a workflow with an `inboundMessage` trigger node (`module: "@ha-bits/bit-slack"`, `operation: inboundMessage`).
+
+### In the Slack app
+
+> **Disable Socket Mode first.** Habits uses HTTP Event Subscriptions (a Request URL), not Socket Mode. If **Event Subscriptions** shows *"Socket Mode is enabled. You won't need to specify a Request URL"*, open **Socket Mode** in the left sidebar, turn **Enable Socket Mode** **off**, save, then return to **Event Subscriptions**.
+
+1. Go to **Event Subscriptions** → turn it **On**.
+2. Paste the endpoint above as **Request URL**. Slack sends a verification request — status should show **Verified** when the server is running and the trigger is registered.
+3. Under **Subscribe to bot events**, add `message.channels` (public channels) and/or `message.groups` (private channels).
+4. Ensure scopes include `channels:history` (and related scopes from the table above), **Save**, then **Reinstall to Workspace**. Update `HABITS_SLACK_BOT_TOKEN` in `.env` if the token changed.
+5. Invite the bot to the channel you will test (`/invite @YourBot`).
+6. Post a message in that channel — the server terminal logs the inbound payload from the trigger workflow.
 
 <IntegrationShowcases integration="slack" />

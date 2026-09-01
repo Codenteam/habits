@@ -1,0 +1,337 @@
+id: handle-whatsapp-ack
+name: Handle WhatsApp Acknowledgement
+description: >
+  Receives WhatsApp replies or reactions to escalation messages, uses OpenAI to
+  detect acknowledgement, and marks the matching database record as acknowledged.
+
+nodes:
+  - id: whatsapp-inbound
+    type: trigger
+    data:
+      label: WhatsApp Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params:
+        verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{whatsapp-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const entry = payload?.entry?.[0];
+            const change = entry?.changes?.[0]?.value;
+            const msg = change?.messages?.[0];
+            const contact = change?.contacts?.[0];
+            const messageType = String(msg?.type || '');
+
+            const replyToMessageId = msg?.context?.id != null
+              ? String(msg.context.id)
+              : undefined;
+            const reactedToMessageId = messageType === 'reaction' && msg?.reaction?.message_id != null
+              ? String(msg.reaction.message_id)
+              : undefined;
+            const parentMessageId = replyToMessageId ?? reactedToMessageId ?? '';
+
+            const text = String(
+              msg?.text?.body
+              || msg?.button?.text
+              || msg?.interactive?.button_reply?.title
+              || ''
+            );
+            const reactionEmoji = messageType === 'reaction' && msg?.reaction
+              ? String(msg.reaction.emoji ?? '')
+              : '';
+
+            return {
+              from: String(msg?.from || ''),
+              text,
+              messageId: String(msg?.id || ''),
+              messageType,
+              contactName: String(contact?.profile?.name || ''),
+              parentMessageId,
+              replyToMessageId: replyToMessageId || '',
+              reactedToMessageId: reactedToMessageId || '',
+              reactionEmoji,
+            };
+          }
+
+  - id: filter-ack-candidates
+    type: script
+    data:
+      label: Filter Ack Candidates
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-inbound.result}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed) {
+            if (!parsed?.parentMessageId) {
+              return { skip: true, reason: 'no_parent_message' };
+            }
+            return { skip: false, ack: parsed };
+          }
+
+  - id: check-is-ack-candidate
+    type: bits
+    data:
+      label: Is Ack Candidate?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Process
+            value1: "{{filter-ack-candidates.result.skip}}"
+            operator: equals
+            value2: false
+            output: process
+        includeElse: true
+        defaultOutput: skip
+
+  - id: log-skipped-ack
+    type: action
+    data:
+      label: Log Skipped Ack Check
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-SKIP-ACK
+        message:
+          reason: "{{filter-ack-candidates.result.reason}}"
+          from: "{{parse-inbound.result.from}}"
+          messageType: "{{parse-inbound.result.messageType}}"
+
+  - id: lookup-escalation
+    type: bits
+    data:
+      label: Lookup Escalation Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: whatsapp_urgent_escalations
+        filter: '{"escalationMessageId": "{{filter-ack-candidates.result.ack.parentMessageId}}", "status": "pending_ack", "acknowledged": false}'
+        limit: 1
+
+  - id: filter-found-record
+    type: script
+    data:
+      label: Filter Found Record
+      framework: script
+      source: inline
+      params:
+        lookup: "{{lookup-escalation}}"
+        ack: "{{filter-ack-candidates.result.ack}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(lookup, ack) {
+            const record = lookup?.results?.[0];
+            if (!record) {
+              return { skip: true, reason: 'no_matching_escalation' };
+            }
+            return { skip: false, record, ack };
+          }
+
+  - id: check-record-found
+    type: bits
+    data:
+      label: Record Found?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Found
+            value1: "{{filter-found-record.result.skip}}"
+            operator: equals
+            value2: false
+            output: found
+        includeElse: true
+        defaultOutput: not_found
+
+  - id: log-no-record
+    type: action
+    data:
+      label: Log No Matching Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-NO-RECORD
+        message:
+          parentMessageId: "{{filter-ack-candidates.result.ack.parentMessageId}}"
+          from: "{{filter-ack-candidates.result.ack.from}}"
+
+  - id: ai-check-ack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are verifying whether a WhatsApp escalation has been acknowledged by a human.
+
+          ESCALATION CONTEXT:
+          - Urgency: {{filter-found-record.result.record.urgencyLevel}}
+          - Summary: {{filter-found-record.result.record.summary}}
+          - Suggested action: {{filter-found-record.result.record.suggestedAction}}
+          - Escalation round: {{filter-found-record.result.record.escalationRound}}
+
+          INBOUND ACKNOWLEDGEMENT ATTEMPT:
+          - Message type: {{filter-found-record.result.ack.messageType}}
+          - Reply text: {{filter-found-record.result.ack.text}}
+          - Reaction emoji: {{filter-found-record.result.ack.reactionEmoji}}
+          - Parent message ID: {{filter-found-record.result.ack.parentMessageId}}
+
+          RULES:
+          - Reply text such as "on it", "looking", "ack", "got it", "confirmed", "will handle" = acknowledged
+          - Reaction emojis like ✅, 👍, 👀, 🙏, ✔️ = acknowledged
+          - Empty reaction (user removed reaction) = NOT acknowledged
+          - Unrelated reply text = NOT acknowledged
+          - When uncertain, return acknowledged: false
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences:
+            - acknowledged: boolean
+            - reason: brief explanation
+        maxTokens: 400
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: branch-on-ack
+    type: bits
+    data:
+      label: Acknowledged?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Acknowledged
+            value1: "{{ai-check-ack.acknowledged}}"
+            operator: equals
+            value2: true
+            output: acknowledged
+        includeElse: true
+        defaultOutput: not_acknowledged
+
+  - id: mark-acknowledged
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: update
+      params:
+        collection: whatsapp_urgent_escalations
+        filter:
+          _id: "{{filter-found-record.result.record._id}}"
+        update:
+          status: acknowledged
+          acknowledged: true
+          acknowledgedAt: "{{habits.now}}"
+          ackMessageId: "{{filter-found-record.result.ack.messageId}}"
+          ackReplyText: "{{filter-found-record.result.ack.text}}"
+          ackReactionEmoji: "{{filter-found-record.result.ack.reactionEmoji}}"
+
+  - id: log-acknowledged
+    type: action
+    data:
+      label: Log Acknowledged
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-ACKNOWLEDGED
+        message:
+          escalationId: "{{filter-found-record.result.record._id}}"
+          reason: "{{ai-check-ack.reason}}"
+          ackMessageId: "{{filter-found-record.result.ack.messageId}}"
+
+  - id: log-not-acknowledged
+    type: action
+    data:
+      label: Log Not Acknowledged
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-NOT-ACKNOWLEDGED
+        message:
+          escalationId: "{{filter-found-record.result.record._id}}"
+          reason: "{{ai-check-ack.reason}}"
+          replyText: "{{filter-found-record.result.ack.text}}"
+          reactionEmoji: "{{filter-found-record.result.ack.reactionEmoji}}"
+
+edges:
+  - source: whatsapp-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: filter-ack-candidates
+  - source: filter-ack-candidates
+    target: check-is-ack-candidate
+  - source: check-is-ack-candidate
+    target: lookup-escalation
+    sourceHandle: branch-0
+  - source: check-is-ack-candidate
+    target: log-skipped-ack
+    sourceHandle: branch-1
+  - source: lookup-escalation
+    target: filter-found-record
+  - source: filter-found-record
+    target: check-record-found
+  - source: check-record-found
+    target: ai-check-ack
+    sourceHandle: branch-0
+  - source: check-record-found
+    target: log-no-record
+    sourceHandle: branch-1
+  - source: ai-check-ack
+    target: branch-on-ack
+  - source: branch-on-ack
+    target: mark-acknowledged
+    sourceHandle: branch-0
+  - source: mark-acknowledged
+    target: log-acknowledged
+  - source: branch-on-ack
+    target: log-not-acknowledged
+    sourceHandle: branch-1
+
+output:
+  skipped: "{{filter-ack-candidates.result.skip}}"
+  skipReason: "{{filter-ack-candidates.result.reason}}"
+  recordFound: "{{filter-found-record.result.skip}}"
+  acknowledged: "{{ai-check-ack.acknowledged}}"
+  reason: "{{ai-check-ack.reason}}"
+  escalationId: "{{filter-found-record.result.record._id}}"

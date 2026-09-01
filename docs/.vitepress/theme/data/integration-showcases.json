@@ -35,6 +35,14 @@
       "name": "AI Invoice Mailer"
     },
     {
+      "slug": "ai-reply-routing-assistant",
+      "name": "AI Reply and Routing Assistant"
+    },
+    {
+      "slug": "ai-reply-and-routing-assistant-whatsapp",
+      "name": "AI Reply and Routing Assistant (WhatsApp)"
+    },
+    {
       "slug": "resume-tailor",
       "name": "AI Resume Tailor"
     },
@@ -122,9 +130,21 @@
     {
       "slug": "study-flashcards",
       "name": "Study Flashcards"
+    },
+    {
+      "slug": "urgent-message-escalation",
+      "name": "Urgent Message Escalation"
+    },
+    {
+      "slug": "urgent-message-escalation-whatsapp",
+      "name": "Urgent Message Escalation (WhatsApp)"
     }
   ],
   "slack": [
+    {
+      "slug": "ai-reply-routing-assistant",
+      "name": "AI Reply and Routing Assistant"
+    },
     {
       "slug": "email-digest-summarizer",
       "name": "Email Digest Summarizer"
@@ -132,6 +152,10 @@
     {
       "slug": "rss-digest-summarizer",
       "name": "RSS Digest Summarizer"
+    },
+    {
+      "slug": "urgent-message-escalation",
+      "name": "Urgent Message Escalation"
     }
   ],
   "hubspot": [
@@ -191,7 +215,16 @@
       "name": "Social Media Multi-Posting"
     }
   ],
-  "whatsapp": [],
+  "whatsapp": [
+    {
+      "slug": "ai-reply-and-routing-assistant-whatsapp",
+      "name": "AI Reply and Routing Assistant (WhatsApp)"
+    },
+    {
+      "slug": "urgent-message-escalation-whatsapp",
+      "name": "Urgent Message Escalation (WhatsApp)"
+    }
+  ],
   "intersect": [
     {
       "slug": "ai-cookbook",
@@ -209,7 +242,6 @@
   "snov": [],
   "salesforce": [],
   "gohighlevel": [],
-  "recaptcha": [],
   "sumsub": [
     {
       "slug": "finance-banking-customer-onboarding",
@@ -217,6 +249,7 @@
       "improving": true
     }
   ],
+  "recaptcha": [],
   "mcp-servers": [
     {
       "slug": "agent-mcp-demo",

@@ -1,0 +1,46 @@
+version: "1.0"
+name: "Urgent Message Escalation"
+description: >
+  Detects urgent Slack messages with AI, posts structured escalations to an on-call
+  channel, and re-escalates if nobody acknowledges within 15 minutes.
+
+workflows:
+  - id: analyze-urgency
+    path: ./habits/analyze-urgency.yaml
+    enabled: true
+
+  - id: post-escalation
+    path: ./habits/post-escalation.yaml
+    enabled: true
+
+  - id: register-pending-ack
+    path: ./habits/register-pending-ack.yaml
+    enabled: true
+
+  - id: process-urgent-message
+    path: ./habits/process-urgent-message.yaml
+    enabled: true
+
+  - id: verify-and-escalate
+    path: ./habits/verify-and-escalate.yaml
+    enabled: true
+
+  - id: check-pending-acks
+    path: ./habits/check-pending-acks.yaml
+    enabled: true
+
+  - id: slack-urgent-routing
+    path: ./habits/slack-urgent-routing.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  openapi: true
+  frontend: ./frontend
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

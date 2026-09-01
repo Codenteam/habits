@@ -1,0 +1,98 @@
+id: check-pending-acks
+name: Check Pending Acknowledgements
+description: >-
+  Cron habit that runs every 1 minute. Fetches unacknowledged escalations whose
+  re-escalation deadline has passed, then re-escalates each one.
+
+nodes:
+  - id: cron-trigger
+    type: trigger
+    data:
+      label: Cron Trigger
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-scheduler"
+      operation: schedule
+      triggerType: polling
+      isTrigger: true
+      params:
+        cronExpression: "*/1 * * * *"
+        timezone: "UTC"
+        enabled: true
+
+  - id: log-cron-tick
+    type: action
+    data:
+      label: Log Cron Tick
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-CRON-TICK
+        message:
+          executedAt: "{{cron-trigger.executedAt}}"
+          cronExpression: "{{cron-trigger.cronExpression}}"
+          executionCount: "{{cron-trigger.executionCount}}"
+          nextExecution: "{{cron-trigger.nextExecution}}"
+
+  - id: get-overdue
+    type: bits
+    data:
+      label: Get Overdue Escalations
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: whatsapp_urgent_escalations
+        filter: '{"status": "pending_ack", "acknowledged": false, "escalateAt": {"$lte": "{{cron-trigger.executedAt}}"}}'
+        limit: 20
+
+  - id: log-overdue-results
+    type: action
+    data:
+      label: Log Overdue Query Results
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-OVERDUE-RESULTS
+        message:
+          queryExecutedAt: "{{cron-trigger.executedAt}}"
+          count: "{{get-overdue.count}}"
+          results: "{{get-overdue.results}}"
+
+  - id: re-escalate-each
+    type: action
+    data:
+      label: Re-escalate Each Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-overdue.results}}"
+        habitId: re-escalate-unacked
+        inputKey: escalation
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: cron-trigger
+    target: log-cron-tick
+  - source: log-cron-tick
+    target: get-overdue
+  - source: get-overdue
+    target: log-overdue-results
+  - source: log-overdue-results
+    target: re-escalate-each
+
+output:
+  overdue: "{{get-overdue.results}}"
+  totalOverdue: "{{get-overdue.count}}"
+  processed: "{{re-escalate-each.successCount}}"
+  results: "{{re-escalate-each.results}}"
+  checkedAt: "{{cron-trigger.executedAt}}"
+  nextExecution: "{{cron-trigger.nextExecution}}"

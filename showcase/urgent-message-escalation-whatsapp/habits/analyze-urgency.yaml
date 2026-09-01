@@ -1,0 +1,64 @@
+id: analyze-urgency
+name: Analyze Message Urgency
+description: Detect urgency, deadlines, complaints, outages, and escalation phrases with OpenAI
+
+nodes:
+  - id: analyze
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are an urgent message escalation assistant for WhatsApp Business.
+
+          Analyze the incoming message and decide whether it requires immediate human attention.
+
+          URGENT SIGNALS (any of these → isUrgent: true):
+          - Explicit urgency: "ASAP", "urgent", "immediately", "right now"
+          - Outages: "production down", "site is down", "API failing", "outage"
+          - Waiting clients: "client waiting", "customer on the phone", "deal at risk"
+          - Complaints: angry tone, threats to cancel, repeated follow-ups, escalation requests
+          - Hard deadlines: "by EOD", "before the meeting", "expires today"
+          - Security or data incidents
+
+          INCOMING MESSAGE:
+          - From: {{message.from}} ({{message.contactName}})
+          - Type: {{message.messageType}}
+          - Text:
+          {{message.text}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - isUrgent:       boolean — true only when immediate human action is needed
+            - urgencyLevel:   one of (critical, high, medium, low) — use low when isUrgent is false
+            - confidence:     number from 0.0 to 1.0
+            - summary:        brief 1-2 sentence summary for the on-call team
+            - suggestedAction: one clear next step for the responder (e.g. "Call the client and check production logs")
+            - urgencyReason:  brief reason why this is or is not urgent
+            - extractedDetails: key facts as a short bullet list (names, dates, systems, clients)
+        maxTokens: 700
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  from: "{{message.from}}"
+  contactName: "{{message.contactName}}"
+  waId: "{{message.waId}}"
+  text: "{{message.text}}"
+  messageId: "{{message.messageId}}"
+  messageType: "{{message.messageType}}"
+  timestamp: "{{message.timestamp}}"
+  isUrgent: "{{analyze.isUrgent}}"
+  urgencyLevel: "{{analyze.urgencyLevel}}"
+  confidence: "{{analyze.confidence}}"
+  summary: "{{analyze.summary}}"
+  suggestedAction: "{{analyze.suggestedAction}}"
+  urgencyReason: "{{analyze.urgencyReason}}"
+  extractedDetails: "{{analyze.extractedDetails}}"

@@ -1,0 +1,88 @@
+id: forward-with-auto-reply
+name: Forward with Auto Reply
+description: Forward a low-risk inquiry to the team phone, including the auto-reply sent to the customer
+
+nodes:
+  - id: build-message
+    type: script
+    data:
+      label: Build Forward Message
+      framework: script
+      source: inline
+      params:
+        ticket: "{{ticket.output}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(ticket) {
+            const text = [
+              `*New ${ticket.routeCategory} inquiry* (${ticket.priority} priority) — *auto-replied*`,
+              '',
+              `*From:* ${ticket.contactName} (${ticket.from})`,
+              '',
+              `*Risk:* ${ticket.riskLevel} — ${ticket.riskReason}`,
+              '',
+              '*Summary:*',
+              String(ticket.summary || ''),
+              '',
+              '*Auto-reply sent to customer:*',
+              String(ticket.finalReply || ''),
+              '',
+              '*Details:*',
+              String(ticket.extractedDetails || ''),
+              '',
+              '*Original message:*',
+              String(ticket.text || ''),
+              '',
+              '────────────────────────────',
+            ].join('\n');
+            return { text };
+          }
+
+  - id: build-outbound
+    type: script
+    data:
+      label: Build Outbound Payload
+      framework: script
+      source: inline
+      params:
+        recipient: "{{ticket.output.targetPhone}}"
+        message: "{{build-message.result.text}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(recipient, message) {
+            return {
+              items: [{
+                recipient: String(recipient || '').trim(),
+                message: String(message || ''),
+                replyToMessageId: '',
+              }],
+            };
+          }
+
+  - id: send
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{build-outbound.result.items}}"
+        habitId: send-whatsapp-session-aware
+        inputKey: spread
+        collectResults: true
+
+edges:
+  - source: build-message
+    target: build-outbound
+  - source: build-outbound
+    target: send
+
+output:
+  success: "{{send.results[0].output.success}}"
+  messageId: "{{send.results[0].output.messageId}}"
+  targetPhone: "{{ticket.output.targetPhone}}"
+  routeCategory: "{{ticket.output.routeCategory}}"
+  templateSent: "{{send.results[0].output.templateSent}}"

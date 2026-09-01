@@ -1,0 +1,35 @@
+id: get-reactions
+name: Get Slack Reactions
+description: Gets reactions for a message via @ha-bits/bit-slack reactions.get.
+
+# Required env vars:
+#   HABITS_SLACK_BOT_TOKEN
+#   HABITS_SLACK_DIGEST_CHANNEL
+# Slack scope: reactions:read
+
+input:
+  - id: timestamp
+    type: string
+    required: true
+
+nodes:
+  - id: get-reactions
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: getReactions
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        timestamp: "{{habits.input.timestamp}}"
+
+edges: []
+
+output:
+  success: "{{get-reactions.success}}"
+  channel: "{{get-reactions.channel}}"
+  timestamp: "{{get-reactions.timestamp}}"
+  reactions: "{{get-reactions.reactions}}"
+  message: "{{get-reactions.message}}"

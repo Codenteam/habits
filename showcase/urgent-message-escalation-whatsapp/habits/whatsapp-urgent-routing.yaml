@@ -1,0 +1,188 @@
+id: whatsapp-urgent-routing
+name: WhatsApp Urgent Message Routing
+description: >
+  Orchestrates the urgent WhatsApp escalation pipeline:
+  1. Receives inbound WhatsApp messages via Meta webhook
+  2. Skips replies and reactions (handled by handle-whatsapp-ack)
+  3. Analyzes each new message with OpenAI for urgency
+  4. Posts structured escalations and registers pending acknowledgements
+
+nodes:
+  - id: whatsapp-inbound
+    type: trigger
+    data:
+      label: WhatsApp Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params:
+        verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{whatsapp-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const entry = payload?.entry?.[0];
+            const change = entry?.changes?.[0]?.value;
+            const msg = change?.messages?.[0];
+            const contact = change?.contacts?.[0];
+            const messageType = String(msg?.type || '');
+
+            const replyToMessageId = msg?.context?.id != null
+              ? String(msg.context.id)
+              : undefined;
+            const reactedToMessageId = messageType === 'reaction' && msg?.reaction?.message_id != null
+              ? String(msg.reaction.message_id)
+              : undefined;
+            const parentMessageId = replyToMessageId ?? reactedToMessageId;
+
+            const text = String(
+              msg?.text?.body
+              || msg?.button?.text
+              || msg?.interactive?.button_reply?.title
+              || msg?.reaction?.emoji
+              || ''
+            );
+
+            return {
+              from: String(msg?.from || ''),
+              text,
+              messageId: String(msg?.id || ''),
+              messageType,
+              contactName: String(contact?.profile?.name || ''),
+              waId: String(contact?.wa_id || msg?.from || ''),
+              phoneNumberId: String(change?.metadata?.phone_number_id || ''),
+              timestamp: String(msg?.timestamp || ''),
+              parentMessageId: parentMessageId || '',
+              replyToMessageId: replyToMessageId || '',
+              reactedToMessageId: reactedToMessageId || '',
+              reactionEmoji: messageType === 'reaction' && msg?.reaction
+                ? String(msg.reaction.emoji ?? '')
+                : '',
+            };
+          }
+
+  - id: filter-intake-messages
+    type: script
+    data:
+      label: Filter Intake Messages
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-inbound.result}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed) {
+            if (!parsed?.text && parsed?.messageType !== 'text') {
+              return { skip: true, reason: 'empty_message' };
+            }
+
+            if (parsed.parentMessageId) {
+              return { skip: true, reason: 'reply_or_reaction' };
+            }
+
+            if (parsed.messageType === 'reaction') {
+              return { skip: true, reason: 'reaction' };
+            }
+
+            return { skip: false, message: parsed };
+          }
+
+  - id: check-should-analyze
+    type: bits
+    data:
+      label: Should Analyze Message?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Analyze
+            value1: "{{filter-intake-messages.result.skip}}"
+            operator: equals
+            value2: false
+            output: analyze
+        includeElse: true
+        defaultOutput: skip
+
+  - id: log-skipped-message
+    type: action
+    data:
+      label: Log Skipped Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: UME-WA-SKIP-INBOUND
+        message:
+          reason: "{{filter-intake-messages.result.reason}}"
+          from: "{{parse-inbound.result.from}}"
+          messageType: "{{parse-inbound.result.messageType}}"
+          parentMessageId: "{{parse-inbound.result.parentMessageId}}"
+          text: "{{parse-inbound.result.text}}"
+
+  - id: analyze-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{filter-intake-messages.result.message}}"
+        habitId: analyze-urgency
+        inputKey: message
+        continueOnError: true
+        collectResults: true
+
+  - id: process-messages
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{analyze-messages.results}}"
+        habitId: process-urgent-message
+        inputKey: analyzedMessage
+        delayMs: 300
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: whatsapp-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: filter-intake-messages
+  - source: filter-intake-messages
+    target: check-should-analyze
+  - source: check-should-analyze
+    target: analyze-messages
+    sourceHandle: branch-0
+  - source: check-should-analyze
+    target: log-skipped-message
+    sourceHandle: branch-1
+  - source: analyze-messages
+    target: process-messages
+
+output:
+  skipped: "{{filter-intake-messages.result.skip}}"
+  skipReason: "{{filter-intake-messages.result.reason}}"
+  messagesProcessed: "{{process-messages.successCount}}"
+  results: "{{process-messages.results}}"

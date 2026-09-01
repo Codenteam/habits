@@ -1,0 +1,70 @@
+# Showcase metadata for AI Reply and Routing Assistant (WhatsApp) example
+name: AI Reply and Routing Assistant (WhatsApp)
+type: automation
+description: Listens for inbound WhatsApp messages, classifies them with AI, sends an acknowledgement, auto-replies for low-risk questions, and forwards to the correct team phone number.
+
+longDescription: |
+  **AI Reply and Routing Assistant (WhatsApp)** listens for inbound WhatsApp customer messages,
+  classifies them with OpenAI, sends an automatic acknowledgement, optionally auto-replies for
+  low-risk questions, and forwards a summary to the correct team phone number.
+
+  ## Environment variables
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for message analysis |
+  | `HABITS_WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API permanent access token |
+  | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
+  | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token (same value in Meta App Dashboard) |
+  | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (verifies `X-Hub-Signature-256` on inbound webhooks) |
+  | `HABITS_WHATSAPP_SESSION_TEMPLATE` | Approved template for first outbound to team phones (outside 24h window) |
+  | `HABITS_WHATSAPP_SESSION_TEMPLATE_LANGUAGE` | Template language code (e.g. `en_US`) |
+  | `HABITS_WHATSAPP_TEAM_SALES_PHONE` | Sales team phone (E.164) |
+  | `HABITS_WHATSAPP_TEAM_SUPPORT_PHONE` | Support team phone (E.164) |
+  | `HABITS_WHATSAPP_TEAM_BILLING_PHONE` | Billing team phone (E.164) |
+  | `HABITS_WHATSAPP_TEAM_TECHNICAL_PHONE` | Technical team phone (E.164) |
+  | `HABITS_WHATSAPP_TEAM_HR_PHONE` | HR team phone (E.164) |
+  | `HABITS_WHATSAPP_TEAM_GENERAL_PHONE` | General inquiry team phone (E.164) |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables above.
+  2. For Meta app setup, access tokens, webhooks, test recipients, and message templates, follow the [WhatsApp integration guide] in documentation integrations.
+
+tags:
+  - ai
+  - automation
+  - integration
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key for message analysis)
+  - WHATSAPP_ACCESS_TOKEN (WhatsApp Cloud API permanent access token)
+  - WHATSAPP_PHONE_NUMBER_ID (WhatsApp Business phone number ID)
+  - WHATSAPP_VERIFY_TOKEN (Webhook verify token)
+  - WHATSAPP_APP_SECRET (Meta app secret for inbound webhook verification)
+  - WHATSAPP_SESSION_TEMPLATE (Approved template for session-aware outbound)
+  - WHATSAPP_SESSION_TEMPLATE_LANGUAGE (Template language code)
+  - WHATSAPP_TEAM_SALES_PHONE (Sales team phone in E.164 format)
+  - WHATSAPP_TEAM_SUPPORT_PHONE (Support team phone in E.164 format)
+  - WHATSAPP_TEAM_BILLING_PHONE (Billing team phone in E.164 format)
+  - WHATSAPP_TEAM_TECHNICAL_PHONE (Technical team phone in E.164 format)
+  - WHATSAPP_TEAM_HR_PHONE (HR team phone in E.164 format)
+  - WHATSAPP_TEAM_GENERAL_PHONE (General inquiry team phone in E.164 format)
+
+habits:
+  - habits/whatsapp-routing.yaml
+  - habits/analyze-message.yaml
+  - habits/route-category.yaml
+  - habits/send-acknowledgement.yaml
+  - habits/send-auto-reply.yaml
+  - habits/forward-msg.yaml
+  - habits/forward-with-auto-reply.yaml
+  - habits/send-whatsapp-session-aware.yaml
+  - habits/process-message.yaml

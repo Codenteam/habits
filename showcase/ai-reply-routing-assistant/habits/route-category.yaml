@@ -1,0 +1,66 @@
+id: route-category
+name: Route by Category
+description: Branch on routeCategory and resolve the matching Slack channel ID
+
+nodes:
+  - id: route-category
+    type: bits
+    data:
+      label: Route by Category
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Sales
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: sales
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_SALES}}"
+          - label: Support
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: support
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_SUPPORT}}"
+          - label: Billing
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: billing
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_BILLING}}"
+          - label: Technical
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: technical
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_TECHNICAL}}"
+          - label: HR
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: hr
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_HR}}"
+          - label: General
+            value1: "{{analyzedMessage.output.routeCategory}}"
+            operator: equals
+            value2: general
+            output: "{{habits.env.HABITS_SLACK_CHANNEL_GENERAL}}"
+        includeElse: true
+        defaultOutput: "{{habits.env.HABITS_SLACK_CHANNEL_GENERAL}}"
+
+edges: []
+
+output:
+  targetChannel: "{{route-category.output}}"
+  sourceChannel: "{{analyzedMessage.output.channel}}"
+  threadTs: "{{analyzedMessage.output.threadTs}}"
+  user: "{{analyzedMessage.output.user}}"
+  text: "{{analyzedMessage.output.text}}"
+  routeCategory: "{{analyzedMessage.output.routeCategory}}"
+  confidence: "{{analyzedMessage.output.confidence}}"
+  summary: "{{analyzedMessage.output.summary}}"
+  priority: "{{analyzedMessage.output.priority}}"
+  suggestedReply: "{{analyzedMessage.output.suggestedReply}}"
+  riskLevel: "{{analyzedMessage.output.riskLevel}}"
+  riskReason: "{{analyzedMessage.output.riskReason}}"
+  finalReply: "{{analyzedMessage.output.finalReply}}"
+  extractedDetails: "{{analyzedMessage.output.extractedDetails}}"

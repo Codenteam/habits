@@ -1,0 +1,159 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: slack-test
+  title: Slack Test
+  subtitle: Send, update, and react to Slack messages via bit-slack
+  icon: "lucide:MessageSquare"
+
+theme:
+  preset: neural
+  mode: dark
+
+state:
+  text: ""
+  webhookUrl: ""
+  timestamp: ""
+  name: ""
+  result: null
+
+actions:
+  send:
+    method: POST
+    endpoint: /api/send-message
+    body: { text: "{{state.text}}" }
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        timestamp: "$response.timestamp"
+      toast: "Plain message sent!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  sendBlock:
+    method: POST
+    endpoint: /api/send-block-message
+    body: { text: "{{state.text}}" }
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        timestamp: "$response.timestamp"
+      toast: "Block message sent!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  update:
+    method: POST
+    endpoint: /api/update-message
+    body:
+      text: "{{state.text}}"
+      timestamp: "{{state.timestamp}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Message updated!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  addReaction:
+    method: POST
+    endpoint: /api/add-reaction
+    body:
+      timestamp: "{{state.timestamp}}"
+      name: "{{state.name}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Reaction added!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  getReactions:
+    method: POST
+    endpoint: /api/get-reactions
+    body:
+      timestamp: "{{state.timestamp}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Reactions fetched!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  getConversationReplies:
+    method: POST
+    endpoint: /api/get-conversation-replies
+    body:
+      timestamp: "{{state.timestamp}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Thread replies fetched!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  sendWebhook:
+    method: POST
+    endpoint: /api/send-webhook
+    body:
+      webhookUrl: "{{state.webhookUrl}}"
+      text: "{{state.text}}"
+    responsePath: output
+    onSuccess:
+      set: { result: "$response" }
+      toast: "Webhook message sent!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+
+widgets:
+  - kind: card
+    title: Send to Slack
+    subtitle: Posts to Slack channel using bot token or webhook URL
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: text
+            type: textarea
+            label: Message
+            placeholder: "Type your message here..."
+            rows: 4
+            required: true
+          - name: webhookUrl
+            type: url
+            label: Webhook URL (for send msg via webhook)
+            placeholder: "https://hooks.slack.com/services/..."
+          - name: timestamp
+            type: text
+            label: Message timestamp (for update / reaction)
+            placeholder: "1734567890.123456"
+          - name: name
+            type: text
+            label: Reaction name (for add reaction)
+            placeholder: "thumbsup"
+      - kind: button-row
+        buttons:
+          - { label: Send message, action: send, loadingLabel: "Sending..." }
+          - { label: Send block message, action: sendBlock, loadingLabel: "Sending...", variant: secondary }
+          - { label: Update message, action: update, loadingLabel: "Updating...", variant: secondary }
+          - { label: Add reaction, action: addReaction, loadingLabel: "Adding...", variant: secondary }
+          - { label: Get reactions, action: getReactions, loadingLabel: "Fetching...", variant: secondary }
+          - { label: Get replies, action: getConversationReplies, loadingLabel: "Fetching...", variant: secondary }
+          - { label: Send webhook, action: sendWebhook, loadingLabel: "Sending...", variant: secondary }
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

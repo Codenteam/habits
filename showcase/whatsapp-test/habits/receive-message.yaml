@@ -39,22 +39,46 @@ nodes:
             const change = entry?.changes?.[0]?.value;
             const msg = change?.messages?.[0];
             const contact = change?.contacts?.[0];
+            const messageType = String(msg?.type || '');
 
-            return {
+            const result = {
               from: String(msg?.from || ''),
               text: String(
                 msg?.text?.body
                 || msg?.button?.text
                 || msg?.interactive?.button_reply?.title
+                || msg?.reaction?.emoji
                 || ''
               ),
               messageId: String(msg?.id || ''),
-              messageType: String(msg?.type || ''),
+              messageType,
               contactName: String(contact?.profile?.name || ''),
               waId: String(contact?.wa_id || msg?.from || ''),
               phoneNumberId: String(change?.metadata?.phone_number_id || ''),
               timestamp: String(msg?.timestamp || ''),
             };
+
+            const replyToMessageId = msg?.context?.id != null
+              ? String(msg.context.id)
+              : undefined;
+            const replyToFrom = msg?.context?.from != null
+              ? String(msg.context.from)
+              : undefined;
+            const reactedToMessageId = messageType === 'reaction' && msg?.reaction?.message_id != null
+              ? String(msg.reaction.message_id)
+              : undefined;
+            const reactionEmoji = messageType === 'reaction' && msg?.reaction
+              ? String(msg.reaction.emoji ?? '')
+              : undefined;
+            const parentMessageId = replyToMessageId ?? reactedToMessageId;
+
+            if (replyToMessageId) result.replyToMessageId = replyToMessageId;
+            if (replyToFrom) result.replyToFrom = replyToFrom;
+            if (reactedToMessageId) result.reactedToMessageId = reactedToMessageId;
+            if (reactionEmoji !== undefined) result.reactionEmoji = reactionEmoji;
+            if (parentMessageId) result.parentMessageId = parentMessageId;
+
+            return result;
           }
 
   - id: log-inbound
@@ -79,6 +103,12 @@ output:
   from: "{{parse-inbound.result.from}}"
   text: "{{parse-inbound.result.text}}"
   messageId: "{{parse-inbound.result.messageId}}"
+  messageType: "{{parse-inbound.result.messageType}}"
   contactName: "{{parse-inbound.result.contactName}}"
   waId: "{{parse-inbound.result.waId}}"
   timestamp: "{{parse-inbound.result.timestamp}}"
+  parentMessageId: "{{parse-inbound.result.parentMessageId}}"
+  replyToMessageId: "{{parse-inbound.result.replyToMessageId}}"
+  replyToFrom: "{{parse-inbound.result.replyToFrom}}"
+  reactedToMessageId: "{{parse-inbound.result.reactedToMessageId}}"
+  reactionEmoji: "{{parse-inbound.result.reactionEmoji}}"

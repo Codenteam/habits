@@ -1,0 +1,114 @@
+id: process-message
+name: Process Message
+description: >
+  Routes the analyzed message, sends an acknowledgement, optionally auto-replies
+  for low-risk questions, and forwards to the correct team channel.
+
+nodes:
+  - id: get-route
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "[{{analyzedMessage}}]"
+        habitId: route-category
+        inputKey: analyzedMessage
+        collectResults: true
+
+  - id: send-ack
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-route.results}}"
+        habitId: send-acknowledgement
+        inputKey: ticket
+        collectResults: true
+
+  - id: route-by-risk
+    type: bits
+    data:
+      label: Route by Risk
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Low risk
+            value1: "{{get-route.results[0].output.riskLevel}}"
+            operator: equals
+            value2: low
+            output: low
+        includeElse: true
+        defaultOutput: high
+
+  - id: send-auto-reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-route.results}}"
+        habitId: send-auto-reply
+        inputKey: ticket
+        collectResults: true
+
+  - id: forward-high-risk
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-route.results}}"
+        habitId: forward-to-channel
+        inputKey: ticket
+        collectResults: true
+
+  - id: forward-low-risk
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{get-route.results}}"
+        habitId: forward-with-auto-reply
+        inputKey: ticket
+        collectResults: true
+
+edges:
+  - source: get-route
+    target: send-ack
+  - source: send-ack
+    target: route-by-risk
+  - source: route-by-risk
+    target: send-auto-reply
+    sourceHandle: branch-0
+  - source: send-auto-reply
+    target: forward-low-risk
+  - source: route-by-risk
+    target: forward-high-risk
+    sourceHandle: branch-1
+
+output:
+  routeCategory: "{{analyzedMessage.output.routeCategory}}"
+  riskLevel: "{{analyzedMessage.output.riskLevel}}"
+  sourceChannel: "{{analyzedMessage.output.channel}}"
+  targetChannel: "{{get-route.results[0].output.targetChannel}}"
+  acknowledgementSent: "{{send-ack.successCount}}"
+  autoReplySent: "{{send-auto-reply.successCount}}"
+  forwardedHighRisk: "{{forward-high-risk.successCount}}"
+  forwardedLowRisk: "{{forward-low-risk.successCount}}"

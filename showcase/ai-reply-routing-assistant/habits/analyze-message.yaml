@@ -1,0 +1,81 @@
+id: analyze-message
+name: Analyze Slack Message
+description: Classify an inbound Slack message with OpenAI and generate a reply
+
+nodes:
+  - id: analyze
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: 'force'
+        prompt: |
+          You are a Slack message routing assistant.
+
+          Classify the incoming message into exactly one category.
+
+          CATEGORIES:
+          - sales:    pricing, demos, partnerships, product interest
+          - support:  general help, account issues, how-to questions
+          - billing:  invoices, refunds, payments, subscription changes
+          - technical: bugs, outages, integrations, API issues
+          - hr:       hiring, payroll, benefits, internal people topics
+          - general:  anything that does not clearly fit the categories above
+
+          ROUTING CHANNELS (use category to pick targetChannel value):
+          - sales:     {{habits.env.HABITS_SLACK_CHANNEL_SALES}}
+          - support:   {{habits.env.HABITS_SLACK_CHANNEL_SUPPORT}}
+          - billing:   {{habits.env.HABITS_SLACK_CHANNEL_BILLING}}
+          - technical: {{habits.env.HABITS_SLACK_CHANNEL_TECHNICAL}}
+          - hr:        {{habits.env.HABITS_SLACK_CHANNEL_HR}}
+          - general:   {{habits.env.HABITS_SLACK_CHANNEL_GENERAL}}
+
+          INCOMING MESSAGE:
+          - Channel: {{message.channel}}
+          - User:    {{message.user}}
+          - Text:
+          {{message.text}}
+
+          RISK ASSESSMENT (for auto-reply decision):
+          - low:  safe to answer automatically — general FAQs, public product info, office hours, simple how-tos with no account-specific or financial impact
+          - high: requires human review — refunds, billing disputes, cancellations, legal/compliance, HR personal matters, security or account access, angry or escalated tone, sensitive PII, or anything needing approval. When in doubt, choose high.
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - category:       one of (sales, support, billing, technical, hr, general)
+            - confidence:     number from 0.0 to 1.0
+            - summary:        brief 1-2 sentence summary for the team channel
+            - priority:       one of (high, medium, low)
+            - riskLevel:      exactly one of (low, high) — see RISK ASSESSMENT above; never use any other value
+            - riskReason:     brief reason for the risk level
+            - suggestedReply: short acknowledgement to post in the same Slack thread. Confirm only that the message was received and that we will get back to them soon. Do not answer their question, promise specific information, or mention who will respond (no "I", no "the bot", no "a team member" — use "we" only).
+            - finalReply:     when riskLevel is low, a complete helpful answer to the user's question in the same thread (use "we", be concise). When riskLevel is high, use an empty string.
+            - extractedDetails: key facts as a short bullet list (names, dates, amounts, product names)
+            - targetChannel:  the exact channel ID from ROUTING CHANNELS for the selected category
+        maxTokens: 900
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges: []
+
+output:
+  channel: "{{message.channel}}"
+  user: "{{message.user}}"
+  text: "{{message.text}}"
+  timestamp: "{{message.timestamp}}"
+  threadTs: "{{message.threadTs}}"
+  team: "{{message.team}}"
+  routeCategory: "{{analyze.category}}"
+  confidence: "{{analyze.confidence}}"
+  summary: "{{analyze.summary}}"
+  priority: "{{analyze.priority}}"
+  suggestedReply: "{{analyze.suggestedReply}}"
+  riskLevel: "{{analyze.riskLevel}}"
+  riskReason: "{{analyze.riskReason}}"
+  finalReply: "{{analyze.finalReply}}"
+  extractedDetails: "{{analyze.extractedDetails}}"
+  targetChannel: "{{analyze.targetChannel}}"

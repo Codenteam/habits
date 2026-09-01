@@ -1,0 +1,50 @@
+# Showcase metadata for Urgent Message Escalation example
+name: Urgent Message Escalation
+type: automation
+description: Detects urgent Slack messages with AI, posts structured escalations to an on-call channel, and re-escalates if nobody acknowledges within 15 minutes.
+
+longDescription: |
+  **Urgent Message Escalation** monitors incoming Slack messages, uses AI to detect urgency,
+  posts structured escalations to an on-call channel, and re-escalates if nobody acknowledges
+  within 15 minutes.
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for urgency analysis and acknowledgement detection |
+  | `HABITS_SLACK_BOT_TOKEN` | Slack bot token (`xoxb-...`) |
+  | `HABITS_SLACK_SIGNING_SECRET` | Slack app signing secret (verifies inbound Events API webhooks) |
+  | `HABITS_SLACK_CHANNEL_ESCALATION` | On-call / incident channel ID for escalations |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables above.
+  2. For Slack app setup, scopes, event subscriptions, and webhook configuration, follow the [Slack integration guide] in documentation integrations.
+
+tags:
+  - ai
+  - automation
+  - integration
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key for urgency analysis and acknowledgement detection)
+  - SLACK_BOT_TOKEN (Slack bot token)
+  - SLACK_SIGNING_SECRET (Slack app signing secret)
+  - SLACK_CHANNEL_ESCALATION (On-call / incident channel ID for escalations)
+
+habits:
+  - habits/slack-urgent-routing.yaml
+  - habits/analyze-urgency.yaml
+  - habits/process-urgent-message.yaml
+  - habits/post-escalation.yaml
+  - habits/register-pending-ack.yaml
+  - habits/check-pending-acks.yaml
+  - habits/verify-and-escalate.yaml
