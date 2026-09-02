@@ -38,6 +38,7 @@ import { visionPrompt } from './lib/actions/vision-prompt';
 import { askWithFile } from './lib/actions/ask-with-file';
 import { baseUrl, openaiAuth, openaiAuthValue, notLLMs } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { embedTextAction } from './lib/actions/embed-text';
 import OpenAI from 'openai';
 
 // Re-export auth for backwards compatibility
@@ -105,6 +106,7 @@ export const openai = createBit({
     askOpenAI,
     askAssistant,
     listModels,
+    embedTextAction,
     generateImage,
     visionPrompt,
     askWithFile,

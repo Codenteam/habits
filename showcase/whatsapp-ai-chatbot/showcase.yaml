@@ -1,0 +1,59 @@
+# Showcase metadata for WhatsApp AI Chatbot
+name: WhatsApp AI Chatbot
+type: automation
+description: Upload company or product info, then let AI answer customer questions automatically on WhatsApp.
+
+longDescription: |
+  **WhatsApp AI Chatbot** helps you support customers on WhatsApp without typing every reply yourself.
+
+  Upload a document with your company or product information. When customers message your
+  WhatsApp Business number, the assistant reads their question, finds the right details from
+  what you uploaded, and sends a professional reply back to them.
+
+  Greetings and casual messages get a natural response. Real questions about your products,
+  services, pricing, or policies get answers grounded in your uploaded content.
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables below.
+  2. Start the showcase and open the web UI to upload your knowledge document.
+  3. Connect the Meta WhatsApp webhook so inbound messages reach your server.
+  4. Message your business number from WhatsApp to try it out.
+
+  For Meta app setup, webhooks, and test phone numbers, see the WhatsApp integration guide in the docs.
+
+  ## Environment variables (`.env`)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for reading uploaded documents, understanding customer messages, and generating replies |
+  | `HABITS_WHATSAPP_ACCESS_TOKEN` | WhatsApp Cloud API permanent access token from Meta Business |
+  | `HABITS_WHATSAPP_PHONE_NUMBER_ID` | Your WhatsApp Business phone number ID (from Meta App → WhatsApp → API Setup) |
+  | `HABITS_WHATSAPP_VERIFY_TOKEN` | Webhook verify token — choose any secret string; must match the value in Meta App Dashboard |
+  | `HABITS_WHATSAPP_APP_SECRET` | Meta app secret (App settings → Basic) — used to verify inbound WhatsApp webhooks |
+
+tags:
+  - ai
+  - automation
+  - whatsapp
+  - customer-support
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (for understanding messages and generating replies)
+  - WHATSAPP_ACCESS_TOKEN (WhatsApp Cloud API access token)
+  - WHATSAPP_PHONE_NUMBER_ID (your WhatsApp Business phone number ID)
+  - WHATSAPP_VERIFY_TOKEN (webhook verify token — you choose this string)
+  - WHATSAPP_APP_SECRET (Meta app secret for inbound message verification)
+
+habits:
+  - habits/whatsapp-chatbot-routing.yaml
+  - habits/handle-customer-question.yaml
+  - habits/ingest-knowledge-file.yaml
+  - habits/ingest-knowledge-item.yaml
