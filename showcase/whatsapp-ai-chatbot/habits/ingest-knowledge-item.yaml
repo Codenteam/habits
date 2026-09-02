@@ -1,0 +1,48 @@
+id: ingest-knowledge-item
+name: Ingest Knowledge Item
+description: >
+  Embed a single product/company knowledge chunk with OpenAI and store it
+  in the vector database for RAG retrieval.
+
+nodes:
+  - id: embed-item
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: embed-text
+      params:
+        text: "{{infoItem.text}}"
+        model: "text-embedding-3-small"
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: store-vector
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: product_knowledge
+        document:
+          text: "{{infoItem.text}}"
+          title: "{{infoItem.title}}"
+          category: "{{infoItem.category}}"
+          companyName: "{{infoItem.companyName}}"
+          sourceFile: "{{infoItem.sourceFile}}"
+          vector: "{{embed-item.embeddings[0]}}"
+
+edges:
+  - source: embed-item
+    target: store-vector
+
+output:
+  success: "{{store-vector.success}}"
+  id: "{{store-vector.id}}"
+  title: "{{infoItem.title}}"
+  category: "{{infoItem.category}}"
+  textPreview: "{{infoItem.text}}"
