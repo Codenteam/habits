@@ -1,0 +1,26 @@
+id: create-contact
+name: Create Salesforce Contact
+description: Create a new contact in Salesforce using OAuth
+
+nodes:
+  - id: create-contact
+    type: bits
+    data:
+      label: Create Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: createContact
+      auth:
+        clientId: "{{habits.env.SALESFORCE_CLIENT_ID}}"
+      params:
+        email: "{{habits.input.email}}"
+        firstName: "{{habits.input.firstName}}"
+        lastName: "{{habits.input.lastName}}"
+        phone: "{{habits.input.phone}}"
+        title: "{{habits.input.title}}"
+        instanceUrl: "{{habits.env.SALESFORCE_INSTANCE_URL}}"
+
+output:
+  success: "{{create-contact.success}}"
+  contact: "{{create-contact.contact}}"
