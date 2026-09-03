@@ -1148,28 +1148,65 @@ const salesforceBit = {
     newContact: {
       name: 'newContact',
       displayName: 'New Contact',
-      description: 'Triggers when a new contact is created in Salesforce',
+      description: 'Triggers when a new contact is created in Salesforce (Flow HTTP webhook or outbound message)',
       type: 'WEBHOOK',
       props: {},
       filter(payload: { body: any; headers: Record<string, string>; query: Record<string, string>; method: string }): boolean {
         const body = payload.body;
-        const sObjectType = body?.Notification?.sObject?.$?.['xsi:type'] || 
-                           body?.sobjectType || 
+        if (!body || typeof body !== 'object') {
+          return false;
+        }
+
+        // Salesforce Flow HTTP webhook: { id, email, firstName, lastName, phone }
+        const contactId = body.id != null ? String(body.id).trim() : '';
+        if (contactId) {
+          return true;
+        }
+
+        const sObjectType = body?.Notification?.sObject?.$?.['xsi:type'] ||
+                           body?.sobjectType ||
                            body?.object || '';
         const event = body?.Notification?.ActionId || body?.event || body?.action || '';
         const normalizedType = String(sObjectType).toLowerCase();
         const normalizedEvent = String(event).toLowerCase();
-        return normalizedType.includes('contact') && 
+        return normalizedType.includes('contact') &&
                (normalizedEvent.includes('create') || normalizedEvent.includes('insert') || normalizedEvent.includes('new'));
       },
       async run(context: any) {
         const body = context.webhookPayload?.body;
+
+        const contactId = body?.id != null ? String(body.id).trim() : '';
+        if (contactId) {
+          const contact = {
+            id: contactId,
+            email: body.email ?? null,
+            firstName: body.firstName ?? null,
+            lastName: body.lastName ?? null,
+            phone: body.phone ?? null,
+          };
+
+          return [{
+            contact,
+            contactId,
+            email: contact.email,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            phone: contact.phone,
+            event: 'newContact',
+            raw: body,
+          }];
+        }
+
         const contact = body?.Notification?.sObject || body?.data || body;
         return [{
           contact,
-          contactId: contact?.Id,
+          contactId: contact?.Id || contact?.id,
+          email: contact?.Email || contact?.email,
+          firstName: contact?.FirstName || contact?.firstName,
+          lastName: contact?.LastName || contact?.lastName,
+          phone: contact?.Phone || contact?.phone,
           event: 'newContact',
-          raw: body
+          raw: body,
         }];
       },
     },
