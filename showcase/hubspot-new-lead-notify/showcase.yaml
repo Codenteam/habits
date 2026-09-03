@@ -1,0 +1,52 @@
+# Showcase metadata for HubSpot New Lead Slack Notify
+name: HubSpot New Lead Slack Notify
+type: automation
+description: When a new contact is created in HubSpot, fetch their details, generate a Slack alert with OpenAI, and post it to your team channel.
+
+longDescription: |
+  **HubSpot New Lead Slack Notify** listens for HubSpot `contact.creation` webhooks,
+  loads the full contact from the CRM, asks OpenAI to write a concise Slack message,
+  and delivers it to a configured Slack channel.
+
+  ## Environment variables
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for notification copy |
+  | `HABITS_HUBSPOT_ACCESS_TOKEN` | HubSpot Private App token (CRM API) |
+  | `HABITS_HUBSPOT_CLIENT_SECRET` | HubSpot Private App client secret (webhook verification) |
+  | `HABITS_SLACK_BOT_TOKEN` | Slack bot token for posting messages |
+  | `HABITS_SLACK_CHANNEL_ID` | Slack channel ID for new-lead alerts |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in credentials.
+  2. Configure HubSpot Private App webhooks (see README).
+  3. Start the showcase and expose port 13000 with ngrok.
+  4. Create a test contact in HubSpot — a Slack message should appear.
+
+tags:
+  - hubspot
+  - slack
+  - openai
+  - crm
+  - sales
+  - automation
+  - webhook
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key)
+  - HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
+  - HUBSPOT_CLIENT_SECRET (HubSpot Private App client secret for webhook verification)
+  - SLACK_BOT_TOKEN (Slack bot token)
+  - SLACK_CHANNEL_ID (Slack channel ID for notifications)
+
+habits:
+  - habits/hubspot-new-contact-notify.yaml
+  - habits/list-hubspot-contacts.yaml
