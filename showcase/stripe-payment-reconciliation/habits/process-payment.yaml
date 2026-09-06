@@ -1,0 +1,148 @@
+id: process-payment
+name: Process Payment
+description: >
+  Receives a single Stripe payment object, uses OpenAI to draft a professional
+  notification email, sends it via Gmail SMTP, then records the payment in
+  QuickBooks Online.
+
+nodes:
+  # Step 1: Generate email subject and body with OpenAI
+  - id: generate-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      label: Generate Email Copy
+      params:
+        model: "gpt-4o-mini"
+        cast: "force"
+        maxTokens: 800
+        prompt: |
+          Write a minimal internal payment notification email.
+
+          PAYMENT DETAILS:
+          - Payment ID: {{payment.paymentId}}
+          - Amount: {{payment.amount}} {{payment.currency}}
+          - Status: {{payment.status}}
+          - Description: {{payment.description}}
+          - Created: {{payment.created}}
+          - Customer name: {{payment.customer.name}}
+          - Customer email: {{payment.customer.email}}
+          - Customer address: {{payment.customer.address}}
+          - Receipt email: {{payment.receiptEmail}}
+          - Metadata: {{payment.metadata}}
+
+          Return ONLY valid JSON wrapped in ```json``` fences:
+          {
+            "subject": "Concise subject line mentioning amount and payment ID",
+            "body": "Plain-text body — confirmation sentence then details only",
+            "html": "Simple HTML with <p> and <ul> only — same content as body"
+          }
+
+          Body format (plain text and HTML must match this structure):
+          1. First line (exactly): We would like to inform you about a successful payment processed.
+          2. Blank line, then a bullet list of payment details (payment ID, amount, currency, status, customer name, customer email, created date, description — omit empty fields or say "not provided").
+
+          Strict rules:
+          - Do NOT include a greeting (no "Dear", "Hi", "Hello", or recipient name).
+          - Do NOT include a closing (no "Best regards", "Thank you", team signature, or sign-off).
+          - Do NOT include "If you have any questions" or similar filler.
+          - Body = confirmation sentence + details only. Nothing else.
+          - Do not invent data; use "not provided" for missing fields.
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  # Step 2: Send the email via Gmail SMTP
+  - id: send-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      label: Send Gmail Notification
+      params:
+        to: "{{habits.env.HABITS_PAYMENT_NOTIFY_EMAIL}}"
+        from: "{{habits.env.HABITS_EMAIL_FROM}}"
+        subject: "{{generate-email.subject}}"
+        body: "{{generate-email.body}}"
+        html: "{{generate-email.html}}"
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{habits.env.HABITS_SMTP_USER}}"
+          password: "{{habits.env.HABITS_SMTP_PASSWORD}}"
+
+  # Step 3: Record the payment in QuickBooks Online
+  - id: create-quickbooks-payment
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-quickbooks"
+      operation: createPayment
+      label: Record Payment in QuickBooks
+      params:
+        environment: "{{habits.env.HABITS_QUICKBOOKS_ENV}}"
+        realmId: "{{habits.env.HABITS_QUICKBOOKS_REALM_ID}}"
+        customerId: "{{habits.env.HABITS_QUICKBOOKS_CUSTOMER_ID}}"
+        amount: "{{payment.amount}}"
+        currency: "{{payment.currency}}"
+        paymentId: "{{payment.paymentId}}"
+        description: "{{payment.description}}"
+        customerName: "{{payment.customer.name}}"
+        customerEmail: "{{payment.customer.email}}"
+        paymentDate: "{{payment.created}}"
+      auth:
+        clientId: "{{habits.env.HABITS_QUICKBOOKS_CLIENT_ID}}"
+        clientSecret: "{{habits.env.HABITS_QUICKBOOKS_CLIENT_SECRET}}"
+
+  # Step 4: Persist reconciled payment for the dashboard
+  - id: save-payment
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: insert
+      label: Save Payment Record
+      params:
+        collection: "stripe_payments"
+        document:
+          paymentId: "{{payment.paymentId}}"
+          amount: "{{payment.amount}}"
+          currency: "{{payment.currency}}"
+          status: "{{payment.status}}"
+          description: "{{payment.description}}"
+          customerName: "{{payment.customer.name}}"
+          customerEmail: "{{payment.customer.email}}"
+          stripeCreated: "{{payment.created}}"
+          emailSubject: "{{generate-email.subject}}"
+          quickbooksPaymentId: "{{create-quickbooks-payment.quickbooksPaymentId}}"
+          quickbooksSuccess: "{{create-quickbooks-payment.success}}"
+          reconciledAt: "{{habits.function.now()}}"
+
+edges:
+  - source: generate-email
+    target: send-email
+  - source: send-email
+    target: create-quickbooks-payment
+  - source: create-quickbooks-payment
+    target: save-payment
+
+output:
+  paymentId: "{{payment.paymentId}}"
+  amount: "{{payment.amount}}"
+  currency: "{{payment.currency}}"
+  customerEmail: "{{payment.customer.email}}"
+  emailSubject: "{{generate-email.subject}}"
+  sentTo: "{{habits.env.HABITS_PAYMENT_NOTIFY_EMAIL}}"
+  messageId: "{{send-email.messageId}}"
+  quickbooksPaymentId: "{{create-quickbooks-payment.quickbooksPaymentId}}"
+  quickbooksSuccess: "{{create-quickbooks-payment.success}}"
+  savedPaymentId: "{{save-payment.id}}"
+  success: "{{send-email.success}}"

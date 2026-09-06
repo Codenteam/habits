@@ -250,6 +250,12 @@
     }
   ],
   "recaptcha": [],
+  "quickbooks": [
+    {
+      "slug": "stripe-payment-reconciliation",
+      "name": "Stripe Payment Reconciliation"
+    }
+  ],
   "mcp-servers": [
     {
       "slug": "agent-mcp-demo",
