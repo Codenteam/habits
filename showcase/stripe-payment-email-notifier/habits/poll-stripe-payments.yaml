@@ -1,0 +1,77 @@
+id: poll-stripe-payments
+name: Poll Stripe Payments
+description: >
+  Polls Stripe for new successful payments on a 30-second schedule, logs each
+  payment, then dispatches it to send-payment-email via bit-loop.
+
+  Note: Cortex runs this workflow once per new payment (not once per poll batch).
+  If Stripe returns 2 new payments, you will see 2 separate log lines with count 1.
+
+nodes:
+  # Step 1: Poll Stripe for new successful payments
+  - id: stripe-trigger
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-stripe"
+      operation: paymentSucceededPolling
+      isTrigger: true
+      triggerType: polling
+      params:
+        secretKey: "{{habits.env.HABITS_STRIPE_SECRET_KEY}}"
+        cronExpression: "*/30 * * * * *"
+        timezone: "UTC"
+        lastNDays: 7
+        limit: 100
+        dedupBy: id
+
+  # Step 2: Log the payment (one payment per workflow run)
+  - id: log-payments
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      label: Log Fetched Payment
+      params:
+        label: STRIPE-PAYMENTS-POLL
+        message:
+          paymentIndex: "{{__pollingItemIndex}}"
+          paymentId: "{{stripe-trigger.paymentId}}"
+          amount: "{{stripe-trigger.amount}}"
+          currency: "{{stripe-trigger.currency}}"
+          customerName: "{{stripe-trigger.customer.name}}"
+          customerEmail: "{{stripe-trigger.customer.email}}"
+          polledAt: "{{stripe-trigger.polledAt}}"
+          payment: "{{stripe-trigger}}"
+
+  # Step 3: Invoke send-payment-email for this payment (bit-loop wraps single item)
+  - id: dispatch-emails
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      label: Dispatch Payment Email
+      params:
+        items: "{{stripe-trigger}}"
+        habitId: send-payment-email
+        inputKey: payment
+        delayMs: 1000
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: stripe-trigger
+    target: log-payments
+  - source: log-payments
+    target: dispatch-emails
+
+output:
+  paymentId: "{{stripe-trigger.paymentId}}"
+  customerEmail: "{{stripe-trigger.customer.email}}"
+  dispatchResults: "{{dispatch-emails.results}}"
+  errors: "{{dispatch-emails.errors}}"

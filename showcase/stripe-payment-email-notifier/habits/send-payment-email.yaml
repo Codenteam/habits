@@ -1,0 +1,86 @@
+id: send-payment-email
+name: Send Payment Email
+description: >
+  Receives a single Stripe payment object, uses OpenAI to draft a professional
+  notification email, then sends it to the configured inbox via Gmail SMTP.
+
+nodes:
+  # Step 1: Generate email subject and body with OpenAI
+  - id: generate-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      label: Generate Email Copy
+      params:
+        model: "gpt-4o-mini"
+        cast: "force"
+        maxTokens: 800
+        prompt: |
+          You are a finance operations assistant. Write a clear, professional payment
+          notification email for an internal team inbox.
+
+          PAYMENT DETAILS:
+          - Payment ID: {{payment.paymentId}}
+          - Amount: {{payment.amount}} {{payment.currency}}
+          - Status: {{payment.status}}
+          - Description: {{payment.description}}
+          - Created: {{payment.created}}
+          - Customer name: {{payment.customer.name}}
+          - Customer email: {{payment.customer.email}}
+          - Customer address: {{payment.customer.address}}
+          - Receipt email: {{payment.receiptEmail}}
+          - Metadata: {{payment.metadata}}
+
+          Return ONLY valid JSON wrapped in ```json``` fences:
+          {
+            "subject": "Concise subject line mentioning amount and payment ID",
+            "body": "Plain-text email body with a short summary, bullet list of key fields, and a friendly closing line",
+            "html": "Optional simple HTML version with <p> and <ul> tags (no external CSS)"
+          }
+
+          Rules:
+          - Keep the tone professional and concise.
+          - Include payment ID, amount, currency, customer name, and customer email in the body.
+          - Do not invent data that is missing; say "not provided" instead.
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  # Step 2: Send the email via Gmail SMTP
+  - id: send-email
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-email"
+      operation: sendEmail
+      label: Send Gmail Notification
+      params:
+        to: "{{habits.env.HABITS_PAYMENT_NOTIFY_EMAIL}}"
+        from: "{{habits.env.HABITS_EMAIL_FROM}}"
+        subject: "{{generate-email.subject}}"
+        body: "{{generate-email.body}}"
+        html: "{{generate-email.html}}"
+      credentials:
+        auth:
+          host: "{{habits.env.HABITS_SMTP_HOST}}"
+          port: "{{habits.env.HABITS_SMTP_PORT}}"
+          user: "{{habits.env.HABITS_SMTP_USER}}"
+          password: "{{habits.env.HABITS_SMTP_PASSWORD}}"
+
+edges:
+  - source: generate-email
+    target: send-email
+
+output:
+  paymentId: "{{payment.paymentId}}"
+  amount: "{{payment.amount}}"
+  currency: "{{payment.currency}}"
+  customerEmail: "{{payment.customer.email}}"
+  emailSubject: "{{generate-email.subject}}"
+  sentTo: "{{habits.env.HABITS_PAYMENT_NOTIFY_EMAIL}}"
+  messageId: "{{send-email.messageId}}"
+  success: "{{send-email.success}}"

@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: stripe-payment-email-notifier
+  title: Stripe Payment Email Notifier
+  subtitle: Poll Stripe every 30s and email AI-written payment summaries
+  icon: "lucide:CreditCard"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+state:
+  info: null
+
+actions:
+  loadInfo:
+    method: GET
+    endpoint: /api/health
+    responsePath: ""
+    onSuccess:
+      set: { info: "$response" }
+      toast: "Server is running"
+
+defaultView: main
+
+views:
+  main:
+    widgets:
+      - kind: card
+        title: Stripe Payment Email Notifier
+        subtitle: Runs automatically in the background — no manual trigger needed
+        children:
+          - kind: markdown
+            source: |
+              ## How it works
+
+              1. **`poll-stripe-payments`** polls Stripe every **30 seconds** using `paymentSucceededPolling`.
+              2. Fetched payments are **logged** to the server console via `@ha-bits/bit-logger`.
+              3. **`bit-loop`** invokes **`send-payment-email`** once per payment.
+              4. OpenAI drafts the email; **Gmail SMTP** delivers it to `HABITS_PAYMENT_NOTIFY_EMAIL`.
+
+              ## Required environment variables
+
+              | Variable | Purpose |
+              |---|---|
+              | `HABITS_STRIPE_SECRET_KEY` | Stripe secret key |
+              | `HABITS_OPENAI_API_KEY` | OpenAI API key |
+              | `HABITS_SMTP_HOST` | `smtp.gmail.com` |
+              | `HABITS_SMTP_PORT` | `587` |
+              | `HABITS_SMTP_USER` | Gmail address |
+              | `HABITS_SMTP_PASSWORD` | Gmail app password |
+              | `HABITS_EMAIL_FROM` | From header |
+              | `HABITS_PAYMENT_NOTIFY_EMAIL` | Notification recipient |
+
+              Copy `.env.example` to `.env` and fill in your credentials, then start the stack.
+
+      - kind: card
+        title: Test a payment
+        children:
+          - kind: markdown
+            source: |
+              1. Create a Stripe **Payment Link** (test mode, Managed Payments off).
+              2. Pay with test card `4242 4242 4242 4242`.
+              3. Watch server logs for `STRIPE-PAYMENTS-POLL` entries.
+              4. Check `HABITS_PAYMENT_NOTIFY_EMAIL` for the notification.
+
+              Manual fire (bypass cron):
+              `POST /misc/trigger/poll-stripe-payments/stripe-trigger/fire`

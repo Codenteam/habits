@@ -1,0 +1,66 @@
+# Showcase metadata for Stripe Payment Email Notifier
+
+name: Stripe Payment Email Notifier
+type: fullstack
+description: Poll Stripe for successful payments every 30 seconds, log them, and email AI-generated summaries via Gmail.
+
+longDescription: |
+  **Stripe Payment Email Notifier** demonstrates the `paymentSucceededPolling` trigger
+  from `@ha-bits/bit-stripe` combined with logging, sub-habit fan-out, OpenAI copy
+  generation, and Gmail SMTP delivery.
+
+  ## What it does
+
+  - **Stripe polling** : `poll-stripe-payments` uses `paymentSucceededPolling` with a 30-second cron schedule
+  - **Logging** : Fetched payment payloads are written to the server console via `@ha-bits/bit-logger`
+  - **Fan-out** : `@ha-bits/bit-loop` invokes `send-payment-email` once per payment
+  - **AI email copy** : OpenAI drafts subject, plain-text body, and simple HTML
+  - **Gmail delivery** : `@ha-bits/bit-email` sends via SMTP (Gmail app password)
+
+  ## Environment variables (`.env`)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_...` or `sk_live_...`) |
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key |
+  | `HABITS_SMTP_HOST` | SMTP host (`smtp.gmail.com`) |
+  | `HABITS_SMTP_PORT` | SMTP port (`587`) |
+  | `HABITS_SMTP_USER` | Gmail address for SMTP auth |
+  | `HABITS_SMTP_PASSWORD` | Gmail app password |
+  | `HABITS_EMAIL_FROM` | From header for outgoing mail |
+  | `HABITS_PAYMENT_NOTIFY_EMAIL` | Recipient inbox for payment alerts |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in credentials.
+  2. Create a Stripe test Payment Link and complete a test payment.
+  3. Start the stack: `pnpm habits dev showcase/stripe-payment-email-notifier/stack.yaml`
+  4. Watch logs for `STRIPE-PAYMENTS-POLL` and check the notify inbox.
+
+tags:
+  - stripe
+  - payments
+  - polling
+  - email
+  - openai
+  - gmail
+  - automation
+  - finance
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - STRIPE_SECRET_KEY (Stripe API secret key)
+  - OPENAI_API_KEY (OpenAI API key)
+  - SMTP credentials (Gmail app password recommended)
+  - PAYMENT_NOTIFY_EMAIL (recipient inbox)
+
+habits:
+  - habits/poll-stripe-payments.yaml
+  - habits/send-payment-email.yaml
+
+quickDownload: true

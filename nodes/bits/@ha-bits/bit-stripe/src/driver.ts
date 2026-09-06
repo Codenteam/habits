@@ -96,7 +96,7 @@ export async function stripeRequest(
 
   logger.debug('Stripe API request', { method, url });
   const response = await fetch(url, options);
-  const result = await response.json();
+  const result = (await response.json()) as { error?: { message?: string } };
 
   if (!response.ok) {
     logger.error('Stripe API error', { error: result.error });
@@ -137,10 +137,10 @@ export async function fetchSuccessfulPayments(
   // Convert to Unix timestamp (seconds)
   const createdGteTimestamp = Math.floor(startDate.getTime() / 1000);
 
-  // Build query string
+  // Build query string — expand customer + latest_charge for name/email on Payment Links
   let queryString = `/payment_intents?created[gte]=${createdGteTimestamp}&limit=${limit}`;
   if (expandCustomer) {
-    queryString += '&expand[]=data.customer';
+    queryString += '&expand[]=data.customer&expand[]=data.latest_charge';
   }
 
   logger.debug('Fetching successful payments', { createdGte: startDate.toISOString(), limit });
@@ -161,7 +161,12 @@ export async function fetchSuccessfulPayments(
  * Formats a raw Stripe PaymentIntent into a consistent structure
  */
 export function formatPaymentIntent(pi: any): FormattedPayment {
-  const billingDetails = pi.billing_details || {};
+  const expandedCustomer =
+    typeof pi.customer === 'object' && pi.customer !== null ? pi.customer : null;
+  const latestCharge =
+    typeof pi.latest_charge === 'object' && pi.latest_charge !== null ? pi.latest_charge : null;
+  // PaymentIntent has no top-level billing_details — they live on the Charge
+  const billingDetails = latestCharge?.billing_details || pi.billing_details || {};
   const billingAddress = billingDetails.address || {};
 
   return {
@@ -172,9 +177,13 @@ export function formatPaymentIntent(pi: any): FormattedPayment {
     description: pi.description || '',
     created: new Date(pi.created * 1000).toISOString(),
     customer: {
-      id: typeof pi.customer === 'string' ? pi.customer : pi.customer?.id || null,
-      name: billingDetails.name || '',
-      email: billingDetails.email || pi.receipt_email || '',
+      id: typeof pi.customer === 'string' ? pi.customer : expandedCustomer?.id || null,
+      name: billingDetails.name || expandedCustomer?.name || '',
+      email:
+        billingDetails.email ||
+        pi.receipt_email ||
+        expandedCustomer?.email ||
+        '',
       address: billingAddress
         ? [
             billingAddress.line1,
@@ -189,6 +198,6 @@ export function formatPaymentIntent(pi: any): FormattedPayment {
         : '',
     },
     metadata: pi.metadata || {},
-    receiptEmail: pi.receipt_email || '',
+    receiptEmail: pi.receipt_email || billingDetails.email || expandedCustomer?.email || '',
   };
 }
