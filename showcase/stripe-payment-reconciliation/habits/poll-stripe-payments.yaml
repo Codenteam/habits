@@ -1,8 +1,8 @@
 id: poll-stripe-payments
 name: Poll Stripe Payments
 description: >
-  Polls Stripe for new successful payments on a 30-second schedule, logs each
-  payment, then dispatches it to send-payment-email via bit-loop.
+  Polls Stripe for new successful payments on a 1-minute schedule, logs each
+  payment, then dispatches it to process-payment via bit-loop.
 
   Note: Cortex runs this workflow once per new payment (not once per poll batch).
   If Stripe returns 2 new payments, you will see 2 separate log lines with count 1.
@@ -20,7 +20,7 @@ nodes:
       triggerType: polling
       params:
         secretKey: "{{habits.env.HABITS_STRIPE_SECRET_KEY}}"
-        cronExpression: "*/30 * * * * *"
+        cronExpression: "0 */1 * * * *"
         timezone: "UTC"
         lastNDays: 7
         limit: 100
@@ -47,18 +47,18 @@ nodes:
           polledAt: "{{stripe-trigger.polledAt}}"
           payment: "{{stripe-trigger}}"
 
-  # Step 3: Invoke send-payment-email for this payment (bit-loop wraps single item)
-  - id: dispatch-emails
+  # Step 3: Invoke process-payment for this payment (bit-loop wraps single item)
+  - id: dispatch-processing
     type: action
     data:
       framework: bits
       source: npm
       module: "@ha-bits/bit-loop"
       operation: forEach
-      label: Dispatch Payment Email
+      label: Dispatch Payment Processing
       params:
         items: "{{stripe-trigger}}"
-        habitId: send-payment-email
+        habitId: process-payment
         inputKey: payment
         delayMs: 1000
         continueOnError: true
@@ -68,10 +68,10 @@ edges:
   - source: stripe-trigger
     target: log-payments
   - source: log-payments
-    target: dispatch-emails
+    target: dispatch-processing
 
 output:
   paymentId: "{{stripe-trigger.paymentId}}"
   customerEmail: "{{stripe-trigger.customer.email}}"
-  dispatchResults: "{{dispatch-emails.results}}"
-  errors: "{{dispatch-emails.errors}}"
+  dispatchResults: "{{dispatch-processing.results}}"
+  errors: "{{dispatch-processing.errors}}"
