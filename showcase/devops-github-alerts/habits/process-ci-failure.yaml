@@ -1,0 +1,147 @@
+id: process-ci-failure
+name: Process CI Failure
+description: >
+  Uses OpenAI to pick a GitHub label and craft issue/Slack content, logs the AI
+  output, creates a labelled GitHub issue, and posts a Slack alert.
+
+nodes:
+  - id: analyze
+    type: action
+    data:
+      label: Analyze CI Failure
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: "force"
+        prompt: |
+          You are a DevOps assistant triaging failed GitHub Actions CI/CD runs.
+
+          Pick exactly ONE label from this allowed list (labels must match exactly):
+          {{habits.env.HABITS_GITHUB_ISSUE_LABELS}}
+
+          Analyze the failed workflow run below and return ONLY a valid JSON object
+          wrapped in ```json``` code fences with exactly these fields:
+            - label:        one label from the allowed list above
+            - issueTitle:   concise GitHub issue title (max 120 chars)
+            - issueBody:    markdown issue body with workflow name, branch, SHA, actor, run URL, and suggested next steps
+            - slackMessage: Slack mrkdwn alert for developers (include emoji, run link, branch, label, and PR number if present)
+
+          FAILED WORKFLOW RUN:
+          - Repository: {{failure.repository}}
+          - Workflow:   {{failure.name}}
+          - Run #{{failure.runNumber}} (id {{failure.id}})
+          - Event:      {{failure.event}}
+          - Branch:     {{failure.branch}}
+          - SHA:        {{failure.sha}}
+          - Actor:      {{failure.actor}}
+          - URL:        {{failure.url}}
+          - PRs:        {{failure.pullRequests}}
+          - Commit:     {{failure.headCommit.message}}
+        maxTokens: 1200
+        temperature: 0.2
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: log-ai-result
+    type: action
+    data:
+      label: Log OpenAI Label and Slack Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: DEVOPS-AI-TRIAGE
+        message:
+          runId: "{{failure.id}}"
+          runUrl: "{{failure.url}}"
+          label: "{{analyze.label}}"
+          issueTitle: "{{analyze.issueTitle}}"
+          slackMessage: "{{analyze.slackMessage}}"
+
+  - id: create-issue
+    type: action
+    data:
+      label: Create GitHub Issue
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-github"
+      operation: createIssue
+      params:
+        token: "{{habits.env.HABITS_GITHUB_TOKEN}}"
+        owner: "{{habits.env.HABITS_GITHUB_OWNER}}"
+        repo: "{{habits.env.HABITS_GITHUB_REPO}}"
+        title: "{{analyze.issueTitle}}"
+        body: "{{analyze.issueBody}}"
+        labels: "{{analyze.label}}"
+
+  - id: send-slack
+    type: action
+    data:
+      label: Send Slack Alert
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_ALERTS_CHANNEL}}"
+        text: |
+          {{analyze.slackMessage}}
+
+          *Issue:* {{create-issue.url}}
+
+  - id: save-record
+    type: bits
+    data:
+      label: Save CI Failure Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: ci_failure_actions
+        document:
+          runId: "{{failure.id}}"
+          runNumber: "{{failure.runNumber}}"
+          workflowName: "{{failure.name}}"
+          displayTitle: "{{failure.displayTitle}}"
+          repository: "{{failure.repository}}"
+          branch: "{{failure.branch}}"
+          sha: "{{failure.sha}}"
+          event: "{{failure.event}}"
+          actor: "{{failure.actor}}"
+          runUrl: "{{failure.url}}"
+          workflowPath: "{{failure.path}}"
+          conclusion: "{{failure.conclusion}}"
+          pullRequests: "{{failure.pullRequests}}"
+          commitMessage: "{{failure.headCommit.message}}"
+          label: "{{analyze.label}}"
+          issueTitle: "{{analyze.issueTitle}}"
+          issueNumber: "{{create-issue.number}}"
+          issueUrl: "{{create-issue.url}}"
+          slackSent: "{{send-slack.success}}"
+          processedAt: "{{habits.function.date()}}"
+
+edges:
+  - source: analyze
+    target: log-ai-result
+  - source: log-ai-result
+    target: create-issue
+  - source: create-issue
+    target: send-slack
+  - source: send-slack
+    target: save-record
+
+output:
+  runId: "{{failure.id}}"
+  runUrl: "{{failure.url}}"
+  label: "{{analyze.label}}"
+  issueNumber: "{{create-issue.number}}"
+  issueUrl: "{{create-issue.url}}"
+  slackSent: "{{send-slack.success}}"
+  savedId: "{{save-record.id}}"

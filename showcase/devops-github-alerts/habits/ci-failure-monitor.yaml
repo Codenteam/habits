@@ -1,0 +1,81 @@
+id: ci-failure-monitor
+name: CI Failure Monitor
+description: >
+  Polls GitHub Actions for new failed workflow runs every minute, logs each
+  failure, and fans out to process-ci-failure for AI labelling, issue creation,
+  and Slack alerting.
+
+nodes:
+  - id: poll-failures
+    type: trigger
+    data:
+      label: Poll Failed Workflow Runs
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-github"
+      operation: pollFailedWorkflowRuns
+      isTrigger: true
+      triggerType: polling
+      params:
+        token: "{{habits.env.HABITS_GITHUB_TOKEN}}"
+        owner: "{{habits.env.HABITS_GITHUB_OWNER}}"
+        repo: "{{habits.env.HABITS_GITHUB_REPO}}"
+        cronExpression: "*/1 * * * *"
+        perPage: 30
+
+  - id: log-failures
+    type: action
+    data:
+      label: Log Triggered Failures
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: DEVOPS-CI-FAILURES
+        message: "{{poll-failures}}"
+
+  - id: normalize-failures
+    type: script
+    data:
+      label: Normalize Failure Items
+      framework: script
+      source: inline
+      params:
+        failures: "{{poll-failures}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(failures) {
+            if (!failures) return [];
+            return Array.isArray(failures) ? failures : [failures];
+          }
+
+  - id: process-failures
+    type: action
+    data:
+      label: Process Each CI Failure
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{normalize-failures.result}}"
+        habitId: process-ci-failure
+        inputKey: failure
+        delayMs: 500
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: poll-failures
+    target: log-failures
+  - source: log-failures
+    target: normalize-failures
+  - source: normalize-failures
+    target: process-failures
+
+output:
+  failuresDetected: "{{normalize-failures.result.length}}"
+  processed: "{{process-failures.successCount}}"
+  results: "{{process-failures.results}}"

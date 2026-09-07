@@ -18,6 +18,17 @@ const integrations = [
     "icon": "Mail"
   },
   {
+    "slug": "github",
+    "name": "GitHub",
+    "description": "Monitor GitHub Actions failures and manage issues with a fine-grained personal access token.",
+    "categories": [
+      "devtools"
+    ],
+    "bitPackage": "@ha-bits/bit-github",
+    "showcaseCount": 1,
+    "icon": "Github"
+  },
+  {
     "slug": "openai",
     "name": "OpenAI",
     "description": "Use GPT models for classification, summarization, enrichment, and content generation.",

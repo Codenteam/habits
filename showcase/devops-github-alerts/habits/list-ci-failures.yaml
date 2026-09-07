@@ -1,0 +1,64 @@
+id: list-ci-failures
+name: List CI Failures
+description: >
+  Returns processed CI failure records from the database for the showcase UI.
+  Newest entries appear first.
+
+nodes:
+  - id: query-failures
+    type: bits
+    data:
+      label: Query CI Failure Records
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: ci_failure_actions
+        filter: "{}"
+        limit: 100
+
+  - id: sort-failures
+    type: script
+    data:
+      label: Sort Failures Newest First
+      framework: script
+      source: inline
+      params:
+        records: "{{query-failures.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(records) {
+            const list = Array.isArray(records) ? records : [];
+
+            function parseTime(row) {
+              const raw = row.processedAt === 'now | iso' ? row._createdAt : row.processedAt;
+              return Date.parse(raw || row._createdAt || '') || 0;
+            }
+
+            function formatWhen(value) {
+              if (!value || value === 'now | iso') return '';
+              const ms = Date.parse(value);
+              if (Number.isNaN(ms)) return String(value);
+              return new Date(ms).toLocaleString();
+            }
+
+            return list
+              .slice()
+              .sort((a, b) => parseTime(b) - parseTime(a))
+              .map((row) => ({
+                ...row,
+                processedAt: formatWhen(row.processedAt) || formatWhen(row._createdAt) || row.processedAt,
+              }));
+          }
+
+edges:
+  - source: query-failures
+    target: sort-failures
+
+output:
+  success: true
+  count: "{{sort-failures.result.length}}"
+  items: "{{sort-failures.result}}"
+  refreshedAt: "{{habits.function.date()}}"
