@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: devops-github-alerts
+  title: DevOps/GitHub Alerts
+  subtitle: Failed CI runs → labelled issues → Slack alerts
+  icon: "lucide:Workflow"
+  documentTitle: DevOps/GitHub Alerts
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: DevOps/GitHub Alerts
+    subtitle: Auto-labels GitHub issues and alerts developers in Slack on failed CI/CD
+    icon: "lucide:Workflow"
+
+state:
+  failures: []
+  failureCount: 0
+  lastRefreshed: null
+  error: null
+
+actions:
+  listFailures:
+    method: POST
+    endpoint: /api/list-ci-failures
+    body: {}
+    responsePath: output
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        failures: "$response.items"
+        failureCount: "$response.count"
+        lastRefreshed: "$response.refreshedAt"
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+onMount:
+  - listFailures
+
+widgets:
+  - kind: hero
+    icon: "lucide:ShieldAlert"
+    title: CI failure monitor
+    subtitle: |
+      This showcase polls GitHub Actions every minute for failed workflow runs,
+      uses OpenAI to pick a repository label, creates a GitHub issue, posts a
+      Slack alert, and stores each processed run below. The list refreshes every
+      30 seconds.
+
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+
+  - kind: card
+    title: Processed CI failures
+    children:
+      - kind: metric-grid
+        columns: 2
+        metrics:
+          - { value: "{{state.failureCount}}", label: Total records }
+          - { value: "{{state.lastRefreshed | date}}", label: Last refreshed }
+      - kind: data-table
+        source: state.failures
+        empty: "No CI failures processed yet. Trigger a failed GitHub Actions run and wait for the monitor to pick it up."
+        columns:
+          - { key: processedAt, label: Processed }
+          - { key: workflowName, label: Workflow }
+          - { key: branch, label: Branch }
+          - { key: label, label: Label }
+          - { key: issueNumber, label: "Issue #" }
+          - { key: runUrl, label: Run URL }
+          - { key: issueUrl, label: Issue URL }
+          - { key: actor, label: Actor }
