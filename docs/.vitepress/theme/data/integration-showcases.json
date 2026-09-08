@@ -180,6 +180,12 @@
       "name": "Invoices Processing"
     }
   ],
+  "airtable": [
+    {
+      "slug": "test-airtable",
+      "name": "Test Airtable"
+    }
+  ],
   "google-calendar": [],
   "telegram": [
     {

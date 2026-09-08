@@ -1,0 +1,41 @@
+version: "1.0"
+name: "Test Airtable"
+description: >-
+  Test @ha-bits/bit-airtable with user-defined field columns saved to the database.
+
+workflows:
+  - id: configure-fields
+    path: ./habits/configure-fields.yaml
+    enabled: true
+
+  - id: get-field-config
+    path: ./habits/get-field-config.yaml
+    enabled: true
+
+  - id: create-record
+    path: ./habits/create-record.yaml
+    enabled: true
+
+  - id: list-records
+    path: ./habits/list-records.yaml
+    enabled: true
+
+  - id: list-tables
+    path: ./habits/list-tables.yaml
+    enabled: true
+
+  - id: poll-new-records
+    path: ./habits/poll-new-records.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true
