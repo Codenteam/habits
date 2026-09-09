@@ -58,7 +58,7 @@ const integrations = [
       "database"
     ],
     "bitPackage": "@ha-bits/bit-airtable",
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "icon": "Table"
   },
   {
@@ -80,7 +80,7 @@ const integrations = [
       "google"
     ],
     "bitPackage": "@ha-bits/bit-google-sheets",
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "icon": "Package"
   },
   {

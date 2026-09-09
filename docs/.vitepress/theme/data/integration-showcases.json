@@ -178,9 +178,21 @@
     {
       "slug": "invoices-processing",
       "name": "Invoices Processing"
+    },
+    {
+      "slug": "sheets-airtable-sync",
+      "name": "Sheets ↔ Airtable Sync"
+    },
+    {
+      "slug": "test-google-sheets-poll",
+      "name": "Test Google Sheets Polling"
     }
   ],
   "airtable": [
+    {
+      "slug": "sheets-airtable-sync",
+      "name": "Sheets ↔ Airtable Sync"
+    },
     {
       "slug": "test-airtable",
       "name": "Test Airtable"
