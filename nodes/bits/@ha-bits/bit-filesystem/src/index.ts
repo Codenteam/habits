@@ -12,6 +12,37 @@ interface FilesystemContext {
   propsValue: Record<string, any>;
 }
 
+interface BitsPollingStore {
+  hasSeenItem(itemId: string, itemDate?: string): Promise<boolean>;
+  markItemSeen(itemId: string, sourceDate: string, data?: any): Promise<void>;
+}
+
+interface FolderWatcherContext {
+  propsValue: {
+    folderPath?: string;
+    baseDir?: string;
+    recursive?: boolean;
+    cronExpression?: string;
+  };
+  pollingStore?: BitsPollingStore;
+  setSchedule?: (options: { cronExpression: string; timezone?: string }) => void;
+}
+
+function assertNodeRuntime(): void {
+  const isNode = typeof process !== 'undefined' && !!process.versions?.node;
+  const globalRef = globalThis as any;
+  const isTauri = !!(
+    globalRef.__TAURI__?.core?.invoke ||
+    globalRef.__TAURI__?.invoke
+  );
+
+  if (!isNode || isTauri) {
+    throw new Error(
+      'The folder file watcher trigger requires Node.js (Cortex server). It is not available in the Tauri app.'
+    );
+  }
+}
+
 const filesystemBit = {
   displayName: 'Filesystem',
   description: 'Read, write, and manage files on the local filesystem',
@@ -305,7 +336,134 @@ const filesystemBit = {
     },
   },
 
-  triggers: {},
+  triggers: {
+    /**
+     * Poll a folder for new files (Node.js / Cortex server only).
+     * Returns only files not yet seen, deduplicated via PollingStore.
+     * Cortex executes the workflow once per returned file.
+     */
+    newFiles: {
+      name: 'newFiles',
+      displayName: 'New Files in Folder',
+      description:
+        'Polls a directory for new or modified files on a schedule. Returns each unseen file with metadata and base64 content. Node.js only.',
+      type: 'POLLING',
+      props: {
+        folderPath: {
+          type: 'SHORT_TEXT',
+          displayName: 'Folder Path',
+          description: 'Absolute or relative path to the directory to watch',
+          required: true,
+        },
+        baseDir: {
+          type: 'SHORT_TEXT',
+          displayName: 'Base Directory',
+          description: 'Base directory for relative folder paths (defaults to cwd)',
+          required: false,
+        },
+        recursive: {
+          type: 'CHECKBOX',
+          displayName: 'Recursive',
+          description: 'Include files in subdirectories',
+          required: false,
+          defaultValue: false,
+        },
+        cronExpression: {
+          type: 'SHORT_TEXT',
+          displayName: 'Poll Interval',
+          description: 'Cron expression for polling (default: every 1 minute)',
+          required: false,
+          defaultValue: '*/1 * * * *',
+        },
+      },
+
+      async onEnable(context: FolderWatcherContext): Promise<void> {
+        const cron = context.propsValue.cronExpression || '*/1 * * * *';
+        context.setSchedule?.({ cronExpression: cron, timezone: 'UTC' });
+      },
+
+      async onDisable(_context: FolderWatcherContext): Promise<void> {
+        // Server stops the cron job on disable.
+      },
+
+      async run(context: FolderWatcherContext): Promise<any[]> {
+        assertNodeRuntime();
+
+        const folderPath = String(context.propsValue.folderPath || '').trim();
+        if (!folderPath) {
+          console.log('[bit-filesystem] newFiles: no folderPath provided, skipping');
+          return [];
+        }
+
+        const { baseDir, recursive = false } = context.propsValue;
+        const pollingStore = context.pollingStore;
+
+        let scanResult: Awaited<ReturnType<typeof driver.readDirectoryFiles>>;
+        try {
+          scanResult = await driver.readDirectoryFiles({
+            folderPath,
+            baseDir,
+            recursive: Boolean(recursive),
+          });
+        } catch (err: any) {
+          console.error(`[bit-filesystem] newFiles: ${err.message}`);
+          throw err;
+        }
+
+        const newFiles: any[] = [];
+
+        for (const file of scanResult.files) {
+          const seen = pollingStore
+            ? await pollingStore.hasSeenItem(file.fileId, file.modified)
+            : false;
+
+          if (!seen) {
+            newFiles.push({
+              fileId: file.fileId,
+              fileName: file.fileName,
+              filePath: file.filePath,
+              relativePath: file.relativePath,
+              size: file.size,
+              modified: file.modified,
+              created: file.created,
+              mimeType: file.mimeType,
+              fileContent: file.fileContent,
+              folderPath: scanResult.folderPath,
+            });
+          }
+        }
+
+        if (pollingStore) {
+          for (const file of newFiles) {
+            await pollingStore.markItemSeen(file.fileId, file.modified, {
+              fileName: file.fileName,
+              filePath: file.filePath,
+              size: file.size,
+            });
+          }
+        }
+
+        console.log(
+          `[bit-filesystem] newFiles: ${newFiles.length} new file(s) in ${scanResult.folderPath} (${scanResult.count} total)`
+        );
+
+        return newFiles;
+      },
+
+      sampleData: {
+        fileId: '/data/knowledge/company-info.pdf|12345|1700000000000',
+        fileName: 'company-info.pdf',
+        filePath: '/data/knowledge/company-info.pdf',
+        relativePath: 'company-info.pdf',
+        size: 12345,
+        modified: new Date().toISOString(),
+        created: new Date().toISOString(),
+        mimeType: 'application/pdf',
+        fileContent: 'JVBERi0xLjQK...',
+        folderPath: '/data/knowledge',
+      },
+    },
+  },
 };
 
 export default filesystemBit;

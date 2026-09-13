@@ -1,0 +1,45 @@
+id: rag-list-files
+name: List RAG Files
+description: Query ingested file metadata from the SQLite database for the UI.
+
+nodes:
+  - id: query-files
+    type: bit
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: rag_files
+        filter: "{}"
+        limit: 200
+
+  - id: sort-files
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        rows: "{{query-files.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(rows) {
+            const files = Array.isArray(rows) ? rows.slice() : [];
+            files.sort((a, b) => {
+              const aTime = Date.parse(a?.ingestedAt || a?._createdAt || '') || 0;
+              const bTime = Date.parse(b?.ingestedAt || b?._createdAt || '') || 0;
+              return bTime - aTime;
+            });
+            return { files, count: files.length };
+          }
+
+edges:
+  - source: query-files
+    target: sort-files
+
+output:
+  success: true
+  count: "{{sort-files.result.count}}"
+  files: "{{sort-files.result.files}}"

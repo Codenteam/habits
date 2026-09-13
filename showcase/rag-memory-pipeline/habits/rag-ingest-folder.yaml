@@ -1,0 +1,170 @@
+id: rag-ingest-folder
+name: RAG Ingest from Folder
+description: >
+  Poll a directory for new files, extract RAG chunks with OpenAI,
+  embed each chunk, and store in the vector database.
+
+nodes:
+  - id: watch-folder
+    type: trigger
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-filesystem"
+      operation: newFiles
+      isTrigger: true
+      triggerType: polling
+      params:
+        baseDir: "{{habits.env.HABITS_RAG_BASE_DIR}}"
+        folderPath: "{{habits.env.HABITS_RAG_FOLDER_PATH}}"
+        cronExpression: "*/1 * * * *"
+        recursive: false
+        dedupBy: "id"
+
+  - id: extract-chunks
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_with_file
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        fileContent: "{{watch-folder.fileContent}}"
+        filename: "{{watch-folder.fileName}}"
+        mimeType: "{{watch-folder.mimeType}}"
+        maxTokens: 4000
+        prompt: |
+          You are a RAG chunking assistant.
+
+          Read the attached document and extract every useful piece of information for
+          retrieval-augmented generation (RAG).
+
+          Split the content into self-contained text chunks (1-4 sentences each) that can be
+          searched independently. Each chunk must make sense on its own without extra context.
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - documentTitle: string — short label for the source document (or "Untitled" if unclear)
+            - chunks: array of objects, each with:
+                - title: short label for the chunk (max 12 words)
+                - text: the full chunk text (1-4 sentences)
+                - tag: one of (concept, procedure, reference, data, general)
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: prepare-chunks
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        extracted: "{{extract-chunks}}"
+        fileName: "{{watch-folder.fileName}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(extracted, fileName) {
+            const data = extracted && typeof extracted === 'object' ? extracted : {};
+            const documentTitle = String(data.documentTitle || fileName || 'Untitled').trim();
+            const rawChunks = Array.isArray(data.chunks) ? data.chunks : [];
+
+            const chunks = rawChunks
+              .map((chunk, index) => {
+                const text = String(chunk?.text || '').trim();
+                if (!text) return null;
+                return {
+                  title: String(chunk?.title || `Chunk ${index + 1}`).trim(),
+                  text,
+                  tag: String(chunk?.tag || 'general').trim(),
+                  documentTitle,
+                  sourceFile: String(fileName || '').trim(),
+                };
+              })
+              .filter(Boolean);
+
+            if (chunks.length === 0) {
+              throw new Error('No RAG chunks extracted from the file');
+            }
+
+            return { documentTitle, chunks, count: chunks.length };
+          }
+
+  - id: ingest-chunks
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{prepare-chunks.result.chunks}}"
+        habitId: rag-ingest-chunk
+        inputKey: ragChunk
+        continueOnError: true
+        collectResults: true
+        delayMs: 200
+
+  - id: save-file-meta
+    type: bit
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: rag_files
+        document:
+          fileId: "{{watch-folder.fileId}}"
+          fileName: "{{watch-folder.fileName}}"
+          filePath: "{{watch-folder.filePath}}"
+          relativePath: "{{watch-folder.relativePath}}"
+          mimeType: "{{watch-folder.mimeType}}"
+          size: "{{watch-folder.size}}"
+          modified: "{{watch-folder.modified}}"
+          documentTitle: "{{prepare-chunks.result.documentTitle}}"
+          chunksExtracted: "{{prepare-chunks.result.count}}"
+          chunksIngested: "{{ingest-chunks.successCount}}"
+          failed: "{{ingest-chunks.errorCount}}"
+          ingestedAt: "{{now | iso}}"
+
+  - id: log-ingest-summary
+    type: action
+    data:
+      label: Log RAG Ingest Summary
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: RAG-MEMORY-PIPELINE
+        message:
+          sourceFile: "{{watch-folder.fileName}}"
+          filePath: "{{watch-folder.filePath}}"
+          documentTitle: "{{prepare-chunks.result.documentTitle}}"
+          chunksExtracted: "{{prepare-chunks.result.count}}"
+          chunksIngested: "{{ingest-chunks.successCount}}"
+          failed: "{{ingest-chunks.errorCount}}"
+          errors: "{{ingest-chunks.errors}}"
+
+edges:
+  - source: watch-folder
+    target: extract-chunks
+  - source: extract-chunks
+    target: prepare-chunks
+  - source: prepare-chunks
+    target: ingest-chunks
+  - source: ingest-chunks
+    target: save-file-meta
+  - source: save-file-meta
+    target: log-ingest-summary
+
+output:
+  sourceFile: "{{watch-folder.fileName}}"
+  filePath: "{{watch-folder.filePath}}"
+  documentTitle: "{{prepare-chunks.result.documentTitle}}"
+  chunksExtracted: "{{prepare-chunks.result.count}}"
+  chunksIngested: "{{ingest-chunks.successCount}}"
+  failed: "{{ingest-chunks.errorCount}}"
+  results: "{{ingest-chunks.results}}"

@@ -1,0 +1,68 @@
+# Showcase metadata for RAG Memory Pipeline
+name: RAG Memory Pipeline
+type: automation
+description: Watch a folder for new documents, extract RAG chunks with OpenAI, and store embeddings in a vector database.
+
+longDescription: |
+  **RAG Memory Pipeline** automatically builds a searchable vector memory from
+  files dropped into a directory on your server.
+
+  ## What it does
+
+  - **Folder polling**: Watches `HABITS_RAG_BASE_DIR` + `HABITS_RAG_FOLDER_PATH` every minute for new or modified files
+  - **Deduplication**: Skips already-processed files via the SQLite polling store (path + size + mtime)
+  - **Chunk extraction**: Sends each file to OpenAI (`ask_with_file`) to extract self-contained RAG chunks
+  - **Vector storage**: Embeds each chunk with `text-embedding-3-small` and stores it via `vectorInsert`
+
+  ## Environment variables (`.env`)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for document extraction and embeddings |
+  | `HABITS_RAG_BASE_DIR` | Base directory on the filesystem (absolute path, e.g. `/tmp`) |
+  | `HABITS_RAG_FOLDER_PATH` | Folder relative to base (e.g. `rag-data`, or `.` to watch the base dir) |
+  | `HABITS_RAG_COLLECTION` | Vector collection name for chunk storage (default: `rag_memory`) |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in your OpenAI key.
+  2. Create the watch directory and set `HABITS_RAG_BASE_DIR` + `HABITS_RAG_FOLDER_PATH` (e.g. `/tmp` + `rag-data`).
+  3. Start the showcase:
+
+     ```bash
+     npx nx dev @ha-bits/cortex --config showcase/rag-memory-pipeline/stack.yaml
+     ```
+
+  4. Drop a PDF, TXT, or other supported file into the folder — within one minute it will be
+     chunked, embedded, and stored in `habits-cortex.db` under the `rag_memory` collection.
+
+  ## Tech stack
+
+  - **Filesystem** (`@ha-bits/bit-filesystem`) — folder polling trigger (Node.js only)
+  - **OpenAI** (`@ha-bits/bit-openai`) — `ask_with_file` + `embed-text`
+  - **SQLite vectors** (`@ha-bits/bit-database-sql`) — `vectorInsert` via sqlite-vec
+
+tags:
+  - ai
+  - automation
+  - filesystem
+  - vector
+  - rag
+  - openai
+  - memory
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (for document extraction and embeddings)
+  - RAG_BASE_DIR (filesystem base directory)
+  - RAG_FOLDER_PATH (folder relative to base directory)
+
+habits:
+  - habits/rag-ingest-folder.yaml
+  - habits/rag-ingest-chunk.yaml
+  - habits/rag-list-files.yaml
