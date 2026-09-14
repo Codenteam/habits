@@ -28,21 +28,6 @@ interface FolderWatcherContext {
   setSchedule?: (options: { cronExpression: string; timezone?: string }) => void;
 }
 
-function assertNodeRuntime(): void {
-  const isNode = typeof process !== 'undefined' && !!process.versions?.node;
-  const globalRef = globalThis as any;
-  const isTauri = !!(
-    globalRef.__TAURI__?.core?.invoke ||
-    globalRef.__TAURI__?.invoke
-  );
-
-  if (!isNode || isTauri) {
-    throw new Error(
-      'The folder file watcher trigger requires Node.js (Cortex server). It is not available in the Tauri app.'
-    );
-  }
-}
-
 const filesystemBit = {
   displayName: 'Filesystem',
   description: 'Read, write, and manage files on the local filesystem',
@@ -387,8 +372,6 @@ const filesystemBit = {
       },
 
       async run(context: FolderWatcherContext): Promise<any[]> {
-        assertNodeRuntime();
-
         const folderPath = String(context.propsValue.folderPath || '').trim();
         if (!folderPath) {
           console.log('[bit-filesystem] newFiles: no folderPath provided, skipping');
