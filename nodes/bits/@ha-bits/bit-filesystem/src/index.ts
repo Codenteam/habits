@@ -449,19 +449,6 @@ const filesystemBit = {
 
         return newFiles;
       },
-
-      sampleData: {
-        fileId: '/data/knowledge/company-info.pdf|12345|1700000000000',
-        fileName: 'company-info.pdf',
-        filePath: '/data/knowledge/company-info.pdf',
-        relativePath: 'company-info.pdf',
-        size: 12345,
-        modified: new Date().toISOString(),
-        created: new Date().toISOString(),
-        mimeType: 'application/pdf',
-        fileContent: 'JVBERi0xLjQK...',
-        folderPath: '/data/knowledge',
-      },
     },
   },
 };
