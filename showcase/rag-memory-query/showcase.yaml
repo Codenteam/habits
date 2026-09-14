@@ -1,0 +1,55 @@
+# Showcase metadata for RAG Memory Query
+name: RAG Memory Query
+type: automation
+description: Ask questions against ingested RAG memory — embed, vector search, and display matching chunks.
+
+longDescription: |
+  **RAG Memory Query** is a small test UI for searching the `rag_memory` vector collection.
+
+  ## What it does
+
+  1. User types a question in the web UI
+  2. OpenAI `embed-text` embeds the question (`text-embedding-3-small`)
+  3. `bit-database-sql` `vectorSearch` finds the top 5 similar chunks (cosine distance)
+  4. OpenAI `ask_chatgpt` synthesizes one answer from all retrieved chunks
+  5. The answer is shown under the input; source chunks are listed below
+
+  ## Prerequisites
+
+  Ingest data first with the **rag-memory-pipeline** showcase (same SQLite DB:
+  `/tmp/habits-sql/habits-cortex.db`, collection `rag_memory`).
+
+  ## Environment variables (`.env`)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for question embeddings |
+  | `HABITS_RAG_COLLECTION` | Vector collection name (default: `rag_memory`, must match ingest) |
+
+  ## How to run
+
+  ```bash
+  npx nx dev @ha-bits/cortex --config showcase/rag-memory-query/stack.yaml --env showcase/rag-memory-query/.env
+  ```
+
+  Open http://localhost:13003, type a question, click **Send**.
+
+tags:
+  - ai
+  - rag
+  - vector
+  - search
+  - openai
+
+difficulty: beginner
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (for question embeddings)
+  - rag_memory data (from rag-memory-pipeline ingest)
+
+habits:
+  - habits/rag-search.yaml

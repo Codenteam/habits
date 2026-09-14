@@ -1,0 +1,166 @@
+id: whatsapp-chatbot-routing
+name: WhatsApp AI Chatbot Routing
+description: >
+  Receives inbound WhatsApp messages, filters out replies/reactions,
+  and routes each customer question through the RAG chatbot pipeline.
+
+nodes:
+  - id: whatsapp-inbound
+    type: trigger
+    data:
+      label: WhatsApp Inbound Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: inboundMessage
+      triggerType: webhook
+      isTrigger: true
+      params:
+        verifyToken: "{{habits.env.HABITS_WHATSAPP_VERIFY_TOKEN}}"
+
+  - id: parse-inbound
+    type: script
+    data:
+      label: Parse Inbound Message
+      framework: script
+      source: inline
+      params:
+        payload: "{{whatsapp-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const entry = payload?.entry?.[0];
+            const change = entry?.changes?.[0]?.value;
+            const msg = change?.messages?.[0];
+            const contact = change?.contacts?.[0];
+            const messageType = String(msg?.type || '');
+
+            const replyToMessageId = msg?.context?.id != null
+              ? String(msg.context.id)
+              : undefined;
+            const reactedToMessageId = messageType === 'reaction' && msg?.reaction?.message_id != null
+              ? String(msg.reaction.message_id)
+              : undefined;
+            const parentMessageId = replyToMessageId ?? reactedToMessageId;
+
+            const text = String(
+              msg?.text?.body
+              || msg?.button?.text
+              || msg?.interactive?.button_reply?.title
+              || msg?.interactive?.list_reply?.title
+              || ''
+            );
+
+            return {
+              from: String(msg?.from || ''),
+              text,
+              messageId: String(msg?.id || ''),
+              messageType,
+              contactName: String(contact?.profile?.name || ''),
+              waId: String(contact?.wa_id || msg?.from || ''),
+              phoneNumberId: String(change?.metadata?.phone_number_id || ''),
+              timestamp: String(msg?.timestamp || ''),
+              parentMessageId: parentMessageId || '',
+            };
+          }
+
+  - id: filter-intake-messages
+    type: script
+    data:
+      label: Filter Intake Messages
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-inbound.result}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed) {
+            if (!parsed?.text) {
+              return { skip: true, reason: 'empty_message' };
+            }
+
+            if (parsed.parentMessageId) {
+              return { skip: true, reason: 'reply_or_reaction' };
+            }
+
+            if (parsed.messageType === 'reaction') {
+              return { skip: true, reason: 'reaction' };
+            }
+
+            if (parsed.messageType !== 'text') {
+              return { skip: true, reason: 'unsupported_message_type' };
+            }
+
+            return { skip: false, message: parsed };
+          }
+
+  - id: check-should-reply
+    type: bits
+    data:
+      label: Should Reply?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Reply
+            value1: "{{filter-intake-messages.result.skip}}"
+            operator: equals
+            value2: false
+            output: reply
+        includeElse: true
+        defaultOutput: skip
+
+  - id: log-skipped-message
+    type: action
+    data:
+      label: Log Skipped Message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-CHATBOT-SKIP
+        message:
+          reason: "{{filter-intake-messages.result.reason}}"
+          from: "{{parse-inbound.result.from}}"
+          messageType: "{{parse-inbound.result.messageType}}"
+          text: "{{parse-inbound.result.text}}"
+
+  - id: handle-questions
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{filter-intake-messages.result.message}}"
+        habitId: handle-customer-question
+        inputKey: message
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: whatsapp-inbound
+    target: parse-inbound
+  - source: parse-inbound
+    target: filter-intake-messages
+  - source: filter-intake-messages
+    target: check-should-reply
+  - source: check-should-reply
+    target: handle-questions
+    sourceHandle: branch-0
+  - source: check-should-reply
+    target: log-skipped-message
+    sourceHandle: branch-1
+
+output:
+  skipped: "{{filter-intake-messages.result.skip}}"
+  skipReason: "{{filter-intake-messages.result.reason}}"
+  questionsHandled: "{{handle-questions.successCount}}"
+  results: "{{handle-questions.results}}"

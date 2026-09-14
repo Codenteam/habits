@@ -1,0 +1,128 @@
+id: rag-search
+name: RAG Memory Search
+description: >
+  Embed a user question, search the vector collection, and synthesize one answer with OpenAI.
+
+nodes:
+  - id: embed-question
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: embed-text
+      params:
+        text: "{{habits.input.question}}"
+        model: "text-embedding-3-small"
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: search-memory
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorSearch
+      params:
+        collection: "{{habits.env.HABITS_RAG_COLLECTION}}"
+        vector: "{{embed-question.embeddings[0]}}"
+        limit: 5
+        distance: cosine
+
+  - id: build-context
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        question: "{{habits.input.question}}"
+        results: "{{search-memory.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(question, results) {
+            const rows = Array.isArray(results) ? results : [];
+            const matches = rows.map((item, index) => {
+              const distance = item?._distance != null ? Number(item._distance) : null;
+              return {
+                rank: index + 1,
+                title: String(item?.title || `Match ${index + 1}`).trim(),
+                text: String(item?.text || '').trim(),
+                tag: String(item?.tag || 'general').trim(),
+                documentTitle: String(item?.documentTitle || '').trim(),
+                sourceFile: String(item?.sourceFile || '').trim(),
+                distance,
+                relevance: distance != null ? (1 - distance).toFixed(4) : null,
+              };
+            });
+
+            const contextText = matches.length
+              ? matches.map((m) =>
+                  `[${m.rank}] ${m.title} (${m.tag}) — ${m.sourceFile || m.documentTitle}\n${m.text}`
+                ).join('\n\n')
+              : '';
+
+            return {
+              question: String(question || '').trim(),
+              matchCount: matches.length,
+              matches,
+              contextText: contextText || 'No matching chunks found in the vector database.',
+            };
+          }
+
+  - id: generate-answer
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        maxTokens: 800
+        prompt: |
+          You are a helpful assistant that answers questions using retrieved memory chunks.
+
+          Answer the user's question in a single clear response based ONLY on the context below.
+          Combine information from all relevant chunks into one coherent answer.
+
+          Rules:
+          - Use only facts present in the context — do not invent details
+          - If the context does not contain enough information, say so honestly
+          - Write in plain language; short paragraphs are fine
+          - Do not mention embeddings, vectors, chunks, or internal systems
+          - Do not list raw chunk numbers unless helpful for clarity
+
+          USER QUESTION:
+          {{build-context.result.question}}
+
+          RETRIEVED CONTEXT:
+          {{build-context.result.contextText}}
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+edges:
+  - source: embed-question
+    target: search-memory
+  - source: search-memory
+    target: build-context
+  - source: build-context
+    target: generate-answer
+
+input:
+  - id: question
+    type: string
+    displayName: Question
+    required: true
+
+output:
+  question: "{{build-context.result.question}}"
+  answer: "{{generate-answer}}"
+  matchCount: "{{build-context.result.matchCount}}"
+  matches: "{{build-context.result.matches}}"
+  contextText: "{{build-context.result.contextText}}"
+  rawResults: "{{search-memory.results}}"

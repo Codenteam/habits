@@ -1,0 +1,306 @@
+id: handle-customer-question
+name: Handle Customer Question
+description: >
+  Classify the inbound WhatsApp message first. Product/company questions go through
+  RAG (embed → search → reply). Greetings and other non-product messages get a direct
+  AI reply without vector search.
+
+nodes:
+  - id: classify-intent
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        maxTokens: 300
+        prompt: |
+          You are an intent classifier for a WhatsApp customer-support chatbot.
+
+          Decide whether the customer message is asking about products, services, pricing,
+          features, availability, policies, shipping, returns, support hours, company info,
+          or any other topic that should be answered from a product/company knowledge base.
+
+          NOT a product/company question (isProductQuestion: false):
+          - Greetings: hi, hello, hey, good morning
+          - Thanks or goodbye: thanks, thank you, bye, see you
+          - Small talk: how are you, what's up, nice to meet you
+          - Emoji-only or very short social messages with no real question
+          - Generic chit-chat unrelated to the business
+
+          IS a product/company question (isProductQuestion: true):
+          - Questions about products, plans, pricing, features, specs
+          - Support, policies, refunds, delivery, warranty, hours, contact
+          - "Do you have...", "How much...", "What is your...", "Can I..."
+
+          CUSTOMER NAME: {{message.contactName}}
+          MESSAGE:
+          {{message.text}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - isProductQuestion: boolean — true only when the message needs knowledge-base lookup
+            - intentType: one of (greeting, thanks, small_talk, product_question, company_question, support_question, other)
+            - confidence: number from 0.0 to 1.0
+            - reason: brief reason for the classification
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: branch-on-intent
+    type: bits
+    data:
+      label: Product or company question?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Knowledge question
+            value1: "{{classify-intent.isProductQuestion}}"
+            operator: equals
+            value2: true
+            output: rag
+        includeElse: true
+        defaultOutput: direct
+
+  # ── Branch 0: RAG path (product / company question) ───────────────────────
+
+  - id: embed-question-rag
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: embed-text
+      params:
+        text: "{{message.text}}"
+        model: "text-embedding-3-small"
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: search-knowledge-rag
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorSearch
+      params:
+        collection: product_knowledge
+        vector: "{{embed-question-rag.embeddings[0]}}"
+        limit: 5
+        distance: cosine
+
+  - id: log-vector-search
+    type: action
+    data:
+      label: Log Vector Search Results
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-CHATBOT-VECTOR-SEARCH
+        message:
+          question: "{{message.text}}"
+          from: "{{message.from}}"
+          collection: product_knowledge
+          matchCount: "{{search-knowledge-rag.count}}"
+          results: "{{search-knowledge-rag.results}}"
+
+  - id: build-context-rag
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        question: "{{message.text}}"
+        contactName: "{{message.contactName}}"
+        searchResults: "{{search-knowledge-rag.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(question, contactName, searchResults) {
+            const results = Array.isArray(searchResults) ? searchResults : [];
+            const contextBlocks = results.map((item, index) => {
+              const title = String(item?.title || `Source ${index + 1}`).trim();
+              const category = String(item?.category || 'general').trim();
+              const text = String(item?.text || '').trim();
+              const distance = item?._distance != null ? Number(item._distance).toFixed(4) : 'n/a';
+              return `[${index + 1}] (${category}) ${title}\n${text}\n(relevance: ${distance})`;
+            });
+
+            return {
+              question: String(question || '').trim(),
+              contactName: String(contactName || 'there').trim(),
+              matchCount: results.length,
+              contextText: contextBlocks.length
+                ? contextBlocks.join('\n\n')
+                : 'No matching knowledge found in the database.',
+            };
+          }
+
+  - id: generate-reply-rag
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        maxTokens: 600
+        prompt: |
+          You are a professional WhatsApp customer-support assistant for a company.
+
+          Write a helpful, friendly, and concise reply to the customer question below.
+          Use ONLY the knowledge context provided — do not invent product details, prices,
+          or policies that are not in the context.
+
+          If the context does not contain enough information, politely say you do not have
+          that detail and offer to connect them with a human agent.
+
+          Style rules:
+          - Keep the reply under 120 words
+          - Use a warm, professional tone suitable for WhatsApp
+          - No markdown headings or bullet lists — short paragraphs only
+          - Sound natural and conversational, like a helpful human on WhatsApp — not a scripted template
+          - Do not mention embeddings, vectors, or internal systems
+
+          How to open your reply (read the CUSTOMER MESSAGE and decide):
+          - Direct question only (e.g. "What are your prices?", "Do you ship to Jordan?"):
+            Answer immediately. Do NOT start with "Hi", "Hello", or the customer's name.
+            Lead with the useful information (e.g. "Our plans start at…", "Yes, we ship to…").
+          - Greeting AND question in the same message (e.g. "Hi, what are your prices?", "Hello! Do you offer support?"):
+            Start with a brief natural greeting using their name when you have it (e.g. "Hi Sarah," or "Hello!"),
+            then answer the question in the same message.
+          - Never use the same "Hi [name]," opener on every reply — only when the customer actually greeted you first.
+
+          CUSTOMER NAME: {{build-context-rag.result.contactName}}
+          CUSTOMER MESSAGE:
+          {{build-context-rag.result.question}}
+
+          KNOWLEDGE CONTEXT ({{build-context-rag.result.matchCount}} matches):
+          {{build-context-rag.result.contextText}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - reply: string — the WhatsApp message to send to the customer
+            - confidence: number from 0.0 to 1.0
+            - usedContext: boolean — true if you relied on the knowledge context
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: send-reply-rag
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{message.from}}"
+        replyToMessageId: "{{message.messageId}}"
+        message: "{{generate-reply-rag.reply}}"
+
+  # ── Branch 1: Direct reply (greeting, thanks, small talk, etc.) ───────────
+
+  - id: generate-direct-reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        maxTokens: 300
+        prompt: |
+          You are a friendly WhatsApp customer-support assistant.
+
+          The customer message below is NOT a product or company knowledge question
+          (e.g. greeting, thanks, small talk). Reply warmly and professionally.
+
+          If it is a greeting or opening message, welcome them and invite them to ask
+          about products, services, or support. Do not invent specific product details.
+
+          Style rules:
+          - Keep under 60 words
+          - Warm, human tone suitable for WhatsApp
+          - No markdown or bullet lists
+          - Address the customer by name when available
+
+          CUSTOMER NAME: {{message.contactName}}
+          INTENT: {{classify-intent.intentType}}
+          MESSAGE:
+          {{message.text}}
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - reply: string — the WhatsApp message to send
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: send-direct-reply
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-whatsapp"
+      operation: sendTextMessage
+      params:
+        accessToken: "{{habits.env.HABITS_WHATSAPP_ACCESS_TOKEN}}"
+        phoneNumberId: "{{habits.env.HABITS_WHATSAPP_PHONE_NUMBER_ID}}"
+        to: "{{message.from}}"
+        replyToMessageId: "{{message.messageId}}"
+        message: "{{generate-direct-reply.reply}}"
+
+edges:
+  - source: classify-intent
+    target: branch-on-intent
+
+  # RAG branch — each node only on branch-0 chain
+  - source: branch-on-intent
+    target: embed-question-rag
+    sourceHandle: branch-0
+  - source: embed-question-rag
+    target: search-knowledge-rag
+  - source: search-knowledge-rag
+    target: log-vector-search
+  - source: log-vector-search
+    target: build-context-rag
+  - source: build-context-rag
+    target: generate-reply-rag
+  - source: generate-reply-rag
+    target: send-reply-rag
+
+  # Direct branch — each node only on branch-1 chain
+  - source: branch-on-intent
+    target: generate-direct-reply
+    sourceHandle: branch-1
+  - source: generate-direct-reply
+    target: send-direct-reply
+
+output:
+  from: "{{message.from}}"
+  contactName: "{{message.contactName}}"
+  question: "{{message.text}}"
+  isProductQuestion: "{{classify-intent.isProductQuestion}}"
+  intentType: "{{classify-intent.intentType}}"
+  intentConfidence: "{{classify-intent.confidence}}"
+  intentReason: "{{classify-intent.reason}}"
+  path: "{{classify-intent.isProductQuestion ? 'rag' : 'direct'}}"
+  ragMatchCount: "{{build-context-rag.result.matchCount}}"
+  reply: "{{classify-intent.isProductQuestion ? generate-reply-rag.reply : generate-direct-reply.reply}}"
+  messageId: "{{classify-intent.isProductQuestion ? send-reply-rag.messageId : send-direct-reply.messageId}}"
+  success: "{{classify-intent.isProductQuestion ? send-reply-rag.success : send-direct-reply.success}}"

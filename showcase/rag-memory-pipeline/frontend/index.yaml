@@ -1,0 +1,77 @@
+version: 1
+meta:
+  id: rag-memory-pipeline
+  title: RAG Memory Pipeline
+  subtitle: Folder watch → chunk → embed → vector store
+  icon: "lucide:Database"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: RAG Memory Pipeline
+    subtitle: "Ingested files from the watched folder"
+    icon: "lucide:Database"
+
+state:
+  files: []
+  lastRefreshed: null
+  error: null
+
+actions:
+  listFiles:
+    method: POST
+    endpoint: /api/rag-list-files
+    body: {}
+    responsePath: output
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        files: "$response.files"
+        lastRefreshed: "new Date().toISOString()"
+        error: null
+    onError:
+      set: { error: "$error.message" }
+
+onMount:
+  - listFiles
+
+widgets:
+  - kind: status-banner
+    source: "Drop files into the watched folder. New files are ingested automatically and this list refreshes every 30 seconds."
+
+  - kind: card
+    title: Ingested files
+    children:
+      - kind: kv-grid
+        items:
+          - { label: Total files, value: "{{state.files.length}}" }
+          - { label: Last refreshed, value: "{{state.lastRefreshed | date}}" }
+          - { label: Auto-refresh, value: "Every 30 seconds" }
+
+      - kind: list
+        source: state.files
+        empty: "No files ingested yet. Add a document to the watched folder to get started."
+        itemKey: _id
+        template:
+          - kind: text
+            value: "{{item.fileName || item.documentTitle || 'Untitled'}}"
+            strong: true
+          - kind: text
+            value: "{{item.documentTitle}} · {{item.chunksIngested}}/{{item.chunksExtracted}} chunks · {{item.mimeType}}"
+            muted: true
+          - kind: text
+            value: "{{item.size}} bytes · modified {{item.modified | date}}"
+            muted: true
+          - kind: text
+            value: "{{item.filePath}}"
+            muted: true
+
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error

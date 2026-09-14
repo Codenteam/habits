@@ -12,3 +12,4 @@ export { transcribeAction } from './transcriptions';
 export { translateAction } from './translation';
 export { visionPrompt } from './vision-prompt';
 export { askWithFile } from './ask-with-file';
+export { embedTextAction } from './embed-text';
