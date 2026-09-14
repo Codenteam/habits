@@ -8,7 +8,8 @@ aside: false
 import { Brain, Zap, Tag, Sparkles } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/rag-memory-pipeline/automation-default.svg', caption: 'RAG Memory Pipeline' }
+    { img: '/showcase/rag-memory-pipeline/rag-memory-pipeline-1.png', caption: 'RAG Memory Pipeline' },
+    { img: '/showcase/rag-memory-pipeline/rag-memory-pipeline-2.png', caption: 'RAG Memory Pipeline' }
 ]
 
 const habitTabs = [
