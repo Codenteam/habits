@@ -51,6 +51,17 @@ const integrations = [
     "icon": "Users"
   },
   {
+    "slug": "airtable",
+    "name": "Airtable",
+    "description": "Create records, manage table schema, and poll for new rows with a personal access token.",
+    "categories": [
+      "database"
+    ],
+    "bitPackage": "@ha-bits/bit-airtable",
+    "showcaseCount": 2,
+    "icon": "Table"
+  },
+  {
     "slug": "google-drive",
     "name": "Google Drive",
     "description": "Upload files to Google Drive with OAuth 2.0 credentials from Google Cloud.",
@@ -69,7 +80,7 @@ const integrations = [
       "google"
     ],
     "bitPackage": "@ha-bits/bit-google-sheets",
-    "showcaseCount": 1,
+    "showcaseCount": 2,
     "icon": "Package"
   },
   {

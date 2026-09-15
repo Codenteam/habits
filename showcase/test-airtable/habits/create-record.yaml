@@ -1,0 +1,180 @@
+id: create-record
+name: Create Airtable Record
+description: >-
+  Create an Airtable record using the saved field configuration. Values can be
+  JSON, labeled pairs (Name=Jane, Email=a@b.com), or comma-separated in column order.
+
+input:
+  - id: values
+    type: string
+    required: true
+    description: JSON object, labeled key=value pairs, or comma-separated values
+
+nodes:
+  - id: load-config
+    type: action
+    data:
+      label: Load Field Config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: get
+      params:
+        collection: test-airtable-sync
+        key: field-config
+        defaultValue: null
+
+  - id: build-fields
+    type: script
+    data:
+      label: Build Airtable Fields
+      framework: script
+      source: inline
+      params:
+        config: "{{load-config.value}}"
+        values: "{{habits.input.values}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(config, values) {
+            const columns = Array.isArray(config?.columns) ? config.columns : [];
+            if (columns.length === 0) {
+              throw new Error(
+                'No field configuration found. Save your column names first using Configure Fields.',
+              );
+            }
+
+            const raw = String(values ?? '').trim();
+            if (!raw) {
+              throw new Error('Enter record values as labeled pairs, JSON, or comma-separated text.');
+            }
+
+            function splitSegments(text) {
+              return text.split(',').map((part) => part.trim()).filter(Boolean);
+            }
+
+            function parseKeyValueSegment(segment) {
+              const eqMatch = segment.match(/^([^=:]+)\s*=\s*(.+)$/);
+              if (eqMatch) {
+                return [eqMatch[1].trim(), eqMatch[2].trim()];
+              }
+
+              const colonMatch = segment.match(/^([^=:]+)\s*:\s*(.+)$/);
+              if (colonMatch) {
+                return [colonMatch[1].trim(), colonMatch[2].trim()];
+              }
+
+              return null;
+            }
+
+            function hasLabeledPairs(text) {
+              return splitSegments(text).some((segment) => /^[^=:]+[=:]\s*.+/.test(segment));
+            }
+
+            function parseLabeledValues(text) {
+              const fields = {};
+              const columnSet = new Set(columns);
+              const unknownKeys = [];
+
+              for (const segment of splitSegments(text)) {
+                const pair = parseKeyValueSegment(segment);
+                if (!pair) {
+                  throw new Error(
+                    `Invalid format in "${segment}". Use ColumnName=value for each field.`,
+                  );
+                }
+
+                const [key, value] = pair;
+                if (!columnSet.has(key)) {
+                  unknownKeys.push(key);
+                }
+                fields[key] = value;
+              }
+
+              if (unknownKeys.length > 0) {
+                throw new Error(
+                  `Unknown column(s): ${unknownKeys.join(', ')}. Expected: ${columns.join(', ')}`,
+                );
+              }
+
+              return fields;
+            }
+
+            function parsePositionalValues(text) {
+              const rowValues = splitSegments(text);
+              const fields = {};
+
+              for (let index = 0; index < columns.length; index += 1) {
+                const column = columns[index];
+                const value = rowValues[index];
+                if (column && value !== undefined && value !== '') {
+                  fields[column] = value;
+                }
+              }
+
+              return fields;
+            }
+
+            let fields = {};
+
+            if (raw.startsWith('{')) {
+              const parsed = JSON.parse(raw);
+              if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                throw new Error('Values JSON must be an object, e.g. {"Name":"Jane","Email":"a@b.com"}');
+              }
+              fields = parsed;
+            } else if (hasLabeledPairs(raw)) {
+              fields = parseLabeledValues(raw);
+            } else {
+              fields = parsePositionalValues(raw);
+            }
+
+            const airtableFields = {};
+            for (const column of columns) {
+              const value = fields[column];
+              if (value !== undefined && value !== null && value !== '') {
+                airtableFields[column] = value;
+              }
+            }
+
+            if (Object.keys(airtableFields).length === 0) {
+              throw new Error(
+                'No values matched your configured columns. Use ColumnName=value pairs or JSON keys that match your column names.',
+              );
+            }
+
+            return {
+              fields: airtableFields,
+              columns,
+            };
+          }
+
+  - id: create
+    type: action
+    data:
+      label: Create Airtable Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: createRecord
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        fields: "{{build-fields.result.fields}}"
+
+edges:
+  - source: load-config
+    target: build-fields
+  - source: build-fields
+    target: create
+
+output:
+  success: "{{create.success}}"
+  recordId: "{{create.recordId}}"
+  createdTime: "{{create.createdTime}}"
+  fields: "{{create.fields}}"
+  mappedFields: "{{build-fields.result.fields}}"
+  columns: "{{build-fields.result.columns}}"

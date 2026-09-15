@@ -1,0 +1,47 @@
+{
+  "name": "@ha-bits/bit-shopify",
+  "version": "0.0.1",
+  "description": "Shopify Admin API integration using Dev Dashboard client credentials grant",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "habits",
+    "bits",
+    "shopify",
+    "ecommerce",
+    "oauth2",
+    "client-credentials"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "nx": {
+    "sourceRoot": "@ha-bits/bit-shopify/src",
+    "projectType": "library",
+    "tags": [
+      "scope:bits",
+      "type:bit"
+    ],
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
+  },
+  "habits": {
+    "catalog": true,
+    "icon": "ShoppingBag"
+  }
+}

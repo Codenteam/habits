@@ -1,0 +1,43 @@
+id: poll-new-records
+name: Poll Airtable New Records
+description: >-
+  Polls Airtable every minute for new records and logs each new record to the
+  server console.
+
+nodes:
+  - id: poll-airtable
+    type: trigger
+    data:
+      label: Poll Airtable New Records
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: newRecords
+      triggerType: polling
+      isTrigger: true
+      params:
+        personalAccessToken: "{{habits.env.AIRTABLE_PAT}}"
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        cronExpression: "*/1 * * * *"
+        maxRecords: 100
+
+  - id: log-record
+    type: action
+    data:
+      label: Log New Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Airtable New Record
+        message: "{{poll-airtable}}"
+
+edges:
+  - source: poll-airtable
+    target: log-record
+
+output:
+  record: "{{poll-airtable}}"
+  logged: "{{log-record.logged}}"

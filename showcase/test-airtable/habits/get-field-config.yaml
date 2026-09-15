@@ -1,0 +1,25 @@
+id: get-field-config
+name: Get Field Configuration
+description: Load the saved Airtable field column configuration from the database.
+
+nodes:
+  - id: load-config
+    type: action
+    data:
+      label: Load Field Config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: get
+      params:
+        collection: test-airtable-sync
+        key: field-config
+        defaultValue: null
+
+edges: []
+
+output:
+  found: "{{load-config.found}}"
+  columns: "{{load-config.value.columns}}"
+  updatedAt: "{{load-config.value.updatedAt}}"
+  config: "{{load-config.value}}"

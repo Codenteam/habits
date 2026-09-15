@@ -296,9 +296,8 @@ export class WorkflowExecutor {
             continue; // Not a polling trigger
           }
           
-          // Extract trigger props from node params and resolve env expressions
-          const rawProps = nodeData.params || {};
-          const triggerProps = this.resolveParameters(rawProps, {});
+          // Include params + credentials/auth (see resolveTriggerInput) for OAuth bits
+          const triggerProps = this.resolveTriggerInput(nodeData, {});
           
           this.logger.log(`   ⏰ Enabling polling trigger: ${workflowId}/${node.id} (${moduleName}:${triggerName})`);
           
@@ -383,6 +382,8 @@ export class WorkflowExecutor {
                 }
                 
                 this.logger.log(`   ✅ Workflow ${workflowId} completed processing ${runResult.output.length} item(s)`);
+              } else if (!runResult.success) {
+                this.logger.error(`   ❌ Polling trigger failed: ${runResult.message || 'unknown error'}`);
               } else {
                 this.logger.log(`   ⏳ No new items from trigger, skipping workflow execution`);
               }
@@ -466,8 +467,7 @@ export class WorkflowExecutor {
             continue; // Not a streaming trigger
           }
 
-          const rawProps = nodeData.params || {};
-          const triggerProps = this.resolveParameters(rawProps, {});
+          const triggerProps = this.resolveTriggerInput(nodeData, {});
 
           this.logger.log(`   ⚡ Enabling streaming trigger: ${workflowId}/${node.id} (${moduleName}:${triggerName})`);
 
@@ -554,8 +554,7 @@ export class WorkflowExecutor {
       repository: moduleName,
     };
 
-    const rawProps = nodeData.params || {};
-    const triggerProps = this.resolveParameters(rawProps, {});
+    const triggerProps = this.resolveTriggerInput(nodeData, {});
 
     this.logger.log(`   🔥 Firing trigger now: ${workflowId}/${nodeId}`);
 
@@ -1588,6 +1587,37 @@ export class WorkflowExecutor {
   }
 
 
+
+  /**
+   * Resolve trigger params and credentials for bits trigger execution.
+   *
+   * Polling/streaming triggers run on a cron path (not via executeNode), so they
+   * previously only received `params` and dropped `auth` / `credentials` from the
+   * workflow node. Action nodes already merge credentials in executeNode; this
+   * mirrors that for triggers.
+   *
+   * YAML `auth:` (e.g. Google clientId/clientSecret) is wrapped as
+   * `credentials.oauth` so bitsCue can extract it the same way as action runs.
+   * OAuth bits still need an access token — bitsCue.resolveTriggerOAuthAuth()
+   * hydrates that from oauthTokenStore after authorization.
+   */
+  protected resolveTriggerInput(nodeData: Record<string, any>, context: Record<string, any>): Record<string, any> {
+    const resolvedParams = this.resolveParameters(nodeData.params || {}, context);
+    const resolvedCredentials = nodeData.credentials
+      ? this.resolveParameters(nodeData.credentials, context)
+      : undefined;
+    const resolvedAuth = nodeData.auth
+      ? this.resolveParameters(nodeData.auth, context)
+      : undefined;
+
+    // Prefer explicit credentials; fall back to auth block as credentials.oauth
+    const credentials = resolvedCredentials || (resolvedAuth ? { oauth: resolvedAuth } : undefined);
+
+    return {
+      ...resolvedParams,
+      ...(credentials && { credentials }),
+    };
+  }
 
   /**
    * Resolve dynamic parameters using context

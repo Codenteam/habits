@@ -1,0 +1,276 @@
+id: sync-sheets-to-airtable
+name: Sync Google Sheets → Airtable
+description: >-
+  Polls Google Sheets for new rows, hashes field values into a shared itemId,
+  checks SQLite, branches with bit-if (skip vs sync), and creates Airtable records when new.
+
+nodes:
+  - id: poll-sheet
+    type: trigger
+    data:
+      label: Poll Google Sheet New Rows
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: newRows
+      triggerType: polling
+      isTrigger: true
+      auth:
+        clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        range: "{{habits.env.GOOGLE_RANGE}}"
+        cronExpression: "*/1 * * * *"
+        hasHeaderRow: true
+
+  - id: load-config
+    type: action
+    data:
+      label: Load Column Config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: sheets-airtable-sync
+        key: field-config
+        database: sheets-airtable-sync.db
+        defaultValue: null
+
+  - id: prepare-row
+    type: script
+    data:
+      label: Prepare Row and Item ID
+      framework: script
+      source: inline
+      params:
+        row: "{{poll-sheet}}"
+        config: "{{load-config.value}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(row, config) {
+            const columns = Array.isArray(config?.columns) ? config.columns : [];
+            if (columns.length === 0) {
+              throw new Error('No column configuration found. Run Configure Fields from the UI first.');
+            }
+
+            const values = Array.isArray(row?.values) ? row.values : [];
+            if (values.length === 0) {
+              throw new Error('Sheet row has no values.');
+            }
+
+            function normalizeFields(columnList, valueList) {
+              const normalized = {};
+              for (let index = 0; index < columnList.length; index += 1) {
+                const column = columnList[index];
+                normalized[column] = String(valueList[index] ?? '').trim();
+              }
+              return normalized;
+            }
+
+            // Hash fieldsJson into a short id — same values always produce the same itemId.
+            function hashString(str) {
+              let hash = 5381;
+              for (let i = 0; i < str.length; i += 1) {
+                hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+              }
+              return (hash >>> 0).toString(16);
+            }
+
+            const normalizedFields = normalizeFields(columns, values);
+            const nonEmptyValues = Object.values(normalizedFields).some((value) => value !== '');
+            if (!nonEmptyValues) {
+              throw new Error('Sheet row has no values matching configured columns.');
+            }
+
+            const fieldsJson = JSON.stringify(normalizedFields);
+            const itemId = hashString(fieldsJson); // shared dedup key with Airtable → Sheets habit
+
+            return {
+              rowIndex: row?.rowIndex || null,
+              values,
+              fields: normalizedFields,
+              fieldsJson,
+              itemId,
+              dbKey: `sync-item:${itemId}`,
+            };
+          }
+
+  - id: check-sync-item
+    type: action
+    data:
+      label: Check Item ID in Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: sheets-airtable-sync
+        key: "{{prepare-row.result.dbKey}}"
+        database: sheets-airtable-sync.db
+        defaultValue: null
+
+  - id: branch-item-exists
+    type: action
+    data:
+      label: Branch on Item ID
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: New Item
+            value1: "{{check-sync-item.found}}"
+            operator: equals
+            value2: false
+            output: new
+        includeElse: true
+        defaultOutput: exists
+
+  - id: reserve-sync-item-new
+    type: action
+    data:
+      label: Reserve New Item in Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: sheets-airtable-sync
+        key: "{{prepare-row.result.dbKey}}"
+        database: sheets-airtable-sync.db
+        value:
+          itemId: "{{prepare-row.result.itemId}}"
+          fieldsJson: "{{prepare-row.result.fieldsJson}}"
+          fields: "{{prepare-row.result.fields}}"
+          direction: sheets-to-airtable
+          rowIndex: "{{prepare-row.result.rowIndex}}"
+          pending: true
+
+  - id: create-airtable-new
+    type: action
+    data:
+      label: Create Airtable Record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: createRecord
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        fields: "{{prepare-row.result.fields}}"
+
+  - id: save-sync-item-new
+    type: action
+    data:
+      label: Save Synced Item to Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: sheets-airtable-sync
+        key: "{{prepare-row.result.dbKey}}"
+        database: sheets-airtable-sync.db
+        value:
+          itemId: "{{prepare-row.result.itemId}}"
+          fieldsJson: "{{prepare-row.result.fieldsJson}}"
+          fields: "{{prepare-row.result.fields}}"
+          direction: sheets-to-airtable
+          airtableRecordId: "{{create-airtable-new.recordId}}"
+          rowIndex: "{{prepare-row.result.rowIndex}}"
+          pending: false
+          syncedAt: "{{create-airtable-new.createdTime}}"
+
+  - id: save-audit-new
+    type: action
+    data:
+      label: Save Audit Record for New Sync
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: sheets-airtable-sync-records
+        database: sheets-airtable-sync.db
+        document:
+          itemId: "{{prepare-row.result.itemId}}"
+          direction: sheets-to-airtable
+          airtableRecordId: "{{create-airtable-new.recordId}}"
+          fields: "{{prepare-row.result.fields}}"
+          fieldsJson: "{{prepare-row.result.fieldsJson}}"
+          rowIndex: "{{prepare-row.result.rowIndex}}"
+          syncedAt: "{{create-airtable-new.createdTime}}"
+
+  - id: log-synced-new
+    type: action
+    data:
+      label: Log New Sync to Airtable
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Sheets → Airtable Synced
+        message:
+          action: synced
+          itemId: "{{prepare-row.result.itemId}}"
+          rowIndex: "{{prepare-row.result.rowIndex}}"
+          fields: "{{prepare-row.result.fields}}"
+          airtableRecordId: "{{create-airtable-new.recordId}}"
+
+  - id: log-skipped-existing
+    type: action
+    data:
+      label: Log Skipped Duplicate Item
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Sheets → Airtable Skipped
+        message:
+          action: skipped
+          reason: Item ID already exists in database
+          itemId: "{{prepare-row.result.itemId}}"
+          rowIndex: "{{prepare-row.result.rowIndex}}"
+          fields: "{{prepare-row.result.fields}}"
+          existing: "{{check-sync-item.value}}"
+
+edges:
+  - source: poll-sheet
+    target: load-config
+  - source: load-config
+    target: prepare-row
+  - source: prepare-row
+    target: check-sync-item
+  - source: check-sync-item
+    target: branch-item-exists
+  - source: branch-item-exists
+    target: reserve-sync-item-new
+    sourceHandle: branch-0
+  - source: reserve-sync-item-new
+    target: create-airtable-new
+  - source: create-airtable-new
+    target: save-sync-item-new
+  - source: save-sync-item-new
+    target: save-audit-new
+  - source: save-audit-new
+    target: log-synced-new
+  - source: branch-item-exists
+    target: log-skipped-existing
+    sourceHandle: branch-1
+
+output:
+  itemId: "{{prepare-row.result.itemId}}"
+  found: "{{check-sync-item.found}}"
+  branch: "{{branch-item-exists.output}}"
+  airtableRecordId: "{{create-airtable-new.recordId}}"
+  logged: "{{log-synced-new.logged}}"

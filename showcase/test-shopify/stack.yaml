@@ -1,0 +1,64 @@
+version: "1.0"
+name: "Test Shopify"
+description: >-
+  Test @ha-bits/bit-shopify client credentials grant — get shop, create a product,
+  and list products.
+
+env:
+  - name: HABITS_SHOPIFY_SHOP
+    required: true
+    description: "Dev store subdomain only (without .myshopify.com)"
+  - name: HABITS_SHOPIFY_CLIENT_ID
+    required: true
+    description: "Shopify Dev Dashboard app Client ID"
+  - name: HABITS_SHOPIFY_CLIENT_SECRET
+    required: true
+    description: "Shopify Dev Dashboard app Client secret"
+  - name: HABITS_SHOPIFY_TEST_PRODUCT_TITLE
+    required: false
+    description: "Default title for create-product workflow"
+    default: "Habits test product"
+  - name: HABITS_SHOPIFY_WEBHOOK_URL
+    required: false
+    description: "Full HTTPS Shopify webhook callback URL, e.g. https://your-subdomain.ngrok-free.app/webhook/v/shopify"
+
+workflows:
+  - id: get-shop
+    path: ./habits/get-shop.yaml
+    enabled: true
+
+  - id: create-product
+    path: ./habits/create-product.yaml
+    enabled: true
+
+  - id: list-products
+    path: ./habits/list-products.yaml
+    enabled: true
+
+  - id: get-product-by-id
+    path: ./habits/get-product-by-id.yaml
+    enabled: true
+
+  - id: create-webhook-subscription-item
+    path: ./habits/create-webhook-subscription-item.yaml
+    enabled: true
+
+  - id: configure-webhooks
+    path: ./habits/configure-webhooks.yaml
+    enabled: true
+
+  - id: shopify-event-webhook
+    path: ./habits/shopify-event-webhook.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true
