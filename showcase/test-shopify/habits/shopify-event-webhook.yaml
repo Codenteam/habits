@@ -1,0 +1,47 @@
+id: shopify-event-webhook
+name: Shopify Event Webhook Handler
+description: >-
+  Listens at POST /webhook/v/shopify. Cortex verifies X-Shopify-Hmac-Sha256 using
+  HABITS_SHOPIFY_CLIENT_SECRET before dispatching. Register topics via configure-webhooks workflow.
+
+nodes:
+  - id: shopify-inbound
+    type: trigger
+    data:
+      label: Shopify Webhook
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: shopifyEvent
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+      credentials:
+        shopify:
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+
+  - id: log-event
+    type: action
+    data:
+      label: Log Shopify event
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Shopify webhook
+        message:
+          topic: "{{shopify-inbound.headers.x-shopify-topic}}"
+          shopDomain: "{{shopify-inbound.headers.x-shopify-shop-domain}}"
+          webhookId: "{{shopify-inbound.headers.x-shopify-webhook-id}}"
+          triggeredAt: "{{shopify-inbound.headers.x-shopify-triggered-at}}"
+          body: "{{shopify-inbound.body}}"
+
+edges:
+  - source: shopify-inbound
+    target: log-event
+
+output:
+  topic: "{{shopify-inbound.headers.x-shopify-topic}}"
+  shopDomain: "{{shopify-inbound.headers.x-shopify-shop-domain}}"
+  body: "{{shopify-inbound.body}}"

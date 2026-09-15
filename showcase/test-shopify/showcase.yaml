@@ -1,0 +1,32 @@
+name: Test Shopify
+description: Test @ha-bits/bit-shopify with getShop, createProduct, and listProducts workflows.
+
+longDescription: |
+  Validates Shopify Dev Dashboard **client credentials** auth against your dev store:
+  fetch shop metadata, create a test product, list products, and optional Admin webhooks.
+
+  Requires the app installed on a dev store in the **same Shopify organization** as the app,
+  with `read_products` and `write_products` on the app version.
+
+  **Webhooks:** set `HABITS_SHOPIFY_WEBHOOK_URL` in `.env` to your full ngrok HTTPS URL including `/webhook/v/shopify`.
+  Product webhook topics work with product scopes; **order** topics need Shopify **Protected customer
+  data access** approval — see `showcase/test-shopify/README.md` (Webhooks section).
+
+tags:
+  - ecommerce
+  - shopify
+  - backend
+  - api
+
+difficulty: beginner
+
+requirements:
+  - HABITS_SHOPIFY_SHOP
+  - HABITS_SHOPIFY_CLIENT_ID
+  - HABITS_SHOPIFY_CLIENT_SECRET
+
+habits:
+  - habits/get-shop.yaml
+  - habits/create-product.yaml
+  - habits/list-products.yaml
+  - habits/get-product-by-id.yaml

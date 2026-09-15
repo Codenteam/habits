@@ -1,0 +1,198 @@
+version: 1
+meta:
+  id: test-shopify
+  title: Test Shopify
+  subtitle: "@ha-bits/bit-shopify client credentials"
+  icon: "lucide:ShoppingBag"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Test Shopify
+    subtitle: "getShop · products · webhooks"
+    icon: "lucide:ShoppingBag"
+
+state:
+  productTitle: ""
+  descriptionHtml: ""
+  listFirst: "10"
+  productId: ""
+  webhookTopics: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE"
+  webhookCallbackUrl: ""
+  result: null
+  lastAction: ""
+  error: null
+
+actions:
+  getShop:
+    method: POST
+    endpoint: /api/get-shop
+    body: {}
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "get-shop"
+        error: null
+      toast: "Shop loaded"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+  createProduct:
+    method: POST
+    endpoint: /api/create-product
+    body:
+      title: "{{state.productTitle}}"
+      descriptionHtml: "{{state.descriptionHtml}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "create-product"
+        error: null
+      toast: "Product created"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+  listProducts:
+    method: POST
+    endpoint: /api/list-products
+    body:
+      first: "{{state.listFirst}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "list-products"
+        error: null
+      toast: "Products loaded"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+  getProductById:
+    method: POST
+    endpoint: /api/get-product-by-id
+    body:
+      id: "{{state.productId}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "get-product-by-id"
+        error: null
+      toast: "Product loaded"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+  configureWebhooks:
+    method: POST
+    endpoint: /api/configure-webhooks
+    body:
+      topics: "{{state.webhookTopics}}"
+      callbackUrl: "{{state.webhookCallbackUrl}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "configure-webhooks"
+        error: null
+      toast: "Webhooks configured"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+  clearResult:
+    set:
+      result: null
+      error: null
+      lastAction: ""
+
+widgets:
+  - kind: status-banner
+    source: >-
+      Set HABITS_SHOPIFY_SHOP, HABITS_SHOPIFY_CLIENT_ID, and HABITS_SHOPIFY_CLIENT_SECRET in .env
+      (see .env.example). For webhooks, expose Cortex on HTTPS (ngrok) and set HABITS_SHOPIFY_WEBHOOK_URL to your full callback URL (/webhook/v/shopify).
+      Shopify delivers events to /webhook/v/shopify (HMAC verified with HABITS_SHOPIFY_CLIENT_SECRET).
+
+  - kind: card
+    title: Shopify webhooks
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: webhookTopics
+            type: textarea
+            label: Topics (comma-separated)
+            placeholder: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE"
+            rows: 2
+          - name: webhookCallbackUrl
+            type: text
+            label: Callback URL (optional)
+            placeholder: "Leave empty to use HABITS_SHOPIFY_WEBHOOK_URL from .env"
+      - kind: button-row
+        buttons:
+          - { label: Configure webhooks, action: configureWebhooks, variant: primary }
+
+  - kind: card
+    title: Product options
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: productTitle
+            type: text
+            label: Product title
+            placeholder: "Leave empty to use HABITS_SHOPIFY_TEST_PRODUCT_TITLE from .env"
+          - name: descriptionHtml
+            type: textarea
+            label: Description (HTML)
+            placeholder: "<p>Optional</p>"
+            rows: 2
+          - name: listFirst
+            type: select
+            label: List limit
+            default: "10"
+            options: ["3", "5", "10", "25", "50"]
+          - name: productId
+            type: text
+            label: Product GID
+            placeholder: "gid://shopify/Product/..."
+
+  - kind: card
+    title: Run workflows
+    children:
+      - kind: button-row
+        buttons:
+          - { label: Get shop, action: getShop, variant: primary }
+          - { label: Create product, action: createProduct, variant: secondary }
+          - { label: List products, action: listProducts, variant: secondary }
+          - { label: Get by ID, action: getProductById, variant: secondary, disabledWhen: "!state.productId" }
+      - kind: button-row
+        buttons:
+          - { label: Clear result, action: clearResult, variant: ghost }
+
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: "Result ({{state.lastAction}})"
+    sections:
+      - kind: json-dump
+        source: state.result
+        copy: true
