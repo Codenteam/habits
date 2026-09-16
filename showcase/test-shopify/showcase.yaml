@@ -30,3 +30,4 @@ habits:
   - habits/create-product.yaml
   - habits/list-products.yaml
   - habits/get-product-by-id.yaml
+  - habits/get-order-by-id.yaml

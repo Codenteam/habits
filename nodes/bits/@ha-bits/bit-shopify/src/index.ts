@@ -10,6 +10,7 @@
 import {
   getAccessToken,
   getHeaderValue,
+  normalizeOrderGid,
   normalizeShop,
   normalizeWebhookSubscriptionTopic,
   shopifyGraphql,
@@ -284,6 +285,104 @@ const shopifyBit = {
         return {
           shop: normalizeShop(auth.shop),
           product: data.product,
+        };
+      },
+    },
+
+    getOrderById: {
+      name: 'getOrderById',
+      displayName: 'Get Order by ID',
+      description:
+        'Fetch a single order by Admin GraphQL ID (gid://shopify/Order/...). Requires read_orders (or write_orders). Last 60 days unless read_all_orders is granted.',
+      props: {
+        id: {
+          type: 'SHORT_TEXT',
+          displayName: 'Order ID',
+          description:
+            'Full GID, e.g. gid://shopify/Order/123456789, or numeric legacy order id',
+          required: true,
+        },
+      },
+      async run(context: ShopifyContext): Promise<{
+        shop: string;
+        order: {
+          id: string;
+          name: string;
+          email: string | null;
+          createdAt: string;
+          displayFinancialStatus: string | null;
+          displayFulfillmentStatus: string | null;
+          totalPrice: { amount: string; currencyCode: string } | null;
+          lineItems: Array<{ id: string; name: string; quantity: number }>;
+        };
+      }> {
+        const auth = requireAuth(context);
+        const accessToken = await getAccessToken(auth.shop, auth.clientId, auth.clientSecret);
+        const id = normalizeOrderGid(String(context.propsValue.id || ''));
+
+        const data = await shopifyGraphql<{
+          order: {
+            id: string;
+            name: string;
+            email: string | null;
+            createdAt: string;
+            displayFinancialStatus: string | null;
+            displayFulfillmentStatus: string | null;
+            totalPriceSet: {
+              shopMoney: { amount: string; currencyCode: string };
+            } | null;
+            lineItems: {
+              edges: Array<{ node: { id: string; name: string; quantity: number } }>;
+            };
+          } | null;
+        }>(
+          accessToken,
+          auth.shop,
+          `query GetOrder($id: ID!) {
+            order(id: $id) {
+              id
+              name
+              email
+              createdAt
+              displayFinancialStatus
+              displayFulfillmentStatus
+              totalPriceSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              lineItems(first: 25) {
+                edges {
+                  node {
+                    id
+                    name
+                    quantity
+                  }
+                }
+              }
+            }
+          }`,
+          { id }
+        );
+
+        if (!data.order) {
+          throw new Error(`Order not found: ${id}`);
+        }
+
+        const { order } = data;
+        return {
+          shop: normalizeShop(auth.shop),
+          order: {
+            id: order.id,
+            name: order.name,
+            email: order.email,
+            createdAt: order.createdAt,
+            displayFinancialStatus: order.displayFinancialStatus,
+            displayFulfillmentStatus: order.displayFulfillmentStatus,
+            totalPrice: order.totalPriceSet?.shopMoney ?? null,
+            lineItems: order.lineItems.edges.map((edge) => edge.node),
+          },
         };
       },
     },

@@ -39,6 +39,10 @@ workflows:
     path: ./habits/get-product-by-id.yaml
     enabled: true
 
+  - id: get-order-by-id
+    path: ./habits/get-order-by-id.yaml
+    enabled: true
+
   - id: create-webhook-subscription-item
     path: ./habits/create-webhook-subscription-item.yaml
     enabled: true

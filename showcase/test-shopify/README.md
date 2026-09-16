@@ -104,7 +104,7 @@ Configure scopes on the **app version** (not in the token request). For **this s
 
 `getShop` works once the app is installed and client credentials succeed; product actions need the scopes above.
 
-Order webhook topics (e.g. `ORDERS_CREATE`, `ORDERS_UPDATE`) also require **Protected customer data access** approval in the Partner Dashboard (scopes alone are not enough).
+Order webhook topics (e.g. `ORDERS_CREATE`, `ORDERS_DELETE`, `ORDERS_CANCELLED`, `ORDERS_EDITED`) also require **Protected customer data access** approval in the Partner Dashboard (scopes alone are not enough).
 
 Then **Release** the version.
 
@@ -220,6 +220,7 @@ Open the UI: **http://localhost:13000**
 | `create-product` | `createProduct` | Create a test product |
 | `list-products` | `listProducts` | List products |
 | `get-product-by-id` | `getProductById` | Fetch one product by GID |
+| `get-order-by-id` | `getOrderById` | Fetch one order by GID or numeric id |
 | `configure-webhooks` | `createWebhookSubscription` (via loop) | Register Shopify webhook topics |
 | `shopify-event-webhook` | `shopifyEvent` trigger | Log inbound Shopify webhooks |
 
@@ -235,7 +236,7 @@ Point ngrok at `http://localhost:13000`. You can override the URL per request wi
 
 **Product webhooks** (e.g. `PRODUCTS_CREATE`, `PRODUCTS_UPDATE`) only need the usual Admin scopes (`read_products` / `write_products`) and the steps below.
 
-**Order webhooks** (e.g. `ORDERS_CREATE`, `ORDERS_UPDATE`) include **protected customer data**. Shopify blocks `webhookSubscriptionCreate` until your app is approved for **Protected customer data access**, even if `read_orders` / `write_orders` are on the app version. Error example:
+**Order webhooks** (e.g. `ORDERS_CREATE`, `ORDERS_DELETE`, `ORDERS_CANCELLED`, `ORDERS_EDITED`) include **protected customer data**. Shopify blocks `webhookSubscriptionCreate` until your app is approved for **Protected customer data access**, even if `read_orders` / `write_orders` are on the app version. Error example:
 
 ```text
 This app is not approved to subscribe to webhook topics containing protected customer data
@@ -277,12 +278,12 @@ References: [Protected customer data](https://shopify.dev/docs/apps/launch/prote
 
 1. Expose port **13000** with ngrok (or similar) and set **`HABITS_SHOPIFY_WEBHOOK_URL`** in `.env` to your full URL including **`/webhook/v/shopify`**.
 2. Start the server — workflow **`shopify-event-webhook`** registers **`POST /webhook/v/shopify`**. Cortex verifies **`X-Shopify-Hmac-Sha256`** using **`HABITS_SHOPIFY_CLIENT_SECRET`**.
-3. In the UI, enter comma-separated topics (e.g. `PRODUCTS_CREATE,PRODUCTS_UPDATE` for testing without PCD; add `ORDERS_CREATE` after approval) and click **Configure webhooks**, or call:
+3. In the UI, enter comma-separated topics (default includes product topics plus order topics; order topics need PCD approval) and click **Configure webhooks**, or call:
 
 ```bash
 curl -s -X POST http://localhost:13000/api/configure-webhooks \
   -H 'Content-Type: application/json' \
-  -d '{"topics":"PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE"}'
+  -d '{"topics":"PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE,ORDERS_DELETE,ORDERS_CANCELLED,ORDERS_EDITED"}'
 ```
 
 4. Trigger events in Shopify admin (create/update product; create order after order topics are subscribed). Watch Cortex logs for **`[Shopify webhook]`** from `@ha-bits/bit-logger`.
@@ -305,6 +306,10 @@ curl -s -X POST http://localhost:13000/api/list-products \
 curl -s -X POST http://localhost:13000/api/get-product-by-id \
   -H 'Content-Type: application/json' \
   -d '{"id":"gid://shopify/Product/YOUR_NUMERIC_ID"}'
+
+curl -s -X POST http://localhost:13000/api/get-order-by-id \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"gid://shopify/Order/YOUR_NUMERIC_ID"}'
 ```
 
 ---

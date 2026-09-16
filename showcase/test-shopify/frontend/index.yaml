@@ -21,7 +21,8 @@ state:
   descriptionHtml: ""
   listFirst: "10"
   productId: ""
-  webhookTopics: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE"
+  orderId: ""
+  webhookTopics: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE,ORDERS_DELETE,ORDERS_CANCELLED,ORDERS_EDITED"
   webhookCallbackUrl: ""
   result: null
   lastAction: ""
@@ -96,6 +97,23 @@ actions:
         error: "$error.message"
         result: null
 
+  getOrderById:
+    method: POST
+    endpoint: /api/get-order-by-id
+    body:
+      id: "{{state.orderId}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        lastAction: "get-order-by-id"
+        error: null
+      toast: "Order loaded"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
   configureWebhooks:
     method: POST
     endpoint: /api/configure-webhooks
@@ -136,7 +154,7 @@ widgets:
           - name: webhookTopics
             type: textarea
             label: Topics (comma-separated)
-            placeholder: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE"
+            placeholder: "PRODUCTS_CREATE,PRODUCTS_UPDATE,ORDERS_CREATE,ORDERS_DELETE,ORDERS_CANCELLED,ORDERS_EDITED"
             rows: 2
           - name: webhookCallbackUrl
             type: text
@@ -170,6 +188,10 @@ widgets:
             type: text
             label: Product GID
             placeholder: "gid://shopify/Product/..."
+          - name: orderId
+            type: text
+            label: Order ID
+            placeholder: "gid://shopify/Order/... or numeric id"
 
   - kind: card
     title: Run workflows
@@ -179,7 +201,8 @@ widgets:
           - { label: Get shop, action: getShop, variant: primary }
           - { label: Create product, action: createProduct, variant: secondary }
           - { label: List products, action: listProducts, variant: secondary }
-          - { label: Get by ID, action: getProductById, variant: secondary, disabledWhen: "!state.productId" }
+          - { label: Get product, action: getProductById, variant: secondary, disabledWhen: "!state.productId" }
+          - { label: Get order, action: getOrderById, variant: secondary, disabledWhen: "!state.orderId" }
       - kind: button-row
         buttons:
           - { label: Clear result, action: clearResult, variant: ghost }

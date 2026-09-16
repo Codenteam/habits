@@ -14,13 +14,29 @@ interface TokenCacheEntry {
 
 const tokenCache = new Map<string, TokenCacheEntry>();
 
-/** Normalize shop to subdomain only (e.g. "my-store" from "my-store.myshopify.com"). */
 export function normalizeShop(shop: string): string {
   const trimmed = shop.trim().toLowerCase();
   if (!trimmed) {
     throw new Error('Shop is required (your *.myshopify.com subdomain, without .myshopify.com).');
   }
   return trimmed.replace(/\.myshopify\.com\/?$/i, '').replace(/^https?:\/\//i, '').split('/')[0];
+}
+
+/** Admin GraphQL Order ID — accepts full GID or numeric legacy id. */
+export function normalizeOrderGid(id: string): string {
+  const trimmed = id.trim();
+  if (!trimmed) {
+    throw new Error('Order id is required.');
+  }
+  if (trimmed.startsWith('gid://')) {
+    return trimmed;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return `gid://shopify/Order/${trimmed}`;
+  }
+  throw new Error(
+    'Order id must be a full GID (gid://shopify/Order/...) or numeric Admin order id.'
+  );
 }
 
 function cacheKey(shop: string, clientId: string): string {
