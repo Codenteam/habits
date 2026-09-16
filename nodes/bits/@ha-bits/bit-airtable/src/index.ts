@@ -8,6 +8,7 @@
  */
 
 import {
+  AIRTABLE_API,
   airtableRequest,
   asString,
   optionalString,
@@ -40,7 +41,7 @@ type AirtablePollingContext = AirtableContext & {
 const airtableBit = {
   id: 'airtable',
   displayName: 'Airtable',
-  description: 'Create and read Airtable records',
+  description: 'Create, read, update, and delete Airtable records',
   logoUrl: 'lucide:Table',
   runtime: 'all',
 
@@ -215,6 +216,141 @@ const airtableBit = {
           recordId: result.id,
           createdTime: result.createdTime,
           fields: result.fields,
+        };
+      },
+    },
+
+    updateRecord: {
+      name: 'updateRecord',
+      displayName: 'Update Record',
+      description: 'Update field values on an existing Airtable record',
+      props: {
+        personalAccessToken: {
+          type: 'SECRET_TEXT',
+          displayName: 'Personal Access Token',
+          required: false,
+        },
+        baseId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Base ID',
+          required: true,
+        },
+        tableId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Table ID',
+          required: true,
+        },
+        recordId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Record ID',
+          required: true,
+        },
+        fields: {
+          type: 'JSON',
+          displayName: 'Fields',
+          description: 'Record fields keyed by field name',
+          required: true,
+        },
+        typecast: {
+          type: 'CHECKBOX',
+          displayName: 'Typecast',
+          required: false,
+          defaultValue: true,
+        },
+      },
+      async run(context: AirtableContext) {
+        const token = resolveToken(context);
+        const baseId = asString(context.propsValue.baseId, 'baseId');
+        const tableId = asString(context.propsValue.tableId, 'tableId');
+        const recordId = asString(context.propsValue.recordId, 'recordId');
+        const fields = parseJsonValue<Record<string, unknown>>(context.propsValue.fields, 'fields');
+        const typecast = context.propsValue.typecast !== false;
+
+        const result = await airtableRequest<AirtableRecord>(
+          `/${baseId}/${tableId}/${recordId}`,
+          token,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ fields, typecast }),
+          },
+        );
+
+        return {
+          success: true,
+          recordId: result.id,
+          createdTime: result.createdTime,
+          fields: result.fields,
+        };
+      },
+    },
+
+    deleteRecord: {
+      name: 'deleteRecord',
+      displayName: 'Delete Record',
+      description: 'Delete a single record from an Airtable table by record ID',
+      props: {
+        personalAccessToken: {
+          type: 'SECRET_TEXT',
+          displayName: 'Personal Access Token',
+          required: false,
+        },
+        baseId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Base ID',
+          required: true,
+        },
+        tableId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Table ID',
+          required: true,
+        },
+        recordId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Record ID',
+          required: true,
+        },
+      },
+      async run(context: AirtableContext) {
+        const token = resolveToken(context);
+        const baseId = asString(context.propsValue.baseId, 'baseId');
+        const tableId = asString(context.propsValue.tableId, 'tableId');
+        const recordId = asString(context.propsValue.recordId, 'recordId');
+
+        const url = `${AIRTABLE_API}/${baseId}/${tableId}/${recordId}`;
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 404) {
+          return {
+            success: true,
+            recordId,
+            deleted: false,
+            notFound: true,
+          };
+        }
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Airtable API error (${response.status}): ${error}`);
+        }
+
+        const text = await response.text();
+        let parsed: { deleted?: boolean; id?: string } = {};
+        if (text) {
+          try {
+            parsed = JSON.parse(text) as { deleted?: boolean; id?: string };
+          } catch {
+            parsed = {};
+          }
+        }
+
+        return {
+          success: true,
+          recordId: parsed.id || recordId,
+          deleted: parsed.deleted !== false,
+          notFound: false,
         };
       },
     },

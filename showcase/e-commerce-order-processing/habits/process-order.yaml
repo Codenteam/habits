@@ -1,0 +1,286 @@
+id: process-order
+name: Process Shopify Order Create
+description: >-
+  Map order/create webhook → fetch order → Airtable create → SQLite → OpenAI Slack.
+
+# Invoked from order-event-webhook via bit-loop inputKey: spread (topic, headers, body on context root).
+# Direct API calls may use habits.input.* instead.
+
+input:
+  - id: topic
+    type: string
+    required: true
+  - id: headers
+    type: object
+    required: false
+  - id: body
+    type: object
+    required: true
+
+nodes:
+  - id: parse-order-id
+    type: script
+    data:
+      label: Resolve Shopify order GID
+      framework: script
+      source: inline
+      params:
+        topic: "{{topic}}"
+        body: "{{body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(topic, body) {
+            const t = String(topic || '').trim().toLowerCase();
+            if (t !== 'orders/create') {
+              throw new Error(`process-order expects orders/create, got "${t}"`);
+            }
+            const b = body && typeof body === 'object' ? body : {};
+            const admin = b.admin_graphql_api_id ? String(b.admin_graphql_api_id).trim() : '';
+            let orderGid = '';
+            if (admin.includes('gid://shopify/Order/')) {
+              orderGid = admin;
+            } else if (b.id != null && b.id !== '') {
+              const n = String(b.id).trim();
+              orderGid = n.startsWith('gid://shopify/Order/')
+                ? n
+                : `gid://shopify/Order/${n}`;
+            }
+            if (!orderGid) {
+              throw new Error('orders/create payload missing order id');
+            }
+            return { topic: t, orderGid };
+          }
+
+  - id: fetch-order
+    type: action
+    data:
+      label: Fetch order from Shopify Admin API
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: getOrderById
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        id: "{{parse-order-id.result.orderGid}}"
+
+  - id: load-field-config
+    type: action
+    data:
+      label: Load Airtable field config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: ecommerce-order-processing
+        key: field-config
+        database: "{{habits.env.HABITS_ORDERS_DATABASE || 'showcase/e-commerce-order-processing/orders.db'}}"
+        defaultValue:
+          columns:
+            - Order ID
+            - Order Name
+            - Topic
+            - Status
+            - Financial Status
+            - Fulfillment Status
+            - Total
+            - Currency
+            - Line Items
+            - Updated At
+            - Shopify Order Number
+          orderIdField: Order ID
+
+  - id: map-order
+    type: script
+    data:
+      label: Map order to Airtable fields
+      framework: script
+      source: inline
+      params:
+        parse: "{{parse-order-id.result}}"
+        order: "{{fetch-order.order}}"
+        config: "{{load-field-config.value}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parse, order, config) {
+            if (!order) {
+              throw new Error('Shopify getOrderById returned no order');
+            }
+            const topic = parse.topic || 'orders/create';
+            const columns = config?.columns || [];
+            const orderIdField = config?.orderIdField || 'Order ID';
+
+            const fulfillment = order.displayFulfillmentStatus || 'UNFULFILLED';
+            const lineSummary = (order.lineItems || [])
+              .map((li) => `${li.quantity}x ${li.name}`)
+              .join('; ');
+
+            const shopifyLabel = order.name || '';
+            const orderNumber = shopifyLabel.replace(/^#/, '').trim();
+            const productNames = [
+              ...new Set(
+                (order.lineItems || []).map((li) => li.name).filter(Boolean),
+              ),
+            ];
+            const customerName = order.customerDisplayName || '';
+            const orderNote = order.note || '';
+            const orderTitle =
+              orderNote.trim() ||
+              customerName.trim() ||
+              productNames.join(', ') ||
+              shopifyLabel;
+
+            const values = {
+              'Order ID': order.id || parse.orderGid,
+              'Order Name': orderTitle,
+              Topic: topic,
+              Status: 'Unfulfilled',
+              'Financial Status': order.displayFinancialStatus || '',
+              'Fulfillment Status': fulfillment,
+              Total: order.totalPrice?.amount ?? '',
+              Currency: order.totalPrice?.currencyCode ?? '',
+              'Line Items': lineSummary,
+              'Updated At': order.createdAt || new Date().toISOString(),
+              'Shopify Order Number': orderNumber,
+            };
+
+            const amount = values.Total;
+            const currency = values.Currency || 'USD';
+            let totalDisplay = '';
+            if (amount !== '' && amount != null) {
+              const amt = String(amount);
+              totalDisplay =
+                currency === 'USD' ? `$${amt} ${currency}` : `${amt} ${currency}`.trim();
+            }
+
+            const slackFacts = {
+              ...values,
+              'Order Number': orderNumber,
+              'Shopify order label': shopifyLabel,
+              'Customer name': customerName,
+              'Product names': productNames.join(', '),
+              'Line items (qty × product)': lineSummary,
+            };
+
+            const airtableFields = {};
+            for (const col of columns) {
+              if (values[col] !== undefined) airtableFields[col] = values[col];
+            }
+            if (!airtableFields[orderIdField]) {
+              airtableFields[orderIdField] = parse.orderGid;
+            }
+
+            return {
+              shopifyOrderGid: parse.orderGid,
+              airtableFields,
+              orderName: orderTitle,
+              total: amount,
+              currency,
+              totalDisplay,
+              slackFacts,
+            };
+          }
+
+  - id: create-airtable
+    type: action
+    data:
+      label: Create Airtable record
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: createRecord
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        fields: "{{map-order.result.airtableFields}}"
+
+  - id: slack-order-draft
+    type: action
+    data:
+      label: Draft Slack message (new order)
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        maxTokens: 420
+        prompt: |
+          Write a concise Slack ops message (3-6 lines, plain text, emoji ok) for a NEW Shopify order (orders/create).
+
+          Use "Order Number" for the numeric id (e.g. 1010), not as the product name.
+          Include "Order Name" (human title), "Shopify order label" (#1010), each product name, and qty from line items.
+          Include total with currency and status.
+
+          Facts: {{map-order.result.slackFacts}}
+          Airtable record: {{create-airtable.recordId}}
+
+  - id: slack-order-send
+    type: action
+    data:
+      label: Send Slack message
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_DIGEST_CHANNEL}}"
+        text: "{{slack-order-draft}}"
+
+  - id: save-order
+    type: action
+    data:
+      label: Save order to SQLite
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: shopify_orders
+        database: "{{habits.env.HABITS_ORDERS_DATABASE || 'showcase/e-commerce-order-processing/orders.db'}}"
+        document:
+          shopifyOrderGid: "{{map-order.result.shopifyOrderGid}}"
+          orderName: "{{map-order.result.orderName}}"
+          topic: orders/create
+          status: Unfulfilled
+          total: "{{map-order.result.total}}"
+          currency: "{{map-order.result.currency}}"
+          totalDisplay: "{{map-order.result.totalDisplay}}"
+          airtableRecordId: "{{create-airtable.recordId}}"
+          airtableFields: "{{map-order.result.airtableFields}}"
+          updatedAt: "{{map-order.result.slackFacts.Updated At}}"
+
+edges:
+  - source: parse-order-id
+    target: fetch-order
+  - source: fetch-order
+    target: load-field-config
+  - source: load-field-config
+    target: map-order
+  - source: map-order
+    target: create-airtable
+  - source: create-airtable
+    target: slack-order-draft
+  - source: slack-order-draft
+    target: slack-order-send
+  - source: slack-order-send
+    target: save-order
+
+output:
+  shopifyOrderGid: "{{map-order.result.shopifyOrderGid}}"
+  airtableRecordId: "{{create-airtable.recordId}}"
+  slackSent: "{{slack-order-send.success}}"
+  saved: "{{save-order.success}}"

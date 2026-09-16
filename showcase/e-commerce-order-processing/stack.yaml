@@ -1,0 +1,72 @@
+version: "1.0"
+name: "E-Commerce Order Processing"
+description: >-
+  Monitor Shopify order webhooks, sync to SQLite and Airtable, notify Slack.
+
+env:
+  - name: HABITS_SHOPIFY_SHOP
+    required: true
+    description: "Dev store subdomain (without .myshopify.com)"
+  - name: HABITS_SHOPIFY_CLIENT_ID
+    required: true
+  - name: HABITS_SHOPIFY_CLIENT_SECRET
+    required: true
+  - name: HABITS_SHOPIFY_WEBHOOK_URL
+    required: false
+    description: "Full HTTPS callback https://host/webhook/v/shopify"
+  - name: AIRTABLE_PAT
+    required: true
+  - name: AIRTABLE_BASE_ID
+    required: true
+  - name: AIRTABLE_TABLE_ID
+    required: true
+  - name: HABITS_SLACK_BOT_TOKEN
+    required: true
+  - name: HABITS_SLACK_DIGEST_CHANNEL
+    required: true
+  - name: HABITS_OPENAI_API_KEY
+    required: true
+  - name: HABITS_ORDERS_DATABASE
+    required: false
+    default: "showcase/e-commerce-order-processing/orders.db"
+
+workflows:
+  - id: configure-airtable-fields
+    path: ./habits/configure-airtable-fields.yaml
+    enabled: true
+
+  - id: get-field-config
+    path: ./habits/get-field-config.yaml
+    enabled: true
+
+  - id: configure-webhooks
+    path: ./habits/configure-webhooks.yaml
+    enabled: true
+
+  - id: create-webhook-subscription-item
+    path: ./habits/create-webhook-subscription-item.yaml
+    enabled: true
+
+  - id: order-event-webhook
+    path: ./habits/order-event-webhook.yaml
+    enabled: true
+
+  - id: process-order
+    path: ./habits/process-order.yaml
+    enabled: true
+
+  - id: list-orders
+    path: ./habits/list-orders.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

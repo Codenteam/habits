@@ -309,6 +309,8 @@ const shopifyBit = {
           id: string;
           name: string;
           email: string | null;
+          note: string | null;
+          customerDisplayName: string | null;
           createdAt: string;
           displayFinancialStatus: string | null;
           displayFulfillmentStatus: string | null;
@@ -325,6 +327,8 @@ const shopifyBit = {
             id: string;
             name: string;
             email: string | null;
+            note: string | null;
+            customer: { displayName: string | null } | null;
             createdAt: string;
             displayFinancialStatus: string | null;
             displayFulfillmentStatus: string | null;
@@ -343,6 +347,10 @@ const shopifyBit = {
               id
               name
               email
+              note
+              customer {
+                displayName
+              }
               createdAt
               displayFinancialStatus
               displayFulfillmentStatus
@@ -377,6 +385,8 @@ const shopifyBit = {
             id: order.id,
             name: order.name,
             email: order.email,
+            note: order.note ?? null,
+            customerDisplayName: order.customer?.displayName ?? null,
             createdAt: order.createdAt,
             displayFinancialStatus: order.displayFinancialStatus,
             displayFulfillmentStatus: order.displayFulfillmentStatus,
