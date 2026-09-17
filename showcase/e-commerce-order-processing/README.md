@@ -51,12 +51,11 @@ Dev stores → Create store
 Choose **Development store**, pick the **Basic** plan, and optionally enable **Generate test data**.
 
 After creation, note the store **subdomain** (shop name):
+It will open the store ,from teh URL get the shop name like :
+https://admin.shopify.com/store/`<Shop-Name>`
 
-```text
-your-dev-store
-```
 
-Use this value **without** `.myshopify.com` in Habits (e.g. `HABITS_SHOPIFY_SHOP=your-dev-store`).
+Use this value **without** `.shopify.com` in Habits (e.g. `HABITS_SHOPIFY_SHOP=your-dev-store`).
 
 - [Create dev stores](https://shopify.dev/docs/apps/build/dev-dashboard/development-stores)
 
@@ -148,10 +147,11 @@ HABITS_OPENAI_API_KEY=
 
 ## 7. Install the app on the development store
 
+Before this step make sure you run the showcase and the ngrok
 From Dev Dashboard:
 
 ```text
-Apps → your app → Install app
+Apps → your app → Install app ( From right section )
 ```
 
 Select the development store you created and complete **Install**.
@@ -160,21 +160,68 @@ The app must be installed on the store before client credentials can obtain an a
 
 - [Install your app (Dev Dashboard)](https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard#step-3-install-your-app)
 
-**Same organization:** the app and dev store must appear under the same org in Dev Dashboard, or you may see `shop_not_permitted` on token requests.
-
+--- open the store from https://admin.shopify.com/store/<your-shop-name> and make sure the app installed at the left sidebar for this store
 ---
 
-## 8. If app scopes change later
+## 8. If app scopes change later ( only if you need to change the scopes need to approve the new changes from the app in the store)
 
 When you add or change scopes:
 
 1. **Dev Dashboard → Apps → your app → Versions**
 2. Create a **new version** with updated scopes
 3. **Release** the version
-4. On the dev store: **Settings → Apps and sales channels** → your app → **Update** (approve new scopes)
+4. On the dev store: **Settings → Apps and sales channels / or apps from the left sidebar** → your app → **Update** (approve new scopes)
 5. **Restart** the Habits server
 
 - [Access scopes overview](https://shopify.dev/docs/api/usage/access-scopes)
+
+------------
+
+#### Protected customer data access (required for ORDERS_CREATE)
+
+1. Open the [Shopify Partner program](https://www.shopify.com/partners) and sign in.
+2. Open **Apps** → select your app (or **App distribution** → your app).
+3. In the left sidebar, open **API access requests**.
+4. Request **Protected customer data access** and complete the form.
+
+**Step 1 — What you need access to**
+
+- Select **Protected customer data**.
+- Reason: **App functionality** (order payloads to sync Airtable, SQLite, and Slack on new orders).
+- Save
+
+**step 2 - Protected customer fields select the Name,Email,Phone,Address and choose **App functionality** for each one and save**
+
+## How to try this showcase
+--- After open the showcase UI and config buttons in the configuration for fields and webhooks.
+
+> **Important:** Finish Shopify app install, **Protected customer data** approval (if required), `.env`, ngrok on port **13000**, and the showcase **Configuration** tab (**Airtable fields** + **Configure webhooks** for **`ORDERS_CREATE`**) before you create test orders. See [Run this showcase](#run-this-showcase).
+
+After setup, use your dev store admin to create a product and a paid order. Shopify posts **`ORDERS_CREATE`** to Habits; the showcase runs **`process-order`** (Airtable, Slack, SQLite). Check the showcase **Orders** tab and Cortex logs.
+
+### 1. Create a product
+
+**Where in Shopify Admin:**
+
+1. Open your store: `https://admin.shopify.com/store/<shop-name>` (use the subdomain from [step 3](#3-create-a-development-store)).
+2. Left sidebar → **Products**.
+3. Top right → **Add product**.
+4. Set **Title** (product name) and **Price**.
+5. In **Inventory**, set a quantity for each location (for example **100** at **My Custom Location** and **100** at **Shop location**).
+6. Click **Save**.
+
+### 2. Create a paid order
+
+**Where in Shopify Admin:**
+
+1. Left sidebar → **Orders**.
+2. Top right → **Create order**.
+3. Click **+ product** (or **+ Product**) and select the product you created.
+4. Set the line-item **quantity**.
+5. Click **Collect payment** → **Mark as paid**.
+6. Click **Create order**.
+
+Shopify sends the order payload to **`HABITS_SHOPIFY_WEBHOOK_URL`** (`/webhook/v/shopify`). Habits verifies the webhook, logs the event, and processes the order end-to-end.
 
 ---
 
@@ -254,37 +301,7 @@ Point ngrok at `http://localhost:13000`. Set **`HABITS_SHOPIFY_WEBHOOK_URL`** in
 This app is not approved to subscribe to webhook topics containing protected customer data
 ```
 
-#### Protected customer data access (required for ORDERS_CREATE)
 
-1. Open the [Shopify Partner program](https://www.shopify.com/partners) and sign in.
-2. Open **Apps** → select your app (or **App distribution** → your app).
-3. In the left sidebar, open **API access requests**.
-4. Request **Protected customer data access** and complete the form.
-
-**Step 1 — What you need access to**
-
-- Select **Protected customer data**.
-- Reason: **App functionality** (order payloads to sync Airtable, SQLite, and Slack on new orders).
-
-**Step 2 — Data protection details**
-
-Answer according to how you operate Habits in production (adjust if your deployment differs):
-
-| Question | Suggested answer | Notes |
-| -------- | ---------------- | ----- |
-| Do you process only the minimum personal data required for your stated purposes? | **Yes** | Request only fields your workflows use. |
-| Do you tell merchants what data you process and why? | **Yes** | Document in app listing / privacy policy. |
-| Do you limit use of personal data to that purpose? | **Yes** | No unrelated reuse of order/customer payloads. |
-| Do you have privacy or data protection agreements with merchants? | **Yes** | If you publish a Privacy Policy and/or DPA for Habits services. |
-| Do you respect customer consent decisions where applicable? | **Not applicable** | If Habits does not process marketing consent preferences for this app. |
-| Do you respect opt-out of data being sold? | **Not applicable** | If Habits does not sell or share data for that purpose. |
-| Automated decision-making with legal or similarly significant effects? | **Not applicable** | If Habits does not perform that type of automated decision-making on customer data. |
-| Do you have data retention periods? | **Yes** | Only if you have a real retention policy (logs, databases, backups). |
-| Do you encrypt data at rest and in transit? | **Yes** | Only if data is actually encrypted in transit (HTTPS/TLS) and at rest in your hosting. |
-
-Save the request and wait for Shopify approval. Then release/use the approved app version on your dev store, restart Habits, and run **Configure webhooks** with **`ORDERS_CREATE`**.
-
-References: [Protected customer data](https://shopify.dev/docs/apps/launch/protected-customer-data), [HTTPS webhooks](https://shopify.dev/docs/apps/build/webhooks/subscribe/https), [`webhookSubscriptionCreate`](https://shopify.dev/docs/api/admin-graphql/latest/mutations/webhookSubscriptionCreate).
 
 #### Run webhooks in this showcase
 
