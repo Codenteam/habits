@@ -25,7 +25,7 @@ const integrations = [
       "ai"
     ],
     "bitPackage": "@ha-bits/bit-openai",
-    "showcaseCount": 27,
+    "showcaseCount": 28,
     "icon": "Sparkles"
   },
   {
@@ -36,7 +36,7 @@ const integrations = [
       "messaging"
     ],
     "bitPackage": "@ha-bits/bit-slack",
-    "showcaseCount": 4,
+    "showcaseCount": 5,
     "icon": "MessageSquare"
   },
   {
@@ -170,6 +170,17 @@ const integrations = [
     "bitPackage": "@ha-bits/bit-salesforce",
     "showcaseCount": 0,
     "icon": "Users"
+  },
+  {
+    "slug": "shopify",
+    "name": "Shopify",
+    "description": "Connect your Shopify dev store for orders, products, and webhooks with a Dev Dashboard app.",
+    "categories": [
+      "ecommerce"
+    ],
+    "bitPackage": "@ha-bits/bit-shopify",
+    "showcaseCount": 1,
+    "icon": "ShoppingBag"
   },
   {
     "slug": "gohighlevel",

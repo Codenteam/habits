@@ -59,6 +59,10 @@
       "name": "Daily Standup"
     },
     {
+      "slug": "e-commerce-order-processing",
+      "name": "E-Commerce Order Processing"
+    },
+    {
       "slug": "email-digest-summarizer",
       "name": "Email Digest Summarizer"
     },
@@ -146,6 +150,10 @@
       "name": "AI Reply and Routing Assistant"
     },
     {
+      "slug": "e-commerce-order-processing",
+      "name": "E-Commerce Order Processing"
+    },
+    {
       "slug": "email-digest-summarizer",
       "name": "Email Digest Summarizer"
     },
@@ -182,20 +190,6 @@
     {
       "slug": "sheets-airtable-sync",
       "name": "Sheets ↔ Airtable Sync"
-    },
-    {
-      "slug": "test-google-sheets-poll",
-      "name": "Test Google Sheets Polling"
-    }
-  ],
-  "airtable": [
-    {
-      "slug": "sheets-airtable-sync",
-      "name": "Sheets ↔ Airtable Sync"
-    },
-    {
-      "slug": "test-airtable",
-      "name": "Test Airtable"
     }
   ],
   "google-calendar": [],
@@ -259,6 +253,17 @@
   ],
   "snov": [],
   "salesforce": [],
+  "shopify": [
+    {
+      "slug": "e-commerce-order-processing",
+      "name": "E-Commerce Order Processing"
+    },
+    {
+      "slug": "test-shopify",
+      "name": "Test Shopify",
+      "improving": true
+    }
+  ],
   "gohighlevel": [],
   "sumsub": [
     {
