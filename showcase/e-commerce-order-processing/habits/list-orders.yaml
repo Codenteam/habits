@@ -1,0 +1,74 @@
+id: list-orders
+name: List Saved Shopify Orders
+description: Query shopify_orders documents saved by process-order (orders/create).
+
+nodes:
+  - id: query-orders
+    type: action
+    data:
+      label: Query orders from SQLite
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: shopify_orders
+        database: "{{habits.env.HABITS_ORDERS_DATABASE || 'showcase/e-commerce-order-processing/orders.db'}}"
+        filter:
+          topic: orders/create
+        limit: 100
+
+  - id: format-orders
+    type: script
+    data:
+      label: Format orders for UI
+      framework: script
+      source: inline
+      params:
+        query: "{{query-orders}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(query) {
+            const rows = Array.isArray(query?.results) ? query.results : [];
+            const orders = rows
+              .map((row) => {
+                const doc = row?.document ? { ...row.document, _id: row._id || row.id } : row;
+                const fields = doc.airtableFields || {};
+                let totalDisplay = doc.totalDisplay || '';
+                if (!totalDisplay) {
+                  const amount = doc.total ?? fields.Total ?? fields['Total'];
+                  const currency = doc.currency ?? fields.Currency ?? fields['Currency'] ?? 'USD';
+                  if (amount !== '' && amount != null) {
+                    const amt = String(amount);
+                    totalDisplay =
+                      currency === 'USD' ? `$${amt} ${currency}` : `${amt} ${currency}`.trim();
+                  }
+                }
+                return {
+                  id: doc._id || row._id || row.id,
+                  shopifyOrderGid: doc.shopifyOrderGid || '',
+                  orderName: doc.orderName || '',
+                  topic: doc.topic || '',
+                  status: doc.status || '',
+                  totalDisplay,
+                  airtableRecordId: doc.airtableRecordId || '',
+                  updatedAt: doc.updatedAt || row._createdAt || '',
+                };
+              })
+              .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+            return {
+              orders,
+              count: orders.length,
+              fetchedAt: new Date().toISOString(),
+            };
+          }
+
+edges:
+  - source: query-orders
+    target: format-orders
+
+output:
+  orders: "{{format-orders.result.orders}}"
+  count: "{{format-orders.result.count}}"
+  fetchedAt: "{{format-orders.result.fetchedAt}}"

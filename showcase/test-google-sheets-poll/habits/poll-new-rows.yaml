@@ -1,0 +1,45 @@
+id: poll-new-rows
+name: Poll Google Sheets New Rows
+description: >-
+  Polls a Google Sheet range every minute and logs each new row to the server
+  console.
+
+nodes:
+  - id: poll-sheet
+    type: trigger
+    data:
+      label: Poll Google Sheet New Rows
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: newRows
+      triggerType: polling
+      isTrigger: true
+      auth:
+        clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        range: "{{habits.env.GOOGLE_RANGE}}"
+        cronExpression: "*/1 * * * *"
+        hasHeaderRow: true
+
+  - id: log-row
+    type: action
+    data:
+      label: Log New Row
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Google Sheets New Row
+        message: "{{poll-sheet}}"
+
+edges:
+  - source: poll-sheet
+    target: log-row
+
+output:
+  row: "{{poll-sheet}}"
+  logged: "{{log-row.logged}}"

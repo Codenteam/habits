@@ -1,0 +1,61 @@
+# Showcase metadata for Sheets ↔ Airtable Sync
+# Bidirectional sync between Google Sheets and Airtable with a shared column setup UI
+
+name: Sheets ↔ Airtable Sync
+type: fullstack
+description: >-
+  Keep Google Sheets and Airtable in sync. Set up your columns once, then new rows
+  added in either place appear in the other automatically.
+
+longDescription: |
+  **Sheets ↔ Airtable Sync** connects a Google Sheet and an Airtable table so your
+  team can work in either tool without copying data by hand.
+
+  ## What it does
+
+  - **Column setup** : Enter column names in the UI once — they are created in Airtable and written as the header row in your sheet
+  - **Airtable → Sheets** : New records in Airtable show up as new rows in Google Sheets
+  - **Sheets → Airtable** : New rows in your sheet show up as new records in Airtable
+  - **No duplicates** : The same row is never synced twice in either direction
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and add your Airtable PAT, base/table IDs, and Google OAuth credentials.
+  2. Run the showcase and complete Google OAuth at `/oauth/bit-google-sheets/init`.
+  3. Open the UI, enter your column names, and click **Configure & sync headers**.
+  4. Add rows in Airtable or your sheet — they appear in the other place within about a minute.
+
+  ## Further reading
+
+  - [Airtable integration](/integrations/airtable/) — PAT scopes, base/table IDs, and first-time Airtable setup
+  - [Google Sheets integration](/integrations/google-sheets/) — OAuth credentials and spreadsheet access
+  - [README.md](https://github.com/Codenteam/habits/blob/main/showcase/sheets-airtable-sync/README.md) (`showcase/sheets-airtable-sync/README.md`) — full local setup guide, including `GOOGLE_RANGE` and testing sync both ways
+
+tags:
+  - automation
+  - integration
+  - business
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - AIRTABLE_PAT (Airtable personal access token)
+  - AIRTABLE_BASE_ID (Airtable base ID)
+  - AIRTABLE_TABLE_ID (Airtable table ID)
+  - GOOGLE_CLIENT_ID (Google OAuth client ID)
+  - GOOGLE_CLIENT_SECRET (Google OAuth client secret)
+  - GOOGLE_SPREADSHEET_ID (Google Spreadsheet ID)
+  - GOOGLE_SHEET_NAME (Sheet tab name)
+  - GOOGLE_RANGE (A1 range for sheet polling)
+
+habits:
+  - habits/configure-fields.yaml
+  - habits/get-field-config.yaml
+  - habits/sync-airtable-to-sheets.yaml
+  - habits/sync-sheets-to-airtable.yaml
+
+quickDownload: true

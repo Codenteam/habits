@@ -1,0 +1,107 @@
+id: configure-fields
+name: Configure Airtable Fields
+description: >-
+  Parse comma-separated field names, create missing columns in Airtable, then
+  save the field configuration to the in-memory database.
+
+input:
+  - id: fieldNames
+    type: string
+    required: true
+    description: Comma-separated Airtable column names to create and sync
+
+nodes:
+  - id: parse-fields
+    type: script
+    data:
+      label: Parse Field Names
+      framework: script
+      source: inline
+      params:
+        fieldNames: "{{habits.input.fieldNames}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(fieldNames) {
+            const columns = String(fieldNames || '')
+              .split(',')
+              .map((name) => name.trim())
+              .filter(Boolean);
+
+            if (columns.length === 0) {
+              throw new Error('Enter at least one field name, separated by commas.');
+            }
+
+            return {
+              columns,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+
+  - id: ensure-fields
+    type: action
+    data:
+      label: Create Missing Airtable Fields
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: ensureFields
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        columns: "{{parse-fields.result.columns}}"
+
+  - id: merge-config
+    type: script
+    data:
+      label: Merge Field Config
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-fields.result}}"
+        ensured: "{{ensure-fields}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed, ensured) {
+            const columns = Array.isArray(parsed?.columns) ? parsed.columns : [];
+            return {
+              columns,
+              updatedAt: parsed?.updatedAt || new Date().toISOString(),
+              created: ensured?.created || [],
+              skipped: ensured?.skipped || [],
+              fields: ensured?.fields || [],
+            };
+          }
+
+  - id: save-config
+    type: action
+    data:
+      label: Save Field Config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: store
+      params:
+        collection: test-airtable-sync
+        key: field-config
+        value: "{{merge-config.result}}"
+
+edges:
+  - source: parse-fields
+    target: ensure-fields
+  - source: ensure-fields
+    target: merge-config
+  - source: merge-config
+    target: save-config
+
+output:
+  success: "{{save-config.success}}"
+  columns: "{{merge-config.result.columns}}"
+  created: "{{merge-config.result.created}}"
+  skipped: "{{merge-config.result.skipped}}"
+  fields: "{{merge-config.result.fields}}"
+  updatedAt: "{{merge-config.result.updatedAt}}"

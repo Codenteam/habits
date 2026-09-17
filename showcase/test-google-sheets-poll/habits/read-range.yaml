@@ -1,0 +1,24 @@
+id: read-range
+name: Read Google Sheet Range
+description: Read data from a Google Sheet range (manual test).
+
+nodes:
+  - id: read-sheet
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: readRange
+      label: Read Sheet Data
+      auth:
+        clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        range: "{{habits.env.GOOGLE_RANGE}}"
+
+edges: []
+
+output:
+  data: "{{read-sheet}}"

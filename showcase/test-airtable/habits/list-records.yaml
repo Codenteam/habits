@@ -1,0 +1,25 @@
+id: list-records
+name: List Airtable Records
+description: List recent records from an Airtable table.
+
+nodes:
+  - id: list
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: listRecords
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        maxRecords: 10
+
+edges: []
+
+output:
+  count: "{{list.count}}"
+  records: "{{list.records}}"

@@ -1,0 +1,33 @@
+id: create-webhook-subscription-item
+name: Create One Shopify Webhook Subscription
+description: Internal helper for configure-webhooks bit-loop.
+
+input:
+  - id: topic
+    type: string
+    required: true
+  - id: callbackUrl
+    type: string
+    required: true
+
+nodes:
+  - id: subscribe
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: createWebhookSubscription
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        topic: "{{item.topic}}"
+        callbackUrl: "{{item.callbackUrl}}"
+
+edges: []
+
+output:
+  result: "{{subscribe}}"

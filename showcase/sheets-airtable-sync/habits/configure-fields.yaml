@@ -1,0 +1,151 @@
+id: configure-fields
+name: Configure Sync Columns
+description: >-
+  Parse comma-separated field names, create missing Airtable columns, write the
+  header row to Google Sheets, and save the configuration to SQLite.
+
+input:
+  - id: fieldNames
+    type: string
+    required: true
+    description: Comma-separated column names shared by Airtable and Google Sheets
+
+nodes:
+  - id: parse-fields
+    type: script
+    data:
+      label: Parse Field Names
+      framework: script
+      source: inline
+      params:
+        fieldNames: "{{habits.input.fieldNames}}"
+        sheetName: "{{habits.env.GOOGLE_SHEET_NAME}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(fieldNames, sheetName) {
+            const columns = String(fieldNames || '')
+              .split(',')
+              .map((name) => name.trim())
+              .filter(Boolean);
+
+            if (columns.length === 0) {
+              throw new Error('Enter at least one field name, separated by commas.');
+            }
+
+            const tab = String(sheetName || 'Sheet1').trim();
+            const quotedTab = /[\s'"]/.test(tab) ? `'${tab.replace(/'/g, "''")}'` : tab;
+
+            function columnLetter(index) {
+              let n = index;
+              let letters = '';
+              while (n > 0) {
+                const remainder = (n - 1) % 26;
+                letters = String.fromCharCode(65 + remainder) + letters;
+                n = Math.floor((n - 1) / 26);
+              }
+              return letters;
+            }
+
+            const lastColumn = columnLetter(columns.length);
+            const headerRange = `${quotedTab}!A1:${lastColumn}1`;
+
+            return {
+              columns,
+              sheetName: tab,
+              headerRange,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+
+  - id: ensure-fields
+    type: action
+    data:
+      label: Create Missing Airtable Fields
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: ensureFields
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        columns: "{{parse-fields.result.columns}}"
+
+  - id: write-sheet-headers
+    type: action
+    data:
+      label: Write Google Sheets Header Row
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-google-sheets"
+      operation: writeRange
+      auth:
+        clientId: "{{habits.env.GOOGLE_CLIENT_ID}}"
+        clientSecret: "{{habits.env.GOOGLE_CLIENT_SECRET}}"
+      params:
+        spreadsheetId: "{{habits.env.GOOGLE_SPREADSHEET_ID}}"
+        range: "{{parse-fields.result.headerRange}}"
+        values: "{{parse-fields.result.columns}}"
+
+  - id: merge-config
+    type: script
+    data:
+      label: Merge Field Config
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-fields.result}}"
+        ensured: "{{ensure-fields}}"
+        sheetWrite: "{{write-sheet-headers}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed, ensured, sheetWrite) {
+            const columns = Array.isArray(parsed?.columns) ? parsed.columns : [];
+            return {
+              columns,
+              sheetName: parsed?.sheetName || 'Sheet1',
+              headerRange: parsed?.headerRange || '',
+              updatedAt: parsed?.updatedAt || new Date().toISOString(),
+              created: ensured?.created || [],
+              skipped: ensured?.skipped || [],
+              fields: ensured?.fields || [],
+              sheetHeadersWritten: Boolean(sheetWrite?.success),
+            };
+          }
+
+  - id: save-config
+    type: action
+    data:
+      label: Save Field Config to SQLite
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: sheets-airtable-sync
+        key: field-config
+        database: sheets-airtable-sync.db
+        value: "{{merge-config.result}}"
+
+edges:
+  - source: parse-fields
+    target: ensure-fields
+  - source: ensure-fields
+    target: write-sheet-headers
+  - source: write-sheet-headers
+    target: merge-config
+  - source: merge-config
+    target: save-config
+
+output:
+  success: "{{save-config.success}}"
+  columns: "{{merge-config.result.columns}}"
+  headerRange: "{{merge-config.result.headerRange}}"
+  sheetHeadersWritten: "{{merge-config.result.sheetHeadersWritten}}"
+  created: "{{merge-config.result.created}}"
+  skipped: "{{merge-config.result.skipped}}"
+  updatedAt: "{{merge-config.result.updatedAt}}"

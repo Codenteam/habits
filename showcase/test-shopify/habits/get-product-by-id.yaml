@@ -1,0 +1,26 @@
+id: get-product-by-id
+name: Get Product by ID
+description: Fetch one product by Admin GraphQL GID (input id required).
+
+nodes:
+  - id: product
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: getProductById
+      label: Get Product by ID
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        id: "{{habits.input.id}}"
+
+edges: []
+
+output:
+  shop: "{{product.shop}}"
+  product: "{{product.product}}"

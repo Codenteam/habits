@@ -80,4 +80,8 @@ For [Invoices Processing](/showcase/invoices-processing), add these headers to r
 |---|---|---|---|---|---|---|---|---|
 | Invoice Number | Invoice Date | Vendor Name | Vendor Email | Customer Name | Total Amount | Currency | Due Date | Notes |
 
+## Polling trigger (`newRows`)
+
+`@ha-bits/bit-google-sheets` includes a **polling** trigger that runs on a cron schedule (default every 1 minute), calls the same API as `readRange`, deduplicates rows with `pollingStore`, and returns only new rows.
+
 <IntegrationShowcases integration="google-sheets" />
