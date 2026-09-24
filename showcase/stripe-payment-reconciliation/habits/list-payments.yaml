@@ -1,0 +1,28 @@
+id: list-payments
+name: List Payments
+description: Fetch reconciled Stripe payments stored in the database
+
+input:
+  - id: limit
+    type: number
+    required: false
+
+nodes:
+  - id: query-payments
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database"
+      operation: query
+      label: Query Reconciled Payments
+      params:
+        collection: "stripe_payments"
+        filter: "{}"
+        limit: "{{habits.input.limit}}"
+
+edges: []
+
+output:
+  payments: "{{query-payments.results}}"
+  count: "{{query-payments.count}}"

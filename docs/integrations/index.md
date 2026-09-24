@@ -29,6 +29,17 @@ const integrations = [
     "icon": "Sparkles"
   },
   {
+    "slug": "quickbooks",
+    "name": "QuickBooks Online",
+    "description": "Record payments in QuickBooks Online with OAuth 2.0 and the QBO Accounting API.",
+    "categories": [
+      "finance"
+    ],
+    "bitPackage": "@ha-bits/bit-quickbooks",
+    "showcaseCount": 1,
+    "icon": "Calculator"
+  },
+  {
     "slug": "slack",
     "name": "Slack",
     "description": "Post digests and notifications to Slack channels with a bot token.",

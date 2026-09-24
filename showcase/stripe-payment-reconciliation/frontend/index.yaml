@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: stripe-payment-reconciliation
+  title: Stripe Payment Reconciliation
+  subtitle: Live reconciled payments dashboard
+  icon: "lucide:CreditCard"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Stripe Payment Reconciliation
+    subtitle: Polls Stripe every 30s · email + QuickBooks · auto-refreshing list
+    icon: "lucide:CreditCard"
+
+state:
+  payments: []
+  count: 0
+  error: null
+
+actions:
+  listPayments:
+    method: GET
+    endpoint: /api/list-payments?limit=100
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        payments: "$response.payments"
+        count: "$response.count"
+        error: null
+    onError:
+      set:
+        error: "$error.message"
+
+onMount:
+  - listPayments
+
+defaultView: main
+
+views:
+  main:
+    widgets:
+      - kind: card
+        title: Reconciled payments
+        subtitle: Refreshes every 30 seconds from the database
+        children:
+          - kind: metric-grid
+            columns: 1
+            metrics:
+              - value: "{{state.count}}"
+                label: Payments recorded
+          - kind: data-table
+            source: state.payments
+            empty: "No payments yet. Complete a Stripe test payment and wait for reconciliation."
+            columns:
+              - key: paymentId
+                label: Payment ID
+              - key: amount
+                label: Amount
+              - key: currency
+                label: Currency
+              - key: customerName
+                label: Customer
+              - key: customerEmail
+                label: Email
+              - key: quickbooksPaymentId
+                label: QuickBooks ID
+              - key: reconciledAt
+                label: Reconciled at
+      - kind: alert
+        level: error
+        showWhen: state.error
+        text: "{{state.error}}"

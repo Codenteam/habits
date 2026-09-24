@@ -258,6 +258,11 @@
     {
       "framework": "bits",
       "source": "npm",
+      "repository": "@ha-bits/bit-quickbooks"
+    },
+    {
+      "framework": "bits",
+      "source": "npm",
       "repository": "@ha-bits/bit-sumsub"
     },
     {
