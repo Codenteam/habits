@@ -78,6 +78,44 @@ async function hubspotRequest(
   return response.json();
 }
 
+/** HubSpot contact properties to request — phone is not in the default GET response. */
+const CONTACT_READ_PROPERTIES = [
+  'firstname',
+  'lastname',
+  'email',
+  'phone',
+  'mobilephone',
+  'company',
+  'hs_calculated_phone_number',
+  'hs_searchable_calculated_phone_number',
+] as const;
+
+const CONTACT_PROPERTIES_QUERY = `properties=${CONTACT_READ_PROPERTIES.join(',')}`;
+
+function resolveContactPhone(properties: Record<string, string | undefined>): string | undefined {
+  return (
+    properties.phone ||
+    properties.mobilephone ||
+    properties.hs_calculated_phone_number ||
+    properties.hs_searchable_calculated_phone_number ||
+    undefined
+  );
+}
+
+function mapHubSpotContact(data: { id: string; properties?: Record<string, string>; createdAt?: string; updatedAt?: string }): Contact {
+  const props = data.properties || {};
+  return {
+    id: data.id,
+    email: props.email,
+    firstName: props.firstname,
+    lastName: props.lastname,
+    company: props.company || undefined,
+    phone: resolveContactPhone(props),
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+}
+
 /**
  * Ensure a custom property exists on a HubSpot object type.
  * Does a GET first; if not found (throws), creates it via POST.
@@ -205,16 +243,7 @@ const hubspotBit = {
         
         console.log(`🔶 HubSpot: Created contact ${data.id} - ${email}`);
         
-        const contact: Contact = {
-          id: data.id,
-          email: data.properties.email,
-          firstName: data.properties.firstname,
-          lastName: data.properties.lastname,
-          company: data.properties.company,
-          phone: data.properties.phone,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        };
+        const contact = mapHubSpotContact(data);
         
         return { success: true, contact };
       },
@@ -249,7 +278,7 @@ const hubspotBit = {
           
           if (contactId) {
             data = await hubspotRequest(
-              `/crm/v3/objects/contacts/${contactId}`,
+              `/crm/v3/objects/contacts/${contactId}?${CONTACT_PROPERTIES_QUERY}`,
               context.auth.accessToken
             );
           } else if (email) {
@@ -266,6 +295,7 @@ const hubspotBit = {
                     value: email,
                   }],
                 }],
+                properties: [...CONTACT_READ_PROPERTIES],
               }
             );
             
@@ -279,16 +309,7 @@ const hubspotBit = {
             return { found: false, contact: null };
           }
           
-          const contact: Contact = {
-            id: data.id,
-            email: data.properties.email,
-            firstName: data.properties.firstname,
-            lastName: data.properties.lastname,
-            company: data.properties.company,
-            phone: data.properties.phone,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-          };
+          const contact = mapHubSpotContact(data);
           
           console.log(`🔶 HubSpot: Found contact ${contact.id}`);
           return { found: true, contact };
@@ -337,16 +358,7 @@ const hubspotBit = {
         
         console.log(`🔶 HubSpot: Updated contact ${contactId}`);
         
-        const contact: Contact = {
-          id: data.id,
-          email: data.properties.email,
-          firstName: data.properties.firstname,
-          lastName: data.properties.lastname,
-          company: data.properties.company,
-          phone: data.properties.phone,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        };
+        const contact = mapHubSpotContact(data);
         
         return { success: true, contact };
       },
@@ -395,26 +407,18 @@ const hubspotBit = {
               query,
               limit: Math.min(Number(limit), 100),
               after,
+              properties: [...CONTACT_READ_PROPERTIES],
             }
           );
         } else {
           // Use list endpoint
-          let url = `/crm/v3/objects/contacts?limit=${Math.min(Number(limit), 100)}`;
+          let url = `/crm/v3/objects/contacts?limit=${Math.min(Number(limit), 100)}&${CONTACT_PROPERTIES_QUERY}`;
           if (after) url += `&after=${after}`;
           
           data = await hubspotRequest(url, context.auth.accessToken);
         }
         
-        const contacts: Contact[] = (data.results || []).map((r: any) => ({
-          id: r.id,
-          email: r.properties.email,
-          firstName: r.properties.firstname,
-          lastName: r.properties.lastname,
-          company: r.properties.company,
-          phone: r.properties.phone,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-        }));
+        const contacts: Contact[] = (data.results || []).map((r: any) => mapHubSpotContact(r));
         
         console.log(`🔶 HubSpot: Listed ${contacts.length} contacts`);
         
@@ -737,17 +741,11 @@ const hubspotBit = {
         
         console.log(`🔶 HubSpot: Created lead ${data.id} - ${email}`);
         
+        const contact = mapHubSpotContact(data);
         const lead: Lead = {
-          id: data.id,
-          email: data.properties.email,
-          firstName: data.properties.firstname,
-          lastName: data.properties.lastname,
-          company: data.properties.company,
-          phone: data.properties.phone,
-          source: data.properties.hs_lead_status,
+          ...contact,
+          source: data.properties?.hs_lead_status,
           status: 'lead',
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
         };
         
         return { success: true, lead };
@@ -869,19 +867,13 @@ const hubspotBit = {
               }],
             }],
             limit: Math.min(Number(limit), 100),
+            properties: [...CONTACT_READ_PROPERTIES],
           }
         );
         
         const leads: Lead[] = (data.results || []).map((r: any) => ({
-          id: r.id,
-          email: r.properties.email,
-          firstName: r.properties.firstname,
-          lastName: r.properties.lastname,
-          company: r.properties.company,
-          phone: r.properties.phone,
+          ...mapHubSpotContact(r),
           status: 'lead',
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
         }));
         
         console.log(`🔶 HubSpot: Listed ${leads.length} leads`);
@@ -1054,16 +1046,10 @@ const hubspotBit = {
           console.log(`🔶 HubSpot: Created new lead ${data.id} - ${email}`);
         }
 
+        const contact = mapHubSpotContact(data);
         const lead: Lead = {
-          id: data.id,
-          email: data.properties.email,
-          firstName: data.properties.firstname,
-          lastName: data.properties.lastname,
-          company: data.properties.company,
-          phone: data.properties.phone,
+          ...contact,
           status: 'lead',
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
         };
         
         return { success: true, lead };

@@ -1,0 +1,35 @@
+# Showcase metadata for Sync HubSpot ↔ Salesforce
+name: Sync HubSpot to Salesforce
+type: automation
+description: Bidirectional contact sync — HubSpot new contacts to Salesforce, and Salesforce Flow webhooks to HubSpot.
+
+longDescription: |
+  **Sync HubSpot ↔ Salesforce** includes two workflows:
+
+  1. **sync-hubspot-salesforce** — HubSpot `contact.creation` webhook → fetch contact → create in Salesforce
+  2. **sync-salesforce-hubspot** — Salesforce Flow HTTP POST → create in HubSpot
+
+tags:
+  - hubspot
+  - salesforce
+  - crm
+  - sync
+  - automation
+  - webhook
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - HUBSPOT_ACCESS_TOKEN (HubSpot Private App access token)
+  - HUBSPOT_CLIENT_SECRET (HubSpot Private App client secret)
+  - SALESFORCE_CLIENT_ID (Salesforce Connected App Consumer Key)
+  - SALESFORCE_INSTANCE_URL (Salesforce org URL)
+  - SALESFORCE_X_WEBHOOK_SECRET (Salesforce Flow `salesforce-X-Webhook-Secret` header value)
+
+habits:
+  - habits/sync-hubspot-salesforce.yaml
+  - habits/sync-salesforce-hubspot.yaml

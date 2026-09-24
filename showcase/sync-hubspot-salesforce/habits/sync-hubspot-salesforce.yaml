@@ -1,0 +1,260 @@
+id: sync-hubspot-salesforce
+name: Sync HubSpot Contact to Salesforce
+description: >-
+  Webhook listener for new HubSpot contacts. Fetches contact details from HubSpot
+  and creates a matching Contact in Salesforce.
+  Register Target URL in HubSpot Private App: https://<host>/webhook/v/hubspot
+version: "1.0"
+
+nodes:
+  - id: hubspot-inbound
+    type: trigger
+    data:
+      label: HubSpot New Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: newContact
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+
+  - id: parse-event
+    type: script
+    data:
+      label: Parse HubSpot Webhook Event
+      framework: script
+      source: inline
+      params:
+        payload: "{{hubspot-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const events = Array.isArray(payload) ? payload : [payload];
+            const created = events.find((event) => {
+              const eventType = String(event?.subscriptionType || event?.eventType || '');
+              return eventType.includes('contact.creation');
+            });
+
+            if (!created) {
+              return {
+                matched: false,
+                skipped: true,
+                reason: 'not_contact_creation',
+                contactId: '',
+              };
+            }
+
+            const changeSource = String(created.changeSource || '').toUpperCase();
+            const syncEchoSources = ['INTEGRATION', 'API', 'IMPORT', 'MIGRATION'];
+            if (syncEchoSources.some((source) => changeSource.includes(source))) {
+              return {
+                matched: false,
+                skipped: true,
+                reason: 'sync_echo',
+                contactId: String(created.objectId || ''),
+                changeSource: String(created.changeSource || ''),
+              };
+            }
+
+            return {
+              matched: true,
+              skipped: false,
+              contactId: String(created.objectId || ''),
+              portalId: String(created.portalId || ''),
+              changeSource: String(created.changeSource || ''),
+              occurredAt: created.occurredAt ?? null,
+              raw: created,
+            };
+          }
+
+  - id: check-should-process
+    type: action
+    data:
+      label: Should Process HubSpot Event?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Process
+            value1: "{{parse-event.result.matched}}"
+            operator: equals
+            value2: true
+            output: process
+        includeElse: true
+        defaultOutput: skip
+
+  - id: fetch-contact-for-sync
+    type: action
+    data:
+      label: Fetch HubSpot Contact For Sync
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: getContact
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        contactId: "{{parse-event.result.contactId}}"
+
+  - id: prepare-salesforce-fields
+    type: script
+    data:
+      label: Prepare Salesforce Contact Fields
+      framework: script
+      source: inline
+      params:
+        contact: "{{fetch-contact-for-sync.contact}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(contact) {
+            const c = contact || {};
+            const email = String(c.email || '').trim();
+            let lastName = String(c.lastName || '').trim();
+
+            if (!email) {
+              throw new Error('HubSpot contact is missing email — cannot sync to Salesforce');
+            }
+
+            if (!lastName) {
+              lastName = email.includes('@') ? email.split('@')[0] : 'Contact';
+            }
+
+            const firstName = String(c.firstName || '').trim();
+            const phone = String(c.phone || '').trim();
+
+            return {
+              email,
+              firstName: firstName || undefined,
+              lastName,
+              phone: phone || undefined,
+            };
+          }
+
+  - id: check-salesforce-exists
+    type: action
+    data:
+      label: Check Salesforce Contact Exists
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: getContact
+      auth:
+        clientId: "{{habits.env.SALESFORCE_CLIENT_ID}}"
+      params:
+        email: "{{prepare-salesforce-fields.result.email}}"
+        instanceUrl: "{{habits.env.SALESFORCE_INSTANCE_URL}}"
+
+  - id: branch-salesforce-exists
+    type: action
+    data:
+      label: Salesforce Contact Already Exists?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Create
+            value1: "{{check-salesforce-exists.found}}"
+            operator: equals
+            value2: false
+            output: create
+        includeElse: true
+        defaultOutput: skip
+
+  - id: create-salesforce-contact
+    type: action
+    data:
+      label: Create Salesforce Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: createContact
+      auth:
+        clientId: "{{habits.env.SALESFORCE_CLIENT_ID}}"
+      params:
+        email: "{{prepare-salesforce-fields.result.email}}"
+        firstName: "{{prepare-salesforce-fields.result.firstName}}"
+        lastName: "{{prepare-salesforce-fields.result.lastName}}"
+        phone: "{{prepare-salesforce-fields.result.phone}}"
+        instanceUrl: "{{habits.env.SALESFORCE_INSTANCE_URL}}"
+
+  - id: finish-skip-salesforce-duplicate
+    type: script
+    data:
+      label: Skip — Salesforce Contact Already Exists
+      framework: script
+      source: inline
+      params:
+        email: "{{prepare-salesforce-fields.result.email}}"
+        existing: "{{check-salesforce-exists.contact}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(email, existing) {
+            return {
+              skipped: true,
+              reason: 'salesforce_contact_exists',
+              email,
+              salesforceContactId: existing?.id,
+            };
+          }
+
+  - id: finish-skip-hubspot-event
+    type: script
+    data:
+      label: Skip — HubSpot Event Not Processed
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-event.result}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed) {
+            return {
+              skipped: true,
+              reason: parsed?.reason || 'hubspot_event_skipped',
+              contactId: parsed?.contactId || '',
+              changeSource: parsed?.changeSource || '',
+            };
+          }
+
+edges:
+  - source: hubspot-inbound
+    target: parse-event
+  - source: parse-event
+    target: check-should-process
+  - source: check-should-process
+    target: fetch-contact-for-sync
+    sourceHandle: branch-0
+  - source: fetch-contact-for-sync
+    target: prepare-salesforce-fields
+  - source: prepare-salesforce-fields
+    target: check-salesforce-exists
+  - source: check-salesforce-exists
+    target: branch-salesforce-exists
+  - source: branch-salesforce-exists
+    target: create-salesforce-contact
+    sourceHandle: branch-0
+  - source: branch-salesforce-exists
+    target: finish-skip-salesforce-duplicate
+    sourceHandle: branch-1
+  - source: check-should-process
+    target: finish-skip-hubspot-event
+    sourceHandle: branch-1
+
+output:
+  hubspotContactId: "{{parse-event.result.contactId}}"
+  skippedHubSpotEvent: "{{finish-skip-hubspot-event.result}}"
+  skippedSalesforceDuplicate: "{{finish-skip-salesforce-duplicate.result}}"
+  salesforceContact: "{{create-salesforce-contact.contact}}"
+  success: "{{create-salesforce-contact.success}}"

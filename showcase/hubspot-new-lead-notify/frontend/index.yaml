@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: hubspot-new-lead-notify
+  title: HubSpot New Lead Notify
+  subtitle: Background automation — no manual actions required
+  icon: "lucide:BellRing"
+  documentTitle: HubSpot New Lead Notify
+
+theme:
+  preset: ha-bits-purple
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: HubSpot New Lead Notify
+    subtitle: Background automation — no manual actions required
+    icon: "lucide:BellRing"
+
+state:
+  contacts: []
+
+actions:
+  listContacts:
+    method: GET
+    endpoint: /api/list-hubspot-contacts
+    responsePath: output.contacts
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        contacts: "$response"
+
+onMount:
+  - listContacts
+
+widgets:
+  - kind: hero
+    icon: "lucide:Workflow"
+    title: Waiting for new HubSpot contacts
+    subtitle: When a contact is created in HubSpot, this showcase fetches their details, drafts a Slack message with OpenAI, and posts it to your team channel.
+
+  - kind: card
+    title: New contacts
+    children:
+      - kind: list
+        source: state.contacts
+        empty: No contacts yet. Create a contact in HubSpot to see it here.
+        template:
+          - kind: text
+            value: "{{item.fullName}}"
+            strong: true
+          - kind: text
+            value: "{{item.email}}"
+            muted: true
+          - kind: text
+            value: "{{item.phone}}"
+            muted: true

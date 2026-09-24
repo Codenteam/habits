@@ -37,20 +37,46 @@ import type {
 interface SalesforceContext extends CRMContext {
   auth: {
     accessToken: string;
-    instanceUrl: string;
+    instanceUrl?: string;
+    instance_url?: string;
   };
+}
+
+function resolveSalesforceApiAuth(context: SalesforceContext): {
+  instanceUrl: string;
+  accessToken: string;
+} {
+  const auth = context.auth || ({} as SalesforceContext['auth']);
+  const accessToken = auth.accessToken || (auth as { access_token?: string }).access_token;
+  const instanceUrl =
+    auth.instanceUrl
+    || auth.instance_url
+    || (context.propsValue as { instanceUrl?: string } | undefined)?.instanceUrl;
+
+  if (!accessToken) {
+    throw new Error(
+      'Salesforce access token is required. Complete OAuth or provide accessToken in credentials.',
+    );
+  }
+  if (!instanceUrl) {
+    throw new Error(
+      'Salesforce instanceUrl is required. Set SALESFORCE_INSTANCE_URL and pass instanceUrl in action params.',
+    );
+  }
+
+  return { instanceUrl, accessToken };
 }
 
 /**
  * Make a Salesforce API request
  */
 async function salesforceRequest(
-  instanceUrl: string,
+  context: SalesforceContext,
   endpoint: string,
-  accessToken: string,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET',
   body?: any
 ): Promise<any> {
+  const { instanceUrl, accessToken } = resolveSalesforceApiAuth(context);
   const url = `${instanceUrl}/services/data/v59.0${endpoint}`;
   
   const options: RequestInit = {
@@ -84,12 +110,11 @@ async function salesforceRequest(
  * Run a SOQL query
  */
 async function salesforceQuery(
-  instanceUrl: string,
-  accessToken: string,
+  context: SalesforceContext,
   soql: string
 ): Promise<any> {
   const encoded = encodeURIComponent(soql);
-  return salesforceRequest(instanceUrl, `/query?q=${encoded}`, accessToken);
+  return salesforceRequest(context, `/query?q=${encoded}`);
 }
 
 const salesforceBit = {
@@ -102,13 +127,13 @@ const salesforceBit = {
   replaces: '@ha-bits/bit-crm',
   
   auth: {
-    type: 'OAUTH2' as const,
+    type: 'OAUTH2',
     displayName: 'Salesforce OAuth',
     description: 'Connect your Salesforce account',
     required: true,
-    authUrl: 'https://login.salesforce.com/services/oauth2/authorize',
+    authorizationUrl: 'https://login.salesforce.com/services/oauth2/authorize',
     tokenUrl: 'https://login.salesforce.com/services/oauth2/token',
-    scope: ['api', 'refresh_token'],
+    scopes: ['api', 'refresh_token'],
     extraAuthParams: {
       response_type: 'code',
     },
@@ -190,12 +215,7 @@ const salesforceBit = {
         if (source) leadData.LeadSource = source;
         if (status) leadData.Status = status;
         
-        const result = await salesforceRequest(
-          context.auth.instanceUrl,
-          '/sobjects/Lead',
-          context.auth.accessToken,
-          'POST',
-          leadData
+        const result = await salesforceRequest(context, '/sobjects/Lead', 'POST', leadData
         );
         
         console.log(`☁️ Salesforce: Created lead ${result.id} - ${email}`);
@@ -245,15 +265,11 @@ const salesforceBit = {
           
           if (leadId) {
             data = await salesforceRequest(
-              context.auth.instanceUrl,
+              context,
               `/sobjects/Lead/${leadId}`,
-              context.auth.accessToken
             );
           } else if (email) {
-            const result = await salesforceQuery(
-              context.auth.instanceUrl,
-              context.auth.accessToken,
-              `SELECT Id, Email, FirstName, LastName, Company, Phone, Status, LeadSource, CreatedDate FROM Lead WHERE Email = '${email}' LIMIT 1`
+            const result = await salesforceQuery(context, `SELECT Id, Email, FirstName, LastName, Company, Phone, Status, LeadSource, CreatedDate FROM Lead WHERE Email = '${email}' LIMIT 1`
             );
             
             if (result.records?.length > 0) {
@@ -316,19 +332,13 @@ const salesforceBit = {
           updateData = JSON.parse(updates);
         }
         
-        await salesforceRequest(
-          context.auth.instanceUrl,
-          `/sobjects/Lead/${leadId}`,
-          context.auth.accessToken,
-          'PATCH',
-          updateData
+        await salesforceRequest(context, `/sobjects/Lead/${leadId}`, 'PATCH', updateData
         );
         
         // Fetch updated record
         const data = await salesforceRequest(
-          context.auth.instanceUrl,
+          context,
           `/sobjects/Lead/${leadId}`,
-          context.auth.accessToken
         );
         
         console.log(`☁️ Salesforce: Updated lead ${leadId}`);
@@ -380,10 +390,7 @@ const salesforceBit = {
         }
         soql += ` ORDER BY CreatedDate DESC LIMIT ${limit}`;
         
-        const result = await salesforceQuery(
-          context.auth.instanceUrl,
-          context.auth.accessToken,
-          soql
+        const result = await salesforceQuery(context, soql
         );
         
         const leads: Lead[] = (result.records || []).map((r: any) => ({
@@ -446,6 +453,12 @@ const salesforceBit = {
           displayName: 'Title',
           required: false,
         },
+        instanceUrl: {
+          type: 'SHORT_TEXT',
+          displayName: 'Instance URL',
+          description: 'Salesforce org URL (optional if set on auth; use habits.env.SALESFORCE_INSTANCE_URL)',
+          required: false,
+        },
       },
       async run(context: SalesforceContext): Promise<CreateContactResult> {
         const { email, firstName, lastName, accountId, phone, title } = context.propsValue;
@@ -459,12 +472,7 @@ const salesforceBit = {
         if (phone) contactData.Phone = phone;
         if (title) contactData.Title = title;
         
-        const result = await salesforceRequest(
-          context.auth.instanceUrl,
-          '/sobjects/Contact',
-          context.auth.accessToken,
-          'POST',
-          contactData
+        const result = await salesforceRequest(context, '/sobjects/Contact', 'POST', contactData
         );
         
         console.log(`☁️ Salesforce: Created contact ${result.id} - ${email}`);
@@ -509,15 +517,11 @@ const salesforceBit = {
           
           if (contactId) {
             data = await salesforceRequest(
-              context.auth.instanceUrl,
+              context,
               `/sobjects/Contact/${contactId}`,
-              context.auth.accessToken
             );
           } else if (email) {
-            const result = await salesforceQuery(
-              context.auth.instanceUrl,
-              context.auth.accessToken,
-              `SELECT Id, Email, FirstName, LastName, Phone, Title, AccountId, CreatedDate FROM Contact WHERE Email = '${email}' LIMIT 1`
+            const result = await salesforceQuery(context, `SELECT Id, Email, FirstName, LastName, Phone, Title, AccountId, CreatedDate FROM Contact WHERE Email = '${email}' LIMIT 1`
             );
             
             if (result.records?.length > 0) {
@@ -576,18 +580,12 @@ const salesforceBit = {
           updateData = JSON.parse(updates);
         }
         
-        await salesforceRequest(
-          context.auth.instanceUrl,
-          `/sobjects/Contact/${contactId}`,
-          context.auth.accessToken,
-          'PATCH',
-          updateData
+        await salesforceRequest(context, `/sobjects/Contact/${contactId}`, 'PATCH', updateData
         );
         
         const data = await salesforceRequest(
-          context.auth.instanceUrl,
+          context,
           `/sobjects/Contact/${contactId}`,
-          context.auth.accessToken
         );
         
         console.log(`☁️ Salesforce: Updated contact ${contactId}`);
@@ -650,10 +648,7 @@ const salesforceBit = {
         }
         soql += ` ORDER BY CreatedDate DESC LIMIT ${limit}`;
         
-        const result = await salesforceQuery(
-          context.auth.instanceUrl,
-          context.auth.accessToken,
-          soql
+        const result = await salesforceQuery(context, soql
         );
         
         const contacts: Contact[] = (result.records || []).map((r: any) => ({
@@ -741,22 +736,12 @@ const salesforceBit = {
         if (amount) oppData.Amount = Number(amount);
         if (accountId) oppData.AccountId = accountId;
         
-        const result = await salesforceRequest(
-          context.auth.instanceUrl,
-          '/sobjects/Opportunity',
-          context.auth.accessToken,
-          'POST',
-          oppData
+        const result = await salesforceRequest(context, '/sobjects/Opportunity', 'POST', oppData
         );
         
         // Associate with contact if provided
         if (contactId) {
-          await salesforceRequest(
-            context.auth.instanceUrl,
-            '/sobjects/OpportunityContactRole',
-            context.auth.accessToken,
-            'POST',
-            {
+          await salesforceRequest(context, '/sobjects/OpportunityContactRole', 'POST', {
               OpportunityId: result.id,
               ContactId: contactId,
               IsPrimary: true,
@@ -807,12 +792,7 @@ const salesforceBit = {
           updateData = JSON.parse(updates);
         }
         
-        await salesforceRequest(
-          context.auth.instanceUrl,
-          `/sobjects/Opportunity/${opportunityId}`,
-          context.auth.accessToken,
-          'PATCH',
-          updateData
+        await salesforceRequest(context, `/sobjects/Opportunity/${opportunityId}`, 'PATCH', updateData
         );
         
         console.log(`☁️ Salesforce: Updated opportunity ${opportunityId}`);
@@ -909,9 +889,8 @@ const salesforceBit = {
         
         // Fetch updated opportunity
         const data = await salesforceRequest(
-          context.auth.instanceUrl,
+          context,
           `/sobjects/Opportunity/${dealId}`,
-          context.auth.accessToken
         );
         
         const deal: Deal = {
@@ -971,12 +950,7 @@ const salesforceBit = {
           WhatId: entityType === 'Opportunity' ? entityId : undefined,
         };
         
-        const result = await salesforceRequest(
-          context.auth.instanceUrl,
-          '/sobjects/Task',
-          context.auth.accessToken,
-          'POST',
-          taskData
+        const result = await salesforceRequest(context, '/sobjects/Task', 'POST', taskData
         );
         
         console.log(`☁️ Salesforce: Created note ${result.id} on ${entityType} ${entityId}`);
@@ -1034,10 +1008,7 @@ const salesforceBit = {
         for (const tag of parsedTags) {
           try {
             // First, find or create the topic
-            const topicResult = await salesforceQuery(
-              context.auth.instanceUrl,
-              context.auth.accessToken,
-              `SELECT Id FROM Topic WHERE Name = '${tag}' LIMIT 1`
+            const topicResult = await salesforceQuery(context, `SELECT Id FROM Topic WHERE Name = '${tag}' LIMIT 1`
             );
             
             let topicId: string;
@@ -1045,23 +1016,13 @@ const salesforceBit = {
               topicId = topicResult.records[0].Id;
             } else {
               // Create topic
-              const newTopic = await salesforceRequest(
-                context.auth.instanceUrl,
-                '/sobjects/Topic',
-                context.auth.accessToken,
-                'POST',
-                { Name: tag }
+              const newTopic = await salesforceRequest(context, '/sobjects/Topic', 'POST', { Name: tag }
               );
               topicId = newTopic.id;
             }
             
             // Assign topic to entity
-            await salesforceRequest(
-              context.auth.instanceUrl,
-              '/sobjects/TopicAssignment',
-              context.auth.accessToken,
-              'POST',
-              {
+            await salesforceRequest(context, '/sobjects/TopicAssignment', 'POST', {
                 TopicId: topicId,
                 EntityId: entityId,
               }
@@ -1127,12 +1088,7 @@ const salesforceBit = {
           opportunityName: opportunityName || undefined,
         };
         
-        const result = await salesforceRequest(
-          context.auth.instanceUrl,
-          '/sobjects/LeadConvert',
-          context.auth.accessToken,
-          'POST',
-          convertRequest
+        const result = await salesforceRequest(context, '/sobjects/LeadConvert', 'POST', convertRequest
         );
         
         console.log(`☁️ Salesforce: Converted lead ${leadId}`);
@@ -1192,28 +1148,65 @@ const salesforceBit = {
     newContact: {
       name: 'newContact',
       displayName: 'New Contact',
-      description: 'Triggers when a new contact is created in Salesforce',
+      description: 'Triggers when a new contact is created in Salesforce (Flow HTTP webhook or outbound message)',
       type: 'WEBHOOK',
       props: {},
       filter(payload: { body: any; headers: Record<string, string>; query: Record<string, string>; method: string }): boolean {
         const body = payload.body;
-        const sObjectType = body?.Notification?.sObject?.$?.['xsi:type'] || 
-                           body?.sobjectType || 
+        if (!body || typeof body !== 'object') {
+          return false;
+        }
+
+        // Salesforce Flow HTTP webhook: { id, email, firstName, lastName, phone }
+        const contactId = body.id != null ? String(body.id).trim() : '';
+        if (contactId) {
+          return true;
+        }
+
+        const sObjectType = body?.Notification?.sObject?.$?.['xsi:type'] ||
+                           body?.sobjectType ||
                            body?.object || '';
         const event = body?.Notification?.ActionId || body?.event || body?.action || '';
         const normalizedType = String(sObjectType).toLowerCase();
         const normalizedEvent = String(event).toLowerCase();
-        return normalizedType.includes('contact') && 
+        return normalizedType.includes('contact') &&
                (normalizedEvent.includes('create') || normalizedEvent.includes('insert') || normalizedEvent.includes('new'));
       },
       async run(context: any) {
         const body = context.webhookPayload?.body;
+
+        const contactId = body?.id != null ? String(body.id).trim() : '';
+        if (contactId) {
+          const contact = {
+            id: contactId,
+            email: body.email ?? null,
+            firstName: body.firstName ?? null,
+            lastName: body.lastName ?? null,
+            phone: body.phone ?? null,
+          };
+
+          return [{
+            contact,
+            contactId,
+            email: contact.email,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            phone: contact.phone,
+            event: 'newContact',
+            raw: body,
+          }];
+        }
+
         const contact = body?.Notification?.sObject || body?.data || body;
         return [{
           contact,
-          contactId: contact?.Id,
+          contactId: contact?.Id || contact?.id,
+          email: contact?.Email || contact?.email,
+          firstName: contact?.FirstName || contact?.firstName,
+          lastName: contact?.LastName || contact?.lastName,
+          phone: contact?.Phone || contact?.phone,
           event: 'newContact',
-          raw: body
+          raw: body,
         }];
       },
     },

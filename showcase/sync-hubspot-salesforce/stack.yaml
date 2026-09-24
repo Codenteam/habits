@@ -1,0 +1,27 @@
+version: "1.0"
+name: Sync HubSpot to Salesforce
+
+description: >
+  Bidirectional CRM sync: HubSpot new contacts → Salesforce, and Salesforce new
+  contacts (Flow webhook) → HubSpot.
+
+workflows:
+  - id: sync-hubspot-salesforce
+    path: ./habits/sync-hubspot-salesforce.yaml
+    enabled: true
+
+  - id: sync-salesforce-hubspot
+    path: ./habits/sync-salesforce-hubspot.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  frontend: ./frontend
+  openapi: true
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

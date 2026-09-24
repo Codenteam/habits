@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: sync-hubspot-salesforce
+  title: Sync HubSpot to Salesforce
+  subtitle: New HubSpot contacts are synced to Salesforce automatically
+  icon: "lucide:ArrowLeftRight"
+  documentTitle: Sync HubSpot to Salesforce
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Sync HubSpot → Salesforce
+    subtitle: Background sync — no manual actions required
+    icon: "lucide:ArrowLeftRight"
+
+widgets:
+  - kind: hero
+    icon: "lucide:Workflow"
+    title: HubSpot ↔ Salesforce contact sync
+    subtitle: HubSpot new contacts sync to Salesforce. Salesforce Flow HTTP POSTs sync new contacts to HubSpot.
+
+  - kind: status-banner
+    source: "HubSpot → SF: /webhook/v/hubspot. SF → HubSpot: Flow POST /webhook/v/salesforce with JSON body (id, email, firstName, lastName, phone). See README.md."
