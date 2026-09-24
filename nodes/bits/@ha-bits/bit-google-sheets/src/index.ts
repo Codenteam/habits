@@ -1,9 +1,12 @@
 /**
  * @ha-bits/bit-google-sheets
- * 
+ *
  * Google Sheets integration for Habits workflows.
  * Supports reading, writing, and appending data to Google Sheets.
  */
+
+import { createHash } from 'crypto';
+import { fetchRange, sheetsRequest } from './sheets';
 
 // ============================================================================
 // Types
@@ -18,88 +21,55 @@ interface GoogleSheetsContext {
   propsValue: Record<string, any>;
 }
 
-interface SheetRange {
-  values: any[][];
-}
+type GoogleSheetsPollingContext = GoogleSheetsContext & {
+  pollingStore?: {
+    hasSeenItem: (itemId: string, itemDate?: string) => Promise<boolean>;
+    markItemSeen: (itemId: string, itemDate: string, data?: unknown) => Promise<void>;
+    getLastPolledDate: () => Promise<string | null>;
+    setLastPolledDate: (date: string) => Promise<void>;
+  };
+  setSchedule?: (options: { cronExpression: string; timezone?: string }) => void;
+};
 
 // ============================================================================
-// Google Sheets API Helper
+// Auth
 // ============================================================================
-
-const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 async function getAccessToken(context: GoogleSheetsContext): Promise<string> {
+  const fromProps = context.propsValue.accessToken;
+  if (typeof fromProps === 'string' && fromProps.trim()) {
+    return fromProps.trim();
+  }
+
   if (context.auth?.accessToken) {
     return context.auth.accessToken;
   }
-  // If service account key is provided (JSON)
+
   const serviceAccountKey = context.propsValue.serviceAccountKey || context.auth?.serviceAccountKey;
 
-  /**
-   * Implementation removed: Keeping client ID and secret is no longer secure in stronghold. Service account authentication should be done externally and the access token provided directly to the bit. Maybe the vault can help here? 
-   * 
-   * TODO: Check Vault implementation for OAuth stuff and app secrets.
-   */
   if (serviceAccountKey) {
-    // Parse service account credentials
-    let credentials: any;
+    let credentials: Record<string, unknown>;
     try {
-      credentials = typeof serviceAccountKey === 'string' 
-        ? JSON.parse(serviceAccountKey) 
+      credentials = typeof serviceAccountKey === 'string'
+        ? JSON.parse(serviceAccountKey)
         : serviceAccountKey;
     } catch {
       throw new Error('Invalid service account key JSON');
     }
 
-    // Create JWT for service account auth
     const now = Math.floor(Date.now() / 1000);
-    const header = { alg: 'RS256', typ: 'JWT' };
-    const payload = {
-      iss: credentials.client_email,
-      scope: 'https://www.googleapis.com/auth/spreadsheets',
-      aud: 'https://oauth2.googleapis.com/token',
-      iat: now,
-      exp: now + 3600,
-    };
-
-    // Note: In a real implementation, you'd use a proper JWT library
-    // For now, we'll require the access token directly
+    void credentials;
+    void now;
     throw new Error('Service account authentication requires the access token to be pre-generated. Please provide an access token.');
   }
+
   throw new Error('No OAuth token. Please authorize Google Sheets access first.');
 }
 
-async function sheetsRequest(
-  endpoint: string,
-  method: string,
-  accessToken: string,
-  body?: any
-): Promise<any> {
-  const url = endpoint.startsWith('http') ? endpoint : `${SHEETS_API_URL}${endpoint}`;
-  
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-  };
-
-  const options: RequestInit = {
-    method,
-    headers,
-  };
-
-  if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, options);
-  
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Google Sheets API Error: ${response.status} - ${error}`);
-  }
-
-  const text = await response.text();
-  return text ? JSON.parse(text) : {};
+/** Dedup key from spreadsheet + range + full row content (stable when rows shift). */
+function buildRowItemId(spreadsheetId: string, range: string, row: unknown[]): string {
+  const contentHash = createHash('sha256').update(JSON.stringify(row)).digest('hex');
+  return `${spreadsheetId}:${range}:content:${contentHash}`;
 }
 
 // ============================================================================
@@ -111,7 +81,7 @@ const googleSheetsBit = {
   description: 'Read, write, and append data to Google Sheets',
   logoUrl: 'lucide:Table',
   runtime: 'all',
-  
+
   auth: {
     type: 'OAUTH2',
     displayName: 'Google Sheets',
@@ -126,15 +96,7 @@ const googleSheetsBit = {
     },
   },
 
-  // ============================================================================
-  // Actions
-  // ============================================================================
-  
   actions: {
-    /**
-     * Append Row
-     * Add a new row to the end of a sheet
-     */
     appendRow: {
       name: 'appendRow',
       displayName: 'Append Row',
@@ -160,17 +122,16 @@ const googleSheetsBit = {
           required: true,
         },
       },
-      
+
       async run(context: GoogleSheetsContext): Promise<any> {
         const accessToken = await getAccessToken(context);
         const { spreadsheetId, sheetName, values } = context.propsValue;
-        
+
         if (!spreadsheetId || !sheetName || !values) {
           throw new Error('Spreadsheet ID, sheet name, and values are required');
         }
 
-        // Parse values if it's a string
-        let rowValues: any[];
+        let rowValues: unknown[];
         if (typeof values === 'string') {
           try {
             rowValues = JSON.parse(values);
@@ -184,7 +145,7 @@ const googleSheetsBit = {
         }
 
         console.log(`📊 Google Sheets: Appending row to ${sheetName}...`);
-        
+
         const range = `${sheetName}!A:Z`;
         const result = await sheetsRequest(
           `/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
@@ -192,23 +153,21 @@ const googleSheetsBit = {
           accessToken,
           {
             values: [rowValues],
-          }
+          },
         );
-        
+
+        const updates = result.updates as Record<string, unknown> | undefined;
+
         return {
           success: true,
           spreadsheetId,
-          updatedRange: result.updates?.updatedRange || range,
-          updatedRows: result.updates?.updatedRows || 1,
-          updatedColumns: result.updates?.updatedColumns || rowValues.length,
+          updatedRange: updates?.updatedRange || range,
+          updatedRows: updates?.updatedRows || 1,
+          updatedColumns: updates?.updatedColumns || rowValues.length,
         };
       },
     },
 
-    /**
-     * Read Range
-     * Read data from a range of cells
-     */
     readRange: {
       name: 'readRange',
       displayName: 'Read Range',
@@ -227,35 +186,21 @@ const googleSheetsBit = {
           required: true,
         },
       },
-      
+
       async run(context: GoogleSheetsContext): Promise<any> {
         const accessToken = await getAccessToken(context);
         const { spreadsheetId, range } = context.propsValue;
-        
+
         if (!spreadsheetId || !range) {
           throw new Error('Spreadsheet ID and range are required');
         }
 
         console.log(`📊 Google Sheets: Reading range ${range}...`);
-        
-        const result = await sheetsRequest(
-          `/${spreadsheetId}/values/${encodeURIComponent(range)}`,
-          'GET',
-          accessToken
-        );
-        
-        return {
-          range: result.range,
-          values: result.values || [],
-          rowCount: (result.values || []).length,
-        };
+
+        return fetchRange(accessToken, spreadsheetId, range);
       },
     },
 
-    /**
-     * Write Range
-     * Write data to a specific range
-     */
     writeRange: {
       name: 'writeRange',
       displayName: 'Write Range',
@@ -280,39 +225,35 @@ const googleSheetsBit = {
           required: true,
         },
       },
-      
+
       async run(context: GoogleSheetsContext): Promise<any> {
         const accessToken = await getAccessToken(context);
         const { spreadsheetId, range, values } = context.propsValue;
-        
+
         if (!spreadsheetId || !range || !values) {
           throw new Error('Spreadsheet ID, range, and values are required');
         }
 
-        // Parse values if it's a string
-        let data: any[][];
+        let data: unknown[][];
         if (typeof values === 'string') {
           data = JSON.parse(values);
         } else {
           data = values;
         }
 
-        // Ensure it's a 2D array
         if (!Array.isArray(data[0])) {
           data = [data];
         }
 
         console.log(`📊 Google Sheets: Writing to range ${range}...`);
-        
+
         const result = await sheetsRequest(
           `/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
           'PUT',
           accessToken,
-          {
-            values: data,
-          }
+          { values: data },
         );
-        
+
         return {
           success: true,
           spreadsheetId,
@@ -324,9 +265,6 @@ const googleSheetsBit = {
       },
     },
 
-    /**
-     * Get Spreadsheet Info
-     */
     getSpreadsheet: {
       name: 'getSpreadsheet',
       displayName: 'Get Spreadsheet Info',
@@ -339,40 +277,39 @@ const googleSheetsBit = {
           required: true,
         },
       },
-      
+
       async run(context: GoogleSheetsContext): Promise<any> {
         const accessToken = await getAccessToken(context);
         const { spreadsheetId } = context.propsValue;
-        
+
         if (!spreadsheetId) {
           throw new Error('Spreadsheet ID is required');
         }
 
         console.log(`📊 Google Sheets: Getting spreadsheet info...`);
-        
+
         const result = await sheetsRequest(
           `/${spreadsheetId}?fields=spreadsheetId,properties.title,sheets.properties`,
           'GET',
-          accessToken
+          accessToken,
         );
-        
+
+        const sheets = (result.sheets as Array<{ properties: Record<string, unknown> }>) || [];
+
         return {
           spreadsheetId: result.spreadsheetId,
-          title: result.properties?.title,
-          sheets: (result.sheets || []).map((s: any) => ({
+          title: (result.properties as Record<string, unknown>)?.title,
+          sheets: sheets.map((s) => ({
             sheetId: s.properties.sheetId,
             title: s.properties.title,
             index: s.properties.index,
-            rowCount: s.properties.gridProperties?.rowCount,
-            columnCount: s.properties.gridProperties?.columnCount,
+            rowCount: (s.properties.gridProperties as Record<string, unknown>)?.rowCount,
+            columnCount: (s.properties.gridProperties as Record<string, unknown>)?.columnCount,
           })),
         };
       },
     },
 
-    /**
-     * Clear Range
-     */
     clearRange: {
       name: 'clearRange',
       displayName: 'Clear Range',
@@ -391,24 +328,24 @@ const googleSheetsBit = {
           required: true,
         },
       },
-      
+
       async run(context: GoogleSheetsContext): Promise<any> {
         const accessToken = await getAccessToken(context);
         const { spreadsheetId, range } = context.propsValue;
-        
+
         if (!spreadsheetId || !range) {
           throw new Error('Spreadsheet ID and range are required');
         }
 
         console.log(`📊 Google Sheets: Clearing range ${range}...`);
-        
+
         const result = await sheetsRequest(
           `/${spreadsheetId}/values/${encodeURIComponent(range)}:clear`,
           'POST',
           accessToken,
-          {}
+          {},
         );
-        
+
         return {
           success: true,
           clearedRange: result.clearedRange,
@@ -417,7 +354,138 @@ const googleSheetsBit = {
     },
   },
 
-  triggers: {},
+  triggers: {
+    newRows: {
+      name: 'newRows',
+      displayName: 'New Rows (polling)',
+      description:
+        'Polls a Google Sheet range on a schedule and returns rows not seen before (deduplicated by spreadsheet + row content hash).',
+      type: 'POLLING',
+      props: {
+        accessToken: {
+          type: 'SECRET_TEXT',
+          displayName: 'Access Token',
+          description: 'Optional OAuth access token override (for polling without interactive auth)',
+          required: false,
+        },
+        spreadsheetId: {
+          type: 'SHORT_TEXT',
+          displayName: 'Spreadsheet ID',
+          description: 'The ID of the spreadsheet',
+          required: true,
+        },
+        range: {
+          type: 'SHORT_TEXT',
+          displayName: 'Range',
+          description: 'A1 notation range (e.g., "Sheet1!A1:D100")',
+          required: true,
+        },
+        cronExpression: {
+          type: 'SHORT_TEXT',
+          displayName: 'Poll Interval',
+          description: 'Cron expression (default: every 1 minute)',
+          required: false,
+          defaultValue: '*/1 * * * *',
+        },
+        timezone: {
+          type: 'SHORT_TEXT',
+          displayName: 'Timezone',
+          required: false,
+          defaultValue: 'UTC',
+        },
+        hasHeaderRow: {
+          type: 'CHECKBOX',
+          displayName: 'Has Header Row',
+          description: 'Skip the first row when returning new data rows',
+          required: false,
+          defaultValue: true,
+        },
+      },
+      async onEnable(context: GoogleSheetsPollingContext): Promise<void> {
+        const cronExpression = context.propsValue.cronExpression || '*/1 * * * *';
+        const timezone = context.propsValue.timezone || 'UTC';
+        context.setSchedule?.({ cronExpression, timezone });
+      },
+      async onDisable(_context: GoogleSheetsPollingContext): Promise<void> {
+        // Server stops cron jobs on shutdown.
+      },
+      async run(context: GoogleSheetsPollingContext) {
+        const accessToken = await getAccessToken(context);
+        const { spreadsheetId, range } = context.propsValue;
+        const hasHeaderRow = context.propsValue.hasHeaderRow !== false;
+        const pollingStore = context.pollingStore;
+
+        if (!spreadsheetId || !range) {
+          throw new Error('Spreadsheet ID and range are required');
+        }
+
+        const result = await fetchRange(accessToken, spreadsheetId, range);
+        const pollTimestamp = new Date().toISOString();
+        const newRows: Array<{
+          spreadsheetId: string;
+          range: string;
+          rowIndex: number;
+          values: unknown[];
+        }> = [];
+
+        for (let i = 0; i < result.values.length; i++) {
+          if (hasHeaderRow && i === 0) {
+            continue;
+          }
+
+          const row = result.values[i];
+          const rowIndex = i + 1;
+          const itemId = buildRowItemId(spreadsheetId, range, row);
+
+          if (pollingStore) {
+            const seen = await pollingStore.hasSeenItem(itemId);
+            if (seen) {
+              continue;
+            }
+            await pollingStore.markItemSeen(itemId, pollTimestamp, {
+              spreadsheetId,
+              range: result.range,
+              rowIndex,
+              values: row,
+            });
+          }
+
+          newRows.push({
+            spreadsheetId,
+            range: result.range,
+            rowIndex,
+            values: row,
+          });
+        }
+
+        if (pollingStore) {
+          await pollingStore.setLastPolledDate(pollTimestamp);
+        }
+
+        console.log(
+          `[bit-google-sheets] newRows poll: ${newRows.length} new row(s) from ${spreadsheetId} ${range}`,
+        );
+
+        return newRows;
+      },
+      async test(_context: GoogleSheetsPollingContext) {
+        return [
+          {
+            spreadsheetId: 'sheet123',
+            range: 'Sheet1!A1:D2',
+            rowIndex: 2,
+            values: ['ID-001', 'Alice', 'alice@example.com', 'Active'],
+          },
+        ];
+      },
+      sampleData: {
+        spreadsheetId: 'sheet123',
+        range: 'Sheet1!A1:D2',
+        rowIndex: 2,
+        values: ['ID-001', 'Alice', 'alice@example.com', 'Active'],
+      },
+    },
+  },
 };
 
 export default googleSheetsBit;

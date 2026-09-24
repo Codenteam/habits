@@ -1,0 +1,175 @@
+version: 1
+meta:
+  id: e-commerce-order-processing
+  title: E-Commerce Order Processing
+  subtitle: Shopify orders/create → Airtable · Slack · SQLite
+  icon: "lucide:ShoppingCart"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: E-Commerce Order Processing
+    subtitle: Configuration · saved orders
+    icon: "lucide:ShoppingCart"
+  nav:
+    - { id: configuration, label: Configuration, icon: "lucide:Settings" }
+    - { id: orders, label: Orders, icon: "lucide:Package", badge: "{{state.orders.length}}" }
+
+state:
+  fieldNames: "Order ID,Order Name,Topic,Status,Financial Status,Fulfillment Status,Total,Currency,Line Items,Updated At,Shopify Order Number"
+  webhookTopics: "ORDERS_CREATE"
+  result: null
+  savedColumns: null
+  error: null
+  orders: []
+  ordersFetchedAt: null
+
+actions:
+  configureFields:
+    method: POST
+    endpoint: /api/configure-airtable-fields
+    body:
+      fieldNames: "{{state.fieldNames}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+        error: null
+      toast: "Airtable fields configured"
+    onError:
+      set:
+        error: "$error.message"
+
+  loadConfig:
+    method: POST
+    endpoint: /api/get-field-config
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+      toast: "Loaded field config"
+
+  configureWebhooks:
+    method: POST
+    endpoint: /api/configure-webhooks
+    body:
+      topics: "{{state.webhookTopics}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: null
+      toast: "Webhooks configured"
+    onError:
+      set:
+        error: "$error.message"
+
+  listOrders:
+    method: POST
+    endpoint: /api/list-orders
+    body: {}
+    responsePath: output
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        orders: "$response.orders"
+        ordersFetchedAt: "$response.fetchedAt"
+        error: null
+
+  clearResult:
+    set:
+      result: null
+      error: null
+
+onMount:
+  - listOrders
+
+defaultView: configuration
+
+views:
+  configuration:
+    widgets:
+      - kind: status-banner
+        source: >-
+          Set Shopify, Airtable, Slack, and OpenAI env vars (see README).
+          HABITS_SHOPIFY_WEBHOOK_URL must be https://your-ngrok/webhook/v/shopify.
+          Default webhook topic: ORDERS_CREATE.
+
+      - kind: card
+        title: Step 1 — Airtable columns
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: fieldNames
+                type: textarea
+                label: Field names (comma-separated)
+                rows: 3
+                placeholder: "Order ID, Order Name, Topic, Status, ..."
+          - kind: button-row
+            buttons:
+              - { label: Configure Airtable fields, action: configureFields, variant: primary }
+              - { label: Load saved config, action: loadConfig, variant: secondary }
+
+      - kind: card
+        title: Step 2 — Shopify webhooks
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: webhookTopics
+                type: textarea
+                label: Webhook topics (comma-separated)
+                rows: 2
+                placeholder: "ORDERS_CREATE"
+          - kind: button-row
+            buttons:
+              - { label: Configure webhooks, action: configureWebhooks, variant: primary }
+
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+
+      - kind: result-panel
+        showWhen: state.result
+        source: state.result
+        title: Result
+        sections:
+          - kind: json-dump
+            source: state.result
+            copy: true
+
+  orders:
+    widgets:
+      - kind: card
+        title: Saved orders (orders/create)
+        children:
+          - kind: text
+            value: Orders refresh automatically every 30 seconds. Use Refresh now for an immediate update.
+            muted: true
+          - kind: kv-grid
+            items:
+              - { label: Orders, value: "{{state.orders.length}}" }
+              - { label: Last fetch, value: "{{state.ordersFetchedAt | date}}" }
+          - kind: button-row
+            buttons:
+              - { label: Refresh now, action: listOrders, variant: secondary }
+          - kind: list
+            source: state.orders
+            empty: "No orders saved yet. Configure webhooks and create a test order in Shopify."
+            itemKey: id
+            template:
+              - { kind: text, value: "{{item.orderName}}", strong: true }
+              - { kind: text, value: "{{item.status}} · {{item.topic}}", muted: true }
+              - { kind: text, value: "Total: {{item.totalDisplay}}", muted: true }
+              - { kind: text, value: "Shopify: {{item.shopifyOrderGid}}", muted: true }
+              - { kind: text, value: "Airtable: {{item.airtableRecordId}}", muted: true }
+              - { kind: text, value: "Updated: {{item.updatedAt | date}}", muted: true }

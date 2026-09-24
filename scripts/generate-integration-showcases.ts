@@ -62,6 +62,7 @@ const INTEGRATIONS: IntegrationDef[] = [
   { slug: 'intersect', match: ['@ha-bits/bit-intersect', 'bit-intersect'] },
   { slug: 'snov', match: ['@ha-bits/bit-snov', 'bit-snov'] },
   { slug: 'salesforce', match: ['@ha-bits/bit-salesforce', 'bit-salesforce'] },
+  { slug: 'shopify', match: ['@ha-bits/bit-shopify', 'bit-shopify'] },
   { slug: 'gohighlevel', match: ['@ha-bits/bit-gohighlevel', 'bit-gohighlevel'] },
   { slug: 'sumsub', match: ['@ha-bits/bit-sumsub', 'bit-sumsub'] },
   { slug: 'recaptcha', match: ['HABITS_RECAPTCHA_', 'recaptchaenterprise.googleapis.com'] },

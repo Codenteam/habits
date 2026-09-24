@@ -1,0 +1,100 @@
+id: configure-webhooks
+name: Configure Shopify Webhooks
+description: >-
+  Parse comma-separated topics and register each with Shopify Admin API webhookSubscriptionCreate.
+  Callback defaults to HABITS_SHOPIFY_WEBHOOK_URL in .env (full URL including /webhook/v/shopify).
+
+input:
+  - id: topics
+    type: string
+    required: true
+  - id: callbackUrl
+    type: string
+    required: false
+
+nodes:
+  - id: prepare
+    type: script
+    data:
+      label: Prepare subscription items
+      framework: script
+      source: inline
+      params:
+        topics: "{{habits.input.topics}}"
+        callbackUrl: "{{habits.input.callbackUrl}}"
+        envWebhookUrl: "{{habits.env.HABITS_SHOPIFY_WEBHOOK_URL}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(topics, callbackUrl, envWebhookUrl) {
+            const explicit = String(callbackUrl || '').trim();
+            const fromEnv = String(envWebhookUrl || '').trim();
+            const url = explicit || fromEnv;
+            if (!url) {
+              throw new Error(
+                'Webhook callback URL required. Set HABITS_SHOPIFY_WEBHOOK_URL in .env or pass callbackUrl in the request.'
+              );
+            }
+            if (!url.startsWith('https://')) {
+              throw new Error('Shopify requires an HTTPS callback URL (use ngrok or a deployed host).');
+            }
+            if (!url.includes('/webhook/v/shopify')) {
+              throw new Error(
+                'Callback URL must be the Habits vendor webhook path, e.g. https://your-host.ngrok-free.app/webhook/v/shopify'
+              );
+            }
+            const list = String(topics || '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            if (list.length === 0) {
+              throw new Error('At least one webhook topic is required.');
+            }
+            return {
+              callbackUrl: url,
+              items: list.map((topic) => ({ topic, callbackUrl: url })),
+            };
+          }
+
+  - id: subscribe-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      label: Subscribe each topic
+      params:
+        items: "{{prepare.result.items}}"
+        habitId: create-webhook-subscription-item
+        inputKey: item
+        continueOnError: true
+        collectResults: true
+
+  - id: log-summary
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Shopify webhook subscriptions
+        message:
+          callbackUrl: "{{prepare.result.callbackUrl}}"
+          successCount: "{{subscribe-all.successCount}}"
+          errorCount: "{{subscribe-all.errorCount}}"
+          results: "{{subscribe-all.results}}"
+
+edges:
+  - source: prepare
+    target: subscribe-all
+  - source: subscribe-all
+    target: log-summary
+
+output:
+  callbackUrl: "{{prepare.result.callbackUrl}}"
+  topics: "{{prepare.result.items}}"
+  successCount: "{{subscribe-all.successCount}}"
+  errorCount: "{{subscribe-all.errorCount}}"
+  results: "{{subscribe-all.results}}"

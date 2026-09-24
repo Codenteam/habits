@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+import { validateShopifySignature } from './shopifySignature';
 import { validateSlackSignature } from './slackSignature';
 import { validateWhatsAppSignature } from './whatsappSignature';
 
@@ -18,11 +19,13 @@ export interface AuthenticateWebhookResult {
 }
 
 const SIGNATURE_HEADERS = [
+  'x-shopify-hmac-sha256', // Shopify Admin webhooks
   'x-hub-signature-256', // Meta (WhatsApp, etc.)
   'x-slack-signature', // Slack
 ] as const;
 
 const validators: Record<string, WebhookValidator> = {
+  'x-shopify-hmac-sha256': validateShopifySignature,
   'x-hub-signature-256': validateWhatsAppSignature,
   'x-slack-signature': validateSlackSignature,
 };

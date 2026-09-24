@@ -1,0 +1,89 @@
+id: order-event-webhook
+name: Shopify Order Event Webhook
+description: >-
+  Logs orders/create webhooks and invokes process-order sub-habit.
+  POST /webhook/v/shopify (@ha-bits/bit-shopify shopifyEvent).
+
+nodes:
+  - id: shopify-inbound
+    type: trigger
+    data:
+      label: Shopify order webhook
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: shopifyEvent
+      triggerType: webhook
+      isTrigger: true
+      params:
+        topics: "orders/create"
+      credentials:
+        shopify:
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+
+  - id: log-shopify-event
+    type: action
+    data:
+      label: Log Shopify webhook event
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: Shopify webhook event
+        message:
+          topic: "{{shopify-inbound.headers.x-shopify-topic}}"
+          shopDomain: "{{shopify-inbound.headers.x-shopify-shop-domain}}"
+          webhookId: "{{shopify-inbound.headers.x-shopify-webhook-id}}"
+          body: "{{shopify-inbound.body}}"
+
+  - id: prepare-process-input
+    type: script
+    data:
+      label: Package event for process-order
+      framework: script
+      source: inline
+      params:
+        topic: "{{shopify-inbound.headers.x-shopify-topic}}"
+        headers: "{{shopify-inbound.headers}}"
+        body: "{{shopify-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(topic, headers, body) {
+            return [
+              {
+                topic: String(topic || '').trim(),
+                headers: headers && typeof headers === 'object' ? headers : {},
+                body: body && typeof body === 'object' ? body : {},
+              },
+            ];
+          }
+
+  - id: run-process-order
+    type: action
+    data:
+      label: Invoke process-order
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{prepare-process-input.result}}"
+        habitId: process-order
+        inputKey: spread
+        continueOnError: false
+        collectResults: true
+
+edges:
+  - source: shopify-inbound
+    target: log-shopify-event
+  - source: log-shopify-event
+    target: prepare-process-input
+  - source: prepare-process-input
+    target: run-process-order
+
+output:
+  topic: "{{shopify-inbound.headers.x-shopify-topic}}"
+  logged: "{{log-shopify-event.success}}"
+  processOrder: "{{run-process-order.results}}"

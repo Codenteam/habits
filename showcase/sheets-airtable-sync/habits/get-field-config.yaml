@@ -1,0 +1,27 @@
+id: get-field-config
+name: Get Field Configuration
+description: Load the saved column configuration from SQLite.
+
+nodes:
+  - id: load-config
+    type: action
+    data:
+      label: Load Field Config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: sheets-airtable-sync
+        key: field-config
+        database: sheets-airtable-sync.db
+        defaultValue: null
+
+edges: []
+
+output:
+  found: "{{load-config.found}}"
+  columns: "{{load-config.value.columns}}"
+  headerRange: "{{load-config.value.headerRange}}"
+  updatedAt: "{{load-config.value.updatedAt}}"
+  config: "{{load-config.value}}"
