@@ -22,6 +22,9 @@ Before starting, you need:
 - **Slack** bot token and channel
 - **OpenAI** API key (Slack message draft)
 
+> **Note — Airtable and Slack setup**  
+> This README focuses on Shopify. For PAT scopes, base/table IDs, Slack app scopes, bot token, and channel ID, follow the Habits integration guides: [Airtable] and [Slack].
+
 ---
 
 ## 1. Create a Shopify account
@@ -51,7 +54,7 @@ Dev stores → Create store
 Choose **Development store**, pick the **Basic** plan, and optionally enable **Generate test data**.
 
 After creation, note the store **subdomain** (shop name):
-It will open the store ,from teh URL get the shop name like :
+It will open the store ,from the URL get the shop name like :
 https://admin.shopify.com/store/`<Shop-Name>`
 
 
