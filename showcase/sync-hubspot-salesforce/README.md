@@ -49,8 +49,8 @@ Complete the signup and basic org setup.
 
 **Where in Salesforce:**
 
-1. **Setup** → Quick Find → **App Manager** → open your Connected App.
-2. On the app detail page, click **Manage Consumer Details** (or **View** under *Consumer Key and Secret*).
+1. **Setup** → Quick Find → **External client App Manager** → open your Connected App.
+2. Open setting tab → Oauth settings → Consumer key and secret.
 3. Complete email/SMS verification if prompted.
 4. Copy **Consumer Key** → this is `SALESFORCE_CLIENT_ID` in `.env`.
 
@@ -229,7 +229,11 @@ Click **Done** on the Start element.
 { "success": true, "message": "Contact received successfully" }
 ```
 
-9. Finish the HTTP Callout wizard → **Done**.
+
+
+9. Reopen the action node and set in the Set request body section → value → New resource → set the api name with `ContactWebhookBody` , it should be the same name like in the add assignemt step
+
+10. Finish the HTTP Callout wizard → **Done**.
 
 **Add Assignment** (before the HTTP Callout):
 
