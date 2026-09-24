@@ -215,7 +215,7 @@ HABITS_QUICKBOOKS_CUSTOMER_ID=1
 
 **If payment creation fails** (customer not found):
 
-1. In QBO sandbox, go to **Sales → Customers**
+1. In QBO sandbox, go to **Sales → Customer Hub → Customers & Leads**
 2. Click **New customer**, create one (e.g. `Stripe Payments`)
 3. Open that customer — the URL may show `nameId=58` (use `58` as the id), or use the [API Explorer](https://developer.intuit.com/app/developer/qbo/docs/get-started/get-client-id-and-client-secret) query: `SELECT * FROM Customer`
 4. Set the numeric **Id** in `.env`:
