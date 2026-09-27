@@ -1,0 +1,88 @@
+# Showcase metadata for Stripe Payment Reconciliation
+
+name: Stripe Payment Reconciliation
+type: fullstack
+description: >
+  Poll Stripe for successful payments every 30 seconds, log them, send minimal
+  AI-generated email notifications via Gmail, and record each payment in QuickBooks Online.
+
+longDescription: |
+  **Stripe Payment Reconciliation** polls Stripe for new successful payments, logs each
+  event, fans out to a child workflow per payment, sends an internal email summary, and
+  records a QBO Payment via `@ha-bits/bit-quickbooks`.
+
+  ## Workflows
+
+  | Workflow | Purpose |
+  |----------|---------|
+  | `poll-stripe-payments` | `paymentSucceededPolling` (30s cron) → logger → `bit-loop` |
+  | `process-payment` | OpenAI email copy → Gmail SMTP → QuickBooks `createPayment` → database save |
+  | `list-payments` | Query `stripe_payments` collection for the dashboard API |
+
+  ## What it does
+
+  - **Stripe polling** — `@ha-bits/bit-stripe` `paymentSucceededPolling` with dedup via Cortex polling store
+  - **Logging** — `@ha-bits/bit-logger` writes each payment to the server console
+  - **Fan-out** — `@ha-bits/bit-loop` invokes `process-payment` once per new payment
+  - **Email** — `@ha-bits/bit-openai` drafts a minimal body (confirmation sentence + details only); `@ha-bits/bit-email` sends via Gmail SMTP
+  - **QuickBooks** — `@ha-bits/bit-quickbooks` records a Payment in QBO sandbox/production
+  - **Database** — `@ha-bits/bit-database` stores each reconciled payment for the live UI dashboard
+
+  ## Environment variables (`.env`)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_...` or `sk_live_...`) |
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key |
+  | `HABITS_SMTP_HOST` | SMTP host (`smtp.gmail.com`) |
+  | `HABITS_SMTP_PORT` | SMTP port (`587`) |
+  | `HABITS_SMTP_USER` | Gmail address for SMTP auth |
+  | `HABITS_SMTP_PASSWORD` | Gmail app password |
+  | `HABITS_EMAIL_FROM` | From header for outgoing mail |
+  | `HABITS_PAYMENT_NOTIFY_EMAIL` | Recipient inbox for payment alerts |
+  | `HABITS_QUICKBOOKS_CLIENT_ID` | Intuit OAuth client id (Development keys) |
+  | `HABITS_QUICKBOOKS_CLIENT_SECRET` | Intuit OAuth client secret |
+  | `HABITS_QUICKBOOKS_ENV` | `sandbox` or `production` |
+  | `HABITS_QUICKBOOKS_REALM_ID` | QBO company id (Gear → Settings → Company) |
+  | `HABITS_QUICKBOOKS_CUSTOMER_ID` | QBO CustomerRef id (`1` or Sales → Customers) |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in Stripe, OpenAI, and Gmail credentials.
+  2. Complete [QuickBooks Online setup](/integrations/quickbooks/) (Intuit app, OAuth redirect, sandbox company, company id, customer id).
+  3. Create a Stripe test Payment Link and complete a test payment.
+  4. Start the stack: `pnpm habits dev showcase/stripe-payment-reconciliation/stack.yaml`
+  5. Watch logs for `STRIPE-PAYMENTS-POLL`, check the notify inbox, verify payments in QBO sandbox, and open the showcase UI to see the live payment list.
+
+tags:
+  - stripe
+  - payments
+  - reconciliation
+  - polling
+  - email
+  - openai
+  - gmail
+  - quickbooks
+  - automation
+  - finance
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - STRIPE_SECRET_KEY (Stripe API secret key)
+  - OPENAI_API_KEY (OpenAI API key)
+  - SMTP credentials (Gmail app password recommended)
+  - PAYMENT_NOTIFY_EMAIL (recipient inbox)
+  - QUICKBOOKS_CLIENT_ID / QUICKBOOKS_CLIENT_SECRET (Intuit OAuth)
+  - QUICKBOOKS_REALM_ID and QUICKBOOKS_CUSTOMER_ID (QBO sandbox company)
+
+habits:
+  - habits/poll-stripe-payments.yaml
+  - habits/process-payment.yaml
+  - habits/list-payments.yaml
+
+quickDownload: true

@@ -357,7 +357,7 @@ const stripeBit = {
           if (pollingStore) {
             const seen = await pollingStore.hasSeenItem(paymentId, paymentDate);
             if (seen) {
-              logger.trace('Skipping already seen payment', { paymentId });
+              logger.debug('Skipping already seen payment', { paymentId });
               continue;
             }
           }
