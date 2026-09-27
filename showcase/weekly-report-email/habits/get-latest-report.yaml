@@ -1,0 +1,79 @@
+id: get-latest-report
+name: Get Latest Report
+description: Returns the most recent weekly report saved after email delivery.
+
+nodes:
+  - id: query-reports
+    type: action
+    data:
+      label: Query Saved Reports
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: weekly_report_email_reports
+        filter: "{}"
+        limit: 100
+
+  - id: log-query-results
+    type: action
+    data:
+      label: Log Query Results
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WEEKLY-REPORT-QUERY
+        message:
+          collection: "{{query-reports.collection}}"
+          count: "{{query-reports.count}}"
+          results: "{{query-reports.results}}"
+
+  - id: pick-latest
+    type: script
+    data:
+      label: Pick Latest Report by Date
+      framework: script
+      source: inline
+      params:
+        items: "{{query-reports.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(items) {
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+              return { found: false, report: null };
+            }
+
+            const sorted = [...list].sort((a, b) => {
+              const aTime = Date.parse(a?.reportDate || a?._createdAt || '') || 0;
+              const bTime = Date.parse(b?.reportDate || b?._createdAt || '') || 0;
+              return bTime - aTime;
+            });
+
+            const latest = sorted[0];
+            return {
+              found: true,
+              report: {
+                id: latest._id,
+                reportDate: latest.reportDate || latest._createdAt || '',
+                conclusion: latest.conclusion || '',
+                report: latest.report || '',
+                rowCount: latest.rowCount ?? null,
+                emailSent: latest.emailSent ?? null,
+              },
+            };
+          }
+
+edges:
+  - source: query-reports
+    target: log-query-results
+  - source: log-query-results
+    target: pick-latest
+
+output:
+  found: "{{pick-latest.result.found}}"
+  report: "{{pick-latest.result.report}}"
