@@ -10,12 +10,14 @@ import { Tag, Mail, Sparkles, Zap } from 'lucide-vue-next'
 
 const images = [
     { img: '/showcase/stripe-payment-reconciliation/stripe-payment-reconciliation-1.png', caption: 'Stripe Payment Reconciliation' },
-    { img: '/showcase/stripe-payment-reconciliation/stripe-payment-reconciliation-2.png', caption: 'Stripe Payment Reconciliation' }
+    { img: '/showcase/stripe-payment-reconciliation/stripe-payment-reconciliation-2.png', caption: 'Stripe Payment Reconciliation' },
+    { img: '/showcase/stripe-payment-reconciliation/stripe-payment-reconciliation-3.png', caption: 'Stripe Payment Reconciliation' }
 ]
 
 const habitTabs = [
     { label: 'poll-stripe-payments', url: '/showcase/stripe-payment-reconciliation/poll-stripe-payments.yaml' },
-    { label: 'process-payment', url: '/showcase/stripe-payment-reconciliation/process-payment.yaml' }
+    { label: 'process-payment', url: '/showcase/stripe-payment-reconciliation/process-payment.yaml' },
+    { label: 'list-payments', url: '/showcase/stripe-payment-reconciliation/list-payments.yaml' }
 ]
 </script>
 
@@ -55,7 +57,8 @@ records a QBO Payment via `@ha-bits/bit-quickbooks`.
 | Workflow | Purpose |
 |----------|---------|
 | `poll-stripe-payments` | `paymentSucceededPolling` (30s cron) → logger → `bit-loop` |
-| `process-payment` | OpenAI email copy → Gmail SMTP → QuickBooks `createPayment` |
+| `process-payment` | OpenAI email copy → Gmail SMTP → QuickBooks `createPayment` → database save |
+| `list-payments` | Query `stripe_payments` collection for the dashboard API |
 
 ## What it does
 
@@ -64,6 +67,7 @@ records a QBO Payment via `@ha-bits/bit-quickbooks`.
 - **Fan-out** — `@ha-bits/bit-loop` invokes `process-payment` once per new payment
 - **Email** — `@ha-bits/bit-openai` drafts a minimal body (confirmation sentence + details only); `@ha-bits/bit-email` sends via Gmail SMTP
 - **QuickBooks** — `@ha-bits/bit-quickbooks` records a Payment in QBO sandbox/production
+- **Database** — `@ha-bits/bit-database` stores each reconciled payment for the live UI dashboard
 
 ## Environment variables (`.env`)
 
@@ -89,7 +93,7 @@ records a QBO Payment via `@ha-bits/bit-quickbooks`.
 2. Complete [QuickBooks Online setup](/integrations/quickbooks/) (Intuit app, OAuth redirect, sandbox company, company id, customer id).
 3. Create a Stripe test Payment Link and complete a test payment.
 4. Start the stack: `pnpm habits dev showcase/stripe-payment-reconciliation/stack.yaml`
-5. Watch logs for `STRIPE-PAYMENTS-POLL`, check the notify inbox, and verify payments under **Sales → Sales transactions** in QBO sandbox.
+5. Watch logs for `STRIPE-PAYMENTS-POLL`, check the notify inbox, verify payments in QBO sandbox, and open the showcase UI to see the live payment list.
 
 
 

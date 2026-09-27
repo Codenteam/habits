@@ -18,11 +18,19 @@ interface GitHubContext {
  * Trigger context, mirrors BitsTriggerContext from cortex framework.
  * Keeping a local interface so the bit has no runtime dependency on cortex.
  */
+interface GitHubPollingStore {
+  hasSeenItem: (itemId: string, itemDate?: string | Date | null) => Promise<boolean>;
+  markItemSeen: (itemId: string, itemDate?: string | Date | null, metadata?: Record<string, unknown>) => Promise<void>;
+  getLastPolledDate: () => Promise<string | null>;
+  setLastPolledDate: (date: string) => Promise<void>;
+}
+
 interface GitHubTriggerContext {
   auth?: any;
   propsValue: Record<string, any>;
   payload: unknown;
   webhookUrl?: string;
+  pollingStore?: GitHubPollingStore;
   store: {
     get: <T>(key: string) => Promise<T | null>;
     put: <T>(key: string, value: T) => Promise<void>;
@@ -55,6 +63,50 @@ function normalisePR(pr: any) {
     merged: pr.merged ?? false,
     action: (pr as any)._action ?? undefined,
   };
+}
+
+/**
+ * Normalise a workflow run object from the GitHub Actions API.
+ */
+function normaliseWorkflowRun(run: any, owner: string, repo: string) {
+  return {
+    id: run.id,
+    runNumber: run.run_number,
+    name: run.name ?? null,
+    displayTitle: run.display_title ?? run.name ?? null,
+    path: run.path ?? null,
+    event: run.event,
+    status: run.status,
+    conclusion: run.conclusion,
+    url: run.html_url,
+    branch: run.head_branch,
+    sha: run.head_sha,
+    workflowId: run.workflow_id,
+    actor: run.actor?.login ?? run.triggering_actor?.login ?? null,
+    createdAt: run.created_at,
+    updatedAt: run.updated_at,
+    runStartedAt: run.run_started_at ?? null,
+    pullRequests: (run.pull_requests ?? []).map((pr: any) => ({
+      number: pr.number,
+      url: pr.url,
+      headRef: pr.head?.ref,
+      baseRef: pr.base?.ref,
+    })),
+    headCommit: run.head_commit
+      ? {
+          id: run.head_commit.id,
+          message: run.head_commit.message,
+          timestamp: run.head_commit.timestamp,
+          author: run.head_commit.author?.name ?? null,
+        }
+      : null,
+    repository: `${owner}/${repo}`,
+  };
+}
+
+function parseLabelNames(labels: string | undefined): string[] {
+  if (!labels) return [];
+  return labels.split(',').map((l) => l.trim()).filter(Boolean);
 }
 
 /**
@@ -504,8 +556,12 @@ const githubBit = {
 
         const payload: Record<string, any> = { title };
         if (body) payload.body = body;
-        if (labels) payload.labels = labels.split(',').map((l: string) => l.trim());
-        if (assignees) payload.assignees = assignees.split(',').map((a: string) => a.trim());
+        const labelNames = parseLabelNames(labels);
+        if (labelNames.length > 0) payload.labels = labelNames;
+        const assigneeNames = assignees
+          ? assignees.split(',').map((a: string) => a.trim()).filter(Boolean)
+          : [];
+        if (assigneeNames.length > 0) payload.assignees = assigneeNames;
 
         const issue = await githubRequest(
           `/repos/${owner}/${repo}/issues`,
@@ -1012,6 +1068,205 @@ const githubBit = {
         state: 'open',
         url: 'https://github.com/owner/repo/pull/42',
         user: 'octocat',
+        repository: 'owner/repo',
+      },
+    },
+
+    /**
+     * Polling trigger — checks GitHub Actions for newly failed workflow runs.
+     *
+     * Uses pollingStore (SQLite-backed) when available, otherwise falls back to
+     * in-memory store with a last-seen run id watermark.
+     */
+    pollFailedWorkflowRuns: {
+      name: 'pollFailedWorkflowRuns',
+      displayName: 'Failed Workflow Runs (polling)',
+      description: 'Polls the GitHub Actions API for new failed workflow runs on a schedule',
+      type: 'POLLING',
+
+      props: {
+        token: {
+          type: 'SECRET_TEXT',
+          displayName: 'Token',
+          description: 'GitHub personal access token (Actions read + Issues write for downstream flows)',
+          required: true,
+        },
+        owner: {
+          type: 'SHORT_TEXT',
+          displayName: 'Owner',
+          description: 'Repository owner (user or org)',
+          required: true,
+        },
+        repo: {
+          type: 'SHORT_TEXT',
+          displayName: 'Repository',
+          description: 'Repository name',
+          required: true,
+        },
+        branch: {
+          type: 'SHORT_TEXT',
+          displayName: 'Branch',
+          description: 'Optional branch filter (e.g. main)',
+          required: false,
+        },
+        workflowName: {
+          type: 'SHORT_TEXT',
+          displayName: 'Workflow Name',
+          description: 'Optional client-side filter on workflow run name',
+          required: false,
+        },
+        cronExpression: {
+          type: 'SHORT_TEXT',
+          displayName: 'Cron Expression',
+          description: 'How often to poll (default: every 1 minute)',
+          required: false,
+          defaultValue: '*/1 * * * *',
+        },
+        perPage: {
+          type: 'NUMBER',
+          displayName: 'Per Page',
+          description: 'Max runs to fetch per poll (default 30, max 100)',
+          required: false,
+          defaultValue: 30,
+        },
+      },
+
+      async onEnable(context: GitHubTriggerContext): Promise<void> {
+        const cron = context.propsValue.cronExpression || '*/1 * * * *';
+        context.setSchedule({ cronExpression: cron, timezone: 'UTC' });
+      },
+
+      async onDisable(_context: GitHubTriggerContext): Promise<void> {
+        // No cleanup needed.
+      },
+
+      async run(context: GitHubTriggerContext): Promise<any[]> {
+        const {
+          token,
+          owner,
+          repo,
+          branch,
+          workflowName,
+          perPage = 30,
+        } = context.propsValue;
+
+        if (!token || !owner || !repo) {
+          throw new Error('token, owner, and repo are required for pollFailedWorkflowRuns');
+        }
+
+        const params = new URLSearchParams({
+          status: 'failure',
+          per_page: String(Math.min(Number(perPage) || 30, 100)),
+        });
+        if (branch) params.set('branch', branch);
+
+        const response = await githubRequest(
+          `/repos/${owner}/${repo}/actions/runs?${params}`,
+          token
+        );
+
+        let runs: any[] = response?.workflow_runs ?? [];
+        runs = runs.filter((run) => run.status === 'completed' && run.conclusion === 'failure');
+
+        if (workflowName) {
+          runs = runs.filter((run) => (run.name ?? '') === workflowName);
+        }
+
+        const pollingStore = context.pollingStore;
+        const storeKey = 'lastSeenFailedRunId';
+        const newFailures: any[] = [];
+
+        if (pollingStore) {
+          for (const run of runs) {
+            const runId = String(run.id);
+            const seen = await pollingStore.hasSeenItem(runId, run.updated_at);
+            if (!seen) {
+              newFailures.push(normaliseWorkflowRun(run, owner, repo));
+            }
+          }
+
+          for (const run of newFailures) {
+            await pollingStore.markItemSeen(String(run.id), run.updatedAt, {
+              conclusion: run.conclusion,
+              name: run.name,
+            });
+          }
+
+          if (runs.length > 0) {
+            await pollingStore.setLastPolledDate(new Date().toISOString());
+          }
+        } else {
+          const lastSeenRunId = await context.store.get<number>(storeKey);
+
+          if (lastSeenRunId == null) {
+            // Bootstrap: seed watermark without firing historical failures.
+            if (runs.length > 0) {
+              const maxId = Math.max(...runs.map((run) => run.id));
+              await context.store.put(storeKey, maxId);
+            }
+            return [];
+          }
+
+          for (const run of runs) {
+            if (run.id > lastSeenRunId) {
+              newFailures.push(normaliseWorkflowRun(run, owner, repo));
+            }
+          }
+
+          if (runs.length > 0) {
+            const maxId = Math.max(...runs.map((run) => run.id));
+            await context.store.put(storeKey, maxId);
+          }
+        }
+
+        return newFailures;
+      },
+
+      async test(context: GitHubTriggerContext): Promise<any[]> {
+        const { token, owner, repo } = context.propsValue;
+        if (!token || !owner || !repo) {
+          return [{
+            id: 999001,
+            runNumber: 42,
+            name: 'CI',
+            displayTitle: 'CI',
+            event: 'pull_request',
+            status: 'completed',
+            conclusion: 'failure',
+            url: `https://github.com/${owner || 'owner'}/${repo || 'repo'}/actions/runs/999001`,
+            branch: 'feature/ci-fix',
+            sha: 'abc123def456',
+            workflowId: 1,
+            actor: 'octocat',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            runStartedAt: new Date().toISOString(),
+            pullRequests: [{ number: 7, url: `https://api.github.com/repos/${owner || 'owner'}/${repo || 'repo'}/pulls/7` }],
+            headCommit: { id: 'abc123', message: 'fix: ci pipeline', timestamp: new Date().toISOString(), author: 'octocat' },
+            repository: `${owner || 'owner'}/${repo || 'repo'}`,
+          }];
+        }
+
+        const response = await githubRequest(
+          `/repos/${owner}/${repo}/actions/runs?status=failure&per_page=5`,
+          token
+        );
+
+        const runs = (response?.workflow_runs ?? [])
+          .filter((run: any) => run.status === 'completed' && run.conclusion === 'failure')
+          .slice(0, 3);
+
+        return runs.map((run: any) => normaliseWorkflowRun(run, owner, repo));
+      },
+
+      sampleData: {
+        id: 999001,
+        runNumber: 42,
+        name: 'CI',
+        conclusion: 'failure',
+        url: 'https://github.com/owner/repo/actions/runs/999001',
+        branch: 'main',
+        event: 'push',
         repository: 'owner/repo',
       },
     },

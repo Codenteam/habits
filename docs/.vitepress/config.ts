@@ -209,9 +209,12 @@ export default defineConfig({
         items: [
           { text: 'Browse All', link: '/integrations/' },
           { text: 'Gmail (IMAP/SMTP)', link: '/integrations/gmail/' },
+          { text: 'GitHub', link: '/integrations/github/' },
           { text: 'OpenAI', link: '/integrations/openai/' },
           { text: 'Slack', link: '/integrations/slack/' },
           { text: 'HubSpot CRM', link: '/integrations/hubspot/' },
+          { text: 'Shopify', link: '/integrations/shopify/' },
+          { text: 'Airtable', link: '/integrations/airtable/' },
           { text: 'Google Drive', link: '/integrations/google-drive/' },
           { text: 'Google Sheets', link: '/integrations/google-sheets/' },
           { text: 'Telegram', link: '/integrations/telegram/' },

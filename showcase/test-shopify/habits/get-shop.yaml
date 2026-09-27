@@ -1,0 +1,23 @@
+id: get-shop
+name: Get Shop
+description: Return Shopify shop details for the configured dev store (validates client credentials).
+
+nodes:
+  - id: shop
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: getShop
+      label: Get Shop
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+
+edges: []
+
+output:
+  shop: "{{shop}}"

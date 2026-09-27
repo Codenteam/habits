@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: sheets-airtable-sync
+  title: Sheets ↔ Airtable Sync
+  subtitle: Set up your columns once, then keep Google Sheets and Airtable in sync
+  icon: "lucide:ArrowLeftRight"
+
+theme:
+  preset: neural
+  mode: dark
+
+state:
+  fieldNames: ""
+  result: null
+  savedColumns: null
+
+actions:
+  configureFields:
+    method: POST
+    endpoint: /api/configure-fields
+    body:
+      fieldNames: "{{state.fieldNames}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+      toast: "Columns created in Airtable, header row written to Google Sheets, and config saved!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  loadConfig:
+    method: POST
+    endpoint: /api/get-field-config
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+      toast: "Loaded saved column configuration"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+
+widgets:
+  - kind: card
+    title: "Step 1 — Set up your columns"
+    subtitle: >-
+      Enter your column names (comma-separated). They are created in Airtable
+      and added as the header row in your Google Sheet.
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: fieldNames
+            type: textarea
+            label: Column names
+            placeholder: "Name, Email, Status, Phone"
+            rows: 3
+            required: true
+      - kind: button-row
+        buttons:
+          - { label: Configure & sync headers, action: configureFields, loadingLabel: "Configuring..." }
+          - { label: Load saved config, action: loadConfig, loadingLabel: "Loading...", variant: secondary }
+
+  - kind: card
+    title: "Automatic sync"
+    subtitle: >-
+      After setup, add a row in Airtable or Google Sheets and it will show up
+      in the other place. The same row is never copied twice.
+    children:
+      - kind: metric-grid
+        columns: 2
+        metrics:
+          - value: "Airtable → Sheets"
+            label: "New rows in Airtable appear in your sheet"
+          - value: "Sheets → Airtable"
+            label: "New rows in your sheet appear in Airtable"
+
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

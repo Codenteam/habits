@@ -1,0 +1,28 @@
+id: create-product
+name: Create Product
+description: >-
+  Create a test product in the dev store. Input title (optional) or uses
+  HABITS_SHOPIFY_TEST_PRODUCT_TITLE from .env.
+
+nodes:
+  - id: product
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: createProduct
+      label: Create Product
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        title: "{{habits.input.title || habits.env.HABITS_SHOPIFY_TEST_PRODUCT_TITLE}}"
+        descriptionHtml: "{{habits.input.descriptionHtml}}"
+
+edges: []
+
+output:
+  product: "{{product}}"
