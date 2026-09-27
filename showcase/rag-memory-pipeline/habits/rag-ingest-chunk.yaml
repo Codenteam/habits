@@ -1,0 +1,47 @@
+id: rag-ingest-chunk
+name: RAG Ingest Chunk
+description: >
+  Embed a single RAG text chunk with OpenAI and store it in the vector database.
+
+nodes:
+  - id: embed-chunk
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: embed-text
+      params:
+        text: "{{ragChunk.text}}"
+        model: "text-embedding-3-small"
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: store-vector
+    type: bits
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: vectorInsert
+      params:
+        collection: "{{habits.env.HABITS_RAG_COLLECTION}}"
+        document:
+          text: "{{ragChunk.text}}"
+          title: "{{ragChunk.title}}"
+          tag: "{{ragChunk.tag}}"
+          documentTitle: "{{ragChunk.documentTitle}}"
+          sourceFile: "{{ragChunk.sourceFile}}"
+          vector: "{{embed-chunk.embeddings[0]}}"
+
+edges:
+  - source: embed-chunk
+    target: store-vector
+
+output:
+  success: "{{store-vector.success}}"
+  id: "{{store-vector.id}}"
+  title: "{{ragChunk.title}}"
+  tag: "{{ragChunk.tag}}"
+  textPreview: "{{ragChunk.text}}"

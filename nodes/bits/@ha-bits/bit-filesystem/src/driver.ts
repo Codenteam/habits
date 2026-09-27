@@ -17,6 +17,44 @@ export interface FileInfo {
   modified: Date;
 }
 
+export interface DirectoryFileDetails {
+  /** Stable dedup key: absolutePath|size|mtimeMs */
+  fileId: string;
+  fileName: string;
+  filePath: string;
+  relativePath: string;
+  size: number;
+  modified: string;
+  created: string;
+  mimeType: string;
+  /** Base64-encoded file bytes */
+  fileContent: string;
+}
+
+const MIME_BY_EXT: Record<string, string> = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  txt: 'text/plain',
+  md: 'text/markdown',
+  csv: 'text/csv',
+  json: 'application/json',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+export function guessMimeType(filename: string): string {
+  const ext = path.extname(filename).replace(/^\./, '').toLowerCase();
+  return MIME_BY_EXT[ext] || 'application/octet-stream';
+}
+
+export function buildFileId(filePath: string, size: number, mtimeMs: number): string {
+  return `${filePath}|${size}|${mtimeMs}`;
+}
+
 /**
  * Resolve and validate path within allowed base directory
  */
@@ -160,4 +198,73 @@ export async function moveFile(params: { sourcePath: string; destPath: string; b
   await fs.mkdir(path.dirname(dest), { recursive: true });
   await fs.rename(src, dest);
   return { success: true, source: src, destination: dest };
+}
+
+/**
+ * Read all files in a directory (Node.js only).
+ * Returns file metadata and base64 content for each regular file found.
+ */
+export async function readDirectoryFiles(params: {
+  folderPath: string;
+  baseDir?: string;
+  recursive?: boolean;
+}): Promise<{ files: DirectoryFileDetails[]; count: number; folderPath: string }> {
+  const { folderPath, baseDir, recursive = false } = params;
+  const resolved = resolvePath(folderPath, baseDir);
+
+  let dirStats: Awaited<ReturnType<typeof fs.stat>>;
+  try {
+    dirStats = await fs.stat(resolved);
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') {
+      throw new Error(`Folder does not exist: ${resolved}`);
+    }
+    throw err;
+  }
+
+  if (!dirStats.isDirectory()) {
+    throw new Error(`Path is not a directory: ${resolved}`);
+  }
+
+  const files: DirectoryFileDetails[] = [];
+
+  async function collectFiles(dir: string, relativeRoot: string): Promise<void> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+
+      const entryPath = path.join(dir, entry.name);
+      const relativePath = path.join(relativeRoot, entry.name);
+
+      if (entry.isDirectory()) {
+        if (recursive) {
+          await collectFiles(entryPath, relativePath);
+        }
+        continue;
+      }
+
+      if (!entry.isFile()) continue;
+
+      const stats = await fs.stat(entryPath);
+      const buffer = await fs.readFile(entryPath);
+      const mtimeMs = stats.mtimeMs;
+
+      files.push({
+        fileId: buildFileId(entryPath, stats.size, mtimeMs),
+        fileName: entry.name,
+        filePath: entryPath,
+        relativePath,
+        size: stats.size,
+        modified: stats.mtime.toISOString(),
+        created: stats.birthtime.toISOString(),
+        mimeType: guessMimeType(entry.name),
+        fileContent: buffer.toString('base64'),
+      });
+    }
+  }
+
+  await collectFiles(resolved, '');
+
+  return { files, count: files.length, folderPath: resolved };
 }

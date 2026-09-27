@@ -1,0 +1,77 @@
+version: 1
+meta:
+  id: rag-memory-query
+  title: RAG Memory Query
+  subtitle: Ask questions against your ingested vector memory
+  icon: "lucide:Search"
+
+theme:
+  preset: ha-bits-emerald
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: RAG Memory Query
+    subtitle: "Embed → search → AI answer"
+    icon: "lucide:Search"
+
+state:
+  question: ""
+  response: null
+  error: null
+
+actions:
+  search:
+    method: POST
+    endpoint: /api/rag-search
+    body:
+      question: "{{state.question}}"
+    responsePath: output
+    onSuccess:
+      set: { response: "$response", error: null }
+      toast: "Search complete"
+    onError:
+      set: { error: "$error.message" }
+
+widgets:
+  - kind: status-banner
+    source: "Uses the rag_memory collection in habits-cortex.db. Run rag-memory-pipeline first to ingest documents."
+
+  - kind: card
+    title: Ask a question
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: question
+            type: textarea
+            label: Your question
+            placeholder: "What does the document say about..."
+            rows: 3
+            required: true
+        submit:
+          label: Send
+          action: search
+          loadingLabel: "Thinking..."
+
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+
+  - kind: result-panel
+    showWhen: state.response
+    source: state.response
+    title: Answer
+    sections:
+      - kind: alert
+        level: info
+        text: "Question: {{state.response.question}}"
+      - kind: markdown
+        source: state.response.answer
+      - kind: alert
+        level: info
+        text: "Based on {{state.response.matchCount}} retrieved chunk(s)"
+      - kind: json-dump
+        source: state.response.matches
+        title: Source chunks

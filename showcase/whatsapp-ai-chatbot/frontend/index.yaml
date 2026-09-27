@@ -1,0 +1,104 @@
+version: 1
+meta:
+  id: whatsapp-ai-chatbot
+  title: WhatsApp AI Chatbot
+  subtitle: Upload knowledge · Answer on WhatsApp
+  icon: "lucide:MessageCircle"
+
+theme:
+  preset: neural
+  mode: dark
+
+layout:
+  type: tabs
+  header:
+    title: WhatsApp AI Chatbot
+    subtitle: RAG knowledge base + WhatsApp replies
+    icon: "lucide:MessageCircle"
+  nav:
+    - { id: ingest, label: Knowledge base, icon: "lucide:Database" }
+    - { id: status, label: Status, icon: "lucide:Activity" }
+
+state:
+  fileBase64: ""
+  ingestResult: null
+  error: null
+
+actions:
+  ingestKnowledge:
+    method: POST
+    endpoint: /api/ingest-knowledge-file
+    body:
+      fileContent: "{{state.fileBase64}}"
+      fileName: "{{state.fileBase64__name}}"
+      mimeType: "{{state.fileBase64__type}}"
+    onSuccess:
+      set: { ingestResult: "$response" }
+      toast: "Knowledge ingested successfully"
+    onError:
+      set: { error: "$error.message" }
+
+defaultView: ingest
+
+views:
+  ingest:
+    widgets:
+      - kind: hero
+        icon: "lucide:Upload"
+        title: Build your knowledge base
+        subtitle: Upload a PDF or text file with company and product details. Each fact is extracted, embedded, and stored for WhatsApp RAG replies.
+
+      - kind: card
+        title: Upload company / product document
+        children:
+          - kind: form
+            bindTo: state
+            fields:
+              - name: fileBase64
+                type: file-upload
+                label: Company or product info file
+                accept: "application/pdf,.pdf,.txt,.md,text/plain,text/markdown"
+                asBase64: true
+                required: true
+            submit:
+              label: Ingest knowledge
+              action: ingestKnowledge
+              loadingLabel: "Extracting & embedding..."
+              disabledWhen: "!state.fileBase64"
+
+      - kind: result-panel
+        source: state.ingestResult
+        title: Ingestion complete
+        showWhen: state.ingestResult
+        sections:
+          - kind: kv-grid
+            source: state.ingestResult
+            fields:
+              - { key: companyName, label: Company }
+              - { key: itemsExtracted, label: Items extracted }
+              - { key: itemsIngested, label: Items stored }
+              - { key: failed, label: Failed }
+
+      - kind: status-banner
+        showWhen: state.error
+        source: state.error
+        tone: error
+
+  status:
+    widgets:
+      - kind: card
+        title: WhatsApp webhook
+        children:
+          - kind: badge-list
+            values:
+              - Listening on /webhook/v/whatsapp
+              - Vector collection product_knowledge
+            tone: success
+          - kind: text
+            value: Send a text message to your WhatsApp Business number. The bot embeds your question, searches the knowledge base, and replies automatically.
+            muted: true
+
+      - kind: empty-state
+        icon: "lucide:Bot"
+        title: Ready for customer questions
+        subtitle: Upload knowledge first, then message your WhatsApp Business number.

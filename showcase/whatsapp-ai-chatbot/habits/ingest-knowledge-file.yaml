@@ -1,0 +1,142 @@
+id: ingest-knowledge-file
+name: Ingest Knowledge File
+description: >
+  Upload a company/product document, extract structured knowledge items with OpenAI,
+  then embed and store each item in the vector database.
+
+nodes:
+  - id: extract-knowledge
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_with_file
+      params:
+        model: "gpt-4o-mini"
+        cast: force
+        fileContent: "{{habits.input.fileContent}}"
+        filename: "{{habits.input.fileName}}"
+        mimeType: "{{habits.input.mimeType}}"
+        maxTokens: 4000
+        prompt: |
+          You are a knowledge-base extraction assistant for a WhatsApp customer-support chatbot.
+
+          Read the attached document and extract every useful fact about the company, products,
+          services, pricing, policies, support hours, contact details, FAQs, and features.
+
+          Split the content into self-contained chunks (1-4 sentences each) that can be searched
+          independently. Each chunk must make sense on its own without extra context.
+
+          Return ONLY a valid JSON object wrapped in ```json``` code fences with exactly these fields:
+            - companyName: string — the company or brand name (or "Unknown" if not stated)
+            - items: array of objects, each with:
+                - title: short label for the chunk (max 12 words)
+                - text: the full knowledge text for this chunk (1-4 sentences)
+                - category: one of (product, pricing, support, policy, contact, general)
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+
+  - id: prepare-items
+    type: script
+    data:
+      framework: script
+      source: inline
+      params:
+        extracted: "{{extract-knowledge}}"
+        fileName: "{{habits.input.fileName}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(extracted, fileName) {
+            const data = extracted && typeof extracted === 'object' ? extracted : {};
+            const companyName = String(data.companyName || 'Unknown').trim();
+            const rawItems = Array.isArray(data.items) ? data.items : [];
+
+            const items = rawItems
+              .map((item, index) => {
+                const text = String(item?.text || '').trim();
+                if (!text) return null;
+                return {
+                  title: String(item?.title || `Item ${index + 1}`).trim(),
+                  text,
+                  category: String(item?.category || 'general').trim(),
+                  companyName,
+                  sourceFile: String(fileName || '').trim(),
+                };
+              })
+              .filter(Boolean);
+
+            if (items.length === 0) {
+              throw new Error('No knowledge items extracted from the uploaded file');
+            }
+
+            return { companyName, items, count: items.length };
+          }
+
+  - id: ingest-items
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      params:
+        items: "{{prepare-items.result.items}}"
+        habitId: ingest-knowledge-item
+        inputKey: infoItem
+        continueOnError: true
+        collectResults: true
+        delayMs: 200
+
+  - id: log-ingest-summary
+    type: action
+    data:
+      label: Log Ingest Summary
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-logger"
+      operation: log
+      params:
+        label: WA-CHATBOT-INGEST
+        message:
+          companyName: "{{prepare-items.result.companyName}}"
+          sourceFile: "{{habits.input.fileName}}"
+          itemsExtracted: "{{prepare-items.result.count}}"
+          itemsIngested: "{{ingest-items.successCount}}"
+          failed: "{{ingest-items.errorCount}}"
+          extractedItems: "{{prepare-items.result.items}}"
+          storedResults: "{{ingest-items.results}}"
+          errors: "{{ingest-items.errors}}"
+
+edges:
+  - source: extract-knowledge
+    target: prepare-items
+  - source: prepare-items
+    target: ingest-items
+  - source: ingest-items
+    target: log-ingest-summary
+
+input:
+  - id: fileContent
+    type: string
+    displayName: File Content (base64)
+    required: true
+  - id: fileName
+    type: string
+    displayName: File Name
+    required: true
+    default: company-info.pdf
+  - id: mimeType
+    type: string
+    displayName: MIME Type
+    required: false
+    default: application/pdf
+
+output:
+  companyName: "{{prepare-items.result.companyName}}"
+  itemsExtracted: "{{prepare-items.result.count}}"
+  itemsIngested: "{{ingest-items.successCount}}"
+  failed: "{{ingest-items.errorCount}}"
+  results: "{{ingest-items.results}}"

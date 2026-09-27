@@ -82,33 +82,36 @@ export const askWithFile = createAction({
       ? fileContent
       : `data:${resolvedMime};base64,${fileContent}`;
 
-    // Images use image_url content type; everything else (PDF, etc.) uses file
-    const isImage = resolvedMime.startsWith('image/');
-    const fileContentBlock: any = isImage
-      ? {
-          type: 'image_url',
-          image_url: { url: fileData },
-        }
-      : {
-          type: 'file',
-          file: {
-            filename: filename || 'file.pdf',
-            file_data: fileData,
-          },
-        };
+    const userContent: any[] = [{ type: 'text', text: prompt }];
+
+    if (isTextMime(resolvedMime)) {
+      // OpenAI file blocks do not accept plain text MIME types — inline decoded text instead
+      const textBody = decodeBase64Content(fileContent);
+      userContent.push({
+        type: 'text',
+        text: `--- ${filename || 'file'} ---\n${textBody}`,
+      });
+    } else if (resolvedMime.startsWith('image/')) {
+      userContent.push({
+        type: 'image_url',
+        image_url: { url: fileData },
+      });
+    } else {
+      userContent.push({
+        type: 'file',
+        file: {
+          filename: filename || 'file.pdf',
+          file_data: fileData,
+        },
+      });
+    }
 
     const completion = await openai.chat.completions.create({
       model: model || 'gpt-4o',
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: prompt,
-            },
-            fileContentBlock,
-          ],
+          content: userContent,
         },
       ],
       max_completion_tokens: maxTokens,
@@ -124,20 +127,41 @@ export const askWithFile = createAction({
   },
 });
 
-/**
- * Guess MIME type from file extension
- */
+/** MIME map aligned with @ha-bits/bit-filesystem guessMimeType */
+const MIME_BY_EXT: Record<string, string> = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  txt: 'text/plain',
+  md: 'text/markdown',
+  csv: 'text/csv',
+  json: 'application/json',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+const TEXT_MIMES = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+]);
+
 function guessMimeType(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase();
-  const map: Record<string, string> = {
-    pdf: 'application/pdf',
-    png: 'image/png',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    gif: 'image/gif',
-    webp: 'image/webp',
-    txt: 'text/plain',
-    csv: 'text/csv',
-  };
-  return map[ext || ''] || 'application/octet-stream';
+  return MIME_BY_EXT[ext || ''] || 'application/octet-stream';
+}
+
+function isTextMime(mime: string): boolean {
+  return TEXT_MIMES.has(mime) || mime.startsWith('text/');
+}
+
+function decodeBase64Content(fileContent: string): string {
+  const raw = fileContent.startsWith('data:')
+    ? (fileContent.split(',')[1] || '')
+    : fileContent;
+  return Buffer.from(raw, 'base64').toString('utf-8');
 }
