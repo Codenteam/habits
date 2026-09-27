@@ -49,6 +49,7 @@ import {
   Globe,
   Bot,
   Link,
+  Github,
 } from 'lucide-vue-next'
 
 interface IntegrationInfo {
@@ -79,6 +80,7 @@ const iconMap: Record<string, any> = {
   Globe,
   Bot,
   Link,
+  Github,
 }
 
 const iconComponent = computed(() => {

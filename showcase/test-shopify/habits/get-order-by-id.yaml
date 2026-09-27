@@ -1,0 +1,26 @@
+id: get-order-by-id
+name: Get Order by ID
+description: Fetch one order by Admin GraphQL GID or numeric order id (input id required).
+
+nodes:
+  - id: order
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: getOrderById
+      label: Get Order by ID
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        id: "{{habits.input.id}}"
+
+edges: []
+
+output:
+  shop: "{{order.shop}}"
+  order: "{{order.order}}"

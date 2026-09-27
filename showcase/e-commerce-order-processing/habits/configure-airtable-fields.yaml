@@ -1,0 +1,102 @@
+id: configure-airtable-fields
+name: Configure Airtable Order Fields
+description: Create missing Airtable columns from comma-separated names and save config to SQLite.
+
+input:
+  - id: fieldNames
+    type: string
+    required: true
+
+nodes:
+  - id: parse-fields
+    type: script
+    data:
+      label: Parse field names
+      framework: script
+      source: inline
+      params:
+        fieldNames: "{{habits.input.fieldNames}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(fieldNames) {
+            const columns = String(fieldNames || '')
+              .split(',')
+              .map((name) => name.trim())
+              .filter(Boolean);
+            if (columns.length === 0) {
+              throw new Error('Enter at least one Airtable field name, comma-separated.');
+            }
+            return {
+              columns,
+              orderIdField: columns.find((c) => /order id/i.test(c)) || 'Order ID',
+              updatedAt: new Date().toISOString(),
+            };
+          }
+
+  - id: ensure-fields
+    type: action
+    data:
+      label: Create missing Airtable fields
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: ensureFields
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+        tableId: "{{habits.env.AIRTABLE_TABLE_ID}}"
+        columns: "{{parse-fields.result.columns}}"
+
+  - id: merge-config
+    type: script
+    data:
+      label: Merge config
+      framework: script
+      source: inline
+      params:
+        parsed: "{{parse-fields.result}}"
+        ensured: "{{ensure-fields}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(parsed, ensured) {
+            return {
+              columns: parsed?.columns || [],
+              orderIdField: parsed?.orderIdField || 'Order ID',
+              updatedAt: parsed?.updatedAt || new Date().toISOString(),
+              created: ensured?.created || [],
+              skipped: ensured?.skipped || [],
+            };
+          }
+
+  - id: save-config
+    type: action
+    data:
+      label: Save field config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: store
+      params:
+        collection: ecommerce-order-processing
+        key: field-config
+        database: "{{habits.env.HABITS_ORDERS_DATABASE || 'showcase/e-commerce-order-processing/orders.db'}}"
+        value: "{{merge-config.result}}"
+
+edges:
+  - source: parse-fields
+    target: ensure-fields
+  - source: ensure-fields
+    target: merge-config
+  - source: merge-config
+    target: save-config
+
+output:
+  success: "{{save-config.success}}"
+  columns: "{{merge-config.result.columns}}"
+  orderIdField: "{{merge-config.result.orderIdField}}"
+  created: "{{merge-config.result.created}}"
+  skipped: "{{merge-config.result.skipped}}"

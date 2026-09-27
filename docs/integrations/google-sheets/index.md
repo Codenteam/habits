@@ -35,6 +35,16 @@ HABITS_GOOGLE_SPREADSHEET_ID=your-spreadsheet-id
 
 > **Sheet tab name:** Ensure the target tab is named correctly (e.g. `Invoices` for the invoices-processing showcase).
 
+## Sheet range for `readRange`
+
+The range uses **A1 notation**: `Tab Name!start:end`
+
+- **Tab name** — the label at the bottom of Google Sheets (e.g. `Weekly Report` or `Sheet1`). Must match exactly, including spaces and capitals.
+- **Start** — top-left cell or column (e.g. `A1` or `A`)
+- **End** — bottom-right cell or column (e.g. `F` or `E10`)
+
+Example: `Weekly Report!A:F` means the tab **Weekly Report**, from column **A** through column **F**, all rows with data.
+
 ## Step 1: Create a Google Cloud Project and Enable the API
 
 1. Go to [https://console.cloud.google.com](https://console.cloud.google.com).
@@ -79,5 +89,9 @@ For [Invoices Processing](/showcase/invoices-processing), add these headers to r
 | A | B | C | D | E | F | G | H | I |
 |---|---|---|---|---|---|---|---|---|
 | Invoice Number | Invoice Date | Vendor Name | Vendor Email | Customer Name | Total Amount | Currency | Due Date | Notes |
+
+## Polling trigger (`newRows`)
+
+`@ha-bits/bit-google-sheets` includes a **polling** trigger that runs on a cron schedule (default every 1 minute), calls the same API as `readRange`, deduplicates rows with `pollingStore`, and returns only new rows.
 
 <IntegrationShowcases integration="google-sheets" />

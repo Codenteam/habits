@@ -1,4 +1,7 @@
 import type { Request } from 'express';
+import { validateHubSpotV3Signature } from './hubspotSignature';
+import { validateSalesforceWebhookSecret } from './salesforceWebhookSecret';
+import { validateShopifySignature } from './shopifySignature';
 import { validateSlackSignature } from './slackSignature';
 import { validateWhatsAppSignature } from './whatsappSignature';
 
@@ -18,13 +21,19 @@ export interface AuthenticateWebhookResult {
 }
 
 const SIGNATURE_HEADERS = [
+  'x-hubspot-signature-v3', // HubSpot webhooks (v3)
+  'x-shopify-hmac-sha256', // Shopify Admin webhooks
   'x-hub-signature-256', // Meta (WhatsApp, etc.)
   'x-slack-signature', // Slack
+  'salesforce-x-webhook-secret', // Salesforce Flow HTTP webhook
 ] as const;
 
 const validators: Record<string, WebhookValidator> = {
+  'x-hubspot-signature-v3': validateHubSpotV3Signature,
+  'x-shopify-hmac-sha256': validateShopifySignature,
   'x-hub-signature-256': validateWhatsAppSignature,
   'x-slack-signature': validateSlackSignature,
+  'salesforce-x-webhook-secret': validateSalesforceWebhookSecret,
 };
 
 function getHeader(req: Request, name: string): string | undefined {

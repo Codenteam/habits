@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: test-airtable
+  title: Test Airtable
+  subtitle: Configure columns, save to database, and create Airtable records
+  icon: "lucide:Table"
+
+theme:
+  preset: neural
+  mode: dark
+
+state:
+  fieldNames: ""
+  values: ""
+  result: null
+  savedColumns: null
+
+actions:
+  configureFields:
+    method: POST
+    endpoint: /api/configure-fields
+    body:
+      fieldNames: "{{state.fieldNames}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+      toast: "Fields created in Airtable and saved to database!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  loadConfig:
+    method: POST
+    endpoint: /api/get-field-config
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        savedColumns: "$response.columns"
+      toast: "Loaded saved field configuration"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  create:
+    method: POST
+    endpoint: /api/create-record
+    body:
+      values: "{{state.values}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+      toast: "Record created in Airtable!"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  listRecords:
+    method: POST
+    endpoint: /api/list-records
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+      toast: "Records loaded"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+  listTables:
+    method: POST
+    endpoint: /api/list-tables
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+      toast: "Tables loaded"
+    onError:
+      toast:
+        message: "{{state.error}}"
+        level: error
+
+widgets:
+  - kind: card
+    title: "Step 1 — Configure columns"
+    subtitle: Enter field names (comma-separated). Missing columns are created in Airtable, then config is saved to the database.
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: fieldNames
+            type: textarea
+            label: Column names
+            placeholder: "Name, Email, Status, Phone"
+            rows: 3
+            required: true
+      - kind: button-row
+        buttons:
+          - { label: Create & save columns, action: configureFields, loadingLabel: "Creating fields..." }
+          - { label: Load saved config, action: loadConfig, loadingLabel: "Loading...", variant: secondary }
+
+  - kind: card
+    title: "Step 2 — Create record"
+    subtitle: >-
+      Enter each value with its column name (order does not matter), e.g. Name=Jane, Email=jane@test.com, Phone=5555, Status=ready.
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: values
+            type: textarea
+            label: Record values
+            placeholder: "Name=Jane, Email=jane@test.com, Phone=5555, Status=ready"
+            rows: 5
+            required: true
+      - kind: button-row
+        buttons:
+          - { label: Create in Airtable, action: create, loadingLabel: "Creating..." }
+          - { label: List records, action: listRecords, loadingLabel: "Loading...", variant: secondary }
+          - { label: List tables, action: listTables, loadingLabel: "Loading...", variant: secondary }
+
+  - kind: result-panel
+    source: state.result
+    showWhen: state.result
+    title: Result
+    sections:
+      - { kind: json-dump, source: state.result, copy: true }

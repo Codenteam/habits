@@ -1,0 +1,26 @@
+id: list-products
+name: List Products
+description: List products from the dev store (input first optional, default 10).
+
+nodes:
+  - id: products
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-shopify"
+      operation: listProducts
+      label: List Products
+      credentials:
+        shopify:
+          shop: "{{habits.env.HABITS_SHOPIFY_SHOP}}"
+          clientId: "{{habits.env.HABITS_SHOPIFY_CLIENT_ID}}"
+          clientSecret: "{{habits.env.HABITS_SHOPIFY_CLIENT_SECRET}}"
+      params:
+        first: "{{habits.input.first || 10}}"
+
+edges: []
+
+output:
+  shop: "{{products.shop}}"
+  products: "{{products.products}}"

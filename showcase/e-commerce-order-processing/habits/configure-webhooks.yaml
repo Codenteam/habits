@@ -1,0 +1,74 @@
+id: configure-webhooks
+name: Configure Shopify Order Webhooks
+description: Register comma-separated Shopify webhook topics from UI input against HABITS_SHOPIFY_WEBHOOK_URL.
+
+input:
+  - id: topics
+    type: string
+    required: true
+
+nodes:
+  - id: prepare
+    type: script
+    data:
+      label: Prepare subscription items
+      framework: script
+      source: inline
+      params:
+        topics: "{{habits.input.topics}}"
+        envWebhookUrl: "{{habits.env.HABITS_SHOPIFY_WEBHOOK_URL}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(topics, envWebhookUrl) {
+            const url = String(envWebhookUrl || '').trim();
+            if (!url) {
+              throw new Error(
+                'Set HABITS_SHOPIFY_WEBHOOK_URL in .env (https://host/webhook/v/shopify).'
+              );
+            }
+            if (!url.startsWith('https://')) {
+              throw new Error('Shopify requires an HTTPS callback URL.');
+            }
+            if (!url.includes('/webhook/v/shopify')) {
+              throw new Error('Callback must end with /webhook/v/shopify');
+            }
+            const list = String(topics || '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            if (list.length === 0) {
+              throw new Error('At least one webhook topic is required.');
+            }
+            return {
+              callbackUrl: url,
+              topics: list,
+              items: list.map((topic) => ({ topic, callbackUrl: url })),
+            };
+          }
+
+  - id: subscribe-all
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-loop"
+      operation: forEach
+      label: Subscribe each topic
+      params:
+        items: "{{prepare.result.items}}"
+        habitId: create-webhook-subscription-item
+        inputKey: item
+        continueOnError: true
+        collectResults: true
+
+edges:
+  - source: prepare
+    target: subscribe-all
+
+output:
+  callbackUrl: "{{prepare.result.callbackUrl}}"
+  topics: "{{prepare.result.topics}}"
+  successCount: "{{subscribe-all.successCount}}"
+  errorCount: "{{subscribe-all.errorCount}}"
+  results: "{{subscribe-all.results}}"

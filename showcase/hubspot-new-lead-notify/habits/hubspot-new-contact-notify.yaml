@@ -1,0 +1,196 @@
+id: hubspot-new-contact-notify
+name: HubSpot New Contact Slack Notify
+description: >-
+  Webhook listener for new HubSpot contacts. Fetches contact details from HubSpot,
+  asks OpenAI to draft a Slack notification, and posts it to the configured channel.
+  Register Target URL in HubSpot Private App: https://<host>/webhook/v/hubspot
+version: "1.0"
+
+nodes:
+  - id: hubspot-inbound
+    type: trigger
+    data:
+      label: HubSpot New Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: newContact
+      triggerType: webhook
+      isTrigger: true
+      params: {}
+
+  - id: parse-event
+    type: script
+    data:
+      label: Parse HubSpot Webhook Event
+      framework: script
+      source: inline
+      params:
+        payload: "{{hubspot-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const events = Array.isArray(payload) ? payload : [payload];
+            const created = events.find((event) => {
+              const eventType = String(event?.subscriptionType || event?.eventType || '');
+              return eventType.includes('contact.creation');
+            });
+
+            if (!created) {
+              return {
+                matched: false,
+                contactId: '',
+                portalId: '',
+                changeSource: '',
+                occurredAt: null,
+              };
+            }
+
+            return {
+              matched: true,
+              contactId: String(created.objectId || ''),
+              portalId: String(created.portalId || ''),
+              changeSource: String(created.changeSource || ''),
+              occurredAt: created.occurredAt ?? null,
+              raw: created,
+            };
+          }
+
+  - id: fetch-contact
+    type: action
+    data:
+      label: Fetch HubSpot Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: getContact
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        contactId: "{{parse-event.result.contactId}}"
+
+  - id: save-contact
+    type: action
+    data:
+      label: Save Contact to Database
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: insert
+      params:
+        collection: hubspot_new_lead_contacts
+        document:
+          hubspotId: "{{fetch-contact.contact.id}}"
+          email: "{{fetch-contact.contact.email}}"
+          firstName: "{{fetch-contact.contact.firstName}}"
+          lastName: "{{fetch-contact.contact.lastName}}"
+          phone: "{{fetch-contact.contact.phone}}"
+          company: "{{fetch-contact.contact.company}}"
+          createdAt: "{{fetch-contact.contact.createdAt}}"
+          changeSource: "{{parse-event.result.changeSource}}"
+
+  - id: format-contact
+    type: script
+    data:
+      label: Format Contact for Notification
+      framework: script
+      source: inline
+      params:
+        contact: "{{fetch-contact.contact}}"
+        changeSource: "{{parse-event.result.changeSource}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(contact, changeSource) {
+            const c = contact || {};
+            const lines = [];
+
+            const add = (label, value) => {
+              const v = value == null ? '' : String(value).trim();
+              if (!v || v.toLowerCase() === 'undefined' || v.toLowerCase() === 'null') return;
+              lines.push(`${label}: ${v}`);
+            };
+
+            add('HubSpot ID', c.id);
+            add('First name', c.firstName);
+            add('Last name', c.lastName);
+            add('Email', c.email);
+            add('Company', c.company);
+            add('Phone', c.phone);
+            add('Created at', c.createdAt);
+            add('Source', changeSource);
+
+            return {
+              summary: lines.join('\n'),
+              fields: Object.fromEntries(
+                lines.map((line) => {
+                  const idx = line.indexOf(': ');
+                  return [line.slice(0, idx), line.slice(idx + 2)];
+                })
+              ),
+            };
+          }
+
+  - id: openai-notify
+    type: action
+    data:
+      label: Generate Slack Notification
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-openai"
+      operation: ask_chatgpt
+      credentials:
+        openai:
+          apiKey: "{{habits.env.HABITS_OPENAI_API_KEY}}"
+      params:
+        model: gpt-4o-mini
+        temperature: 0.4
+        maxTokens: 400
+        prompt: |
+          Write a Slack message for a sales team about a new lead that just registered in HubSpot.
+
+          Include ONLY the contact details listed below. Do not mention fields that are not listed.
+          Do not write "undefined", "null", or placeholder values for missing data.
+
+          Contact details:
+          {{format-contact.result.summary}}
+
+          Use Slack mrkdwn (*bold* for labels, bullet lists).
+          Keep it concise and actionable (2-4 short bullets plus a one-line summary).
+          Return ONLY the message text.
+
+  - id: send-slack
+    type: action
+    data:
+      label: Send Slack Notification
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-slack"
+      operation: sendMessage
+      params:
+        token: "{{habits.env.HABITS_SLACK_BOT_TOKEN}}"
+        channel: "{{habits.env.HABITS_SLACK_CHANNEL_ID}}"
+        text: "{{openai-notify}}"
+        iconEmoji: ":incoming_envelope:"
+
+edges:
+  - source: hubspot-inbound
+    target: parse-event
+  - source: parse-event
+    target: fetch-contact
+  - source: fetch-contact
+    target: save-contact
+  - source: save-contact
+    target: format-contact
+  - source: format-contact
+    target: openai-notify
+  - source: openai-notify
+    target: send-slack
+
+output:
+  contactId: "{{parse-event.result.contactId}}"
+  contact: "{{fetch-contact.contact}}"
+  slackMessage: "{{openai-notify}}"
+  slack: "{{send-slack}}"
