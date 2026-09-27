@@ -1,0 +1,101 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+meta:
+  id: salesforce-create-contact
+  title: Salesforce Create Contact
+  subtitle: OAuth → create a Contact in Salesforce
+  icon: "lucide:Users"
+
+theme:
+  preset: ha-bits-blue
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Salesforce Create Contact
+    subtitle: "Connect Salesforce, then create a contact"
+    icon: "lucide:Users"
+
+state:
+  email: ""
+  firstName: ""
+  lastName: ""
+  phone: ""
+  title: ""
+  result: null
+  error: null
+
+actions:
+  create:
+    method: POST
+    endpoint: /api/create-contact
+    body:
+      email: "{{state.email}}"
+      firstName: "{{state.firstName}}"
+      lastName: "{{state.lastName}}"
+      phone: "{{state.phone}}"
+      title: "{{state.title}}"
+    responsePath: output
+    onSuccess:
+      set:
+        result: "$response"
+        error: null
+      toast: "Contact created in Salesforce"
+    onError:
+      set:
+        error: "$error.message"
+        result: null
+
+widgets:
+  - kind: status-banner
+    source: "1) Copy .env.example → .env and set Salesforce Connected App credentials. 2) Start the server and visit /oauth/bit-salesforce/init to authorize. 3) Submit the form below."
+  - kind: card
+    title: New contact
+    children:
+      - kind: form
+        bindTo: state
+        fields:
+          - name: email
+            type: email
+            label: Email
+            placeholder: "jane@example.com"
+            required: true
+          - name: firstName
+            type: text
+            label: First name
+            placeholder: "Jane"
+          - name: lastName
+            type: text
+            label: Last name
+            placeholder: "Doe"
+            required: true
+          - name: phone
+            type: text
+            label: Phone
+            placeholder: "+1 555 0100"
+          - name: title
+            type: text
+            label: Job title
+            placeholder: "Sales Manager"
+        submit:
+          label: Create in Salesforce
+          action: create
+          disabledWhen: "!state.email || !state.lastName"
+          loadingLabel: "Creating..."
+  - kind: status-banner
+    showWhen: state.error
+    source: state.error
+  - kind: result-panel
+    showWhen: state.result
+    source: state.result
+    title: Created
+    sections:
+      - kind: kv-grid
+        source: state.result.contact
+        fields:
+          - { key: id, label: Contact ID }
+          - { key: email, label: Email }
+          - { key: firstName, label: First name }
+          - { key: lastName, label: Last name }
+          - { key: phone, label: Phone }

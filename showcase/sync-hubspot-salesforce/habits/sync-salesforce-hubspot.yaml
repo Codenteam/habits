@@ -1,0 +1,155 @@
+id: sync-salesforce-hubspot
+name: Sync Salesforce Contact to HubSpot
+description: >-
+  Webhook listener for new Salesforce contacts (Flow HTTP POST).
+  Creates a matching contact in HubSpot.
+  Configure Salesforce Flow Target URL: https://<host>/webhook/v/salesforce
+version: "1.0"
+
+nodes:
+  - id: salesforce-inbound
+    type: trigger
+    data:
+      label: Salesforce New Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-salesforce"
+      operation: newContact
+      triggerType: webhook
+      isTrigger: true
+      params:
+        Salesforce-X-Webhook-Secret: "{{habits.env.SALESFORCE_X_WEBHOOK_SECRET}}"
+
+  - id: prepare-hubspot-fields
+    type: script
+    data:
+      label: Prepare HubSpot Contact Fields
+      framework: script
+      source: inline
+      params:
+        payload: "{{salesforce-inbound.body}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(payload) {
+            const body = payload || {};
+            let email = body.email != null ? String(body.email).trim() : '';
+            let lastName = body.lastName != null ? String(body.lastName).trim() : '';
+            const salesforceId = body.id ? String(body.id) : '';
+
+            if (!email && salesforceId) {
+              email = `no-email@salesforce.contacts.com`;
+            }
+
+            if (!email) {
+              throw new Error('Salesforce webhook payload is missing email and contact id');
+            }
+
+            if (!lastName) {
+              lastName = email.includes('@') ? email.split('@')[0] : 'Contact';
+            }
+
+            const firstName = body.firstName != null ? String(body.firstName).trim() : '';
+            const phone = body.phone != null ? String(body.phone).trim() : '';
+
+            return {
+              salesforceId: salesforceId || undefined,
+              email,
+              firstName: firstName || undefined,
+              lastName,
+              phone: phone || undefined,
+            };
+          }
+
+  - id: check-hubspot-exists
+    type: action
+    data:
+      label: Check HubSpot Contact Exists
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: getContact
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{prepare-hubspot-fields.result.email}}"
+
+  - id: branch-hubspot-exists
+    type: action
+    data:
+      label: HubSpot Contact Already Exists?
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-if"
+      operation: branch
+      params:
+        mode: switch
+        branches:
+          - label: Create
+            value1: "{{check-hubspot-exists.found}}"
+            operator: equals
+            value2: false
+            output: create
+        includeElse: true
+        defaultOutput: skip
+
+  - id: create-hubspot-contact
+    type: action
+    data:
+      label: Create HubSpot Contact
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-hubspot"
+      operation: createContact
+      credentials:
+        hubspot:
+          accessToken: "{{habits.env.HABITS_HUBSPOT_ACCESS_TOKEN}}"
+      params:
+        email: "{{prepare-hubspot-fields.result.email}}"
+        firstName: "{{prepare-hubspot-fields.result.firstName}}"
+        lastName: "{{prepare-hubspot-fields.result.lastName}}"
+        phone: "{{prepare-hubspot-fields.result.phone}}"
+
+  - id: finish-skip-hubspot-duplicate
+    type: script
+    data:
+      label: Skip — HubSpot Contact Already Exists
+      framework: script
+      source: inline
+      params:
+        email: "{{prepare-hubspot-fields.result.email}}"
+        salesforceId: "{{prepare-hubspot-fields.result.salesforceId}}"
+        existing: "{{check-hubspot-exists.contact}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(email, salesforceId, existing) {
+            return {
+              skipped: true,
+              reason: 'hubspot_contact_exists',
+              email,
+              salesforceId,
+              hubspotContactId: existing?.id,
+            };
+          }
+
+edges:
+  - source: salesforce-inbound
+    target: prepare-hubspot-fields
+  - source: prepare-hubspot-fields
+    target: check-hubspot-exists
+  - source: check-hubspot-exists
+    target: branch-hubspot-exists
+  - source: branch-hubspot-exists
+    target: create-hubspot-contact
+    sourceHandle: branch-0
+  - source: branch-hubspot-exists
+    target: finish-skip-hubspot-duplicate
+    sourceHandle: branch-1
+
+output:
+  salesforceContactId: "{{prepare-hubspot-fields.result.salesforceId}}"
+  skippedHubSpotDuplicate: "{{finish-skip-hubspot-duplicate.result}}"
+  hubspotContact: "{{create-hubspot-contact.contact}}"
+  success: "{{create-hubspot-contact.success}}"

@@ -1,0 +1,57 @@
+id: list-hubspot-contacts
+name: List HubSpot Contacts
+description: Returns all new HubSpot contacts saved by the notification workflow.
+
+nodes:
+  - id: query-contacts
+    type: action
+    data:
+      label: Query Saved Contacts
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: query
+      params:
+        collection: hubspot_new_lead_contacts
+        filter: "{}"
+        limit: 200
+
+  - id: sort-contacts
+    type: script
+    data:
+      label: Sort Contacts
+      framework: script
+      source: inline
+      params:
+        items: "{{query-contacts.results}}"
+        type: script
+        language: javascript
+        script: |
+          async function main(items) {
+            const list = Array.isArray(items) ? items : [];
+            return list
+              .map((item) => {
+                const first = String(item?.firstName || '').trim();
+                const last = String(item?.lastName || '').trim();
+                const fullName = String(item?.fullName || `${first} ${last}`.trim()).trim();
+                return {
+                  ...item,
+                  fullName: fullName || 'Unknown',
+                  email: item?.email || '',
+                  phone: item?.phone || '',
+                };
+              })
+              .sort((a, b) => {
+                const aTime = Date.parse(a?.createdAt || a?._createdAt || '') || 0;
+                const bTime = Date.parse(b?.createdAt || b?._createdAt || '') || 0;
+                return bTime - aTime;
+              });
+          }
+
+edges:
+  - source: query-contacts
+    target: sort-contacts
+
+output:
+  contacts: "{{sort-contacts.result}}"
+  count: "{{sort-contacts.result.length}}"
