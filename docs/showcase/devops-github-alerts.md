@@ -1,33 +1,27 @@
 ---
-title: "E-Commerce Order Processing"
-description: "Shopify ORDERS_CREATE webhooks → Airtable, OpenAI Slack alerts, and SQLite with a Configuration + Orders UI."
+title: "DevOps/GitHub Alerts"
+description: "Auto-labels GitHub issues and alerts developers in Slack on failed CI/CD."
 aside: false
 ---
 
 <script setup>
-import { Tag, Zap, Server, Database } from 'lucide-vue-next'
+import { Tag, Zap, Brain } from 'lucide-vue-next'
 
 const images = [
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-1.png', caption: 'E-Commerce Order Processing' },
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-2.png', caption: 'E-Commerce Order Processing' },
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-3.png', caption: 'E-Commerce Order Processing' },
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-4.png', caption: 'E-Commerce Order Processing' },
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-5.png', caption: 'E-Commerce Order Processing' },
-    { img: '/showcase/e-commerce-order-processing/e-commerce-order-processing-6.png', caption: 'E-Commerce Order Processing' }
+    { img: '/showcase/devops-github-alerts/devops-github-alerts-1.png', caption: 'DevOps/GitHub Alerts' },
+    { img: '/showcase/devops-github-alerts/devops-github-alerts-2.png', caption: 'DevOps/GitHub Alerts' },
+    { img: '/showcase/devops-github-alerts/devops-github-alerts-3.png', caption: 'DevOps/GitHub Alerts' },
+    { img: '/showcase/devops-github-alerts/devops-github-alerts-4.png', caption: 'DevOps/GitHub Alerts' }
 ]
 
 const habitTabs = [
-    { label: 'configure-airtable-fields', url: '/showcase/e-commerce-order-processing/configure-airtable-fields.yaml' },
-    { label: 'get-field-config', url: '/showcase/e-commerce-order-processing/get-field-config.yaml' },
-    { label: 'configure-webhooks', url: '/showcase/e-commerce-order-processing/configure-webhooks.yaml' },
-    { label: 'create-webhook-subscription-item', url: '/showcase/e-commerce-order-processing/create-webhook-subscription-item.yaml' },
-    { label: 'order-event-webhook', url: '/showcase/e-commerce-order-processing/order-event-webhook.yaml' },
-    { label: 'process-order', url: '/showcase/e-commerce-order-processing/process-order.yaml' },
-    { label: 'list-orders', url: '/showcase/e-commerce-order-processing/list-orders.yaml' }
+    { label: 'ci-failure-monitor', url: '/showcase/devops-github-alerts/ci-failure-monitor.yaml' },
+    { label: 'process-ci-failure', url: '/showcase/devops-github-alerts/process-ci-failure.yaml' },
+    { label: 'list-ci-failures', url: '/showcase/devops-github-alerts/list-ci-failures.yaml' }
 ]
 </script>
 
-# E-Commerce Order Processing
+# DevOps/GitHub Alerts
 
 <div class="showcase-header">
   <div class="showcase-meta">
@@ -37,10 +31,10 @@ const habitTabs = [
         Intermediate
       </span>
       <span class="meta-divider"></span>
-      <div class="tags"><span class="showcase-tag tag-integration"><component :is="Tag" :size="12" /> integration</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-business"><component :is="Tag" :size="12" /> business</span> <span class="showcase-tag tag-api"><component :is="Server" :size="12" /> api</span> <span class="showcase-tag tag-database"><component :is="Database" :size="12" /> database</span></div>
+      <div class="tags"><span class="showcase-tag tag-devops"><component :is="Tag" :size="12" /> devops</span> <span class="showcase-tag tag-github"><component :is="Tag" :size="12" /> github</span> <span class="showcase-tag tag-slack"><component :is="Tag" :size="12" /> slack</span> <span class="showcase-tag tag-ci"><component :is="Tag" :size="12" /> ci</span> <span class="showcase-tag tag-automation"><component :is="Zap" :size="12" /> automation</span> <span class="showcase-tag tag-ai"><component :is="Brain" :size="12" /> ai</span></div>
     </div>
     <div class="meta-right">
-      <DownloadExample examplePath="e-commerce-order-processing" />
+      <DownloadExample examplePath="devops-github-alerts" />
     </div>
   </div>
 </div>
@@ -51,17 +45,42 @@ const habitTabs = [
 
 
 
-<p class="showcase-description">Shopify ORDERS_CREATE webhooks → Airtable, OpenAI Slack alerts, and SQLite with a Configuration + Orders UI.</p>
+<p class="showcase-description">Auto-labels GitHub issues and alerts developers in Slack on failed CI/CD.</p>
 
-End-to-end **order create** automation for a Shopify dev store using **client credentials** (no OAuth redirect).
+**DevOps/GitHub Alerts** monitors a GitHub repository for failed GitHub Actions
+workflow runs, uses OpenAI to classify each failure with an existing repository
+label, creates a tracked GitHub issue, and posts a Slack alert to your team channel.
 
-**After `pnpm habits dev`**, open the UI on port **13000** and finish setup on the **Configuration** tab:
-1. **Airtable columns** — configure fields (defaults prefilled) so `process-order` can map Shopify order data.
-2. **Shopify webhooks** — register **`ORDERS_CREATE`** only; callback URL is **`HABITS_SHOPIFY_WEBHOOK_URL`** in `.env` (e.g. `https://your-subdomain.ngrok-free.app/webhook/v/shopify` via ngrok on port 13000).
+## What it does
 
-**Runtime flow:** `order-event-webhook` receives **`orders/create`** → **`process-order`** fetches the order, creates an Airtable row, drafts a Slack notification (OpenAI), and saves metadata (including order total) to SQLite. The **Orders** tab lists saved rows and refreshes every **30 seconds**.
+- **CI polling**: `@ha-bits/bit-github` `pollFailedWorkflowRuns` polls `/actions/runs?status=failure` every minute with deduplication via the polling store
+- **Debug logging**: `@ha-bits/bit-logger` logs raw trigger output and OpenAI triage results
+- **AI triage**: `@ha-bits/bit-openai` picks one allowed GitHub label and drafts issue + Slack copy
+- **Issue creation**: `@ha-bits/bit-github` `createIssue` creates a labelled tracking issue
+- **Slack alert**: `@ha-bits/bit-slack` `sendMessage` notifies the configured alerts channel
+- **Database history**: `@ha-bits/bit-database-sql` stores each processed failure for the dashboard UI
+- **Dashboard**: Frontend polls `/api/list-ci-failures` every 30 seconds to show processed runs
 
-Requires Shopify **Protected customer data access** for `ORDERS_CREATE`, plus Airtable, Slack, and OpenAI env vars. See `README.md` for Dev Dashboard scopes (`read_orders`, `read_customers`).
+## Environment variables (`.env` / keyring on apps)
+
+| Variable | Purpose |
+|---|---|
+| `HABITS_GITHUB_TOKEN` | GitHub PAT with `repo`, Actions read, and Issues write |
+| `HABITS_GITHUB_OWNER` | Repository owner (user or org) |
+| `HABITS_GITHUB_REPO` | Repository name |
+| `HABITS_GITHUB_ISSUE_LABELS` | Comma-separated allowed labels (must already exist in the repo), e.g. `bug,ci-failure,devops,enhancement` |
+| `HABITS_OPENAI_API_KEY` | OpenAI API key for failure triage |
+| `HABITS_SLACK_BOT_TOKEN` | Slack bot token (`xoxb-...`) with `chat:write` |
+| `HABITS_SLACK_ALERTS_CHANNEL` | Slack channel ID for CI failure alerts |
+
+## How to set up
+
+1. Copy `.env.example` to `.env` and fill in the variables above.
+2. Create the GitHub labels listed in `HABITS_GITHUB_ISSUE_LABELS` on your repository.
+3. Invite your Slack bot to the alerts channel and paste the channel ID.
+4. Start the stack and enable the `ci-failure-monitor` workflow — it polls every minute.
+5. Open the frontend to view processed CI failures (refreshes every 30 seconds).
+6. See [README.md] for GitHub token, owner, repo, and label setup.
 
 
 
@@ -100,23 +119,19 @@ Requires Shopify **Protected customer data access** for `ORDERS_CREATE`, plus Ai
 
 ## Requirements
 
-- HABITS_SHOPIFY_SHOP
-- HABITS_SHOPIFY_CLIENT_ID
-- HABITS_SHOPIFY_CLIENT_SECRET
-- HABITS_SHOPIFY_WEBHOOK_URL
-- AIRTABLE_PAT
-- AIRTABLE_BASE_ID
-- AIRTABLE_TABLE_ID
-- HABITS_SLACK_BOT_TOKEN
-- HABITS_SLACK_DIGEST_CHANNEL
-- HABITS_OPENAI_API_KEY
-- HABITS_ORDERS_DATABASE (optional; defaults to showcase SQLite path)
+- GITHUB_TOKEN (GitHub PAT with repo + Actions read + Issues write)
+- GITHUB_OWNER (Repository owner)
+- GITHUB_REPO (Repository name)
+- GITHUB_ISSUE_LABELS (Comma-separated allowed issue labels)
+- OPENAI_API_KEY (OpenAI API key)
+- SLACK_BOT_TOKEN (Slack bot token)
+- SLACK_ALERTS_CHANNEL (Slack channel ID for alerts)
 
 ## Quick Start
 
-<ExampleRunner examplePath="e-commerce-order-processing" />
+<ExampleRunner examplePath="devops-github-alerts" />
 
-<DownloadExample examplePath="e-commerce-order-processing" />
+<DownloadExample examplePath="devops-github-alerts" />
 
 
 <ContactForm

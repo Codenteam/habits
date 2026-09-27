@@ -144,6 +144,12 @@
       "name": "Urgent Message Escalation (WhatsApp)"
     }
   ],
+  "github": [
+    {
+      "slug": "devops-github-alerts",
+      "name": "DevOps/GitHub Alerts"
+    }
+  ],
   "slack": [
     {
       "slug": "ai-reply-routing-assistant",

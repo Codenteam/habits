@@ -209,6 +209,7 @@ export default defineConfig({
         items: [
           { text: 'Browse All', link: '/integrations/' },
           { text: 'Gmail (IMAP/SMTP)', link: '/integrations/gmail/' },
+          { text: 'GitHub', link: '/integrations/github/' },
           { text: 'OpenAI', link: '/integrations/openai/' },
           { text: 'Slack', link: '/integrations/slack/' },
           { text: 'HubSpot CRM', link: '/integrations/hubspot/' },
