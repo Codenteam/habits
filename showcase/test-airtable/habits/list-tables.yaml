@@ -1,0 +1,23 @@
+id: list-tables
+name: List Airtable Tables
+description: List tables and field metadata for the configured Airtable base.
+
+nodes:
+  - id: tables
+    type: action
+    data:
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-airtable"
+      operation: listTables
+      credentials:
+        airtable:
+          token: "{{habits.env.AIRTABLE_PAT}}"
+      params:
+        baseId: "{{habits.env.AIRTABLE_BASE_ID}}"
+
+edges: []
+
+output:
+  count: "{{tables.count}}"
+  tables: "{{tables.tables}}"

@@ -1,0 +1,26 @@
+id: get-field-config
+name: Get Airtable Field Configuration
+description: Load saved Airtable column configuration from SQLite.
+
+nodes:
+  - id: load-config
+    type: action
+    data:
+      label: Load field config
+      framework: bits
+      source: npm
+      module: "@ha-bits/bit-database-sql"
+      operation: get
+      params:
+        collection: ecommerce-order-processing
+        key: field-config
+        database: "{{habits.env.HABITS_ORDERS_DATABASE || 'showcase/e-commerce-order-processing/orders.db'}}"
+        defaultValue: null
+
+edges: []
+
+output:
+  found: "{{load-config.found}}"
+  columns: "{{load-config.value.columns}}"
+  orderIdField: "{{load-config.value.orderIdField}}"
+  config: "{{load-config.value}}"

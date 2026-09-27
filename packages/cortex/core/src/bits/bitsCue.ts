@@ -23,6 +23,7 @@ import {
   BitsTriggerContext,
 } from './bitsRoutine';
 import { PollingStore, createPollingStore, DedupStrategy } from '../store';
+import { oauthTokenStore } from './oauthTokenStore';
 import { LoggerFactory } from '@ha-bits/core/logger';
 
 const logger = LoggerFactory.getRoot();
@@ -179,6 +180,74 @@ function isNil(value: any): value is null | undefined {
   return value === null || value === undefined;
 }
 
+/**
+ * Resolve OAuth access tokens for trigger execution (polling, streaming, etc.).
+ *
+ * Actions use bitsRoutine, which already loads/refreshes tokens from
+ * oauthTokenStore. Triggers used to only get clientId/clientSecret from
+ * credentials and never called the store, so OAuth bits (e.g. Google Sheets)
+ * failed on cron with "No OAuth token" while the same node worked as an action.
+ *
+ * Priority: existing accessToken → token in credentials → oauthTokenStore
+ * (with refresh when expired), same as the action path.
+ */
+async function resolveTriggerOAuthAuth(
+  moduleDefinition: ModuleDefinition,
+  credentials: Record<string, any> | undefined,
+  existingAuth: any,
+): Promise<any> {
+  if (existingAuth?.accessToken) {
+    return existingAuth;
+  }
+
+  // Direct token in credentials (e.g. pre-provided accessToken)
+  for (const cred of Object.values(credentials || {})) {
+    const token = (cred as any)?.accessToken || (cred as any)?.access_token;
+    if (token) {
+      return {
+        accessToken: token,
+        refreshToken: (cred as any)?.refreshToken || (cred as any)?.refresh_token,
+        tokenType: (cred as any)?.tokenType || (cred as any)?.token_type || 'Bearer',
+        expiresAt: (cred as any)?.expiresAt || (cred as any)?.expires_at,
+      };
+    }
+  }
+
+  const piece = await pieceFromModule(moduleDefinition);
+  const authType = (piece.auth as any)?.type;
+  if (!piece.auth || (authType !== 'OAUTH2' && authType !== 'OAUTH2_PKCE')) {
+    return existingAuth;
+  }
+
+  // Hydrate from oauthTokenStore (populated by /oauth/{bitId}/init flow)
+  const bitId = moduleDefinition.repository.split('/').pop() || moduleDefinition.repository;
+  const storedToken = oauthTokenStore.getToken(bitId);
+  if (!storedToken) {
+    return existingAuth;
+  }
+
+  if (oauthTokenStore.isExpired(bitId)) {
+    const refreshedToken = await oauthTokenStore.refreshToken(bitId);
+    if (refreshedToken) {
+      logger.log(`✅ OAuth token refreshed for polling trigger: ${bitId}`);
+      return {
+        accessToken: refreshedToken.accessToken,
+        refreshToken: refreshedToken.refreshToken,
+        tokenType: refreshedToken.tokenType,
+        expiresAt: refreshedToken.expiresAt,
+      };
+    }
+  }
+
+  logger.log(`🔐 Using OAuth token from store for polling trigger: ${bitId}`);
+  return {
+    accessToken: storedToken.accessToken,
+    refreshToken: storedToken.refreshToken,
+    tokenType: storedToken.tokenType,
+    expiresAt: storedToken.expiresAt,
+  };
+}
+
 // ============================================================================
 // Map trigger type from loaded module to our enum
 // ============================================================================
@@ -277,7 +346,8 @@ const _cueHelperImpl = {
       logger.log(`📊 Created polling store for ${triggerId} (dedup: ${dedupStrategy})`);
     }
 
-    // Extract auth from credentials if present
+    // Split credentials from trigger params (credentials come from
+    // WorkflowExecutor.resolveTriggerInput, which maps node auth → credentials.oauth)
     let auth: any = undefined;
     const { credentials, ...triggerProps } = input;
     if (credentials) {
@@ -292,6 +362,9 @@ const _cueHelperImpl = {
         logger.log(`🔐 Using credentials for trigger: ${credentialKeys[0]}`);
       }
     }
+
+    // clientId/clientSecret alone are not enough — load accessToken from oauthTokenStore
+    auth = await resolveTriggerOAuthAuth(moduleDefinition, credentials, auth);
 
     // Build context for trigger execution
     const context: BitsTriggerContext = {
