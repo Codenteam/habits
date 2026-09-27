@@ -1,0 +1,30 @@
+version: "1.0"
+name: "DevOps/GitHub Alerts"
+description: >
+  Polls GitHub Actions for failed CI/CD runs, uses OpenAI to pick a repository
+  label and draft alerts, creates a labelled GitHub issue, and notifies Slack.
+
+workflows:
+  - id: process-ci-failure
+    path: ./habits/process-ci-failure.yaml
+    enabled: true
+
+  - id: ci-failure-monitor
+    path: ./habits/ci-failure-monitor.yaml
+    enabled: true
+
+  - id: list-ci-failures
+    path: ./habits/list-ci-failures.yaml
+    enabled: true
+
+server:
+  port: 13000
+  host: "0.0.0.0"
+  openapi: true
+  frontend: ./frontend
+
+logging:
+  level: info
+  outputs: [console]
+  format: text
+  colorize: true

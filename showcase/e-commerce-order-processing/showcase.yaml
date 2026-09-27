@@ -1,0 +1,48 @@
+name: E-Commerce Order Processing
+description: Shopify ORDERS_CREATE webhooks → Airtable, OpenAI Slack alerts, and SQLite with a Configuration + Orders UI.
+
+longDescription: |
+  End-to-end **order create** automation for a Shopify dev store using **client credentials** (no OAuth redirect).
+
+  **After `pnpm habits dev`**, open the UI on port **13000** and finish setup on the **Configuration** tab:
+  1. **Airtable columns** — configure fields (defaults prefilled) so `process-order` can map Shopify order data.
+  2. **Shopify webhooks** — register **`ORDERS_CREATE`** only; callback URL is **`HABITS_SHOPIFY_WEBHOOK_URL`** in `.env` (e.g. `https://your-subdomain.ngrok-free.app/webhook/v/shopify` via ngrok on port 13000).
+
+  **Runtime flow:** `order-event-webhook` receives **`orders/create`** → **`process-order`** fetches the order, creates an Airtable row, drafts a Slack notification (OpenAI), and saves metadata (including order total) to SQLite. The **Orders** tab lists saved rows and refreshes every **30 seconds**.
+
+  Requires Shopify **Protected customer data access** for `ORDERS_CREATE`, plus Airtable, Slack, and OpenAI env vars. See `README.md` for Dev Dashboard scopes (`read_orders`, `read_customers`).
+
+type: automation
+
+tags:
+  - integration
+  - automation
+  - business
+  - api
+  - database
+
+difficulty: intermediate
+
+version: "1.0"
+
+requirements:
+  - HABITS_SHOPIFY_SHOP
+  - HABITS_SHOPIFY_CLIENT_ID
+  - HABITS_SHOPIFY_CLIENT_SECRET
+  - HABITS_SHOPIFY_WEBHOOK_URL
+  - AIRTABLE_PAT
+  - AIRTABLE_BASE_ID
+  - AIRTABLE_TABLE_ID
+  - HABITS_SLACK_BOT_TOKEN
+  - HABITS_SLACK_DIGEST_CHANNEL
+  - HABITS_OPENAI_API_KEY
+  - HABITS_ORDERS_DATABASE (optional; defaults to showcase SQLite path)
+
+habits:
+  - habits/configure-airtable-fields.yaml
+  - habits/get-field-config.yaml
+  - habits/configure-webhooks.yaml
+  - habits/create-webhook-subscription-item.yaml
+  - habits/order-event-webhook.yaml
+  - habits/process-order.yaml
+  - habits/list-orders.yaml

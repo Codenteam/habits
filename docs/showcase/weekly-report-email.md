@@ -69,10 +69,9 @@ asks OpenAI to write a stakeholder-friendly summary, and emails the result via S
 | `HABITS_REPORT_SENDER_NAME` | Sender name for "Best regards, …" sign-off |
 | `HABITS_REPORT_SENDER_POSITION` | Optional job title on the line below sender name |
 
-## Testing schedule
+## Schedule
 
-The workflow runs **every 1 minute** while testing. Change `cronExpression` in
-`habits/weekly-report-email.yaml` to `0 9 * * 1` (Mondays 09:00 UTC) for weekly production use.
+The workflow runs **every Monday at 09:00 UTC** (`0 9 * * 1` in `habits/weekly-report-email.yaml`).
 
 
 
@@ -119,6 +118,9 @@ The workflow runs **every 1 minute** while testing. Change `cronExpression` in
 - SMTP_USER (SMTP username)
 - SMTP_PASSWORD (SMTP password)
 - REPORT_EMAIL_TO (Report recipient)
+- HABITS_REPORT_STAKEHOLDER_NAME (Recipient name for greeting)
+- HABITS_REPORT_SENDER_NAME (Sender name for sign-off)
+- HABITS_REPORT_SENDER_POSITION (Sender position for sign-off)
 
 ## Quick Start
 

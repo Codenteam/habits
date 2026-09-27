@@ -1,0 +1,68 @@
+# Showcase metadata for DevOps/GitHub Alerts
+name: DevOps/GitHub Alerts
+type: automation
+description: Auto-labels GitHub issues and alerts developers in Slack on failed CI/CD.
+
+longDescription: |
+  **DevOps/GitHub Alerts** monitors a GitHub repository for failed GitHub Actions
+  workflow runs, uses OpenAI to classify each failure with an existing repository
+  label, creates a tracked GitHub issue, and posts a Slack alert to your team channel.
+
+  ## What it does
+
+  - **CI polling**: `@ha-bits/bit-github` `pollFailedWorkflowRuns` polls `/actions/runs?status=failure` every minute with deduplication via the polling store
+  - **Debug logging**: `@ha-bits/bit-logger` logs raw trigger output and OpenAI triage results
+  - **AI triage**: `@ha-bits/bit-openai` picks one allowed GitHub label and drafts issue + Slack copy
+  - **Issue creation**: `@ha-bits/bit-github` `createIssue` creates a labelled tracking issue
+  - **Slack alert**: `@ha-bits/bit-slack` `sendMessage` notifies the configured alerts channel
+  - **Database history**: `@ha-bits/bit-database-sql` stores each processed failure for the dashboard UI
+  - **Dashboard**: Frontend polls `/api/list-ci-failures` every 30 seconds to show processed runs
+
+  ## Environment variables (`.env` / keyring on apps)
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_GITHUB_TOKEN` | GitHub PAT with `repo`, Actions read, and Issues write |
+  | `HABITS_GITHUB_OWNER` | Repository owner (user or org) |
+  | `HABITS_GITHUB_REPO` | Repository name |
+  | `HABITS_GITHUB_ISSUE_LABELS` | Comma-separated allowed labels (must already exist in the repo), e.g. `bug,ci-failure,devops,enhancement` |
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for failure triage |
+  | `HABITS_SLACK_BOT_TOKEN` | Slack bot token (`xoxb-...`) with `chat:write` |
+  | `HABITS_SLACK_ALERTS_CHANNEL` | Slack channel ID for CI failure alerts |
+
+  ## How to set up
+
+  1. Copy `.env.example` to `.env` and fill in the variables above.
+  2. Create the GitHub labels listed in `HABITS_GITHUB_ISSUE_LABELS` on your repository.
+  3. Invite your Slack bot to the alerts channel and paste the channel ID.
+  4. Start the stack and enable the `ci-failure-monitor` workflow — it polls every minute.
+  5. Open the frontend to view processed CI failures (refreshes every 30 seconds).
+  6. See [README.md](./README.md) for GitHub token, owner, repo, and label setup.
+
+tags:
+  - devops
+  - github
+  - slack
+  - ci
+  - automation
+  - ai
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - GITHUB_TOKEN (GitHub PAT with repo + Actions read + Issues write)
+  - GITHUB_OWNER (Repository owner)
+  - GITHUB_REPO (Repository name)
+  - GITHUB_ISSUE_LABELS (Comma-separated allowed issue labels)
+  - OPENAI_API_KEY (OpenAI API key)
+  - SLACK_BOT_TOKEN (Slack bot token)
+  - SLACK_ALERTS_CHANNEL (Slack channel ID for alerts)
+
+habits:
+  - habits/ci-failure-monitor.yaml
+  - habits/process-ci-failure.yaml
+  - habits/list-ci-failures.yaml
