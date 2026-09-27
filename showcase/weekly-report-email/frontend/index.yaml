@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=../../../schemas/ui-spec.schema.yaml
+version: 1
+
+meta:
+  id: weekly-report-email
+  title: Weekly Report Email
+  subtitle: Scheduled Google Sheets → OpenAI → SMTP
+  icon: "lucide:Mail"
+  documentTitle: Weekly Report Email
+
+theme:
+  preset: ha-bits-cyan
+  mode: dark
+
+layout:
+  type: single
+  header:
+    title: Weekly Report Email
+    subtitle: Reads your Google Sheet on a schedule, generates a report with OpenAI, emails it via SMTP, and saves the latest report here.
+    icon: "lucide:Mail"
+
+state:
+  latestReport: null
+
+actions:
+  fetchLatestReport:
+    method: GET
+    endpoint: /api/get-latest-report
+    responsePath: output.report
+    poll:
+      auto: true
+      intervalMs: 30000
+    onSuccess:
+      set:
+        latestReport: "$response"
+
+onMount:
+  - fetchLatestReport
+
+widgets:
+  - kind: card
+    title: Latest report
+    children:
+      - kind: text
+        value: "Generated {{state.latestReport.reportDate}}"
+        muted: true
+        showWhen: state.latestReport.reportDate
+      - kind: heading
+        level: 3
+        value: Conclusion
+        showWhen: state.latestReport.conclusion
+      - kind: markdown
+        source: state.latestReport.conclusion
+        showWhen: state.latestReport.conclusion
+      - kind: heading
+        level: 3
+        value: Individual details
+        showWhen: state.latestReport.report
+      - kind: markdown
+        source: state.latestReport.report
+        showWhen: state.latestReport.report
+      - kind: text
+        value: No reports yet. The workflow runs on schedule — check back after the next run.
+        muted: true
+        hideWhen: state.latestReport.reportDate

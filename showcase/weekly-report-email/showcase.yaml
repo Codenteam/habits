@@ -1,0 +1,63 @@
+# Showcase metadata for Weekly Report Email
+name: Weekly Report Email
+type: automation
+description: Read metrics from Google Sheets on a schedule, generate a report email with OpenAI, and send it via SMTP.
+
+longDescription: |
+  **Weekly Report Email** polls a Google Sheet on a cron schedule, formats the rows,
+  asks OpenAI to write a stakeholder-friendly summary, and emails the result via SMTP.
+
+  ## Environment variables
+
+  | Variable | Purpose |
+  |---|---|
+  | `HABITS_OPENAI_API_KEY` | OpenAI API key for report copy |
+  | `HABITS_GOOGLE_SHEETS_CLIENT_ID` | Google OAuth 2.0 Client ID |
+  | `HABITS_GOOGLE_SHEETS_CLIENT_SECRET` | Google OAuth 2.0 Client Secret |
+  | `HABITS_GOOGLE_SPREADSHEET_ID` | Spreadsheet ID from the Sheets URL |
+  | `HABITS_GOOGLE_SHEET_RANGE` | A1 range to read (e.g. `Weekly Report!A:F`) |
+  | `HABITS_SMTP_HOST` | SMTP server hostname |
+  | `HABITS_SMTP_PORT` | SMTP port (587 for TLS) |
+  | `HABITS_SMTP_USER` | SMTP username |
+  | `HABITS_SMTP_PASSWORD` | SMTP password or app password |
+  | `HABITS_EMAIL_FROM` | Sender address shown on the email |
+  | `HABITS_REPORT_EMAIL_TO` | Recipient address for the report |
+  | `HABITS_REPORT_EMAIL_SUBJECT` | Email subject line |
+  | `HABITS_REPORT_STAKEHOLDER_NAME` | Recipient name for "Dear …" greeting |
+  | `HABITS_REPORT_SENDER_NAME` | Sender name for "Best regards, …" sign-off |
+  | `HABITS_REPORT_SENDER_POSITION` | Optional job title on the line below sender name |
+
+  ## Schedule
+
+  The workflow runs **every Monday at 09:00 UTC** (`0 9 * * 1` in `habits/weekly-report-email.yaml`).
+
+tags:
+  - google-sheets
+  - openai
+  - email
+  - automation
+  - scheduler
+  - reporting
+
+difficulty: intermediate
+
+featured: false
+
+version: "1.0"
+
+requirements:
+  - OPENAI_API_KEY (OpenAI API key)
+  - GOOGLE_SHEETS_CLIENT_ID (Google OAuth 2.0 Client ID)
+  - GOOGLE_SHEETS_CLIENT_SECRET (Google OAuth 2.0 Client Secret)
+  - GOOGLE_SPREADSHEET_ID (Spreadsheet ID)
+  - SMTP_HOST (SMTP server)
+  - SMTP_USER (SMTP username)
+  - SMTP_PASSWORD (SMTP password)
+  - REPORT_EMAIL_TO (Report recipient)
+  - HABITS_REPORT_STAKEHOLDER_NAME (Recipient name for greeting)
+  - HABITS_REPORT_SENDER_NAME (Sender name for sign-off)
+  - HABITS_REPORT_SENDER_POSITION (Sender position for sign-off)
+
+habits:
+  - habits/weekly-report-email.yaml
+  - habits/get-latest-report.yaml
