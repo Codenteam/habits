@@ -169,7 +169,7 @@ async function generateBundleAll(modules, outputPath) {
   const nodePolyfillPlugin = {
     name: 'node-polyfill',
     setup(build) {
-      const stubPackages = ['typescript', 'dotenv', 'winston', 'yaml', 'yargs', 'express', 'debug', 'form-data', '@tauri-apps/plugin-shell', '@tauri-apps/api'];
+      const stubPackages = ['typescript', 'dotenv', 'winston', 'yargs', 'express', 'debug', 'form-data', '@tauri-apps/plugin-shell', '@tauri-apps/api'];
       
       build.onResolve({ filter: new RegExp(`^(${stubPackages.join('|')})$`) }, (args) => {
         return {

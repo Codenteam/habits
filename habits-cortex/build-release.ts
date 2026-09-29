@@ -21,6 +21,7 @@
  *   --output <dir>    Output directory for artifacts (default: ./release)
  *   --debug           Build in debug mode (faster, no optimization)
  *   --skip-notarize   Skip macOS notarization step
+ *   --build-only      Build artifacts only (skips macOS code signing; also set via BUILD_ONLY=true)
  *   --dry-run         Validate environment only, don't build
  *   --verbose         Show all command output
  *   --help            Show this help message
@@ -85,6 +86,9 @@ async function main(): Promise<void> {
   if (options.skipNotarize) {
     console.log('info', 'Notarization: skipped');
   }
+  if (options.buildOnly) {
+    console.log('info', 'Build only: macOS code signing disabled (--no-sign)');
+  }
   
   // Validate environment
   const validation = validateEnvironment(options.platforms);
@@ -115,6 +119,14 @@ async function main(): Promise<void> {
   const allArtifacts: string[] = [];
   setupBase64EnvVars();
   try {
+    // Temporary: patch latentcollapse/candle @ 1765abe to remove broken qwen35 KV-cache helpers so the Rust build compiles.
+    const patchCandleScript = path.resolve(__dirname, '..', 'scripts', 'patch-candle-qwen35.mjs');
+    if (fs.existsSync(patchCandleScript)) {
+      logSection('Patching candle quantized_qwen35 (temporary)');
+      exec(`node "${patchCandleScript}"`, { cwd: path.resolve(__dirname, '..') });
+      console.log('success', 'candle patch applied');
+    }
+
     // Generate bundle-all.js with all bits
     logSection('Generating cortex-bundle-all.js');
     const bundleAllScript = path.resolve(__dirname, '..', 'bundle-generator', 'bundle-all.js');
@@ -129,6 +141,15 @@ async function main(): Promise<void> {
       console.log('success', 'Bundle-all generated at www/cortex-bundle-all.js');
     } else {
       console.log('warn', 'bundle-all.js not found, skipping bundle generation');
+    }
+
+    const corePkg = path.resolve(__dirname, '..', 'dist/packages/cortex/core/index.cjs');
+    if (!fs.existsSync(corePkg)) {
+      logSection('Building @ha-bits/cortex-core');
+      exec('pnpm nx build @ha-bits/cortex-core', {
+        cwd: path.resolve(__dirname, '..'),
+      });
+      console.log('success', 'Built @ha-bits/cortex-core');
     }
 
     const syncAssetsScript = path.resolve(__dirname, '..', 'scripts', 'sync-cortex-ha-assets.mjs');
@@ -414,9 +435,10 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
     ? ctx.appStoreIdentity 
     : (ctx.developerIdIdentity || ctx.appStoreIdentity);
   
-  const buildEnv: Record<string, string | undefined> = {
-    APPLE_SIGNING_IDENTITY: signingIdentity,
-  };
+  const skipCodesign = options.buildOnly && !options.uploadMacos;
+  const buildEnv: Record<string, string | undefined> = skipCodesign
+    ? {}
+    : { APPLE_SIGNING_IDENTITY: signingIdentity };
   
   // Disable notarization at build time (we handle it separately)
   if (options.skipNotarize || !ctx.hasDevIdCert) {
@@ -435,11 +457,14 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
     }
   }
   
-  console.log('step', `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
+  console.log('step', skipCodesign
+    ? 'Building unsigned (build-only, --no-sign)...'
+    : `Building with: ${signingIdentity?.substring(0, 50) || 'default identity'}...`);
   
   // Only build app bundle when uploading to App Store (DMG not needed, we create .pkg from .app)
   // Build both app and dmg for direct distribution
   const bundles = options.uploadMacos ? 'app' : 'app,dmg';
+  const noSignArg = skipCodesign ? '--no-sign' : '';
 
   // For App Store uploads, override tauri.conf.json to use Entitlements.store.plist.
   // For non-App-Store (Developer ID) builds, tauri.conf.json references Entitlements.plist.
@@ -452,7 +477,7 @@ async function buildMacOSApp(ctx: MacOSContext, options: CLIOptions): Promise<st
   }
 
   // Always use no-external-habits for App Store / direct-distribution macOS builds
-  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${configArg}`.trimEnd(), { env: buildEnv });
+  exec(`npm run tauri -- build ${ctx.buildArgs} --target ${ctx.target} --bundles ${bundles} --features no-external-habits ${noSignArg} ${configArg}`.trimEnd(), { env: buildEnv });
   
   // Collect DMG artifacts
   if (fs.existsSync(dmgDir)) {
